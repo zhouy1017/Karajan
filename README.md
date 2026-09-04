@@ -1,4 +1,4 @@
-# Toil-like Heavy Agent Framework Research
+# Karajan
 
 关于构建重度 Toil 类多 Agent 代码交付控制平面的调研与架构建议。
 
