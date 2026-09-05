@@ -1,0 +1,232 @@
+{
+  "schema_version": "karajan.resources.v1",
+  "status": "example_unbound",
+  "description": "Draft shapes only. Null is unconfigured; no profile, budget, endpoint or secret is active.",
+  "accounts": [
+    {
+      "id": "account-chatgpt",
+      "provider_id": "chatgpt",
+      "auth_kind": "official_subscription",
+      "secret_ref": null,
+      "state": "draft"
+    },
+    {
+      "id": "account-claude",
+      "provider_id": "claude",
+      "auth_kind": "official_subscription",
+      "secret_ref": null,
+      "state": "draft"
+    },
+    {
+      "id": "account-deepseek",
+      "provider_id": "deepseek",
+      "auth_kind": "api_key",
+      "secret_ref": null,
+      "state": "draft"
+    },
+    {
+      "id": "account-go",
+      "provider_id": "go",
+      "auth_kind": "api_key",
+      "secret_ref": null,
+      "state": "draft"
+    },
+    {
+      "id": "account-third_party",
+      "provider_id": "third_party",
+      "auth_kind": "api_key",
+      "secret_ref": null,
+      "state": "draft"
+    }
+  ],
+  "channels": [
+    {
+      "id": "channel-chatgpt",
+      "account_id": "account-chatgpt",
+      "protocol": "official_runtime",
+      "endpoint": null,
+      "billing_path": "subscription_only"
+    },
+    {
+      "id": "channel-claude",
+      "account_id": "account-claude",
+      "protocol": "official_runtime",
+      "endpoint": null,
+      "billing_path": "subscription_only"
+    },
+    {
+      "id": "channel-deepseek",
+      "account_id": "account-deepseek",
+      "protocol": "provider_adapter",
+      "endpoint": null,
+      "billing_path": "api_cash"
+    },
+    {
+      "id": "channel-go",
+      "account_id": "account-go",
+      "protocol": "model_specific_adapter",
+      "endpoint": null,
+      "billing_path": "subscription_only"
+    },
+    {
+      "id": "channel-third_party",
+      "account_id": "account-third_party",
+      "protocol": "to_be_qualified",
+      "endpoint": null,
+      "billing_path": "api_cash"
+    }
+  ],
+  "profiles": [
+    {
+      "id": "profile-chatgpt",
+      "revision": 1,
+      "state": "draft",
+      "channel_id": "channel-chatgpt",
+      "model_id": null,
+      "model_family": null,
+      "runtime": {
+        "kind": "codex_app_server",
+        "version": null
+      },
+      "native_settings": {},
+      "admission_granularity": "attempt",
+      "required_isolation": "tool_sandboxed",
+      "capability_evidence": [],
+      "quota_pool_refs": [],
+      "price_revision_ref": null
+    },
+    {
+      "id": "profile-claude",
+      "revision": 1,
+      "state": "draft",
+      "channel_id": "channel-claude",
+      "model_id": null,
+      "model_family": null,
+      "runtime": {
+        "kind": "claude_cli",
+        "version": null
+      },
+      "native_settings": {},
+      "admission_granularity": "attempt",
+      "required_isolation": "tool_sandboxed",
+      "capability_evidence": [],
+      "quota_pool_refs": [],
+      "price_revision_ref": null
+    },
+    {
+      "id": "profile-deepseek",
+      "revision": 1,
+      "state": "draft",
+      "channel_id": "channel-deepseek",
+      "model_id": null,
+      "model_family": null,
+      "runtime": {
+        "kind": "opencode_api_runner",
+        "version": null
+      },
+      "native_settings": {},
+      "admission_granularity": "model_call",
+      "required_isolation": "attempt_isolated",
+      "capability_evidence": [],
+      "quota_pool_refs": [],
+      "price_revision_ref": null
+    },
+    {
+      "id": "profile-go",
+      "revision": 1,
+      "state": "draft",
+      "channel_id": "channel-go",
+      "model_id": null,
+      "model_family": null,
+      "runtime": {
+        "kind": "opencode_api_runner",
+        "version": null
+      },
+      "native_settings": {},
+      "admission_granularity": "model_call",
+      "required_isolation": "attempt_isolated",
+      "capability_evidence": [],
+      "quota_pool_refs": [],
+      "price_revision_ref": null
+    },
+    {
+      "id": "profile-third_party",
+      "revision": 1,
+      "state": "draft",
+      "channel_id": "channel-third_party",
+      "model_id": null,
+      "model_family": null,
+      "runtime": {
+        "kind": "opencode_api_runner",
+        "version": null
+      },
+      "native_settings": {},
+      "admission_granularity": "model_call",
+      "required_isolation": "attempt_isolated",
+      "capability_evidence": [],
+      "quota_pool_refs": [],
+      "price_revision_ref": null
+    }
+  ],
+  "quota_pools": [
+    {
+      "id": "pool-chatgpt-short-example",
+      "account_id": "account-chatgpt",
+      "state": "draft",
+      "shared_scope": "account",
+      "unit": "percent",
+      "window_kind": null,
+      "window_identity": null,
+      "limit": null,
+      "observation_source": null
+    }
+  ],
+  "capacity_policies": [
+    {
+      "id": "capacity-chatgpt-example",
+      "revision": 1,
+      "account_id": "account-chatgpt",
+      "state": "draft",
+      "pool_constraints": [
+        {
+          "pool_ref": "pool-chatgpt-short-example",
+          "safety_margin": {
+            "unit": "percent",
+            "amount": null
+          },
+          "role_reserves": [
+            {
+              "role": "commander",
+              "purpose": "lead",
+              "unit": "percent",
+              "amount": null
+            }
+          ]
+        }
+      ],
+      "conservative_mode": {
+        "enabled": false,
+        "max_local_active_attempts": 1,
+        "max_attempt_duration_seconds": null,
+        "observation_max_age_seconds": null,
+        "cooldown_seconds": null
+      }
+    }
+  ],
+  "budgets": [
+    {
+      "id": "budget-run-template",
+      "scope": "run_template",
+      "state": "draft",
+      "currency_limits": {
+        "USD": null,
+        "CNY": null
+      },
+      "cash_enforcement": "bounded_calls",
+      "max_total_attempts": null,
+      "max_run_duration_seconds": null
+    }
+  ],
+  "price_snapshots": [],
+  "fx_snapshots": []
+}

@@ -1,0 +1,176 @@
+{
+  "repository": "zhouy1017/Karajan",
+  "published_at": "2026-09-05",
+  "prd": {
+    "number": 1,
+    "url": "https://github.com/zhouy1017/Karajan/issues/1",
+    "file": "docs/prd/karajan-v1.md"
+  },
+  "issues": [
+    {
+      "key": "M0-01",
+      "number": 2,
+      "url": "https://github.com/zhouy1017/Karajan/issues/2",
+      "title": "M0-01｜建立可执行契约与资格报告格式",
+      "file": "docs/planning/m0/issues/01-contract.md",
+      "blocked_by": []
+    },
+    {
+      "key": "M0-02",
+      "number": 3,
+      "url": "https://github.com/zhouy1017/Karajan/issues/3",
+      "title": "M0-02｜验证 RunnerHost 启动、取消与失联核对",
+      "file": "docs/planning/m0/issues/02-runnerhost.md",
+      "blocked_by": [
+        2
+      ],
+      "optional": false
+    },
+    {
+      "key": "M0-03",
+      "number": 4,
+      "url": "https://github.com/zhouy1017/Karajan/issues/4",
+      "title": "M0-03｜验证资源切片、逐调用准入与发送未知",
+      "file": "docs/planning/m0/issues/03-budget-broker.md",
+      "blocked_by": [
+        2
+      ],
+      "optional": false
+    },
+    {
+      "key": "M0-04",
+      "number": 5,
+      "url": "https://github.com/zhouy1017/Karajan/issues/5",
+      "title": "M0-04｜验证一个官方订阅执行器的协议与权限绑定",
+      "file": "docs/planning/m0/issues/04-subscription.md",
+      "blocked_by": [
+        2
+      ],
+      "optional": false
+    },
+    {
+      "key": "M0-05",
+      "number": 6,
+      "url": "https://github.com/zhouy1017/Karajan/issues/6",
+      "title": "M0-05｜验证固定 API 执行器的工具循环和请求通路",
+      "file": "docs/planning/m0/issues/05-api-runner.md",
+      "blocked_by": [
+        2
+      ],
+      "optional": false
+    },
+    {
+      "key": "M0-06",
+      "number": 7,
+      "url": "https://github.com/zhouy1017/Karajan/issues/7",
+      "title": "M0-06｜验证选定执行环境的工具、凭据和交付隔离",
+      "file": "docs/planning/m0/issues/06-isolation.md",
+      "blocked_by": [
+        3,
+        5,
+        6
+      ],
+      "optional": false
+    },
+    {
+      "key": "M0-07",
+      "number": 8,
+      "url": "https://github.com/zhouy1017/Karajan/issues/8",
+      "title": "M0-07｜完成一订阅＋一 API 的真实资格验证与 M0 出口",
+      "file": "docs/planning/m0/issues/07-live-exit.md",
+      "blocked_by": [
+        4,
+        7
+      ],
+      "optional": false
+    },
+    {
+      "key": "M0-X",
+      "number": 9,
+      "url": "https://github.com/zhouy1017/Karajan/issues/9",
+      "title": "M0-X｜可选：评估 Bernstein 能否服从 Karajan 执行契约",
+      "file": "docs/planning/m0/issues/08-bernstein-optional.md",
+      "blocked_by": [
+        2
+      ],
+      "optional": true
+    }
+  ],
+  "relation_verification": {
+    "status": "verified",
+    "method": "GitHub REST GET after connector publication and browser relationship writes",
+    "parent_number": 1,
+    "sub_issue_numbers": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "dependency_count": 10,
+    "blocked_by": [
+      {
+        "number": 2,
+        "blocked_by": [],
+        "match": true
+      },
+      {
+        "number": 3,
+        "blocked_by": [
+          2
+        ],
+        "match": true
+      },
+      {
+        "number": 4,
+        "blocked_by": [
+          2
+        ],
+        "match": true
+      },
+      {
+        "number": 5,
+        "blocked_by": [
+          2
+        ],
+        "match": true
+      },
+      {
+        "number": 6,
+        "blocked_by": [
+          2
+        ],
+        "match": true
+      },
+      {
+        "number": 7,
+        "blocked_by": [
+          3,
+          5,
+          6
+        ],
+        "match": true
+      },
+      {
+        "number": 8,
+        "blocked_by": [
+          4,
+          7
+        ],
+        "match": true
+      },
+      {
+        "number": 9,
+        "blocked_by": [
+          2
+        ],
+        "match": true
+      }
+    ]
+  },
+  "execution_status": "not_started",
+  "live_qualification": "not_run"
+}
