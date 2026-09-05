@@ -1,0 +1,12 @@
+{
+  "pool_id": "每周窗口",
+  "window_id": "window-1",
+  "observed_at": 1788629748.7824476,
+  "reset_at": 1789233498.128781,
+  "source": "fixture",
+  "source_ref": "resource-workbench-unknown-sample",
+  "metric": "unknown",
+  "amount": null,
+  "limit": "100.000000",
+  "covered_usage_ids": []
+}

@@ -1,0 +1,171 @@
+{
+  "schema_version": "karajan.capacity.fixture.v1",
+  "pools": [
+    {
+      "id": "short",
+      "account_id": "shared-account",
+      "kind": "service",
+      "unit": "requests",
+      "window_kind": "fixed"
+    },
+    {
+      "id": "weekly",
+      "account_id": "shared-account",
+      "kind": "service",
+      "unit": "requests",
+      "window_kind": "fixed"
+    },
+    {
+      "id": "allowance",
+      "account_id": "shared-account",
+      "kind": "platform_allowance",
+      "unit": "requests",
+      "window_kind": "fixed"
+    }
+  ],
+  "profiles": [
+    {
+      "id": "fast-a",
+      "revision": 1,
+      "account_id": "shared-account",
+      "pool_ids": [
+        "short",
+        "weekly",
+        "allowance"
+      ]
+    },
+    {
+      "id": "fast-b",
+      "revision": 1,
+      "account_id": "shared-account",
+      "pool_ids": [
+        "short",
+        "weekly",
+        "allowance"
+      ]
+    }
+  ],
+  "observations": [
+    {
+      "adjustment_reason": null,
+      "amount": "20",
+      "coverage_ref": null,
+      "covered_usage_ids": [],
+      "limit": "20",
+      "metric": "remaining",
+      "observed_at": 1788629129.017416,
+      "pool_id": "short",
+      "reset_at": 1788629429.017416,
+      "source": "fixture",
+      "source_ref": "local-fixture-observer",
+      "window_id": "window-1"
+    },
+    {
+      "adjustment_reason": null,
+      "amount": "5",
+      "coverage_ref": null,
+      "covered_usage_ids": [],
+      "limit": "5",
+      "metric": "remaining",
+      "observed_at": 1788629129.017416,
+      "pool_id": "weekly",
+      "reset_at": 1788629429.017416,
+      "source": "fixture",
+      "source_ref": "local-fixture-observer",
+      "window_id": "window-1"
+    },
+    {
+      "adjustment_reason": null,
+      "amount": "20",
+      "coverage_ref": null,
+      "covered_usage_ids": [],
+      "limit": "20",
+      "metric": "remaining",
+      "observed_at": 1788629129.017416,
+      "pool_id": "allowance",
+      "reset_at": 1788629429.017416,
+      "source": "fixture",
+      "source_ref": "local-fixture-observer",
+      "window_id": "window-1"
+    }
+  ],
+  "policy": {
+    "account_id": "shared-account",
+    "conservative_mode": null,
+    "lead_reserve": {
+      "weekly": "2"
+    },
+    "lead_reserved_slots": 0,
+    "max_active_attempts": 4,
+    "max_attempt_duration_seconds": 60,
+    "observation_max_age_seconds": 30,
+    "require_official_observation": false,
+    "safety_margin": {}
+  },
+  "blocked_request": {
+    "attempt_id": "blocked",
+    "run_id": "run-a",
+    "profile_id": "fast-a",
+    "profile_revision": 1,
+    "role": "worker",
+    "purpose": null,
+    "authorization_ref": "fixture-approved-scope",
+    "rulebook_revision": "rules-run-a",
+    "duration_seconds": 30,
+    "demand": {
+      "short": "2",
+      "weekly": "100",
+      "allowance": "2"
+    }
+  },
+  "contenders": [
+    {
+      "attempt_id": "worker-a",
+      "run_id": "run-a",
+      "profile_id": "fast-a",
+      "profile_revision": 1,
+      "role": "worker",
+      "purpose": null,
+      "authorization_ref": "fixture-approved-scope",
+      "rulebook_revision": "rules-run-a",
+      "duration_seconds": 30,
+      "demand": {
+        "short": "2",
+        "weekly": "2",
+        "allowance": "2"
+      }
+    },
+    {
+      "attempt_id": "worker-b",
+      "run_id": "run-b",
+      "profile_id": "fast-b",
+      "profile_revision": 1,
+      "role": "worker",
+      "purpose": null,
+      "authorization_ref": "fixture-approved-scope",
+      "rulebook_revision": "rules-run-b",
+      "duration_seconds": 30,
+      "demand": {
+        "short": "2",
+        "weekly": "2",
+        "allowance": "2"
+      }
+    }
+  ],
+  "lead_request": {
+    "attempt_id": "lead",
+    "run_id": "run-a",
+    "profile_id": "fast-a",
+    "profile_revision": 1,
+    "role": "commander",
+    "purpose": "lead",
+    "authorization_ref": "fixture-approved-scope",
+    "rulebook_revision": "rules-run-a",
+    "duration_seconds": 30,
+    "demand": {
+      "short": "2",
+      "weekly": "2",
+      "allowance": "2"
+    }
+  }
+}

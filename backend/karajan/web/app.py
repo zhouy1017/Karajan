@@ -16,11 +16,13 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
+from karajan.capacity import CapacityStore
 from karajan.projects import ProjectRegistry
 from karajan.runs import RunPlanner
 
 from .body_limit import BodyLimitMiddleware
 from .projects import register_project_routes
+from .resources import register_resource_routes
 from .runs import register_run_routes
 
 
@@ -132,6 +134,7 @@ def create_app(
     projects = ProjectRegistry(state_directory / "projects.sqlite", allowed_roots)
     register_project_routes(app, projects)
     register_run_routes(app, RunPlanner(state_directory / "runs.sqlite", projects))
+    register_resource_routes(app, CapacityStore(state_directory / "capacity.sqlite"))
 
     @app.middleware("http")
     async def session_boundary(

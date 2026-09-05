@@ -1,0 +1,13 @@
+{
+  "initial_csrf": "old-fixture-session",
+  "replacement_csrf": "replacement-fixture-session",
+  "replacement_code": "replacement-code-canary",
+  "old_resource_response_status": 401,
+  "actions": [
+    "open resources and hold its HTTP response",
+    "log out",
+    "log in using a replacement fixture session",
+    "release old resource response",
+    "observe current page"
+  ]
+}

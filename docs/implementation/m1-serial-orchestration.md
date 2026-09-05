@@ -110,3 +110,5 @@ WSL 首跑没有跳过或改判为通过。增加实际 UTC 观察后，诊断�
 F01 固定绑定、F02 启动/停止、CandidateStore 质量门在上述离线范围内有实际集成证据；F03 资源、F04 原生权限/隔离、F05 真实来源、跨来源相同候选、远端 Delivery、全平台恢复与多 Worker 集成均未由本切片验收。后续接线必须使用对应权威接口与真实证据，不能补一个支持布尔值就放行。
 
 最终独立 Spec 和 Standards 窄复核均无未闭合发现。Spec 已在原始提前 Review 输入上观察到检查正常推进；Standards 另核对恢复失效状态、无效命令不破坏已通过 Run、合法入队继续检查三项回归。30 项源码和执行证据指纹均匹配当前冻结文件；原始输入和 XML/JSON 证据按字节保存。独立完整长测未重复，最终 Windows/WSL 完整结果来自上表已核验的执行记录。
+
+[PR #41](https://github.com/zhouy1017/Karajan/pull/41) 的提交 `b8aafa6b29a5dc9005e4264f27c3aff5f5d39724` 已通过 [PR CI](https://github.com/zhouy1017/Karajan/actions/runs/33980163997) 和 [push CI](https://github.com/zhouy1017/Karajan/actions/runs/33980224116)，包含 Windows、Linux、前端及必需汇总门。远端通过不改变上述产品集成与来源资格边界。

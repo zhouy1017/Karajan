@@ -1,0 +1,66 @@
+{
+  "schema_version": "karajan.resource-review.dot-segment.v1",
+  "account_id": "..",
+  "pools": [
+    {
+      "id": "short",
+      "account_id": "..",
+      "kind": "service",
+      "unit": "requests",
+      "window_kind": "fixed"
+    },
+    {
+      "id": "weekly",
+      "account_id": "..",
+      "kind": "service",
+      "unit": "requests",
+      "window_kind": "fixed"
+    },
+    {
+      "id": "allowance",
+      "account_id": "..",
+      "kind": "platform_allowance",
+      "unit": "requests",
+      "window_kind": "fixed"
+    }
+  ],
+  "profiles": [
+    {
+      "id": "fast-a",
+      "revision": 1,
+      "account_id": "..",
+      "pool_ids": [
+        "short",
+        "weekly",
+        "allowance"
+      ]
+    },
+    {
+      "id": "fast-b",
+      "revision": 1,
+      "account_id": "..",
+      "pool_ids": [
+        "short",
+        "weekly",
+        "allowance"
+      ]
+    }
+  ],
+  "initial_policy": {
+    "account_id": "..",
+    "conservative_mode": null,
+    "lead_reserve": {
+      "weekly": "2"
+    },
+    "lead_reserved_slots": 0,
+    "max_active_attempts": 4,
+    "max_attempt_duration_seconds": 60,
+    "observation_max_age_seconds": 30,
+    "require_official_observation": false,
+    "safety_margin": {}
+  },
+  "observation_registration": false,
+  "logical_action": "Save the existing policy for the registered opaque account ID",
+  "expected_revision": 1,
+  "original_ui_request_path": "/v1/resources/accounts/../policy"
+}

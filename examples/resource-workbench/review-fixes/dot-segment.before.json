@@ -1,0 +1,21 @@
+{
+  "schema_version": "karajan.resource-review.observation.v1",
+  "recorded_at": "2026-09-05T17:32:08.147201+00:00",
+  "provenance": "Transcribed from the Standards reviewers actual earlier tool output in this task; original source was not rerun after the fix.",
+  "original_source_line": "ResourcePanel.tsx:298 used /v1/resources/accounts/${encodeURIComponent(draft.account.id)}/policy",
+  "source_sha256": null,
+  "original_observation": {
+    "registered_account": "..",
+    "request_url": "http://127.0.0.1:8765/v1/resources/policy",
+    "status": 404,
+    "response": {
+      "detail": "Not Found"
+    }
+  },
+  "node_url_observation": {
+    "encodeURIComponent_dotdot": "..",
+    "normalized_pathname": "/v1/resources/policy"
+  },
+  "cash_api_calls": 0,
+  "real_model_calls": 0
+}

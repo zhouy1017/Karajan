@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ProjectRuns } from "./ProjectRuns";
+import { ResourcePanel } from "./ResourcePanel";
 
 type Project = {
   id: string;
@@ -28,6 +29,7 @@ export function App() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [showResources, setShowResources] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [repositoryPath, setRepositoryPath] = useState("");
@@ -109,6 +111,7 @@ export function App() {
       if (!response.ok && response.status !== 401)
         throw new Error("暂时无法退出，请重试。");
       setCsrf(null);
+      setShowResources(false);
       setProjects([]);
       setSelected(null);
       setRunProject(null);
@@ -300,16 +303,35 @@ export function App() {
           K<span>Karajan</span>
         </a>
         <p>让模型协作，让你掌舵。</p>
-        <div className="nav-item">
-          ◈ <span>项目工作台</span>
-        </div>
+        <nav className="workspace-navigation" aria-label="工作空间">
+          <button
+            type="button"
+            className="nav-item"
+            disabled={!csrf || busy}
+            aria-pressed={!showResources}
+            onClick={() => setShowResources(false)}
+          >
+            <span aria-hidden="true">◈</span>
+            <span>项目工作台</span>
+          </button>
+          <button
+            type="button"
+            className="nav-item"
+            disabled={!csrf || busy}
+            aria-pressed={showResources}
+            onClick={() => setShowResources(true)}
+          >
+            <span aria-hidden="true">◉</span>
+            <span>资源与配额</span>
+          </button>
+        </nav>
         <div className="local-mark">
           <i /> 本机 · 私人工作空间
         </div>
       </aside>
       <main>
         <header className="topbar">
-          <span>WORKSPACE / 项目</span>
+          <span>WORKSPACE / {showResources ? "资源" : "项目"}</span>
           {csrf ? (
             <button
               className="secondary"
@@ -347,6 +369,17 @@ export function App() {
               </button>
             </form>
           </section>
+        ) : showResources ? (
+          <ResourcePanel
+            csrf={csrf}
+            onSessionExpired={() => {
+              setCsrf(null);
+              setShowResources(false);
+              setProjects([]);
+              setSelected(null);
+              setRunProject(null);
+            }}
+          />
         ) : (
           <section className="project-space">
             <div className="section-heading">

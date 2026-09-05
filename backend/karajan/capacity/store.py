@@ -273,25 +273,58 @@ class CapacityStore:
             raise CapacityError("CAPACITY_INPUT_INVALID")
 
         def apply(db: sqlite3.Connection) -> dict[str, Any]:
-            current = db.execute(
-                "SELECT COALESCE(MAX(revision),0) FROM policies WHERE account_id=?",
-                (value["account_id"],),
-            ).fetchone()[0]
-            if current != expected_revision:
-                raise CapacityError("CAPACITY_POLICY_STALE")
-            if value["lead_reserved_slots"] > value["max_active_attempts"]:
-                raise CapacityError("CAPACITY_POLICY_INVALID")
-            for identity in set(value["safety_margin"]) | set(value["lead_reserve"]):
-                if self._pool(db, identity)["account_id"] != value["account_id"]:
-                    raise CapacityError("CAPACITY_POLICY_INVALID")
-            revision = current + 1
-            db.execute(
-                "INSERT INTO policies VALUES (?, ?, ?)",
-                (value["account_id"], revision, encoded(value)),
-            )
-            return {"revision": revision, "policy": value}
+            return self._activate_policy(db, value, expected_revision)
 
         return self._command("activate_policy", [value, expected_revision], command_key, apply)
+
+    def update_protection(
+        self, policy: dict[str, Any], *, expected_revision: int, command_key: str
+    ) -> dict[str, Any]:
+        """Change only Commander protection on an existing policy, with atomic replay and CAS."""
+        value = validate(Policy, policy)
+        if type(expected_revision) is not int or expected_revision < 1:
+            raise CapacityError("CAPACITY_INPUT_INVALID")
+
+        def apply(db: sqlite3.Connection) -> dict[str, Any]:
+            row = db.execute(
+                "SELECT revision,data FROM policies WHERE account_id=? "
+                "ORDER BY revision DESC LIMIT 1",
+                (value["account_id"],),
+            ).fetchone()
+            if row is None or row["revision"] != expected_revision:
+                raise CapacityError("CAPACITY_POLICY_STALE")
+            current = json.loads(row["data"])
+            editable = {"lead_reserve", "lead_reserved_slots"}
+            if any(value[key] != current[key] for key in value if key not in editable):
+                raise CapacityError("PROTECTION_UPDATE_ONLY")
+            return self._activate_policy(db, value, expected_revision)
+
+        return self._command("update_protection", [value, expected_revision], command_key, apply)
+
+    def _activate_policy(
+        self, db: sqlite3.Connection, value: dict[str, Any], expected_revision: int
+    ) -> dict[str, Any]:
+        current = db.execute(
+            "SELECT COALESCE(MAX(revision),0) FROM policies WHERE account_id=?",
+            (value["account_id"],),
+        ).fetchone()[0]
+        if current != expected_revision:
+            raise CapacityError("CAPACITY_POLICY_STALE")
+        if value["lead_reserved_slots"] > value["max_active_attempts"]:
+            raise CapacityError("CAPACITY_POLICY_INVALID")
+        for identity in set(value["safety_margin"]) | set(value["lead_reserve"]):
+            if self._pool(db, identity)["account_id"] != value["account_id"]:
+                raise CapacityError("CAPACITY_POLICY_INVALID")
+            observed = self._observation(db, identity)
+            if observed is not None and observed["limit"] is not None:
+                if units(value["lead_reserve"].get(identity, "0")) > units(observed["limit"]):
+                    raise CapacityError("PROTECTION_EXCEEDS_POOL_LIMIT")
+        revision = current + 1
+        db.execute(
+            "INSERT INTO policies VALUES (?, ?, ?)",
+            (value["account_id"], revision, encoded(value)),
+        )
+        return {"revision": revision, "policy": value}
 
     def admit(self, request: dict[str, Any], *, command_key: str) -> dict[str, Any]:
         value = validate(AdmissionRequest, request)
@@ -694,7 +727,7 @@ class CapacityStore:
         self,
         db: sqlite3.Connection,
         pool: dict[str, Any],
-        observed: dict[str, Any],
+        observed: dict[str, Any] | None,
         failures: list[dict[str, Any]],
     ) -> bool:
         numeric = [
@@ -719,7 +752,8 @@ class CapacityStore:
                     return True
         if latest is not None and remaining is not None and remaining <= 0:
             reset_proved = (
-                pool["window_kind"] == "fixed"
+                observed is not None
+                and pool["window_kind"] == "fixed"
                 and observed["window_id"] != latest["window_id"]
                 and latest["reset_at"] is not None
                 and observed["observed_at"] >= latest["reset_at"]
@@ -811,6 +845,158 @@ class CapacityStore:
             if units(request["demand"][pool_id]) > quantity:
                 reasons.append("QUOTA_INSUFFICIENT:" + pool_id)
         return reasons, observations, available
+
+    def resource_view(self) -> dict[str, Any]:
+        """One read snapshot for owners; never reserves, expires, or activates an Attempt."""
+        with self._transaction() as db:
+            now = self._now()
+            pools = [json.loads(row[0]) for row in db.execute("SELECT data FROM pools ORDER BY id")]
+            policies: dict[str, Any] = {}
+            for row in db.execute(
+                "SELECT account_id,revision,data FROM policies ORDER BY revision"
+            ):
+                policies[row[0]] = {"revision": row[1], "policy": json.loads(row[2])}
+            accounts = []
+            for identity in sorted(set(policies) | {p["account_id"] for p in pools}):
+                current = policies.get(identity)
+                policy = current["policy"] if current else None
+                held = [
+                    json.loads(row[0])
+                    for row in db.execute(
+                        "SELECT data FROM reservations WHERE account_id=?", (identity,)
+                    )
+                ]
+                held = [
+                    item
+                    for item in held
+                    if item["state"] in ("active", "unknown")
+                    or (item["state"] == "reserved" and item["expires_at"] > now)
+                ]
+                failures = [
+                    json.loads(row[0])
+                    for row in db.execute(
+                        "SELECT data FROM failures WHERE account_id=?", (identity,)
+                    )
+                ]
+                items = [
+                    self._pool_view(db, pool, policy, held, now, failures)
+                    for pool in pools
+                    if pool["account_id"] == identity
+                ]
+                blockers = []
+                cooling = [failure["until"] for failure in failures if failure["until"] > now]
+                if cooling:
+                    blockers.append({"reason_code": "ACCOUNT_COOLDOWN", "until": max(cooling)})
+                exhausted = not any(
+                    pool["account_id"] == identity and pool["kind"] == "service" for pool in pools
+                ) and any(f["failure"]["reason"] == "QUOTA_EXHAUSTED" for f in failures)
+                for pool in pools:
+                    if pool["account_id"] == identity:
+                        observed = self._observation(db, pool["id"])
+                        exhausted |= self._exhausted(db, pool, observed, failures)
+                if exhausted:
+                    blockers.append(
+                        {"reason_code": "EXHAUSTION_REQUIRES_NEW_OBSERVATION", "until": None}
+                    )
+                accounts.append(
+                    {
+                        "id": identity,
+                        "policy_revision": current["revision"] if current else None,
+                        "policy": policy,
+                        "active_attempts": len(held),
+                        "waiting_reconciliation": sum(item["state"] == "unknown" for item in held),
+                        "pools": items,
+                        "blockers": blockers,
+                    }
+                )
+            return {
+                "schema_version": "karajan.resources.view.v1",
+                "observed_at": now,
+                "accounts": accounts,
+                "live_qualification": "not_run",
+                "activation_allowed": False,
+            }
+
+    def _pool_view(
+        self,
+        db: sqlite3.Connection,
+        pool: dict[str, Any],
+        policy: dict[str, Any] | None,
+        held: list[dict[str, Any]],
+        now: float,
+        failures: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        observed = self._observation(db, pool["id"])
+        row = db.execute(
+            "SELECT received_at FROM observations WHERE pool_id=? AND applied=1 "
+            "ORDER BY sequence DESC LIMIT 1",
+            (pool["id"],),
+        ).fetchone()
+        remaining = self._numeric_remaining(observed) if observed is not None else None
+        status = "unconfigured" if policy is None or observed is None else "observed"
+        if observed is not None and policy is not None:
+            if (
+                observed["observed_at"] > now
+                or now - observed["observed_at"] > policy["observation_max_age_seconds"]
+                or (observed["reset_at"] is not None and observed["reset_at"] <= now)
+            ):
+                status = "stale"
+            elif remaining is None or (
+                pool["kind"] == "service"
+                and policy["require_official_observation"]
+                and observed["source"] != "official"
+            ):
+                status = "unknown"
+            elif pool["kind"] == "service" and any(
+                failure["failure"]["reason"] == "QUOTA_EXHAUSTED"
+                and failure["at"] >= observed["observed_at"]
+                for failure in failures
+            ):
+                status = "unknown"
+        uncovered, future = self._pool_usage(
+            db,
+            pool["id"],
+            observed or {"covered_usage_ids": [], "window_id": None, "observed_at": float("-inf")},
+            held,
+        )
+        safety = policy["safety_margin"].get(pool["id"], "0") if policy else "0"
+        reserve = policy["lead_reserve"].get(pool["id"], "0") if policy else "0"
+        available = (
+            remaining - uncovered - future - units(safety)
+            if remaining is not None and status == "observed"
+            else None
+        )
+        coverage = observed["covered_usage_ids"] if observed else []
+        return {
+            "id": pool["id"],
+            "kind": pool["kind"],
+            "unit": pool["unit"],
+            "window_kind": pool["window_kind"],
+            "window_id": observed["window_id"] if observed else None,
+            "reported_remaining": money(remaining) if remaining is not None else None,
+            "reported_limit": money(units(observed["limit"]))
+            if observed is not None and observed["limit"] is not None
+            else None,
+            "local_uncovered": money(uncovered),
+            "future_reserved": money(future),
+            "safety_margin": safety,
+            "lead_reserve": reserve,
+            "available_for_worker": money(available - units(reserve))
+            if available is not None
+            else None,
+            "available_for_lead": money(available) if available is not None else None,
+            "source": observed["source"] if observed else None,
+            "observed_at": observed["observed_at"] if observed else None,
+            "received_at": row[0] if row else None,
+            "reset_at": observed["reset_at"] if observed else None,
+            "status": status,
+            "coverage_status": "uncertain"
+            if uncovered
+            else "explicit_coverage"
+            if coverage
+            else "no_local_usage",
+            "covered_usage_count": len(coverage),
+        }
 
     def snapshot(self) -> dict[str, Any]:
         with self._transaction() as db:

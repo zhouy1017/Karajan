@@ -1,0 +1,82 @@
+{
+  "schema_version": "karajan.resource-workbench.freeze.v1",
+  "recorded_at": "2026-09-05T17:42:27.259837+00:00",
+  "base_commit": "b8aafa6b29a5dc9005e4264f27c3aff5f5d39724",
+  "branch": "codex/m3-resource-workbench",
+  "python": "3.12.14",
+  "source_sha256": {
+    "backend/karajan/capacity/store.py": "ecce38cfeb1a5ca9e878934266d2e3e37d72831375c1e20a445fb539df97be01",
+    "backend/karajan/web/app.py": "2ae7b74d2dc2e58061e7246c0428cdbcdcfef70c10e34fa0becf158d49701f41",
+    "backend/karajan/web/resources.py": "51d88e3c686b67d804c0cd7faffb8439263f5100f968997c659f9d0564af21e0",
+    "frontend/src/App.tsx": "b1baf3d0cf14e317c5d0fa2f53a41daa6ef002c0ce288b9eebfe3881a5eb6975",
+    "frontend/src/App.test.tsx": "581714c8dfb0ac4d63f61e2b8e82bd1712ce281200074fd61b6dcce988e94e93",
+    "frontend/src/styles.css": "9afd713d319776b263e2c89be6b9367d8bcf884e75d7c87c0f0fe9588281c456",
+    "frontend/src/ResourcePanel.tsx": "c1a05e1f496e09455f51ba3f211354d381c678e6234ae1354b7e2f85bf39375b",
+    "frontend/src/ResourcePanel.test.tsx": "acc490f2be2b2adb225e42ac99b1d616933db29530c838b05ed076e4fc0083f6",
+    "frontend/src/ResourcePanel.css": "bc8a378af4d0b58ec4fd2c12aefbd1c80f115aeea1115fdb7bab87fa909fb678",
+    "tests/capacity/test_resource_view.py": "c60ae06c161683d86d82af1e0a50fa6d438f94c593d49182f8934d3e42575a25",
+    "tests/web/test_resources_http.py": "99a91a4f3088e2a7596f2e279ade8d8a0605249a09859e2a6b23c1a0b39e03a1"
+  },
+  "evidence_sha256": {
+    "examples/resource-workbench/browser-after.json": "0c3192af5b6ca7bc30962f1cc6b28d8890e4c92b822ab6c0bd0170e8acc5d3ce",
+    "examples/resource-workbench/browser-before.json": "2ddb7fc726710de7bd1825a4df8ba45488406ada280e449ccd73f97879496490",
+    "examples/resource-workbench/browser-unknown.input.json": "a08e9f12f46c9956b66e7bb94c8daf6b62a6a6df51da3662d93a96c8e45d8583",
+    "examples/resource-workbench/browser-unknown.json": "f49c7bbdeffa4e42ff157a3eaef58f0cf00332c66e8e2b769bc60e96c1f17743",
+    "examples/resource-workbench/review-fixes/dot-segment.after.json": "5bd6c63d8a68a3ad0ea97fbcdf3447d9707569304f0516c7999daf08d1c64286",
+    "examples/resource-workbench/review-fixes/dot-segment.before.json": "bdcb77b57916fb00df91da0315131118c2c10d5eb612b8e0e771082be1f53378",
+    "examples/resource-workbench/review-fixes/dot-segment.input.json": "ef53e55d05dc40062ef3945dc39599b014d965b96e3a6deed208204a14ba4337",
+    "examples/resource-workbench/review-fixes/spec-exhaustion.after.json": "9f8ce7551529144825aba696a6044801198efec829f681ff6782bc6ef1326a5b",
+    "examples/resource-workbench/review-fixes/spec-exhaustion.before.json": "4bce56414990b9d20df16159c4ee673cc371b591e3c653ae211801e2b01b08b3",
+    "examples/resource-workbench/review-fixes/spec-exhaustion.input.json": "6a9116a1bd8facca36afec316fbc50e40058ec3fcbe7cb983ee94f253e67c770",
+    "examples/resource-workbench/review-fixes/spec-limit.after.json": "44df682dd41374112c03233293770b25e32bf885d22196eb6eb60c4351ee1ac7",
+    "examples/resource-workbench/review-fixes/spec-limit.before.json": "398fcb16923d47231e734b318df72a126f8b6bb4c510ed592ad423bac248211f",
+    "examples/resource-workbench/review-fixes/spec-limit.input.json": "4e4c452f6f1b4a0c2af051967f99fdb6062a3fa8f5938b602ba2344da689ddb1",
+    "examples/resource-workbench/review-fixes/spec-README.md": "ab412ce7f1a782c60ca5b288267608ba1250191a73ae4a80f49e0f1534cbc8b9",
+    "examples/resource-workbench/review-fixes/spec-review-index.json": "9e97dbec3185a9f514f17eb680589f2251251efae797f251f57664326239bcf4",
+    "examples/resource-workbench/review-fixes/spec-session.after.json": "7d8440572676d37e077299f03d3783ff75a5f338b471b2022254896f8d807cff",
+    "examples/resource-workbench/review-fixes/spec-session.after.vitest.json": "5ede391af4bbb0c2fb73258cb3403fe922aeecc1be0a030619585a00602b749c",
+    "examples/resource-workbench/review-fixes/spec-session.before.json": "ae3118f8624490220411a34499151f8598b98e472f59599d3c762594ee5fec71",
+    "examples/resource-workbench/review-fixes/spec-session.input.json": "1d40e5fbf67fa52839131642d2b724ea3bc43419c833ccfbec97d8f295e5a984",
+    "examples/resource-workbench/review-fixes/spec-session.test.ts": "d724e0c366195c8b24cf08aa3d872a3f2000b36d45b31b6c1e8a9db0a339ee23",
+    "examples/resource-workbench/review-fixes/spec-source.before.json": "0cc05e0ccd0990e3cc6cc83f14b9e87d9bb01efcf3018d0e4381634d6a033bdf",
+    "examples/resource-workbench/review-fixes/spec_replay.py": "96e32a3788aec0b0bb0ff8bc6de46d05ee53fbd69add86dd8b1c42c40bd60697",
+    "examples/resource-workbench/windows.junit.xml": "f656ab3cf5d0a55bbdecb2d9535d438adcf2d1cc90144fe5484f72bd05179a9e"
+  },
+  "verification": {
+    "windows_capacity_and_web": {
+      "passed": 79,
+      "duration_seconds": 6.12,
+      "junit": "examples/resource-workbench/windows.junit.xml"
+    },
+    "frontend_all": {
+      "passed": 48,
+      "duration_seconds": 7.48,
+      "resource_panel_cases": 30
+    },
+    "ruff": "passed",
+    "strict_mypy": {
+      "status": "passed",
+      "source_files": 78
+    },
+    "frontend_types_format_build": "passed",
+    "standards_review": "passed_no_open_findings",
+    "spec_review": "passed_no_open_findings"
+  },
+  "browser": {
+    "url": "http://127.0.0.1:8765/",
+    "account": "离线样例账户",
+    "weekly_protection_before": "2",
+    "weekly_protection_after": "1",
+    "policy_revision_before": 1,
+    "policy_revision_after": 2,
+    "reload_preserves_saved_value": true,
+    "reservation_usage_observation_digest_unchanged": true,
+    "unknown_refresh_suppresses_exact_availability": true,
+    "viewport_width": 554
+  },
+  "model_calls": 0,
+  "cash_api_calls": 0,
+  "live_qualification": "not_run",
+  "activation_allowed": false,
+  "github_ci": "pending_actual_commit"
+}

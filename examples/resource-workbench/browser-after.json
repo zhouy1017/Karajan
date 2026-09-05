@@ -1,0 +1,102 @@
+{
+  "phase": "after-browser-save-and-reload",
+  "view": {
+    "schema_version": "karajan.resources.view.v1",
+    "observed_at": 1788629748.777447,
+    "accounts": [
+      {
+        "id": "离线样例账户",
+        "policy_revision": 2,
+        "policy": {
+          "account_id": "离线样例账户",
+          "conservative_mode": null,
+          "lead_reserve": {
+            "每周窗口": "1"
+          },
+          "lead_reserved_slots": 0,
+          "max_active_attempts": 4,
+          "max_attempt_duration_seconds": 60,
+          "observation_max_age_seconds": 3600,
+          "require_official_observation": false,
+          "safety_margin": {}
+        },
+        "active_attempts": 1,
+        "waiting_reconciliation": 1,
+        "pools": [
+          {
+            "id": "平台分配",
+            "kind": "platform_allowance",
+            "unit": "requests",
+            "window_kind": "fixed",
+            "window_id": "window-1",
+            "reported_remaining": "20.000000",
+            "reported_limit": "100.000000",
+            "local_uncovered": "1.000000",
+            "future_reserved": "2.000000",
+            "safety_margin": "0",
+            "lead_reserve": "0",
+            "available_for_worker": "17.000000",
+            "available_for_lead": "17.000000",
+            "source": "fixture",
+            "observed_at": 1788628693.128781,
+            "received_at": 1788628698.1337824,
+            "reset_at": 1789233498.128781,
+            "status": "observed",
+            "coverage_status": "uncertain",
+            "covered_usage_count": 0
+          },
+          {
+            "id": "每周窗口",
+            "kind": "service",
+            "unit": "requests",
+            "window_kind": "fixed",
+            "window_id": "window-1",
+            "reported_remaining": "5.000000",
+            "reported_limit": "100.000000",
+            "local_uncovered": "1.000000",
+            "future_reserved": "2.000000",
+            "safety_margin": "0",
+            "lead_reserve": "1",
+            "available_for_worker": "1.000000",
+            "available_for_lead": "2.000000",
+            "source": "fixture",
+            "observed_at": 1788628693.128781,
+            "received_at": 1788628698.1317816,
+            "reset_at": 1789233498.128781,
+            "status": "observed",
+            "coverage_status": "uncertain",
+            "covered_usage_count": 0
+          },
+          {
+            "id": "短期窗口",
+            "kind": "service",
+            "unit": "requests",
+            "window_kind": "fixed",
+            "window_id": "window-1",
+            "reported_remaining": "20.000000",
+            "reported_limit": "100.000000",
+            "local_uncovered": "1.000000",
+            "future_reserved": "2.000000",
+            "safety_margin": "0",
+            "lead_reserve": "0",
+            "available_for_worker": "17.000000",
+            "available_for_lead": "17.000000",
+            "source": "fixture",
+            "observed_at": 1788628693.128781,
+            "received_at": 1788628698.1297832,
+            "reset_at": 1788635898.128781,
+            "status": "observed",
+            "coverage_status": "uncertain",
+            "covered_usage_count": 0
+          }
+        ],
+        "blockers": []
+      }
+    ],
+    "live_qualification": "not_run",
+    "activation_allowed": false
+  },
+  "protected_facts_sha256": "2e02b36bebcf1fc0bc5c5a4c5b6e4f508e904c3c586a7f2172b908923d0ee0d0",
+  "reservation_count": 2,
+  "usage_count": 1
+}
