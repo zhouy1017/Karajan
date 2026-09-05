@@ -1,0 +1,6 @@
+{
+  "first_pr": "fixture-pr-1",
+  "second_pr": "foreign-replacement-pr",
+  "second_state": "delivered",
+  "second_completed": true
+}

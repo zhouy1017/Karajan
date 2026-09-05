@@ -39,14 +39,16 @@ M1-01 切片通过 73 项项目领域测试、17 项 Web 测试、4 项前端交
 
 M0-05/06 的固定 OpenCode 运行时与隔离探针在 [PR #33](https://github.com/zhouy1017/Karajan/pull/33) 的 `722c1a7` 通过双系统 [CI](https://github.com/zhouy1017/Karajan/actions/runs/33969441411)。托管 Linux 无 user namespace 权限时记录 unsupported；本机 WSL2 的真实隔离/终止测试另有记录，不能把跳过当作能力通过。真实来源资格仍为 not_run。
 
-后续需求/候选切片已取得本地证据：[Run 计划领域](m1-run-planning.md) 的 49 项公共行为测试；[候选验证](m1-candidate-validation.md) 的 Windows 72 passed/3 POSIX-only skipped 与真实 WSL2/ext4 75 passed；[需求与计划页面](m1-run-workbench.md) 的认证 HTTP 和真实浏览器批准/人工交接。这些分别覆盖 FR03/04/12 的计划协议、FR14 的候选质量门和 FR17 的快照入口，不代表真实规划、执行调度、资源准入、完整事件视图或交付已经集成。尚未提交的记录不冒称远端 CI。
+需求/候选切片已取得本地证据：[Run 计划领域](m1-run-planning.md) 的 49 项公共行为测试；[候选验证](m1-candidate-validation.md) 的 Windows 72 passed/3 POSIX-only skipped 与真实 WSL2/ext4 75 passed；[需求与计划页面](m1-run-workbench.md) 的认证 HTTP、17 项前端测试和真实浏览器批准/人工交接。[PR #35](https://github.com/zhouy1017/Karajan/pull/35) 的 `370eefb573a3d92fc0095509da2d10a0559099c1` 已通过双系统后端与前端 [CI](https://github.com/zhouy1017/Karajan/actions/runs/33971900785)。这些分别覆盖 FR03/04/12 的计划协议、FR14 的候选质量门和 FR17 的快照入口，不代表真实规划、执行调度、资源准入、完整事件视图或交付已经集成。
+
+[Claude 固定协议回放](m2-claude-boundary.md) 的 59 项公共测试通过；[PR #36](https://github.com/zhouy1017/Karajan/pull/36) 的 `65d9060a39f555e17078bc8c208453cc9bb19b69` 已通过 [CI](https://github.com/zhouy1017/Karajan/actions/runs/33972318555)。原生权限、协议身份和 usage 观察的离线行为已覆盖，实际 Claude 订阅调用与来源资格保持 not_run。
 
 | ID | 完成必须有的证据 | 候选责任票与验收关联 | 当前状态 |
 |---|---|---|---|
 | FR01 | U+C：有效项目解析到可信 repo/base/目标分支；越界路径、未知 base 拒绝且无模型调用/仓库修改；原工作区保持原样 | M1-01、M1-05；AC01，A01、A16 | 实现中；登记/API 子集 passed，完整变体 not_run |
 | FR02 | C+S+P：五来源分别有 Profile 目录、真实资格和可启用角色；空模型、未知必需能力、参数被忽略不启用；同名模型不同通道身份分开 | M0-07、M2-02–M2-06、M4-03；A02、A12、A13 | 未实现 / not_run |
-| FR03 | U+C+S：真实规划与顾问计入规划预算，未确认无代码写入；T0 留规划；只有当前主 term 可提交有效计划 | M1-02、M3-05；AC02 | 未实现 / not_run |
-| FR04 | U+C：批准记录绑定具体 plan/authorization hash、任务图/来源/预算/检查/PR 权限；旧版本拒绝；范围内正常运行不重复批准 | M1-01、M1-02、M3-01；A11 | 未实现 / not_run |
+| FR03 | U+C+S：真实规划与顾问计入规划预算，未确认无代码写入；T0 留规划；只有当前主 term 可提交有效计划 | M1-02、M3-05；AC02 | 实现中；计划协议子集 passed，真实规划和资源接线 not_run |
+| FR04 | U+C：批准记录绑定具体 plan/authorization hash、任务图/来源/预算/检查/PR 权限；旧版本拒绝；范围内正常运行不重复批准 | M1-01、M1-02、M3-01；A11 | 实现中；版本化批准及 Web 子集 passed，调度集成 not_run |
 | FR05 | U+C：v2 成员显式复用 A、替换 B，输入变化传递失效；旧 B 迟到不能满足新计划，其进程/消费仍核对 | M1-05、M2-01；A22 | 未实现 / not_run |
 | FR06 | C+U：硬资格/风险下限先于排序；T0/歧义/缺规则阻塞，T3 不降级；同快照模拟确定且零预留/调用/费用；发布不扩旧授权 | M1-01、M3-01、M3-04；AC03，A08、A11 | 未实现 / not_run |
 | FR07 | C+S：同 Run 的不同角色跨来源执行，每 Attempt 绑定 Profile/规则/授权；接受配置及 fallback 不符可见且停止 | M1-02、M1-03、M2-01–M2-06；A02、A12 | 未实现 / not_run |
@@ -54,12 +56,12 @@ M0-05/06 的固定 OpenCode 运行时与隔离探针在 [PR #33](https://github.
 | FR09 | C+U+S：服务额度/本地预算/在途/未核对/置信分别显示；外部/延迟/重复报告和重置正确；unknown 仅在明确有限模式准入，真实不可见字段仍未知 | M1-01、M1-06、M2-02–M2-06、M3-02；A05、A06 | 未实现 / not_run |
 | FR10 | C+S：原币上限逐项约束，实际请求全部经过受控出口；价格/隐藏收费缺口阻塞；父子不双算，未知发送不释放；不透明订阅只报告覆盖范围 | M0-03、M0-07、M1-01–M1-03、M3-03；A18、A19、A26 | 未实现 / not_run |
 | FR11 | C+P+S：合格批准集合内换源新 Attempt，保留难度/风险/消费；原执行停止或实际隔离后才替代；无合格者等待，Commander 无自动替任 | M3-04；A07、A08、A10 | 未实现 / not_run |
-| FR12 | U+C+S：提案显示检查点、候选和费用影响；不答复/拒绝不启动，当前提案确认只激活指定新 term，迟到确认拒绝；独立已批任务继续 | M1-02、M3-05、M4-01；AC04 | 未实现 / not_run |
+| FR12 | U+C+S：提案显示检查点、候选和费用影响；不答复/拒绝不启动，当前提案确认只激活指定新 term，迟到确认拒绝；独立已批任务继续 | M1-02、M3-05、M4-01；AC04 | 实现中；人工交接协议及 Web 子集 passed，资源和执行集成 not_run |
 | FR13 | C+P+S：真实 2–3 子任务独立目录、默认最多 2 writer；依赖输入完整、固定顺序集成，越界/冲突显式处理；组合候选重新验证 | M1-03、M2-01；A01、A13、A16 | 未实现 / not_run |
-| FR14 | C+P+S：可信必需检查与独立 Review 绑定最终候选；T3 不同家族；失败/不确定/缺日志不交付；同批失败一轮，Run/根链次数不重置 | M1-03、M3-04；A15、A16、A24 | 未实现 / not_run |
+| FR14 | C+P+S：可信必需检查与独立 Review 绑定最终候选；T3 不同家族；失败/不确定/缺日志不交付；同批失败一轮，Run/根链次数不重置 | M1-03、M3-04；A15、A16、A24 | 实现中；固定候选/检查/Review 门子集 passed，真实 Review 与修复集成 not_run |
 | FR15 | U+C+P：暂停/取消语义分开；实际子进程/远端推理停止范围可核对；unknown 不当停止；迟到产物无效但消费仍计 | M1-03、M1-06、M4-01；A09、A10 | 未实现 / not_run |
 | FR16 | C+P+S：原生请求绑定当前 Attempt/fence/turn/授权；原范围程序裁决、扩权走具体新授权；取消后迟到批准不授 session 权限 | M0-04、M0-06、M1-03、M2-02–M2-06、M4-01；A23 | 未实现 / not_run |
-| FR17 | U+C：任务/Attempt/路由/阻塞/候选/证据/资源视图对应持久事实；快照到事件无缺口，过期操作拒绝，unknown 不伪精确 | M1-06、M3-02、M3-03、M3-05；AC05，A20 | 未实现 / not_run |
+| FR17 | U+C：任务/Attempt/路由/阻塞/候选/证据/资源视图对应持久事实；快照到事件无缺口，过期操作拒绝，unknown 不伪精确 | M1-06、M3-02、M3-03、M3-05；AC05，A20 | 实现中；需求/计划快照入口 passed，统一视图与 SSE not_run |
 | FR18 | C+P：实际正常重启先核对业务或物理未完成对象；历史恢复新 epoch/冻结，旧 outbox 不重放，核对后由用户决定 | M1-06、M4-01、M4-02；A09、A21 | 未实现 / not_run |
 | FR19 | C+P+G：唯一交付身份和每步 activation；实际条件更新、响应丢失核对、跨 revision 互斥；同一 Run 同一 PR，无外部 head 覆盖 | M1-04、M4-03；A14、A17 | 未实现 / not_run |
 | FR20 | U+C+G：默认完成与预设 CI gate 两种 Run 分别验证，PR/CI/merge 独立显示；全部证据绑定当前内容且无自动 merge | M1-04、M4-03；AC06，A01 | 未实现 / not_run |

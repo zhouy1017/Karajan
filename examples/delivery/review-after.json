@@ -1,0 +1,31 @@
+{
+  "replacement": {
+    "state": "blocked",
+    "reason": "PR_IDENTITY_CONFLICT",
+    "operations": 1
+  },
+  "empty": {
+    "state": "blocked",
+    "reason": "PR_IDENTITY_CONFLICT",
+    "operations": 1
+  },
+  "head": {
+    "state": "blocked",
+    "reason": "REMOTE_HEAD_CHANGED",
+    "actual": {
+      "repository_id": "fixture-repo",
+      "head_sha": "321b03e43e1113a95b4aa14bb34c456900f60bc3",
+      "base_sha": "321b03e43e1113a95b4aa14bb34c456900f60bc3"
+    }
+  },
+  "base": {
+    "state": "blocked",
+    "reason": "TESTED_BASE_CHANGED",
+    "actual": {
+      "repository_id": "fixture-repo",
+      "head_sha": "40946752825158b719f07b0cf02901952cb4b7a1",
+      "base_sha": "40946752825158b719f07b0cf02901952cb4b7a1"
+    }
+  },
+  "conflicting_old_db": "PR_IDENTITY_CONFLICT"
+}

@@ -16,6 +16,8 @@ PRD、8 个 M0 Issues、20 个 M1–M4 实现任务和独立 CI 任务已发布�
 
 [启动说明与实际验证](docs/implementation/m1-local-workbench.md) 包含依赖安装、构建和本机运行方式。服务启动后使用本地文件中的一次性访问码登录；项目状态、配置预览和版本化保存使用实际 SQLite。[需求与计划页面](docs/implementation/m1-run-workbench.md) 可保存需求、审阅并确认既有计划、决定指定 Commander 交接。当前尚不能从页面派发真实模型任务。
 
+[交付协调协议](docs/implementation/m1-delivery.md) 已提供本地可运行验证：固定候选推送、同一 PR 身份恢复、当前提交 CI 与暂停/取消。示例使用本地 Git 和明确的 PR 替身，生产交付仍等待当前候选权威、真实凭据与执行资格接线。
+
 ## 完整架构设计
 
 从 [Karajan 完整架构设计 v1](docs/architecture/README.md) 开始阅读。它是当前设计入口，覆盖：
