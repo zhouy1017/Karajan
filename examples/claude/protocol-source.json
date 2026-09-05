@@ -1,0 +1,47 @@
+{
+  "schema_version": "karajan.claude-protocol-source.v1",
+  "observed_at": "2026-09-05",
+  "runtime_version": "2.1.260",
+  "runtime_distribution": "@anthropic-ai/claude-code",
+  "host_os": "windows",
+  "binary_sha256": "ab5fe6cb800a9faf3df1cc0f6bcb71f097296b302a16b576ca906446a22fea71",
+  "commands": [
+    {
+      "arguments": [
+        "--version"
+      ],
+      "exit_code": 0,
+      "stdout_file": "version.txt",
+      "stdout_sha256": "4df158110a453b91291bf2bf546195fb7b83054363d3cb29e95acca043a2e2ba",
+      "stderr_empty": true
+    },
+    {
+      "arguments": [
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout_file": "help.txt",
+      "stdout_sha256": "95a31820dc2a7b1adbd197346baa89a62cddd14b984079e1fc2ad56d11a97b20",
+      "stderr_empty": true
+    }
+  ],
+  "metadata_only": true,
+  "model_invocations": 0,
+  "authentication_files_read": false,
+  "isolated_temporary_home": true,
+  "native_stream_schema_generated": false,
+  "wire_reference": {
+    "url": "https://raw.githubusercontent.com/anthropics/claude-agent-sdk-python/b1b838b1c5730a7a0b270915a79b15861a8ca716/src/claude_agent_sdk/_internal/message_parser.py",
+    "commit": "b1b838b1c5730a7a0b270915a79b15861a8ca716",
+    "sha256": "febb1aee19e47e03433d89cd4b1f8c5636950e206df77e4f4ca2738b0c900393",
+    "bytes": 16797,
+    "scope": "official SDK parser reference, not installed CLI schema certification"
+  },
+  "sources": [
+    "https://code.claude.com/docs/en/headless",
+    "https://code.claude.com/docs/en/authentication",
+    "https://code.claude.com/docs/en/agent-sdk/cost-tracking",
+    "https://code.claude.com/docs/en/agent-sdk/streaming-output",
+    "https://support.claude.com/en/articles/15036540-use-the-claude-agent-sdk-with-your-claude-plan"
+  ]
+}
