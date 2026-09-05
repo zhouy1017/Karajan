@@ -1,0 +1,14 @@
+{
+  "schema_version": "karajan.isolation.probe.v1",
+  "case_id": "wsl2-local-python-isolation",
+  "binding": {
+    "attempt_id": "isolation-canary-1",
+    "fence": 1,
+    "profile_id": "python-isolation-canary",
+    "profile_revision": 1,
+    "profile_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "runtime_kind": "python-canary",
+    "runtime_version": "3.12.3",
+    "execution_path": "unshare-chroot-v1"
+  }
+}

@@ -1,0 +1,268 @@
+{
+  "schema_version": "karajan.isolation.report.v1",
+  "status": "passed",
+  "reason_codes": [],
+  "case_id": "wsl2-local-python-isolation",
+  "binding": {
+    "attempt_id": "isolation-canary-1",
+    "fence": 1,
+    "profile_id": "python-isolation-canary",
+    "profile_revision": 1,
+    "profile_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "runtime_kind": "python-canary",
+    "runtime_version": "3.12.3",
+    "execution_path": "unshare-chroot-v1"
+  },
+  "input_digest": "c7db6e687e499c6d8578a1223a5f66b5882dfdf6a3754ac0ba0a6489d325552a",
+  "observed_at": "2026-09-05T13:12:37.680859+00:00",
+  "host_os": "linux",
+  "qualification_scope": "fixed_python_canary",
+  "dispatch_eligible": false,
+  "runtime_tools_status": "not_run",
+  "checks": [
+    {
+      "id": "workspace_read_write",
+      "status": "passed",
+      "enforcement": "os_enforced",
+      "evidence": {
+        "observation": {
+          "allowed_read": true,
+          "allowed_write": true,
+          "protected_reads": {
+            "platform": false,
+            "git_credentials": false,
+            "other_attempt": false,
+            "broker_admin": false,
+            "subscription_auth": false
+          },
+          "protected_writes": {
+            "platform": false,
+            "git_credentials": false,
+            "other_attempt": false,
+            "broker_admin": false,
+            "subscription_auth": false
+          },
+          "escapes": {
+            "symlink": false,
+            "host_proc": false
+          },
+          "environment_leaked": false,
+          "inherited_fd_leaked": false,
+          "capabilities": {
+            "CapInh": "0000000000000000",
+            "CapPrm": "0000000000000000",
+            "CapEff": "0000000000000000",
+            "CapBnd": "0000000000000000",
+            "CapAmb": "0000000000000000"
+          },
+          "no_new_privs": "1",
+          "readonly_write": false,
+          "network_reachable": {
+            "/control": false,
+            "/broker-admin": false,
+            "/provider": false,
+            "/delivery": false
+          },
+          "git_read_usable": true,
+          "git_push_exit": 128,
+          "interop_executed": false,
+          "chroot_succeeded": false,
+          "mount_succeeded": false,
+          "runtime_version": "3.12.3",
+          "runtime_executable": "/usr/bin/python3",
+          "kernel_release": "6.18.33.2-microsoft-standard-WSL2"
+        }
+      }
+    },
+    {
+      "id": "protected_files",
+      "status": "passed",
+      "enforcement": "os_enforced",
+      "evidence": {
+        "baseline_all_readable": true,
+        "outside_unchanged": true,
+        "reads": {
+          "platform": false,
+          "git_credentials": false,
+          "other_attempt": false,
+          "broker_admin": false,
+          "subscription_auth": false
+        },
+        "writes": {
+          "platform": false,
+          "git_credentials": false,
+          "other_attempt": false,
+          "broker_admin": false,
+          "subscription_auth": false
+        }
+      }
+    },
+    {
+      "id": "symlink_escape",
+      "status": "passed",
+      "enforcement": "os_enforced",
+      "evidence": {
+        "baseline_accessible": true,
+        "sandbox_accessible": false
+      }
+    },
+    {
+      "id": "host_proc",
+      "status": "passed",
+      "enforcement": "os_enforced",
+      "evidence": {
+        "baseline_accessible": true,
+        "sandbox_accessible": false
+      }
+    },
+    {
+      "id": "environment",
+      "status": "passed",
+      "enforcement": "trusted_setup",
+      "evidence": {
+        "baseline_accessible": true,
+        "sandbox_accessible": false
+      }
+    },
+    {
+      "id": "inherited_fds",
+      "status": "passed",
+      "enforcement": "os_enforced",
+      "evidence": {
+        "baseline_accessible": true,
+        "sandbox_accessible": false
+      }
+    },
+    {
+      "id": "capabilities",
+      "status": "passed",
+      "enforcement": "os_enforced",
+      "evidence": {
+        "capabilities": {
+          "CapInh": "0000000000000000",
+          "CapPrm": "0000000000000000",
+          "CapEff": "0000000000000000",
+          "CapBnd": "0000000000000000",
+          "CapAmb": "0000000000000000"
+        },
+        "no_new_privs": "1",
+        "readonly_canary_write": false,
+        "chroot_succeeded": false,
+        "mount_succeeded": false
+      }
+    },
+    {
+      "id": "wsl_interop",
+      "status": "passed",
+      "enforcement": "os_enforced",
+      "evidence": {
+        "fixture_source": "/mnt/c/Windows/System32/cmd.exe",
+        "fixture_digest": "8dd1ebb0b969370c70a5ee7f7ee347949aa7046aa5e1a33fcd7b1e9415b21fc3",
+        "baseline_executed": true,
+        "sandbox_executed": false
+      }
+    },
+    {
+      "id": "network_endpoints",
+      "status": "passed",
+      "enforcement": "os_enforced",
+      "evidence": {
+        "baseline_receipts": 4,
+        "sandbox_receipts": 0,
+        "sandbox_connections": {
+          "/control": false,
+          "/broker-admin": false,
+          "/provider": false,
+          "/delivery": false
+        }
+      }
+    },
+    {
+      "id": "git_remote",
+      "status": "passed",
+      "enforcement": "os_enforced",
+      "evidence": {
+        "workspace_git_usable": true,
+        "baseline_pushed_head": "2ecd326c3173de9d4357261fee1b321ecb5d62b7",
+        "remote_unchanged": true,
+        "sandbox_push_exit": 128
+      }
+    },
+    {
+      "id": "process_cancel",
+      "status": "passed",
+      "enforcement": "os_enforced",
+      "evidence": {
+        "supervisor_pid": 6039,
+        "supervisor_birth": "357042",
+        "report_received": true,
+        "child_wrote_before_cancel": true,
+        "supervisor_running_before_cancel": true,
+        "heartbeat_stopped": true,
+        "supervisor_exit_code": -9,
+        "remote_stop": "unknown",
+        "runnerhost_writer_lease_integration": "not_run",
+        "observed_process_identities": {
+          "6039": "357042",
+          "6040": "357042",
+          "6066": "357059"
+        },
+        "observed_tree_exited": true
+      }
+    },
+    {
+      "id": "candidate_collection",
+      "status": "passed",
+      "enforcement": "trusted_collector",
+      "evidence": {
+        "hook_positive_control": true,
+        "marker_unchanged_during_collection": true,
+        "candidate_digest": "519e811fbdf3f0e11e64fe101f777e208b5cb6a38d193f52c5398324d9420c6e",
+        "collected_files": [
+          "allowed.txt"
+        ],
+        "executes_git": false
+      }
+    },
+    {
+      "id": "runtime_binding",
+      "status": "passed",
+      "enforcement": "trusted_setup",
+      "evidence": {
+        "requested_version": "3.12.3",
+        "observed_version": "3.12.3",
+        "observed_executable": "/usr/bin/python3"
+      }
+    }
+  ],
+  "remaining_required_checks": {
+    "codex_native_file_tools": "not_run",
+    "opencode_native_tools": "not_run",
+    "native_mcp_and_hooks": "not_run",
+    "real_authentication_storage": "not_run",
+    "runnerhost_writer_lease_integration": "not_run"
+  },
+  "source_digests": {
+    "probe.py": "a0e622e6da74b5c366898f00b2fd035d4ddb6b9ecabf3712b6ca18e44d369f50",
+    "qualification.py": "b6cf6313b0766004d8fc01d1714552c1e992f536810a3dac3514b90316c59c90",
+    "_canary.py": "8700dc275642498517f971f2a5ca071a87961885a27b7d9b7375e82306ffe56a",
+    "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+    "_targets.py": "bf6034e53d22fda07acee6e0f08b2ec7e6a39d5bc6e90b1a073a7854f1e823f9",
+    "__init__.py": "3722156c0b26efb5757999ccbf6f36c21068b71f1c973a33739331d8ab4774f5",
+    "__main__.py": "a841cf56c5b25f6ecaf6deef401c1a26c0dbac3c1368a61a2148074f1c7a085a"
+  },
+  "execution": {
+    "exit_code": -9,
+    "read_only_mounts": [
+      "/usr/bin",
+      "/usr/lib/x86_64-linux-gnu",
+      "/usr/lib/python3.12",
+      "/usr/lib/git-core",
+      "/usr/lib64"
+    ],
+    "runtime_version": "3.12.3",
+    "runtime_executable": "/usr/bin/python3",
+    "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+    "python_binary_digest": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+  }
+}

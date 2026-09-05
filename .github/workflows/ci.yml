@@ -59,6 +59,14 @@ jobs:
       - name: Install locked development dependencies
         run: uv sync --frozen --extra dev
 
+      - name: Set up pinned Node.js for the runtime probe
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24.18.1"
+
+      - name: Install the locked OpenCode runtime
+        run: npm ci --prefix runtimes/opencode --no-audit --no-fund
+
       - name: Lint Python
         run: uv run --frozen --extra dev ruff check .
 
