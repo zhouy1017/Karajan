@@ -1,0 +1,109 @@
+{
+  "binding": {
+    "native_reported": {
+      "auth_mode": null,
+      "billing_path": null,
+      "model_id": "claude-fixture-model-v1",
+      "permission_mode": "dontAsk",
+      "runtime_version": "2.1.260",
+      "tools": [
+        "Read"
+      ]
+    },
+    "settings_confirmation": "partial"
+  },
+  "capabilities": {
+    "billing_path": "not_run",
+    "dynamic_permission_grant": "unsupported",
+    "process_tree_stop": "not_run",
+    "remote_stop": "not_run",
+    "subscription_authentication": "not_run",
+    "tool_isolation": "not_run"
+  },
+  "events": {
+    "duplicates": 0
+  },
+  "identity": {
+    "attempt_id": "claude-attempt-fixture",
+    "configuration_source_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "fence": 1,
+    "profile_digest": "557445444234b2d49621fbf9e6e2948681064b4e48c6b0b17298c58d1fff1620",
+    "profile_id": "claude-profile-fixture",
+    "profile_revision": 1,
+    "session_id": "89e508d7-f6c6-4fd3-82e7-15dca7106a29"
+  },
+  "native_errors": [],
+  "permissions": {
+    "denial_system_events": 0,
+    "outbound_grants": 0,
+    "requires_new_attempt": false,
+    "terminal_denial_observations": 0,
+    "tool_requests_observed": 0,
+    "tool_results_observed": 0
+  },
+  "provenance": {
+    "input_sha256": "88409c55bf549b531ef81dd5da1939fc7df7cfd9a97515bdcfb9cfa15b34a72d",
+    "kind": "fixture",
+    "native_stream_verified": false,
+    "runtime_version": "2.1.260"
+  },
+  "qualification": {
+    "dispatch_eligible": false,
+    "live_status": "not_run"
+  },
+  "quota": {
+    "account_remaining": null,
+    "basis": "native_advisory",
+    "observations": []
+  },
+  "reason_codes": [],
+  "result": {
+    "state": "completed",
+    "text_length": 16,
+    "text_sha256": "865ed84dec4b325aa425a12945403e5ab28d0ddbf3de6c9700c3eb3c21f0c04e"
+  },
+  "result_decisions": {
+    "accepted": 1,
+    "rejected": 0
+  },
+  "retries": [],
+  "schema_version": "karajan.claude-replay-report.v1",
+  "status": "passed",
+  "stopping": {
+    "main_process": "unknown",
+    "process_tree": "unknown",
+    "remote": "unknown"
+  },
+  "stream": {
+    "events": 0
+  },
+  "usage": {
+    "account_remaining": null,
+    "cash_charged_usd": null,
+    "client_cost_estimate_usd": 0.001,
+    "coverage": "native_reported_only",
+    "hidden_retry_usage": "unknown",
+    "main_loop_final": {
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 2,
+      "input_tokens": 12,
+      "output_tokens": 4
+    },
+    "model_usage": {},
+    "partial_main_input": null,
+    "terminal_observations": 1,
+    "terminal_snapshots": [
+      {
+        "client_cost_estimate_usd": 0.001,
+        "model_usage": {},
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 2,
+          "input_tokens": 12,
+          "output_tokens": 4
+        }
+      }
+    ]
+  },
+  "validation_scope": "offline_protocol_replay"
+}
