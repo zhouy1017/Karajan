@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="7" skipped="0" tests="7" time="2.314" timestamp="2026-09-06T02:40:38.074473+08:00" hostname="ProArt-Zhou"><testcase classname="tests.orchestration.test_pinned_rules" name="test_new_rulebook_does_not_replace_old_run_inputs_or_budget" time="0.325"><failure message="AssertionError: ['PROJECT_CONFIGURATION_CHANGED']&#10;assert 'blocked' == 'queued'&#10;  &#10;  - queued&#10;  + blocked">case = {'root': WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-479/test_new_rulebook_does_not_rep0'), ...t_rep0/fixture/repository'), 'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x000001D6495886B0&gt;, ...}
+
+    def test_new_rulebook_does_not_replace_old_run_inputs_or_budget(case: dict[str, Any]) -&gt; None:
+        approve(case)
+        controller = coordinator(case)
+        original = copy.deepcopy(case["planner"].get(case["run"]["id"]))
+        config = copy.deepcopy(original["configuration_snapshot"]["configuration"])
+        config["rulebook"]["revision"] += 1
+        config["rulebook"]["description"] = "Future runs use this new version"
+        config["rulebook"]["collaboration"]["max_quality_repair_rounds"] += 1
+        config["resources"]["budgets"][1]["max_total_attempts"] += 20
+        save(case, config, "new-rules")
+    
+        queued = controller.enqueue(
+            case["run"]["id"], "implement", profile_ref=case["profile"],
+            command_key="start-old-run", principal="owner",
+        )
+    
+&gt;       assert queued["state"] == "queued", queued["reason_codes"]
+E       AssertionError: ['PROJECT_CONFIGURATION_CHANGED']
+E       assert 'blocked' == 'queued'
+E         
+E         - queued
+E         + blocked
+
+tests\orchestration\test_pinned_rules.py:53: AssertionError</failure></testcase><testcase classname="tests.orchestration.test_pinned_rules" name="test_current_restrictions_block_a_frozen_run_before_enqueue[disabled]" time="0.300"><failure message="AssertionError: assert ['PROJECT_CON...TION_CHANGED'] == ['CURRENT_PROFILE_RESTRICTED']&#10;  &#10;  At index 0 diff: 'PROJECT_CONFIGURATION_CHANGED' != 'CURRENT_PROFILE_RESTRICTED'&#10;  Use -v to get more diff">case = {'root': WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-479/test_current_restrictions_bloc0'), ..._bloc0/fixture/repository'), 'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x000001D6495A39E0&gt;, ...}
+revocation = 'disabled'
+
+    @pytest.mark.parametrize("revocation", ["disabled", "approval", "channel", "binding", "capability"])
+    def test_current_restrictions_block_a_frozen_run_before_enqueue(
+        case: dict[str, Any], revocation: str,
+    ) -&gt; None:
+        approve(case)
+        config = copy.deepcopy(case["run"]["configuration_snapshot"]["configuration"])
+        if revocation == "disabled":
+            config["resources"]["profiles"][0]["enabled"] = False
+        elif revocation == "approval":
+            config["approved_profile_refs"] = []
+        elif revocation == "channel":
+            config["resources"]["channels"][0]["approved_data_destination"] = False
+        elif revocation == "binding":
+            config["resources"]["profiles"][0]["profile"]["binding"]["model_id"] = "different-model"
+        else:
+            for evidence in config["resources"]["profiles"][0]["capability_evidence"]:
+                evidence["status"] = "failed"
+        save(case, config, "revoke")
+        state = coordinator(case).enqueue(
+            case["run"]["id"], "implement", profile_ref=case["profile"],
+            command_key="start-revoked", principal="owner",
+        )
+        assert state["state"] == "blocked"
+&gt;       assert state["reason_codes"] == ["CURRENT_PROFILE_RESTRICTED"]
+E       AssertionError: assert ['PROJECT_CON...TION_CHANGED'] == ['CURRENT_PROFILE_RESTRICTED']
+E         
+E         At index 0 diff: 'PROJECT_CONFIGURATION_CHANGED' != 'CURRENT_PROFILE_RESTRICTED'
+E         Use -v to get more diff
+
+tests\orchestration\test_pinned_rules.py:86: AssertionError</failure></testcase><testcase classname="tests.orchestration.test_pinned_rules" name="test_current_restrictions_block_a_frozen_run_before_enqueue[approval]" time="0.292"><failure message="AssertionError: assert ['PROJECT_CON...TION_CHANGED'] == ['CURRENT_PROFILE_RESTRICTED']&#10;  &#10;  At index 0 diff: 'PROJECT_CONFIGURATION_CHANGED' != 'CURRENT_PROFILE_RESTRICTED'&#10;  Use -v to get more diff">case = {'root': WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-479/test_current_restrictions_bloc1'), ..._bloc1/fixture/repository'), 'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x000001D6495DE090&gt;, ...}
+revocation = 'approval'
+
+    @pytest.mark.parametrize("revocation", ["disabled", "approval", "channel", "binding", "capability"])
+    def test_current_restrictions_block_a_frozen_run_before_enqueue(
+        case: dict[str, Any], revocation: str,
+    ) -&gt; None:
+        approve(case)
+        config = copy.deepcopy(case["run"]["configuration_snapshot"]["configuration"])
+        if revocation == "disabled":
+            config["resources"]["profiles"][0]["enabled"] = False
+        elif revocation == "approval":
+            config["approved_profile_refs"] = []
+        elif revocation == "channel":
+            config["resources"]["channels"][0]["approved_data_destination"] = False
+        elif revocation == "binding":
+            config["resources"]["profiles"][0]["profile"]["binding"]["model_id"] = "different-model"
+        else:
+            for evidence in config["resources"]["profiles"][0]["capability_evidence"]:
+                evidence["status"] = "failed"
+        save(case, config, "revoke")
+        state = coordinator(case).enqueue(
+            case["run"]["id"], "implement", profile_ref=case["profile"],
+            command_key="start-revoked", principal="owner",
+        )
+        assert state["state"] == "blocked"
+&gt;       assert state["reason_codes"] == ["CURRENT_PROFILE_RESTRICTED"]
+E       AssertionError: assert ['PROJECT_CON...TION_CHANGED'] == ['CURRENT_PROFILE_RESTRICTED']
+E         
+E         At index 0 diff: 'PROJECT_CONFIGURATION_CHANGED' != 'CURRENT_PROFILE_RESTRICTED'
+E         Use -v to get more diff
+
+tests\orchestration\test_pinned_rules.py:86: AssertionError</failure></testcase><testcase classname="tests.orchestration.test_pinned_rules" name="test_current_restrictions_block_a_frozen_run_before_enqueue[channel]" time="0.288"><failure message="AssertionError: assert ['PROJECT_CON...TION_CHANGED'] == ['CURRENT_PROFILE_RESTRICTED']&#10;  &#10;  At index 0 diff: 'PROJECT_CONFIGURATION_CHANGED' != 'CURRENT_PROFILE_RESTRICTED'&#10;  Use -v to get more diff">case = {'root': WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-479/test_current_restrictions_bloc2'), ..._bloc2/fixture/repository'), 'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x000001D6495DDE80&gt;, ...}
+revocation = 'channel'
+
+    @pytest.mark.parametrize("revocation", ["disabled", "approval", "channel", "binding", "capability"])
+    def test_current_restrictions_block_a_frozen_run_before_enqueue(
+        case: dict[str, Any], revocation: str,
+    ) -&gt; None:
+        approve(case)
+        config = copy.deepcopy(case["run"]["configuration_snapshot"]["configuration"])
+        if revocation == "disabled":
+            config["resources"]["profiles"][0]["enabled"] = False
+        elif revocation == "approval":
+            config["approved_profile_refs"] = []
+        elif revocation == "channel":
+            config["resources"]["channels"][0]["approved_data_destination"] = False
+        elif revocation == "binding":
+            config["resources"]["profiles"][0]["profile"]["binding"]["model_id"] = "different-model"
+        else:
+            for evidence in config["resources"]["profiles"][0]["capability_evidence"]:
+                evidence["status"] = "failed"
+        save(case, config, "revoke")
+        state = coordinator(case).enqueue(
+            case["run"]["id"], "implement", profile_ref=case["profile"],
+            command_key="start-revoked", principal="owner",
+        )
+        assert state["state"] == "blocked"
+&gt;       assert state["reason_codes"] == ["CURRENT_PROFILE_RESTRICTED"]
+E       AssertionError: assert ['PROJECT_CON...TION_CHANGED'] == ['CURRENT_PROFILE_RESTRICTED']
+E         
+E         At index 0 diff: 'PROJECT_CONFIGURATION_CHANGED' != 'CURRENT_PROFILE_RESTRICTED'
+E         Use -v to get more diff
+
+tests\orchestration\test_pinned_rules.py:86: AssertionError</failure></testcase><testcase classname="tests.orchestration.test_pinned_rules" name="test_current_restrictions_block_a_frozen_run_before_enqueue[binding]" time="0.305"><failure message="AssertionError: assert ['PROJECT_CON...TION_CHANGED'] == ['CURRENT_PROFILE_RESTRICTED']&#10;  &#10;  At index 0 diff: 'PROJECT_CONFIGURATION_CHANGED' != 'CURRENT_PROFILE_RESTRICTED'&#10;  Use -v to get more diff">case = {'root': WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-479/test_current_restrictions_bloc3'), ..._bloc3/fixture/repository'), 'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x000001D6495DD340&gt;, ...}
+revocation = 'binding'
+
+    @pytest.mark.parametrize("revocation", ["disabled", "approval", "channel", "binding", "capability"])
+    def test_current_restrictions_block_a_frozen_run_before_enqueue(
+        case: dict[str, Any], revocation: str,
+    ) -&gt; None:
+        approve(case)
+        config = copy.deepcopy(case["run"]["configuration_snapshot"]["configuration"])
+        if revocation == "disabled":
+            config["resources"]["profiles"][0]["enabled"] = False
+        elif revocation == "approval":
+            config["approved_profile_refs"] = []
+        elif revocation == "channel":
+            config["resources"]["channels"][0]["approved_data_destination"] = False
+        elif revocation == "binding":
+            config["resources"]["profiles"][0]["profile"]["binding"]["model_id"] = "different-model"
+        else:
+            for evidence in config["resources"]["profiles"][0]["capability_evidence"]:
+                evidence["status"] = "failed"
+        save(case, config, "revoke")
+        state = coordinator(case).enqueue(
+            case["run"]["id"], "implement", profile_ref=case["profile"],
+            command_key="start-revoked", principal="owner",
+        )
+        assert state["state"] == "blocked"
+&gt;       assert state["reason_codes"] == ["CURRENT_PROFILE_RESTRICTED"]
+E       AssertionError: assert ['PROJECT_CON...TION_CHANGED'] == ['CURRENT_PROFILE_RESTRICTED']
+E         
+E         At index 0 diff: 'PROJECT_CONFIGURATION_CHANGED' != 'CURRENT_PROFILE_RESTRICTED'
+E         Use -v to get more diff
+
+tests\orchestration\test_pinned_rules.py:86: AssertionError</failure></testcase><testcase classname="tests.orchestration.test_pinned_rules" name="test_current_restrictions_block_a_frozen_run_before_enqueue[capability]" time="0.283"><failure message="AssertionError: assert ['PROJECT_CON...TION_CHANGED'] == ['CURRENT_PROFILE_RESTRICTED']&#10;  &#10;  At index 0 diff: 'PROJECT_CONFIGURATION_CHANGED' != 'CURRENT_PROFILE_RESTRICTED'&#10;  Use -v to get more diff">case = {'root': WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-479/test_current_restrictions_bloc4'), ..._bloc4/fixture/repository'), 'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x000001D649589B50&gt;, ...}
+revocation = 'capability'
+
+    @pytest.mark.parametrize("revocation", ["disabled", "approval", "channel", "binding", "capability"])
+    def test_current_restrictions_block_a_frozen_run_before_enqueue(
+        case: dict[str, Any], revocation: str,
+    ) -&gt; None:
+        approve(case)
+        config = copy.deepcopy(case["run"]["configuration_snapshot"]["configuration"])
+        if revocation == "disabled":
+            config["resources"]["profiles"][0]["enabled"] = False
+        elif revocation == "approval":
+            config["approved_profile_refs"] = []
+        elif revocation == "channel":
+            config["resources"]["channels"][0]["approved_data_destination"] = False
+        elif revocation == "binding":
+            config["resources"]["profiles"][0]["profile"]["binding"]["model_id"] = "different-model"
+        else:
+            for evidence in config["resources"]["profiles"][0]["capability_evidence"]:
+                evidence["status"] = "failed"
+        save(case, config, "revoke")
+        state = coordinator(case).enqueue(
+            case["run"]["id"], "implement", profile_ref=case["profile"],
+            command_key="start-revoked", principal="owner",
+        )
+        assert state["state"] == "blocked"
+&gt;       assert state["reason_codes"] == ["CURRENT_PROFILE_RESTRICTED"]
+E       AssertionError: assert ['PROJECT_CON...TION_CHANGED'] == ['CURRENT_PROFILE_RESTRICTED']
+E         
+E         At index 0 diff: 'PROJECT_CONFIGURATION_CHANGED' != 'CURRENT_PROFILE_RESTRICTED'
+E         Use -v to get more diff
+
+tests\orchestration\test_pinned_rules.py:86: AssertionError</failure></testcase><testcase classname="tests.orchestration.test_pinned_rules" name="test_replayed_enqueue_cannot_activate_after_current_profile_is_revoked" time="0.431"><failure message="AssertionError: assert ['PROJECT_CON...TION_CHANGED'] == ['CURRENT_PROFILE_RESTRICTED']&#10;  &#10;  At index 0 diff: 'PROJECT_CONFIGURATION_CHANGED' != 'CURRENT_PROFILE_RESTRICTED'&#10;  Use -v to get more diff">case = {'root': WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-479/test_replayed_enqueue_cannot_a0'), ...not_a0/fixture/repository'), 'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x000001D6495E3950&gt;, ...}
+
+    def test_replayed_enqueue_cannot_activate_after_current_profile_is_revoked(
+        case: dict[str, Any],
+    ) -&gt; None:
+        approve(case)
+        controller = coordinator(case)
+        args = dict(profile_ref=case["profile"], command_key="enqueue", principal="owner")
+        original = controller.enqueue(case["run"]["id"], "implement", **args)
+        assert original["state"] == "queued"
+        config = copy.deepcopy(case["run"]["configuration_snapshot"]["configuration"])
+        config["resources"]["profiles"][0]["enabled"] = False
+        save(case, config, "disable-after-queue")
+        reopened = coordinator(case)
+        assert reopened.enqueue(case["run"]["id"], "implement", **args) == original
+        state = reopened.advance(case["run"]["id"])
+        assert state["state"] == "invalidating"
+&gt;       assert state["reason_codes"] == ["CURRENT_PROFILE_RESTRICTED"]
+E       AssertionError: assert ['PROJECT_CON...TION_CHANGED'] == ['CURRENT_PROFILE_RESTRICTED']
+E         
+E         At index 0 diff: 'PROJECT_CONFIGURATION_CHANGED' != 'CURRENT_PROFILE_RESTRICTED'
+E         Use -v to get more diff
+
+tests\orchestration\test_pinned_rules.py:105: AssertionError</failure></testcase></testsuite></testsuites>

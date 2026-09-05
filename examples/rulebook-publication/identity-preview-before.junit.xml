@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="3" time="0.807" timestamp="2026-09-06T03:00:37.156159+08:00" hostname="ProArt-Zhou"><testcase classname="tests.projects.test_publication" name="test_same_revision_different_execution_is_rejected_at_both_write_entries[configuration]" time="0.233"><failure message="assert True is False">tests\projects\test_publication.py:110: in test_same_revision_different_execution_is_rejected_at_both_write_entries
+    assert preview["can_save_draft"] is False
+E   assert True is False</failure></testcase><testcase classname="tests.projects.test_publication" name="test_same_revision_different_execution_is_rejected_at_both_write_entries[rulebook]" time="0.205"><failure message="assert True is False">tests\projects\test_publication.py:110: in test_same_revision_different_execution_is_rejected_at_both_write_entries
+    assert preview["can_save_draft"] is False
+E   assert True is False</failure></testcase><testcase classname="tests.projects.test_publication_migration" name="test_conflicting_legacy_revision_is_reported_and_never_automatically_selected" time="0.215"><failure message="assert True is False">tests\projects\test_publication_migration.py:112: in test_conflicting_legacy_revision_is_reported_and_never_automatically_selected
+    assert preview["can_publish"] is False
+E   assert True is False</failure></testcase></testsuite></testsuites>

@@ -30,4 +30,6 @@
 
 这些输入是模拟事实。求解器检查一致性，不能证明调用者提交的授权摘要、当前策略标记、作者或观察出处是真实权威。Host 后续必须从批准记录、固定 Profile、当前容量账及可信风险规则构建快照，并在启动事务内重新检查、预留和写入 Attempt/outbox。
 
-当前项目配置、Run、Host 和 Web 尚未切换到该求解器；规则编辑、版本发布、旧 Run 的显式采用和真实统一准入仍待实现，安排见 [接入与发布计划](m3-rulebook-publication-plan.md)。本 PR 不关闭 M3-01，不将 FR06、AC03 或 A11 的完整产品验收标为通过。真实模型及现金 API 请求数为零，真实来源资格仍为 `not_run`。
+当前 Run 和 Host 尚未切换到该求解器。后续[规则发布切片](m3-rulebook-publication.md) 已接入项目配置、矩阵编辑、不可变版本和旧 Run 固定；显式采用、完整模拟页面及真实统一准入仍待实现，安排见 [接入与发布计划](m3-rulebook-publication-plan.md)。本 PR 不关闭 M3-01，不将 FR06、AC03 或 A11 的完整产品验收标为通过。真实模型及现金 API 请求数为零，真实来源资格仍为 `not_run`。
+
+[PR #43](https://github.com/zhouy1017/Karajan/pull/43) 的最终提交 `9b085de898f5abad9d1cad557ab9ce4ed3c31f39` 已通过 [PR CI](https://github.com/zhouy1017/Karajan/actions/runs/33984302537) 和 [push CI](https://github.com/zhouy1017/Karajan/actions/runs/33984275373)。Windows、Linux、前端与必需汇总门均成功；提交前冻结报告中的 pending 保留为历史。

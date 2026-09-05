@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="10" time="2.720" timestamp="2026-09-06T03:01:04.780138+08:00" hostname="ProArt-Zhou"><testcase classname="tests.web.test_rulebook_http" name="test_preview_publish_retry_and_history_survive_restart_without_reservations" time="0.318" /><testcase classname="tests.web.test_rulebook_http" name="test_rulebook_commands_require_session_proof_revision_and_command_identity[csrf-preview]" time="0.220" /><testcase classname="tests.web.test_rulebook_http" name="test_rulebook_commands_require_session_proof_revision_and_command_identity[csrf-publish]" time="0.215" /><testcase classname="tests.web.test_rulebook_http" name="test_rulebook_commands_require_session_proof_revision_and_command_identity[origin-preview]" time="0.217" /><testcase classname="tests.web.test_rulebook_http" name="test_rulebook_commands_require_session_proof_revision_and_command_identity[origin-publish]" time="0.219" /><testcase classname="tests.web.test_rulebook_http" name="test_rulebook_commands_require_session_proof_revision_and_command_identity[revision-preview]" time="0.240" /><testcase classname="tests.web.test_rulebook_http" name="test_rulebook_commands_require_session_proof_revision_and_command_identity[revision-publish]" time="0.229" /><testcase classname="tests.web.test_rulebook_http" name="test_rulebook_commands_require_session_proof_revision_and_command_identity[key-preview]" time="0.230" /><testcase classname="tests.web.test_rulebook_http" name="test_rulebook_commands_require_session_proof_revision_and_command_identity[key-publish]" time="0.224" /><testcase classname="tests.web.test_rulebook_http" name="test_secret_and_invalid_unicode_previews_never_create_a_publishable_document" time="0.237"><failure message="assert 422 == 200&#10; +  where 422 = &lt;Response [422 Unprocessable Entity]&gt;.status_code">publication_case = {'directory': WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-502/test_secret_and_invalid_unicod...ive_qualified': False, ...}, 'registry': &lt;karajan.projects.registry.ProjectRegistry object at 0x000001D6C81475C0&gt;, ...}
+
+    def test_secret_and_invalid_unicode_previews_never_create_a_publishable_document(
+        publication_case: dict[str, Any],
+    ) -&gt; None:
+        case = publication_case
+        base = f"/v1/projects/{case['project']['id']}/rulebook"
+        with TestClient(case["app"], base_url=ORIGIN) as client:
+            headers = login(client)
+            for index, change in enumerate(
+                ({"api_key": "FAKE-RULEBOOK-SECRET-CANARY"}, {"description": "\ud800"})
+            ):
+                document = {**case["configuration"]["rulebook"], "revision": 2, **change}
+                response = client.post(
+                    base + "/preview",
+                    content=json.dumps(document).encode(),
+                    headers={
+                        **headers,
+                        "Content-Type": "application/json",
+                        "Idempotency-Key": f"bad-preview-{index}",
+                    },
+                )
+&gt;               assert response.status_code == 200
+E               assert 422 == 200
+E                +  where 422 = &lt;Response [422 Unprocessable Entity]&gt;.status_code
+
+tests\web\test_rulebook_http.py:205: AssertionError</failure></testcase></testsuite></testsuites>

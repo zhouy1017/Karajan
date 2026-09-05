@@ -1,0 +1,47 @@
+{
+  "schema_version": "karajan.spec-review.v1",
+  "reviewer": "report_to_decisions",
+  "reviewed_at_utc": "2026-09-05T19:16:50.885371+00:00",
+  "scope": "Rulebook publication: pinned existing Run and actual local legacy activation ordering only",
+  "result": "no_actionable_findings_in_reviewed_scope",
+  "findings": [],
+  "observed": [
+    "Rules, approved profile groups, budget and collaboration limits come from the immutable Run configuration snapshot; future publication does not replace them.",
+    "Current effective resources restrict the selected profile and eligible reviewers; replayed enqueue is only a historical receipt and activation rechecks current restrictions.",
+    "Local activation holds coordinator, Run, project, then Host locks and recomputes material and approved plan impact before Host preparation and start.",
+    "In the tested update-first schedules no workspace or Host is created; in activation-first schedules the competing update waits and the next advance invalidates the task.",
+    "The before_spawn and after_spawn injected failures release authority locks while preserving the Host attempt and durable start identity.",
+    "Reviewed guarded call paths do not re-enter public Run or project reads while their authority transactions are held."
+  ],
+  "validation": {
+    "platform": "Windows",
+    "command": "PYTHONPATH=backend .venv/Scripts/python.exe -m pytest tests/orchestration/test_pinned_rules.py -q",
+    "exit_code": 0,
+    "stdout": "..............                                                           [100%]\n14 passed in 7.61s\n",
+    "source_hashes_unchanged_after_validation": true,
+    "fixtures": "Temporary Git repositories, real SQLite, local fixed fixture subprocesses, public interfaces with event-controlled concurrency and explicit crash injection"
+  },
+  "limitations": [
+    "No real model or cash API calls; fixture qualification cannot enable a production Profile.",
+    "No new frontend review or whole-project acceptance claim.",
+    "The fixed-template legacy route intentionally rejects custom matrices with ROUTING_SNAPSHOT_REQUIRED.",
+    "These locks do not provide unified F03/F05 admission, cash accounting, quota reservation or Host outbox atomicity.",
+    "The two crash schedules exercise explicit local failure points, not power-loss or whole-OS crash qualification.",
+    "The separately reported Windows 322 and WSL 131 runs were not repeated in this bounded review."
+  ],
+  "source_sha256": {
+    "backend/karajan/projects/legacy_evaluation.py": "50630560406b7bdcc11d36221a14d605f6a1c5cfe36f32e4b64d2e4f23064d51",
+    "backend/karajan/orchestration/binding.py": "bd7072df5447ff050b109a85763ca30152f20be04ce4b4187656e3e9301aab0b",
+    "backend/karajan/orchestration/serial.py": "e4d9b7a5aed32d96bdacbc605d9179ac5f2411844dc312e828bc07c316df3245",
+    "backend/karajan/runs/planning.py": "f90c4d61965167d61ff9821d0bdb7d958ed3176e978e64995a97773483d4f2bc",
+    "backend/karajan/projects/registry.py": "aca0573465ce00350547790b3336ea18be64d7b947128d87aff7308d94827458",
+    "tests/orchestration/test_pinned_rules.py": "b56f5f7fc9149cfcf53dea7900cddd8e50e9d2b3cb64f7246b7d08c372a37baa",
+    "backend/karajan/projects/configuration.py": "3dd388edeea88bd74292725b0680e8f47c46e9a07023215dd8c67273df489b03",
+    "backend/karajan/projects/publication.py": "b57cd2ef51738b1f9871b55670a0c7b3e434bc6b25ee2c5b3eebc34b0516124a",
+    "backend/karajan/execution/host.py": "642607b129e061f30d059d016b8d7be0356c065161f0dce512e0c82b9ad0eead",
+    "backend/karajan/orchestration/fixture.py": "15554d1e48c9a45337555e3a60961a37632837615a07927f37f9b50d7f7248c9",
+    "tests/orchestration/conftest.py": "e37888dba481972f9dc1f9f7df3fd2517a5a34e6c6c9071a45cd1acb06985538",
+    "tests/orchestration/test_serial.py": "55f70fdac545fbb81eec9df2baf0915a0bb0c4809c5edc58f2a34a721d5e7cc9",
+    "docs/implementation/m3-rulebook-publication.md": "bc952ddbc04fd08ff35a499a4a7557fce5eb4e6a773b7933de944f99bb43c5c5"
+  }
+}

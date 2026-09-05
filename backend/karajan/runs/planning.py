@@ -245,6 +245,18 @@ class RunPlanner:
                 raise RunError("RUN_NOT_FOUND")
             return run
 
+    @contextmanager
+    def activation_guard(self, run_id: str) -> Iterator[dict[str, Any]]:
+        """Hold the current approved plan stable while a local Host accepts activation.
+
+        Internal lock order is coordinator, Run, project, then Host. Consumers use
+        this supplied snapshot and must not re-enter public Run reads inside it.
+        Rollback of this read transaction does not undo an accepted Host start.
+        """
+        identifier(run_id)
+        with self._transaction() as db:
+            yield self._get(db, run_id)
+
     def list(self, *, principal: str, project_id: str | None = None) -> list[dict[str, Any]]:
         identifier(principal)
         if project_id is not None:

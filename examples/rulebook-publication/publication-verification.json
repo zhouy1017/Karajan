@@ -1,0 +1,82 @@
+{
+  "schema_version": "karajan.publication-verification.v1",
+  "scope": "ProjectRegistry publication persistence and public tests; parent owns integrated source verification",
+  "python": "3.12.14",
+  "platform": "Windows",
+  "live_qualification": "not_run",
+  "activation_allowed": false,
+  "source_sha256": {
+    "backend/karajan/projects/registry.py": "aca0573465ce00350547790b3336ea18be64d7b947128d87aff7308d94827458",
+    "backend/karajan/projects/configuration.py": "3dd388edeea88bd74292725b0680e8f47c46e9a07023215dd8c67273df489b03",
+    "backend/karajan/projects/publication.py": "b57cd2ef51738b1f9871b55670a0c7b3e434bc6b25ee2c5b3eebc34b0516124a",
+    "tests/projects/test_registry.py": "cee7b4465b3a5768f83989063a5cd10887021f479fa9dec86062e98bf0732b47",
+    "tests/projects/test_publication.py": "750943371c28c9f6c83f91a1d0717c54ca5e7d1a9ebc24a454881e5f81064083",
+    "tests/projects/test_publication_guards.py": "c885f07f4e9c2fcd00de7d8b015abff4b8227fe4fd2cb2f5b30f1028cc7f090a",
+    "tests/projects/test_publication_migration.py": "20948596a3c655fc22e8031dd53d9c6f71a1ca5a77961857bc53c7ae958da404"
+  },
+  "reports": {
+    "identity-preview-after.junit.xml": {
+      "sha256": "5e7e9d5af08b2e26558d9e349d74747f8b3f2dfa00b3fb3104287a0f57eecbc7",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time": "0.845"
+    },
+    "identity-preview-before.junit.xml": {
+      "sha256": "9a73735bba81cfb0ef63983fd6396e917e6e9fa81fd8f73667fe2e025d59e603",
+      "tests": 3,
+      "failures": 3,
+      "errors": 0,
+      "skipped": 0,
+      "time": "0.807"
+    },
+    "projects-routing-final.junit.xml": {
+      "sha256": "63d1a2619c86652caaa5d7cd3e93c73e22c200fc7223e8d3313b3d3c1157948d",
+      "tests": 185,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time": "23.432"
+    },
+    "projects-routing.junit.xml": {
+      "sha256": "e35a9de34e542e12715a5eee4be12e375a63937064289e2f6bcaed82f3b7f4ae",
+      "tests": 185,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time": "22.805"
+    },
+    "validation-after.junit.xml": {
+      "sha256": "d45ba792ca96b657567ef48f2176cf9f7f6379dcc199555d724c0fa66876100e",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time": "3.422"
+    },
+    "validation-before.junit.xml": {
+      "sha256": "d3deaf75cc292d3e467c2928bd096f68f0145db861f69306d049efce4d957e4c",
+      "tests": 15,
+      "failures": 15,
+      "errors": 0,
+      "skipped": 0,
+      "time": "3.580"
+    },
+    "validation-behavior-before.junit.xml": {
+      "sha256": "b0d154072f9dd9625b054cb43bb36c9fe687e16a34f3a8eea4117fccf7e36a0e",
+      "tests": 15,
+      "failures": 14,
+      "errors": 0,
+      "skipped": 0,
+      "time": "3.461"
+    }
+  },
+  "checks": {
+    "ruff_projects": "passed",
+    "strict_mypy_projects": {
+      "status": "passed",
+      "source_files": 6
+    }
+  }
+}

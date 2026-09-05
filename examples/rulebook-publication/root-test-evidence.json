@@ -1,0 +1,180 @@
+{
+  "reports": {
+    "pinned-rules-before.junit.xml": {
+      "sha256": "fe808143107870f3246ae231f55885e5da97419e7164b313f1f38f0a5550903a",
+      "suite": {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "7",
+        "skipped": "0",
+        "tests": "7",
+        "time": "2.227",
+        "timestamp": "2026-09-06T02:38:27.276713+08:00",
+        "hostname": "ProArt-Zhou"
+      }
+    },
+    "pinned-rules-corrected-input-before.junit.xml": {
+      "sha256": "99ff121d11983fa89272fcca865eb89f0d44f6c6693564bd4b15b54e620b0548",
+      "suite": {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "7",
+        "skipped": "0",
+        "tests": "7",
+        "time": "2.314",
+        "timestamp": "2026-09-06T02:40:38.074473+08:00",
+        "hostname": "ProArt-Zhou"
+      }
+    },
+    "pinned-rules-after.junit.xml": {
+      "sha256": "9401c7764c0ddb9aebb6b221e2aa268734f22dec5d6a537a4f63615372de97e5",
+      "suite": {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "tests": "7",
+        "time": "2.504",
+        "timestamp": "2026-09-06T02:43:21.885792+08:00",
+        "hostname": "ProArt-Zhou"
+      }
+    },
+    "activation-guard-before.junit.xml": {
+      "sha256": "97bc348dc4c31530a40ec7f26e05cc756d7588bd575e64b9697c888b711c2dd9",
+      "suite": {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "2",
+        "skipped": "0",
+        "tests": "2",
+        "time": "1.424",
+        "timestamp": "2026-09-06T02:45:37.598525+08:00",
+        "hostname": "ProArt-Zhou"
+      }
+    },
+    "pinned-rules-guard-after.junit.xml": {
+      "sha256": "e29cc695567f6772610e62d89a5edc0d6c3089e8e0f8239e3bee16d8c9a600b9",
+      "suite": {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "tests": "9",
+        "time": "4.088",
+        "timestamp": "2026-09-06T02:47:05.644585+08:00",
+        "hostname": "ProArt-Zhou"
+      }
+    },
+    "pinned-rules-complete.junit.xml": {
+      "sha256": "476232e2f35bf2711593d034b4ecc09ca02d8ba81d04d1c1646988c460f3b92e",
+      "suite": {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "tests": "13",
+        "time": "7.061",
+        "timestamp": "2026-09-06T02:48:47.441158+08:00",
+        "hostname": "ProArt-Zhou"
+      }
+    },
+    "pinned-rules-final.junit.xml": {
+      "sha256": "998fbb5607e27cd2e2daa04707e11a54cfcd4b349739283f241ff5c2c436ad2b",
+      "suite": {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "tests": "14",
+        "time": "7.471",
+        "timestamp": "2026-09-06T02:51:23.962836+08:00",
+        "hostname": "ProArt-Zhou"
+      }
+    },
+    "publication-orchestration-runs.junit.xml": {
+      "sha256": "d787b570ec314840b61102ff90827694c056336e66f9aaa808c0827159e83d8b",
+      "suite": {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "1",
+        "tests": "99",
+        "time": "84.684",
+        "timestamp": "2026-09-06T02:49:14.591918+08:00",
+        "hostname": "ProArt-Zhou"
+      }
+    },
+    "rulebook-http.junit.xml": {
+      "sha256": "b79922b73890e7b1f5019f6c81a80060a0c2af6ceb7f3cd3089496f8295c8ab5",
+      "suite": {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "1",
+        "skipped": "0",
+        "tests": "10",
+        "time": "2.720",
+        "timestamp": "2026-09-06T03:01:04.780138+08:00",
+        "hostname": "ProArt-Zhou"
+      }
+    },
+    "rulebook-http-final.junit.xml": {
+      "sha256": "f0084fd9e2bf4541106ec4f9baaaf6a49f3ca4b6b3118d16c55c78989a784eb0",
+      "suite": {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "tests": "10",
+        "time": "2.558",
+        "timestamp": "2026-09-06T03:01:38.805659+08:00",
+        "hostname": "ProArt-Zhou"
+      }
+    },
+    "rulebook-publication-backend.junit.xml": {
+      "sha256": "641b24079c64f4e35c7bf0811d7de5cd206aed415a1b938b34b8a3c909813904",
+      "suite": {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "1",
+        "tests": "323",
+        "time": "115.246",
+        "timestamp": "2026-09-06T03:06:18.815521+08:00",
+        "hostname": "ProArt-Zhou"
+      }
+    },
+    "rulebook-publication-wsl.junit.xml": {
+      "sha256": "b66f468ae1523a8af4c8888a80c788739ae112ef47ab6af78d7c22b8a29ecf65",
+      "suite": {
+        "name": "pytest",
+        "errors": "1",
+        "failures": "0",
+        "skipped": "0",
+        "tests": "1",
+        "time": "0.789",
+        "timestamp": "2026-09-06T03:07:50.455224+08:00",
+        "hostname": "ProArt-Zhou"
+      }
+    },
+    "rulebook-publication-wsl-final.junit.xml": {
+      "sha256": "b8b3413a10254ad6387af569392d95194a4f07e5708815dd00876486f3c39d56",
+      "suite": {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "tests": "131",
+        "time": "20.794",
+        "timestamp": "2026-09-06T03:08:30.850590+08:00",
+        "hostname": "ProArt-Zhou"
+      }
+    }
+  },
+  "historical_notes": {
+    "pinned-rules-before.junit.xml": "Historical first run contains one test input mistake (binding.model instead of model_id); corrected-input-before is the seven product failures. Old product source was not frozen, so not claimed reproducible at an old commit.",
+    "rulebook-http.junit.xml": "One assertion expected Unicode to reach registry; actual existing body middleware safely returns 422. Corrected test only; no product security fix.",
+    "rulebook-publication-wsl.junit.xml": "Collection failed because old WSL environment lacked FastAPI. Fixed project Web dependencies installed before final run."
+  },
+  "live_qualification": "not_run",
+  "cash_api_calls": 0
+}

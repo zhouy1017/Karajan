@@ -1,0 +1,18 @@
+{
+  "steps": [
+    "Open App rulebook panel",
+    "Edit description to Unresolved owner edit and revision to 2",
+    "Preview",
+    "Publish returns a network TypeError",
+    "Navigate to resources",
+    "Navigate back to projects"
+  ],
+  "expected": "Original draft and unresolved publication command remain available or navigation is prevented",
+  "observed": "Original draft and pending command discarded on remount; server configuration restored",
+  "source_sha256": {
+    "frontend/src/RulebookPanel.tsx": "006745101e49e9d1dd2b8bb15aa9f4034445e289ebb70419688a48a3fe751dbb",
+    "frontend/src/App.tsx": "ad6719c1e00b5186816081fcf42312c194f2504a44722a1510ccf74a9947e121",
+    "frontend/.cache/rulebook-review/navigation.test.tsx": "be2f6704d22c9496b707a6424b34c92145ef52e75ccf4190dcf9ba30579325ac",
+    "examples/projects/offline-configuration.json": "a286b101251e33a44c351b99edff5a07f9c325cef9be79eb90c251a0e9cb204f"
+  }
+}

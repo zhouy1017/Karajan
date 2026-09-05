@@ -416,8 +416,46 @@ def test_fixed_rulebook_hard_conditions_cannot_be_overridden_in_configuration(
         created["id"], document, command_key="preview", principal="owner"
     )
 
-    assert preview["status"] == "draft"
-    assert {"code": "RULEBOOK_HARD_CONSTRAINT_INVALID", "path": "rulebook"} in preview["issues"]
+    if variant == "critical-downgrade":
+        from karajan.routing import evaluate_route, fixture_from_configuration
+
+        assert preview["status"] == "offline_valid"
+        assert preview["can_publish"] is True
+        service.apply_configuration(
+            created["id"],
+            preview["preview_id"],
+            expected_revision=1,
+            command_key="apply",
+            principal="owner",
+        )
+        legacy = service.evaluate_task(
+            created["id"],
+            {
+                "role": "worker",
+                "readiness": "ready",
+                "complexity": "T3",
+                "risk": "critical",
+                "approved_profile_refs": document["approved_profile_refs"],
+            },
+        )
+        assert legacy["reason_codes"] == ["ROUTING_SNAPSHOT_REQUIRED"]
+        task, policy, capacity = fixture_from_configuration(document, as_of=1000.0)
+        task.update(complexity="T3", risk="critical")
+        registered = policy["resources"]["profiles"][0]
+        registered["capability_evidence"] = [
+            e
+            for e in registered["capability_evidence"]
+            if e["capability"] != "critical_implementation"
+        ]
+        result = evaluate_route(task, policy, capacity)
+        assert result["selected_profile"] is None
+        assert (
+            "CAPABILITY_UNQUALIFIED:critical_implementation"
+            in result["candidates"][0]["reason_codes"]
+        )
+    else:
+        assert preview["status"] == "draft"
+        assert {"code": "RULEBOOK_HARD_CONSTRAINT_INVALID", "path": "rulebook"} in preview["issues"]
 
 
 @pytest.mark.parametrize(

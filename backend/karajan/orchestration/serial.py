@@ -741,6 +741,63 @@ class SerialCoordinator:
         *,
         crash_at: str | None = None,
     ) -> None:
+        # Serialize an actual local start with plan approval and resource revocation.
+        # These are authority read locks, not a resource reservation or a live F05 gate.
+        with self.planner.activation_guard(state["run_id"]) as run:
+            with self.planner.projects.effective_resources_guard(run["project_id"]) as resources:
+                current, error = material(
+                    self.planner,
+                    run,
+                    task["id"],
+                    task["profile_ref"],
+                    current_resources=resources,
+                )
+                original = task["binding"]
+                approved = {row["plan_revision"] for row in run["approvals"]}
+                impacted = any(
+                    row["plan_revision"] > original["plan_revision"]
+                    and row["plan_revision"] in approved
+                    and task["id"] in row["impact"]["affected"]
+                    for row in run["plans"]
+                )
+                if (
+                    error
+                    or current is None
+                    or current["input_sha256"] != original["input_sha256"]
+                    or impacted
+                ):
+                    task.update(
+                        state="invalidating", invalidation_reason=error or "APPROVED_INPUT_CHANGED"
+                    )
+                    for linked in state["attempts"]:
+                        if linked["task_id"] == task["id"]:
+                            linked["fence"] += 1
+                            state["outbox"].append(
+                                {
+                                    "id": "invalidate:" + linked["id"],
+                                    "kind": "invalidate",
+                                    "attempt_id": linked["id"],
+                                    "state": "pending",
+                                }
+                            )
+                    state.update(state="invalidating", reason_codes=[task["invalidation_reason"]])
+                    return
+                attempt["activation_check"] = {
+                    "run_revision": run["revision"],
+                    "plan_revision": current["plan_revision"],
+                    "authorization_digest": current["authorization_digest"],
+                    "current_resources": current["current_resources"],
+                }
+                self._launch_locked(state, attempt, task, crash_at=crash_at)
+
+    def _launch_locked(
+        self,
+        state: dict[str, Any],
+        attempt: dict[str, Any],
+        task: dict[str, Any],
+        *,
+        crash_at: str | None = None,
+    ) -> None:
         assert self.fixture_runner is not None
         if not self.fixture_runner.safe_path(
             Path(attempt["workspace"])

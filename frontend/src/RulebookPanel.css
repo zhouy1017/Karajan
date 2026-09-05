@@ -1,0 +1,172 @@
+.rulebook-panel {
+  margin-top: 28px;
+  padding: 28px;
+  border: 1px solid #d7e0da;
+  border-radius: 12px;
+  background: #fff;
+  min-width: 0;
+}
+.rulebook-header,
+.rulebook-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.rulebook-header h2 {
+  margin: 6px 0;
+}
+.rulebook-header p,
+.rulebook-boundary {
+  color: #526b64;
+  line-height: 1.7;
+}
+.rulebook-boundary,
+.rulebook-notice {
+  background: #eef6f0;
+  padding: 14px;
+  border-radius: 8px;
+}
+.rulebook-error {
+  color: #8d3424;
+  background: #fff0ea;
+  padding: 14px;
+  border-radius: 8px;
+}
+.rulebook-editor {
+  margin: 20px 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.rulebook-editor h3 {
+  margin-top: 32px;
+}
+.rulebook-import {
+  margin: 0;
+}
+.rulebook-import input {
+  margin-top: 8px;
+}
+.rulebook-table-scroll {
+  overflow-x: auto;
+}
+.rulebook-matrix {
+  width: 100%;
+  min-width: 780px;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+.rulebook-matrix th,
+.rulebook-matrix td {
+  padding: 16px 12px;
+  border-bottom: 1px solid #dce5df;
+  vertical-align: top;
+}
+.rulebook-matrix thead {
+  background: #edf3ef;
+}
+.rulebook-matrix th[scope="row"] {
+  width: 38%;
+  font-weight: 400;
+}
+.rulebook-matrix td:nth-child(2) {
+  min-width: 110px;
+}
+.rulebook-matrix p {
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.rulebook-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 10px 0;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+.rulebook-check input {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin: 1px 0;
+  accent-color: #16634f;
+}
+.rulebook-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
+}
+.rulebook-groups section {
+  background: #f5f8f6;
+  padding: 18px;
+  border-radius: 8px;
+  min-width: 0;
+}
+.rulebook-groups h4 {
+  margin: 0 0 12px;
+  overflow-wrap: anywhere;
+}
+.rulebook-waiting {
+  color: #89651f;
+}
+.rulebook-order {
+  padding-left: 25px;
+  max-width: 580px;
+}
+.rulebook-order li {
+  padding: 8px 0;
+}
+.rulebook-order span {
+  display: inline-block;
+  width: calc(100% - 100px);
+}
+.rulebook-order button {
+  padding: 7px 12px;
+  margin-left: 5px;
+}
+.rulebook-panel details {
+  margin: 16px 0;
+}
+.rulebook-panel summary {
+  cursor: pointer;
+  color: #285c4c;
+}
+.rulebook-panel pre {
+  overflow: auto;
+  max-height: 340px;
+  background: #f3f6f4;
+  padding: 12px;
+  font-size: 12px;
+}
+.rulebook-preview {
+  border-top: 1px solid #dce5df;
+  padding: 20px 0;
+}
+.rulebook-panel code {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+.rulebook-differences {
+  padding-left: 22px;
+  max-height: 380px;
+  overflow: auto;
+}
+.rulebook-differences li {
+  padding: 12px 0;
+  line-height: 1.7;
+}
+.rulebook-history code {
+  display: block;
+  margin: 4px 0 12px;
+}
+@media (max-width: 700px) {
+  .rulebook-panel {
+    padding: 16px;
+  }
+  .rulebook-order span {
+    width: calc(100% - 90px);
+  }
+}
