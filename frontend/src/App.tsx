@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { ProjectRuns } from "./ProjectRuns";
 
 type Project = {
   id: string;
@@ -34,6 +35,7 @@ export function App() {
   const [targetBranch, setTargetBranch] = useState("main");
   const createCommand = useRef<{ payload: string; key: string } | null>(null);
   const [selected, setSelected] = useState<Project | null>(null);
+  const [runProject, setRunProject] = useState<Project | null>(null);
   const [configuration, setConfiguration] = useState("{}");
   const [preview, setPreview] = useState<Preview | null>(null);
   const [notice, setNotice] = useState("");
@@ -109,6 +111,7 @@ export function App() {
       setCsrf(null);
       setProjects([]);
       setSelected(null);
+      setRunProject(null);
       setPreview(null);
       setConfiguration("{}");
       setProjectName("");
@@ -219,6 +222,7 @@ export function App() {
   }
 
   async function openConfiguration(project: Project) {
+    setRunProject(null);
     setBusy(true);
     setError("");
     setNotice("");
@@ -444,6 +448,18 @@ export function App() {
                     >
                       检查配置
                     </button>
+                    <button
+                      className="secondary"
+                      disabled={busy}
+                      onClick={() => {
+                        setSelected(null);
+                        setRunProject(project);
+                        setError("");
+                        setNotice("");
+                      }}
+                    >
+                      需求与计划
+                    </button>
                   </article>
                 ))
               ) : (
@@ -454,6 +470,13 @@ export function App() {
                 </div>
               )}
             </div>
+            {runProject && csrf && (
+              <ProjectRuns
+                key={runProject.id}
+                project={runProject}
+                csrf={csrf}
+              />
+            )}
             {selected && (
               <section className="project-form">
                 <h2>{selected.name} · 配置预览</h2>

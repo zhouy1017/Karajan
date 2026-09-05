@@ -1,0 +1,15 @@
+{
+  "series_id": "fixture-run/fixture-task",
+  "baseline_id": "fixture:resolved-at-runtime",
+  "input_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "allowed_paths": ["app.py"],
+  "task_class": "T2",
+  "writer": {"attempt_id": "worker-1", "fence": 1, "stopped": true, "observation_ref": "fixture:stopped"},
+  "authors": [{"attempt_id": "worker-1", "fence": 1, "profile_id": "fixture-fast", "profile_revision": 1, "model_family": "fixture-family-a", "context_id": "worker-context", "provenance_ref": "fixture:author"}],
+  "policy": {
+    "id": "fixture-trusted-checks",
+    "revision": 1,
+    "checks": [{"id": "content-check", "revision": 1, "argv": ["{python}", "-I", "-c", "from pathlib import Path; assert Path('app.py').read_bytes() == b\"print('candidate')\\n\"; print('content check passed')"], "environment_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}],
+    "review": {"revision": 1, "environment_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "approved_reviewers": [{"profile_id": "fixture-fast", "profile_revision": 1, "model_family": "fixture-family-a", "qualification_ref": "fixture:reviewer"}]}
+  }
+}

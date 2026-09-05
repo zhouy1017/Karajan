@@ -17,9 +17,11 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
 from karajan.projects import ProjectRegistry
+from karajan.runs import RunPlanner
 
 from .body_limit import BodyLimitMiddleware
 from .projects import register_project_routes
+from .runs import register_run_routes
 
 
 def _digest(value: str) -> str:
@@ -127,9 +129,9 @@ def create_app(
     sessions = SessionStore(state_directory / "sessions.sqlite", bootstrap_token)
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
     app.add_middleware(BodyLimitMiddleware)
-    register_project_routes(
-        app, ProjectRegistry(state_directory / "projects.sqlite", allowed_roots)
-    )
+    projects = ProjectRegistry(state_directory / "projects.sqlite", allowed_roots)
+    register_project_routes(app, projects)
+    register_run_routes(app, RunPlanner(state_directory / "runs.sqlite", projects))
 
     @app.middleware("http")
     async def session_boundary(

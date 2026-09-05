@@ -35,7 +35,11 @@
 
 提交 `6a3af08` 的 RunnerHost、现金 broker 和 Codex 原生权限回放通过 [PR #32](https://github.com/zhouy1017/Karajan/pull/32) 的 Linux/Windows CI（[实际运行](https://github.com/zhouy1017/Karajan/actions/runs/33964876795)）。它们分别提供 A09/A10 启动恢复原语、A19/A26 本地逐调用账本行为和 A23 权限绑定回放；没有取得对应完整产品或真实服务资格。
 
-当前工作台变更的 M1-01 切片通过 73 项项目领域测试、17 项 Web 测试、4 项前端交互测试及真实浏览器保存/刷新/退出验证，详见 [项目登记](m1-project-registry.md) 与 [本地工作台](m1-local-workbench.md)。FR01 的正常登记及 API 拒绝路径已实现；完整用户动作变体仍需补齐。FR04 的配置预览应用、FR06 的固定规则离线计算和 NF02 的本机认证仅为各自要求的子集。当前未提交代码的测试记录不冒称已有远端 CI。
+M1-01 切片通过 73 项项目领域测试、17 项 Web 测试、4 项前端交互测试及真实浏览器保存/刷新/退出验证，详见 [项目登记](m1-project-registry.md) 与 [本地工作台](m1-local-workbench.md)。[PR #34](https://github.com/zhouy1017/Karajan/pull/34) 的 `782b6c4` 已通过双系统后端与前端 [实际 CI](https://github.com/zhouy1017/Karajan/actions/runs/33969448252)。FR01 的正常登记及 API 拒绝路径已实现；完整用户动作变体仍需补齐。FR04 的配置预览应用、FR06 的固定规则离线计算和 NF02 的本机认证仅为各自要求的子集。
+
+M0-05/06 的固定 OpenCode 运行时与隔离探针在 [PR #33](https://github.com/zhouy1017/Karajan/pull/33) 的 `722c1a7` 通过双系统 [CI](https://github.com/zhouy1017/Karajan/actions/runs/33969441411)。托管 Linux 无 user namespace 权限时记录 unsupported；本机 WSL2 的真实隔离/终止测试另有记录，不能把跳过当作能力通过。真实来源资格仍为 not_run。
+
+后续需求/候选切片已取得本地证据：[Run 计划领域](m1-run-planning.md) 的 49 项公共行为测试；[候选验证](m1-candidate-validation.md) 的 Windows 72 passed/3 POSIX-only skipped 与真实 WSL2/ext4 75 passed；[需求与计划页面](m1-run-workbench.md) 的认证 HTTP 和真实浏览器批准/人工交接。这些分别覆盖 FR03/04/12 的计划协议、FR14 的候选质量门和 FR17 的快照入口，不代表真实规划、执行调度、资源准入、完整事件视图或交付已经集成。尚未提交的记录不冒称远端 CI。
 
 | ID | 完成必须有的证据 | 候选责任票与验收关联 | 当前状态 |
 |---|---|---|---|
