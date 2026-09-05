@@ -15,3 +15,5 @@ OpenCode 由非作者独立检查 Standards 与 Spec，15 项公开测试、Ruff
 ## 限制
 
 独立审查不替代目标提交的 CI；新的远端运行记录在 PR 中补充。本次没有调用真实 provider 或读取真实认证，也没有取得现金计费上界、通用 runtime 沙箱或完整 #6/#7 出口资格。
+
+首次远端提交 `c397b2d` 的 Windows 检查通过、Linux 检查失败，汇总 gate 正确失败（[实际运行](https://github.com/zhouy1017/Karajan/actions/runs/33968582389)）。根因是探针测试及演示脚本错误假定 Linux 入口不带后缀。已核对锁定包的 package.json/postinstall：两个系统的目标名均为 `bin/opencode.exe`，Linux 内部仍是相应平台二进制。修复统一入口路径，保留缺二进制时失败，不能通过 skip 绕过安装或版本检查。

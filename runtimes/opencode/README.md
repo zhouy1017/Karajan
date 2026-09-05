@@ -7,7 +7,8 @@ npm ci --prefix runtimes/opencode --no-audit --no-fund
 ```
 
 不要用自动更新替换此执行版本。Python 探针在隔离环境中运行 `--version`，版本不符拒绝。
-Windows 可执行文件为 `node_modules/opencode-ai/bin/opencode.exe`；Linux 为同目录 `opencode`。
+该版本的入口在所有系统均为 `node_modules/opencode-ai/bin/opencode.exe`。
+名称来自 npm 包的 `bin` 字段及 `postinstall.mjs` 的固定目标；Linux 文件内容为本平台二进制，不能按后缀推断格式。
 安装工具自身需要读取 npm registry；安装完成后的模型探针只配置本地模拟服务。
 
 此依赖不提供 Karajan 的工具沙箱或现金准入资格。固定版本依据官方 npm 包和
