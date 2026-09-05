@@ -11,8 +11,7 @@ from karajan.contracts.probe import ProbeDocument
 
 def runtime_path() -> Path:
     root = Path(__file__).resolve().parents[3]
-    name = "opencode.exe" if os.name == "nt" else "opencode"
-    return root / "runtimes" / "opencode" / "node_modules" / "opencode-ai" / "bin" / name
+    return root / "runtimes" / "opencode" / "node_modules" / "opencode-ai" / "bin" / "opencode.exe"
 
 
 def test_official_runtime_completes_a_real_read_tool_loop_through_the_local_broker(
