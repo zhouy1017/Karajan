@@ -1,4 +1,4 @@
-"""The public CLI drives durable contention and a real loopback receiver."""
+"""The capacity CLI drives durable contention and a real loopback receiver."""
 
 import json
 import os
