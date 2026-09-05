@@ -22,7 +22,9 @@
 
 独立 Spec 的五份原输入及最终复验证据由 `review-fixes/spec-final-index.json` 绑定：未知需求、lead 禁用保护、数值等价 FX、原生假秘密以及混合池压力均已闭合。Standards 的非法目录预算反例现返回结构化 `POLICY_SNAPSHOT_INVALID`，见 `budget-number.*.json`。编译器额外记录了权限布尔值、静态歧义及非 ASCII 摘要回归；保守并发扣保护名额的独立反例另存。两轴最终审查均无未闭合发现。历史失败保持原文件；未保存旧源的记录不宣称可在旧提交重新执行。
 
-提交整理只删除公共凭据助手文件末尾的一行多余空行，函数内容逐字节未变；变更前后摘要记录在 `source-format-change.json`。整理后再次通过 78 项路由测试（1.46 秒），五个原 Spec 输入的公开结果与先前最终报告完全相同，见 `publication-replay.json`。`freeze.report.json` 绑定实际提交源码与所有历史证据。
+提交整理只删除公共凭据助手文件末尾的一行多余空行，函数内容逐字节未变；变更前后摘要记录在 `source-format-change.json`。整理后再次通过 78 项路由测试（1.46 秒），五个原 Spec 输入的公开结果与先前最终报告完全相同，见 `publication-replay.json`。`freeze.report.json` 记录测试时工作目录源码与所有历史证据。
+
+首轮逐字节提交校验发现，两份既有适配器文件在 Windows 工作目录使用 CRLF，Git 中使用 LF，因此原始字节摘要不同；已确认仅换行表示不同，产品内容未变化。`commit-source-binding.json` 保留此次校验差异，将 87 份源码映射到实现提交 `90e8575` 的实际 Git blob 摘要；全部测试与证据文件逐字节一致。跨检出重放比较输入和结果时，应另外核对源码表示，不能把换行差异当成相同原始摘要。
 
 ## 接入边界
 
