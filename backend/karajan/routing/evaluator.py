@@ -1,0 +1,382 @@
+"""Pure routing over supplied, versioned facts. A result never grants admission."""
+
+from pathlib import PurePosixPath, PureWindowsPath
+from typing import Any
+
+from karajan.contracts.credentials import contains_credential
+
+from .compiler import RoutingError, compile_rulebook, digest, parse, reference
+from .models import CapacitySnapshot, PolicySnapshot, TaskSnapshot
+from .quotas import check_quota
+from .ranking import check_cash, rank
+
+ALGORITHM_REVISION = "karajan.routing.lexicographic.v1"
+CLASSES = {"T1": 1, "T2": 2, "T3": 3}
+
+
+def _paths(value: str) -> tuple[str, ...]:
+    path = PurePosixPath(value)
+    if (
+        path.is_absolute()
+        or value != path.as_posix()
+        or not path.parts
+        or any(
+            part in {".", ".."} or part.rstrip(". ") != part or PureWindowsPath(part).is_reserved()
+            for part in path.parts
+        )
+        or any(char in value for char in '\\:*?[]<>|"\x00')
+        or not value.isprintable()
+    ):
+        raise RoutingError("ROUTING_PATH_INVALID")
+    return tuple(part.casefold() for part in path.parts)
+
+
+def _floor(task: dict[str, Any], risks: dict[str, Any]) -> str:
+    if task["risk"] not in risks["mapping"]:
+        raise RoutingError("RISK_MAPPING_REQUIRED")
+    values: list[str] = [task["complexity"], risks["mapping"][task["risk"]]]
+    for value in task["paths"]:
+        path = _paths(value)
+        for floor in risks["path_floors"]:
+            prefix = _paths(floor["prefix"])
+            if path[: len(prefix)] == prefix:
+                values.append(floor["minimum_class"])
+    return max(values, key=CLASSES.__getitem__)
+
+
+def _matches(rule: dict[str, Any], task: dict[str, Any], effective: str) -> bool:
+    when = rule["when"]
+    return (
+        all(when[key] is None or when[key] == task[key] for key in ("role", "purpose", "readiness"))
+        and (when["effective_class"] is None or when["effective_class"] == effective)
+        and (when["effective_class_in"] is None or effective in when["effective_class_in"])
+        and set(when["domains_all"]) <= set(task["domains"])
+        and (not when["risks_in"] or task["risk"] in when["risks_in"])
+    )
+
+
+def _unique(rows: list[dict[str, Any]], key: str) -> None:
+    values = [
+        reference(row)
+        if key == "ref"
+        else reference(row["profile"])
+        if key == "profile"
+        else row[key]
+        for row in rows
+    ]
+    if len(values) != len(set(values)):
+        raise RoutingError("SNAPSHOT_IDENTITY_CONFLICT")
+
+
+def _validate(task: dict[str, Any], policy: dict[str, Any], capacity: dict[str, Any]) -> None:
+    resources = policy["resources"]
+    for kind in ("accounts", "channels", "quota_pools", "budgets"):
+        _unique(resources[kind], "id")
+    _unique(resources["profiles"], "ref")
+    _unique(policy["profile_facts"], "profile")
+    _unique(capacity["accounts"], "id")
+    _unique(capacity["pools"], "id")
+    _unique(capacity["estimates"], "profile")
+    for estimate in capacity["estimates"]:
+        _unique(estimate["demand"], "pool_id")
+    for profile in resources["profiles"]:
+        if profile["profile"] is not None and contains_credential(
+            profile["profile"]["binding"]["native_settings"]
+        ):
+            raise RoutingError("CREDENTIAL_VALUE_FORBIDDEN")
+        _unique(profile["capability_evidence"], "capability")
+        if len(profile["quota_pool_refs"]) != len(set(profile["quota_pool_refs"])):
+            raise RoutingError("SNAPSHOT_IDENTITY_CONFLICT")
+    for floor in policy["risk_policy"]["path_floors"]:
+        _paths(floor["prefix"])
+    if policy["risk_policy"]["mapping"].get("critical", "T3") != "T3":
+        raise RoutingError("RISK_POLICY_FLOOR_INVALID")
+    for current in [task, *task["authors"]]:
+        for path in current["paths"]:
+            _paths(path)
+    if (task["role"] == "commander") != (task["purpose"] is not None):
+        raise RoutingError("TASK_PURPOSE_INVALID")
+
+
+def _required(
+    task: dict[str, Any], policy: dict[str, Any], rule: dict[str, Any], effective: str
+) -> set[str]:
+    required = set(
+        task["required_capabilities"]
+        + policy["constraints"]["required_capabilities"]
+        + task["authorization"]["required_capabilities"]
+        + rule["capabilities_all"]
+    )
+    if task["role"] == "worker":
+        required.update(
+            (
+                {
+                    "T1": "bounded_code_edit",
+                    "T2": "bounded_implementation",
+                    "T3": "critical_implementation",
+                }[effective],
+                "controlled_tools",
+                "candidate_capture",
+            )
+        )
+    elif task["role"] == "reviewer":
+        required.update(
+            ("critical_code_review" if effective == "T3" else "code_review", "structured_findings")
+        )
+    else:
+        required.add("design_reasoning")
+        if task["purpose"] == "lead":
+            required.add("structured_plan_output")
+    return required
+
+
+def _profile_checks(
+    ref: dict[str, Any],
+    task: dict[str, Any],
+    policy: dict[str, Any],
+    capacity: dict[str, Any],
+    rule: dict[str, Any],
+    effective: str,
+) -> dict[str, Any]:
+    reasons: list[str] = []
+    row: dict[str, Any] = {
+        "profile": ref,
+        "reason_codes": reasons,
+        "qualification": "simulation_only",
+        "pool_evaluations": [],
+        "sort_inputs": {},
+        "eligible": False,
+    }
+    key = reference(ref)
+    for name, refs in (
+        ("PROJECT_PROFILE_NOT_APPROVED", policy["approved_profile_refs"]),
+        ("PROJECT_CONSTRAINT_PROFILE_DENIED", policy["constraints"]["profile_refs"]),
+        ("RUN_PROFILE_NOT_APPROVED", task["authorization"]["profile_refs"]),
+        ("RUN_CEILING_PROFILE_DENIED", task["authorization"]["ceiling_profile_refs"]),
+    ):
+        if key not in {reference(value) for value in refs}:
+            reasons.append(name)
+    registered = next((p for p in policy["resources"]["profiles"] if reference(p) == key), None)
+    if registered is None or registered["profile"] is None:
+        reasons.append("PROFILE_BINDING_MISSING")
+        return row
+    profile = registered["profile"]
+    binding = profile["binding"]
+    profile_hash = digest(profile)
+    row["profile_sha256"] = profile_hash
+    row["required_capabilities"] = sorted(_required(task, policy, rule, effective))
+    if reference(profile) != key:
+        reasons.append("PROFILE_BINDING_MISMATCH")
+    if not registered["enabled"]:
+        reasons.append("PROFILE_DISABLED")
+    if registered["max_class"] is None or CLASSES[registered["max_class"]] < CLASSES[effective]:
+        reasons.append("PROFILE_CLASS_INSUFFICIENT")
+    if registered["required_isolation"] != "tool_sandboxed":
+        reasons.append("ISOLATION_INSUFFICIENT")
+    channel = next(
+        (c for c in policy["resources"]["channels"] if c["id"] == binding["channel_id"]), None
+    )
+    account = next(
+        (a for a in policy["resources"]["accounts"] if a["id"] == binding["account_id"]), None
+    )
+    if (
+        channel is None
+        or account is None
+        or channel["account_id"] != binding["account_id"]
+        or account["secret_ref"] != profile["auth_ref"]
+    ):
+        reasons.append("CHANNEL_ACCOUNT_BINDING_INVALID")
+    if channel is None or channel["billing_path"] != binding["billing_path"]:
+        reasons.append("BILLING_PATH_UNVERIFIED")
+    if channel is None or not channel["approved_data_destination"]:
+        reasons.append("DATA_DESTINATION_NOT_APPROVED")
+    for constraints in (policy["constraints"], task["authorization"]):
+        if binding["channel_id"] not in constraints["channel_ids"]:
+            reasons.append("CHANNEL_NOT_AUTHORIZED")
+        if not set(task["tools"] + profile["required_permissions"]) <= set(constraints["tools"]):
+            reasons.append("TOOL_NOT_AUTHORIZED")
+    facts = next((f for f in policy["profile_facts"] if reference(f["profile"]) == key), None)
+    if facts is None:
+        reasons.append("PROFILE_FACTS_MISSING")
+    else:
+        row["qualification_evidence"] = facts
+        if (
+            facts["profile_digest"] != profile_hash
+            or facts["runtime_version"] != binding["runtime_version"]
+            or not facts["observed_at"] <= capacity["as_of"] < facts["valid_until"]
+        ):
+            reasons.append("PROFILE_FACTS_STALE_OR_MISMATCHED")
+        if task["role"] not in facts["roles"]:
+            reasons.append("ROLE_NOT_SUPPORTED")
+        if not set(task["tools"]) <= set(facts["tools"]):
+            reasons.append("TOOLS_NOT_SUPPORTED")
+        if facts["context_tokens"] is None or facts["context_tokens"] < task["context_tokens"]:
+            reasons.append("CONTEXT_CAPACITY_INSUFFICIENT")
+        if any(
+            facts["data_destination"] not in c["data_destinations"]
+            for c in (policy["constraints"], task["authorization"])
+        ):
+            reasons.append("DATA_DESTINATION_NOT_AUTHORIZED")
+    evidence = {e["capability"]: e for e in registered["capability_evidence"]}
+    for capability in row["required_capabilities"]:
+        current = evidence.get(capability)
+        if (
+            current is None
+            or current["status"] != "passed"
+            or current["profile_digest"] != profile_hash
+            or current["runtime_version"] != binding["runtime_version"]
+            or current["provenance"] is None
+            or current["evidence_ref"] is None
+        ):
+            reasons.append(f"CAPABILITY_UNQUALIFIED:{capability}")
+    if task["role"] == "reviewer":
+        if not task["authors"]:
+            reasons.append("AUTHOR_SCOPE_REQUIRED")
+        for author in task["authors"]:
+            if (
+                author["attempt_id"] == task["planned_attempt_id"]
+                or author["context_id"] == task["planned_context_id"]
+            ):
+                reasons.append("REVIEW_NOT_INDEPENDENT")
+            if effective == "T3" or "different_model_family_from_authors" in rule["independence"]:
+                if (
+                    registered["model_family"] is None
+                    or author["model_family"] is None
+                    or registered["model_family"] == author["model_family"]
+                ):
+                    reasons.append("REVIEW_FAMILY_NOT_INDEPENDENT")
+    row["eligible"] = not reasons
+    return row
+
+
+def evaluate_route(
+    task_snapshot: dict[str, Any],
+    policy_snapshot: dict[str, Any],
+    capacity_snapshot: dict[str, Any],
+) -> dict[str, Any]:
+    task = parse(TaskSnapshot, task_snapshot, "TASK_SNAPSHOT_INVALID")
+    policy = parse(PolicySnapshot, policy_snapshot, "POLICY_SNAPSHOT_INVALID")
+    capacity = parse(CapacitySnapshot, capacity_snapshot, "CAPACITY_SNAPSHOT_INVALID")
+    compiled = compile_rulebook(policy["rulebook"])
+    _validate(task, policy, capacity)
+    report: dict[str, Any] = {
+        "schema_version": "karajan.routing.result.v1",
+        "algorithm_revision": ALGORITHM_REVISION,
+        "compiler_revision": compiled["compiler_revision"],
+        "rulebook_sha256": compiled["rulebook_sha256"],
+        "rulebook_id": policy["rulebook"]["id"],
+        "rulebook_revision": policy["rulebook"]["revision"],
+        "compiled_issues": compiled["issues"],
+        "compiled_warnings": compiled["warnings"],
+        "snapshots": {"task": task, "policy": policy, "capacity": capacity},
+        "snapshot_sha256": {
+            "task": digest(task),
+            "policy": digest(policy),
+            "capacity": digest(capacity),
+        },
+        "as_of": capacity["as_of"],
+        "reason_codes": [],
+        "effective_class": None,
+        "rule_id": None,
+        "matching_rules": [],
+        "resolved_groups": [],
+        "candidates": [],
+        "selected_profile": None,
+        "activation_allowed": False,
+        "live_qualification": "not_run",
+        "scope": "simulation_only",
+        "cash_sort": {"mode": "not_evaluated"},
+    }
+    if task["readiness"] == "T0" and task["role"] == "worker":
+        report["reason_codes"] = ["TASK_NOT_READY"]
+        return report
+    try:
+        effective = max(
+            (
+                _floor(current, policy["risk_policy"])
+                for current in ([task, *task["authors"]] if task["role"] == "reviewer" else [task])
+            ),
+            key=CLASSES.__getitem__,
+        )
+    except RoutingError as error:
+        report["reason_codes"] = [error.code]
+        return report
+    report["effective_class"] = effective
+    matches = [r for r in compiled["document"]["rules"] if _matches(r, task, effective)]
+    report["matching_rules"] = [
+        {"id": r["id"], "priority": r["priority"]}
+        for r in sorted(matches, key=lambda r: (-r["priority"], r["id"]))
+    ]
+    highest = [
+        r for r in matches if r["priority"] == max((row["priority"] for row in matches), default=0)
+    ]
+    if len(highest) != 1:
+        report["reason_codes"] = ["RULE_AMBIGUOUS" if highest else "NO_RULE"]
+        return report
+    rule = highest[0]
+    report["rule_id"] = rule["id"]
+    if not rule["eligible_groups"] or not rule["capabilities_all"]:
+        report["reason_codes"] = ["RULE_REQUIREMENT_EMPTY"]
+        return report
+    if task["stage"] not in task["authorization"]["allowed_stages"]:
+        report["reason_codes"] = ["STAGE_NOT_AUTHORIZED"]
+        return report
+    if task["stage"] == "quality":
+        if task["failure_reason"] != "QUALITY_FAILED" or task["previous_profile"] is None:
+            report["reason_codes"] = ["QUALITY_FAILURE_REQUIRED"]
+            return report
+        if reference(task["previous_profile"]) not in {
+            reference(p) for p in task["authorization"]["profile_refs"]
+        }:
+            report["reason_codes"] = ["PREVIOUS_PROFILE_NOT_AUTHORIZED"]
+            return report
+        if task["quality_repair_rounds_used"] >= min(
+            task["authorization"]["max_quality_repair_rounds"],
+            compiled["document"]["collaboration"]["max_quality_repair_rounds"],
+        ):
+            report["reason_codes"] = ["QUALITY_REPAIR_LIMIT_REACHED"]
+            return report
+        if (
+            task["quality_stage_index"]
+            not in task["authorization"]["approved_quality_stage_indices"]
+        ):
+            report["reason_codes"] = ["QUALITY_STAGE_NOT_AUTHORIZED"]
+            return report
+        if task["quality_stage_index"] > task["quality_repair_rounds_used"]:
+            report["reason_codes"] = ["QUALITY_STAGE_NOT_REACHED"]
+            return report
+    groups = (
+        rule["quality_escalation_groups"][
+            task["quality_stage_index"] : task["quality_stage_index"] + 1
+        ]
+        if task["stage"] == "quality"
+        else rule["eligible_groups"]
+    )
+    report["resolved_groups"] = [
+        {"id": group, "profiles": compiled["document"]["profile_groups"][group]} for group in groups
+    ]
+    refs = {
+        reference(ref) for group in groups for ref in compiled["document"]["profile_groups"][group]
+    }
+    for key in sorted(refs):
+        candidate = _profile_checks(
+            {"id": key[0], "revision": key[1]}, task, policy, capacity, rule, effective
+        )
+        if not any(
+            key
+            in {reference(ref) for ref in task["authorization"]["approved_groups"].get(group, [])}
+            and key in {reference(ref) for ref in compiled["document"]["profile_groups"][group]}
+            for group in groups
+        ):
+            candidate["reason_codes"].append("GROUP_PROFILE_NOT_APPROVED")
+        check_quota(candidate, task, policy, capacity, rule)
+        check_cash(candidate, task, policy, capacity)
+        candidate["reason_codes"] = sorted(set(candidate["reason_codes"]))
+        candidate["eligible"] = not candidate["reason_codes"]
+        report["candidates"].append(candidate)
+    eligible, report["cash_sort"] = rank(report["candidates"], rule, policy, capacity)
+    if eligible:
+        report["selected_profile"] = eligible[0]["profile"]
+    else:
+        report["reason_codes"] = ["NO_ELIGIBLE_PROFILE" if refs else "NO_STAGE_CANDIDATE"]
+    return report

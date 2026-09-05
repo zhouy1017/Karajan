@@ -32,3 +32,5 @@
 独立 Standards 与 Spec 复核均无未闭合发现。原始点段账户、超过池上限、无首份报告时的耗尽、旧会话迟到 401 四类反例已复验；[Spec 重跑入口和命令](../../examples/resource-workbench/review-fixes/spec-README.md) 保留原输入与历史失败。`freeze.report.json` 绑定最终源码、验证结果与浏览器记录；GitHub 必需检查须另以实际提交结果为准。
 
 真实来源观察、统一调度与启动 outbox、排队公平性、完整 Run 事件视图和账户登记仍未由此页验收；M3-02 和完整 FR08/FR09 保持实现中。没有真实模型请求、现金 API 调用或资格启用，`live_qualification=not_run`、`activation_allowed=false` 保持。
+
+[PR #42](https://github.com/zhouy1017/Karajan/pull/42) 的提交 `6b9d52b01ba16e533fe1ebed7c63d610540cf3b3` 已通过 [PR CI](https://github.com/zhouy1017/Karajan/actions/runs/33981865940) 和 [push CI](https://github.com/zhouy1017/Karajan/actions/runs/33981840461)，包含 Windows、Linux、前端及必需汇总门。冻结报告中的 CI pending 是提交前记录；这里补充该提交的实际远端结果，保留原记录。

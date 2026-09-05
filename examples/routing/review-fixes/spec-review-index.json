@@ -1,0 +1,79 @@
+{
+  "review": "Independent Spec replay of four confirmed issues and one approved pressure-semantics clarification",
+  "observed_at": "2026-09-05T18:18:33.065911+00:00",
+  "implementation_commit": null,
+  "implementation_binding": "Frozen work-in-progress source hashes; parent publishes the implementation commit",
+  "status": "passed",
+  "unclosed_confirmed_findings": 0,
+  "cases": [
+    {
+      "case": "unknown-estimate",
+      "status": "passed",
+      "input_sha256": "4f9880777ceed03a08fbfcb9639096b287780ed020b34d84d1a7cb9bee7e8929"
+    },
+    {
+      "case": "lead-reserve-denied",
+      "status": "passed",
+      "input_sha256": "26a3a0f81d2fbc181951e4faf86bc17fda2532aa8539292e14b1555487f4be3d"
+    },
+    {
+      "case": "fx-normalized-one",
+      "status": "passed",
+      "input_sha256": "faddace7bdc2f938b1dfe87a614ab7255cdf3584006273383944927f2193fe92"
+    },
+    {
+      "case": "credential-native-setting",
+      "status": "passed",
+      "input_sha256": "25c878432aedab1c04d2af591501b20c495d184d53d25db381338891df75cc9d"
+    },
+    {
+      "case": "mixed-pool-pressure",
+      "status": "passed",
+      "input_sha256": "43970a120f25a30df5b556953075ac1fe5509ea61490995aa88502e755b8c069"
+    }
+  ],
+  "source_sha256": {
+    "__init__.py": "0f33eab0165f5fd322d16105c343da220a8365aacf6168992a53559e24e7ca3f",
+    "__main__.py": "30607a3cdd15dd1d7e31731fa32262cdcf34f956c02929779836b9195fabc663",
+    "compiler.py": "11f1e504b04ac0fa596583e1210f456890b9c79622c3fb5f94e941c57b35daa8",
+    "evaluator.py": "e5d716a0f2f3e97d245462022a886fc99e7c1808b0cebfb6c14823ffe65d2a15",
+    "fixture.py": "491ecf20a6b5efd1dc0cc9386a3513607b467eef3ffccfcc76d0b3afa2269bec",
+    "models.py": "96406ae8759ce6ebb09a7f88173c49c3d8372c9b3cf8671152b96aee38035683",
+    "quotas.py": "6a9e332943436a6f76ad558b9a064da2b77905922460bbb9dc535b8726f16f53",
+    "ranking.py": "c1b8dfe7464834af3d8ca0b852059b006ec857065ab663cb31fc7f5087c8a99a",
+    "resources/broker.py": "cb1d6444a8ea17aa3c86ce4f32db769d205a2dedcaa257be00666bd9ebff8df4",
+    "resources/__init__.py": "c394746ed05c643e8957f941160b3524ff25af9dd31006c767a60dce321e021f",
+    "capacity/models.py": "bd58f6b0c98991cfaff402e863cebbab6f819b54ba244a05db56b4706d40d7ad",
+    "capacity/store.py": "ecce38cfeb1a5ca9e878934266d2e3e37d72831375c1e20a445fb539df97be01",
+    "capacity/__init__.py": "40bb4ac634db80514b97a271d428dec8d74432488492b87fedcc3eeda4676edf",
+    "contracts/probe.py": "7201236169624c597c9ac4747ade03fdfee86d60e8aab5d92fafb6ad8ec7ea8b",
+    "contracts/__init__.py": "e905480b39cd165ebd4b0904b5820acd7fe4396c3d97da725b3e3738cbcd74d8",
+    "contracts/credentials.py": "0184bc0f18dd301f58def658cc7c0510f787c953a8d21f4aa8fcc80f51a24395",
+    "projects/models.py": "ae082cf980f09ce6cb315d8d873875181c6c6f482d0bd581378d1b8ac5e7d698",
+    "projects/configuration.py": "7a67ff65f6c3ce4cc9259d07db5455b0c8fc45c939869eba1567bc8a0a826b34",
+    "projects/registry.py": "8db6b944c0f778007beebdef5e2b78f5bbac375c192a1986f19349e93000f931",
+    "projects/__init__.py": "9e3b2ead9e3ab7b2a52d22205acaeb42db20e2f609552f0be91f0c5d91c236e0"
+  },
+  "historical_input_and_before_bytes_unchanged": true,
+  "scope": "Pure solver and synthetic snapshots only; no model calls or cash requests; real qualification not_run",
+  "evidence_sha256": {
+    "spec-credential-native-setting.after.json": "8edcedf7c6f15c6689ef3847f8a420f9e05bf032f9f6c9413bc9e7d7c5c6a81d",
+    "spec-credential-native-setting.before.json": "775fcb2faf062d455c2dfca599146bfd2211e06e4b6bf7dc0afb6a00e8aaaaba",
+    "spec-credential-native-setting.input.json": "25c878432aedab1c04d2af591501b20c495d184d53d25db381338891df75cc9d",
+    "spec-fx-normalized-one.after.json": "580b90ac6878558a81930771cf5cce2d7e90897d770a4ad716568dd42f6d3e6b",
+    "spec-fx-normalized-one.before.json": "036e87379f679ebbe5b149a90c14a6c02e29a051a095069be2db3474e1bc8e86",
+    "spec-fx-normalized-one.input.json": "faddace7bdc2f938b1dfe87a614ab7255cdf3584006273383944927f2193fe92",
+    "spec-lead-reserve-denied.after.json": "1fa26c6dd6e06a1cc58908c22cb76c05e9167f98930c048bd354dc8108b81de1",
+    "spec-lead-reserve-denied.before.json": "b15d7b15cd40e75d095e5e3b730f191c3eeaeb9c2f06972ba135327d9f58f80d",
+    "spec-lead-reserve-denied.input.json": "26a3a0f81d2fbc181951e4faf86bc17fda2532aa8539292e14b1555487f4be3d",
+    "spec-mixed-pool-pressure.after.json": "afe324c2a5a9f062ca8729f9467df7288b7f82da633e8046225c5626fc8f5f4e",
+    "spec-mixed-pool-pressure.before.json": "c588593fea4985d889a2d384b6e916be972ffabf5439940013402b8222ed9b9b",
+    "spec-mixed-pool-pressure.input.json": "43970a120f25a30df5b556953075ac1fe5509ea61490995aa88502e755b8c069",
+    "spec-README.md": "e8ea54c7f431e45520598f2a927ff31e9b03ec1259cbf8752dfb4322766047da",
+    "spec-routing-final.junit.xml": "5bc9b0aad63721c0d5fc1d2b63ea12691446dc98bcf7c27421d2023ea2735fa7",
+    "spec-unknown-estimate.after.json": "bba6b8caa5c6da7af3683dd24077a6ba8f6ba6aaf99a69c37ec47e9e624de1d4",
+    "spec-unknown-estimate.before.json": "1448ca690f26ee75436d49e87cae43685a39c5d2c3992af6153aa9a6b4cae67e",
+    "spec-unknown-estimate.input.json": "4f9880777ceed03a08fbfcb9639096b287780ed020b34d84d1a7cb9bee7e8929",
+    "spec_replay.py": "1a553c555975de820c94ad72157fef24d566d01a917ed9b080a9f09fc12f87cf"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "schema_version": "karajan.routing.observed-test-history.v1",
+  "scope": "offline public API and CLI",
+  "note": "Counts below record actual tool executions during implementation. Full final JUnit is saved separately; early counts are transcribed from tool receipts, not claimed as preserved full logs.",
+  "cycles": [
+    {"seam": "initial API import and routing", "before": "ModuleNotFoundError: karajan.routing, one collection error", "after": "4 initial routing tests passed"},
+    {"seam": "all-window capacity and conservative mode", "before": "10 failed, 4 passed", "after": "14 passed"},
+    {"seam": "cash ceilings and candidate ordering", "before": "10 failed", "after": "10 passed"},
+    {"seam": "approved groups and ordered quality stages", "before": "2 failed, 9 passed", "after": "11 passed; combined routing suite 35 passed"},
+    {"seam": "public JSON CLI", "before": "4 failed, 1 passed", "after": "5 passed"},
+    {"seam": "unknown demand confidence", "before": "1 failed: fixture-profile selected without conservative mode", "after": "12 resource tests passed, including separate reserved-slot regression"},
+    {"seam": "explicit lead reserve denial and normalized FX one", "before": "2 failed", "after": "full routing suite 71 passed"},
+    {"seam": "native credential export rejection", "before": "1 failed: expected RoutingError was not raised", "after": "see final routing-results.xml and independent review-fixes replay evidence"}
+  ],
+  "live_qualification": "not_run",
+  "activation_allowed": false
+}

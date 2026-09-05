@@ -1,0 +1,1635 @@
+{
+  "$defs": {
+    "Account": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "provider_id": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Id"
+        },
+        "secret_ref": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Secret Ref"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "Account",
+      "type": "object"
+    },
+    "Binding": {
+      "additionalProperties": false,
+      "properties": {
+        "account_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Account Id",
+          "type": "string"
+        },
+        "auth_mode": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Auth Mode",
+          "type": "string"
+        },
+        "billing_path": {
+          "enum": [
+            "subscription_only",
+            "api_cash"
+          ],
+          "title": "Billing Path",
+          "type": "string"
+        },
+        "channel_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Channel Id",
+          "type": "string"
+        },
+        "model_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Model Id",
+          "type": "string"
+        },
+        "native_settings": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Native Settings",
+          "type": "object"
+        },
+        "runtime_kind": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Runtime Kind",
+          "type": "string"
+        },
+        "runtime_version": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Runtime Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "model_id",
+        "channel_id",
+        "account_id",
+        "runtime_kind",
+        "runtime_version",
+        "auth_mode",
+        "billing_path",
+        "native_settings"
+      ],
+      "title": "Binding",
+      "type": "object"
+    },
+    "Budget": {
+      "additionalProperties": false,
+      "properties": {
+        "currency_limits": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Currency Limits",
+          "type": "object"
+        },
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "max_duration_seconds": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Duration Seconds"
+        },
+        "max_total_attempts": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Total Attempts"
+        },
+        "scope": {
+          "enum": [
+            "planning",
+            "run"
+          ],
+          "title": "Scope",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "scope"
+      ],
+      "title": "Budget",
+      "type": "object"
+    },
+    "CapabilityEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "capability": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Capability",
+          "type": "string"
+        },
+        "evidence_ref": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Ref"
+        },
+        "profile_digest": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Profile Digest"
+        },
+        "provenance": {
+          "anyOf": [
+            {
+              "enum": [
+                "fixture",
+                "imported_observation"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provenance"
+        },
+        "runtime_version": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Runtime Version"
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "not_run",
+            "unsupported"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "capability",
+        "status"
+      ],
+      "title": "CapabilityEvidence",
+      "type": "object"
+    },
+    "CapacityPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "account_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Account Id",
+          "type": "string"
+        },
+        "conservative_mode": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ConservativeMode"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "account_id"
+      ],
+      "title": "CapacityPolicy",
+      "type": "object"
+    },
+    "Channel": {
+      "additionalProperties": false,
+      "properties": {
+        "account_id": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Account Id"
+        },
+        "approved_data_destination": {
+          "default": false,
+          "title": "Approved Data Destination",
+          "type": "boolean"
+        },
+        "billing_path": {
+          "anyOf": [
+            {
+              "enum": [
+                "subscription_only",
+                "api_cash"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Billing Path"
+        },
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "Channel",
+      "type": "object"
+    },
+    "Collaboration": {
+      "additionalProperties": false,
+      "properties": {
+        "command_mode": {
+          "const": "lead_with_advisers",
+          "title": "Command Mode",
+          "type": "string"
+        },
+        "delivery_target": {
+          "const": "pull_request",
+          "title": "Delivery Target",
+          "type": "string"
+        },
+        "implementation_readiness": {
+          "const": "ready",
+          "title": "Implementation Readiness",
+          "type": "string"
+        },
+        "internal_delegation": {
+          "const": "disabled_unless_admitted_and_observable",
+          "title": "Internal Delegation",
+          "type": "string"
+        },
+        "max_infrastructure_retries_per_root_task": {
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Max Infrastructure Retries Per Root Task",
+          "type": "integer"
+        },
+        "max_parallel_writers_per_project": {
+          "exclusiveMinimum": 0,
+          "maximum": 1000000000,
+          "title": "Max Parallel Writers Per Project",
+          "type": "integer"
+        },
+        "max_quality_repair_rounds": {
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Max Quality Repair Rounds",
+          "type": "integer"
+        },
+        "merge_authority": {
+          "const": "user",
+          "title": "Merge Authority",
+          "type": "string"
+        },
+        "plan_approval": {
+          "const": "explicit_revision",
+          "title": "Plan Approval",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command_mode",
+        "plan_approval",
+        "implementation_readiness",
+        "delivery_target",
+        "merge_authority",
+        "max_parallel_writers_per_project",
+        "max_quality_repair_rounds",
+        "max_infrastructure_retries_per_root_task",
+        "internal_delegation"
+      ],
+      "title": "Collaboration",
+      "type": "object"
+    },
+    "ConservativeMode": {
+      "additionalProperties": false,
+      "properties": {
+        "cooldown_seconds": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cooldown Seconds"
+        },
+        "enabled": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Enabled"
+        },
+        "max_attempt_duration_seconds": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Attempt Duration Seconds"
+        },
+        "max_local_active_attempts": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Local Active Attempts"
+        },
+        "observation_max_age_seconds": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Observation Max Age Seconds"
+        }
+      },
+      "title": "ConservativeMode",
+      "type": "object"
+    },
+    "GlobalConstraints": {
+      "additionalProperties": false,
+      "properties": {
+        "autonomous_tool_execution_min_isolation": {
+          "const": "tool_sandboxed",
+          "title": "Autonomous Tool Execution Min Isolation",
+          "type": "string"
+        },
+        "final_review_required": {
+          "const": true,
+          "title": "Final Review Required",
+          "type": "boolean"
+        },
+        "no_silent_model_or_billing_fallback": {
+          "const": true,
+          "title": "No Silent Model Or Billing Fallback",
+          "type": "boolean"
+        },
+        "profile_fixed_per_attempt": {
+          "const": true,
+          "title": "Profile Fixed Per Attempt",
+          "type": "boolean"
+        },
+        "require_approved_data_destination": {
+          "const": true,
+          "title": "Require Approved Data Destination",
+          "type": "boolean"
+        },
+        "require_enabled_profile": {
+          "const": true,
+          "title": "Require Enabled Profile",
+          "type": "boolean"
+        },
+        "require_explicit_billing_path": {
+          "const": true,
+          "title": "Require Explicit Billing Path",
+          "type": "boolean"
+        },
+        "require_passed_capabilities": {
+          "const": true,
+          "title": "Require Passed Capabilities",
+          "type": "boolean"
+        },
+        "review_context": {
+          "const": "fresh_non_author",
+          "title": "Review Context",
+          "type": "string"
+        }
+      },
+      "required": [
+        "require_enabled_profile",
+        "require_passed_capabilities",
+        "require_explicit_billing_path",
+        "require_approved_data_destination",
+        "autonomous_tool_execution_min_isolation",
+        "profile_fixed_per_attempt",
+        "no_silent_model_or_billing_fallback",
+        "review_context",
+        "final_review_required"
+      ],
+      "title": "GlobalConstraints",
+      "type": "object"
+    },
+    "HardConstraints": {
+      "additionalProperties": false,
+      "properties": {
+        "channel_ids": {
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Channel Ids",
+          "type": "array"
+        },
+        "data_destinations": {
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Data Destinations",
+          "type": "array"
+        },
+        "min_isolation": {
+          "enum": [
+            "attempt_isolated",
+            "tool_sandboxed"
+          ],
+          "title": "Min Isolation",
+          "type": "string"
+        },
+        "profile_refs": {
+          "items": {
+            "$ref": "#/$defs/ProfileRef"
+          },
+          "maxItems": 1000,
+          "title": "Profile Refs",
+          "type": "array"
+        },
+        "required_capabilities": {
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Required Capabilities",
+          "type": "array"
+        },
+        "tools": {
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Tools",
+          "type": "array"
+        }
+      },
+      "required": [
+        "profile_refs",
+        "channel_ids",
+        "tools",
+        "data_destinations",
+        "required_capabilities",
+        "min_isolation"
+      ],
+      "title": "HardConstraints",
+      "type": "object"
+    },
+    "JsonValue": {},
+    "PathFloor": {
+      "additionalProperties": false,
+      "properties": {
+        "minimum_class": {
+          "enum": [
+            "T1",
+            "T2",
+            "T3"
+          ],
+          "title": "Minimum Class",
+          "type": "string"
+        },
+        "prefix": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Prefix",
+          "type": "string"
+        }
+      },
+      "required": [
+        "prefix",
+        "minimum_class"
+      ],
+      "title": "PathFloor",
+      "type": "object"
+    },
+    "Preference": {
+      "additionalProperties": false,
+      "properties": {
+        "band": {
+          "maximum": 1000000,
+          "minimum": -1000000,
+          "title": "Band",
+          "type": "integer"
+        },
+        "profile": {
+          "$ref": "#/$defs/ProfileRef"
+        }
+      },
+      "required": [
+        "profile",
+        "band"
+      ],
+      "title": "Preference",
+      "type": "object"
+    },
+    "Profile": {
+      "additionalProperties": false,
+      "properties": {
+        "admission_granularity": {
+          "enum": [
+            "attempt",
+            "model_call"
+          ],
+          "title": "Admission Granularity",
+          "type": "string"
+        },
+        "auth_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Auth Ref",
+          "type": "string"
+        },
+        "binding": {
+          "$ref": "#/$defs/Binding"
+        },
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "required_permissions": {
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^\\S+$",
+            "type": "string"
+          },
+          "title": "Required Permissions",
+          "type": "array"
+        },
+        "revision": {
+          "exclusiveMinimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "usage_coverage": {
+          "enum": [
+            "attempt",
+            "model_call",
+            "unknown"
+          ],
+          "title": "Usage Coverage",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "revision",
+        "binding",
+        "auth_ref",
+        "required_permissions",
+        "admission_granularity",
+        "usage_coverage"
+      ],
+      "title": "Profile",
+      "type": "object"
+    },
+    "ProfileFacts": {
+      "additionalProperties": false,
+      "properties": {
+        "budget_enforcement": {
+          "enum": [
+            "bounded_calls",
+            "estimated_stop",
+            "unknown"
+          ],
+          "title": "Budget Enforcement",
+          "type": "string"
+        },
+        "context_tokens": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 1000000000,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Context Tokens"
+        },
+        "data_destination": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Data Destination",
+          "type": "string"
+        },
+        "evidence_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Evidence Ref",
+          "type": "string"
+        },
+        "observed_at": {
+          "title": "Observed At",
+          "type": "number"
+        },
+        "profile": {
+          "$ref": "#/$defs/ProfileRef"
+        },
+        "profile_digest": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Profile Digest",
+          "type": "string"
+        },
+        "provenance": {
+          "enum": [
+            "fixture",
+            "imported_observation"
+          ],
+          "title": "Provenance",
+          "type": "string"
+        },
+        "roles": {
+          "items": {
+            "enum": [
+              "commander",
+              "worker",
+              "reviewer"
+            ],
+            "type": "string"
+          },
+          "title": "Roles",
+          "type": "array"
+        },
+        "runtime_version": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Runtime Version",
+          "type": "string"
+        },
+        "tools": {
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Tools",
+          "type": "array"
+        },
+        "valid_until": {
+          "title": "Valid Until",
+          "type": "number"
+        }
+      },
+      "required": [
+        "profile",
+        "profile_digest",
+        "runtime_version",
+        "roles",
+        "tools",
+        "context_tokens",
+        "data_destination",
+        "budget_enforcement",
+        "provenance",
+        "evidence_ref",
+        "observed_at",
+        "valid_until"
+      ],
+      "title": "ProfileFacts",
+      "type": "object"
+    },
+    "ProfileRef": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "revision": {
+          "exclusiveMinimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "revision"
+      ],
+      "title": "ProfileRef",
+      "type": "object"
+    },
+    "QuotaPool": {
+      "additionalProperties": false,
+      "properties": {
+        "account_id": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Account Id"
+        },
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "service",
+            "platform_allowance"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "limit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Limit"
+        },
+        "observation_state": {
+          "default": "unknown",
+          "enum": [
+            "unknown",
+            "observed"
+          ],
+          "title": "Observation State",
+          "type": "string"
+        },
+        "unit": {
+          "enum": [
+            "percent",
+            "tokens",
+            "requests"
+          ],
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "unit"
+      ],
+      "title": "QuotaPool",
+      "type": "object"
+    },
+    "RegisteredProfile": {
+      "additionalProperties": false,
+      "properties": {
+        "capability_evidence": {
+          "items": {
+            "$ref": "#/$defs/CapabilityEvidence"
+          },
+          "title": "Capability Evidence",
+          "type": "array"
+        },
+        "enabled": {
+          "default": false,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "max_class": {
+          "anyOf": [
+            {
+              "enum": [
+                "T1",
+                "T2",
+                "T3"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Class"
+        },
+        "model_family": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model Family"
+        },
+        "profile": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Profile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "quota_pool_refs": {
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+            "type": "string"
+          },
+          "title": "Quota Pool Refs",
+          "type": "array"
+        },
+        "required_isolation": {
+          "anyOf": [
+            {
+              "enum": [
+                "attempt_isolated",
+                "tool_sandboxed"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Required Isolation"
+        },
+        "revision": {
+          "exclusiveMinimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "revision"
+      ],
+      "title": "RegisteredProfile",
+      "type": "object"
+    },
+    "ResourceCatalog": {
+      "additionalProperties": false,
+      "properties": {
+        "accounts": {
+          "items": {
+            "$ref": "#/$defs/Account"
+          },
+          "title": "Accounts",
+          "type": "array"
+        },
+        "budgets": {
+          "items": {
+            "$ref": "#/$defs/Budget"
+          },
+          "title": "Budgets",
+          "type": "array"
+        },
+        "capacity_policies": {
+          "items": {
+            "$ref": "#/$defs/CapacityPolicy"
+          },
+          "title": "Capacity Policies",
+          "type": "array"
+        },
+        "channels": {
+          "items": {
+            "$ref": "#/$defs/Channel"
+          },
+          "title": "Channels",
+          "type": "array"
+        },
+        "profiles": {
+          "items": {
+            "$ref": "#/$defs/RegisteredProfile"
+          },
+          "title": "Profiles",
+          "type": "array"
+        },
+        "quota_pools": {
+          "items": {
+            "$ref": "#/$defs/QuotaPool"
+          },
+          "title": "Quota Pools",
+          "type": "array"
+        }
+      },
+      "title": "ResourceCatalog",
+      "type": "object"
+    },
+    "ResourcePolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "account_capacity_policy_binding": {
+          "const": "current_global_revision",
+          "title": "Account Capacity Policy Binding",
+          "type": "string"
+        },
+        "call_reservations": {
+          "const": "slices_of_attempt_reservation",
+          "title": "Call Reservations",
+          "type": "string"
+        },
+        "candidate_order": {
+          "items": {
+            "enum": [
+              "preference_band",
+              "uncertainty_band",
+              "bottleneck_quota_pressure",
+              "incremental_cash_estimate",
+              "completion_time_estimate",
+              "profile_id"
+            ],
+            "type": "string"
+          },
+          "title": "Candidate Order",
+          "type": "array"
+        },
+        "cash_budget_enforcement": {
+          "const": "bounded_calls",
+          "title": "Cash Budget Enforcement",
+          "type": "string"
+        },
+        "fairness": {
+          "const": "aging_and_run_round_robin",
+          "title": "Fairness",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "missing_cash_budget": {
+          "const": "deny_cash_route",
+          "title": "Missing Cash Budget",
+          "type": "string"
+        },
+        "planning_budget_ref": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Planning Budget Ref"
+        },
+        "queue_order": {
+          "items": {
+            "enum": [
+              "lead_feedback",
+              "required_review_repair_and_critical_path",
+              "worker",
+              "optional_adviser"
+            ],
+            "type": "string"
+          },
+          "title": "Queue Order",
+          "type": "array"
+        },
+        "reset_preference": {
+          "const": "only_among_equivalent_candidates_all_windows_checked",
+          "title": "Reset Preference",
+          "type": "string"
+        },
+        "run_budget_ref": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Run Budget Ref"
+        },
+        "subscription_quota_enforcement": {
+          "const": "conservative_estimate",
+          "title": "Subscription Quota Enforcement",
+          "type": "string"
+        },
+        "unknown_quota": {
+          "const": "require_explicit_conservative_mode",
+          "title": "Unknown Quota",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "queue_order",
+        "fairness",
+        "candidate_order",
+        "reset_preference",
+        "account_capacity_policy_binding",
+        "unknown_quota",
+        "planning_budget_ref",
+        "run_budget_ref",
+        "missing_cash_budget",
+        "cash_budget_enforcement",
+        "subscription_quota_enforcement",
+        "call_reservations"
+      ],
+      "title": "ResourcePolicy",
+      "type": "object"
+    },
+    "RiskPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "mapping": {
+          "patternProperties": {
+            "^[^\\s\\x00-\\x1f\\x7f]+$": {
+              "enum": [
+                "T1",
+                "T2",
+                "T3"
+              ],
+              "type": "string"
+            }
+          },
+          "propertyNames": {
+            "maxLength": 256,
+            "minLength": 1
+          },
+          "title": "Mapping",
+          "type": "object"
+        },
+        "path_floors": {
+          "items": {
+            "$ref": "#/$defs/PathFloor"
+          },
+          "title": "Path Floors",
+          "type": "array"
+        },
+        "revision": {
+          "exclusiveMinimum": 0,
+          "maximum": 1000000000,
+          "title": "Revision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "revision",
+        "mapping",
+        "path_floors"
+      ],
+      "title": "RiskPolicy",
+      "type": "object"
+    },
+    "Rule": {
+      "additionalProperties": false,
+      "properties": {
+        "capabilities_all": {
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Capabilities All",
+          "type": "array"
+        },
+        "eligible_groups": {
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Eligible Groups",
+          "type": "array"
+        },
+        "handoff": {
+          "anyOf": [
+            {
+              "const": "explicit_checkpoint_record",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Handoff"
+        },
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "independence": {
+          "items": {
+            "enum": [
+              "fresh_context",
+              "non_author_attempt",
+              "different_model_family_from_authors"
+            ],
+            "type": "string"
+          },
+          "title": "Independence",
+          "type": "array"
+        },
+        "lead_reserve_access": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lead Reserve Access"
+        },
+        "priority": {
+          "maximum": 1000000,
+          "minimum": -1000000,
+          "title": "Priority",
+          "type": "integer"
+        },
+        "profile_preferences": {
+          "items": {
+            "$ref": "#/$defs/Preference"
+          },
+          "title": "Profile Preferences",
+          "type": "array"
+        },
+        "quality_escalation_groups": {
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Quality Escalation Groups",
+          "type": "array"
+        },
+        "reroute": {
+          "enum": [
+            "propose_checkpoint_handoff_require_user_decision",
+            "within_approved_set",
+            "within_approved_set_preserve_requirements"
+          ],
+          "title": "Reroute",
+          "type": "string"
+        },
+        "when": {
+          "$ref": "#/$defs/When"
+        }
+      },
+      "required": [
+        "id",
+        "priority",
+        "when",
+        "eligible_groups",
+        "capabilities_all",
+        "reroute"
+      ],
+      "title": "Rule",
+      "type": "object"
+    },
+    "Rulebook": {
+      "additionalProperties": false,
+      "properties": {
+        "collaboration": {
+          "$ref": "#/$defs/Collaboration"
+        },
+        "description": {
+          "maxLength": 8000,
+          "title": "Description",
+          "type": "string"
+        },
+        "global_constraints": {
+          "$ref": "#/$defs/GlobalConstraints"
+        },
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "profile_groups": {
+          "patternProperties": {
+            "^[^\\s\\x00-\\x1f\\x7f]+$": {
+              "items": {
+                "$ref": "#/$defs/ProfileRef"
+              },
+              "maxItems": 1000,
+              "type": "array"
+            }
+          },
+          "propertyNames": {
+            "maxLength": 256,
+            "minLength": 1
+          },
+          "title": "Profile Groups",
+          "type": "object"
+        },
+        "resource_policy": {
+          "$ref": "#/$defs/ResourcePolicy"
+        },
+        "revision": {
+          "exclusiveMinimum": 0,
+          "maximum": 1000000000,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "rules": {
+          "items": {
+            "$ref": "#/$defs/Rule"
+          },
+          "maxItems": 1000,
+          "title": "Rules",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": "karajan.rulebook.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "configured",
+            "example_unbound",
+            "published"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "revision",
+        "status",
+        "description",
+        "collaboration",
+        "profile_groups",
+        "global_constraints",
+        "resource_policy",
+        "rules"
+      ],
+      "title": "Rulebook",
+      "type": "object"
+    },
+    "When": {
+      "additionalProperties": false,
+      "properties": {
+        "domains_all": {
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Domains All",
+          "type": "array"
+        },
+        "effective_class": {
+          "anyOf": [
+            {
+              "enum": [
+                "T1",
+                "T2",
+                "T3"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Effective Class"
+        },
+        "effective_class_in": {
+          "anyOf": [
+            {
+              "items": {
+                "enum": [
+                  "T1",
+                  "T2",
+                  "T3"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Effective Class In"
+        },
+        "purpose": {
+          "anyOf": [
+            {
+              "enum": [
+                "lead",
+                "advice"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Purpose"
+        },
+        "readiness": {
+          "anyOf": [
+            {
+              "enum": [
+                "ready",
+                "T0"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Readiness"
+        },
+        "risks_in": {
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Risks In",
+          "type": "array"
+        },
+        "role": {
+          "enum": [
+            "commander",
+            "worker",
+            "reviewer"
+          ],
+          "title": "Role",
+          "type": "string"
+        }
+      },
+      "required": [
+        "role"
+      ],
+      "title": "When",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "approved_profile_refs": {
+      "items": {
+        "$ref": "#/$defs/ProfileRef"
+      },
+      "maxItems": 1000,
+      "title": "Approved Profile Refs",
+      "type": "array"
+    },
+    "constraints": {
+      "$ref": "#/$defs/HardConstraints"
+    },
+    "profile_facts": {
+      "items": {
+        "$ref": "#/$defs/ProfileFacts"
+      },
+      "title": "Profile Facts",
+      "type": "array"
+    },
+    "resources": {
+      "$ref": "#/$defs/ResourceCatalog"
+    },
+    "risk_policy": {
+      "$ref": "#/$defs/RiskPolicy"
+    },
+    "rulebook": {
+      "$ref": "#/$defs/Rulebook"
+    },
+    "schema_version": {
+      "const": "karajan.routing.policy.v1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "rulebook",
+    "resources",
+    "approved_profile_refs",
+    "profile_facts",
+    "risk_policy",
+    "constraints"
+  ],
+  "title": "PolicySnapshot",
+  "type": "object"
+}

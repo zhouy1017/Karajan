@@ -14,3 +14,8 @@ examples/orchestration/review-fixes/*.json -text whitespace=cr-at-eol
 examples/resource-workbench/*.json -text whitespace=cr-at-eol
 examples/resource-workbench/review-fixes/* -text whitespace=cr-at-eol
 examples/resource-workbench/*.xml -text whitespace=-blank-at-eof,cr-at-eol
+# Routing snapshots and review transcripts retain the bytes used by their hashes.
+examples/routing/*.json -text whitespace=cr-at-eol
+examples/routing/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+examples/routing/review-fixes/*.json -text whitespace=cr-at-eol
+examples/routing/review-fixes/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
