@@ -1,0 +1,149 @@
+{
+  "schema_version": "karajan.codex-replay.v1",
+  "case_id": "codex-turn-interrupted",
+  "runtime_version": "0.153.2",
+  "schema_sha256": "d3eace08be5dca386bfd1f1e8df650058b4113f1e10870a284d775d75517576a",
+  "config_source_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "attempt": {
+    "attempt_id": "attempt-fixture",
+    "fence": 1,
+    "profile_id": "codex-fixture",
+    "profile_revision": 1,
+    "profile_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "thread_id": "thread-fixture",
+    "turn_id": "turn-fixture"
+  },
+  "authorization": {
+    "hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "expires_at": "2026-09-05T10:10:00Z",
+    "allowed_request_digests": [
+      "39e15ce8ee9f86f4244f9a2568c71d37d71a3f24fb81b8b84bde3a31f0600c89"
+    ]
+  },
+  "requested": {
+    "model": "fixture-model",
+    "model_provider": "openai",
+    "cwd": "C:/fixture/repository",
+    "approval_policy": "on-request",
+    "approvals_reviewer": "user",
+    "sandbox": {
+      "type": "readOnly",
+      "networkAccess": false
+    }
+  },
+  "thread_start_request_id": 101,
+  "steps": [
+    {
+      "kind": "native",
+      "at": "2026-09-05T10:00:00Z",
+      "message": {
+        "id": 101,
+        "result": {
+          "model": "fixture-model",
+          "modelProvider": "openai",
+          "cwd": "C:/fixture/repository",
+          "approvalPolicy": "on-request",
+          "approvalsReviewer": "user",
+          "sandbox": {
+            "type": "readOnly",
+            "networkAccess": false
+          },
+          "thread": {
+            "id": "thread-fixture",
+            "cliVersion": "0.153.2",
+            "createdAt": 1788602400,
+            "updatedAt": 1788602400,
+            "cwd": "C:/fixture/repository",
+            "ephemeral": true,
+            "modelProvider": "openai",
+            "preview": "",
+            "projectId": null,
+            "sessionId": "session-fixture",
+            "source": "appServer",
+            "status": {
+              "type": "idle"
+            },
+            "turns": []
+          }
+        }
+      }
+    },
+    {
+      "kind": "native",
+      "at": "2026-09-05T10:00:01Z",
+      "message": {
+        "method": "turn/started",
+        "params": {
+          "threadId": "thread-fixture",
+          "turn": {
+            "id": "turn-fixture",
+            "status": "inProgress",
+            "items": [],
+            "error": null
+          }
+        }
+      }
+    },
+    {
+      "kind": "native",
+      "at": "2026-09-05T10:00:02Z",
+      "expires_at": "2026-09-05T10:02:00Z",
+      "message": {
+        "id": 301,
+        "method": "item/commandExecution/requestApproval",
+        "params": {
+          "itemId": "item-fixture",
+          "threadId": "thread-fixture",
+          "turnId": "turn-fixture",
+          "command": "git status --short",
+          "cwd": "C:/fixture/repository",
+          "kind": "command",
+          "startedAtMs": 1788602400000
+        }
+      }
+    },
+    {
+      "kind": "decision",
+      "at": "2026-09-05T10:00:03Z",
+      "decision": {
+        "attempt_id": "attempt-fixture",
+        "fence": 1,
+        "profile_id": "codex-fixture",
+        "profile_revision": 1,
+        "profile_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "thread_id": "thread-fixture",
+        "turn_id": "turn-fixture",
+        "authorization_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "request_id": 301,
+        "request_digest": "39e15ce8ee9f86f4244f9a2568c71d37d71a3f24fb81b8b84bde3a31f0600c89",
+        "decision": "accept"
+      }
+    },
+    {
+      "kind": "native",
+      "at": "2026-09-05T10:00:04Z",
+      "message": {
+        "method": "turn/completed",
+        "params": {
+          "threadId": "thread-fixture",
+          "turn": {
+            "id": "turn-fixture",
+            "status": "interrupted",
+            "items": [],
+            "error": null
+          }
+        }
+      }
+    }
+  ],
+  "provenance": {
+    "kind": "fixture",
+    "observed_at": "2026-09-05T10:00:00Z",
+    "evidence_refs": [
+      "fixture:codex-turn-interrupted"
+    ],
+    "limitations": [
+      "Scripted protocol messages; no Codex session or model request was started."
+    ]
+  }
+}

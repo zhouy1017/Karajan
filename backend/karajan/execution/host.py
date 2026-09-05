@@ -1,0 +1,540 @@
+"""RunnerHost owns launch identity, not routing or business retries."""
+
+import hashlib
+import json
+import math
+import os
+import sqlite3
+import subprocess
+import sys
+import time
+import uuid
+from collections.abc import Iterator
+from contextlib import contextmanager
+from dataclasses import asdict, dataclass
+from pathlib import Path
+
+from pydantic import TypeAdapter
+
+from karajan.contracts.probe import AttemptManifest, Identifier, PositiveInteger
+
+from ._platform import ProcessGroup, ProcessIdentity, observe_process, process_identity
+
+_identifier: TypeAdapter[str] = TypeAdapter(Identifier)
+_positive_integer: TypeAdapter[int] = TypeAdapter(PositiveInteger)
+
+
+class StartConflict(ValueError):
+    """An idempotency identity was reused with different launch material."""
+
+
+class LaunchDenied(ValueError):
+    """Current control state does not authorize this launch."""
+
+
+class ProbeCrash(RuntimeError):
+    """A deterministic local crash point; the CLI can exit without cleanup here."""
+
+
+def checkpoint(crash_at: str | None, point: str) -> None:
+    if crash_at == point:
+        raise ProbeCrash(point)
+
+
+@dataclass(frozen=True)
+class Activation:
+    id: str
+    attempt_id: str
+    fence: int
+    authorization_ref: str
+    budget_ref: str
+    expires_at: float
+
+    def __post_init__(self) -> None:
+        for identity in (self.id, self.attempt_id, self.authorization_ref, self.budget_ref):
+            _identifier.validate_python(identity, strict=True)
+        _positive_integer.validate_python(self.fence, strict=True)
+
+
+@dataclass(frozen=True)
+class ProcessSpec:
+    argv: tuple[str, ...]
+    cwd: Path
+    timeout_seconds: float = 30.0
+
+    def document(self) -> dict[str, object]:
+        if (
+            not self.argv
+            or not self.argv[0]
+            or any(not isinstance(argument, str) or "\x00" in argument for argument in self.argv)
+            or not self.cwd.is_dir()
+            or self.timeout_seconds <= 0
+            or not math.isfinite(self.timeout_seconds)
+        ):
+            raise ValueError("A command, existing directory and positive timeout are required.")
+        return {**asdict(self), "cwd": str(self.cwd.resolve())}
+
+
+@dataclass(frozen=True)
+class UsageRecord:
+    event_id: str
+    sequence: int
+    fence: int
+    usage: dict[str, object]
+
+
+@dataclass(frozen=True)
+class Snapshot:
+    prepared_id: str
+    attempt_id: str
+    state: str
+    supervisor: ProcessIdentity | None
+    processes: tuple[ProcessIdentity, ...] = ()
+    exit_code: int | None = None
+    remote_stop: str = "unknown"
+    launch_phase: str = "prepared"
+    business_status: str = "pending"
+    usage_settled: bool = False
+    usage_events: tuple[UsageRecord, ...] = ()
+
+
+@dataclass(frozen=True)
+class ResultDecision:
+    accepted: bool
+    reason: str
+
+
+@dataclass(frozen=True)
+class Cancellation:
+    status: str
+    snapshot: Snapshot
+
+
+def encoded(value: object) -> str:
+    return json.dumps(
+        value, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False
+    )
+
+
+class RunnerHost:
+    def __init__(self, state_directory: Path) -> None:
+        self.directory = state_directory.resolve()
+        self.directory.mkdir(parents=True, exist_ok=True)
+        self.database = self.directory / "runnerhost.sqlite3"
+        with self._connect() as connection:
+            connection.execute(
+                "CREATE TABLE IF NOT EXISTS executions ("
+                "start_key TEXT PRIMARY KEY, attempt_id TEXT UNIQUE NOT NULL, "
+                "request_digest TEXT NOT NULL, manifest TEXT NOT NULL, spec TEXT NOT NULL, "
+                "state TEXT NOT NULL, activation TEXT, activation_digest TEXT, "
+                "nonce TEXT NOT NULL, supervisor_pid INTEGER, supervisor_birth TEXT, "
+                "containment_ready INTEGER DEFAULT 0, "
+                "exit_code INTEGER, cancelled INTEGER NOT NULL DEFAULT 0, "
+                "launch_phase TEXT NOT NULL DEFAULT 'prepared', "
+                "business_status TEXT NOT NULL DEFAULT 'pending', "
+                "usage_settled INTEGER NOT NULL DEFAULT 0, "
+                "usage_sequence INTEGER NOT NULL DEFAULT 0)"
+            )
+            connection.execute(
+                "CREATE TABLE IF NOT EXISTS controls (attempt_id TEXT PRIMARY KEY, "
+                "fence INTEGER NOT NULL, authorization_ref TEXT NOT NULL, "
+                "dispatch_enabled INTEGER NOT NULL)"
+            )
+            connection.execute(
+                "CREATE TABLE IF NOT EXISTS cancellations (cancel_key TEXT PRIMARY KEY, "
+                "attempt_id TEXT NOT NULL)"
+            )
+            connection.execute(
+                "CREATE TABLE IF NOT EXISTS results (attempt_id TEXT NOT NULL, "
+                "event_id TEXT NOT NULL, "
+                "payload TEXT NOT NULL, accepted INTEGER NOT NULL, reason TEXT NOT NULL, "
+                "PRIMARY KEY (attempt_id, event_id))"
+            )
+            connection.execute(
+                "CREATE TABLE IF NOT EXISTS usage_events (attempt_id TEXT NOT NULL, "
+                "event_id TEXT NOT NULL, sequence INTEGER NOT NULL, fence INTEGER NOT NULL, "
+                "payload TEXT NOT NULL, PRIMARY KEY (attempt_id, event_id), "
+                "UNIQUE (attempt_id, sequence))"
+            )
+
+    @contextmanager
+    def _connect(self) -> Iterator[sqlite3.Connection]:
+        connection = sqlite3.connect(self.database, timeout=10)
+        connection.row_factory = sqlite3.Row
+        try:
+            with connection:
+                yield connection
+        finally:
+            connection.close()
+
+    def prepare(self, manifest: AttemptManifest, start_key: str, spec: ProcessSpec) -> Snapshot:
+        if not start_key or len(start_key) > 256:
+            raise ValueError("Invalid start key.")
+        manifest_json = manifest.model_dump_json()
+        spec_json = encoded(spec.document())
+        digest = hashlib.sha256(
+            encoded([json.loads(manifest_json), json.loads(spec_json)]).encode()
+        ).hexdigest()
+        with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            old = connection.execute(
+                "SELECT * FROM executions WHERE start_key = ?", (start_key,)
+            ).fetchone()
+            if old is not None:
+                if old["request_digest"] != digest:
+                    raise StartConflict("START_KEY_PAYLOAD_MISMATCH")
+            else:
+                try:
+                    connection.execute(
+                        "INSERT INTO executions (start_key, attempt_id, request_digest, manifest, "
+                        "spec, state, nonce) VALUES (?, ?, ?, ?, ?, 'prepared', ?)",
+                        (
+                            start_key,
+                            manifest.id,
+                            digest,
+                            manifest_json,
+                            spec_json,
+                            uuid.uuid4().hex,
+                        ),
+                    )
+                except sqlite3.IntegrityError as error:
+                    raise StartConflict("ATTEMPT_ALREADY_PREPARED") from error
+        return self.inspect(manifest.id)
+
+    def set_control(
+        self, attempt_id: str, *, fence: int, authorization_ref: str, dispatch_enabled: bool
+    ) -> None:
+        """Trusted coordinator input; this is not a model-facing approval endpoint."""
+        _identifier.validate_python(attempt_id, strict=True)
+        _identifier.validate_python(authorization_ref, strict=True)
+        _positive_integer.validate_python(fence, strict=True)
+        if type(dispatch_enabled) is not bool:
+            raise ValueError("Dispatch must be a boolean.")
+        with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            old = connection.execute(
+                "SELECT fence FROM controls WHERE attempt_id = ?", (attempt_id,)
+            ).fetchone()
+            if old is not None and old["fence"] > fence:
+                raise LaunchDenied("CONTROL_FENCE_REGRESSION")
+            connection.execute(
+                "INSERT INTO controls VALUES (?, ?, ?, ?) ON CONFLICT(attempt_id) DO UPDATE "
+                "SET fence=excluded.fence, authorization_ref=excluded.authorization_ref, "
+                "dispatch_enabled=excluded.dispatch_enabled",
+                (attempt_id, fence, authorization_ref, int(dispatch_enabled)),
+            )
+
+    def start(
+        self, prepared_id: str, activation: Activation, *, crash_at: str | None = None
+    ) -> Snapshot:
+        if crash_at not in {None, "after_accept", "before_spawn", "after_spawn", "after_ack"}:
+            raise ValueError("Unknown crash point.")
+        if not math.isfinite(activation.expires_at):
+            raise LaunchDenied("ACTIVATION_EXPIRY_INVALID")
+        activation_json = encoded(asdict(activation))
+        activation_digest = hashlib.sha256(activation_json.encode()).hexdigest()
+        replay = False
+        with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                "SELECT * FROM executions WHERE start_key = ?", (prepared_id,)
+            ).fetchone()
+            if row is None:
+                raise KeyError(prepared_id)
+            attempt = AttemptManifest.model_validate_json(row["manifest"])
+            if row["activation_digest"] is not None:
+                if row["activation_digest"] != activation_digest:
+                    raise StartConflict("ACTIVATION_PAYLOAD_MISMATCH")
+                replay = True
+            control = connection.execute(
+                "SELECT * FROM controls WHERE attempt_id = ?", (attempt.id,)
+            ).fetchone()
+            if not replay and (
+                row["cancelled"]
+                or control is None
+                or not control["dispatch_enabled"]
+                or control["fence"] != attempt.fence
+                or control["authorization_ref"] != attempt.authorization_ref
+                or activation.attempt_id != attempt.id
+                or activation.fence != attempt.fence
+                or activation.authorization_ref != attempt.authorization_ref
+                or activation.budget_ref != attempt.budget_ref
+                or activation.expires_at <= time.time()
+            ):
+                raise LaunchDenied("ACTIVATION_NOT_CURRENT")
+            if not replay:
+                connection.execute(
+                    "UPDATE executions SET state='accepted', launch_phase='accepted', "
+                    "activation=?, activation_digest=? "
+                    "WHERE start_key=?",
+                    (activation_json, activation_digest, prepared_id),
+                )
+        if not replay:
+            checkpoint(crash_at, "after_accept")
+            with self._connect() as connection:
+                connection.execute("BEGIN IMMEDIATE")
+                current = connection.execute(
+                    "SELECT cancelled FROM executions WHERE start_key=?", (prepared_id,)
+                ).fetchone()
+                control = connection.execute(
+                    "SELECT * FROM controls WHERE attempt_id=?", (attempt.id,)
+                ).fetchone()
+                allowed = (
+                    not current["cancelled"]
+                    and control is not None
+                    and control["dispatch_enabled"]
+                    and control["fence"] == attempt.fence
+                    and control["authorization_ref"] == attempt.authorization_ref
+                    and activation.expires_at > time.time()
+                )
+                connection.execute(
+                    "UPDATE executions SET state=?, launch_phase=? WHERE start_key=?",
+                    (
+                        "starting" if allowed else "cancelled_unstarted",
+                        "activated" if allowed else "denied",
+                        prepared_id,
+                    ),
+                )
+            if not allowed:
+                raise LaunchDenied("ACTIVATION_REVOKED_BEFORE_SPAWN")
+            checkpoint(crash_at, "before_spawn")
+            environment = {
+                key: os.environ[key]
+                for key in ("SystemRoot", "WINDIR", "PATH", "TEMP", "TMP")
+                if key in os.environ
+            }
+            environment["PYTHONPATH"] = str(Path(__file__).resolve().parents[2])
+            environment["PYTHONUTF8"] = "1"
+            with (self.directory / f"{row['nonce']}.supervisor.log").open("ab") as log:
+                process = subprocess.Popen(
+                    [
+                        sys.executable,
+                        "-m",
+                        "karajan.execution._supervisor",
+                        str(self.database),
+                        prepared_id,
+                    ],
+                    env=environment,
+                    stdin=subprocess.DEVNULL,
+                    stdout=log,
+                    stderr=subprocess.STDOUT,
+                    start_new_session=os.name != "nt",
+                )
+            checkpoint(crash_at, "after_spawn")
+            identity = process_identity(process.pid)
+            with self._connect() as connection:
+                connection.execute(
+                    "UPDATE executions SET launch_phase='acknowledged', "
+                    "supervisor_pid=COALESCE(supervisor_pid, ?), "
+                    "supervisor_birth=COALESCE(supervisor_birth, ?) WHERE start_key=?",
+                    (
+                        identity.pid if identity else None,
+                        identity.birth if identity else None,
+                        prepared_id,
+                    ),
+                )
+            checkpoint(crash_at, "after_ack")
+        return self.inspect(attempt.id)
+
+    def cancel(
+        self, attempt_id: str, cancel_key: str, *, timeout_seconds: float = 3.0
+    ) -> Cancellation:
+        if not cancel_key or timeout_seconds < 0 or not math.isfinite(timeout_seconds):
+            raise ValueError("A cancel key and nonnegative wait are required.")
+        with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                "SELECT * FROM executions WHERE attempt_id=?", (attempt_id,)
+            ).fetchone()
+            if row is None:
+                raise KeyError(attempt_id)
+            previous = connection.execute(
+                "SELECT attempt_id FROM cancellations WHERE cancel_key=?", (cancel_key,)
+            ).fetchone()
+            if previous is not None and previous["attempt_id"] != attempt_id:
+                raise StartConflict("CANCEL_KEY_PAYLOAD_MISMATCH")
+            connection.execute(
+                "INSERT OR IGNORE INTO cancellations VALUES (?, ?)", (cancel_key, attempt_id)
+            )
+            connection.execute(
+                "UPDATE executions SET cancelled=1, "
+                "business_status=CASE WHEN business_status='pending' THEN 'cancelled' "
+                "ELSE business_status END, "
+                "state=CASE WHEN state='prepared' THEN 'cancelled_unstarted' ELSE state END "
+                "WHERE attempt_id=?",
+                (attempt_id,),
+            )
+            connection.execute(
+                "UPDATE controls SET dispatch_enabled=0 WHERE attempt_id=?", (attempt_id,)
+            )
+        if os.name == "nt" and row["containment_ready"]:
+            try:
+                group = ProcessGroup(row["nonce"], row["supervisor_pid"])
+                try:
+                    group.terminate()
+                finally:
+                    group.close()
+            except OSError:
+                pass  # The observation below must still prove termination.
+        until = time.monotonic() + timeout_seconds
+        while True:
+            snapshot = self.inspect(attempt_id)
+            if snapshot.state == "exited":
+                return Cancellation("confirmed", snapshot)
+            if time.monotonic() >= until:
+                return Cancellation("unknown", snapshot)
+            time.sleep(0.02)
+
+    def receive_result(
+        self, attempt_id: str, fence: int, event_id: str, result: dict[str, object]
+    ) -> ResultDecision:
+        _identifier.validate_python(attempt_id, strict=True)
+        _identifier.validate_python(event_id, strict=True)
+        _positive_integer.validate_python(fence, strict=True)
+        payload = encoded({"fence": fence, "result": result})
+        with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                "SELECT * FROM executions WHERE attempt_id=?", (attempt_id,)
+            ).fetchone()
+            if row is None:
+                raise KeyError(attempt_id)
+            existing = connection.execute(
+                "SELECT * FROM results WHERE attempt_id=? AND event_id=?", (attempt_id, event_id)
+            ).fetchone()
+            if existing is not None:
+                if existing["payload"] != payload:
+                    raise StartConflict("RESULT_EVENT_PAYLOAD_MISMATCH")
+                return ResultDecision(bool(existing["accepted"]), existing["reason"])
+            attempt = AttemptManifest.model_validate_json(row["manifest"])
+            control = connection.execute(
+                "SELECT * FROM controls WHERE attempt_id=?", (attempt_id,)
+            ).fetchone()
+            accepted = (
+                not row["cancelled"]
+                and row["business_status"] == "pending"
+                and control is not None
+                and fence == attempt.fence == control["fence"]
+                and control["authorization_ref"] == attempt.authorization_ref
+                and row["state"] in {"running", "finished"}
+            )
+            reason = "ACCEPTED" if accepted else "RESULT_NOT_CURRENT"
+            connection.execute(
+                "INSERT INTO results VALUES (?, ?, ?, ?, ?)",
+                (attempt_id, event_id, payload, int(accepted), reason),
+            )
+            if accepted:
+                connection.execute(
+                    "UPDATE executions SET business_status='done' WHERE attempt_id=?", (attempt_id,)
+                )
+        return ResultDecision(accepted, reason)
+
+    def reconcile(self) -> list[Snapshot]:
+        with self._connect() as connection:
+            attempts = [row[0] for row in connection.execute("SELECT attempt_id FROM executions")]
+        snapshots = [self.inspect(attempt_id) for attempt_id in attempts]
+        return [
+            item
+            for item in snapshots
+            if item.state != "exited"
+            or item.business_status not in {"done", "cancelled"}
+            or not item.usage_settled
+        ]
+
+    def record_usage(
+        self, attempt_id: str, fence: int, event_id: str, usage: dict[str, object]
+    ) -> None:
+        _identifier.validate_python(attempt_id, strict=True)
+        _identifier.validate_python(event_id, strict=True)
+        _positive_integer.validate_python(fence, strict=True)
+        payload = encoded(usage)
+        with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                "SELECT usage_sequence FROM executions WHERE attempt_id=?", (attempt_id,)
+            ).fetchone()
+            if row is None:
+                raise KeyError(attempt_id)
+            old = connection.execute(
+                "SELECT fence, payload FROM usage_events WHERE attempt_id=? AND event_id=?",
+                (attempt_id, event_id),
+            ).fetchone()
+            if old is not None:
+                if old["fence"] != fence or old["payload"] != payload:
+                    raise StartConflict("USAGE_EVENT_PAYLOAD_MISMATCH")
+                return
+            sequence = row["usage_sequence"] + 1
+            connection.execute(
+                "INSERT INTO usage_events VALUES (?, ?, ?, ?, ?)",
+                (attempt_id, event_id, sequence, fence, payload),
+            )
+            connection.execute(
+                "UPDATE executions SET usage_sequence=?, usage_settled=0 WHERE attempt_id=?",
+                (sequence, attempt_id),
+            )
+
+    def settle_usage(self, attempt_id: str, *, through_sequence: int) -> None:
+        """Trusted reconciliation of observed facts, not a claim of provider billing finality."""
+        with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                "SELECT usage_sequence FROM executions WHERE attempt_id=?", (attempt_id,)
+            ).fetchone()
+            if row is None:
+                raise KeyError(attempt_id)
+            if through_sequence != row["usage_sequence"]:
+                raise ValueError("USAGE_SEQUENCE_CHANGED")
+            connection.execute(
+                "UPDATE executions SET usage_settled=1 WHERE attempt_id=?", (attempt_id,)
+            )
+
+    def inspect(self, attempt_id: str) -> Snapshot:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT * FROM executions WHERE attempt_id = ?", (attempt_id,)
+            ).fetchone()
+            usages = connection.execute(
+                "SELECT * FROM usage_events WHERE attempt_id=? ORDER BY sequence", (attempt_id,)
+            ).fetchall()
+        if row is None:
+            raise KeyError(attempt_id)
+        supervisor = (
+            ProcessIdentity(row["supervisor_pid"], row["supervisor_birth"])
+            if row["supervisor_pid"] is not None
+            else None
+        )
+        state = row["state"]
+        members: list[ProcessIdentity] = []
+        if state == "cancelled_unstarted":
+            state = "exited"
+        elif state != "prepared":
+            state = "unknown"
+            if supervisor is not None and row["containment_ready"]:
+                try:
+                    if observe_process(supervisor) in {"identity_mismatch", "unknown"}:
+                        raise OSError("Supervisor identity cannot be verified.")
+                    group = ProcessGroup(row["nonce"], supervisor.pid)
+                    try:
+                        members = group.members()
+                    finally:
+                        group.close()
+                    state = "running" if members else "exited"
+                except OSError:
+                    state = "unknown"
+        return Snapshot(
+            row["start_key"],
+            row["attempt_id"],
+            state,
+            supervisor,
+            tuple(members),
+            row["exit_code"],
+            launch_phase=row["launch_phase"],
+            business_status=row["business_status"],
+            usage_settled=bool(row["usage_settled"]),
+            usage_events=tuple(
+                UsageRecord(
+                    item["event_id"], item["sequence"], item["fence"], json.loads(item["payload"])
+                )
+                for item in usages
+            ),
+        )

@@ -1,0 +1,687 @@
+{
+  "$defs": {
+    "AcceptedBindingEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "attempt_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Attempt Id",
+          "type": "string"
+        },
+        "fence": {
+          "exclusiveMinimum": 0,
+          "title": "Fence",
+          "type": "integer"
+        },
+        "profile_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "profile_revision": {
+          "exclusiveMinimum": 0,
+          "title": "Profile Revision",
+          "type": "integer"
+        },
+        "type": {
+          "const": "binding.accepted",
+          "title": "Type",
+          "type": "string"
+        },
+        "binding": {
+          "$ref": "#/$defs/Binding"
+        }
+      },
+      "required": [
+        "event_id",
+        "attempt_id",
+        "fence",
+        "profile_id",
+        "profile_revision",
+        "type",
+        "binding"
+      ],
+      "title": "AcceptedBindingEvent",
+      "type": "object"
+    },
+    "AttemptManifest": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "fence": {
+          "exclusiveMinimum": 0,
+          "title": "Fence",
+          "type": "integer"
+        },
+        "role": {
+          "enum": [
+            "commander",
+            "worker",
+            "reviewer"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "profile_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "profile_revision": {
+          "exclusiveMinimum": 0,
+          "title": "Profile Revision",
+          "type": "integer"
+        },
+        "authorization_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Authorization Ref",
+          "type": "string"
+        },
+        "budget_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Budget Ref",
+          "type": "string"
+        },
+        "permissions": {
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^\\S+$",
+            "type": "string"
+          },
+          "title": "Permissions",
+          "type": "array"
+        },
+        "requested_binding": {
+          "$ref": "#/$defs/Binding"
+        }
+      },
+      "required": [
+        "id",
+        "fence",
+        "role",
+        "profile_id",
+        "profile_revision",
+        "authorization_ref",
+        "budget_ref",
+        "permissions",
+        "requested_binding"
+      ],
+      "title": "AttemptManifest",
+      "type": "object"
+    },
+    "Binding": {
+      "additionalProperties": false,
+      "properties": {
+        "model_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Model Id",
+          "type": "string"
+        },
+        "channel_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Channel Id",
+          "type": "string"
+        },
+        "account_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Account Id",
+          "type": "string"
+        },
+        "runtime_kind": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Runtime Kind",
+          "type": "string"
+        },
+        "runtime_version": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Runtime Version",
+          "type": "string"
+        },
+        "auth_mode": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Auth Mode",
+          "type": "string"
+        },
+        "billing_path": {
+          "enum": [
+            "subscription_only",
+            "api_cash"
+          ],
+          "title": "Billing Path",
+          "type": "string"
+        },
+        "native_settings": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Native Settings",
+          "type": "object"
+        }
+      },
+      "required": [
+        "model_id",
+        "channel_id",
+        "account_id",
+        "runtime_kind",
+        "runtime_version",
+        "auth_mode",
+        "billing_path",
+        "native_settings"
+      ],
+      "title": "Binding",
+      "type": "object"
+    },
+    "CapabilityResultEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "attempt_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Attempt Id",
+          "type": "string"
+        },
+        "fence": {
+          "exclusiveMinimum": 0,
+          "title": "Fence",
+          "type": "integer"
+        },
+        "profile_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "profile_revision": {
+          "exclusiveMinimum": 0,
+          "title": "Profile Revision",
+          "type": "integer"
+        },
+        "type": {
+          "const": "capability.result",
+          "title": "Type",
+          "type": "string"
+        },
+        "capability": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Capability",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "not_run",
+            "unsupported"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "evidence_refs": {
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^\\S+$",
+            "type": "string"
+          },
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "limitations": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Limitations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "event_id",
+        "attempt_id",
+        "fence",
+        "profile_id",
+        "profile_revision",
+        "type",
+        "capability",
+        "status",
+        "evidence_refs",
+        "limitations"
+      ],
+      "title": "CapabilityResultEvent",
+      "type": "object"
+    },
+    "JsonValue": {},
+    "Profile": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "revision": {
+          "exclusiveMinimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "binding": {
+          "$ref": "#/$defs/Binding"
+        },
+        "auth_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Auth Ref",
+          "type": "string"
+        },
+        "required_permissions": {
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^\\S+$",
+            "type": "string"
+          },
+          "title": "Required Permissions",
+          "type": "array"
+        },
+        "admission_granularity": {
+          "enum": [
+            "attempt",
+            "model_call"
+          ],
+          "title": "Admission Granularity",
+          "type": "string"
+        },
+        "usage_coverage": {
+          "enum": [
+            "attempt",
+            "model_call",
+            "unknown"
+          ],
+          "title": "Usage Coverage",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "revision",
+        "binding",
+        "auth_ref",
+        "required_permissions",
+        "admission_granularity",
+        "usage_coverage"
+      ],
+      "title": "Profile",
+      "type": "object"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "fixture",
+            "imported_observation"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "runtime_version": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Runtime Version",
+          "type": "string"
+        },
+        "os": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Os",
+          "type": "string"
+        },
+        "isolation": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Isolation",
+          "type": "string"
+        },
+        "observed_at": {
+          "format": "date-time",
+          "title": "Observed At",
+          "type": "string"
+        },
+        "evidence_refs": {
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^\\S+$",
+            "type": "string"
+          },
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "limitations": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Limitations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "runtime_version",
+        "os",
+        "isolation",
+        "observed_at",
+        "evidence_refs",
+        "limitations"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "ProviderBindingEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "attempt_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Attempt Id",
+          "type": "string"
+        },
+        "fence": {
+          "exclusiveMinimum": 0,
+          "title": "Fence",
+          "type": "integer"
+        },
+        "profile_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^\\S+$",
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "profile_revision": {
+          "exclusiveMinimum": 0,
+          "title": "Profile Revision",
+          "type": "integer"
+        },
+        "type": {
+          "const": "binding.provider_reported",
+          "title": "Type",
+          "type": "string"
+        },
+        "binding": {
+          "$ref": "#/$defs/ReportedBinding"
+        }
+      },
+      "required": [
+        "event_id",
+        "attempt_id",
+        "fence",
+        "profile_id",
+        "profile_revision",
+        "type",
+        "binding"
+      ],
+      "title": "ProviderBindingEvent",
+      "type": "object"
+    },
+    "ReportedBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "model_id": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "pattern": "^\\S+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model Id"
+        },
+        "channel_id": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "pattern": "^\\S+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Channel Id"
+        },
+        "account_id": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "pattern": "^\\S+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Account Id"
+        },
+        "runtime_kind": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "pattern": "^\\S+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Runtime Kind"
+        },
+        "runtime_version": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "pattern": "^\\S+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Runtime Version"
+        },
+        "auth_mode": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "pattern": "^\\S+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Auth Mode"
+        },
+        "billing_path": {
+          "anyOf": [
+            {
+              "enum": [
+                "subscription_only",
+                "api_cash"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Billing Path"
+        },
+        "native_settings": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Native Settings"
+        }
+      },
+      "title": "ReportedBinding",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "karajan.probe.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "case_id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "pattern": "^\\S+$",
+      "title": "Case Id",
+      "type": "string"
+    },
+    "profile": {
+      "$ref": "#/$defs/Profile"
+    },
+    "attempt": {
+      "$ref": "#/$defs/AttemptManifest"
+    },
+    "required_capabilities": {
+      "items": {
+        "maxLength": 256,
+        "minLength": 1,
+        "pattern": "^\\S+$",
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Required Capabilities",
+      "type": "array"
+    },
+    "events": {
+      "items": {
+        "discriminator": {
+          "mapping": {
+            "binding.accepted": "#/$defs/AcceptedBindingEvent",
+            "binding.provider_reported": "#/$defs/ProviderBindingEvent",
+            "capability.result": "#/$defs/CapabilityResultEvent"
+          },
+          "propertyName": "type"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/AcceptedBindingEvent"
+          },
+          {
+            "$ref": "#/$defs/ProviderBindingEvent"
+          },
+          {
+            "$ref": "#/$defs/CapabilityResultEvent"
+          }
+        ]
+      },
+      "title": "Events",
+      "type": "array"
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    }
+  },
+  "required": [
+    "schema_version",
+    "case_id",
+    "profile",
+    "attempt",
+    "required_capabilities",
+    "events",
+    "provenance"
+  ],
+  "title": "ProbeDocument",
+  "type": "object"
+}

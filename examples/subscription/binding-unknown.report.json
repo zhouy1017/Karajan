@@ -1,0 +1,82 @@
+{
+  "attempt": {
+    "attempt_id": "attempt-fixture",
+    "fence": 1,
+    "profile_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "profile_id": "codex-fixture",
+    "profile_revision": 1,
+    "thread_id": "thread-fixture",
+    "turn_id": "turn-fixture"
+  },
+  "authorization_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "bindings": {
+    "accepted": null,
+    "provider_reported": null,
+    "requested": {
+      "approvalPolicy": "on-request",
+      "approvalsReviewer": "user",
+      "cwd": "C:/fixture/repository",
+      "model": "fixture-model",
+      "modelProvider": "openai",
+      "sandbox": {
+        "networkAccess": false,
+        "type": "readOnly"
+      }
+    }
+  },
+  "case_id": "binding-unknown",
+  "estimates": {
+    "state": "not_provided"
+  },
+  "event_order": [],
+  "input_sha256": "7191a8c8166906d17f58611385d342a9384909cced186cda9a10fe257609f29c",
+  "native_errors": [],
+  "permission_outcomes": [],
+  "protocol": {
+    "config_source_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "runtime_version": "0.153.2",
+    "schema_file": "codex_app_server_protocol.v2.schemas.json",
+    "schema_sha256": "d3eace08be5dca386bfd1f1e8df650058b4113f1e10870a284d775d75517576a"
+  },
+  "provenance": {
+    "evidence_refs": [
+      "fixture:binding-unknown"
+    ],
+    "kind": "fixture",
+    "limitations": [
+      "Scripted protocol messages; no Codex session or model request was started."
+    ],
+    "observed_at": "2026-09-05T10:00:00Z"
+  },
+  "qualification": {
+    "capabilities": {
+      "billing_path_confirmed": "not_run",
+      "extra_delegation_disabled": "not_run",
+      "hidden_fallback_excluded": "not_run",
+      "native_sandbox_enforced": "not_run",
+      "provider_model_confirmed": "not_run"
+    },
+    "dispatch_eligible": false,
+    "live_status": "not_run",
+    "remaining_live_cases": [
+      "official_login",
+      "inference",
+      "file_tools",
+      "cancel"
+    ]
+  },
+  "quota": {
+    "state": "unknown"
+  },
+  "reason_codes": [
+    "BINDING_UNCONFIRMED"
+  ],
+  "responses": [],
+  "schema_version": "karajan.codex-replay-report.v1",
+  "status": "not_run",
+  "usage": {
+    "coverage": "attempt",
+    "model_call_count": null,
+    "state": "unknown"
+  }
+}

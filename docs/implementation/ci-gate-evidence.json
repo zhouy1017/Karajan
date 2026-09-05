@@ -1,0 +1,206 @@
+{
+  "schema_version": 1,
+  "repository": "zhouy1017/Karajan",
+  "pull_request": 31,
+  "verified_at": "2026-09-05",
+  "initial_green": {
+    "head": "a82ac03c4bd4ad4c7ae886cca0d058629f4d917b",
+    "runs": [
+      {
+        "id": 33962506084,
+        "event": "pull_request",
+        "conclusion": "success",
+        "url": "https://github.com/zhouy1017/Karajan/actions/runs/33962506084"
+      },
+      {
+        "id": 33962475933,
+        "event": "push",
+        "conclusion": "success",
+        "url": "https://github.com/zhouy1017/Karajan/actions/runs/33962475933"
+      }
+    ]
+  },
+  "negative": {
+    "head": "3187f65a065b895df784e067a9f7b04c3f124482",
+    "runs": [
+      {
+        "id": 33962913492,
+        "event": "pull_request",
+        "conclusion": "failure",
+        "url": "https://github.com/zhouy1017/Karajan/actions/runs/33962913492"
+      },
+      {
+        "id": 33962910528,
+        "event": "push",
+        "conclusion": "failure",
+        "url": "https://github.com/zhouy1017/Karajan/actions/runs/33962910528"
+      }
+    ],
+    "jobs": [
+      {
+        "run": 33962913492,
+        "event": "pull_request",
+        "jobs": [
+          {
+            "id": 101297824535,
+            "name": "python-quality (ubuntu-24.04, Python 3.12)",
+            "status": "completed",
+            "conclusion": "failure",
+            "steps": [
+              {
+                "name": "Run tests, including contract tests",
+                "conclusion": "failure"
+              }
+            ]
+          },
+          {
+            "id": 101297824673,
+            "name": "python-quality (windows-2022, Python 3.12)",
+            "status": "completed",
+            "conclusion": "failure",
+            "steps": [
+              {
+                "name": "Run tests, including contract tests",
+                "conclusion": "failure"
+              }
+            ]
+          },
+          {
+            "id": 101297897346,
+            "name": "quality-gate",
+            "status": "completed",
+            "conclusion": "failure",
+            "steps": [
+              {
+                "name": "Require every upstream check to succeed",
+                "conclusion": "failure"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "run": 33962910528,
+        "event": "push",
+        "jobs": [
+          {
+            "id": 101297816815,
+            "name": "python-quality (windows-2022, Python 3.12)",
+            "status": "completed",
+            "conclusion": "failure",
+            "steps": [
+              {
+                "name": "Run tests, including contract tests",
+                "conclusion": "failure"
+              }
+            ]
+          },
+          {
+            "id": 101297816952,
+            "name": "python-quality (ubuntu-24.04, Python 3.12)",
+            "status": "completed",
+            "conclusion": "failure",
+            "steps": [
+              {
+                "name": "Run tests, including contract tests",
+                "conclusion": "failure"
+              }
+            ]
+          },
+          {
+            "id": 101297886508,
+            "name": "quality-gate",
+            "status": "completed",
+            "conclusion": "failure",
+            "steps": [
+              {
+                "name": "Require every upstream check to succeed",
+                "conclusion": "failure"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "pr_mergeable_state": "blocked"
+  },
+  "restored": {
+    "head": "e8f7142cc4135320014d07eaf0f9d48d935f3b36",
+    "status": "passed",
+    "pull_request_run": "https://github.com/zhouy1017/Karajan/actions/runs/33963017034",
+    "push_run": "https://github.com/zhouy1017/Karajan/actions/runs/33963015622",
+    "pr_mergeable_state": "clean"
+  },
+  "ruleset": {
+    "id": 22331721,
+    "name": "main-quality-gate",
+    "target": "branch",
+    "source_type": "Repository",
+    "source": "zhouy1017/Karajan",
+    "enforcement": "active",
+    "conditions": {
+      "ref_name": {
+        "exclude": [],
+        "include": [
+          "~DEFAULT_BRANCH"
+        ]
+      }
+    },
+    "rules": [
+      {
+        "type": "deletion"
+      },
+      {
+        "type": "non_fast_forward"
+      },
+      {
+        "type": "pull_request",
+        "parameters": {
+          "required_approving_review_count": 0,
+          "dismiss_stale_reviews_on_push": false,
+          "required_reviewers": [],
+          "require_code_owner_review": false,
+          "require_last_push_approval": false,
+          "required_review_thread_resolution": false,
+          "require_extra_approval_for_unattributed_changes": true,
+          "allowed_merge_methods": [
+            "merge",
+            "squash",
+            "rebase"
+          ]
+        }
+      },
+      {
+        "type": "required_status_checks",
+        "parameters": {
+          "strict_required_status_checks_policy": true,
+          "do_not_enforce_on_create": false,
+          "required_status_checks": [
+            {
+              "context": "quality-gate",
+              "integration_id": 15368
+            }
+          ]
+        }
+      }
+    ],
+    "node_id": "RRS_lACqUmVwb3NpdG9yec5Q5EjZzgFUwUk",
+    "created_at": "2026-09-05T19:16:03.449+08:00",
+    "updated_at": "2026-09-05T19:16:03.532+08:00",
+    "bypass_actors": [],
+    "current_user_can_bypass": "never",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/zhouy1017/Karajan/rulesets/22331721"
+      },
+      "html": {
+        "href": "https://github.com/zhouy1017/Karajan/rules/22331721"
+      }
+    }
+  },
+  "limitations": [
+    "Initial Python-only gate; frontend checks must join the gate when frontend is introduced.",
+    "No live provider qualification; no cash API calls.",
+    "This proves development-repository checks and protection, not product delivery acceptance."
+  ]
+}

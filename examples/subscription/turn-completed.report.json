@@ -1,0 +1,154 @@
+{
+  "attempt": {
+    "attempt_id": "attempt-fixture",
+    "fence": 1,
+    "profile_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "profile_id": "codex-fixture",
+    "profile_revision": 1,
+    "thread_id": "thread-fixture",
+    "turn_id": "turn-fixture"
+  },
+  "authorization_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "bindings": {
+    "accepted": {
+      "approvalPolicy": "on-request",
+      "approvalsReviewer": "user",
+      "cwd": "C:/fixture/repository",
+      "model": "fixture-model",
+      "modelProvider": "openai",
+      "sandbox": {
+        "networkAccess": false,
+        "type": "readOnly"
+      }
+    },
+    "provider_reported": null,
+    "requested": {
+      "approvalPolicy": "on-request",
+      "approvalsReviewer": "user",
+      "cwd": "C:/fixture/repository",
+      "model": "fixture-model",
+      "modelProvider": "openai",
+      "sandbox": {
+        "networkAccess": false,
+        "type": "readOnly"
+      }
+    }
+  },
+  "case_id": "codex-turn-completed",
+  "estimates": {
+    "state": "not_provided"
+  },
+  "event_order": [
+    {
+      "at": "2026-09-05T10:00:00+00:00",
+      "index": 0,
+      "kind": "native"
+    },
+    {
+      "at": "2026-09-05T10:00:01+00:00",
+      "index": 1,
+      "kind": "native"
+    },
+    {
+      "at": "2026-09-05T10:00:02+00:00",
+      "index": 2,
+      "kind": "native"
+    },
+    {
+      "at": "2026-09-05T10:00:03+00:00",
+      "index": 3,
+      "kind": "decision"
+    },
+    {
+      "at": "2026-09-05T10:00:04+00:00",
+      "index": 4,
+      "kind": "native"
+    }
+  ],
+  "input_sha256": "72776dc615d6ee5b1b7828edd64aec3a2228490ca41334828ba0ccf9599062ac",
+  "native_errors": [],
+  "permission_outcomes": [
+    {
+      "expires_at": "2026-09-05T10:02:00+00:00",
+      "native_callback": {
+        "approval_id": null,
+        "item_id": "item-fixture"
+      },
+      "request_digest": "39e15ce8ee9f86f4244f9a2568c71d37d71a3f24fb81b8b84bde3a31f0600c89",
+      "status": "pending",
+      "ticket": {
+        "attempt_id": "attempt-fixture",
+        "authorization_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "fence": 1,
+        "profile_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "profile_id": "codex-fixture",
+        "profile_revision": 1,
+        "request_digest": "39e15ce8ee9f86f4244f9a2568c71d37d71a3f24fb81b8b84bde3a31f0600c89",
+        "request_id": 301,
+        "thread_id": "thread-fixture",
+        "turn_id": "turn-fixture"
+      }
+    },
+    {
+      "response": {
+        "id": 301,
+        "result": {
+          "decision": "accept"
+        }
+      },
+      "status": "accepted"
+    }
+  ],
+  "protocol": {
+    "config_source_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "runtime_version": "0.153.2",
+    "schema_file": "codex_app_server_protocol.v2.schemas.json",
+    "schema_sha256": "d3eace08be5dca386bfd1f1e8df650058b4113f1e10870a284d775d75517576a"
+  },
+  "provenance": {
+    "evidence_refs": [
+      "fixture:codex-turn-completed"
+    ],
+    "kind": "fixture",
+    "limitations": [
+      "Scripted protocol messages; no Codex session or model request was started."
+    ],
+    "observed_at": "2026-09-05T10:00:00Z"
+  },
+  "qualification": {
+    "capabilities": {
+      "billing_path_confirmed": "not_run",
+      "extra_delegation_disabled": "not_run",
+      "hidden_fallback_excluded": "not_run",
+      "native_sandbox_enforced": "not_run",
+      "provider_model_confirmed": "not_run"
+    },
+    "dispatch_eligible": false,
+    "live_status": "not_run",
+    "remaining_live_cases": [
+      "official_login",
+      "inference",
+      "file_tools",
+      "cancel"
+    ]
+  },
+  "quota": {
+    "state": "unknown"
+  },
+  "reason_codes": [],
+  "responses": [
+    {
+      "id": 301,
+      "result": {
+        "decision": "accept"
+      }
+    }
+  ],
+  "schema_version": "karajan.codex-replay-report.v1",
+  "status": "passed",
+  "usage": {
+    "coverage": "attempt",
+    "model_call_count": null,
+    "state": "unknown"
+  }
+}
