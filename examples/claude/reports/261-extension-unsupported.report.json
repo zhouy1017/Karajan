@@ -1,0 +1,119 @@
+{
+  "schema_version": "karajan.claude-replay-report.v1",
+  "validation_scope": "offline_protocol_replay",
+  "status": "failed",
+  "reason_codes": [
+    "PROTOCOL_VERSION_UNSUPPORTED"
+  ],
+  "qualification": {
+    "live_status": "not_run",
+    "dispatch_eligible": false
+  },
+  "stopping": {
+    "main_process": "unknown",
+    "process_tree": "unknown",
+    "remote": "unknown"
+  },
+  "result": {
+    "state": "unknown"
+  },
+  "result_decisions": {
+    "accepted": 0,
+    "rejected": 1
+  },
+  "binding": {
+    "settings_confirmation": "partial",
+    "native_reported": {
+      "model_id": "claude-fixture-model-v1",
+      "runtime_version": "2.1.260",
+      "tools": [
+        "Read"
+      ],
+      "permission_mode": "dontAsk",
+      "auth_mode": null,
+      "billing_path": null
+    }
+  },
+  "events": {
+    "duplicates": 0
+  },
+  "permissions": {
+    "requires_new_attempt": false,
+    "outbound_grants": 0,
+    "denial_system_events": 0,
+    "terminal_denial_observations": 0,
+    "tool_requests_observed": 0,
+    "tool_results_observed": 0
+  },
+  "stream": {
+    "events": 0
+  },
+  "retries": [],
+  "native_errors": [],
+  "quota": {
+    "observations": [
+      {
+        "status": "allowed_warning",
+        "window": "five_hour",
+        "reset_epoch_seconds": 1788624000,
+        "utilization": 0.8,
+        "overage_status": null,
+        "overage_reset_epoch_seconds": null
+      }
+    ],
+    "account_remaining": null,
+    "basis": "native_advisory"
+  },
+  "capabilities": {
+    "tool_isolation": "not_run",
+    "subscription_authentication": "not_run",
+    "billing_path": "not_run",
+    "dynamic_permission_grant": "unsupported",
+    "process_tree_stop": "not_run",
+    "remote_stop": "not_run"
+  },
+  "identity": {
+    "attempt_id": "claude-attempt-fixture",
+    "fence": 1,
+    "profile_id": "claude-profile-fixture",
+    "profile_revision": 1,
+    "profile_digest": "557445444234b2d49621fbf9e6e2948681064b4e48c6b0b17298c58d1fff1620",
+    "session_id": "89e508d7-f6c6-4fd3-82e7-15dca7106a29",
+    "configuration_source_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  "provenance": {
+    "kind": "fixture",
+    "input_sha256": "25b880b3bb86feb6f2c8c46b33104da9627422a4dfc6ce1a6b5ef1f32acab660",
+    "runtime_version": "2.1.260",
+    "native_stream_verified": false
+  },
+  "usage": {
+    "coverage": "native_reported_only",
+    "partial_main_input": null,
+    "child_message_snapshots": [],
+    "main_loop_final": {
+      "input_tokens": 12,
+      "output_tokens": 4,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 2
+    },
+    "model_usage": {},
+    "terminal_observations": 1,
+    "terminal_snapshots": [
+      {
+        "usage": {
+          "input_tokens": 12,
+          "output_tokens": 4,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 2
+        },
+        "client_cost_estimate_usd": 0.001,
+        "model_usage": {}
+      }
+    ],
+    "client_cost_estimate_usd": 0.001,
+    "cash_charged_usd": null,
+    "account_remaining": null,
+    "hidden_retry_usage": "unknown"
+  }
+}
