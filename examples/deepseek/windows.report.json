@@ -1,0 +1,844 @@
+{
+  "schema_version": "karajan.deepseek.offline.suite.v1",
+  "observed_at": "2026-09-05T15:53:09.981236+00:00",
+  "os": "Windows",
+  "python_version": "3.12.14",
+  "status": "passed",
+  "source_sha256": {
+    "backend/karajan/adapters/deepseek/__init__.py": "1dbe6ffc5269ec6f7e18d87dba3cfa40dd2c268ff63061c38e6cf2dd28be9115",
+    "backend/karajan/adapters/deepseek/__main__.py": "2d86df689f5d3091b834ded0473464a1869dceaa070135ad5e096bc74185887e",
+    "backend/karajan/adapters/deepseek/_local_transport.py": "6f0397c0ddee089c83ae70f87e99bf0b4a26930ea7f1310db899f7fb22ee9859",
+    "backend/karajan/adapters/deepseek/offline.py": "98308a5d29b5ad20daa786ea38686ed6a9751bc415bf059d883704f98f47c158",
+    "backend/karajan/adapters/deepseek/protocol.py": "9a35bd696de33c704e8dafb5b62b906f6e71c9e2b342b2f846dad5d1b291fa50",
+    "backend/karajan/adapters/deepseek/response.py": "5b0c2add8fa1f9b60e14615a6c392347d0a1b39ab50096742ddd64d300dd2c94"
+  },
+  "suite_source_sha256": "c7b70c90a017806a351e2cd7b18253ecdae071447ecdb9fa15b382841fb794f0",
+  "live_qualification": "not_run",
+  "profile_enabled": false,
+  "cash_api_calls": 0,
+  "billing_scope": "synthetic-flat-CNY-price-not-a-DeepSeek-token-price",
+  "cases": [
+    {
+      "case": "budget_zero.json",
+      "input_sha256": "db388cc20aa82e75fcb3619821ae63094deafef98479b7f30b3408ae4e917808",
+      "status": "passed",
+      "conditions": {
+        "configuration_accepted": true,
+        "server_exited": true,
+        "no_live_qualification": true,
+        "no_cash_api_calls": true,
+        "zero_provider_receives": true,
+        "one_rejected_receipt": true,
+        "no_call_or_bill": true
+      },
+      "runtime_version": "1.18.29",
+      "cleanup": {
+        "errors": [],
+        "server": {
+          "scope": "server_process_only",
+          "status": "exited",
+          "forced_kill": false,
+          "pid": 28964,
+          "errors": [],
+          "exit_code": 1
+        },
+        "transport": "closed"
+      },
+      "attempt_ids": [
+        "attempt-c72c613f921940868984580a8c0adc6a"
+      ],
+      "provider_request_count": 0,
+      "receipts": [
+        {
+          "receipt_id": "7951d923-699c-40d8-adb8-371b6e5e981b",
+          "call_id": null,
+          "state": "rejected",
+          "reason_code": "BUDGET_EXHAUSTED",
+          "profile_id": "deepseek-offline",
+          "profile_revision": 1,
+          "profile_digest": "70f66797a3efa7682c11332c4d6b8134ea06889142e23a77637bb3cda8ba6cd9"
+        }
+      ],
+      "budgets": {
+        "CNY": {
+          "limit": "0.060000",
+          "held": "0.000000",
+          "available": "0.060000"
+        }
+      },
+      "tool_output_observed": false,
+      "response_observations": []
+    },
+    {
+      "case": "config_endpoint_drift.json",
+      "input_sha256": "c98351f452bd5d27e20f9e932a3edfb7084daad5fd505b0b9566c89c284b06ae",
+      "status": "passed",
+      "conditions": {
+        "configuration_accepted": true,
+        "server_exited": true,
+        "no_live_qualification": true,
+        "no_cash_api_calls": true,
+        "rejected_before_requests": true,
+        "explicit_mismatch": true,
+        "no_calls": true
+      },
+      "runtime_version": "1.18.29",
+      "cleanup": {
+        "errors": [],
+        "server": {
+          "scope": "server_process_only",
+          "status": "exited",
+          "forced_kill": false,
+          "pid": 46556,
+          "errors": [],
+          "exit_code": 1
+        },
+        "transport": "closed"
+      },
+      "attempt_ids": [],
+      "provider_request_count": 0,
+      "receipts": [],
+      "budgets": {
+        "CNY": {
+          "limit": "0.060000",
+          "held": "0.000000",
+          "available": "0.060000"
+        }
+      },
+      "tool_output_observed": false,
+      "response_observations": []
+    },
+    {
+      "case": "config_model_drift.json",
+      "input_sha256": "1962287a16c34486aaaee285d8ab1c799171102ec1772e19a0b8015de81741e0",
+      "status": "passed",
+      "conditions": {
+        "configuration_accepted": true,
+        "server_exited": true,
+        "no_live_qualification": true,
+        "no_cash_api_calls": true,
+        "rejected_before_requests": true,
+        "explicit_mismatch": true,
+        "no_calls": true
+      },
+      "runtime_version": "1.18.29",
+      "cleanup": {
+        "errors": [],
+        "server": {
+          "scope": "server_process_only",
+          "status": "exited",
+          "forced_kill": false,
+          "pid": 54340,
+          "errors": [],
+          "exit_code": 1
+        },
+        "transport": "closed"
+      },
+      "attempt_ids": [],
+      "provider_request_count": 0,
+      "receipts": [],
+      "budgets": {
+        "CNY": {
+          "limit": "0.060000",
+          "held": "0.000000",
+          "available": "0.060000"
+        }
+      },
+      "tool_output_observed": false,
+      "response_observations": []
+    },
+    {
+      "case": "config_permission_drift.json",
+      "input_sha256": "50a6e05994d22e465e2ad40a244ce59a188b544bc80d568745ccf784dc743e34",
+      "status": "passed",
+      "conditions": {
+        "configuration_accepted": true,
+        "server_exited": true,
+        "no_live_qualification": true,
+        "no_cash_api_calls": true,
+        "rejected_before_requests": true,
+        "explicit_mismatch": true,
+        "no_calls": true
+      },
+      "runtime_version": "1.18.29",
+      "cleanup": {
+        "errors": [],
+        "server": {
+          "scope": "server_process_only",
+          "status": "exited",
+          "forced_kill": false,
+          "pid": 39844,
+          "errors": [],
+          "exit_code": 1
+        },
+        "transport": "closed"
+      },
+      "attempt_ids": [],
+      "provider_request_count": 0,
+      "receipts": [],
+      "budgets": {
+        "CNY": {
+          "limit": "0.060000",
+          "held": "0.000000",
+          "available": "0.060000"
+        }
+      },
+      "tool_output_observed": false,
+      "response_observations": []
+    },
+    {
+      "case": "disconnect_once.json",
+      "input_sha256": "18a45c623440da7f28231981fe1bad5e85ab4616332eaee89f264bb78e5b1131",
+      "status": "passed",
+      "conditions": {
+        "configuration_accepted": true,
+        "server_exited": true,
+        "no_live_qualification": true,
+        "no_cash_api_calls": true,
+        "one_unknown_request": true,
+        "held_unknown": true,
+        "no_runtime_completion": true
+      },
+      "runtime_version": "1.18.29",
+      "cleanup": {
+        "errors": [],
+        "server": {
+          "scope": "server_process_only",
+          "status": "exited",
+          "forced_kill": false,
+          "pid": 48252,
+          "errors": [],
+          "exit_code": 1
+        },
+        "transport": "closed"
+      },
+      "attempt_ids": [
+        "attempt-2fd49a3f120c44a38c1d8ae0b59fbf19"
+      ],
+      "provider_request_count": 1,
+      "receipts": [
+        {
+          "receipt_id": "b612bf05-35ee-48c0-9ef9-90a3ef41f0ef",
+          "call_id": "97fd4552-872b-4603-b78a-2d13ed5fec19",
+          "state": "send_unknown",
+          "reason_code": "SEND_OUTCOME_UNKNOWN",
+          "profile_id": "deepseek-offline",
+          "profile_revision": 1,
+          "profile_digest": "e6bbcbf0ebdb942fbf2248143bd3e992c9728a327f2cbfdf6e982c1bd2dc59d8"
+        }
+      ],
+      "budgets": {
+        "CNY": {
+          "limit": "0.060000",
+          "held": "0.010000",
+          "available": "0.050000"
+        }
+      },
+      "tool_output_observed": false,
+      "response_observations": []
+    },
+    {
+      "case": "missing_done.json",
+      "input_sha256": "8368d8acaa0135a2e0982773a6b53dfc5bcc526a970160e21e970b7ccd0249d2",
+      "status": "passed",
+      "conditions": {
+        "configuration_accepted": true,
+        "server_exited": true,
+        "no_live_qualification": true,
+        "no_cash_api_calls": true,
+        "one_unknown_request": true,
+        "held_unknown": true,
+        "no_runtime_completion": true
+      },
+      "runtime_version": "1.18.29",
+      "cleanup": {
+        "errors": [],
+        "server": {
+          "scope": "server_process_only",
+          "status": "exited",
+          "forced_kill": false,
+          "pid": 56624,
+          "errors": [],
+          "exit_code": 1
+        },
+        "transport": "closed"
+      },
+      "attempt_ids": [
+        "attempt-a01c6843c41d4fe28fdd413d9b8dfec8"
+      ],
+      "provider_request_count": 1,
+      "receipts": [
+        {
+          "receipt_id": "a92d9c52-a745-4839-b9ef-6810910d09ec",
+          "call_id": "1f0a1f9b-1a9b-4238-8130-5d772cda08b8",
+          "state": "send_unknown",
+          "reason_code": "SEND_OUTCOME_UNKNOWN",
+          "profile_id": "deepseek-offline",
+          "profile_revision": 1,
+          "profile_digest": "70765233ee2a53b7c9bd2d6dfc2b263ff1a54ffc12e0ea5b469867389a5d0599"
+        }
+      ],
+      "budgets": {
+        "CNY": {
+          "limit": "0.060000",
+          "held": "0.010000",
+          "available": "0.050000"
+        }
+      },
+      "tool_output_observed": false,
+      "response_observations": [
+        {
+          "call_id": "1f0a1f9b-1a9b-4238-8130-5d772cda08b8",
+          "status": "unknown",
+          "reason_codes": [
+            "STREAM_INCOMPLETE"
+          ],
+          "model": "deepseek-v4-flash",
+          "usage": {
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "total_tokens": 15,
+            "prompt_cache_hit_tokens": 4,
+            "prompt_cache_miss_tokens": 6,
+            "reasoning_tokens": null
+          },
+          "usage_status": "observed",
+          "actual_charge": null
+        }
+      ]
+    },
+    {
+      "case": "missing_output_limit.json",
+      "input_sha256": "aa9a7bd84f442b2e14707a0a824725a4438b60de5ada0b35d13641ae9ee4e14b",
+      "status": "passed",
+      "conditions": {
+        "configuration_accepted": true,
+        "server_exited": true,
+        "no_live_qualification": true,
+        "no_cash_api_calls": true,
+        "zero_provider_receives": true,
+        "one_rejected_receipt": true,
+        "no_call_or_bill": true
+      },
+      "runtime_version": "1.18.29",
+      "cleanup": {
+        "errors": [],
+        "server": {
+          "scope": "server_process_only",
+          "status": "exited",
+          "forced_kill": false,
+          "pid": 4256,
+          "errors": [],
+          "exit_code": 1
+        },
+        "transport": "closed"
+      },
+      "attempt_ids": [
+        "attempt-0d79d97f1b174224950d3985bc6db1d9"
+      ],
+      "provider_request_count": 0,
+      "receipts": [
+        {
+          "receipt_id": null,
+          "call_id": null,
+          "state": "rejected",
+          "reason_code": "OUTPUT_UNBOUNDED",
+          "profile_id": null,
+          "profile_revision": null,
+          "profile_digest": null
+        }
+      ],
+      "budgets": {
+        "CNY": {
+          "limit": "0.060000",
+          "held": "0.000000",
+          "available": "0.060000"
+        }
+      },
+      "tool_output_observed": false,
+      "response_observations": []
+    },
+    {
+      "case": "missing_output_price.json",
+      "input_sha256": "dddb382fa045626ffc47dc41d5209fa6ccb7b43ca42e5efa500f0e10e0d7f084",
+      "status": "passed",
+      "conditions": {
+        "configuration_accepted": true,
+        "server_exited": true,
+        "no_live_qualification": true,
+        "no_cash_api_calls": true,
+        "zero_provider_receives": true,
+        "one_rejected_receipt": true,
+        "no_call_or_bill": true
+      },
+      "runtime_version": "1.18.29",
+      "cleanup": {
+        "errors": [],
+        "server": {
+          "scope": "server_process_only",
+          "status": "exited",
+          "forced_kill": false,
+          "pid": 58812,
+          "errors": [],
+          "exit_code": 1
+        },
+        "transport": "closed"
+      },
+      "attempt_ids": [
+        "attempt-b7605321e42848b3a54ea4278185d097"
+      ],
+      "provider_request_count": 0,
+      "receipts": [
+        {
+          "receipt_id": "a340dc39-4b4d-474a-a19c-35e9a5bc80d1",
+          "call_id": null,
+          "state": "rejected",
+          "reason_code": "PRICE_UNBOUNDED_OR_EXPIRED",
+          "profile_id": "deepseek-offline",
+          "profile_revision": 1,
+          "profile_digest": "e61409bea3a5a64e45ad7e54fd5f1407b4dd5f4ad31a0d348779020dd6efde24"
+        }
+      ],
+      "budgets": {
+        "CNY": {
+          "limit": "0.060000",
+          "held": "0.000000",
+          "available": "0.060000"
+        }
+      },
+      "tool_output_observed": false,
+      "response_observations": []
+    },
+    {
+      "case": "missing_usage.json",
+      "input_sha256": "f16d9a7da749d727af149c59e6e2d159546a64e457a158af62810d239bea8fda",
+      "status": "passed",
+      "conditions": {
+        "configuration_accepted": true,
+        "server_exited": true,
+        "no_live_qualification": true,
+        "no_cash_api_calls": true,
+        "one_unknown_request": true,
+        "held_unknown": true,
+        "no_runtime_completion": true
+      },
+      "runtime_version": "1.18.29",
+      "cleanup": {
+        "errors": [],
+        "server": {
+          "scope": "server_process_only",
+          "status": "exited",
+          "forced_kill": false,
+          "pid": 54696,
+          "errors": [],
+          "exit_code": 1
+        },
+        "transport": "closed"
+      },
+      "attempt_ids": [
+        "attempt-5a5875dfca6847119c82827660a0ebbe"
+      ],
+      "provider_request_count": 1,
+      "receipts": [
+        {
+          "receipt_id": "f7901e50-351f-4dbd-9356-2b8dbce42aa7",
+          "call_id": "1cff2930-58d2-4611-bc68-18fd6583eea8",
+          "state": "send_unknown",
+          "reason_code": "SEND_OUTCOME_UNKNOWN",
+          "profile_id": "deepseek-offline",
+          "profile_revision": 1,
+          "profile_digest": "64ca81b9e9c5ab7bbd3f150098270da12cf53ebdecf8b01750d829c0336feb26"
+        }
+      ],
+      "budgets": {
+        "CNY": {
+          "limit": "0.060000",
+          "held": "0.010000",
+          "available": "0.050000"
+        }
+      },
+      "tool_output_observed": false,
+      "response_observations": [
+        {
+          "call_id": "1cff2930-58d2-4611-bc68-18fd6583eea8",
+          "status": "tool_requested",
+          "reason_codes": [],
+          "model": "deepseek-v4-flash",
+          "usage": {
+            "prompt_tokens": null,
+            "completion_tokens": null,
+            "total_tokens": null,
+            "prompt_cache_hit_tokens": null,
+            "prompt_cache_miss_tokens": null,
+            "reasoning_tokens": null
+          },
+          "usage_status": "unknown",
+          "actual_charge": null
+        }
+      ]
+    },
+    {
+      "case": "price_expired.json",
+      "input_sha256": "d935d9c1a9b32d88954109cf6c83194d37b2b6e7680d4bec720bbe44a1154352",
+      "status": "passed",
+      "conditions": {
+        "configuration_accepted": true,
+        "server_exited": true,
+        "no_live_qualification": true,
+        "no_cash_api_calls": true,
+        "zero_provider_receives": true,
+        "one_rejected_receipt": true,
+        "no_call_or_bill": true
+      },
+      "runtime_version": "1.18.29",
+      "cleanup": {
+        "errors": [],
+        "server": {
+          "scope": "server_process_only",
+          "status": "exited",
+          "forced_kill": false,
+          "pid": 35116,
+          "errors": [],
+          "exit_code": 1
+        },
+        "transport": "closed"
+      },
+      "attempt_ids": [
+        "attempt-620243e4fc7f4283b1f329fb2a925d4f"
+      ],
+      "provider_request_count": 0,
+      "receipts": [
+        {
+          "receipt_id": "aa520a41-e280-47eb-9e4c-719813e47067",
+          "call_id": null,
+          "state": "rejected",
+          "reason_code": "PRICE_UNBOUNDED_OR_EXPIRED",
+          "profile_id": "deepseek-offline",
+          "profile_revision": 1,
+          "profile_digest": "0bb12acb40a4e70a7c16116a618404c97a80a85679e92695323951c609288c4a"
+        }
+      ],
+      "budgets": {
+        "CNY": {
+          "limit": "0.060000",
+          "held": "0.000000",
+          "available": "0.060000"
+        }
+      },
+      "tool_output_observed": false,
+      "response_observations": []
+    },
+    {
+      "case": "rate_limit_once.json",
+      "input_sha256": "f66065351eb52ca5a9c2fbac466deb7ae5ac0fbe3a514f8247fa3a4b53101f67",
+      "status": "passed",
+      "conditions": {
+        "configuration_accepted": true,
+        "server_exited": true,
+        "no_live_qualification": true,
+        "no_cash_api_calls": true,
+        "tool_loop": true,
+        "bounded_requests": true,
+        "one_receipt_per_call": true,
+        "expected_spending": true,
+        "expected_outcomes": true
+      },
+      "runtime_version": "1.18.29",
+      "cleanup": {
+        "errors": [],
+        "server": {
+          "scope": "server_process_only",
+          "status": "exited",
+          "forced_kill": false,
+          "pid": 59380,
+          "errors": [],
+          "exit_code": 1
+        },
+        "transport": "closed"
+      },
+      "attempt_ids": [
+        "attempt-a14d030a6b4e439eb88b4241fb3fa3a3"
+      ],
+      "provider_request_count": 3,
+      "receipts": [
+        {
+          "receipt_id": "decf9d85-d860-455a-8254-e9e9cf657621",
+          "call_id": "3b2b3ca2-32fc-43e2-8286-1f266b753ba2",
+          "state": "send_unknown",
+          "reason_code": "SEND_OUTCOME_UNKNOWN",
+          "profile_id": "deepseek-offline",
+          "profile_revision": 1,
+          "profile_digest": "c7ba54cd557a1a516892a536067040a87b5d5444c14ef7018c81cfb12411ad5e"
+        },
+        {
+          "receipt_id": "8e2abcf7-d099-408e-acc4-8ebca4f0d867",
+          "call_id": "1352e40b-8dc8-4352-baf9-969495b644c9",
+          "state": "settled",
+          "reason_code": null,
+          "profile_id": "deepseek-offline",
+          "profile_revision": 1,
+          "profile_digest": "c7ba54cd557a1a516892a536067040a87b5d5444c14ef7018c81cfb12411ad5e"
+        },
+        {
+          "receipt_id": "63e2e8a4-af74-45c2-9212-3d0ef8737d2a",
+          "call_id": "03734e9b-8c5e-4951-a246-0f46214ea3f8",
+          "state": "settled",
+          "reason_code": null,
+          "profile_id": "deepseek-offline",
+          "profile_revision": 1,
+          "profile_digest": "c7ba54cd557a1a516892a536067040a87b5d5444c14ef7018c81cfb12411ad5e"
+        }
+      ],
+      "budgets": {
+        "CNY": {
+          "limit": "0.060000",
+          "held": "0.030000",
+          "available": "0.030000"
+        }
+      },
+      "tool_output_observed": true,
+      "response_observations": [
+        {
+          "call_id": "3b2b3ca2-32fc-43e2-8286-1f266b753ba2",
+          "status": "failed",
+          "reason_codes": [
+            "PROVIDER_RATE_LIMITED"
+          ],
+          "model": null,
+          "usage": {},
+          "usage_status": "unknown",
+          "actual_charge": null
+        },
+        {
+          "call_id": "1352e40b-8dc8-4352-baf9-969495b644c9",
+          "status": "tool_requested",
+          "reason_codes": [],
+          "model": "deepseek-v4-flash",
+          "usage": {
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "total_tokens": 15,
+            "prompt_cache_hit_tokens": 4,
+            "prompt_cache_miss_tokens": 6,
+            "reasoning_tokens": null
+          },
+          "usage_status": "observed",
+          "actual_charge": null
+        },
+        {
+          "call_id": "03734e9b-8c5e-4951-a246-0f46214ea3f8",
+          "status": "completed",
+          "reason_codes": [],
+          "model": "deepseek-v4-flash",
+          "usage": {
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "total_tokens": 15,
+            "prompt_cache_hit_tokens": 4,
+            "prompt_cache_miss_tokens": 6,
+            "reasoning_tokens": null
+          },
+          "usage_status": "observed",
+          "actual_charge": null
+        }
+      ]
+    },
+    {
+      "case": "tool_loop.json",
+      "input_sha256": "9cc4210f520697fd8d51cdcc60464aa6ee01d19f039f96110f6d30bfeeb0ed48",
+      "status": "passed",
+      "conditions": {
+        "configuration_accepted": true,
+        "server_exited": true,
+        "no_live_qualification": true,
+        "no_cash_api_calls": true,
+        "tool_loop": true,
+        "bounded_requests": true,
+        "one_receipt_per_call": true,
+        "expected_spending": true,
+        "expected_outcomes": true
+      },
+      "runtime_version": "1.18.29",
+      "cleanup": {
+        "errors": [],
+        "server": {
+          "scope": "server_process_only",
+          "status": "exited",
+          "forced_kill": false,
+          "pid": 59384,
+          "errors": [],
+          "exit_code": 1
+        },
+        "transport": "closed"
+      },
+      "attempt_ids": [
+        "attempt-8893177fe6b0439898f69a13eeb50576"
+      ],
+      "provider_request_count": 2,
+      "receipts": [
+        {
+          "receipt_id": "aeb8ee33-e85d-470a-816e-fea87dd25f1d",
+          "call_id": "229ea7f7-e260-4304-8977-98451047c686",
+          "state": "settled",
+          "reason_code": null,
+          "profile_id": "deepseek-offline",
+          "profile_revision": 1,
+          "profile_digest": "ddc978ca46eb0b7a2ee56283a6f537f66a13e9905fbd628b7ddc38c1b7e4bafc"
+        },
+        {
+          "receipt_id": "f2567686-a660-4867-9bf2-a7614bcf3eca",
+          "call_id": "0bcab9b1-b44f-4f82-9c4f-afa6acb0d697",
+          "state": "settled",
+          "reason_code": null,
+          "profile_id": "deepseek-offline",
+          "profile_revision": 1,
+          "profile_digest": "ddc978ca46eb0b7a2ee56283a6f537f66a13e9905fbd628b7ddc38c1b7e4bafc"
+        }
+      ],
+      "budgets": {
+        "CNY": {
+          "limit": "0.060000",
+          "held": "0.020000",
+          "available": "0.040000"
+        }
+      },
+      "tool_output_observed": true,
+      "response_observations": [
+        {
+          "call_id": "229ea7f7-e260-4304-8977-98451047c686",
+          "status": "tool_requested",
+          "reason_codes": [],
+          "model": "deepseek-v4-flash",
+          "usage": {
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "total_tokens": 15,
+            "prompt_cache_hit_tokens": 4,
+            "prompt_cache_miss_tokens": 6,
+            "reasoning_tokens": null
+          },
+          "usage_status": "observed",
+          "actual_charge": null
+        },
+        {
+          "call_id": "0bcab9b1-b44f-4f82-9c4f-afa6acb0d697",
+          "status": "completed",
+          "reason_codes": [],
+          "model": "deepseek-v4-flash",
+          "usage": {
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "total_tokens": 15,
+            "prompt_cache_hit_tokens": 4,
+            "prompt_cache_miss_tokens": 6,
+            "reasoning_tokens": null
+          },
+          "usage_status": "observed",
+          "actual_charge": null
+        }
+      ]
+    },
+    {
+      "case": "unknown_charges.json",
+      "input_sha256": "f5abde089fd0164140a24930eb69c99f8d01041ea71ed645eae3fd2c6990c00f",
+      "status": "passed",
+      "conditions": {
+        "configuration_accepted": true,
+        "server_exited": true,
+        "no_live_qualification": true,
+        "no_cash_api_calls": true,
+        "zero_provider_receives": true,
+        "one_rejected_receipt": true,
+        "no_call_or_bill": true
+      },
+      "runtime_version": "1.18.29",
+      "cleanup": {
+        "errors": [],
+        "server": {
+          "scope": "server_process_only",
+          "status": "exited",
+          "forced_kill": false,
+          "pid": 59184,
+          "errors": [],
+          "exit_code": 1
+        },
+        "transport": "closed"
+      },
+      "attempt_ids": [
+        "attempt-b7bd07b3e5e34907bdd87ce0a3b6b95e"
+      ],
+      "provider_request_count": 0,
+      "receipts": [
+        {
+          "receipt_id": "f4349e98-53b7-44b6-ae91-48fc03a6cae0",
+          "call_id": null,
+          "state": "rejected",
+          "reason_code": "PRICE_UNBOUNDED_OR_EXPIRED",
+          "profile_id": "deepseek-offline",
+          "profile_revision": 1,
+          "profile_digest": "f7c8cc37ba3029cc5dbfb9cc5973ba190ed12863ca23ee4145d93b52fd469fa3"
+        }
+      ],
+      "budgets": {
+        "CNY": {
+          "limit": "0.060000",
+          "held": "0.000000",
+          "available": "0.060000"
+        }
+      },
+      "tool_output_observed": false,
+      "response_observations": []
+    },
+    {
+      "case": "wire_model_drift.json",
+      "input_sha256": "fc395c36c0f8a870cb78ab0c0440042fcf4a7edccc01735b66a8e5e5186aa605",
+      "status": "passed",
+      "conditions": {
+        "configuration_accepted": true,
+        "server_exited": true,
+        "no_live_qualification": true,
+        "no_cash_api_calls": true,
+        "zero_provider_receives": true,
+        "one_rejected_receipt": true,
+        "no_call_or_bill": true
+      },
+      "runtime_version": "1.18.29",
+      "cleanup": {
+        "errors": [],
+        "server": {
+          "scope": "server_process_only",
+          "status": "exited",
+          "forced_kill": false,
+          "pid": 55356,
+          "errors": [],
+          "exit_code": 1
+        },
+        "transport": "closed"
+      },
+      "attempt_ids": [
+        "attempt-e46c6e258c2143f4bee68437b649578e"
+      ],
+      "provider_request_count": 0,
+      "receipts": [
+        {
+          "receipt_id": null,
+          "call_id": null,
+          "state": "rejected",
+          "reason_code": "MODEL_BINDING_MISMATCH",
+          "profile_id": null,
+          "profile_revision": null,
+          "profile_digest": null
+        }
+      ],
+      "budgets": {
+        "CNY": {
+          "limit": "0.060000",
+          "held": "0.000000",
+          "available": "0.060000"
+        }
+      },
+      "tool_output_observed": false,
+      "response_observations": []
+    }
+  ]
+}

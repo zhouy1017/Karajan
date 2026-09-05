@@ -1,0 +1,5 @@
+{
+  "schema_version": "karajan.deepseek.offline.v1",
+  "scenario": "budget_zero",
+  "model": "deepseek-v4-flash"
+}

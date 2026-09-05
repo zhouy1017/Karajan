@@ -70,3 +70,5 @@ push 回执丢失后先观察指定 ref，未确认时不再次 push。PR 回执
 样例验证回执是明确的测试替身，并非真实候选检查或模型 Review。没有实际模型、现金 API 或外部 PR 请求。临时样例目录保留用于本机核对，报告不包含凭据。
 
 待完成：真实 GitHub gateway 的身份/响应丢失验收，独立交付 IPC 与凭据域，当前候选/检查/Review 权威接线，统一 Run 状态与工作台视图，以及覆盖生产恢复的完整组合验收。
+
+已发布 [PR #38](https://github.com/zhouy1017/Karajan/pull/38)。功能提交 `ed76dc7d2fd9882b0837397d9e2ac68338c33ed3` 随后同步远端重排的基础历史，产生内容完全相同的 `4eb09ca2da0b85c74ae18988f9973d497305bbf7`；后者已通过双系统后端、前端及汇总门 [CI](https://github.com/zhouy1017/Karajan/actions/runs/33976002824)。PR 保持打开，CI 不代表生产交付资格。

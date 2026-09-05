@@ -1,0 +1,5 @@
+{
+  "schema_version": "karajan.deepseek.offline.v1",
+  "scenario": "disconnect_once",
+  "model": "deepseek-v4-flash"
+}

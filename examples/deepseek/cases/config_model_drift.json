@@ -1,0 +1,5 @@
+{
+  "schema_version": "karajan.deepseek.offline.v1",
+  "scenario": "config_model_drift",
+  "model": "deepseek-v4-flash"
+}

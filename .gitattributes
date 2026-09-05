@@ -1,2 +1,6 @@
 * text=auto eol=lf
 *.ps1 text eol=crlf
+
+# Preserve the exact bytes referenced by protocol evidence; SSE needs a blank terminator.
+examples/deepseek/cases/*.json -text whitespace=cr-at-eol
+examples/deepseek/review-fixes/*.sse -text whitespace=-blank-at-eof

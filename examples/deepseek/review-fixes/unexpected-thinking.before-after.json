@@ -1,0 +1,41 @@
+{
+  "input_sha256": "38d09161a92d3264c922b3377c72b4cde96b9dbc90695ecdc1d92804820ef9c2",
+  "before": {
+    "status": "completed",
+    "reason_codes": [],
+    "request_id": "review-only",
+    "model": "deepseek-v4-flash",
+    "content": "answer",
+    "tool_calls": [],
+    "usage": {
+      "prompt_tokens": 3,
+      "completion_tokens": 2,
+      "total_tokens": 5,
+      "prompt_cache_hit_tokens": null,
+      "prompt_cache_miss_tokens": null,
+      "reasoning_tokens": null
+    },
+    "usage_status": "observed",
+    "actual_charge": null
+  },
+  "after": {
+    "status": "failed",
+    "reason_codes": [
+      "THINKING_UNEXPECTED"
+    ],
+    "request_id": "review-only",
+    "model": "deepseek-v4-flash",
+    "content": "",
+    "tool_calls": [],
+    "usage": {
+      "prompt_tokens": 3,
+      "completion_tokens": 2,
+      "total_tokens": 5,
+      "prompt_cache_hit_tokens": null,
+      "prompt_cache_miss_tokens": null,
+      "reasoning_tokens": null
+    },
+    "usage_status": "observed",
+    "actual_charge": null
+  }
+}
