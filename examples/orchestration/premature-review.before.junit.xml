@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.926" timestamp="2026-09-06T00:56:41.084627+08:00" hostname="ProArt-Zhou"><testcase classname="tests.orchestration.test_serial" name="test_a_premature_review_refusal_does_not_hide_the_pending_candidate_check" time="0.822"><failure message="AssertionError: assert {'attempts': ...': False, ...} == {'attempts': ...': False, ...}&#10;  &#10;  Omitting 13 identical items, use -vv to show&#10;  Differing items:&#10;  {'reason_codes': ['DEPENDENCIES_NOT_READY']} != {'reason_codes': []}&#10;  {'state': 'blocked'} != {'state': 'candidate_ready'}&#10;  {'inbox': [{'attempt_id': '644c38c6-dbce-4f28-a6c6-571a2fcb178c', 'id': '59b48c536073819e4fd1c80ef477be7f04391c1c95cd0...8c6-dbce-4f28-a6c6-571a2fcb178c', 'business_status': 'pending', 'exit_code': 0, 'launch_phase': 'acknowledged', ...}}]} != {'inbox': [{'attempt_id': '644c38c6-dbce-4f28-a6c6-571a2fcb178c', 'id': '59b48c536073819e4fd1c80ef477be7f04391c1c95cd0...6-dbce-4f28-a6c6-571a2fcb178c',...&#10;  &#10;  ...Full output truncated (3 lines hidden), use '-vv' to show">case = {'root': WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-440/test_a_premature_review_refusa0'), ...efusa0/fixture/repository'), 'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x000002171107F590&gt;, ...}
+
+    def test_a_premature_review_refusal_does_not_hide_the_pending_candidate_check(case: dict[str, Any]) -&gt; None:
+        from karajan.orchestration import LocalFixtureRunner
+    
+        approve(case)
+        coordinator = SerialCoordinator(case["root"] / "orchestration", case["planner"], case["host"], case["candidates"], fixture_runner=LocalFixtureRunner(case["fixture_root"]))
+        coordinator.enqueue(case["run"]["id"], "implement", profile_ref=case["profile"], command_key="worker", principal="owner")
+        ready = advance_until(coordinator, case["run"]["id"], "candidate_ready")
+        refused = coordinator.enqueue(case["run"]["id"], "review", profile_ref=case["profile"], command_key="too-early", principal="owner")
+        assert refused["reason_codes"] == ["DEPENDENCIES_NOT_READY"]
+&gt;       assert coordinator.snapshot(case["run"]["id"]) == ready
+E       AssertionError: assert {'attempts': ...': False, ...} == {'attempts': ...': False, ...}
+E         
+E         Omitting 13 identical items, use -vv to show
+E         Differing items:
+E         {'reason_codes': ['DEPENDENCIES_NOT_READY']} != {'reason_codes': []}
+E         {'state': 'blocked'} != {'state': 'candidate_ready'}
+E         {'inbox': [{'attempt_id': '644c38c6-dbce-4f28-a6c6-571a2fcb178c', 'id': '59b48c536073819e4fd1c80ef477be7f04391c1c95cd0...8c6-dbce-4f28-a6c6-571a2fcb178c', 'business_status': 'pending', 'exit_code': 0, 'launch_phase': 'acknowledged', ...}}]} != {'inbox': [{'attempt_id': '644c38c6-dbce-4f28-a6c6-571a2fcb178c', 'id': '59b48c536073819e4fd1c80ef477be7f04391c1c95cd0...6-dbce-4f28-a6c6-571a2fcb178c',...
+E         
+E         ...Full output truncated (3 lines hidden), use '-vv' to show
+
+tests\orchestration\test_serial.py:1048: AssertionError</failure></testcase></testsuite></testsuites>

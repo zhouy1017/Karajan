@@ -1,0 +1,285 @@
+{
+  "schema_version": "karajan.serial-freeze.v1",
+  "observed_at": "2026-09-05T17:04:46.676848+00:00",
+  "implementation_commit": null,
+  "commit_binding": "pending_parent_commit_and_CI",
+  "source_sha256": {
+    "backend/karajan/orchestration/__init__.py": "44e1aa3ab0a287b1ac3c5b3de9e49c6a2ed74b4d311a032e94a484b43cea53f6",
+    "backend/karajan/orchestration/_fixture_process.py": "41309db0762b87275d3b4e6c54eae3df3da79ed565fb26f29a6780a5cbd252e1",
+    "backend/karajan/orchestration/binding.py": "28647373bfee669b9fd9200a19e3b214f6aa39720e15bc168bc080b349f1ffca",
+    "backend/karajan/orchestration/fixture.py": "15554d1e48c9a45337555e3a60961a37632837615a07927f37f9b50d7f7248c9",
+    "backend/karajan/orchestration/serial.py": "9fb9745d9ede04ae6bd3a5208463a58883bd472046d135afa08c967a235e3d49",
+    "tests/orchestration/__init__.py": "2f77e240b07586ac53dc66be03d4b79942835dfb44b92282a05f30d75c79ab95",
+    "tests/orchestration/conftest.py": "e37888dba481972f9dc1f9f7df3fd2517a5a34e6c6c9071a45cd1acb06985538",
+    "tests/orchestration/test_cli.py": "afff715de1bc472689ec016af1aafc7533e96320ccaf182c50c17f17ae0e2466",
+    "tests/orchestration/test_serial.py": "55f70fdac545fbb81eec9df2baf0915a0bb0c4809c5edc58f2a34a721d5e7cc9",
+    "examples/orchestration/probe.py": "99a181c0c36bbbf3c4fc976bb66eae6a5c58496dc062a2c5176821b15cb5665f"
+  },
+  "evidence": [
+    {
+      "file": "examples/orchestration/linux-expiry-diagnosis.junit.xml",
+      "sha256": "c88bd19a90d66080efbd611ad92a7f2f9ebaac8e62915f584ef6032efb62b1f1",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "1",
+          "skipped": "0",
+          "tests": "1",
+          "time": "30.823",
+          "timestamp": "2026-09-06T00:48:19.172381+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    },
+    {
+      "file": "examples/orchestration/linux-first-run.junit.xml",
+      "sha256": "46843370684d5a59a184bb9c85ffe5900c966feba66d353cc583c6ce268016b1",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "1",
+          "skipped": "0",
+          "tests": "34",
+          "time": "59.164",
+          "timestamp": "2026-09-06T00:43:15.931113+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    },
+    {
+      "file": "examples/orchestration/linux-pre-review.junit.xml",
+      "sha256": "6ebe6b6d454f96726d52f6ad0f3ddb878219d517492372d754d157889841192f",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "34",
+          "time": "60.186",
+          "timestamp": "2026-09-06T00:50:14.567178+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    },
+    {
+      "file": "examples/orchestration/linux-pre-review.success.report.json",
+      "sha256": "7096efd221ea8375372225204f38dfba66388e2b66cc22684596eb2d4a34c347"
+    },
+    {
+      "file": "examples/orchestration/linux.junit.xml",
+      "sha256": "004e0517ec462779093ea7e32faea7f50e8a563f57477db2d29462767955b9c3",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "37",
+          "time": "63.455",
+          "timestamp": "2026-09-06T01:00:45.078996+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    },
+    {
+      "file": "examples/orchestration/linux.success.report.json",
+      "sha256": "41583bd85d0deb932248e0e9f392777b47b5e866b51c5c2527ef72b389bc203c"
+    },
+    {
+      "file": "examples/orchestration/pre-review.freeze.report.json",
+      "sha256": "75a0758cbb84e9e0f489c0a4608bb628f04627d49d10e7174f9b56dd8beaeb73"
+    },
+    {
+      "file": "examples/orchestration/premature-review.after.junit.xml",
+      "sha256": "eea5932cc57823d04102765cae364e604a39d838b1f9d229301731f0851ec671",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "1",
+          "time": "1.156",
+          "timestamp": "2026-09-06T00:57:20.026920+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    },
+    {
+      "file": "examples/orchestration/premature-review.before.junit.xml",
+      "sha256": "2735bac40b1052c694a0e87e11d8d1c04305b429e0227ca5405c3bdef60db7dc",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "1",
+          "skipped": "0",
+          "tests": "1",
+          "time": "0.926",
+          "timestamp": "2026-09-06T00:56:41.084627+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    },
+    {
+      "file": "examples/orchestration/resume-invalidated.after.junit.xml",
+      "sha256": "4ea880d4288fe100aca60ff1e8a427328b9075d482b477521d9b75b01e8f4695",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "1",
+          "time": "0.497",
+          "timestamp": "2026-09-06T00:59:35.199082+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    },
+    {
+      "file": "examples/orchestration/resume-invalidated.before.junit.xml",
+      "sha256": "fccb1e8baee3857bbd27caac995004899eb93752e8e527c0e69c028388133502",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "1",
+          "skipped": "0",
+          "tests": "1",
+          "time": "0.580",
+          "timestamp": "2026-09-06T00:59:19.529732+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    },
+    {
+      "file": "examples/orchestration/review-fixes/premature-review.after.json",
+      "sha256": "057c3779c64720d7e331c3706401015695b597c110c558ae4eb55e62063ef14b"
+    },
+    {
+      "file": "examples/orchestration/review-fixes/premature-review.before.json",
+      "sha256": "6118c59187d59caa5c1acd33557e3bb2b140ef9ced64a2fb5c24e840e67476f0"
+    },
+    {
+      "file": "examples/orchestration/review-fixes/premature-review.input.json",
+      "sha256": "b3fd5d417ff4608ea5d3719fb6dcf17d29a7087e24b4208fca6f5808ec320bbf"
+    },
+    {
+      "file": "examples/orchestration/valid-enqueue.regression.junit.xml",
+      "sha256": "e235eac32ff20cb851e28fb2af822c7167caa6b0936b9c18f171a73c212f49b6",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "1",
+          "time": "1.618",
+          "timestamp": "2026-09-06T00:58:03.195535+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    },
+    {
+      "file": "examples/orchestration/windows-expiry-final.junit.xml",
+      "sha256": "ac18f28e745e30075730828544657a7b47b126f5ff9b27479fcbdc9ae175de53",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "1",
+          "time": "30.383",
+          "timestamp": "2026-09-06T00:50:09.646124+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    },
+    {
+      "file": "examples/orchestration/windows-pre-review.junit.xml",
+      "sha256": "7d88672fa7af73261de3e3d4343f321cfa061e29d57bf152dca40d48a8fe6342",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "1",
+          "tests": "34",
+          "time": "63.631",
+          "timestamp": "2026-09-06T00:43:09.958369+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    },
+    {
+      "file": "examples/orchestration/windows-pre-review.scenarios.report.json",
+      "sha256": "cc7cf649943bf30f78646eb84f1642597c010768632232abfbc582e036582b3c"
+    },
+    {
+      "file": "examples/orchestration/windows.junit.xml",
+      "sha256": "6cd625b89e8f301fa7c3a05ceefd4109611005c65efc32b19b21c4beea317ba8",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "1",
+          "tests": "37",
+          "time": "66.962",
+          "timestamp": "2026-09-06T01:00:40.080280+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    },
+    {
+      "file": "examples/orchestration/windows.scenarios.report.json",
+      "sha256": "956c9cb116f09287d20261fd9dc58cb9f7b119848d4c1a7b4344c8b2816d8cdc"
+    }
+  ],
+  "validation": {
+    "ruff": {
+      "status": "passed",
+      "scope": [
+        "backend/karajan/orchestration",
+        "tests/orchestration",
+        "examples/orchestration/probe.py"
+      ]
+    },
+    "strict_mypy": {
+      "status": "passed",
+      "source_files": 5
+    },
+    "windows_final_full": {
+      "passed": 36,
+      "skipped": 1,
+      "seconds": 67.01
+    },
+    "wsl_final_full": {
+      "passed": 37,
+      "failed": 0,
+      "seconds": 63.47
+    },
+    "windows_cli_scenarios": 5,
+    "wsl_standalone_success": true,
+    "review_fixes": [
+      "Rejected enqueue does not replace existing Run state",
+      "Pending checks selected from Task facts",
+      "Resume preserves invalidation/blocked state acquired while paused"
+    ]
+  },
+  "cash_api_calls": 0,
+  "real_model_calls": 0,
+  "production_dispatch_eligible": false,
+  "delivery_eligible": false,
+  "live_qualification": "not_run",
+  "limitations": [
+    "Only explicit fixed local fixture processes; not an OS sandbox or real Reviewer qualification",
+    "ResourceBroker/Capacity authority and cross-store activation/revocation protocol not connected",
+    "Multiple-worker integrated candidate, native permissions and production recovery not implemented"
+  ]
+}

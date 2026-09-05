@@ -58,6 +58,8 @@ unknown 模式要求明确启用，并同时设置有限并发、Attempt 时长�
 
 首次远端 [PR CI 33979170985](https://github.com/zhouy1017/Karajan/actions/runs/33979170985) 的两系统在测试收集阶段失败：新增 `test_probe.py` 与既有资源测试同名。已改为唯一的 `test_capacity_probe.py`，完整已提交测试集合重新收集通过；这项修复不改变产品源码或前述报告摘要。首跑失败保留，后续以新提交的实际 CI 结果判断。
 
+修复后的提交 `69d6ceef3e9f533235b46f356666d083061f2c48`，对应 [PR #40](https://github.com/zhouy1017/Karajan/pull/40)，已通过 [PR CI](https://github.com/zhouy1017/Karajan/actions/runs/33979467535) 与 push CI；Windows/Linux 后端、前端和 quality-gate 均成功。
+
 ## 剩余边界
 
 本切片没有完成公平轮转/等待提升、资源页面、与 Run 控制/预算/启动 outbox 的同事务接线，也没有执行当前主身份/批准来源集合的外部鉴权。阻塞请求不阻止后续独立准入的行为已验证，但不等于完整公平调度验收。当前结束但用量未核对的 Admission 会保守地继续占并发槽，尚未拆成页面可见的本地/远端/未知消费三种占位。

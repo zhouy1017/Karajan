@@ -1,0 +1,7 @@
+{
+  "schema": "karajan.serial.review.v1",
+  "setup": "examples/orchestration/probe.py setup(approved=True)",
+  "fixture_runner": {"worker_behavior": "complete", "check_outcome": "pass", "review_verdict": "passed"},
+  "actions": ["enqueue implement", "advance until candidate_ready", "enqueue review before check has been queued", "advance 20 times"],
+  "expected": "Premature Reviewer admission may be rejected, but the existing Worker candidate must still advance through its already required check."
+}

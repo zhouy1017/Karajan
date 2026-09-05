@@ -6,3 +6,7 @@ examples/deepseek/cases/*.json -text whitespace=cr-at-eol
 examples/deepseek/review-fixes/*.sse -text whitespace=-blank-at-eof
 # Preserve independent review inputs byte-for-byte, including their recorded SHA-256.
 examples/capacity/review-fixes/*.input.json -text whitespace=cr-at-eol
+examples/orchestration/*.json -text whitespace=cr-at-eol
+# Failure tracebacks inside JUnit preserve original whitespace as execution evidence.
+examples/orchestration/*.xml -text whitespace=-blank-at-eol,cr-at-eol
+examples/orchestration/review-fixes/*.json -text whitespace=cr-at-eol

@@ -1,0 +1,154 @@
+{
+  "schema_version": "karajan.serial-freeze.v1",
+  "observed_at": "2026-09-05T16:53:41.697281+00:00",
+  "implementation_commit": null,
+  "commit_binding": "pending_parent_commit_and_CI",
+  "source_sha256": {
+    "backend/karajan/orchestration/__init__.py": "44e1aa3ab0a287b1ac3c5b3de9e49c6a2ed74b4d311a032e94a484b43cea53f6",
+    "backend/karajan/orchestration/_fixture_process.py": "41309db0762b87275d3b4e6c54eae3df3da79ed565fb26f29a6780a5cbd252e1",
+    "backend/karajan/orchestration/binding.py": "28647373bfee669b9fd9200a19e3b214f6aa39720e15bc168bc080b349f1ffca",
+    "backend/karajan/orchestration/fixture.py": "15554d1e48c9a45337555e3a60961a37632837615a07927f37f9b50d7f7248c9",
+    "backend/karajan/orchestration/serial.py": "41ec5934357aa2532eec20776215240d3ce7e1e5a99d07334ca13129fe094853",
+    "tests/orchestration/__init__.py": "2f77e240b07586ac53dc66be03d4b79942835dfb44b92282a05f30d75c79ab95",
+    "tests/orchestration/conftest.py": "e37888dba481972f9dc1f9f7df3fd2517a5a34e6c6c9071a45cd1acb06985538",
+    "tests/orchestration/test_cli.py": "afff715de1bc472689ec016af1aafc7533e96320ccaf182c50c17f17ae0e2466",
+    "tests/orchestration/test_serial.py": "5b331eeba6b4a564aa87763eeaddec8101f6acd789f9c37f81d29ffc1f7c8d39",
+    "examples/orchestration/probe.py": "99a181c0c36bbbf3c4fc976bb66eae6a5c58496dc062a2c5176821b15cb5665f"
+  },
+  "evidence": [
+    {
+      "file": "examples/orchestration/linux-expiry-diagnosis.junit.xml",
+      "sha256": "c88bd19a90d66080efbd611ad92a7f2f9ebaac8e62915f584ef6032efb62b1f1",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "1",
+          "skipped": "0",
+          "tests": "1",
+          "time": "30.823",
+          "timestamp": "2026-09-06T00:48:19.172381+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    },
+    {
+      "file": "examples/orchestration/linux-first-run.junit.xml",
+      "sha256": "46843370684d5a59a184bb9c85ffe5900c966feba66d353cc583c6ce268016b1",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "1",
+          "skipped": "0",
+          "tests": "34",
+          "time": "59.164",
+          "timestamp": "2026-09-06T00:43:15.931113+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    },
+    {
+      "file": "examples/orchestration/linux.junit.xml",
+      "sha256": "6ebe6b6d454f96726d52f6ad0f3ddb878219d517492372d754d157889841192f",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "34",
+          "time": "60.186",
+          "timestamp": "2026-09-06T00:50:14.567178+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    },
+    {
+      "file": "examples/orchestration/windows-expiry-final.junit.xml",
+      "sha256": "ac18f28e745e30075730828544657a7b47b126f5ff9b27479fcbdc9ae175de53",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "1",
+          "time": "30.383",
+          "timestamp": "2026-09-06T00:50:09.646124+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    },
+    {
+      "file": "examples/orchestration/windows.junit.xml",
+      "sha256": "7d88672fa7af73261de3e3d4343f321cfa061e29d57bf152dca40d48a8fe6342",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "1",
+          "tests": "34",
+          "time": "63.631",
+          "timestamp": "2026-09-06T00:43:09.958369+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    },
+    {
+      "file": "examples/orchestration/linux.success.report.json",
+      "sha256": "7096efd221ea8375372225204f38dfba66388e2b66cc22684596eb2d4a34c347"
+    },
+    {
+      "file": "examples/orchestration/windows.scenarios.report.json",
+      "sha256": "cc7cf649943bf30f78646eb84f1642597c010768632232abfbc582e036582b3c"
+    }
+  ],
+  "validation": {
+    "ruff": {
+      "status": "passed",
+      "scope": [
+        "backend/karajan/orchestration",
+        "tests/orchestration",
+        "examples/orchestration/probe.py"
+      ]
+    },
+    "strict_mypy": {
+      "status": "passed",
+      "source_files": 5
+    },
+    "windows_full": {
+      "passed": 33,
+      "skipped": 1,
+      "seconds": 63.67,
+      "note": "Before UTC-wait test-only correction"
+    },
+    "windows_final_expiry": {
+      "passed": 1,
+      "seconds": 30.9
+    },
+    "wsl_first_full": {
+      "passed": 33,
+      "failed": 1,
+      "seconds": 59.23
+    },
+    "wsl_final_full": {
+      "passed": 34,
+      "failed": 0,
+      "seconds": 60.48
+    },
+    "windows_cli_scenarios": 5,
+    "wsl_standalone_success": true
+  },
+  "cash_api_calls": 0,
+  "real_model_calls": 0,
+  "production_dispatch_eligible": false,
+  "delivery_eligible": false,
+  "live_qualification": "not_run",
+  "limitations": [
+    "Only explicit fixed local fixture processes; not an OS sandbox or real Reviewer qualification",
+    "ResourceBroker/Capacity authority and cross-store activation/revocation protocol not connected",
+    "Multiple-worker integrated candidate, native permissions and production recovery not implemented"
+  ]
+}
