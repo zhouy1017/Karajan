@@ -1,0 +1,143 @@
+{
+  "schema_version": "karajan.project-registration-probe.v1",
+  "status": "passed",
+  "observed_at": "2026-09-05T13:15:19.224114+00:00",
+  "os": "Windows",
+  "python_version": "3.12.14",
+  "qualification_scope": "offline_configuration",
+  "live_qualified": false,
+  "cash_api_status": "not_run",
+  "configuration_sha256": "a286b101251e33a44c351b99edff5a07f9c325cef9be79eb90c251a0e9cb204f",
+  "implementation_sha256": {
+    "__init__.py": "9e3b2ead9e3ab7b2a52d22205acaeb42db20e2f609552f0be91f0c5d91c236e0",
+    "configuration.py": "8dc397c8f44b0a2600bc5ffa976fa1ebaf45e42eff5a155e70d67a6b05c2e86d",
+    "models.py": "ae082cf980f09ce6cb315d8d873875181c6c6f482d0bd581378d1b8ac5e7d698",
+    "registry.py": "8db6b944c0f778007beebdef5e2b78f5bbac375c192a1986f19349e93000f931"
+  },
+  "resolved_base_sha": "698829ec1f13c75a656f1a49f5d4f77c5c18e597",
+  "repository_file_hashes_before": {
+    ".git\\COMMIT_EDITMSG": "e80b71cd14d3cbd65f4173abcbfcf01a545dbca32a72d575108b553a648cc96f",
+    ".git\\config": "05becdb83bb897f6103c8d91439e2e9092144edf5b3955a746fce4975c12bfdc",
+    ".git\\description": "85ab6c163d43a17ea9cf7788308bca1466f1b0a8d1cc92e26e9bf63da4062aee",
+    ".git\\HEAD": "28d25bf82af4c0e2b72f50959b2beb859e3e60b9630a5e8c603dad4ddb2b6e80",
+    ".git\\hooks\\applypatch-msg.sample": "0223497a0b8b033aa58a3a521b8629869386cf7ab0e2f101963d328aa62193f7",
+    ".git\\hooks\\commit-msg.sample": "1f74d5e9292979b573ebd59741d46cb93ff391acdd083d340b94370753d92437",
+    ".git\\hooks\\fsmonitor-watchman.sample": "e0549964e93897b519bd8e333c037e51fff0f88ba13e086a331592bf801fa1d0",
+    ".git\\hooks\\post-update.sample": "81765af2daef323061dcbc5e61fc16481cb74b3bac9ad8a174b186523586f6c5",
+    ".git\\hooks\\pre-applypatch.sample": "e15c5b469ea3e0a695bea6f2c82bcf8e62821074939ddd85b77e0007ff165475",
+    ".git\\hooks\\pre-commit.sample": "57185b7b9f05239d7ab52db045f5b89eb31348d7b2177eab214f5eb872e1971b",
+    ".git\\hooks\\pre-merge-commit.sample": "d3825a70337940ebbd0a5c072984e13245920cdf8898bd225c8d27a6dfc9cb53",
+    ".git\\hooks\\pre-push.sample": "ecce9c7e04d3f5dd9d8ada81753dd1d549a9634b26770042b58dda00217d086a",
+    ".git\\hooks\\pre-rebase.sample": "4febce867790052338076f4e66cc47efb14879d18097d1d61c8261859eaaa7b3",
+    ".git\\hooks\\pre-receive.sample": "a4c3d2b9c7bb3fd8d1441c31bd4ee71a595d66b44fcf49ddb310252320169989",
+    ".git\\hooks\\prepare-commit-msg.sample": "e9ddcaa4189fddd25ed97fc8c789eca7b6ca16390b2392ae3276f0c8e1aa4619",
+    ".git\\hooks\\push-to-checkout.sample": "a53d0741798b287c6dd7afa64aee473f305e65d3f49463bb9d7408ec3b12bf5f",
+    ".git\\hooks\\sendemail-validate.sample": "44ebfc923dc5466bc009602f0ecf067b9c65459abfe8868ddc49b78e6ced7a92",
+    ".git\\hooks\\update.sample": "8d5f2fa83e103cf08b57eaa67521df9194f45cbdbcb37da52ad586097a14d106",
+    ".git\\index": "9dd957d198b0405e4981b3adf8c54dd2d472776fbec9cab1e7cce657809f5f3d",
+    ".git\\info\\exclude": "6671fe83b7a07c8932ee89164d1f2793b2318058eb8b98dc5c06ee0a5a3b0ec1",
+    ".git\\logs\\HEAD": "cc15fcef3e08114ea6fe0a7380dc413634a2f964db4683f1e8f690d5ede32b24",
+    ".git\\logs\\refs\\heads\\main": "cc15fcef3e08114ea6fe0a7380dc413634a2f964db4683f1e8f690d5ede32b24",
+    ".git\\objects\\16\\34f10c4c0edccfda7f1c2760fbf3c0da95fa60": "bede17390a763c09c08ab02a3450f34e7f4003ab0dcb66465103f1d523eea801",
+    ".git\\objects\\69\\8829ec1f13c75a656f1a49f5d4f77c5c18e597": "d55027a5c4fb203a433b835ab575a8587939d158646481f75800cf23f12f79c0",
+    ".git\\objects\\82\\a7a23eeb80f9e1221d8aa1c0125016546cf423": "361b2779ca4754784cf1b11dce035d2e0d5504778d7811a0ab08b123df1035ca",
+    ".git\\refs\\heads\\main": "b84bbc899f75d009dffe34544a86bfe6a42c64baf0ebdae61d3f14ca5c3915aa",
+    "example.txt": "1e9e0d312f2a1916ebaced383a2a0b82a43302a64e9b9b99352af45f01cc6bef"
+  },
+  "repository_file_hashes_after": {
+    ".git\\COMMIT_EDITMSG": "e80b71cd14d3cbd65f4173abcbfcf01a545dbca32a72d575108b553a648cc96f",
+    ".git\\config": "05becdb83bb897f6103c8d91439e2e9092144edf5b3955a746fce4975c12bfdc",
+    ".git\\description": "85ab6c163d43a17ea9cf7788308bca1466f1b0a8d1cc92e26e9bf63da4062aee",
+    ".git\\HEAD": "28d25bf82af4c0e2b72f50959b2beb859e3e60b9630a5e8c603dad4ddb2b6e80",
+    ".git\\hooks\\applypatch-msg.sample": "0223497a0b8b033aa58a3a521b8629869386cf7ab0e2f101963d328aa62193f7",
+    ".git\\hooks\\commit-msg.sample": "1f74d5e9292979b573ebd59741d46cb93ff391acdd083d340b94370753d92437",
+    ".git\\hooks\\fsmonitor-watchman.sample": "e0549964e93897b519bd8e333c037e51fff0f88ba13e086a331592bf801fa1d0",
+    ".git\\hooks\\post-update.sample": "81765af2daef323061dcbc5e61fc16481cb74b3bac9ad8a174b186523586f6c5",
+    ".git\\hooks\\pre-applypatch.sample": "e15c5b469ea3e0a695bea6f2c82bcf8e62821074939ddd85b77e0007ff165475",
+    ".git\\hooks\\pre-commit.sample": "57185b7b9f05239d7ab52db045f5b89eb31348d7b2177eab214f5eb872e1971b",
+    ".git\\hooks\\pre-merge-commit.sample": "d3825a70337940ebbd0a5c072984e13245920cdf8898bd225c8d27a6dfc9cb53",
+    ".git\\hooks\\pre-push.sample": "ecce9c7e04d3f5dd9d8ada81753dd1d549a9634b26770042b58dda00217d086a",
+    ".git\\hooks\\pre-rebase.sample": "4febce867790052338076f4e66cc47efb14879d18097d1d61c8261859eaaa7b3",
+    ".git\\hooks\\pre-receive.sample": "a4c3d2b9c7bb3fd8d1441c31bd4ee71a595d66b44fcf49ddb310252320169989",
+    ".git\\hooks\\prepare-commit-msg.sample": "e9ddcaa4189fddd25ed97fc8c789eca7b6ca16390b2392ae3276f0c8e1aa4619",
+    ".git\\hooks\\push-to-checkout.sample": "a53d0741798b287c6dd7afa64aee473f305e65d3f49463bb9d7408ec3b12bf5f",
+    ".git\\hooks\\sendemail-validate.sample": "44ebfc923dc5466bc009602f0ecf067b9c65459abfe8868ddc49b78e6ced7a92",
+    ".git\\hooks\\update.sample": "8d5f2fa83e103cf08b57eaa67521df9194f45cbdbcb37da52ad586097a14d106",
+    ".git\\index": "9dd957d198b0405e4981b3adf8c54dd2d472776fbec9cab1e7cce657809f5f3d",
+    ".git\\info\\exclude": "6671fe83b7a07c8932ee89164d1f2793b2318058eb8b98dc5c06ee0a5a3b0ec1",
+    ".git\\logs\\HEAD": "cc15fcef3e08114ea6fe0a7380dc413634a2f964db4683f1e8f690d5ede32b24",
+    ".git\\logs\\refs\\heads\\main": "cc15fcef3e08114ea6fe0a7380dc413634a2f964db4683f1e8f690d5ede32b24",
+    ".git\\objects\\16\\34f10c4c0edccfda7f1c2760fbf3c0da95fa60": "bede17390a763c09c08ab02a3450f34e7f4003ab0dcb66465103f1d523eea801",
+    ".git\\objects\\69\\8829ec1f13c75a656f1a49f5d4f77c5c18e597": "d55027a5c4fb203a433b835ab575a8587939d158646481f75800cf23f12f79c0",
+    ".git\\objects\\82\\a7a23eeb80f9e1221d8aa1c0125016546cf423": "361b2779ca4754784cf1b11dce035d2e0d5504778d7811a0ab08b123df1035ca",
+    ".git\\refs\\heads\\main": "b84bbc899f75d009dffe34544a86bfe6a42c64baf0ebdae61d3f14ca5c3915aa",
+    "example.txt": "1e9e0d312f2a1916ebaced383a2a0b82a43302a64e9b9b99352af45f01cc6bef"
+  },
+  "conditions": {
+    "same_command_same_result": true,
+    "configuration_round_trip": true,
+    "preview_is_offline_valid": true,
+    "t0_blocked": true,
+    "critical_promoted_to_t3": true,
+    "credential_not_storable": true,
+    "credential_not_exported": true,
+    "credential_not_persisted": true,
+    "rejected_apply_keeps_revision": true,
+    "repository_files_unchanged": true
+  },
+  "preview": {
+    "schema_version": "karajan.configuration-preview.v1",
+    "preview_id": "f9fec3a2-b2fd-4da6-a6c3-1fd519d4c8be",
+    "project_id": "b63b328d-d0fa-4dad-8a4f-a5c2b6ab103d",
+    "project_revision": 1,
+    "configuration_digest": "bd53d2bb88b31cd992a48c901fc7b08a46d828c6a583f4fe606c4b7e54182f81",
+    "status": "offline_valid",
+    "issues": [],
+    "can_apply": true,
+    "dispatch_eligible": false,
+    "qualification_scope": "offline_configuration",
+    "live_qualified": false,
+    "validation": {
+      "validator_revision": "karajan.m1-fixed.v1",
+      "fixed_rulebook_sha256": "55db68648c4f4707b4f77ca7786d521cf5a1df8a90da1f7ce78bd1b1532e092b",
+      "rulebook_id": "personal-code-delivery",
+      "rulebook_revision": 1
+    }
+  },
+  "t0_outcome": {
+    "schema_version": "karajan.task-preview.v1",
+    "project_revision": 2,
+    "configuration_digest": "bd53d2bb88b31cd992a48c901fc7b08a46d828c6a583f4fe606c4b7e54182f81",
+    "effective_class": "T3",
+    "rule_id": null,
+    "qualified_candidates": [],
+    "reason_codes": [
+      "TASK_NOT_READY"
+    ],
+    "dispatch_eligible": false,
+    "qualification_scope": "offline_configuration"
+  },
+  "critical_outcome": {
+    "schema_version": "karajan.task-preview.v1",
+    "project_revision": 2,
+    "configuration_digest": "bd53d2bb88b31cd992a48c901fc7b08a46d828c6a583f4fe606c4b7e54182f81",
+    "effective_class": "T3",
+    "rule_id": "critical-worker",
+    "qualified_candidates": [
+      {
+        "id": "fixture-profile",
+        "revision": 1
+      }
+    ],
+    "reason_codes": [],
+    "dispatch_eligible": false,
+    "qualification_scope": "offline_configuration",
+    "required_independence": []
+  },
+  "credential_rejection": "CONFIGURATION_NOT_STORABLE",
+  "limitations": [
+    "Uses real local Git and SQLite with fixture model/evidence references.",
+    "No model starts; HTTP authentication, OS isolation and live qualification are untested.",
+    "Temporary paths are omitted; the provided directory retains original artifacts."
+  ]
+}

@@ -21,6 +21,7 @@
 ```text
 uv lock --check
 uv sync --frozen --extra dev
+npm ci --prefix runtimes/opencode --no-audit --no-fund
 uv run --frozen --extra dev ruff check .
 uv run --frozen --extra dev mypy backend/karajan
 uv run --frozen --extra dev pytest tests
@@ -36,17 +37,19 @@ lint 覆盖仓库 Python 文件，类型检查覆盖 `backend/karajan`，pytest 
 
 `quality-gate` 使用 `if: always()` 等待所有必需 job，并逐个要求结果严格等于 `success`。上游 `failure`、`cancelled`、`skipped`、缺失或未知结果均使汇总步骤退出非零；它不是一个无条件输出成功的收尾任务。整个 workflow 被取消时，汇总检查也可能被取消，这同样不满足成功要求。[GitHub needs 与 always 语义](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idneeds)
 
-当前必需依赖为 `python-quality`。添加新检查 job 时，必须同时更新 `quality-gate.needs` 和汇总脚本的 `required` 集合；不能只运行新检查而让它与合并门无关。汇总 job 不检出或执行项目代码，最多运行 5 分钟。
+当前工作台变更的必需依赖为 `python-quality` 和 `frontend-quality`。添加新检查 job 时，必须同时更新 `quality-gate.needs` 和汇总脚本的 `required` 集合；不能只运行新检查而让它与合并门无关。汇总 job 不检出或执行项目代码，最多运行 5 分钟。前端加入前的历史提交仍只有 Python 依赖，不能把新门禁配置归属于旧 CI 记录。
 
 仓库 ruleset/branch protection 应将精确名称 `quality-gate` 设为必需状态检查，并要求当前提交或 merge group 的检查通过。提交 workflow 文件本身不会修改 GitHub 仓库规则；规则是否已启用应以实际 GitHub 配置与检查结果为准，不从本文件推断。维护时保持这个名称稳定。[GitHub 必需状态检查](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-status-checks-before-merging)
 
-## 前端检查的加入条件
+## 前端必需检查
 
-当前 Python CI 包含一个明确的覆盖检查：若 `frontend/package.json` 已出现，但尚未配置前端质量门，CI 直接失败。它防止前端已经实现却继续只检查 Python；它不声称前端不存在时运行过前端测试。
+工作台首次引入时，同批替换了原先“存在前端却未建立门禁则失败”的覆盖检查。`frontend-quality` 在 Ubuntu 上使用固定 Node.js `24.18.1` 及该发行包随附 npm，按提交的 `frontend/package-lock.json` 安装依赖。
 
-首次加入前端时，必须在同一变更中替换这条覆盖检查，增加真正的 `frontend-quality` job，固定 Node/package manager 版本并提交锁文件，执行对应的锁定安装、类型检查、非 watch 测试和生产构建。例如选择 npm 时使用 `npm ci`，并要求 `typecheck`、`test`、`build` 脚本存在；不使用缺脚本也成功的选项。选择 pnpm 等工具时保留同等冻结锁文件语义。
+在 `frontend` 目录依次执行 `npm ci --no-audit --no-fund`、`npm run typecheck`、`npm run format:check`、`npm test` 和 `npm run build`。交互测试覆盖真实 React 组件的登录、幂等重试、配置读取/预览/版本化应用及退出；网络依赖在此层可控模拟，真实 FastAPI 和浏览器行为另行记录。没有缺脚本也返回成功的选项。
 
-前端 job 必须成为 `quality-gate` 的必需依赖。前端代码已经存在后，不使用 `hashFiles(...)` 条件跳过、成功占位 job，或检测失败后返回成功。前端脚本及 runtime 的具体版本在实际引入时核验，不提前声明尚未实现的检查已通过。
+前端 job 已成为当前 workflow 的必需依赖。不使用 `hashFiles(...)` 条件跳过、成功占位 job，或检测失败后返回成功。具体远端检查结果须引用当前提交运行，不能由本地构建成功推断。
+
+Python 两个系统的 job 同时安装固定 `opencode-ai@1.18.29`，以实际二进制执行本地模拟 provider 探针；缺失或版本不符不能将该检查静默跳过。WSL/Linux namespace canary 在目标机器有独立实证；hosted runner 不支持的隔离路径明确报告，不能升级为 Profile 资格。
 
 ## 凭据与真实资格验证
 
@@ -66,5 +69,7 @@ CI 绿色只表示这些离线契约和本地行为检查通过。它不能证�
 | setup-python | v7.0.0 / `5fda3b95a4ea91299a34e894583c3862153e4b97` | [发布说明](https://github.com/actions/setup-python/releases/tag/v7.0.0)、[提交](https://github.com/actions/setup-python/commit/5fda3b95a4ea91299a34e894583c3862153e4b97) |
 | setup-uv | v10.0.1 / `20cfd1bf945f4377ade1205e4dbc17946fc9a30d` | [发布说明](https://github.com/astral-sh/setup-uv/releases/tag/v10.0.1)、[固定版本输入定义](https://github.com/astral-sh/setup-uv/blob/20cfd1bf945f4377ade1205e4dbc17946fc9a30d/action.yml) |
 | uv | 0.12.10 | [官方发布](https://github.com/astral-sh/uv/releases/tag/0.12.10)、[官方 CI 集成说明](https://docs.astral.sh/uv/guides/integration/github/) |
+| setup-node | v7.0.0 / `820762786026740c76f36085b0efc47a31fe5020` | [官方发布](https://github.com/actions/setup-node/releases/tag/v7.0.0) |
+| Node.js | 24.18.1 | [官方发布](https://github.com/nodejs/node/releases/tag/v24.18.1) |
 
 Python 固定 3.12 系列，由 setup-python 选择可用补丁版本；它不是 Python 二进制逐字节固定的承诺。uv 本体显式固定版本；当前关闭跨运行 uv 缓存。依赖升级修改项目声明与锁文件后，重新运行相同检查。
