@@ -230,6 +230,7 @@ def _linux_probe(directory: Path) -> tuple[list[dict[str, Any]], dict[str, Any]]
                 "unshare: unshare failed: Operation not permitted",
                 "unshare: unshare failed: Invalid argument",
                 "unshare: unshare failed: Function not implemented",
+                "unshare: write failed /proc/self/uid_map: Operation not permitted",
             }
         )
         return [], {
