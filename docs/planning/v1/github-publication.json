@@ -1,0 +1,288 @@
+{
+  "schema_version": 1,
+  "repository": "zhouy1017/Karajan",
+  "published_at": "2026-09-05",
+  "status": "published_relationships_pending",
+  "parent": {
+    "number": 1,
+    "url": "https://github.com/zhouy1017/Karajan/issues/1"
+  },
+  "dependency_semantics": "acceptance_and_enablement_gate; independent_offline_work_allowed",
+  "cash_api_calls": "prohibited",
+  "issues": [
+    {
+      "key": "M1-01",
+      "number": 11,
+      "url": "https://github.com/zhouy1017/Karajan/issues/11",
+      "title": "M1-01｜可信项目、配置与认证入口",
+      "blocked_by": [
+        "M0-03"
+      ],
+      "blocked_by_numbers": [
+        4
+      ]
+    },
+    {
+      "key": "M1-02",
+      "number": 12,
+      "url": "https://github.com/zhouy1017/Karajan/issues/12",
+      "title": "M1-02｜有界规划、确认和最小人工交接",
+      "blocked_by": [
+        "M1-01",
+        "M0-07"
+      ],
+      "blocked_by_numbers": [
+        11,
+        8
+      ]
+    },
+    {
+      "key": "M1-03",
+      "number": 13,
+      "url": "https://github.com/zhouy1017/Karajan/issues/13",
+      "title": "M1-03｜串行执行、冻结候选与独立质量门",
+      "blocked_by": [
+        "M1-02"
+      ],
+      "blocked_by_numbers": [
+        12
+      ]
+    },
+    {
+      "key": "M1-04",
+      "number": 14,
+      "url": "https://github.com/zhouy1017/Karajan/issues/14",
+      "title": "M1-04｜独立交付、同一 PR 与完成语义",
+      "blocked_by": [
+        "M1-03"
+      ],
+      "blocked_by_numbers": [
+        13
+      ]
+    },
+    {
+      "key": "M1-05",
+      "number": 15,
+      "url": "https://github.com/zhouy1017/Karajan/issues/15",
+      "title": "M1-05｜计划修订与成果复用",
+      "blocked_by": [
+        "M1-03"
+      ],
+      "blocked_by_numbers": [
+        13
+      ]
+    },
+    {
+      "key": "M1-06",
+      "number": 16,
+      "url": "https://github.com/zhouy1017/Karajan/issues/16",
+      "title": "M1-06｜可恢复运行视图与当前有效操作",
+      "blocked_by": [
+        "M1-04",
+        "M1-05"
+      ],
+      "blocked_by_numbers": [
+        14,
+        15
+      ]
+    },
+    {
+      "key": "M2-01",
+      "number": 17,
+      "url": "https://github.com/zhouy1017/Karajan/issues/17",
+      "title": "M2-01｜2–3 子任务并行与组合验证",
+      "blocked_by": [
+        "M1-04",
+        "M1-05"
+      ],
+      "blocked_by_numbers": [
+        14,
+        15
+      ]
+    },
+    {
+      "key": "M2-02",
+      "number": 18,
+      "url": "https://github.com/zhouy1017/Karajan/issues/18",
+      "title": "M2-02｜ChatGPT 订阅产品接入",
+      "blocked_by": [
+        "M1-03"
+      ],
+      "blocked_by_numbers": [
+        13
+      ]
+    },
+    {
+      "key": "M2-03",
+      "number": 19,
+      "url": "https://github.com/zhouy1017/Karajan/issues/19",
+      "title": "M2-03｜Claude 订阅产品接入",
+      "blocked_by": [
+        "M1-03"
+      ],
+      "blocked_by_numbers": [
+        13
+      ]
+    },
+    {
+      "key": "M2-04",
+      "number": 20,
+      "url": "https://github.com/zhouy1017/Karajan/issues/20",
+      "title": "M2-04｜DeepSeek 官方 API 产品接入",
+      "blocked_by": [
+        "M1-03"
+      ],
+      "blocked_by_numbers": [
+        13
+      ]
+    },
+    {
+      "key": "M2-05",
+      "number": 21,
+      "url": "https://github.com/zhouy1017/Karajan/issues/21",
+      "title": "M2-05｜OpenCode Go 通道产品接入",
+      "blocked_by": [
+        "M1-03"
+      ],
+      "blocked_by_numbers": [
+        13
+      ]
+    },
+    {
+      "key": "M2-06",
+      "number": 22,
+      "url": "https://github.com/zhouy1017/Karajan/issues/22",
+      "title": "M2-06｜指定第三方 API 产品接入",
+      "blocked_by": [
+        "M1-03"
+      ],
+      "blocked_by_numbers": [
+        13
+      ]
+    },
+    {
+      "key": "M3-01",
+      "number": 23,
+      "url": "https://github.com/zhouy1017/Karajan/issues/23",
+      "title": "M3-01｜Rulebook 编辑、模拟和版本发布",
+      "blocked_by": [
+        "M1-05"
+      ],
+      "blocked_by_numbers": [
+        15
+      ]
+    },
+    {
+      "key": "M3-02",
+      "number": 24,
+      "url": "https://github.com/zhouy1017/Karajan/issues/24",
+      "title": "M3-02｜共享池、多窗口、观察和保护量",
+      "blocked_by": [
+        "M1-03"
+      ],
+      "blocked_by_numbers": [
+        13
+      ]
+    },
+    {
+      "key": "M3-03",
+      "number": 25,
+      "url": "https://github.com/zhouy1017/Karajan/issues/25",
+      "title": "M3-03｜逐调用消费、原币预算与未知核对",
+      "blocked_by": [
+        "M1-03"
+      ],
+      "blocked_by_numbers": [
+        13
+      ]
+    },
+    {
+      "key": "M3-04",
+      "number": 26,
+      "url": "https://github.com/zhouy1017/Karajan/issues/26",
+      "title": "M3-04｜自动换源、质量升级和累计修复",
+      "blocked_by": [
+        "M2-01",
+        "M3-01",
+        "M3-02",
+        "M3-03"
+      ],
+      "blocked_by_numbers": [
+        17,
+        23,
+        24,
+        25
+      ]
+    },
+    {
+      "key": "M3-05",
+      "number": 27,
+      "url": "https://github.com/zhouy1017/Karajan/issues/27",
+      "title": "M3-05｜完整人工 Commander 交接工作台",
+      "blocked_by": [
+        "M3-01",
+        "M3-02"
+      ],
+      "blocked_by_numbers": [
+        23,
+        24
+      ]
+    },
+    {
+      "key": "M4-01",
+      "number": 28,
+      "url": "https://github.com/zhouy1017/Karajan/issues/28",
+      "title": "M4-01｜实际终止、取消竞态与正常恢复",
+      "blocked_by": [
+        "M1-06",
+        "M3-04",
+        "M3-05"
+      ],
+      "blocked_by_numbers": [
+        16,
+        26,
+        27
+      ]
+    },
+    {
+      "key": "M4-02",
+      "number": 29,
+      "url": "https://github.com/zhouy1017/Karajan/issues/29",
+      "title": "M4-02｜备份恢复、升级与保留",
+      "blocked_by": [
+        "M1-06",
+        "M3-04",
+        "M3-05"
+      ],
+      "blocked_by_numbers": [
+        16,
+        26,
+        27
+      ]
+    },
+    {
+      "key": "M4-03",
+      "number": 30,
+      "url": "https://github.com/zhouy1017/Karajan/issues/30",
+      "title": "M4-03｜真实远端 gate、全量证据与 v1 出口",
+      "blocked_by": [
+        "M2-02",
+        "M2-03",
+        "M2-04",
+        "M2-05",
+        "M2-06",
+        "M4-01",
+        "M4-02"
+      ],
+      "blocked_by_numbers": [
+        18,
+        19,
+        20,
+        21,
+        22,
+        28,
+        29
+      ]
+    }
+  ]
+}

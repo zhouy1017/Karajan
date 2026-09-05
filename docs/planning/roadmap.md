@@ -2,13 +2,13 @@
 
 日期：2026-09-05。依据：[PRD v1](../prd/karajan-v1.md)、[已确认架构](../architecture/README.md)和[实施与验收矩阵](../architecture/05-build-and-validation.md)。
 
-已发布 [PRD 父任务 #1](https://github.com/zhouy1017/Karajan/issues/1) 与 8 个 M0 Issues，并核对原生子任务关系和 10 条阻塞依赖。尚未实施平台、安装执行环境或进行真实订阅/API 测试；本文中的验收都是待执行标准。M0-01 等是规格标识，#2 等是实际 GitHub 编号。
+已发布 [PRD 父任务 #1](https://github.com/zhouy1017/Karajan/issues/1)、8 个 M0 Issues、20 个 M1–M4 任务和 [CI 任务 #10](https://github.com/zhouy1017/Karajan/issues/10)。当前已开始离线实现及本地开发环境安装，尚未进行真实订阅/API 资格测试。任务详情见 [完整拆分](v1-backlog.md)，实际编号及关系核验状态见 [后续任务发布记录](v1/github-publication.json)。M0-01 等是规格标识，#2 等是实际 GitHub 编号。
 
 ## 1. 路线与完成语义
 
 先证明一个订阅端和一个 API 端能按统一契约受控执行，再构建需求到 PR 的产品流程。Karajan 始终拥有唯一业务协调器；探针复用真实执行器，但不同时启用另一个平台的自治任务图、选路、业务重试或交付。
 
-M0 建立有界探针、脚本化假 provider、测试进程和最小资源记录，不要求完整 Web、完整 DAG 平台、全部来源接通或真实 GitHub PR。M1–M4 暂保留阶段范围，等前置接口和计量事实明确后再拆成适合独立上下文完成的任务。
+M0 建立有界探针、脚本化假 provider、测试进程和最小资源记录，不要求完整 Web、完整 DAG 平台、全部来源接通或真实 GitHub PR。M1–M4 已按现有设计拆成独立任务，接口和计量事实到位后逐票冻结集成版本；不以尚未完成的真实资格阻止可独立开展的离线实现。
 
 必须分别记录两种状态：
 
@@ -105,6 +105,8 @@ M1 的 PR 核对、M2 的候选集成、M3 的确定性资源规则可以在接�
 
 ## 7. 跟踪与变更
 
-PRD #1 是父级需求，M0 的 8 个 Issue 均通过原生子任务关系关联；正文保留 Parent 与 Blocked by 链接。全部已标记 ready-for-agent，表示规格完整，执行仍须满足依赖和配置。发布编号与关系核验见 [发布清单](m0/github-publication.json)，任务状态以 GitHub 为准。M1–M4 当前只有阶段范围，前置结果到位后再创建具体实现任务。
+PRD #1 是父级需求，正文保留 Parent 与 Blocked by 链接；原生关系以实际发布记录为准。ready-for-agent 表示规格完整，实际启用仍须满足依赖和配置。M0 编号与关系核验见 [M0 发布清单](m0/github-publication.json)，M1–M4 见 [后续发布清单](v1/github-publication.json)，任务状态以 GitHub 为准。
+
+用户已授权全程设计、拆票、实现与 GitHub 测试门禁。本轮暂不进行现金 API 调用，真实 API 资格保持 not_run。完整 v1 出口保留真实资格条件，离线工作不因此暂停；实际证据逐项回填 [需求覆盖审计](../implementation/requirement-coverage.md)。
 
 每次 runtime、操作系统、认证方式、计费通道或关键工具边界变化，相关资格需重新验收。范围或用户行为变化更新 PRD 和设计决定；探针发现事实差异则先记录限制与影响，再决定替换适配器或修改接口。发布规划、关闭调查任务、能力通过和 v1 完成是四个不同事实。

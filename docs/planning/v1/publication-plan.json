@@ -1,0 +1,196 @@
+{
+  "schema_version": 1,
+  "repository": "zhouy1017/Karajan",
+  "prepared_at": "2026-09-05",
+  "status": "prepared_not_published",
+  "parent": {
+    "number": 1,
+    "url": "https://github.com/zhouy1017/Karajan/issues/1"
+  },
+  "dependency_semantics": "acceptance_and_enablement_gate; independent_offline_work_allowed",
+  "execution_policy": {
+    "cash_api_calls": "prohibited_this_round",
+    "live_api_qualification": "not_run",
+    "offline_implementation": "authorized",
+    "unmet_live_gate_does_not_block_independent_offline_work": true
+  },
+  "issues": [
+    {
+      "key": "M1-01",
+      "title": "M1-01｜可信项目、配置与认证入口",
+      "file": "docs/planning/v1/issues/m1-01.md",
+      "blocked_by": [
+        "M0-03"
+      ]
+    },
+    {
+      "key": "M1-02",
+      "title": "M1-02｜有界规划、确认和最小人工交接",
+      "file": "docs/planning/v1/issues/m1-02.md",
+      "blocked_by": [
+        "M1-01",
+        "M0-07"
+      ]
+    },
+    {
+      "key": "M1-03",
+      "title": "M1-03｜串行执行、冻结候选与独立质量门",
+      "file": "docs/planning/v1/issues/m1-03.md",
+      "blocked_by": [
+        "M1-02"
+      ]
+    },
+    {
+      "key": "M1-04",
+      "title": "M1-04｜独立交付、同一 PR 与完成语义",
+      "file": "docs/planning/v1/issues/m1-04.md",
+      "blocked_by": [
+        "M1-03"
+      ]
+    },
+    {
+      "key": "M1-05",
+      "title": "M1-05｜计划修订与成果复用",
+      "file": "docs/planning/v1/issues/m1-05.md",
+      "blocked_by": [
+        "M1-03"
+      ]
+    },
+    {
+      "key": "M1-06",
+      "title": "M1-06｜可恢复运行视图与当前有效操作",
+      "file": "docs/planning/v1/issues/m1-06.md",
+      "blocked_by": [
+        "M1-04",
+        "M1-05"
+      ]
+    },
+    {
+      "key": "M2-01",
+      "title": "M2-01｜2–3 子任务并行与组合验证",
+      "file": "docs/planning/v1/issues/m2-01.md",
+      "blocked_by": [
+        "M1-04",
+        "M1-05"
+      ]
+    },
+    {
+      "key": "M2-02",
+      "title": "M2-02｜ChatGPT 订阅产品接入",
+      "file": "docs/planning/v1/issues/m2-02.md",
+      "blocked_by": [
+        "M1-03"
+      ]
+    },
+    {
+      "key": "M2-03",
+      "title": "M2-03｜Claude 订阅产品接入",
+      "file": "docs/planning/v1/issues/m2-03.md",
+      "blocked_by": [
+        "M1-03"
+      ]
+    },
+    {
+      "key": "M2-04",
+      "title": "M2-04｜DeepSeek 官方 API 产品接入",
+      "file": "docs/planning/v1/issues/m2-04.md",
+      "blocked_by": [
+        "M1-03"
+      ]
+    },
+    {
+      "key": "M2-05",
+      "title": "M2-05｜OpenCode Go 通道产品接入",
+      "file": "docs/planning/v1/issues/m2-05.md",
+      "blocked_by": [
+        "M1-03"
+      ]
+    },
+    {
+      "key": "M2-06",
+      "title": "M2-06｜指定第三方 API 产品接入",
+      "file": "docs/planning/v1/issues/m2-06.md",
+      "blocked_by": [
+        "M1-03"
+      ]
+    },
+    {
+      "key": "M3-01",
+      "title": "M3-01｜Rulebook 编辑、模拟和版本发布",
+      "file": "docs/planning/v1/issues/m3-01.md",
+      "blocked_by": [
+        "M1-05"
+      ]
+    },
+    {
+      "key": "M3-02",
+      "title": "M3-02｜共享池、多窗口、观察和保护量",
+      "file": "docs/planning/v1/issues/m3-02.md",
+      "blocked_by": [
+        "M1-03"
+      ]
+    },
+    {
+      "key": "M3-03",
+      "title": "M3-03｜逐调用消费、原币预算与未知核对",
+      "file": "docs/planning/v1/issues/m3-03.md",
+      "blocked_by": [
+        "M1-03"
+      ]
+    },
+    {
+      "key": "M3-04",
+      "title": "M3-04｜自动换源、质量升级和累计修复",
+      "file": "docs/planning/v1/issues/m3-04.md",
+      "blocked_by": [
+        "M2-01",
+        "M3-01",
+        "M3-02",
+        "M3-03"
+      ]
+    },
+    {
+      "key": "M3-05",
+      "title": "M3-05｜完整人工 Commander 交接工作台",
+      "file": "docs/planning/v1/issues/m3-05.md",
+      "blocked_by": [
+        "M3-01",
+        "M3-02"
+      ]
+    },
+    {
+      "key": "M4-01",
+      "title": "M4-01｜实际终止、取消竞态与正常恢复",
+      "file": "docs/planning/v1/issues/m4-01.md",
+      "blocked_by": [
+        "M1-06",
+        "M3-04",
+        "M3-05"
+      ]
+    },
+    {
+      "key": "M4-02",
+      "title": "M4-02｜备份恢复、升级与保留",
+      "file": "docs/planning/v1/issues/m4-02.md",
+      "blocked_by": [
+        "M1-06",
+        "M3-04",
+        "M3-05"
+      ]
+    },
+    {
+      "key": "M4-03",
+      "title": "M4-03｜真实远端 gate、全量证据与 v1 出口",
+      "file": "docs/planning/v1/issues/m4-03.md",
+      "blocked_by": [
+        "M2-02",
+        "M2-03",
+        "M2-04",
+        "M2-05",
+        "M2-06",
+        "M4-01",
+        "M4-02"
+      ]
+    }
+  ]
+}

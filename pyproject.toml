@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "karajan-core"
+version = "0.1.0"
+description = "Personal multi-provider agent orchestration and evidence-based code delivery"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = ["pydantic>=2.12,<3"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.4,<10", "ruff>=0.12,<1", "mypy>=1.17,<2"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["backend/karajan"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["backend"]
+addopts = "-ra --strict-markers"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+mypy_path = "backend"

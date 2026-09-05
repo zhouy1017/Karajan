@@ -8,7 +8,9 @@
 - [M0–M4 路线图](docs/planning/roadmap.md)：M0 探针顺序、阶段出口与后续拆票时机。
 - [GitHub Issues](https://github.com/zhouy1017/Karajan/issues)：任务状态与依赖关系；[跟踪约定](docs/agents/issue-tracker.md)。
 
-PRD 与 8 个 M0 Issues 已发布，原生子任务及阻塞依赖已核对。首个可开始任务是 [M0-01：契约与资格报告 #2](https://github.com/zhouy1017/Karajan/issues/2)。尚未开始平台实现或真实账户资格测试。
+PRD、8 个 M0 Issues、20 个 M1–M4 实现任务和独立 CI 任务已发布。当前正在实现 M0 契约、执行器和资源原语，真实账户资格尚未通过。后续任务见 [完整任务清单](docs/planning/v1-backlog.md) 与 [需求覆盖审计](docs/implementation/requirement-coverage.md)；GitHub 实际编号见 [发布记录](docs/planning/v1/github-publication.json)。
+
+本轮不进行现金 API 调用，相关真实验收保持 `not_run`；本地进程、假 provider 和协议回放继续推进。开发验证方式见 [测试与合并质量门](docs/implementation/testing-gates.md)。
 
 ## 完整架构设计
 
@@ -19,7 +21,7 @@ PRD 与 8 个 M0 Issues 已发布，原生子任务及阻塞依赖已核对。�
 - 订阅与 API 执行、隔离、跨 Agent 上下文、候选验证和 PR 交付。
 - Web/执行器接口、配置示例、技术组合、实施阶段和验收矩阵。
 
-状态：2026-09-05 已完成审阅并由用户确定为 v1 设计基线；下一阶段是 M0 接口资格探针。尚未实现平台或完成真实账户/执行器资格测试。审阅结果见 [决定记录](docs/architecture/06-review-and-decisions.md)，术语见 [CONTEXT.md](CONTEXT.md)。
+状态：2026-09-05 已完成审阅并由用户确定为 v1 设计基线，现已进入 M0 接口探针实现。设计确认不代表真实账户/执行器资格通过。审阅结果见 [决定记录](docs/architecture/06-review-and-decisions.md)，术语见 [CONTEXT.md](CONTEXT.md)。
 
 ## 报告
 

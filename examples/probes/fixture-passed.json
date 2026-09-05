@@ -1,0 +1,84 @@
+{
+  "schema_version": "karajan.probe.v1",
+  "case_id": "offline-binding-example",
+  "profile": {
+    "id": "profile-fixture",
+    "revision": 1,
+    "binding": {
+      "model_id": "fixture-model-v1",
+      "channel_id": "fixture-channel",
+      "account_id": "fixture-account",
+      "runtime_kind": "fixture",
+      "runtime_version": "1.0",
+      "auth_mode": "fixture_reference",
+      "billing_path": "subscription_only",
+      "native_settings": {"effort": "high"}
+    },
+    "auth_ref": "secret-ref:fixture",
+    "required_permissions": ["workspace.read"],
+    "admission_granularity": "attempt",
+    "usage_coverage": "attempt"
+  },
+  "attempt": {
+    "id": "attempt-fixture-1",
+    "fence": 1,
+    "role": "worker",
+    "profile_id": "profile-fixture",
+    "profile_revision": 1,
+    "authorization_ref": "authorization:fixture",
+    "budget_ref": "budget:fixture",
+    "permissions": ["workspace.read"],
+    "requested_binding": {
+      "model_id": "fixture-model-v1",
+      "channel_id": "fixture-channel",
+      "account_id": "fixture-account",
+      "runtime_kind": "fixture",
+      "runtime_version": "1.0",
+      "auth_mode": "fixture_reference",
+      "billing_path": "subscription_only",
+      "native_settings": {"effort": "high"}
+    }
+  },
+  "required_capabilities": ["fixed_binding"],
+  "events": [
+    {
+      "event_id": "accepted-1",
+      "attempt_id": "attempt-fixture-1",
+      "fence": 1,
+      "profile_id": "profile-fixture",
+      "profile_revision": 1,
+      "type": "binding.accepted",
+      "binding": {
+        "model_id": "fixture-model-v1",
+        "channel_id": "fixture-channel",
+        "account_id": "fixture-account",
+        "runtime_kind": "fixture",
+        "runtime_version": "1.0",
+        "auth_mode": "fixture_reference",
+        "billing_path": "subscription_only",
+        "native_settings": {"effort": "high"}
+      }
+    },
+    {
+      "event_id": "capability-1",
+      "attempt_id": "attempt-fixture-1",
+      "fence": 1,
+      "profile_id": "profile-fixture",
+      "profile_revision": 1,
+      "type": "capability.result",
+      "capability": "fixed_binding",
+      "status": "passed",
+      "evidence_refs": ["fixture:binding"],
+      "limitations": []
+    }
+  ],
+  "provenance": {
+    "kind": "fixture",
+    "runtime_version": "1.0",
+    "os": "synthetic",
+    "isolation": "none_offline",
+    "observed_at": "2026-09-05T08:00:00Z",
+    "evidence_refs": ["fixture:binding"],
+    "limitations": ["Scripted events; no runtime was executed."]
+  }
+}
