@@ -1,0 +1,35 @@
+{
+  "schema_version": "karajan.run-planning-verification.v1",
+  "observed_at": "2026-09-05T13:53:34.646985+00:00",
+  "os": "Windows",
+  "python": "3.12.14",
+  "implementation_commit": null,
+  "commit_binding": "pending_root_commit",
+  "scope": "local_sqlite_and_public_cli_with_test_layer_admission",
+  "tests": {
+    "command": "python -m pytest tests/runs -q",
+    "status": "passed",
+    "count": 49,
+    "seconds": 11.21
+  },
+  "ruff": "passed",
+  "mypy_windows": "passed",
+  "mypy_linux": "passed",
+  "runtime_dispatch": "not_run",
+  "production_admission_reader": "not_run",
+  "live_profile_qualification": "not_run",
+  "cash_api_calls": 0,
+  "model_calls": 0,
+  "source_digests": {
+    "backend\\karajan\\runs\\__init__.py": "9cecae6387250b4b049423e017763b201fb3b3f8af56b9a52d66581cc125b753",
+    "backend\\karajan\\runs\\__main__.py": "7a890fc6ec9fdc24b57a784d29ac69bc629067a9838de0c47b544425cf8ed414",
+    "backend\\karajan\\runs\\models.py": "bb848445114e25a94662dff578759cb5dc8fcdd80bbcd0ca4a00b5141ec3f68d",
+    "backend\\karajan\\runs\\planning.py": "dfabd5a4cfa037ad18b3b7213dbeaeda7171415a8d3ebd883795dace60ae7181",
+    "backend\\karajan\\runs\\validation.py": "e1cf7672799792a7959d9a310ca0a854d3be63a2ab602e727969c966285ebd00"
+  },
+  "review_regressions": {
+    "windows_path_aliases": "passed",
+    "invalid_run_identity": "passed",
+    "red_green_variants": 7
+  }
+}

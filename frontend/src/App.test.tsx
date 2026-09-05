@@ -87,6 +87,7 @@ it("registers a repository with CSRF and reuses the command identity after an un
     }
     if (path === "/v1/projects")
       return Response.json({ items: created ? [project] : [] });
+    if (path.startsWith("/v1/runs?")) return Response.json({ items: [] });
     throw new Error("Unexpected request");
   });
   render(<App />);
@@ -99,6 +100,8 @@ it("registers a repository with CSRF and reuses the command identity after an un
   await screen.findByRole("alert");
   await userEvent.click(screen.getByRole("button", { name: "保存项目" }));
   await screen.findByRole("heading", { name: "我的仓库" });
+  await userEvent.click(screen.getByRole("button", { name: "需求与计划" }));
+  await screen.findByRole("heading", { name: "我的仓库 · 需求与计划" });
   expect(writes).toHaveLength(2);
   expect(new Headers(writes[0].headers).get("X-CSRF-Token")).toBe(
     "csrf-fixture",
