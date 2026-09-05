@@ -52,3 +52,5 @@ SSE 未完成的最后一帧不能终结响应；损坏尾部也不会抹掉前�
 保留的真实失败→修复记录：畸形 JSON choice 抛异常；非法 role 产生不稳定异常；截断 DONE 被当完成；流尾损坏丢失已有 usage；文本 parts 未归一；实际 OpenCode 第二轮空 reasoning 字段被错误拒绝；新场景缺实现；缺运行时先创建了状态目录；CLI 入口缺失；实际配置漂移场景缺入口。相应回归用例修复后通过，不把未失败的补充用例写成红→绿。
 
 剩余工作包括生产可复用 HTTP transport、完整 RunnerHost/Run 状态接线、不同收费项的真实有界计量、指定账户与 secret_ref、真实模型/工具/权限/停止资格，以及用户允许现金测试后的真实对账。本轮现金 API 调用数为零；固定协议与本地账本通过不能给真实 Profile 标记 enabled 或 bounded_calls。
+
+远端验证补记：提交 `3534f967f9742054011ed0b9d226bf50b23dd841` 的 [PR #39](https://github.com/zhouy1017/Karajan/pull/39) 已通过 [GitHub CI](https://github.com/zhouy1017/Karajan/actions/runs/33976539011)，包括 Windows/Linux 后端、前端和 `quality-gate`；同提交的 push CI 也通过。该记录补充上述本机证据，不代表真实 DeepSeek 资格通过。

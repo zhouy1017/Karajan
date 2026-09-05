@@ -1,6 +1,6 @@
 # Karajan v1 需求与完成证据审计
 
-日期：2026-09-05。规范输入：[PRD v1](../prd/karajan-v1.md)、[架构验收 A01–A26](../architecture/05-build-and-validation.md)、[已确认决定 D01–D09](../architecture/06-review-and-decisions.md)。执行安排：[全量候选任务](../planning/v1-backlog.md)；既有 M0：[路线图](../planning/roadmap.md)。
+更新至：2026-09-06。规范输入：[PRD v1](../prd/karajan-v1.md)、[架构验收 A01–A26](../architecture/05-build-and-validation.md)、[已确认决定 D01–D09](../architecture/06-review-and-decisions.md)。执行安排：[全量候选任务](../planning/v1-backlog.md)；既有 M0：[路线图](../planning/roadmap.md)。
 
 本文件追踪全项目完成证据。用户已授权推进整个 PRD，但授权、设计确定、源码存在和能力通过是不同事实。完整验收尚未完成；下文另列已经通过的窄切片，保留其适用范围。标注 `not_run` 的完整要求不能由这些切片自动升级。
 
@@ -43,6 +43,10 @@ M0-05/06 的固定 OpenCode 运行时与隔离探针在 [PR #33](https://github.
 
 [Claude 固定协议回放](m2-claude-boundary.md) 的 59 项公共测试通过；[PR #36](https://github.com/zhouy1017/Karajan/pull/36) 的 `65d9060a39f555e17078bc8c208453cc9bb19b69` 已通过 [CI](https://github.com/zhouy1017/Karajan/actions/runs/33972318555)。原生权限、协议身份和 usage 观察的离线行为已覆盖，实际 Claude 订阅调用与来源资格保持 not_run。
 
+[DeepSeek 离线接入](m2-deepseek-offline.md) 的 70 项 Windows 测试与 14 场景通过；[PR #39](https://github.com/zhouy1017/Karajan/pull/39) 的 `3534f967f9742054011ed0b9d226bf50b23dd841` 已通过双系统后端、前端与 [quality-gate](https://github.com/zhouy1017/Karajan/actions/runs/33976539011)。协议、本机工具循环和现有预算账本的离线子集有证据，真实来源资格不变。
+
+2026-09-06，[共享配额池](m3-shared-capacity.md) 在 Windows 与 WSL2 分别通过 46 项公共测试，固定公开 CLI 实际接收 2 个本机 HTTP 请求、拒绝请求接收 0 次，持久用量和重开快照一致。当前策略、多池原子预留、消费核销、显式覆盖、长短窗及有限 unknown 模式的内部行为已有证据；未接入统一调度/启动 outbox、资源页面或真实观察。FR08/09 与 A03–A06/A25 只取得这些窄切片证据，完整产品验收仍为 not_run。
+
 | ID | 完成必须有的证据 | 候选责任票与验收关联 | 当前状态 |
 |---|---|---|---|
 | FR01 | U+C：有效项目解析到可信 repo/base/目标分支；越界路径、未知 base 拒绝且无模型调用/仓库修改；原工作区保持原样 | M1-01、M1-05；AC01，A01、A16 | 实现中；登记/API 子集 passed，完整变体 not_run |
@@ -52,8 +56,8 @@ M0-05/06 的固定 OpenCode 运行时与隔离探针在 [PR #33](https://github.
 | FR05 | U+C：v2 成员显式复用 A、替换 B，输入变化传递失效；旧 B 迟到不能满足新计划，其进程/消费仍核对 | M1-05、M2-01；A22 | 未实现 / not_run |
 | FR06 | C+U：硬资格/风险下限先于排序；T0/歧义/缺规则阻塞，T3 不降级；同快照模拟确定且零预留/调用/费用；发布不扩旧授权 | M1-01、M3-01、M3-04；AC03，A08、A11 | 未实现 / not_run |
 | FR07 | C+S：同 Run 的不同角色跨来源执行，每 Attempt 绑定 Profile/规则/授权；接受配置及 fallback 不符可见且停止 | M1-02、M1-03、M2-01–M2-06；A02、A12 | 未实现 / not_run |
-| FR08 | C+U：两个 Run/key 原子领取所有适用池，冲突不留半预留；Worker/顾问不借主 Commander 保护量；新准入用当前全局策略 | M1-01–M1-03、M3-02；A03、A04、A25 | 未实现 / not_run |
-| FR09 | C+U+S：服务额度/本地预算/在途/未核对/置信分别显示；外部/延迟/重复报告和重置正确；unknown 仅在明确有限模式准入，真实不可见字段仍未知 | M1-01、M1-06、M2-02–M2-06、M3-02；A05、A06 | 未实现 / not_run |
+| FR08 | C+U：两个 Run/key 原子领取所有适用池，冲突不留半预留；Worker/顾问不借主 Commander 保护量；新准入用当前全局策略 | M1-01–M1-03、M3-02；A03、A04、A25 | 实现中；内部容量账/本机准入 passed，统一调度与资源页面 not_run |
+| FR09 | C+U+S：服务额度/本地预算/在途/未核对/置信分别显示；外部/延迟/重复报告和重置正确；unknown 仅在明确有限模式准入，真实不可见字段仍未知 | M1-01、M1-06、M2-02–M2-06、M3-02；A05、A06 | 实现中；可控观察与核销子集 passed，资源页面与真实观察 not_run |
 | FR10 | C+S：原币上限逐项约束，实际请求全部经过受控出口；价格/隐藏收费缺口阻塞；父子不双算，未知发送不释放；不透明订阅只报告覆盖范围 | M0-03、M0-07、M1-01–M1-03、M3-03；A18、A19、A26 | 未实现 / not_run |
 | FR11 | C+P+S：合格批准集合内换源新 Attempt，保留难度/风险/消费；原执行停止或实际隔离后才替代；无合格者等待，Commander 无自动替任 | M3-04；A07、A08、A10 | 未实现 / not_run |
 | FR12 | U+C+S：提案显示检查点、候选和费用影响；不答复/拒绝不启动，当前提案确认只激活指定新 term，迟到确认拒绝；独立已批任务继续 | M1-02、M3-05、M4-01；AC04 | 实现中；人工交接协议及 Web 子集 passed，资源和执行集成 not_run |

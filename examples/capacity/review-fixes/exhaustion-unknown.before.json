@@ -1,0 +1,226 @@
+{
+  "input_sha256": "a9bd0824133f28b63d2ae1f172516fdf428a50984c50227a86c9c7ed6da8af4a",
+  "source_sha256": "9499f56c82d226fb78900de568b9888bf5d655c6730e55d70ebe05702211b43b",
+  "failure": {
+    "failure": {
+      "account_id": "account",
+      "reason": "QUOTA_EXHAUSTED",
+      "retry_after_seconds": 1,
+      "evidence_ref": "fixture-exhaustion-error"
+    },
+    "at": 1000.0,
+    "until": 1020.0
+  },
+  "later_observation": {
+    "sequence": 2,
+    "applied": true,
+    "observation": {
+      "pool_id": "weekly",
+      "window_id": "week-1",
+      "observed_at": 1021.0,
+      "reset_at": 2000.0,
+      "source": "fixture",
+      "source_ref": "still-unobservable-after-exhaustion",
+      "metric": "unknown",
+      "amount": null,
+      "limit": null,
+      "covered_usage_ids": [],
+      "coverage_ref": null,
+      "adjustment_reason": null
+    },
+    "received_at": 1021.0,
+    "previous": {
+      "adjustment_reason": null,
+      "amount": null,
+      "coverage_ref": null,
+      "covered_usage_ids": [],
+      "limit": null,
+      "metric": "unknown",
+      "observed_at": 1000.0,
+      "pool_id": "weekly",
+      "reset_at": 2000.0,
+      "source": "fixture",
+      "source_ref": "before-exhaustion",
+      "window_id": "week-1"
+    },
+    "current": {
+      "pool_id": "weekly",
+      "window_id": "week-1",
+      "observed_at": 1021.0,
+      "reset_at": 2000.0,
+      "source": "fixture",
+      "source_ref": "still-unobservable-after-exhaustion",
+      "metric": "unknown",
+      "amount": null,
+      "limit": null,
+      "covered_usage_ids": [],
+      "coverage_ref": null,
+      "adjustment_reason": null
+    }
+  },
+  "decision": {
+    "decision": "admitted",
+    "reason_codes": [],
+    "policy_revision": 1,
+    "request": {
+      "attempt_id": "after-exhaustion",
+      "run_id": "run",
+      "profile_id": "worker",
+      "profile_revision": 1,
+      "role": "worker",
+      "purpose": null,
+      "authorization_ref": "fixture-approved",
+      "rulebook_revision": "rules-1",
+      "duration_seconds": 30,
+      "demand": {
+        "weekly": "1"
+      }
+    },
+    "observations": {
+      "weekly": {
+        "adjustment_reason": null,
+        "amount": null,
+        "coverage_ref": null,
+        "covered_usage_ids": [],
+        "limit": null,
+        "metric": "unknown",
+        "observed_at": 1021.0,
+        "pool_id": "weekly",
+        "reset_at": 2000.0,
+        "source": "fixture",
+        "source_ref": "still-unobservable-after-exhaustion",
+        "window_id": "week-1"
+      }
+    },
+    "available_before": {
+      "weekly": "unknown"
+    },
+    "admission_id": "1da1fb71-1ebb-4ff5-a057-f3950c0561b7",
+    "profile_enabled": false,
+    "activation_allowed": false,
+    "live_qualification": "not_run"
+  },
+  "snapshot": {
+    "reservations": [
+      {
+        "account_id": "account",
+        "created_at": 1021.0,
+        "expires_at": 1051.0,
+        "id": "1da1fb71-1ebb-4ff5-a057-f3950c0561b7",
+        "observations": {
+          "weekly": {
+            "adjustment_reason": null,
+            "amount": null,
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": null,
+            "metric": "unknown",
+            "observed_at": 1021.0,
+            "pool_id": "weekly",
+            "reset_at": 2000.0,
+            "source": "fixture",
+            "source_ref": "still-unobservable-after-exhaustion",
+            "window_id": "week-1"
+          }
+        },
+        "policy_revision": 1,
+        "request": {
+          "attempt_id": "after-exhaustion",
+          "authorization_ref": "fixture-approved",
+          "demand": {
+            "weekly": "1"
+          },
+          "duration_seconds": 30,
+          "profile_id": "worker",
+          "profile_revision": 1,
+          "purpose": null,
+          "role": "worker",
+          "rulebook_revision": "rules-1",
+          "run_id": "run"
+        },
+        "state": "reserved"
+      }
+    ],
+    "policies": [
+      {
+        "revision": 1,
+        "policy": {
+          "account_id": "account",
+          "conservative_mode": {
+            "cooldown_seconds": 20,
+            "enabled": true,
+            "max_attempt_duration_seconds": 30,
+            "max_local_active_attempts": 1,
+            "observation_max_age_seconds": 100
+          },
+          "lead_reserve": {},
+          "lead_reserved_slots": 0,
+          "max_active_attempts": 1,
+          "max_attempt_duration_seconds": 30,
+          "observation_max_age_seconds": 100,
+          "require_official_observation": false,
+          "safety_margin": {}
+        }
+      }
+    ],
+    "observations": [
+      {
+        "sequence": 1,
+        "observation": {
+          "adjustment_reason": null,
+          "amount": null,
+          "coverage_ref": null,
+          "covered_usage_ids": [],
+          "limit": null,
+          "metric": "unknown",
+          "observed_at": 1000.0,
+          "pool_id": "weekly",
+          "reset_at": 2000.0,
+          "source": "fixture",
+          "source_ref": "before-exhaustion",
+          "window_id": "week-1"
+        },
+        "received_at": 1000.0,
+        "applied": true
+      },
+      {
+        "sequence": 2,
+        "observation": {
+          "adjustment_reason": null,
+          "amount": null,
+          "coverage_ref": null,
+          "covered_usage_ids": [],
+          "limit": null,
+          "metric": "unknown",
+          "observed_at": 1021.0,
+          "pool_id": "weekly",
+          "reset_at": 2000.0,
+          "source": "fixture",
+          "source_ref": "still-unobservable-after-exhaustion",
+          "window_id": "week-1"
+        },
+        "received_at": 1021.0,
+        "applied": true
+      }
+    ],
+    "lifecycle": [],
+    "usage": [],
+    "failures": [
+      {
+        "at": 1000.0,
+        "failure": {
+          "account_id": "account",
+          "evidence_ref": "fixture-exhaustion-error",
+          "reason": "QUOTA_EXHAUSTED",
+          "retry_after_seconds": 1
+        },
+        "until": 1020.0
+      }
+    ],
+    "live_qualification": "not_run",
+    "activation_allowed": false
+  },
+  "matches_expected": false,
+  "cash_calls": 0,
+  "live_qualification": "not_run"
+}
