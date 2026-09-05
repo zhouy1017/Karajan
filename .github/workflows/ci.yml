@@ -47,12 +47,6 @@ jobs:
           version: "0.12.10"
           enable-cache: false
 
-      - name: Require a gate when the frontend is introduced
-        run: >-
-          python -c "from pathlib import Path; import sys;
-          sys.exit('frontend/package.json exists: add locked frontend install, type checks, tests and build to quality-gate in this change.'
-          if Path('frontend/package.json').exists() else 0)"
-
       - name: Check the dependency lock
         run: uv lock --check
 
@@ -76,10 +70,43 @@ jobs:
       - name: Run tests, including contract tests
         run: uv run --frozen --extra dev pytest tests
 
+  frontend-quality:
+    name: frontend-quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Check out the tested revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up pinned Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24.18.1"
+
+      - name: Install the locked frontend dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Check frontend types
+        run: npm run typecheck
+
+      - name: Check frontend formatting
+        run: npm run format:check
+
+      - name: Run frontend interaction tests
+        run: npm test
+
+      - name: Build the production workbench
+        run: npm run build
+
   quality-gate:
     name: quality-gate
     if: ${{ always() }}
-    needs: [python-quality]
+    needs: [python-quality, frontend-quality]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -94,7 +121,7 @@ jobs:
           import sys
 
           results = json.loads(os.environ["NEEDS_RESULTS"])
-          required = {"python-quality"}
+          required = {"python-quality", "frontend-quality"}
           if set(results) != required:
               print("Required checks are missing or the gate dependency list is inconsistent.")
               sys.exit(1)
