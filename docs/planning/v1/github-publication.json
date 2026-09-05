@@ -2,7 +2,16 @@
   "schema_version": 1,
   "repository": "zhouy1017/Karajan",
   "published_at": "2026-09-05",
-  "status": "published_relationships_pending",
+  "status": "published_relationships_verified",
+  "relationships_verified_at": "2026-09-05",
+  "verification": {
+    "source": "GitHub REST issues/{number}/dependencies/blocked_by and issues/1/sub_issues",
+    "v1_issues_checked": 20,
+    "v1_dependency_edges_checked": 37,
+    "initial_ci_dependency_edges_checked": 1,
+    "parent_sub_issues_checked": 29,
+    "all_expected_relationships_match": true
+  },
   "parent": {
     "number": 1,
     "url": "https://github.com/zhouy1017/Karajan/issues/1"

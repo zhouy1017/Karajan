@@ -4,6 +4,10 @@
 
 ## 自动运行范围
 
+截至 2026-09-05，[PR #31](https://github.com/zhouy1017/Karajan/pull/31) 已完成真实失败与恢复演练。提交 `3187f65` 的两套 Python 检查及汇总检查均失败，GitHub 返回 `mergeable_state=blocked`；移除临时用例后的 `e8f7142` 在 [PR 运行](https://github.com/zhouy1017/Karajan/actions/runs/33963017034) 和 [push 运行](https://github.com/zhouy1017/Karajan/actions/runs/33963015622) 均通过。
+
+主分支的 `main-quality-gate` ruleset（ID `22331721`）已启用，要求 PR、当前基准上的 `quality-gate`（绑定 GitHub Actions，integration ID `15368`），禁止强推和删除，绕过名单为空。配置与失败历史保存于 [门禁证据](ci-gate-evidence.json)。这份记录对应上述具体提交；以后的变更仍须取得其自身的成功检查。
+
 每个 pull request、向 `main` 或 `codex/**` 的 push，以及 merge queue 的 `merge_group: checks_requested` 都运行检查。不设置文件路径过滤，不因文档变更或前端尚未建立而跳过整个质量门。merge queue 事件独立于 pull request 与 push，必须单独订阅才能为合并组报告检查结果。[GitHub 事件说明](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#merge_group)
 
 同一事件类型和 PR/分支只保留最新一次运行；较旧运行可以被取消。不同 PR、push 与合并组不会因为相同分支名共用并发组。被取消的运行不算通过，合并需要当前提交对应的成功检查。
