@@ -1,0 +1,9 @@
+{
+  "name": "karajan-opencode-probe-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pinned execution runtime for local fake-provider qualification probes",
+  "dependencies": {
+    "opencode-ai": "1.18.29"
+  }
+}

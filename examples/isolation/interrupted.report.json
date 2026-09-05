@@ -1,0 +1,157 @@
+{
+  "binding": {
+    "attempt_id": "isolation-canary-1",
+    "execution_path": "unshare-chroot-v1",
+    "fence": 1,
+    "profile_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "profile_id": "python-isolation-canary",
+    "profile_revision": 1,
+    "runtime_kind": "python-canary",
+    "runtime_version": "3.12.3"
+  },
+  "case_id": "wsl2-local-python-isolation",
+  "checks": [
+    {
+      "enforcement": "unavailable",
+      "evidence": {
+        "reason": "NAMESPACE_EXECUTION_UNCONFIRMED"
+      },
+      "id": "candidate_collection",
+      "status": "not_run"
+    },
+    {
+      "enforcement": "unavailable",
+      "evidence": {
+        "reason": "NAMESPACE_EXECUTION_UNCONFIRMED"
+      },
+      "id": "capabilities",
+      "status": "not_run"
+    },
+    {
+      "enforcement": "unavailable",
+      "evidence": {
+        "reason": "NAMESPACE_EXECUTION_UNCONFIRMED"
+      },
+      "id": "environment",
+      "status": "not_run"
+    },
+    {
+      "enforcement": "unavailable",
+      "evidence": {
+        "reason": "NAMESPACE_EXECUTION_UNCONFIRMED"
+      },
+      "id": "git_remote",
+      "status": "not_run"
+    },
+    {
+      "enforcement": "unavailable",
+      "evidence": {
+        "reason": "NAMESPACE_EXECUTION_UNCONFIRMED"
+      },
+      "id": "host_proc",
+      "status": "not_run"
+    },
+    {
+      "enforcement": "unavailable",
+      "evidence": {
+        "reason": "NAMESPACE_EXECUTION_UNCONFIRMED"
+      },
+      "id": "inherited_fds",
+      "status": "not_run"
+    },
+    {
+      "enforcement": "unavailable",
+      "evidence": {
+        "reason": "NAMESPACE_EXECUTION_UNCONFIRMED"
+      },
+      "id": "network_endpoints",
+      "status": "not_run"
+    },
+    {
+      "enforcement": "unavailable",
+      "evidence": {
+        "reason": "NAMESPACE_EXECUTION_UNCONFIRMED"
+      },
+      "id": "process_cancel",
+      "status": "not_run"
+    },
+    {
+      "enforcement": "unavailable",
+      "evidence": {
+        "reason": "NAMESPACE_EXECUTION_UNCONFIRMED"
+      },
+      "id": "protected_files",
+      "status": "not_run"
+    },
+    {
+      "enforcement": "unavailable",
+      "evidence": {
+        "reason": "NAMESPACE_EXECUTION_UNCONFIRMED"
+      },
+      "id": "runtime_binding",
+      "status": "not_run"
+    },
+    {
+      "enforcement": "unavailable",
+      "evidence": {
+        "reason": "NAMESPACE_EXECUTION_UNCONFIRMED"
+      },
+      "id": "symlink_escape",
+      "status": "not_run"
+    },
+    {
+      "enforcement": "unavailable",
+      "evidence": {
+        "reason": "NAMESPACE_EXECUTION_UNCONFIRMED"
+      },
+      "id": "workspace_read_write",
+      "status": "not_run"
+    },
+    {
+      "enforcement": "unavailable",
+      "evidence": {
+        "reason": "NAMESPACE_EXECUTION_UNCONFIRMED"
+      },
+      "id": "wsl_interop",
+      "status": "not_run"
+    }
+  ],
+  "dispatch_eligible": false,
+  "execution": {
+    "exit_code": -9,
+    "namespace_unavailable": false,
+    "observation_timeout": false,
+    "remote_stop": "unknown",
+    "report_received": false,
+    "setup_stderr": "",
+    "supervisor_birth": "357123",
+    "supervisor_pid": 6121,
+    "workspace_write_observed": true
+  },
+  "host_os": "linux",
+  "input_digest": "c7db6e687e499c6d8578a1223a5f66b5882dfdf6a3754ac0ba0a6489d325552a",
+  "observed_at": "2026-09-05T13:12:38.500524+00:00",
+  "qualification_scope": "fixed_python_canary",
+  "reason_codes": [
+    "NAMESPACE_EXECUTION_UNCONFIRMED"
+  ],
+  "remaining_required_checks": {
+    "codex_native_file_tools": "not_run",
+    "native_mcp_and_hooks": "not_run",
+    "opencode_native_tools": "not_run",
+    "real_authentication_storage": "not_run",
+    "runnerhost_writer_lease_integration": "not_run"
+  },
+  "runtime_tools_status": "not_run",
+  "schema_version": "karajan.isolation.report.v1",
+  "source_digests": {
+    "__init__.py": "3722156c0b26efb5757999ccbf6f36c21068b71f1c973a33739331d8ab4774f5",
+    "__main__.py": "a841cf56c5b25f6ecaf6deef401c1a26c0dbac3c1368a61a2148074f1c7a085a",
+    "_canary.py": "8700dc275642498517f971f2a5ca071a87961885a27b7d9b7375e82306ffe56a",
+    "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+    "_targets.py": "bf6034e53d22fda07acee6e0f08b2ec7e6a39d5bc6e90b1a073a7854f1e823f9",
+    "probe.py": "a0e622e6da74b5c366898f00b2fd035d4ddb6b9ecabf3712b6ca18e44d369f50",
+    "qualification.py": "b6cf6313b0766004d8fc01d1714552c1e992f536810a3dac3514b90316c59c90"
+  },
+  "status": "failed"
+}
