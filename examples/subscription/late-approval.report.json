@@ -1,0 +1,151 @@
+{
+  "attempt": {
+    "attempt_id": "attempt-fixture",
+    "fence": 1,
+    "profile_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "profile_id": "codex-fixture",
+    "profile_revision": 1,
+    "thread_id": "thread-fixture",
+    "turn_id": "turn-fixture"
+  },
+  "authorization_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "bindings": {
+    "accepted": {
+      "approvalPolicy": "on-request",
+      "approvalsReviewer": "user",
+      "cwd": "C:/fixture/repository",
+      "model": "fixture-model",
+      "modelProvider": "openai",
+      "sandbox": {
+        "networkAccess": false,
+        "type": "readOnly"
+      }
+    },
+    "provider_reported": null,
+    "requested": {
+      "approvalPolicy": "on-request",
+      "approvalsReviewer": "user",
+      "cwd": "C:/fixture/repository",
+      "model": "fixture-model",
+      "modelProvider": "openai",
+      "sandbox": {
+        "networkAccess": false,
+        "type": "readOnly"
+      }
+    }
+  },
+  "case_id": "late-approval",
+  "estimates": {
+    "state": "not_provided"
+  },
+  "event_order": [
+    {
+      "at": "2026-09-05T10:00:00+00:00",
+      "index": 0,
+      "kind": "native"
+    },
+    {
+      "at": "2026-09-05T10:00:01+00:00",
+      "index": 1,
+      "kind": "native"
+    },
+    {
+      "at": "2026-09-05T10:00:02+00:00",
+      "index": 2,
+      "kind": "native"
+    },
+    {
+      "at": "2026-09-05T10:00:02+00:00",
+      "index": 3,
+      "kind": "cancel"
+    },
+    {
+      "at": "2026-09-05T10:00:03+00:00",
+      "index": 4,
+      "kind": "decision"
+    }
+  ],
+  "input_sha256": "de6fb24faf6d3f70b5334156aa5b7f958103ff79071f1898456a45ff390f79e4",
+  "native_errors": [],
+  "permission_outcomes": [
+    {
+      "expires_at": "2026-09-05T10:02:00+00:00",
+      "native_callback": {
+        "approval_id": null,
+        "item_id": "item-fixture"
+      },
+      "request_digest": "39e15ce8ee9f86f4244f9a2568c71d37d71a3f24fb81b8b84bde3a31f0600c89",
+      "status": "pending",
+      "ticket": {
+        "attempt_id": "attempt-fixture",
+        "authorization_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "fence": 1,
+        "profile_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "profile_id": "codex-fixture",
+        "profile_revision": 1,
+        "request_digest": "39e15ce8ee9f86f4244f9a2568c71d37d71a3f24fb81b8b84bde3a31f0600c89",
+        "request_id": 301,
+        "thread_id": "thread-fixture",
+        "turn_id": "turn-fixture"
+      }
+    },
+    {
+      "reason": "ATTEMPT_INACTIVE",
+      "status": "rejected"
+    }
+  ],
+  "protocol": {
+    "config_source_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "runtime_version": "0.153.2",
+    "schema_file": "codex_app_server_protocol.v2.schemas.json",
+    "schema_sha256": "d3eace08be5dca386bfd1f1e8df650058b4113f1e10870a284d775d75517576a"
+  },
+  "provenance": {
+    "evidence_refs": [
+      "fixture:late-approval"
+    ],
+    "kind": "fixture",
+    "limitations": [
+      "Scripted protocol messages; no Codex session or model request was started."
+    ],
+    "observed_at": "2026-09-05T10:00:00Z"
+  },
+  "qualification": {
+    "capabilities": {
+      "billing_path_confirmed": "not_run",
+      "extra_delegation_disabled": "not_run",
+      "hidden_fallback_excluded": "not_run",
+      "native_sandbox_enforced": "not_run",
+      "provider_model_confirmed": "not_run"
+    },
+    "dispatch_eligible": false,
+    "live_status": "not_run",
+    "remaining_live_cases": [
+      "official_login",
+      "inference",
+      "file_tools",
+      "cancel"
+    ]
+  },
+  "quota": {
+    "state": "unknown"
+  },
+  "reason_codes": [
+    "ATTEMPT_INACTIVE"
+  ],
+  "responses": [
+    {
+      "id": 301,
+      "result": {
+        "decision": "cancel"
+      }
+    }
+  ],
+  "schema_version": "karajan.codex-replay-report.v1",
+  "status": "failed",
+  "usage": {
+    "coverage": "attempt",
+    "model_call_count": null,
+    "state": "unknown"
+  }
+}

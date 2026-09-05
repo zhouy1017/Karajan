@@ -1,0 +1,46 @@
+{
+  "schema_version": "karajan.codex-replay.v1",
+  "case_id": "binding-unknown",
+  "runtime_version": "0.153.2",
+  "schema_sha256": "d3eace08be5dca386bfd1f1e8df650058b4113f1e10870a284d775d75517576a",
+  "config_source_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "attempt": {
+    "attempt_id": "attempt-fixture",
+    "fence": 1,
+    "profile_id": "codex-fixture",
+    "profile_revision": 1,
+    "profile_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "thread_id": "thread-fixture",
+    "turn_id": "turn-fixture"
+  },
+  "authorization": {
+    "hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "expires_at": "2026-09-05T10:10:00Z",
+    "allowed_request_digests": [
+      "39e15ce8ee9f86f4244f9a2568c71d37d71a3f24fb81b8b84bde3a31f0600c89"
+    ]
+  },
+  "requested": {
+    "model": "fixture-model",
+    "model_provider": "openai",
+    "cwd": "C:/fixture/repository",
+    "approval_policy": "on-request",
+    "approvals_reviewer": "user",
+    "sandbox": {
+      "type": "readOnly",
+      "networkAccess": false
+    }
+  },
+  "thread_start_request_id": 101,
+  "steps": [],
+  "provenance": {
+    "kind": "fixture",
+    "observed_at": "2026-09-05T10:00:00Z",
+    "evidence_refs": [
+      "fixture:binding-unknown"
+    ],
+    "limitations": [
+      "Scripted protocol messages; no Codex session or model request was started."
+    ]
+  }
+}

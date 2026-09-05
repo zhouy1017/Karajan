@@ -1,0 +1,248 @@
+{
+  "schema_version": "karajan.codex-protocol-source.v1",
+  "runtime_version": "0.153.2",
+  "observed_at": "2026-09-05",
+  "origin": "local installed official codex-cli; generated without --experimental",
+  "generation_command": "codex app-server generate-json-schema --out .cache/codex-schema/0.153.2",
+  "official_reference": "https://learn.chatgpt.com/docs/app-server",
+  "files": [
+    {
+      "path": "codex_app_server_protocol.v2.schemas.json",
+      "sha256": "d3eace08be5dca386bfd1f1e8df650058b4113f1e10870a284d775d75517576a",
+      "bytes": 583707,
+      "title": "CodexAppServerProtocolV2",
+      "required": []
+    },
+    {
+      "path": "v1/InitializeParams.json",
+      "sha256": "6f0094be9a65242ec779a40794cbd4fdfa32fca1e45084a16adfb50501d33ea2",
+      "bytes": 2143,
+      "title": "InitializeParams",
+      "required": [
+        "clientInfo"
+      ]
+    },
+    {
+      "path": "v1/InitializeResponse.json",
+      "sha256": "62ad689c2cb6379913c1d72749cfd8de5089d35760214123518eb92eef11acc9",
+      "bytes": 1286,
+      "title": "InitializeResponse",
+      "required": [
+        "codexHome",
+        "platformFamily",
+        "platformOs",
+        "userAgent"
+      ]
+    },
+    {
+      "path": "v2/ThreadStartParams.json",
+      "sha256": "792e2f32e37cece971bd616664ea2053741acbed4e9c92e9d1766427718f2ecd",
+      "bytes": 10180,
+      "title": "ThreadStartParams",
+      "required": []
+    },
+    {
+      "path": "v2/ThreadStartResponse.json",
+      "sha256": "656f8fd0fe91f533126cbfdb9369cfab550927a229e48dd46460f6f015d2b186",
+      "bytes": 74826,
+      "title": "ThreadStartResponse",
+      "required": [
+        "approvalPolicy",
+        "approvalsReviewer",
+        "cwd",
+        "model",
+        "modelProvider",
+        "sandbox",
+        "thread"
+      ]
+    },
+    {
+      "path": "v2/TurnStartParams.json",
+      "sha256": "a3835e8c1e942e4b358e1a670939b89918b16c4d13105a579899892b7ade6dea",
+      "bytes": 20847,
+      "title": "TurnStartParams",
+      "required": [
+        "input",
+        "threadId"
+      ]
+    },
+    {
+      "path": "v2/TurnStartedNotification.json",
+      "sha256": "d4b59fd396cadfc2377f60c9f9f4c9367dca95362baadf7817c74e1b9c910c4d",
+      "bytes": 54787,
+      "title": "TurnStartedNotification",
+      "required": [
+        "threadId",
+        "turn"
+      ]
+    },
+    {
+      "path": "v2/TurnCompletedNotification.json",
+      "sha256": "78af2a37391e8e669a4020cb58593e4d3e378756ced79d5fec72374fa69fb94b",
+      "bytes": 54789,
+      "title": "TurnCompletedNotification",
+      "required": [
+        "threadId",
+        "turn"
+      ]
+    },
+    {
+      "path": "CommandExecutionRequestApprovalParams.json",
+      "sha256": "16a71816c2d66e319c2c4aa83dd636dfdc43c61e72b6d5475e421ce08d8e6558",
+      "bytes": 15559,
+      "title": "CommandExecutionRequestApprovalParams",
+      "required": [
+        "itemId",
+        "startedAtMs",
+        "threadId",
+        "turnId"
+      ]
+    },
+    {
+      "path": "CommandExecutionRequestApprovalResponse.json",
+      "sha256": "6d0767113e22f311381809b6b236b0dde2b99b01992879c26bf7b1ea0e003cb7",
+      "bytes": 3202,
+      "title": "CommandExecutionRequestApprovalResponse",
+      "required": [
+        "decision"
+      ]
+    },
+    {
+      "path": "FileChangeRequestApprovalParams.json",
+      "sha256": "13848b26814c286ad6425a20d01c1691c86790e1f9e2529399677a8a22fe0d18",
+      "bytes": 968,
+      "title": "FileChangeRequestApprovalParams",
+      "required": [
+        "itemId",
+        "startedAtMs",
+        "threadId",
+        "turnId"
+      ]
+    },
+    {
+      "path": "FileChangeRequestApprovalResponse.json",
+      "sha256": "b95b03ee6be674e25cee2e863cc135a28620e1070addd2f34685aadee27cde08",
+      "bytes": 1158,
+      "title": "FileChangeRequestApprovalResponse",
+      "required": [
+        "decision"
+      ]
+    },
+    {
+      "path": "PermissionsRequestApprovalParams.json",
+      "sha256": "c6d165e1b0c65d5dcf1e099b4c226c7e4dad79fe2b88b03621a1fc6c1d3c86c2",
+      "bytes": 7719,
+      "title": "PermissionsRequestApprovalParams",
+      "required": [
+        "cwd",
+        "itemId",
+        "permissions",
+        "startedAtMs",
+        "threadId",
+        "turnId"
+      ]
+    },
+    {
+      "path": "PermissionsRequestApprovalResponse.json",
+      "sha256": "23f3f24e9dbf35db3e0b85703f0d934da5a1cff3cbb611fba8bcd41f3b4a04b0",
+      "bytes": 7068,
+      "title": "PermissionsRequestApprovalResponse",
+      "required": [
+        "permissions"
+      ]
+    },
+    {
+      "path": "v2/ModelReroutedNotification.json",
+      "sha256": "37cd3c1b3a3560b85b01d4061a07d830fc9ed93b80e4663f975f9197cdb501ef",
+      "bytes": 636,
+      "title": "ModelReroutedNotification",
+      "required": [
+        "fromModel",
+        "reason",
+        "threadId",
+        "toModel",
+        "turnId"
+      ]
+    },
+    {
+      "path": "v2/ModelVerificationNotification.json",
+      "sha256": "4f27a99d0c8664c29abb4d65384ab16853bbc29b61de5e749111cefdc6994655",
+      "bytes": 574,
+      "title": "ModelVerificationNotification",
+      "required": [
+        "threadId",
+        "turnId",
+        "verifications"
+      ]
+    },
+    {
+      "path": "v2/AccountUpdatedNotification.json",
+      "sha256": "9bf450d9d9ea23a2bac9c9cb0a68c2de8f89a97bdeb4485c91762bb4d43295b8",
+      "bytes": 2745,
+      "title": "AccountUpdatedNotification",
+      "required": []
+    },
+    {
+      "path": "v2/ThreadTokenUsageUpdatedNotification.json",
+      "sha256": "aba4f6c7e4a19b2b842c08ee793b57000c07dafd57b922ad0d8e7c76609108c2",
+      "bytes": 1727,
+      "title": "ThreadTokenUsageUpdatedNotification",
+      "required": [
+        "threadId",
+        "tokenUsage",
+        "turnId"
+      ]
+    },
+    {
+      "path": "v2/AccountRateLimitsUpdatedNotification.json",
+      "sha256": "c50daa6abb4723ca1edffdae9d0d6ca452770669ed045fae48d0fe9b20c6ea81",
+      "bytes": 4532,
+      "title": "AccountRateLimitsUpdatedNotification",
+      "required": [
+        "rateLimits"
+      ]
+    },
+    {
+      "path": "v2/GetAccountRateLimitsResponse.json",
+      "sha256": "a28d4d0e9181a498c58d4ae3b6b49aaa6ee7a33c0c9f81c1ad0bff223bfbbe3b",
+      "bytes": 7670,
+      "title": "GetAccountRateLimitsResponse",
+      "required": [
+        "rateLimits"
+      ]
+    },
+    {
+      "path": "v2/ServerRequestResolvedNotification.json",
+      "sha256": "4f03d586a5af04edd912cad08cc97eceb658e7e06744565e6d41a93e04a55966",
+      "bytes": 514,
+      "title": "ServerRequestResolvedNotification",
+      "required": [
+        "requestId",
+        "threadId"
+      ]
+    },
+    {
+      "path": "v2/ErrorNotification.json",
+      "sha256": "d77732536ef8864799e4fbb5bf6965a9f1970a6195e523f144252a82287c08e7",
+      "bytes": 6895,
+      "title": "ErrorNotification",
+      "required": [
+        "error",
+        "threadId",
+        "turnId",
+        "willRetry"
+      ]
+    },
+    {
+      "path": "v2/ThreadSettingsUpdatedNotification.json",
+      "sha256": "e601ede3c6947f6df0aea6b1c091c01e38ef7909df939f5ef11c8f836fc8a2ed",
+      "bytes": 10318,
+      "title": "ThreadSettingsUpdatedNotification",
+      "required": [
+        "threadId",
+        "threadSettings"
+      ]
+    }
+  ],
+  "live_status": "not_run"
+}

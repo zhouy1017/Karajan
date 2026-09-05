@@ -1,0 +1,9 @@
+{
+  "schema_version": "karajan.resources.probe.v1",
+  "currency": "USD",
+  "account_limit": "10",
+  "contending_parent": "3",
+  "call_upper": "2",
+  "first_actual_charge": "2",
+  "late_actual_charge": "1"
+}
