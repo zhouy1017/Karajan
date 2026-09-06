@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="11" skipped="0" tests="11" time="3.007" timestamp="2026-09-06T10:34:42.388001+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_routing_authorization" name="test_invalid_command_root_preserves_the_public_input_error[payload0-create]" time="0.249"><failure message="AttributeError: 'list' object has no attribute 'get'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-544/test_invalid_command_root_pres0')
+project = (&lt;karajan.projects.registry.ProjectRegistry object at 0x000001C89A2BDEB0&gt;, {'allowed_target_branches': ['main'], 'conf...WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-544/test_invalid_command_root_pres0/repository'))
+entry = 'create', payload = []
+
+    @pytest.mark.parametrize("entry", ["create", "submit_plan", "approve_plan"])
+    @pytest.mark.parametrize("payload", [[], None, "not-an-object"])
+    def test_invalid_command_root_preserves_the_public_input_error(
+        tmp_path: Path, project: tuple, entry: str, payload: object,
+    ) -&gt; None:
+        registry, _, _ = project
+        planner = RunPlanner(tmp_path / "runs.sqlite", registry)
+        expected = "RUN_INPUT_INVALID" if entry == "create" else "PLANNING_INPUT_INVALID"
+        command = getattr(planner, entry)
+        with pytest.raises(RunError, match=expected):
+            if entry == "create":
+&gt;               command(payload, command_key="invalid", principal="owner")
+
+tests\runs\test_routing_authorization.py:451: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.runs.planning.RunPlanner object at 0x000001C89A2721E0&gt;
+request = [], command_key = 'invalid', principal = 'owner'
+
+    def create(
+        self, request: dict[str, Any], *, command_key: str, principal: str
+    ) -&gt; dict[str, Any]:
+&gt;       version_two = request.get("schema_version") == "karajan.create-run.v2"
+                      ^^^^^^^^^^^
+E       AttributeError: 'list' object has no attribute 'get'
+
+backend\karajan\runs\planning.py:117: AttributeError</failure></testcase><testcase classname="tests.runs.test_routing_authorization" name="test_invalid_command_root_preserves_the_public_input_error[payload0-submit_plan]" time="0.249"><failure message="AttributeError: 'list' object has no attribute 'get'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-544/test_invalid_command_root_pres1')
+project = (&lt;karajan.projects.registry.ProjectRegistry object at 0x000001C89A3C7B60&gt;, {'allowed_target_branches': ['main'], 'conf...WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-544/test_invalid_command_root_pres1/repository'))
+entry = 'submit_plan', payload = []
+
+    @pytest.mark.parametrize("entry", ["create", "submit_plan", "approve_plan"])
+    @pytest.mark.parametrize("payload", [[], None, "not-an-object"])
+    def test_invalid_command_root_preserves_the_public_input_error(
+        tmp_path: Path, project: tuple, entry: str, payload: object,
+    ) -&gt; None:
+        registry, _, _ = project
+        planner = RunPlanner(tmp_path / "runs.sqlite", registry)
+        expected = "RUN_INPUT_INVALID" if entry == "create" else "PLANNING_INPUT_INVALID"
+        command = getattr(planner, entry)
+        with pytest.raises(RunError, match=expected):
+            if entry == "create":
+                command(payload, command_key="invalid", principal="owner")
+            else:
+&gt;               command("not-needed", payload, command_key="invalid", principal="owner")
+
+tests\runs\test_routing_authorization.py:453: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.runs.planning.RunPlanner object at 0x000001C89A3C7E60&gt;
+run_id = 'not-needed', request = [], command_key = 'invalid'
+principal = 'owner'
+
+    def submit_plan(
+        self, run_id: str, request: dict[str, Any], *, command_key: str, principal: str
+    ) -&gt; dict[str, Any]:
+&gt;       version_two = request.get("schema_version") == "karajan.submit-plan.v2"
+                      ^^^^^^^^^^^
+E       AttributeError: 'list' object has no attribute 'get'
+
+backend\karajan\runs\planning.py:422: AttributeError</failure></testcase><testcase classname="tests.runs.test_routing_authorization" name="test_invalid_command_root_preserves_the_public_input_error[payload0-approve_plan]" time="0.248"><failure message="AttributeError: 'list' object has no attribute 'get'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-544/test_invalid_command_root_pres2')
+project = (&lt;karajan.projects.registry.ProjectRegistry object at 0x000001C89A3C6E40&gt;, {'allowed_target_branches': ['main'], 'conf...WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-544/test_invalid_command_root_pres2/repository'))
+entry = 'approve_plan', payload = []
+
+    @pytest.mark.parametrize("entry", ["create", "submit_plan", "approve_plan"])
+    @pytest.mark.parametrize("payload", [[], None, "not-an-object"])
+    def test_invalid_command_root_preserves_the_public_input_error(
+        tmp_path: Path, project: tuple, entry: str, payload: object,
+    ) -&gt; None:
+        registry, _, _ = project
+        planner = RunPlanner(tmp_path / "runs.sqlite", registry)
+        expected = "RUN_INPUT_INVALID" if entry == "create" else "PLANNING_INPUT_INVALID"
+        command = getattr(planner, entry)
+        with pytest.raises(RunError, match=expected):
+            if entry == "create":
+                command(payload, command_key="invalid", principal="owner")
+            else:
+&gt;               command("not-needed", payload, command_key="invalid", principal="owner")
+
+tests\runs\test_routing_authorization.py:453: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.runs.planning.RunPlanner object at 0x000001C89A3C7CB0&gt;
+run_id = 'not-needed', request = [], command_key = 'invalid'
+principal = 'owner'
+
+    def approve_plan(
+        self, run_id: str, request: dict[str, Any], *, command_key: str, principal: str
+    ) -&gt; dict[str, Any]:
+&gt;       version_two = request.get("schema_version") == "karajan.approve-plan.v2"
+                      ^^^^^^^^^^^
+E       AttributeError: 'list' object has no attribute 'get'
+
+backend\karajan\runs\planning.py:487: AttributeError</failure></testcase><testcase classname="tests.runs.test_routing_authorization" name="test_invalid_command_root_preserves_the_public_input_error[None-create]" time="0.247"><failure message="AttributeError: 'NoneType' object has no attribute 'get'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-544/test_invalid_command_root_pres3')
+project = (&lt;karajan.projects.registry.ProjectRegistry object at 0x000001C89A472BD0&gt;, {'allowed_target_branches': ['main'], 'conf...WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-544/test_invalid_command_root_pres3/repository'))
+entry = 'create', payload = None
+
+    @pytest.mark.parametrize("entry", ["create", "submit_plan", "approve_plan"])
+    @pytest.mark.parametrize("payload", [[], None, "not-an-object"])
+    def test_invalid_command_root_preserves_the_public_input_error(
+        tmp_path: Path, project: tuple, entry: str, payload: object,
+    ) -&gt; None:
+        registry, _, _ = project
+        planner = RunPlanner(tmp_path / "runs.sqlite", registry)
+        expected = "RUN_INPUT_INVALID" if entry == "create" else "PLANNING_INPUT_INVALID"
+        command = getattr(planner, entry)
+        with pytest.raises(RunError, match=expected):
+            if entry == "create":
+&gt;               command(payload, command_key="invalid", principal="owner")
+
+tests\runs\test_routing_authorization.py:451: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.runs.planning.RunPlanner object at 0x000001C89A471490&gt;
+request = None, command_key = 'invalid', principal = 'owner'
+
+    def create(
+        self, request: dict[str, Any], *, command_key: str, principal: str
+    ) -&gt; dict[str, Any]:
+&gt;       version_two = request.get("schema_version") == "karajan.create-run.v2"
+                      ^^^^^^^^^^^
+E       AttributeError: 'NoneType' object has no attribute 'get'
+
+backend\karajan\runs\planning.py:117: AttributeError</failure></testcase><testcase classname="tests.runs.test_routing_authorization" name="test_invalid_command_root_preserves_the_public_input_error[None-submit_plan]" time="0.254"><failure message="AttributeError: 'NoneType' object has no attribute 'get'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-544/test_invalid_command_root_pres4')
+project = (&lt;karajan.projects.registry.ProjectRegistry object at 0x000001C89A361340&gt;, {'allowed_target_branches': ['main'], 'conf...WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-544/test_invalid_command_root_pres4/repository'))
+entry = 'submit_plan', payload = None
+
+    @pytest.mark.parametrize("entry", ["create", "submit_plan", "approve_plan"])
+    @pytest.mark.parametrize("payload", [[], None, "not-an-object"])
+    def test_invalid_command_root_preserves_the_public_input_error(
+        tmp_path: Path, project: tuple, entry: str, payload: object,
+    ) -&gt; None:
+        registry, _, _ = project
+        planner = RunPlanner(tmp_path / "runs.sqlite", registry)
+        expected = "RUN_INPUT_INVALID" if entry == "create" else "PLANNING_INPUT_INVALID"
+        command = getattr(planner, entry)
+        with pytest.raises(RunError, match=expected):
+            if entry == "create":
+                command(payload, command_key="invalid", principal="owner")
+            else:
+&gt;               command("not-needed", payload, command_key="invalid", principal="owner")
+
+tests\runs\test_routing_authorization.py:453: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.runs.planning.RunPlanner object at 0x000001C89A471CA0&gt;
+run_id = 'not-needed', request = None, command_key = 'invalid'
+principal = 'owner'
+
+    def submit_plan(
+        self, run_id: str, request: dict[str, Any], *, command_key: str, principal: str
+    ) -&gt; dict[str, Any]:
+&gt;       version_two = request.get("schema_version") == "karajan.submit-plan.v2"
+                      ^^^^^^^^^^^
+E       AttributeError: 'NoneType' object has no attribute 'get'
+
+backend\karajan\runs\planning.py:422: AttributeError</failure></testcase><testcase classname="tests.runs.test_routing_authorization" name="test_invalid_command_root_preserves_the_public_input_error[None-approve_plan]" time="0.241"><failure message="AttributeError: 'NoneType' object has no attribute 'get'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-544/test_invalid_command_root_pres5')
+project = (&lt;karajan.projects.registry.ProjectRegistry object at 0x000001C89A3C73B0&gt;, {'allowed_target_branches': ['main'], 'conf...WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-544/test_invalid_command_root_pres5/repository'))
+entry = 'approve_plan', payload = None
+
+    @pytest.mark.parametrize("entry", ["create", "submit_plan", "approve_plan"])
+    @pytest.mark.parametrize("payload", [[], None, "not-an-object"])
+    def test_invalid_command_root_preserves_the_public_input_error(
+        tmp_path: Path, project: tuple, entry: str, payload: object,
+    ) -&gt; None:
+        registry, _, _ = project
+        planner = RunPlanner(tmp_path / "runs.sqlite", registry)
+        expected = "RUN_INPUT_INVALID" if entry == "create" else "PLANNING_INPUT_INVALID"
+        command = getattr(planner, entry)
+        with pytest.raises(RunError, match=expected):
+            if entry == "create":
+                command(payload, command_key="invalid", principal="owner")
+            else:
+&gt;               command("not-needed", payload, command_key="invalid", principal="owner")
+
+tests\runs\test_routing_authorization.py:453: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.runs.planning.RunPlanner object at 0x000001C89A361790&gt;
+run_id = 'not-needed', request = None, command_key = 'invalid'
+principal = 'owner'
+
+    def approve_plan(
+        self, run_id: str, request: dict[str, Any], *, command_key: str, principal: str
+    ) -&gt; dict[str, Any]:
+&gt;       version_two = request.get("schema_version") == "karajan.approve-plan.v2"
+                      ^^^^^^^^^^^
+E       AttributeError: 'NoneType' object has no attribute 'get'
+
+backend\karajan\runs\planning.py:487: AttributeError</failure></testcase><testcase classname="tests.runs.test_routing_authorization" name="test_invalid_command_root_preserves_the_public_input_error[not-an-object-create]" time="0.247"><failure message="AttributeError: 'str' object has no attribute 'get'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-544/test_invalid_command_root_pres6')
+project = (&lt;karajan.projects.registry.ProjectRegistry object at 0x000001C89A3C7C20&gt;, {'allowed_target_branches': ['main'], 'conf...WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-544/test_invalid_command_root_pres6/repository'))
+entry = 'create', payload = 'not-an-object'
+
+    @pytest.mark.parametrize("entry", ["create", "submit_plan", "approve_plan"])
+    @pytest.mark.parametrize("payload", [[], None, "not-an-object"])
+    def test_invalid_command_root_preserves_the_public_input_error(
+        tmp_path: Path, project: tuple, entry: str, payload: object,
+    ) -&gt; None:
+        registry, _, _ = project
+        planner = RunPlanner(tmp_path / "runs.sqlite", registry)
+        expected = "RUN_INPUT_INVALID" if entry == "create" else "PLANNING_INPUT_INVALID"
+        command = getattr(planner, entry)
+        with pytest.raises(RunError, match=expected):
+            if entry == "create":
+&gt;               command(payload, command_key="invalid", principal="owner")
+
+tests\runs\test_routing_authorization.py:451: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.runs.planning.RunPlanner object at 0x000001C89A4714C0&gt;
+request = 'not-an-object', command_key = 'invalid', principal = 'owner'
+
+    def create(
+        self, request: dict[str, Any], *, command_key: str, principal: str
+    ) -&gt; dict[str, Any]:
+&gt;       version_two = request.get("schema_version") == "karajan.create-run.v2"
+                      ^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'get'
+
+backend\karajan\runs\planning.py:117: AttributeError</failure></testcase><testcase classname="tests.runs.test_routing_authorization" name="test_invalid_command_root_preserves_the_public_input_error[not-an-object-submit_plan]" time="0.248"><failure message="AttributeError: 'str' object has no attribute 'get'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-544/test_invalid_command_root_pres7')
+project = (&lt;karajan.projects.registry.ProjectRegistry object at 0x000001C89A471B80&gt;, {'allowed_target_branches': ['main'], 'conf...WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-544/test_invalid_command_root_pres7/repository'))
+entry = 'submit_plan', payload = 'not-an-object'
+
+    @pytest.mark.parametrize("entry", ["create", "submit_plan", "approve_plan"])
+    @pytest.mark.parametrize("payload", [[], None, "not-an-object"])
+    def test_invalid_command_root_preserves_the_public_input_error(
+        tmp_path: Path, project: tuple, entry: str, payload: object,
+    ) -&gt; None:
+        registry, _, _ = project
+        planner = RunPlanner(tmp_path / "runs.sqlite", registry)
+        expected = "RUN_INPUT_INVALID" if entry == "create" else "PLANNING_INPUT_INVALID"
+        command = getattr(planner, entry)
+        with pytest.raises(RunError, match=expected):
+            if entry == "create":
+                command(payload, command_key="invalid", principal="owner")
+            else:
+&gt;               command("not-needed", payload, command_key="invalid", principal="owner")
+
+tests\runs\test_routing_authorization.py:453: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.runs.planning.RunPlanner object at 0x000001C89A471D00&gt;
+run_id = 'not-needed', request = 'not-an-object', command_key = 'invalid'
+principal = 'owner'
+
+    def submit_plan(
+        self, run_id: str, request: dict[str, Any], *, command_key: str, principal: str
+    ) -&gt; dict[str, Any]:
+&gt;       version_two = request.get("schema_version") == "karajan.submit-plan.v2"
+                      ^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'get'
+
+backend\karajan\runs\planning.py:422: AttributeError</failure></testcase><testcase classname="tests.runs.test_routing_authorization" name="test_invalid_command_root_preserves_the_public_input_error[not-an-object-approve_plan]" time="0.242"><failure message="AttributeError: 'str' object has no attribute 'get'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-544/test_invalid_command_root_pres8')
+project = (&lt;karajan.projects.registry.ProjectRegistry object at 0x000001C89A4729C0&gt;, {'allowed_target_branches': ['main'], 'conf...WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-544/test_invalid_command_root_pres8/repository'))
+entry = 'approve_plan', payload = 'not-an-object'
+
+    @pytest.mark.parametrize("entry", ["create", "submit_plan", "approve_plan"])
+    @pytest.mark.parametrize("payload", [[], None, "not-an-object"])
+    def test_invalid_command_root_preserves_the_public_input_error(
+        tmp_path: Path, project: tuple, entry: str, payload: object,
+    ) -&gt; None:
+        registry, _, _ = project
+        planner = RunPlanner(tmp_path / "runs.sqlite", registry)
+        expected = "RUN_INPUT_INVALID" if entry == "create" else "PLANNING_INPUT_INVALID"
+        command = getattr(planner, entry)
+        with pytest.raises(RunError, match=expected):
+            if entry == "create":
+                command(payload, command_key="invalid", principal="owner")
+            else:
+&gt;               command("not-needed", payload, command_key="invalid", principal="owner")
+
+tests\runs\test_routing_authorization.py:453: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.runs.planning.RunPlanner object at 0x000001C89A470080&gt;
+run_id = 'not-needed', request = 'not-an-object', command_key = 'invalid'
+principal = 'owner'
+
+    def approve_plan(
+        self, run_id: str, request: dict[str, Any], *, command_key: str, principal: str
+    ) -&gt; dict[str, Any]:
+&gt;       version_two = request.get("schema_version") == "karajan.approve-plan.v2"
+                      ^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'get'
+
+backend\karajan\runs\planning.py:487: AttributeError</failure></testcase><testcase classname="tests.runs.test_routing_authorization" name="test_policy_reference_bounds_match_registered_policy_bounds[1000000001]" time="0.245"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'EXECUTION_POLICY_REFERENCE_INVALID'&#10;  Actual message: 'EXECUTION_POLICY_NOT_FOUND'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-544/test_policy_reference_bounds_m0')
+project = (&lt;karajan.projects.registry.ProjectRegistry object at 0x000001C89A4718E0&gt;, {'allowed_target_branches': ['main'], 'conf...WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-544/test_policy_reference_bounds_m0/repository'))
+revision = 1000000001
+
+    @pytest.mark.parametrize("revision", [1_000_000_001, 10**40])
+    def test_policy_reference_bounds_match_registered_policy_bounds(
+        tmp_path: Path, project: tuple, revision: int,
+    ) -&gt; None:
+        registry, configured, _ = project
+        fixed = registry.register_execution_policy(
+            configured["id"], policy_request(configured), command_key="policy", principal="owner"
+        )
+&gt;       with pytest.raises(ProjectError, match="EXECUTION_POLICY_REFERENCE_INVALID"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'EXECUTION_POLICY_REFERENCE_INVALID'
+E         Actual message: 'EXECUTION_POLICY_NOT_FOUND'
+
+tests\runs\test_routing_authorization.py:465: AssertionError</failure></testcase><testcase classname="tests.runs.test_routing_authorization" name="test_policy_reference_bounds_match_registered_policy_bounds[10000000000000000000000000000000000000000]" time="0.241"><failure message="OverflowError: Python int too large to convert to SQLite INTEGER">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-544/test_policy_reference_bounds_m1')
+project = (&lt;karajan.projects.registry.ProjectRegistry object at 0x000001C899EE8EC0&gt;, {'allowed_target_branches': ['main'], 'conf...WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-544/test_policy_reference_bounds_m1/repository'))
+revision = 100000000000000000...0000000000000000000
+
+    @pytest.mark.parametrize("revision", [1_000_000_001, 10**40])
+    def test_policy_reference_bounds_match_registered_policy_bounds(
+        tmp_path: Path, project: tuple, revision: int,
+    ) -&gt; None:
+        registry, configured, _ = project
+        fixed = registry.register_execution_policy(
+            configured["id"], policy_request(configured), command_key="policy", principal="owner"
+        )
+        with pytest.raises(ProjectError, match="EXECUTION_POLICY_REFERENCE_INVALID"):
+&gt;           registry.get_execution_policy(configured["id"], fixed["id"], revision, principal="owner")
+
+tests\runs\test_routing_authorization.py:466: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.projects.registry.ProjectRegistry object at 0x000001C899EE8EC0&gt;
+project_id = 'fbb3d20c-d8a0-42ea-a327-54d84be137e4'
+policy_id = 'project-execution'
+revision = 100000000000000000...0000000000000000000, principal = 'owner'
+
+    def get_execution_policy(
+        self, project_id: str, policy_id: str, revision: int, *, principal: str
+    ) -&gt; dict[str, Any]:
+        project_id, policy_id = identifier(project_id), identifier(policy_id)
+        if type(revision) is not int or revision &lt; 1:
+            raise ProjectError("EXECUTION_POLICY_REFERENCE_INVALID")
+        with self._transaction() as db:
+            self._require_owner(db, project_id, principal)
+&gt;           row = db.execute(
+                "SELECT record FROM execution_policies WHERE project_id=? AND id=? AND revision=?",
+                (project_id, policy_id, revision),
+            ).fetchone()
+E           OverflowError: Python int too large to convert to SQLite INTEGER
+
+backend\karajan\projects\registry.py:765: OverflowError</failure></testcase></testsuite></testsuites>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="3" time="1.108" timestamp="2026-09-06T10:28:36.529006+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.v2-approval-spec.test_independent_v2" name="test_non_object_command_is_a_stable_public_error[create]" time="0.250"><failure message="AttributeError: 'list' object has no attribute 'get'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-541/test_non_object_command_is_a_s0')
+project = (&lt;karajan.projects.registry.ProjectRegistry object at 0x000001F4E02B8110&gt;, {'allowed_target_branches': ['main'], 'conf...WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-541/test_non_object_command_is_a_s0/repository'))
+operation = 'create'
+
+    @pytest.mark.parametrize("operation", ["create", "submit_plan", "approve_plan"])
+    def test_non_object_command_is_a_stable_public_error(tmp_path, project, operation):
+        planner = RunPlanner(tmp_path / "invalid-runs.sqlite", project[0])
+        before = rows(planner.database)
+        method = getattr(planner, operation)
+        args = ([],) if operation == "create" else ("nonexistent-run", [])
+        expected = "RUN_INPUT_INVALID" if operation == "create" else "PLANNING_INPUT_INVALID"
+        with pytest.raises(RunError, match=expected):
+&gt;           method(*args, command_key="spec-invalid-json", principal="owner")
+
+.cache\v2-approval-spec\test_independent_v2.py:320: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.runs.planning.RunPlanner object at 0x000001F4E03246E0&gt;
+request = [], command_key = 'spec-invalid-json', principal = 'owner'
+
+    def create(
+        self, request: dict[str, Any], *, command_key: str, principal: str
+    ) -&gt; dict[str, Any]:
+&gt;       version_two = request.get("schema_version") == "karajan.create-run.v2"
+                      ^^^^^^^^^^^
+E       AttributeError: 'list' object has no attribute 'get'
+
+backend\karajan\runs\planning.py:117: AttributeError</failure></testcase><testcase classname=".cache.v2-approval-spec.test_independent_v2" name="test_non_object_command_is_a_stable_public_error[submit_plan]" time="0.246"><failure message="AttributeError: 'list' object has no attribute 'get'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-541/test_non_object_command_is_a_s1')
+project = (&lt;karajan.projects.registry.ProjectRegistry object at 0x000001F4E0326780&gt;, {'allowed_target_branches': ['main'], 'conf...WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-541/test_non_object_command_is_a_s1/repository'))
+operation = 'submit_plan'
+
+    @pytest.mark.parametrize("operation", ["create", "submit_plan", "approve_plan"])
+    def test_non_object_command_is_a_stable_public_error(tmp_path, project, operation):
+        planner = RunPlanner(tmp_path / "invalid-runs.sqlite", project[0])
+        before = rows(planner.database)
+        method = getattr(planner, operation)
+        args = ([],) if operation == "create" else ("nonexistent-run", [])
+        expected = "RUN_INPUT_INVALID" if operation == "create" else "PLANNING_INPUT_INVALID"
+        with pytest.raises(RunError, match=expected):
+&gt;           method(*args, command_key="spec-invalid-json", principal="owner")
+
+.cache\v2-approval-spec\test_independent_v2.py:320: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.runs.planning.RunPlanner object at 0x000001F4E0326E40&gt;
+run_id = 'nonexistent-run', request = [], command_key = 'spec-invalid-json'
+principal = 'owner'
+
+    def submit_plan(
+        self, run_id: str, request: dict[str, Any], *, command_key: str, principal: str
+    ) -&gt; dict[str, Any]:
+&gt;       version_two = request.get("schema_version") == "karajan.submit-plan.v2"
+                      ^^^^^^^^^^^
+E       AttributeError: 'list' object has no attribute 'get'
+
+backend\karajan\runs\planning.py:422: AttributeError</failure></testcase><testcase classname=".cache.v2-approval-spec.test_independent_v2" name="test_non_object_command_is_a_stable_public_error[approve_plan]" time="0.250"><failure message="AttributeError: 'list' object has no attribute 'get'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-541/test_non_object_command_is_a_s2')
+project = (&lt;karajan.projects.registry.ProjectRegistry object at 0x000001F4E03267B0&gt;, {'allowed_target_branches': ['main'], 'conf...WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-541/test_non_object_command_is_a_s2/repository'))
+operation = 'approve_plan'
+
+    @pytest.mark.parametrize("operation", ["create", "submit_plan", "approve_plan"])
+    def test_non_object_command_is_a_stable_public_error(tmp_path, project, operation):
+        planner = RunPlanner(tmp_path / "invalid-runs.sqlite", project[0])
+        before = rows(planner.database)
+        method = getattr(planner, operation)
+        args = ([],) if operation == "create" else ("nonexistent-run", [])
+        expected = "RUN_INPUT_INVALID" if operation == "create" else "PLANNING_INPUT_INVALID"
+        with pytest.raises(RunError, match=expected):
+&gt;           method(*args, command_key="spec-invalid-json", principal="owner")
+
+.cache\v2-approval-spec\test_independent_v2.py:320: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.runs.planning.RunPlanner object at 0x000001F4E0325700&gt;
+run_id = 'nonexistent-run', request = [], command_key = 'spec-invalid-json'
+principal = 'owner'
+
+    def approve_plan(
+        self, run_id: str, request: dict[str, Any], *, command_key: str, principal: str
+    ) -&gt; dict[str, Any]:
+&gt;       version_two = request.get("schema_version") == "karajan.approve-plan.v2"
+                      ^^^^^^^^^^^
+E       AttributeError: 'list' object has no attribute 'get'
+
+backend\karajan\runs\planning.py:487: AttributeError</failure></testcase></testsuite></testsuites>

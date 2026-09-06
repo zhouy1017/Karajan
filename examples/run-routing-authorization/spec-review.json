@@ -1,0 +1,162 @@
+{
+  "base_commit": "07da55e80f5a2c92cf6b3b5612e5e5a706d0cc72",
+  "evidence_bindings": [
+    {
+      "path": "examples/run-routing-authorization/spec_cases.py",
+      "sha256": "262bbfe0fff27bfa70cbbabc629e906bf1a13bd661ca630705ea0257aa0e2ac6"
+    },
+    {
+      "path": "examples/run-routing-authorization/spec-final.junit.xml",
+      "sha256": "eb7924b0decff97378598b7a2c1896b927d6924f50c539b9c7d4e635bcf93b55"
+    },
+    {
+      "path": "examples/run-routing-authorization/spec-nonobject.before.junit.xml",
+      "sha256": "4888b1f9cb97be98795a7b118f139094d3744cba5b9983992629dc3df723781c"
+    },
+    {
+      "path": "examples/run-routing-authorization/spec-nonobject.input.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "examples/run-routing-authorization/spec-observed.json",
+      "sha256": "671ab2622257ba476ad5a1d7125bd3e9b12fc6f465b4aa74b0d2bbfb673286cb"
+    }
+  ],
+  "findings": [
+    {
+      "actual_after_junit": "examples/run-routing-authorization/spec-final.junit.xml",
+      "actual_before_junit": "examples/run-routing-authorization/spec-nonobject.before.junit.xml",
+      "after_observed": "The original array input produces the stable expected RunError in all three public commands, with database rows unchanged.",
+      "after_source_sha256": "2a93ea0e0e75563ffe6e415ce9c2634973bde4f7cedce489528d03c6fa23d247",
+      "before_failures": 3,
+      "before_source_sha256": "ab0270d5c93c582ad6805c57b3bab066866f457a936a47f5d019892311c00611",
+      "before_tests": 3,
+      "cause": "The new schema selector accesses request.get before the existing strict model validation.",
+      "effect": "Public callers lose stable invalid-input errors; the local CLI accepts JSON root arrays and does not catch AttributeError. HTTP dict validation normally rejects this root value before the planner.",
+      "expected": {
+        "approve_plan": "PLANNING_INPUT_INVALID",
+        "create": "RUN_INPUT_INVALID",
+        "submit_plan": "PLANNING_INPUT_INVALID"
+      },
+      "id": "SPEC-V2-001",
+      "input": [],
+      "observed": "All three public commands raised AttributeError: 'list' object has no attribute 'get'.",
+      "priority": "P2",
+      "reviewer_changed_product": false,
+      "scope": "RunPlanner.create, submit_plan, approve_plan protocol dispatch",
+      "source_path": "backend/karajan/runs/planning.py",
+      "status": "closed"
+    }
+  ],
+  "integration_observation": {
+    "legacy_execution": "Source inspection confirms the legacy material selector rejects non-v1 Runs with APPROVED_ROUTING_INTEGRATION_REQUIRED. This reviewer did not repeat the author's Host/Coordinator guard test.",
+    "legacy_http_approval": "An actual authenticated HTTP request with the old UI's v1 approval payload returned 409 RUN_PROTOCOL_VERSION_MISMATCH; the v2 Run and approvals did not change.",
+    "ui_requirement": "The existing UI displays only v1 authorization. It must either explicitly disable approval for v2 or present all v2 permissions and resolved stage grants before sending a v2 approval. This review does not accept that pending UI integration."
+  },
+  "limits": [
+    "Reviewer changed only independent tests and review evidence, never product source.",
+    "No provider, credentials or cash API operations were performed. Numeric cash ceilings are explicit test data, not account balances or spending approval.",
+    "The test-only planning admission reader grants fixture receipts; it is not real provider qualification or F03 admission proof.",
+    "Legacy migration was arranged by removing only the empty new execution_policies table from a public-command-created local test database, then reopening it. Existing project and Run rows and v1 command replays remained exact.",
+    "This review does not accept the full route builder, current qualifications, tool enforcement, resource admission, execution deadlines or new UI flow."
+  ],
+  "open_findings": 0,
+  "review_axis": "Spec",
+  "schema_version": "karajan.run-routing-authorization.spec-review.v1",
+  "scope": "Owner-fixed execution policy and durable v2 Run/task/routing approval only",
+  "source_bindings": [
+    {
+      "path": "backend/karajan/projects/execution_policy.py",
+      "sha256": "097fd61ff89d9c51715cd8f3ea9d33fc87f15bce449b74441ef3af3a86adbd11"
+    },
+    {
+      "path": "backend/karajan/projects/registry.py",
+      "sha256": "8500cf6be6d4d87f16bac1fdad671e0f3b2e06d46f5b45eeac7a946801c7a592"
+    },
+    {
+      "path": "backend/karajan/runs/routing_authorization.py",
+      "sha256": "8dda7f82b7f280b9ca5b6b10459460d68e4bfc4ce8ed9fd9a9a925ad26d1f204"
+    },
+    {
+      "path": "backend/karajan/runs/planning.py",
+      "sha256": "2a93ea0e0e75563ffe6e415ce9c2634973bde4f7cedce489528d03c6fa23d247"
+    },
+    {
+      "path": "backend/karajan/runs/models.py",
+      "sha256": "bb848445114e25a94662dff578759cb5dc8fcdd80bbcd0ca4a00b5141ec3f68d"
+    },
+    {
+      "path": "backend/karajan/runs/validation.py",
+      "sha256": "e1cf7672799792a7959d9a310ca0a854d3be63a2ab602e727969c966285ebd00"
+    },
+    {
+      "path": "backend/karajan/orchestration/binding.py",
+      "sha256": "ccc0c0c88b99e6ae31db3a20a397cfc6d41edccdae7591c9bb5f89c90020fe05"
+    },
+    {
+      "path": "backend/karajan/web/runs.py",
+      "sha256": "ec5b57185e8274b8ecf7f8fe5582c2c761f65c3fdf83f8614da30343da7fe88e"
+    },
+    {
+      "path": "tests/runs/test_planning.py",
+      "sha256": "ab9711b269a848cf85625a3a600083beaeb4294d12ea9c231eaecf1e736efbbb"
+    },
+    {
+      "path": "tests/runs/test_routing_authorization.py",
+      "sha256": "748c8e56f60e291cdf27c3296be674ed9ada83f3871e7e5f7da5cf936ccbfc87"
+    }
+  ],
+  "verification": {
+    "actual_import_check": "The imported planning and registry modules are asserted beneath the explicit worktree/backend.",
+    "command": "$env:PYTHONPATH='<worktree>/backend'; & '<main-workspace>/.venv/Scripts/python.exe' -m pytest examples/run-routing-authorization/spec_cases.py -q --junitxml=examples/run-routing-authorization/spec-final.junit.xml",
+    "final": {
+      "errors": 0,
+      "failures": 0,
+      "seconds": 6.844,
+      "skipped": 0,
+      "testcases": [
+        "test_imports_and_complete_public_round_trip",
+        "test_original_ceiling_applies_even_when_policy_or_configuration_is_broader[tools]",
+        "test_original_ceiling_applies_even_when_policy_or_configuration_is_broader[destination]",
+        "test_original_ceiling_applies_even_when_policy_or_configuration_is_broader[cash]",
+        "test_original_ceiling_applies_even_when_policy_or_configuration_is_broader[currency]",
+        "test_original_ceiling_applies_even_when_policy_or_configuration_is_broader[duration]",
+        "test_original_ceiling_applies_even_when_policy_or_configuration_is_broader[quality]",
+        "test_original_ceiling_applies_even_when_policy_or_configuration_is_broader[stage]",
+        "test_original_ceiling_applies_even_when_policy_or_configuration_is_broader[requirements]",
+        "test_original_ceiling_applies_even_when_policy_or_configuration_is_broader[checks]",
+        "test_original_ceiling_applies_even_when_policy_or_configuration_is_broader[context]",
+        "test_original_ceiling_applies_even_when_policy_or_configuration_is_broader[missing_task_field]",
+        "test_original_ceiling_applies_even_when_policy_or_configuration_is_broader[missing_auth_field]",
+        "test_narrowing_allows_explicit_plan_only_and_old_or_wrong_hashes_stay_inactive",
+        "test_execution_policy_is_owned_scoped_and_cannot_reuse_component_body",
+        "test_changed_task_requires_revision_and_handoff_expires_old_commander_authority",
+        "test_old_http_approval_cannot_approve_v2_and_v1_receipt_stays_exact",
+        "test_policy_lookup_is_project_scoped_even_with_identical_configuration",
+        "test_current_configuration_cannot_be_combined_with_old_policy_and_original_run_is_frozen",
+        "test_legacy_database_migration_preserves_old_rows_and_command_receipts",
+        "test_non_object_command_is_a_stable_public_error[create]",
+        "test_non_object_command_is_a_stable_public_error[submit_plan]",
+        "test_non_object_command_is_a_stable_public_error[approve_plan]"
+      ],
+      "tests": 23,
+      "timestamp": "2026-09-06T10:35:48.468787+08:00"
+    },
+    "fixed_input_before": {
+      "errors": 0,
+      "failures": 3,
+      "seconds": 1.108,
+      "skipped": 0,
+      "testcases": [
+        "test_non_object_command_is_a_stable_public_error[create]",
+        "test_non_object_command_is_a_stable_public_error[submit_plan]",
+        "test_non_object_command_is_a_stable_public_error[approve_plan]"
+      ],
+      "tests": 3,
+      "timestamp": "2026-09-06T10:28:36.529006+08:00"
+    },
+    "warnings": "Two existing FastAPI/Starlette deprecation warnings; no test failures.",
+    "working_directory": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\run-routing-authorization"
+  },
+  "worktree": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\run-routing-authorization"
+}

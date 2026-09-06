@@ -1,0 +1,299 @@
+[
+  {
+    "case": "ceiling-cash",
+    "input_sha256": "214065f60b540ba3622c507d32d6572cfd3858d052a20bc99257984c6349d8f3",
+    "reason_code": "ROUTING_CASH_CEILING_EXCEEDED",
+    "run_unchanged": true
+  },
+  {
+    "case": "ceiling-checks",
+    "input_sha256": "24e64070738395b00a0219da4ce260ac2244bdd9b88de2670b4745124f9f834c",
+    "reason_code": "REQUIRED_CHECKS_REMOVED",
+    "run_unchanged": true
+  },
+  {
+    "case": "ceiling-context",
+    "input_sha256": "bac471badd6ee93bbebbdb85bb04bd5cf31a1ff9d175bb8820d2f3232fcdd97e",
+    "reason_code": "TASK_EXECUTION_REQUIREMENTS_NOT_AUTHORIZED",
+    "run_unchanged": true
+  },
+  {
+    "case": "ceiling-currency",
+    "input_sha256": "c84c05bbadc45c4cc899d7d7de3f4c241bed95d488fc7eda08434322710e271a",
+    "reason_code": "ROUTING_CASH_CEILING_EXCEEDED",
+    "run_unchanged": true
+  },
+  {
+    "case": "ceiling-destination",
+    "input_sha256": "0f5812cb3df7baf1342f15feaee5f66daac1627452649916dd4ffb3f0a0f950e",
+    "reason_code": "ROUTING_AUTHORIZATION_EXCEEDED",
+    "run_unchanged": true
+  },
+  {
+    "case": "ceiling-duration",
+    "input_sha256": "e2810c14b307f0b050bcabecc822f426b061e77fa640f29a2b2f6377fc31e764",
+    "reason_code": "ROUTING_LIMIT_EXCEEDED",
+    "run_unchanged": true
+  },
+  {
+    "case": "ceiling-missing_auth_field",
+    "input_sha256": "ac22efc21cfddcecdc62117d509d5415ac8c993535ea7aee8e99756e1b4144b6",
+    "reason_code": "PLANNING_INPUT_INVALID",
+    "run_unchanged": true
+  },
+  {
+    "case": "ceiling-missing_task_field",
+    "input_sha256": "6344e9e9b0efb71e21cf91862d2705e34a41479b3e9cc454d8a747dbce2cabcc",
+    "reason_code": "PLANNING_INPUT_INVALID",
+    "run_unchanged": true
+  },
+  {
+    "case": "ceiling-quality",
+    "input_sha256": "02a240f13ed508834bf00a59e58a110acbefb8f55b96d3d7f0c3614bde0c3403",
+    "reason_code": "ROUTING_LIMIT_EXCEEDED",
+    "run_unchanged": true
+  },
+  {
+    "case": "ceiling-requirements",
+    "input_sha256": "f4d2d815c362c752ce865d9631b0f361a62417419578706c3a5bf30288d44c37",
+    "reason_code": "ROUTING_REQUIREMENTS_REMOVED",
+    "run_unchanged": true
+  },
+  {
+    "case": "ceiling-stage",
+    "input_sha256": "59ee24b45b892f9717a97abadec59be1179963db6f142153486ac455ad81eb01",
+    "reason_code": "ROUTING_STAGE_NOT_AUTHORIZED",
+    "run_unchanged": true
+  },
+  {
+    "case": "ceiling-tools",
+    "input_sha256": "a326fc764ead8e77cc901679bb37edc1153ed76b9ec798b67b516a0488c55a2f",
+    "reason_code": "ROUTING_AUTHORIZATION_EXCEEDED",
+    "run_unchanged": true
+  },
+  {
+    "case": "configuration-and-policy",
+    "new_configuration_digest": "1ca00ce7778289da3186e03a1d0f997e0d44e6b5a5be4f6c300803765792e1a5",
+    "old_configuration_digest": "6079658f64667a1162216e96b37d0566137519f6e13967001b567d97a08014d0",
+    "preserved_policy_digest": "1919d43bc34e0daf415bb3886e64e1f7a303d30237486561184f983b5e214b44",
+    "rejected_reason": "EXECUTION_POLICY_BINDING_MISMATCH"
+  },
+  {
+    "all_run_rows_preserved": true,
+    "approval_replay_sha256": "e76714ca0cc6fc7cd651f990dc41f2aaff18c34f919f217ed2ca2586384773dc",
+    "case": "legacy-migration",
+    "create_replay_sha256": "f456a0d9db5c81bca37faca44279c8823dde63acbbc010a9fd42562f8d3472f7",
+    "existing_project_rows_preserved": true,
+    "legacy_project_tables": [
+      "commands",
+      "effective_catalogs",
+      "previews",
+      "project_owners",
+      "projects",
+      "publication_migrations",
+      "rulebook_conflicts",
+      "rulebook_publications",
+      "rulebook_versions"
+    ],
+    "plan_replay_sha256": "4d72318dbe385f0c671b616a2430313f88d8f617c4f6ad79639192ed113900ff"
+  },
+  {
+    "case": "old-http-ui",
+    "request": {
+      "authorization_digest": "f983876e2e2485754b273867303a517ebcb1ca61a37434f23c17ec58640899c4",
+      "configuration_digest": "6079658f64667a1162216e96b37d0566137519f6e13967001b567d97a08014d0",
+      "plan_digest": "272103188dcb4714291741036471890ed2dc4e1cea6ae840e3a69b8210b6fd31",
+      "plan_revision": 1,
+      "term": 1
+    },
+    "response": {
+      "reason_code": "RUN_PROTOCOL_VERSION_MISMATCH"
+    },
+    "run_unchanged": true,
+    "status_code": 409
+  },
+  {
+    "approval": {
+      "approved_at": 1788662149.0328438,
+      "approved_by": "owner",
+      "authorization_digest": "691b285cc820ace7b5f089f64dab6148e59d75f09df3b6bc244a8330c8286f5b",
+      "configuration_digest": "6079658f64667a1162216e96b37d0566137519f6e13967001b567d97a08014d0",
+      "dispatch_enabled": false,
+      "id": "3936f079-95c7-4130-9b72-e231551df510",
+      "plan_digest": "f74ef9a034cb744709a651aadc9cf0ad94fca38818f2e17b669cf6ad6f1d1fe2",
+      "plan_revision": 1,
+      "routing_digest": "5d1105ec7965c8dadc1cd6f5efa28b250a9bbb4f785eb2c807d63a85e59904c7",
+      "run_id": "60ad95e5-1994-4286-9a2d-e6f94b24f6e4",
+      "schema_version": "karajan.approve-plan.v2",
+      "term": 1
+    },
+    "authorization": {
+      "budget_ref": "run",
+      "channel_ids": [
+        "fixture-channel"
+      ],
+      "checks": [
+        "tests",
+        "independent_review"
+      ],
+      "currency_limits": {
+        "CNY": "3",
+        "USD": "2"
+      },
+      "data_destinations": [
+        "local-fixture"
+      ],
+      "delivery": "pull_request",
+      "max_attempt_duration_seconds": 28,
+      "max_quality_repair_rounds": 1,
+      "min_isolation": "tool_sandboxed",
+      "profile_refs": [
+        {
+          "id": "fixture-profile",
+          "revision": 1
+        }
+      ],
+      "read_paths": [
+        "src",
+        "tests"
+      ],
+      "required_capabilities": [
+        "controlled_tools",
+        "code_review"
+      ],
+      "stage_permissions": {
+        "bounded-worker": {
+          "normal": true,
+          "quality_indices": []
+        },
+        "standard-review": {
+          "normal": true,
+          "quality_indices": []
+        }
+      },
+      "target_branch": "main",
+      "tools": [
+        "repo-read"
+      ],
+      "write_paths": [
+        "src",
+        "tests"
+      ]
+    },
+    "authorization_digest": "691b285cc820ace7b5f089f64dab6148e59d75f09df3b6bc244a8330c8286f5b",
+    "case": "round-trip",
+    "imports": [
+      "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\run-routing-authorization\\backend\\karajan\\runs\\planning.py",
+      "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\run-routing-authorization\\backend\\karajan\\projects\\registry.py"
+    ],
+    "plan_digest": "f74ef9a034cb744709a651aadc9cf0ad94fca38818f2e17b669cf6ad6f1d1fe2",
+    "policy_input": {
+      "channel_destinations": {
+        "fixture-channel": "local-fixture"
+      },
+      "configuration_digest": "6079658f64667a1162216e96b37d0566137519f6e13967001b567d97a08014d0",
+      "constraints": {
+        "channel_ids": [
+          "fixture-channel"
+        ],
+        "data_destinations": [
+          "local-fixture",
+          "local-evidence"
+        ],
+        "min_isolation": "tool_sandboxed",
+        "profile_refs": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ],
+        "required_capabilities": [
+          "controlled_tools"
+        ],
+        "tools": [
+          "repo-read",
+          "repo-edit"
+        ]
+      },
+      "context_policy": {
+        "id": "spec-context",
+        "input_accounting": "explicit_approved_upper_bound",
+        "reserved_output_tokens": 2000,
+        "revision": 1
+      },
+      "id": "spec-execution",
+      "max_context_tokens": 12000,
+      "revision": 1,
+      "risk_policy": {
+        "id": "spec-risk",
+        "mapping": {
+          "critical": "T3",
+          "standard": "T1"
+        },
+        "path_floors": [
+          {
+            "minimum_class": "T3",
+            "prefix": "src/auth"
+          }
+        ],
+        "revision": 1
+      },
+      "schema_version": "karajan.execution-policy.v1",
+      "tool_policy": {
+        "id": "spec-tools",
+        "revision": 1,
+        "tool_permissions": {
+          "repo-edit": [
+            "fixture-write"
+          ],
+          "repo-read": [
+            "fixture-read"
+          ]
+        }
+      }
+    },
+    "routing_digest": "5d1105ec7965c8dadc1cd6f5efa28b250a9bbb4f785eb2c807d63a85e59904c7",
+    "task_requirements": {
+      "implement": {
+        "complexity": "T2",
+        "context_tokens": 9000,
+        "domains": [
+          "code"
+        ],
+        "duration_seconds": 26,
+        "paths": [
+          "src/report.py"
+        ],
+        "purpose": null,
+        "readiness": "ready",
+        "required_capabilities": [],
+        "revision": 1,
+        "risk": "standard",
+        "role": "worker",
+        "tools": [
+          "repo-read"
+        ]
+      },
+      "review": {
+        "complexity": "T2",
+        "context_tokens": 9000,
+        "domains": [
+          "code"
+        ],
+        "duration_seconds": 26,
+        "paths": [
+          "src/report.py"
+        ],
+        "purpose": null,
+        "readiness": "ready",
+        "required_capabilities": [],
+        "revision": 1,
+        "risk": "standard",
+        "role": "reviewer",
+        "tools": [
+          "repo-read"
+        ]
+      }
+    }
+  }
+]

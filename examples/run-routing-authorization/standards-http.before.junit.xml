@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.643" timestamp="2026-09-06T10:32:05.786360+08:00" hostname="ProArt-Zhou"><testcase classname="examples.run-routing-authorization.standards_boundaries" name="test_http_v2_large_reference_returns_json_rejection_instead_of_server_error" time="0.315"><failure message="AssertionError: (500, 'Internal Server Error')&#10;assert 500 == 422&#10; +  where 500 = &lt;Response [500 Internal Server Error]&gt;.status_code">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-543/test_http_v2_large_reference_r0')
+project = (&lt;karajan.projects.registry.ProjectRegistry object at 0x00000241B6488E60&gt;, {'allowed_target_branches': ['main'], 'conf...WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-543/test_http_v2_large_reference_r0/repository'))
+
+    def test_http_v2_large_reference_returns_json_rejection_instead_of_server_error(
+        tmp_path: Path, project: tuple
+    ) -&gt; None:
+        registry, configured, _ = project
+        fixed = registry.register_execution_policy(
+            configured["id"], policy_request(configured), command_key="policy", principal="owner"
+        )
+        creation = request_v2(configured, fixed)
+        creation["execution_policy"]["revision"] = 10**40
+        origin = "http://127.0.0.1:8765"
+        app = create_app(tmp_path, origin=origin, bootstrap_token="fixture-bootstrap", allowed_roots=[tmp_path])
+        with TestClient(app, base_url=origin, raise_server_exceptions=False) as client:
+            login = client.post(
+                "/v1/session/bootstrap", json={"token": "fixture-bootstrap"}, headers={"Origin": origin}
+            )
+            assert login.status_code == 200
+            response = client.post(
+                "/v1/runs", json=creation,
+                headers={"Origin": origin, "X-CSRF-Token": login.json()["csrf_token"],
+                         "Idempotency-Key": "large-revision"},
+            )
+&gt;           assert response.status_code == 422, (response.status_code, response.text)
+E           AssertionError: (500, 'Internal Server Error')
+E           assert 500 == 422
+E            +  where 500 = &lt;Response [500 Internal Server Error]&gt;.status_code
+
+examples\run-routing-authorization\standards_boundaries.py:38: AssertionError</failure></testcase></testsuite></testsuites>

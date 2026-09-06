@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="4" time="1.213" timestamp="2026-09-06T10:30:33.394936+08:00" hostname="ProArt-Zhou"><testcase classname="examples.run-routing-authorization.standards_boundaries" name="test_out_of_range_policy_reference_is_a_stable_domain_rejection[registry]" time="0.265"><failure message="OverflowError: Python int too large to convert to SQLite INTEGER">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-542/test_out_of_range_policy_refer0')
+project = (&lt;karajan.projects.registry.ProjectRegistry object at 0x000001B2E6B8BEF0&gt;, {'allowed_target_branches': ['main'], 'conf...WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-542/test_out_of_range_policy_refer0/repository'))
+entry = 'registry'
+
+    @pytest.mark.parametrize("entry", ["registry", "run"])
+    def test_out_of_range_policy_reference_is_a_stable_domain_rejection(
+        tmp_path: Path, project: tuple, entry: str
+    ) -&gt; None:
+        registry, configured, _ = project
+        fixed = registry.register_execution_policy(
+            configured["id"], policy_request(configured), command_key="policy", principal="owner"
+        )
+        if entry == "registry":
+            with pytest.raises(ProjectError):
+&gt;               registry.get_execution_policy(
+                    configured["id"], fixed["id"], 10**40, principal="owner"
+                )
+
+examples\run-routing-authorization\standards_boundaries.py:25: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.projects.registry.ProjectRegistry object at 0x000001B2E6B8BEF0&gt;
+project_id = '4ae73bcb-3cce-4436-9994-cc550e310e69'
+policy_id = 'project-execution'
+revision = 100000000000000000...0000000000000000000, principal = 'owner'
+
+    def get_execution_policy(
+        self, project_id: str, policy_id: str, revision: int, *, principal: str
+    ) -&gt; dict[str, Any]:
+        project_id, policy_id = identifier(project_id), identifier(policy_id)
+        if type(revision) is not int or revision &lt; 1:
+            raise ProjectError("EXECUTION_POLICY_REFERENCE_INVALID")
+        with self._transaction() as db:
+            self._require_owner(db, project_id, principal)
+&gt;           row = db.execute(
+                "SELECT record FROM execution_policies WHERE project_id=? AND id=? AND revision=?",
+                (project_id, policy_id, revision),
+            ).fetchone()
+E           OverflowError: Python int too large to convert to SQLite INTEGER
+
+backend\karajan\projects\registry.py:765: OverflowError</failure></testcase><testcase classname="examples.run-routing-authorization.standards_boundaries" name="test_out_of_range_policy_reference_is_a_stable_domain_rejection[run]" time="0.245"><failure message="OverflowError: Python int too large to convert to SQLite INTEGER">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-542/test_out_of_range_policy_refer1')
+project = (&lt;karajan.projects.registry.ProjectRegistry object at 0x000001B2E6BCD6D0&gt;, {'allowed_target_branches': ['main'], 'conf...WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-542/test_out_of_range_policy_refer1/repository'))
+entry = 'run'
+
+    @pytest.mark.parametrize("entry", ["registry", "run"])
+    def test_out_of_range_policy_reference_is_a_stable_domain_rejection(
+        tmp_path: Path, project: tuple, entry: str
+    ) -&gt; None:
+        registry, configured, _ = project
+        fixed = registry.register_execution_policy(
+            configured["id"], policy_request(configured), command_key="policy", principal="owner"
+        )
+        if entry == "registry":
+            with pytest.raises(ProjectError):
+                registry.get_execution_policy(
+                    configured["id"], fixed["id"], 10**40, principal="owner"
+                )
+        else:
+            creation = request_v2(configured, fixed)
+            creation["execution_policy"]["revision"] = 10**40
+            planner = RunPlanner(tmp_path / "runs.sqlite", registry)
+            with pytest.raises(RunError):
+&gt;               planner.create(creation, command_key="too-large", principal="owner")
+
+examples\run-routing-authorization\standards_boundaries.py:33: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+backend\karajan\runs\planning.py:146: in create
+    execution_policy = self.projects.get_execution_policy(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.projects.registry.ProjectRegistry object at 0x000001B2E6BCD6D0&gt;
+project_id = '1f44fb0e-37fe-4994-97b7-e1aedb79cfb4'
+policy_id = 'project-execution'
+revision = 100000000000000000...0000000000000000000, principal = 'owner'
+
+    def get_execution_policy(
+        self, project_id: str, policy_id: str, revision: int, *, principal: str
+    ) -&gt; dict[str, Any]:
+        project_id, policy_id = identifier(project_id), identifier(policy_id)
+        if type(revision) is not int or revision &lt; 1:
+            raise ProjectError("EXECUTION_POLICY_REFERENCE_INVALID")
+        with self._transaction() as db:
+            self._require_owner(db, project_id, principal)
+&gt;           row = db.execute(
+                "SELECT record FROM execution_policies WHERE project_id=? AND id=? AND revision=?",
+                (project_id, policy_id, revision),
+            ).fetchone()
+E           OverflowError: Python int too large to convert to SQLite INTEGER
+
+backend\karajan\projects\registry.py:765: OverflowError</failure></testcase><testcase classname="examples.run-routing-authorization.standards_boundaries" name="test_policy_identifier_rejects_surrogate_before_sql_binding" time="0.242" /><testcase classname="examples.run-routing-authorization.standards_boundaries" name="test_returned_policy_and_run_objects_cannot_mutate_stored_bindings" time="0.260" /></testsuite></testsuites>

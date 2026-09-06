@@ -1,0 +1,13 @@
+# Independent Standards review — Run routing authorization
+
+Reviewed the five changed product files against base `07da55e80f5a2c92cf6b3b5612e5e5a706d0cc72`, the author freeze, `CONTEXT.md` terminology and the explicit-contract/immutable-revision/stable-error requirements in `docs/architecture/01-control-and-state.md` and `04-api-and-workbench.md`. No additional repository coding-standards file was found. Tool-enforced style is excluded from this review.
+
+**P2 — Policy references accept integers that cannot reach the database.** `PolicyRef` inherits the unbounded positive Profile revision; `ProjectRegistry.get_execution_policy` checks only type and the lower bound. The otherwise valid v2 create payload with `execution_policy.revision = 10**40` passes parsing and raises an uncaught SQLite binding `OverflowError`. A real authenticated HTTP create returned **500 Internal Server Error**, contradicting the stable `reason_code` response contract in architecture 04 line 57. Constrain both the v2 reference and public Registry read to the same maximum used by registered ExecutionPolicy revisions. Public-API and HTTP red evidence are retained separately; this is one finding observed through three entry points.
+
+Independent positive checks confirm that callers mutating returned Policy/Run objects or original input cannot change the persisted policy snapshot after reopening, and malformed surrogate policy identifiers are rejected through the domain error. Static review found no owner/project/policy-identity bypass or unbound mutable approval field. Explicit v2 protocol selection and the legacy Serial refusal preserve the separation between domain approval and execution.
+
+Original tests: `standards_boundaries.py`; first public run **2 failed / 2 passed**, separate HTTP run **1 failed**. No provider, credential or model operations were performed. Spec findings and qualification/integration gaps are tracked separately by the Spec reviewer and implementation document.
+
+**Correction independently verified:** both the v2 `PolicyRef` and the public Registry read now validate the same strict `Positive` range used by registered policies (1 through 1,000,000,000). The original public inputs now receive domain errors, and the original authenticated HTTP input returns **422 with `reason_code`**. The combined independent rerun passed **5 / 5 in 1.67 seconds**; `standards-boundaries.after.junit.xml` includes all original cases. Formatting was applied to the reviewer test only; its input values and expected outcomes did not change.
+
+Status: **0 unresolved Standards findings; 1 P2 found and closed.** Final source binding is recorded in `standards-final.json` after the author freezes the corrected source.

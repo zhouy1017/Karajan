@@ -82,6 +82,11 @@ class ProjectRegistry:
                 "REFERENCES projects(id), configuration TEXT, result TEXT NOT NULL)"
             )
             initialize(db)
+            db.execute(
+                "CREATE TABLE IF NOT EXISTS execution_policies (project_id TEXT NOT NULL "
+                "REFERENCES projects(id), id TEXT NOT NULL, revision INTEGER NOT NULL, "
+                "record TEXT NOT NULL, PRIMARY KEY(project_id,id,revision))"
+            )
 
     @contextmanager
     def _transaction(self) -> Iterator[sqlite3.Connection]:
@@ -674,6 +679,100 @@ class ProjectRegistry:
                 "configuration_revision": snapshot["configuration"]["revision"],
                 "configuration": configuration,
             }
+
+    def register_execution_policy(
+        self, project_id: str, request: dict[str, Any], *, command_key: str, principal: str
+    ) -> dict[str, Any]:
+        """Fix explicit routing constraints under the project owner's authority."""
+        from karajan.routing.compiler import RoutingError
+
+        from .execution_policy import validate_policy
+
+        project_id = identifier(project_id)
+        identity = hashlib.sha256(
+            encoded(["execution_policy", project_id, request]).encode()
+        ).hexdigest()
+        with self._transaction() as db:
+            prior = self._replay(db, principal, command_key, identity)
+            if prior is not None:
+                return prior
+            self._require_owner(db, project_id, principal)
+            row = db.execute("SELECT snapshot FROM projects WHERE id=?", (project_id,)).fetchone()
+            snapshot = json.loads(row["snapshot"])
+            if snapshot["configuration"]["status"] != "offline_valid":
+                raise ProjectError("CONFIGURATION_NOT_READY")
+            stored = db.execute(
+                "SELECT configuration FROM previews WHERE id=? AND project_id=?",
+                (snapshot["configuration"]["preview_id"], project_id),
+            ).fetchone()
+            try:
+                document = validate_policy(request, json.loads(stored["configuration"]))
+            except RoutingError as rejected:
+                raise ProjectError(rejected.code) from None
+            latest = db.execute(
+                "SELECT MAX(revision) FROM execution_policies WHERE project_id=? AND id=?",
+                (project_id, document["id"]),
+            ).fetchone()[0]
+            if document["revision"] != (latest or 0) + 1:
+                raise ProjectError("EXECUTION_POLICY_REVISION_CONFLICT")
+            for old in db.execute(
+                "SELECT record FROM execution_policies WHERE project_id=?", (project_id,)
+            ):
+                previous = json.loads(old["record"])
+                for kind in ("risk_policy", "tool_policy", "context_policy"):
+                    left, right = previous[kind], document[kind]
+                    if (left["id"], left["revision"]) == (
+                        right["id"],
+                        right["revision"],
+                    ) and left != right:
+                        raise ProjectError("EXECUTION_POLICY_COMPONENT_REVISION_CONFLICT")
+            result = {
+                **document,
+                "project_id": project_id,
+                "digest": hashlib.sha256(encoded(document).encode()).hexdigest(),
+                "registered_by": principal,
+                "registered_at": self.clock(),
+                "activation_allowed": False,
+            }
+            db.execute(
+                "INSERT INTO execution_policies VALUES (?,?,?,?)",
+                (
+                    project_id,
+                    document["id"],
+                    document["revision"],
+                    encoded(result),
+                ),
+            )
+            db.execute(
+                "INSERT INTO commands VALUES (?,?,?,?)",
+                (
+                    principal,
+                    command_key,
+                    identity,
+                    encoded(result),
+                ),
+            )
+            return result
+
+    def get_execution_policy(
+        self, project_id: str, policy_id: str, revision: int, *, principal: str
+    ) -> dict[str, Any]:
+        from karajan.routing.models import Positive
+
+        project_id, policy_id = identifier(project_id), identifier(policy_id)
+        try:
+            TypeAdapter(Positive).validate_python(revision, strict=True)
+        except ValidationError:
+            raise ProjectError("EXECUTION_POLICY_REFERENCE_INVALID") from None
+        with self._transaction() as db:
+            self._require_owner(db, project_id, principal)
+            row = db.execute(
+                "SELECT record FROM execution_policies WHERE project_id=? AND id=? AND revision=?",
+                (project_id, policy_id, revision),
+            ).fetchone()
+            if row is None:
+                raise ProjectError("EXECUTION_POLICY_NOT_FOUND")
+            return dict(json.loads(row["record"]))
 
     def _replay(
         self, db: sqlite3.Connection, principal: str, key: str, digest: str

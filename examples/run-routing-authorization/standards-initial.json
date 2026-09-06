@@ -1,0 +1,51 @@
+{
+  "schema_version": "karajan.run-routing-standards.initial.v1",
+  "base_commit": "07da55e80f5a2c92cf6b3b5612e5e5a706d0cc72",
+  "finding_count": 1,
+  "finding_id": "POLICY_REFERENCE_REVISION_OUT_OF_RANGE",
+  "severity": "P2",
+  "import_path": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\run-routing-authorization\\backend\\karajan\\runs\\planning.py",
+  "sources": [
+    {
+      "path": "backend/karajan/projects/registry.py",
+      "frozen_sha256": "28e1bfd79fd61e74df4c846bd3f8cc06ad66305930544e96a6e6411b8ba353db",
+      "observed_sha256": "28e1bfd79fd61e74df4c846bd3f8cc06ad66305930544e96a6e6411b8ba353db"
+    },
+    {
+      "path": "backend/karajan/projects/execution_policy.py",
+      "frozen_sha256": "097fd61ff89d9c51715cd8f3ea9d33fc87f15bce449b74441ef3af3a86adbd11",
+      "observed_sha256": "097fd61ff89d9c51715cd8f3ea9d33fc87f15bce449b74441ef3af3a86adbd11"
+    },
+    {
+      "path": "backend/karajan/runs/planning.py",
+      "frozen_sha256": "ab0270d5c93c582ad6805c57b3bab066866f457a936a47f5d019892311c00611",
+      "observed_sha256": "ab0270d5c93c582ad6805c57b3bab066866f457a936a47f5d019892311c00611"
+    },
+    {
+      "path": "backend/karajan/runs/routing_authorization.py",
+      "frozen_sha256": "489fb517996d464b321ab289498deaf129b0853b6b7492b7deb9ecc25df6d684",
+      "observed_sha256": "489fb517996d464b321ab289498deaf129b0853b6b7492b7deb9ecc25df6d684"
+    },
+    {
+      "path": "backend/karajan/orchestration/binding.py",
+      "frozen_sha256": "ccc0c0c88b99e6ae31db3a20a397cfc6d41edccdae7591c9bb5f89c90020fe05",
+      "observed_sha256": "ccc0c0c88b99e6ae31db3a20a397cfc6d41edccdae7591c9bb5f89c90020fe05"
+    },
+    {
+      "path": "tests/runs/test_routing_authorization.py",
+      "frozen_sha256": "cf42e544b5ce4f8109379f6f117e212942bb1a68be5510d39099fee7ff1f8350",
+      "observed_sha256": "cf42e544b5ce4f8109379f6f117e212942bb1a68be5510d39099fee7ff1f8350"
+    },
+    {
+      "path": "docs/implementation/m3-run-routing-authorization.md",
+      "frozen_sha256": "bc2c03cf9822afe5e257cc1d7a4f0c5edad2d8d3c56cdbb0af35b613303b37c8",
+      "observed_sha256": "bc2c03cf9822afe5e257cc1d7a4f0c5edad2d8d3c56cdbb0af35b613303b37c8"
+    }
+  ],
+  "reports": [
+    "standards-boundaries.before.junit.xml",
+    "standards-http.before.junit.xml"
+  ],
+  "status": "awaiting_correction",
+  "model_calls": 0
+}

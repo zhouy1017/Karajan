@@ -94,6 +94,9 @@ def material(
     *,
     current_resources: dict[str, Any] | None = None,
 ) -> tuple[dict[str, Any] | None, str | None]:
+    if run["schema_version"] != "karajan.run-planning.v1":
+        # This legacy selector cannot enforce the complete v2 routing envelope.
+        return None, "APPROVED_ROUTING_INTEGRATION_REQUIRED"
     try:
         profile_ref = ProfileRef.model_validate(profile_ref).model_dump()
     except ValidationError:
