@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="35" failures="1" errors="1" time="0.1047778">
+    <testsuite name="src/RoutingSimulation.test.tsx" timestamp="2026-09-05T19:43:27.439Z" hostname="ProArt-Zhou" tests="34" failures="1" errors="0" skipped="33" time="0.1047778">
+        <testcase classname="src/RoutingSimulation.test.tsx" name="waits for explicit input and runs inside the rulebook editor without publication writes" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="replaces only the current rulebook and sends frozen authorization and resources unchanged" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="shows selected and rejected candidates, every reason and server-ranked components" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="makes blocked outcomes explicit without suggesting activation" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="shows imported provenance, snapshot timestamps and unknown values without inventing availability" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="exports exactly the composed input and unchanged complete server report" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="sends identical bytes on repeat simulation with identical facts" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="invalidates a completed result after changing task" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="invalidates a completed result after changing draft" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="invalidates a completed result after changing file" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="invalidates a completed result after changing example" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="rejects duplicate file data before any simulation request" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="rejects escaped duplicate file data before any simulation request" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="rejects invalid file data before any simulation request" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="rejects missing file data before any simulation request" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="accepts the same field names in different objects and commas/braces inside strings" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="checks the composed UTF-8 body size rather than file characters" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="clears the old result and handles a 422 simulation failure" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="clears the old result and handles a malformed simulation failure" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="clears the old result and handles a wrong scope simulation failure" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="clears the old result and handles a network simulation failure" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="expires only the active session on example 401" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="expires only the active session on simulate 401" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="discards late example headers after mount, session, project, draft or task changes" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="discards late simulate headers after mount, session, project, draft or task changes" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="rechecks edit scope after delayed example JSON parsing" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="rechecks edit scope after delayed simulate JSON parsing" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="discards delayed imported text after unmount changes" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="discards delayed imported text after csrf changes" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="discards delayed imported text after project changes" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="discards delayed imported text after draft changes" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="discards delayed imported text after task changes" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="does not mix a late old result into a newer result" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="renders the original prototype-like evidence reference without crashing" time="0.1033924">
+            <system-err>
+An error occurred in the &lt;p&gt; component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+            </system-err>
+            <failure message="Unable to find an element with the text: 核对资源事实、时间与未知信息. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m&lt;body&gt;[39m
+  [36m&lt;div /&gt;[39m
+[36m&lt;/body&gt;[39m" type="TestingLibraryElementError">
+TestingLibraryElementError: Unable to find an element with the text: 核对资源事实、时间与未知信息. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+&lt;body&gt;
+  &lt;div /&gt;
+&lt;/body&gt;
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/RoutingSimulation.test.tsx:613:32
+            </failure>
+        </testcase>
+    </testsuite>
+    <testsuite name="vitest unhandled errors" timestamp="2026-09-05T19:43:27.449Z" hostname="ProArt-Zhou" tests="1" failures="0" errors="1" skipped="0" time="0">
+        <testcase classname="vitest unhandled errors" name="Uncaught Exception: Objects are not valid as a React child (found: object with keys {}). If you meant to render a collection of children, use an array instead." time="0">
+            <error message="Objects are not valid as a React child (found: object with keys {}). If you meant to render a collection of children, use an array instead." type="Error">
+Error: Objects are not valid as a React child (found: object with keys {}). If you meant to render a collection of children, use an array instead.
+ ❯ throwOnInvalidObjectTypeImpl node_modules/react-dom/cjs/react-dom-client.development.js:6099:13
+ ❯ throwOnInvalidObjectType node_modules/react-dom/cjs/react-dom-client.development.js:6113:11
+ ❯ createChild node_modules/react-dom/cjs/react-dom-client.development.js:6401:11
+ ❯ reconcileChildrenArray node_modules/react-dom/cjs/react-dom-client.development.js:6670:25
+ ❯ reconcileChildFibersImpl node_modules/react-dom/cjs/react-dom-client.development.js:6993:30
+ ❯ node_modules/react-dom/cjs/react-dom-client.development.js:7098:33
+ ❯ reconcileChildren node_modules/react-dom/cjs/react-dom-client.development.js:9701:13
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:12049:13
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in &quot;src/RoutingSimulation.test.tsx&quot; test file. It doesn&apos;t mean the error was thrown inside the file itself, but while it was running.
+The last test to run before this error was &quot;renders the original prototype-like evidence reference without crashing&quot;. This means either:
+- the error was thrown while Vitest was running this test, or
+- the error was thrown after the test completed, and this was the most recent test at that point.
+            </error>
+        </testcase>
+    </testsuite>
+</testsuites>

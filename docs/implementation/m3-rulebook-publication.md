@@ -33,3 +33,5 @@
 实际浏览器在本机离线项目调整规则版本、说明、任务优先级、能力组成员与 Writer 上限，生成服务器预览后确认发布，再刷新当前版本并展开历史。项目 revision 从 2 到 3，规则从 v1 到 v2，历史展示两个不可变版本和一条 `waiting_qualification` 发布记录。预览前后当前配置指针及账本不变；发布前后所有 Run、容量表的逻辑摘要与 Profile 启用值不变。详见 `browser-verification.json` 和三份原始持久快照；未将组件 mock 的未知响应测试冒充浏览器断线验证。
 
 当前仅完成 FR04/06、A11 的发布、旧 Run 固定和撤销边界子集。显式规则采用、完整模拟工作台、统一 F03/F05 接线及真实来源资格仍未验收，因此不关闭 M3-01。真实模型与现金 API 请求数为零。
+
+[PR #44](https://github.com/zhouy1017/Karajan/pull/44) 的提交 `a38bd381bfc8413b9b18c34c717013bd93c03c71` 已通过 [PR CI](https://github.com/zhouy1017/Karajan/actions/runs/33987133822) 和 [push CI](https://github.com/zhouy1017/Karajan/actions/runs/33987109380)。Windows、Linux、前端与必需汇总门均成功；提交前冻结报告中的 pending 保留为历史。

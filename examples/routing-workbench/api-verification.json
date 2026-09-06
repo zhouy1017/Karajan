@@ -1,0 +1,343 @@
+{
+  "schema_version": "karajan.routing-http-verification.v1",
+  "scope": "Authenticated HTTP explicit snapshot simulation, actual projects/runs/capacity logical tables, loopback fake model receiver",
+  "activation_allowed": false,
+  "live_qualification": "not_run",
+  "sample_bytes": 19329,
+  "sample_matches_existing_fixed_input": true,
+  "actual_effect_evidence": {
+    "tables": {
+      "after": {
+        "capacity": {
+          "commands": {
+            "rows": 5,
+            "sha256": "79eb1990715aecf77f659eb16af8cf222b61e5d4c86e2045df753b40e0046737"
+          },
+          "failures": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "lifecycle": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "observations": {
+            "rows": 1,
+            "sha256": "a185987fc2722a0ac4e7cd6116cb037039ecab031e0d6de04c57e4adac88bd2f"
+          },
+          "policies": {
+            "rows": 1,
+            "sha256": "60fed9c5d2512c6ee01be281df6e7f3bc009374912300330374a62db8aafeebe"
+          },
+          "pools": {
+            "rows": 1,
+            "sha256": "6d7241b3c75b2b28a0768bad13bccfef2f09f167f097aae5e4c245b62b2caeb6"
+          },
+          "profiles": {
+            "rows": 1,
+            "sha256": "51306b9a063708afdab737be6bd1f089f20063e05b60dc88b695285248e5f789"
+          },
+          "reservations": {
+            "rows": 1,
+            "sha256": "465649bc3e8b862fc21ab8cea9b8674f45c6d3f3cf2e7c5008a3881032fcd904"
+          },
+          "usage": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          }
+        },
+        "projects": {
+          "commands": {
+            "rows": 3,
+            "sha256": "803e9266b6b06056dedbd4dea89c8361c6af96567f766dc04a2c63fb2b20359c"
+          },
+          "effective_catalogs": {
+            "rows": 1,
+            "sha256": "6289f2653435250d2b646c1b4e5fcbae2aba30022c65235a5b0ebe470fd9d9db"
+          },
+          "previews": {
+            "rows": 1,
+            "sha256": "c66dca319146c0447b82b2d4efa7a5eeba0b817fa77b363d0c351e87e80534e1"
+          },
+          "project_owners": {
+            "rows": 1,
+            "sha256": "dba755ca8e4ae7327a6c5b15a47fed6d036710649dad6e3e385292f87bf70f7a"
+          },
+          "projects": {
+            "rows": 1,
+            "sha256": "4bfba644bf893d066359376c0aca8dadf4916b0fcefbf3b7221aed774dd9553e"
+          },
+          "publication_migrations": {
+            "rows": 1,
+            "sha256": "043f347c2cdc0d8ce70c38775d24e556c0290acf6d0c87a3a52aa85471cb8d02"
+          },
+          "rulebook_conflicts": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "rulebook_publications": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "rulebook_versions": {
+            "rows": 1,
+            "sha256": "5a5533a35dd2ba70f2c871d96d496c8d4be0da3ab97bb6b1346f91156c3e3f61"
+          }
+        },
+        "runs": {
+          "run_commands": {
+            "rows": 1,
+            "sha256": "0e2364963c59483fe9459f723170d9a337e5b2ac68c528db5b4c4dfecfa11b79"
+          },
+          "run_events": {
+            "rows": 1,
+            "sha256": "e74b0c5ef27a8cb91ac6edb9a9d04219d7937382194db91ec3f9dbda774c6f16"
+          },
+          "runs": {
+            "rows": 1,
+            "sha256": "80a3726e89cad93809eac40c41e5af6a5a02aeb9d042e871bed60646dfacbff0"
+          }
+        }
+      },
+      "before": {
+        "capacity": {
+          "commands": {
+            "rows": 5,
+            "sha256": "79eb1990715aecf77f659eb16af8cf222b61e5d4c86e2045df753b40e0046737"
+          },
+          "failures": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "lifecycle": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "observations": {
+            "rows": 1,
+            "sha256": "a185987fc2722a0ac4e7cd6116cb037039ecab031e0d6de04c57e4adac88bd2f"
+          },
+          "policies": {
+            "rows": 1,
+            "sha256": "60fed9c5d2512c6ee01be281df6e7f3bc009374912300330374a62db8aafeebe"
+          },
+          "pools": {
+            "rows": 1,
+            "sha256": "6d7241b3c75b2b28a0768bad13bccfef2f09f167f097aae5e4c245b62b2caeb6"
+          },
+          "profiles": {
+            "rows": 1,
+            "sha256": "51306b9a063708afdab737be6bd1f089f20063e05b60dc88b695285248e5f789"
+          },
+          "reservations": {
+            "rows": 1,
+            "sha256": "465649bc3e8b862fc21ab8cea9b8674f45c6d3f3cf2e7c5008a3881032fcd904"
+          },
+          "usage": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          }
+        },
+        "projects": {
+          "commands": {
+            "rows": 3,
+            "sha256": "803e9266b6b06056dedbd4dea89c8361c6af96567f766dc04a2c63fb2b20359c"
+          },
+          "effective_catalogs": {
+            "rows": 1,
+            "sha256": "6289f2653435250d2b646c1b4e5fcbae2aba30022c65235a5b0ebe470fd9d9db"
+          },
+          "previews": {
+            "rows": 1,
+            "sha256": "c66dca319146c0447b82b2d4efa7a5eeba0b817fa77b363d0c351e87e80534e1"
+          },
+          "project_owners": {
+            "rows": 1,
+            "sha256": "dba755ca8e4ae7327a6c5b15a47fed6d036710649dad6e3e385292f87bf70f7a"
+          },
+          "projects": {
+            "rows": 1,
+            "sha256": "4bfba644bf893d066359376c0aca8dadf4916b0fcefbf3b7221aed774dd9553e"
+          },
+          "publication_migrations": {
+            "rows": 1,
+            "sha256": "043f347c2cdc0d8ce70c38775d24e556c0290acf6d0c87a3a52aa85471cb8d02"
+          },
+          "rulebook_conflicts": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "rulebook_publications": {
+            "rows": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "rulebook_versions": {
+            "rows": 1,
+            "sha256": "5a5533a35dd2ba70f2c871d96d496c8d4be0da3ab97bb6b1346f91156c3e3f61"
+          }
+        },
+        "runs": {
+          "run_commands": {
+            "rows": 1,
+            "sha256": "0e2364963c59483fe9459f723170d9a337e5b2ac68c528db5b4c4dfecfa11b79"
+          },
+          "run_events": {
+            "rows": 1,
+            "sha256": "e74b0c5ef27a8cb91ac6edb9a9d04219d7937382194db91ec3f9dbda774c6f16"
+          },
+          "runs": {
+            "rows": 1,
+            "sha256": "80a3726e89cad93809eac40c41e5af6a5a02aeb9d042e871bed60646dfacbff0"
+          }
+        }
+      }
+    },
+    "model_listener_requests": 0
+  },
+  "reports": {
+    "api-behavior.junit.xml": {
+      "sha256": "bed45240471858f0c4978752316491db84747fb0c58d65e92cb2e0528d7c05ee",
+      "tests": 21,
+      "failures": 0,
+      "errors": 0
+    },
+    "api-duplicates-after.junit.xml": {
+      "sha256": "a55985a72028ca6b6d96d2fc11ce477a2c7f2ca532b8d9dc241f3adc27c45805",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0
+    },
+    "api-duplicates-before.junit.xml": {
+      "sha256": "838437a6c2eb9f403b23ba573c96b02e1bf9206530a1d8b737170b6fdebda0ab",
+      "tests": 3,
+      "failures": 2,
+      "errors": 0
+    },
+    "api-initial-after.junit.xml": {
+      "sha256": "7d7f12ec31eeb479b9bc4686c3a8d498578f50ec3b145549cb4f1b80e0ac846a",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0
+    },
+    "api-initial-before.junit.xml": {
+      "sha256": "1e288907956859b82364feb094a86842aa169b0e4794033b0157278dd30dffcd",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0
+    },
+    "api-populated-effects.junit.xml": {
+      "sha256": "4789628b46992f3f21700e2ebd6c8214f84974b96510d0129590aaac98b5e76b",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0
+    },
+    "api-web-routing-final.junit.xml": {
+      "sha256": "0b7b76dd2d9cefa89d55f728c0caaf27129ab7cfc7b332164703b394f0f3903a",
+      "tests": 137,
+      "failures": 0,
+      "errors": 0
+    }
+  },
+  "source_sha256": {
+    "backend/karajan/__init__.py": "8e2358b5a62c20e8b8658140afd0d226b8eb5f1b5a406d0a21cdecc569e88ea0",
+    "backend/karajan/__main__.py": "2eb0d9a650fc154c8756f97ae875105f539076e5a7d14454824796e541b82b5c",
+    "backend/karajan/adapters/claude/__init__.py": "a8da7a119ba06163afb86acd9666dad1973cad594c10cdaaf3089b645c0597c7",
+    "backend/karajan/adapters/claude/__main__.py": "407beed76373ffe9e2ab41ad5900107fc296e05e6b797e0061b9f559d4afd9c4",
+    "backend/karajan/adapters/claude/models.py": "d11c13a6822a3773197a25835e19446461edf0a08bd2478394cb4ff13f94cc4c",
+    "backend/karajan/adapters/claude/native.py": "1abcc9fba9a4637b198dcc3367adb2d1e4695428c64240b5cadc79e5685527b5",
+    "backend/karajan/adapters/claude/replay.py": "801eaacf09f3a73f69f56699ea64202e02ee41d121736b0a4a6265dd45ce20a9",
+    "backend/karajan/adapters/claude/usage.py": "d650ef4125510631ceffcb01e404d402b83221d81bfcba412911da5eeea916e0",
+    "backend/karajan/adapters/codex/__init__.py": "8ef23e6e990ced52af758bf2b0bfa5183ad83b2f18678a09b0eac76f857cf901",
+    "backend/karajan/adapters/codex/__main__.py": "f043c70b2d54c9d5c085e9f34a865bd805727b66c6170ac7cc72384343f3df79",
+    "backend/karajan/adapters/codex/models.py": "d3c5a2ed26844b75cde9feb57b655a17c4ea497db48c34389655c38415b58caa",
+    "backend/karajan/adapters/codex/permissions.py": "b77ca16f5ac77d9d18809312fb2fd2c20cf9b8ddf5edf5561cccb344741e0132",
+    "backend/karajan/adapters/codex/replay.py": "8c461666041d161f776d1ad9ea493c368da23c603962d69f29de6751f55c4964",
+    "backend/karajan/adapters/deepseek/__init__.py": "1dbe6ffc5269ec6f7e18d87dba3cfa40dd2c268ff63061c38e6cf2dd28be9115",
+    "backend/karajan/adapters/deepseek/__main__.py": "2d86df689f5d3091b834ded0473464a1869dceaa070135ad5e096bc74185887e",
+    "backend/karajan/adapters/deepseek/_local_transport.py": "6f0397c0ddee089c83ae70f87e99bf0b4a26930ea7f1310db899f7fb22ee9859",
+    "backend/karajan/adapters/deepseek/offline.py": "98308a5d29b5ad20daa786ea38686ed6a9751bc415bf059d883704f98f47c158",
+    "backend/karajan/adapters/deepseek/protocol.py": "9a35bd696de33c704e8dafb5b62b906f6e71c9e2b342b2f846dad5d1b291fa50",
+    "backend/karajan/adapters/deepseek/response.py": "5b0c2add8fa1f9b60e14615a6c392347d0a1b39ab50096742ddd64d300dd2c94",
+    "backend/karajan/adapters/opencode/__init__.py": "0a6655eadece7d228d3146a79fcf8bd3fab25adbbbdd5409e854b3973bb15d36",
+    "backend/karajan/adapters/opencode/__main__.py": "8fb8cc703b16987ddd2838f320cc08ece2d7cafcea2b28b6d2a4650d0535ecba",
+    "backend/karajan/adapters/opencode/_evidence.py": "cbabbf1e372199b24aa50554b7fa25870c20e3fe729468375dbfcee5225b20c7",
+    "backend/karajan/adapters/opencode/_fixture.py": "5726fc7f0b308cd3fbf68b77880e2cd8f55caf3ac84c1e7d900428dacdf2470b",
+    "backend/karajan/adapters/opencode/_server.py": "6827bdf9f26b6a38fab4b5b8eecaa3fb00f33c15ee93977f94c15f1ec5836255",
+    "backend/karajan/adapters/opencode/management.py": "1dc5d87c03c38d89df94962183d3ca8da84863753506ccc2f83f858c1b908b68",
+    "backend/karajan/adapters/opencode/probe.py": "876f331a62c8774a0112f12d6be54c9054a3a33dd4b05f44f7246565d9d6bdaa",
+    "backend/karajan/candidates/__init__.py": "198c1b07b42c74941e893c69877ee3d6594b64104236313732d97db6700b4d6e",
+    "backend/karajan/candidates/models.py": "99e99e5cb8f3ae6d6b02f9f0047e8239e8bc8901670c217e88cc6a6d31180769",
+    "backend/karajan/candidates/store.py": "0f49018508992606a304d05cee28324e896a85a6057e78b870552c2694e00b32",
+    "backend/karajan/capacity/__init__.py": "40bb4ac634db80514b97a271d428dec8d74432488492b87fedcc3eeda4676edf",
+    "backend/karajan/capacity/__main__.py": "163e50708ddbe8e193d0dcb47a81beb6d291abbb965dc15e85d9417af0b02933",
+    "backend/karajan/capacity/models.py": "bd58f6b0c98991cfaff402e863cebbab6f819b54ba244a05db56b4706d40d7ad",
+    "backend/karajan/capacity/probe.py": "ebf14b026b19cd805ec35a2003b89ebd63d7162b2d0dd5c9ab49bb79d76e6c55",
+    "backend/karajan/capacity/store.py": "ecce38cfeb1a5ca9e878934266d2e3e37d72831375c1e20a445fb539df97be01",
+    "backend/karajan/contracts/__init__.py": "e905480b39cd165ebd4b0904b5820acd7fe4396c3d97da725b3e3738cbcd74d8",
+    "backend/karajan/contracts/credentials.py": "17257218593bf80f30ba5a1eec003dc0afce69b9f49cd581df16d08530782fc6",
+    "backend/karajan/contracts/probe.py": "7201236169624c597c9ac4747ade03fdfee86d60e8aab5d92fafb6ad8ec7ea8b",
+    "backend/karajan/delivery/__init__.py": "0a503ac5e50c70e1b1e1343060ca71dc696d19359a2ef4a1207c314a36bdb39c",
+    "backend/karajan/delivery/coordinator.py": "a7a39d1c345f541eefff04f25d8cdc5ef9f6f2c7a30eef49b108bd0754dde383",
+    "backend/karajan/delivery/errors.py": "4b5efa4a6d551b5231dcb8a576c02f5f5bf57639188fa479c23a562edac1c994",
+    "backend/karajan/delivery/git.py": "d5aa4542800663965980356a9281715cdbb637318c66dae6fa1209c0d866f548",
+    "backend/karajan/delivery/models.py": "a3fb0094d83bf0e530bfad65c2d6e449f7b451e967175a8b54c93af7f454dab1",
+    "backend/karajan/execution/__init__.py": "f75a6b36e632e3d4d1f1d24b7f46ec4c2a04d69d4249e381126195094fc7b90b",
+    "backend/karajan/execution/__main__.py": "b4a18c070760ff4f5fa3c3a13c9e9ecccbaa5a3de26f4b80ba4b57f0ef88103d",
+    "backend/karajan/execution/_platform.py": "5fbbdc1ddcc9fca1d77167f01b6e8f3f243af48417f161d0acbb22da8e2b2ff9",
+    "backend/karajan/execution/_supervisor.py": "2a23e4a66c3ea57676a6e320f9d70299ff40a4cc48e62c50466a2955b6161037",
+    "backend/karajan/execution/host.py": "642607b129e061f30d059d016b8d7be0356c065161f0dce512e0c82b9ad0eead",
+    "backend/karajan/isolation/__init__.py": "3722156c0b26efb5757999ccbf6f36c21068b71f1c973a33739331d8ab4774f5",
+    "backend/karajan/isolation/__main__.py": "a841cf56c5b25f6ecaf6deef401c1a26c0dbac3c1368a61a2148074f1c7a085a",
+    "backend/karajan/isolation/_canary.py": "8700dc275642498517f971f2a5ca071a87961885a27b7d9b7375e82306ffe56a",
+    "backend/karajan/isolation/_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+    "backend/karajan/isolation/_targets.py": "bf6034e53d22fda07acee6e0f08b2ec7e6a39d5bc6e90b1a073a7854f1e823f9",
+    "backend/karajan/isolation/probe.py": "454a3267aa803646128513d4bac3fdb9e1e34d9606c4b60f9756ad73b884794f",
+    "backend/karajan/isolation/qualification.py": "b6cf6313b0766004d8fc01d1714552c1e992f536810a3dac3514b90316c59c90",
+    "backend/karajan/orchestration/__init__.py": "44e1aa3ab0a287b1ac3c5b3de9e49c6a2ed74b4d311a032e94a484b43cea53f6",
+    "backend/karajan/orchestration/_fixture_process.py": "41309db0762b87275d3b4e6c54eae3df3da79ed565fb26f29a6780a5cbd252e1",
+    "backend/karajan/orchestration/binding.py": "bd7072df5447ff050b109a85763ca30152f20be04ce4b4187656e3e9301aab0b",
+    "backend/karajan/orchestration/fixture.py": "15554d1e48c9a45337555e3a60961a37632837615a07927f37f9b50d7f7248c9",
+    "backend/karajan/orchestration/serial.py": "e4d9b7a5aed32d96bdacbc605d9179ac5f2411844dc312e828bc07c316df3245",
+    "backend/karajan/projects/__init__.py": "9e3b2ead9e3ab7b2a52d22205acaeb42db20e2f609552f0be91f0c5d91c236e0",
+    "backend/karajan/projects/configuration.py": "3dd388edeea88bd74292725b0680e8f47c46e9a07023215dd8c67273df489b03",
+    "backend/karajan/projects/legacy_evaluation.py": "50630560406b7bdcc11d36221a14d605f6a1c5cfe36f32e4b64d2e4f23064d51",
+    "backend/karajan/projects/models.py": "ae082cf980f09ce6cb315d8d873875181c6c6f482d0bd581378d1b8ac5e7d698",
+    "backend/karajan/projects/publication.py": "b57cd2ef51738b1f9871b55670a0c7b3e434bc6b25ee2c5b3eebc34b0516124a",
+    "backend/karajan/projects/registry.py": "aca0573465ce00350547790b3336ea18be64d7b947128d87aff7308d94827458",
+    "backend/karajan/resources/__init__.py": "c394746ed05c643e8957f941160b3524ff25af9dd31006c767a60dce321e021f",
+    "backend/karajan/resources/__main__.py": "43ec656a5707d3fa7744d4708078af22039e8e71df382609d6b896b60de86f73",
+    "backend/karajan/resources/broker.py": "cb1d6444a8ea17aa3c86ce4f32db769d205a2dedcaa257be00666bd9ebff8df4",
+    "backend/karajan/resources/local_probe.py": "c75cb4d6f013f7acaef3abffd64722f280cee49a0bb8b668fea40077c11bb220",
+    "backend/karajan/routing/__init__.py": "0f33eab0165f5fd322d16105c343da220a8365aacf6168992a53559e24e7ca3f",
+    "backend/karajan/routing/__main__.py": "30607a3cdd15dd1d7e31731fa32262cdcf34f956c02929779836b9195fabc663",
+    "backend/karajan/routing/compiler.py": "11f1e504b04ac0fa596583e1210f456890b9c79622c3fb5f94e941c57b35daa8",
+    "backend/karajan/routing/evaluator.py": "e5d716a0f2f3e97d245462022a886fc99e7c1808b0cebfb6c14823ffe65d2a15",
+    "backend/karajan/routing/fixture.py": "491ecf20a6b5efd1dc0cc9386a3513607b467eef3ffccfcc76d0b3afa2269bec",
+    "backend/karajan/routing/models.py": "06a5b4b65e84044823171d584555bf09b52043d45afca4a4ff1ed398e7d5c757",
+    "backend/karajan/routing/quotas.py": "6a9e332943436a6f76ad558b9a064da2b77905922460bbb9dc535b8726f16f53",
+    "backend/karajan/routing/ranking.py": "c1b8dfe7464834af3d8ca0b852059b006ec857065ab663cb31fc7f5087c8a99a",
+    "backend/karajan/runs/__init__.py": "9cecae6387250b4b049423e017763b201fb3b3f8af56b9a52d66581cc125b753",
+    "backend/karajan/runs/__main__.py": "7a890fc6ec9fdc24b57a784d29ac69bc629067a9838de0c47b544425cf8ed414",
+    "backend/karajan/runs/models.py": "bb848445114e25a94662dff578759cb5dc8fcdd80bbcd0ca4a00b5141ec3f68d",
+    "backend/karajan/runs/planning.py": "f90c4d61965167d61ff9821d0bdb7d958ed3176e978e64995a97773483d4f2bc",
+    "backend/karajan/runs/validation.py": "e1cf7672799792a7959d9a310ca0a854d3be63a2ab602e727969c966285ebd00",
+    "backend/karajan/web/__init__.py": "4b485055d55aa7e39bc4fb5224b10a495c5c6d3c4979e214244ff5281fe54254",
+    "backend/karajan/web/__main__.py": "216ef604b3ae338c10b84c0d301a86725946560c9bbf4bcc4b9fe85524613c25",
+    "backend/karajan/web/app.py": "40642b0019a5ce7755e9135a066fb4fa1a680c62f863566e2c60bc207ad285a0",
+    "backend/karajan/web/body_limit.py": "a69fa4e4cec9b562503fded35d466ae2456012165422b99d5ec29299bb94ef1a",
+    "backend/karajan/web/projects.py": "0699265da33d7b548d04248549e9b3a443d9071d94adb5172e6ea6ce8b9edf67",
+    "backend/karajan/web/resources.py": "51d88e3c686b67d804c0cd7faffb8439263f5100f968997c659f9d0564af21e0",
+    "backend/karajan/web/runs.py": "ec5b57185e8274b8ecf7f8fe5582c2c761f65c3fdf83f8614da30343da7fe88e",
+    "backend/karajan/web/simulation.py": "702a076b98a862c6f0d07d2e8141d38f0cbd42eddcfc04a570e89832b8219a9a",
+    "backend/karajan/routing/example.v1.json": "0d4263ab2f0c53db6fa33bee59223149a3f9824f2a94f1752f83dd20094b874d",
+    "tests/web/test_simulation_http.py": "a5a371399264f52681c264fba2a9165e139e3fc3c7bab0fe3ed6d36f83158238",
+    "tests/web/test_rulebook_http.py": "cea8af5da8059345cb46fe1248c1aa90f7793ca7884dac1609bd4cec12ecf954"
+  },
+  "checks": {
+    "ruff": "passed",
+    "strict_mypy": {
+      "status": "passed",
+      "source_files": 2
+    }
+  }
+}

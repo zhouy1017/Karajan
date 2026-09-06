@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.569" timestamp="2026-09-06T03:34:55.385969+08:00" hostname="ProArt-Zhou"><testcase classname="tests.web.test_simulation_http" name="test_fixture_example_and_repeated_simulation_are_deterministic_without_apply_headers" time="0.262"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code">tests\web\test_simulation_http.py:20: in test_fixture_example_and_repeated_simulation_are_deterministic_without_apply_headers
+    assert example.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404 Not Found]&gt;.status_code</failure></testcase></testsuite></testsuites>

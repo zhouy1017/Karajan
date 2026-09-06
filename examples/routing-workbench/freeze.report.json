@@ -1,0 +1,347 @@
+{
+  "schema_version": "karajan.routing-workbench-freeze.v1",
+  "captured_at": "2026-09-06T01:58:27.133772+00:00",
+  "base_commit": "a38bd381bfc8413b9b18c34c717013bd93c03c71",
+  "branch": "codex/m3-routing-simulation",
+  "bindings": {
+    ".gitattributes": {
+      "working_sha256": "24f0df28e5f543e5d61292e70067a0dc2e88af4efa5cfef31cd69654e9fd97b4",
+      "git_index_sha256": "24f0df28e5f543e5d61292e70067a0dc2e88af4efa5cfef31cd69654e9fd97b4",
+      "representation": "identical"
+    },
+    "README.md": {
+      "working_sha256": "dc86147c853a1603927494dd82016b0f1b6ed9bd746695113ce9658dd4d023f6",
+      "git_index_sha256": "dc86147c853a1603927494dd82016b0f1b6ed9bd746695113ce9658dd4d023f6",
+      "representation": "identical"
+    },
+    "backend/karajan/routing/example.v1.json": {
+      "working_sha256": "0d4263ab2f0c53db6fa33bee59223149a3f9824f2a94f1752f83dd20094b874d",
+      "git_index_sha256": "0d4263ab2f0c53db6fa33bee59223149a3f9824f2a94f1752f83dd20094b874d",
+      "representation": "identical"
+    },
+    "backend/karajan/web/app.py": {
+      "working_sha256": "40642b0019a5ce7755e9135a066fb4fa1a680c62f863566e2c60bc207ad285a0",
+      "git_index_sha256": "40642b0019a5ce7755e9135a066fb4fa1a680c62f863566e2c60bc207ad285a0",
+      "representation": "identical"
+    },
+    "backend/karajan/web/simulation.py": {
+      "working_sha256": "702a076b98a862c6f0d07d2e8141d38f0cbd42eddcfc04a570e89832b8219a9a",
+      "git_index_sha256": "702a076b98a862c6f0d07d2e8141d38f0cbd42eddcfc04a570e89832b8219a9a",
+      "representation": "identical"
+    },
+    "docs/implementation/m3-routing-workbench.md": {
+      "working_sha256": "7019b97f0acff777740c59bbac752ef6d52aaa74dc6ba99840854978723afde9",
+      "git_index_sha256": "7019b97f0acff777740c59bbac752ef6d52aaa74dc6ba99840854978723afde9",
+      "representation": "identical"
+    },
+    "docs/implementation/m3-rulebook-publication.md": {
+      "working_sha256": "3cc5a4dd718364348ff1868b48410d9fc6ae18cd34e079afee41ca37792ab3e7",
+      "git_index_sha256": "3cc5a4dd718364348ff1868b48410d9fc6ae18cd34e079afee41ca37792ab3e7",
+      "representation": "identical"
+    },
+    "docs/implementation/requirement-coverage.md": {
+      "working_sha256": "2ed623718c7e02d66bbaa385c0038dd503d37b75f76249505e147bfb4d7676ff",
+      "git_index_sha256": "2ed623718c7e02d66bbaa385c0038dd503d37b75f76249505e147bfb4d7676ff",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/README.md": {
+      "working_sha256": "26122470291135228f110b38e2605f9836f320aeb2ef07a97c1b4fcd466205d0",
+      "git_index_sha256": "26122470291135228f110b38e2605f9836f320aeb2ef07a97c1b4fcd466205d0",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/api-behavior.junit.xml": {
+      "working_sha256": "bed45240471858f0c4978752316491db84747fb0c58d65e92cb2e0528d7c05ee",
+      "git_index_sha256": "bed45240471858f0c4978752316491db84747fb0c58d65e92cb2e0528d7c05ee",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/api-contract.md": {
+      "working_sha256": "35d72f699d41427086d48cd2dc594572172f4024a9b60df5eebc2b9a2034291b",
+      "git_index_sha256": "35d72f699d41427086d48cd2dc594572172f4024a9b60df5eebc2b9a2034291b",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/api-duplicates-after.junit.xml": {
+      "working_sha256": "a55985a72028ca6b6d96d2fc11ce477a2c7f2ca532b8d9dc241f3adc27c45805",
+      "git_index_sha256": "a55985a72028ca6b6d96d2fc11ce477a2c7f2ca532b8d9dc241f3adc27c45805",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/api-duplicates-before.junit.xml": {
+      "working_sha256": "838437a6c2eb9f403b23ba573c96b02e1bf9206530a1d8b737170b6fdebda0ab",
+      "git_index_sha256": "838437a6c2eb9f403b23ba573c96b02e1bf9206530a1d8b737170b6fdebda0ab",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/api-initial-after.junit.xml": {
+      "working_sha256": "7d7f12ec31eeb479b9bc4686c3a8d498578f50ec3b145549cb4f1b80e0ac846a",
+      "git_index_sha256": "7d7f12ec31eeb479b9bc4686c3a8d498578f50ec3b145549cb4f1b80e0ac846a",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/api-initial-before.junit.xml": {
+      "working_sha256": "1e288907956859b82364feb094a86842aa169b0e4794033b0157278dd30dffcd",
+      "git_index_sha256": "1e288907956859b82364feb094a86842aa169b0e4794033b0157278dd30dffcd",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/api-populated-effects.junit.xml": {
+      "working_sha256": "4789628b46992f3f21700e2ebd6c8214f84974b96510d0129590aaac98b5e76b",
+      "git_index_sha256": "4789628b46992f3f21700e2ebd6c8214f84974b96510d0129590aaac98b5e76b",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/api-verification.json": {
+      "working_sha256": "3f68021a55592d4b313271265190761fde8af39631b1db3f6a82395b9b2fc15f",
+      "git_index_sha256": "3f68021a55592d4b313271265190761fde8af39631b1db3f6a82395b9b2fc15f",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/api-web-routing-final.junit.xml": {
+      "working_sha256": "0b7b76dd2d9cefa89d55f728c0caaf27129ab7cfc7b332164703b394f0f3903a",
+      "git_index_sha256": "0b7b76dd2d9cefa89d55f728c0caaf27129ab7cfc7b332164703b394f0f3903a",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/browser-after.json": {
+      "working_sha256": "3f56b4f256318927c4e3613ed67084db3963e7553da54d8816ad659e39c65204",
+      "git_index_sha256": "3f56b4f256318927c4e3613ed67084db3963e7553da54d8816ad659e39c65204",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/browser-before.json": {
+      "working_sha256": "3f56b4f256318927c4e3613ed67084db3963e7553da54d8816ad659e39c65204",
+      "git_index_sha256": "3f56b4f256318927c4e3613ed67084db3963e7553da54d8816ad659e39c65204",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/browser-final.json": {
+      "working_sha256": "3f56b4f256318927c4e3613ed67084db3963e7553da54d8816ad659e39c65204",
+      "git_index_sha256": "3f56b4f256318927c4e3613ed67084db3963e7553da54d8816ad659e39c65204",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/browser-verification.json": {
+      "working_sha256": "dd5ffa1834bda18288a0b345b87e89d2fc2e08ed927793039878dd1c370c468f",
+      "git_index_sha256": "dd5ffa1834bda18288a0b345b87e89d2fc2e08ed927793039878dd1c370c468f",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/frontend-final.junit.xml": {
+      "working_sha256": "02b27667665e00030a57ba52aa0c27bbe16ea1d0a6fdaa913cbf0d520809512e",
+      "git_index_sha256": "02b27667665e00030a57ba52aa0c27bbe16ea1d0a6fdaa913cbf0d520809512e",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/label-prototype.after.junit.xml": {
+      "working_sha256": "9a6b29cb43f21508871b070b153c6a1d953c0295ae436abc82f1557e8e2e2961",
+      "git_index_sha256": "9a6b29cb43f21508871b070b153c6a1d953c0295ae436abc82f1557e8e2e2961",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/label-prototype.before.junit.xml": {
+      "working_sha256": "41d425443ae32c0edaf6ac6dfd5c1b7bf5a195e5e86ecbd8f47bc592cd222582",
+      "git_index_sha256": "41d425443ae32c0edaf6ac6dfd5c1b7bf5a195e5e86ecbd8f47bc592cd222582",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/label-prototype.input.json": {
+      "working_sha256": "ec982e5ed0c1bff44cc42c5f16f4190e8a1f740c97c5a6d31e710ae9b51b5224",
+      "git_index_sha256": "ec982e5ed0c1bff44cc42c5f16f4190e8a1f740c97c5a6d31e710ae9b51b5224",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/spec-api-final.junit.xml": {
+      "working_sha256": "a5f1b2798f881d04a6370916014c2c3842c604b1663070510e4a96c4a0e032de",
+      "git_index_sha256": "a5f1b2798f881d04a6370916014c2c3842c604b1663070510e4a96c4a0e032de",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/spec-api-first.junit.xml": {
+      "working_sha256": "3c3cf12a23f2c91570f553257d4ad571979af0b6e0428b61c35d9273e207da18",
+      "git_index_sha256": "3c3cf12a23f2c91570f553257d4ad571979af0b6e0428b61c35d9273e207da18",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/spec-api-inputs.json": {
+      "working_sha256": "6c990d9df2111d43d9e48b0860295878aabaff42ddcb17d33424615f2b9cfe1c",
+      "git_index_sha256": "6c990d9df2111d43d9e48b0860295878aabaff42ddcb17d33424615f2b9cfe1c",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/spec-api-review.py": {
+      "working_sha256": "48ab3f4e1df2bdd3067917306f292cbf7a60ad72fa66c7384766a922e7aaed16",
+      "git_index_sha256": "48ab3f4e1df2bdd3067917306f292cbf7a60ad72fa66c7384766a922e7aaed16",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/spec-review.json": {
+      "working_sha256": "01dc88b0b2bd2e43f0c8c3ae786d2f6b15a7d0229bf68876d95e87fd1e875b3d",
+      "git_index_sha256": "01dc88b0b2bd2e43f0c8c3ae786d2f6b15a7d0229bf68876d95e87fd1e875b3d",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/spec-ui-author-tests.junit.xml": {
+      "working_sha256": "4a24f27a8291f385be2d57226fb8e8ed9a0d1992d06cd0846567173aa8ccc6e2",
+      "git_index_sha256": "4a24f27a8291f385be2d57226fb8e8ed9a0d1992d06cd0846567173aa8ccc6e2",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-author-tests.final.junit.xml": {
+      "working_sha256": "2beba84054fd6537f94475f7e88c2ef33a66cbc27efc0ebf9a65331a4f88fe60",
+      "git_index_sha256": "2beba84054fd6537f94475f7e88c2ef33a66cbc27efc0ebf9a65331a4f88fe60",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-author-tests.initial.junit.xml": {
+      "working_sha256": "5cffb7c31ea954a354e1c158ca0b363c91d7fe43a7505ae4ac24d2d0059ffc58",
+      "git_index_sha256": "5cffb7c31ea954a354e1c158ca0b363c91d7fe43a7505ae4ac24d2d0059ffc58",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-boundaries.case.tsx": {
+      "working_sha256": "7e1103bc3218d737d645ec271aac4a65f88a583bc3594d4997218a968c71debe",
+      "git_index_sha256": "7e1103bc3218d737d645ec271aac4a65f88a583bc3594d4997218a968c71debe",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-boundaries.final-independent.json": {
+      "working_sha256": "971719de8c77d3a93844fab1e9d9506257c2ef6580d532bf505909727ab90326",
+      "git_index_sha256": "971719de8c77d3a93844fab1e9d9506257c2ef6580d532bf505909727ab90326",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-final-independent.junit.xml": {
+      "working_sha256": "e66f615645cd094f0486fc17a9079783ceb02e8409b962535d7a4f3736b95e82",
+      "git_index_sha256": "e66f615645cd094f0486fc17a9079783ceb02e8409b962535d7a4f3736b95e82",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-overflow-replay.py": {
+      "working_sha256": "80a863b7cc089246ad6761db9c424257f115391b2416d72a802115b7ebd422d8",
+      "git_index_sha256": "80a863b7cc089246ad6761db9c424257f115391b2416d72a802115b7ebd422d8",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-overflow.after.json": {
+      "working_sha256": "4d437021e8b8575149444b1b92c8b753d4bae0afc5d68acd53f7959220459830",
+      "git_index_sha256": "4d437021e8b8575149444b1b92c8b753d4bae0afc5d68acd53f7959220459830",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-overflow.author-after.json": {
+      "working_sha256": "c5f58978961e867cc1e69e7b58af2668c3edbe3897ed0d8e8cdcc6f01f068a3a",
+      "git_index_sha256": "c5f58978961e867cc1e69e7b58af2668c3edbe3897ed0d8e8cdcc6f01f068a3a",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-overflow.author-before.json": {
+      "working_sha256": "39f3381fcae795535e3e77bd3e06c12f6abf882ff0d204ca71023e98e0a5c444",
+      "git_index_sha256": "39f3381fcae795535e3e77bd3e06c12f6abf882ff0d204ca71023e98e0a5c444",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-overflow.before.json": {
+      "working_sha256": "be7267eb4d07171f60eb6eba1907f766b2d2bf9e49c6d80e56f2db9996674a5e",
+      "git_index_sha256": "be7267eb4d07171f60eb6eba1907f766b2d2bf9e49c6d80e56f2db9996674a5e",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-overflow.case.tsx": {
+      "working_sha256": "a2b89e2076d595c8c0eb2bf2c8dc1367138401ef233d19d45c80f95183fa47b2",
+      "git_index_sha256": "a2b89e2076d595c8c0eb2bf2c8dc1367138401ef233d19d45c80f95183fa47b2",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-overflow.final-independent.json": {
+      "working_sha256": "9d147daed158dce7fa06c6b920374bbfdbeb1d74f9d98453552715d3c1ad3b55",
+      "git_index_sha256": "9d147daed158dce7fa06c6b920374bbfdbeb1d74f9d98453552715d3c1ad3b55",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-overflow.http-before.json": {
+      "working_sha256": "0b9a41e4a715cc86f75fa851bbd63a1a75164e5bccbb8c024e9d10bd721b4091",
+      "git_index_sha256": "0b9a41e4a715cc86f75fa851bbd63a1a75164e5bccbb8c024e9d10bd721b4091",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-overflow.input.json": {
+      "working_sha256": "e83f7c0f5814c6b5c138ff265e4cc92eff7dd456db7fae121579b99307832145",
+      "git_index_sha256": "e83f7c0f5814c6b5c138ff265e4cc92eff7dd456db7fae121579b99307832145",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-review.json": {
+      "working_sha256": "dffdd0965fae7bc1469205ca7574dfbd2b91104c63ee93a196d366a69532240f",
+      "git_index_sha256": "dffdd0965fae7bc1469205ca7574dfbd2b91104c63ee93a196d366a69532240f",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-unsafe-integer-http.py": {
+      "working_sha256": "54c0459333a1700308f4efb2ba8a70f41b0c968d829f9538c8b83faaf57ccccf",
+      "git_index_sha256": "54c0459333a1700308f4efb2ba8a70f41b0c968d829f9538c8b83faaf57ccccf",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-unsafe-integer-replay.py": {
+      "working_sha256": "90a48b88ad27dbd6f8964da356b3a165bcda78f22a8c302b1b335e1895f20156",
+      "git_index_sha256": "90a48b88ad27dbd6f8964da356b3a165bcda78f22a8c302b1b335e1895f20156",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-unsafe-integer.after.json": {
+      "working_sha256": "bf75826463a1ea217020f21ca1c9228022dfe63d1c37d715bb4d78dc53aa3a23",
+      "git_index_sha256": "bf75826463a1ea217020f21ca1c9228022dfe63d1c37d715bb4d78dc53aa3a23",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-unsafe-integer.case.tsx": {
+      "working_sha256": "e3281531a52ac3b444810c77bd7bbde325a3e71af1c6bc5a4dc0e143a1c9131b",
+      "git_index_sha256": "e3281531a52ac3b444810c77bd7bbde325a3e71af1c6bc5a4dc0e143a1c9131b",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-unsafe-integer.final-independent.json": {
+      "working_sha256": "da8d4ecdd0eb1e85e9081548dc1ceda4370a400dcb61835ba790dc75f42b5d51",
+      "git_index_sha256": "da8d4ecdd0eb1e85e9081548dc1ceda4370a400dcb61835ba790dc75f42b5d51",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-unsafe-integer.first-observed-after.json": {
+      "working_sha256": "0b0d869d1bfc900b27b3c6082ff5f10023b712c0dcd4e4edec7848a1b1b0e581",
+      "git_index_sha256": "0b0d869d1bfc900b27b3c6082ff5f10023b712c0dcd4e4edec7848a1b1b0e581",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-unsafe-integer.http-before.json": {
+      "working_sha256": "d806866812684724baf2b9f13bf1225eb2df61fa53f2d2a23b6b1629da6970db",
+      "git_index_sha256": "d806866812684724baf2b9f13bf1225eb2df61fa53f2d2a23b6b1629da6970db",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-unsafe-integer.http-comparison.json": {
+      "working_sha256": "2649efdeb07331a53188eeba18c6a775d5fc67e8786430e9cf1960f916917fcb",
+      "git_index_sha256": "2649efdeb07331a53188eeba18c6a775d5fc67e8786430e9cf1960f916917fcb",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-unsafe-integer.input.json": {
+      "working_sha256": "871b3062d533c4585f1dccdfb98b1bb3f064486b0f2f83a1dd5ede815d5f7a6c",
+      "git_index_sha256": "871b3062d533c4585f1dccdfb98b1bb3f064486b0f2f83a1dd5ede815d5f7a6c",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/review-fixes/ui-standards-unsafe-integer.roundtrip.json": {
+      "working_sha256": "dcfd8cf514d162942c2bafcf653e641187794e5d38341281e74c60b581f6da8c",
+      "git_index_sha256": "dcfd8cf514d162942c2bafcf653e641187794e5d38341281e74c60b581f6da8c",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/root-api-standards.json": {
+      "working_sha256": "92c65a4905d517dbeec63c63366c417d90b756cffe8539d35939f49b49273c36",
+      "git_index_sha256": "92c65a4905d517dbeec63c63366c417d90b756cffe8539d35939f49b49273c36",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/routing-workbench-root-backend.junit.xml": {
+      "working_sha256": "f1aea2ba6ad6a2c6f05f4081b4929436bc117a56e6238fb09514508ad08365bd",
+      "git_index_sha256": "f1aea2ba6ad6a2c6f05f4081b4929436bc117a56e6238fb09514508ad08365bd",
+      "representation": "identical"
+    },
+    "examples/routing-workbench/routing-workbench-wsl.junit.xml": {
+      "working_sha256": "d63a5a1b5a04cc933c747259ab89ebfdb3bcc1763f5101b697b72d9da262936b",
+      "git_index_sha256": "d63a5a1b5a04cc933c747259ab89ebfdb3bcc1763f5101b697b72d9da262936b",
+      "representation": "identical"
+    },
+    "frontend/src/RoutingSimulation.css": {
+      "working_sha256": "0f3ad6dba38c1ac910eb2d0a73fadbb8e3986fb9a280e30a3d17929face424fe",
+      "git_index_sha256": "0f3ad6dba38c1ac910eb2d0a73fadbb8e3986fb9a280e30a3d17929face424fe",
+      "representation": "identical"
+    },
+    "frontend/src/RoutingSimulation.test.tsx": {
+      "working_sha256": "a1d3b517b5cd88ec7f4ee9a3204e97b4c05dde9c4a07a43e8c152252ba86ba72",
+      "git_index_sha256": "a1d3b517b5cd88ec7f4ee9a3204e97b4c05dde9c4a07a43e8c152252ba86ba72",
+      "representation": "identical"
+    },
+    "frontend/src/RoutingSimulation.tsx": {
+      "working_sha256": "2bc74b16c67e2fea096f22c9a4e8aeb5ef8e336f60df0fa190138d5159daaa99",
+      "git_index_sha256": "2bc74b16c67e2fea096f22c9a4e8aeb5ef8e336f60df0fa190138d5159daaa99",
+      "representation": "identical"
+    },
+    "frontend/src/RulebookPanel.tsx": {
+      "working_sha256": "6adf542b21eaa92b3d2442e68499256f196e4bad1c0c604f6ea67ef787bbfaac",
+      "git_index_sha256": "6adf542b21eaa92b3d2442e68499256f196e4bad1c0c604f6ea67ef787bbfaac",
+      "representation": "identical"
+    },
+    "tests/web/test_simulation_http.py": {
+      "working_sha256": "a5a371399264f52681c264fba2a9165e139e3fc3c7bab0fe3ed6d36f83158238",
+      "git_index_sha256": "a5a371399264f52681c264fba2a9165e139e3fc3c7bab0fe3ed6d36f83158238",
+      "representation": "identical"
+    }
+  },
+  "binding_scope": "Every explicitly staged source, test, documentation and evidence file for this slice, excluding this manifest to avoid a self-hash cycle. Base commit binds unchanged code. Earlier reports retain their actual working-byte hashes; only verified CRLF to LF source representation differences are listed separately.",
+  "checks": {
+    "windows_web_routing": "137 passed; routing-workbench-root-backend.junit.xml",
+    "wsl_api": "21 passed; routing-workbench-wsl.junit.xml",
+    "frontend_final": "138 passed; frontend-final.junit.xml",
+    "standards": "review-fixes/ui-standards-review.json and root-api-standards.json",
+    "spec": "review-fixes/spec-review.json, supplemented by final numeric review",
+    "browser": "browser-verification.json",
+    "ruff": "check . passed",
+    "mypy": "backend/karajan passed, 90 source files",
+    "remote_ci": "not_run at freeze; record actual commit/CI in PR after publication"
+  },
+  "activation_allowed": false,
+  "live_qualification": "not_run"
+}

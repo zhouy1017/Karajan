@@ -1,0 +1,678 @@
+{
+  "capacity": {
+    "accounts": [
+      {
+        "active_attempts": 0,
+        "cash_remaining": {
+          "CNY": "0",
+          "USD": "0"
+        },
+        "cooldown_until": null,
+        "current_policy_revision": 1,
+        "exhaustion_observation_required": false,
+        "id": "fixture-account",
+        "policy": {
+          "account_id": "fixture-account",
+          "conservative_mode": null,
+          "lead_reserve": {},
+          "lead_reserved_slots": 1,
+          "max_active_attempts": 3,
+          "max_attempt_duration_seconds": 30,
+          "observation_max_age_seconds": 60,
+          "require_official_observation": false,
+          "safety_margin": {}
+        },
+        "policy_revision": 1
+      }
+    ],
+    "as_of": 1000.0,
+    "budget_remaining": {
+      "planning": {
+        "CNY": "0",
+        "USD": "0"
+      },
+      "run": {
+        "CNY": "0",
+        "USD": "0"
+      }
+    },
+    "estimates": [
+      {
+        "completion_seconds": 20.0,
+        "confidence": "known",
+        "demand": [
+          {
+            "amount": "1",
+            "pool_id": "service-fixture",
+            "unit": "percent",
+            "window_id": "fixture-window"
+          }
+        ],
+        "evidence_ref": "fixture:estimate",
+        "price": null,
+        "profile": {
+          "id": "fixture-profile",
+          "revision": 1
+        }
+      }
+    ],
+    "fx": null,
+    "id": "fixture-capacity",
+    "pools": [
+      {
+        "account_id": "fixture-account",
+        "confidence": "known",
+        "coverage_ref": "fixture:coverage",
+        "evidence_ref": "fixture:quota",
+        "future_reserved": "0",
+        "id": "service-fixture",
+        "kind": "service",
+        "local_uncovered": "0",
+        "observed_at": 1000.0,
+        "reported_limit": "100",
+        "reported_remaining": "100",
+        "reset_at": 4600.0,
+        "source": "fixture",
+        "unit": "percent",
+        "window_id": "fixture-window",
+        "window_kind": "fixed"
+      }
+    ],
+    "revision": 1,
+    "schema_version": "karajan.routing.capacity.v1"
+  },
+  "policy": {
+    "approved_profile_refs": [
+      {
+        "id": "fixture-profile",
+        "revision": 1
+      }
+    ],
+    "constraints": {
+      "channel_ids": [
+        "fixture-channel"
+      ],
+      "data_destinations": [
+        "fixture-channel"
+      ],
+      "min_isolation": "tool_sandboxed",
+      "profile_refs": [
+        {
+          "id": "fixture-profile",
+          "revision": 1
+        }
+      ],
+      "required_capabilities": [],
+      "tools": [
+        "fixture-tools"
+      ]
+    },
+    "profile_facts": [
+      {
+        "budget_enforcement": "unknown",
+        "context_tokens": 100000,
+        "data_destination": "fixture-channel",
+        "evidence_ref": "__proto__",
+        "observed_at": 1000.0,
+        "profile": {
+          "id": "fixture-profile",
+          "revision": 1
+        },
+        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+        "provenance": "fixture",
+        "roles": [
+          "commander",
+          "worker",
+          "reviewer"
+        ],
+        "runtime_version": "1",
+        "tools": [
+          "fixture-tools"
+        ],
+        "valid_until": 4600.0
+      }
+    ],
+    "resources": {
+      "accounts": [
+        {
+          "id": "fixture-account",
+          "provider_id": "fixture-provider",
+          "secret_ref": "secret:fixture-reference"
+        }
+      ],
+      "budgets": [
+        {
+          "currency_limits": {
+            "CNY": "0",
+            "USD": "0"
+          },
+          "id": "planning",
+          "max_duration_seconds": 300,
+          "max_total_attempts": 8,
+          "scope": "planning"
+        },
+        {
+          "currency_limits": {
+            "CNY": "0",
+            "USD": "0"
+          },
+          "id": "run",
+          "max_duration_seconds": 300,
+          "max_total_attempts": 8,
+          "scope": "run"
+        }
+      ],
+      "capacity_policies": [
+        {
+          "account_id": "fixture-account",
+          "conservative_mode": {
+            "cooldown_seconds": 10,
+            "enabled": true,
+            "max_attempt_duration_seconds": 30,
+            "max_local_active_attempts": 1,
+            "observation_max_age_seconds": 60
+          }
+        }
+      ],
+      "channels": [
+        {
+          "account_id": "fixture-account",
+          "approved_data_destination": true,
+          "billing_path": "subscription_only",
+          "id": "fixture-channel"
+        }
+      ],
+      "profiles": [
+        {
+          "capability_evidence": [
+            {
+              "capability": "bounded_code_edit",
+              "evidence_ref": "fixture:bounded_code_edit",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "bounded_implementation",
+              "evidence_ref": "fixture:bounded_implementation",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "candidate_capture",
+              "evidence_ref": "fixture:candidate_capture",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "code_review",
+              "evidence_ref": "fixture:code_review",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "controlled_tools",
+              "evidence_ref": "fixture:controlled_tools",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "critical_code_review",
+              "evidence_ref": "fixture:critical_code_review",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "critical_implementation",
+              "evidence_ref": "fixture:critical_implementation",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "design_reasoning",
+              "evidence_ref": "fixture:design_reasoning",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "structured_findings",
+              "evidence_ref": "fixture:structured_findings",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "structured_plan_output",
+              "evidence_ref": "fixture:structured_plan_output",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            }
+          ],
+          "enabled": true,
+          "id": "fixture-profile",
+          "max_class": "T3",
+          "model_family": "fixture-family",
+          "profile": {
+            "admission_granularity": "attempt",
+            "auth_ref": "secret:fixture-reference",
+            "binding": {
+              "account_id": "fixture-account",
+              "auth_mode": "none",
+              "billing_path": "subscription_only",
+              "channel_id": "fixture-channel",
+              "model_id": "fixture-model",
+              "native_settings": {},
+              "runtime_kind": "fixture-runtime",
+              "runtime_version": "1"
+            },
+            "id": "fixture-profile",
+            "required_permissions": [
+              "fixture-tools"
+            ],
+            "revision": 1,
+            "usage_coverage": "unknown"
+          },
+          "quota_pool_refs": [
+            "service-fixture"
+          ],
+          "required_isolation": "tool_sandboxed",
+          "revision": 1
+        }
+      ],
+      "quota_pools": [
+        {
+          "account_id": "fixture-account",
+          "id": "service-fixture",
+          "kind": "service",
+          "limit": "100",
+          "observation_state": "unknown",
+          "unit": "percent"
+        }
+      ]
+    },
+    "risk_policy": {
+      "id": "fixture-risk",
+      "mapping": {
+        "critical": "T3",
+        "standard": "T1"
+      },
+      "path_floors": [],
+      "revision": 1
+    },
+    "rulebook": {
+      "collaboration": {
+        "command_mode": "lead_with_advisers",
+        "delivery_target": "pull_request",
+        "implementation_readiness": "ready",
+        "internal_delegation": "disabled_unless_admitted_and_observable",
+        "max_infrastructure_retries_per_root_task": 2,
+        "max_parallel_writers_per_project": 2,
+        "max_quality_repair_rounds": 2,
+        "merge_authority": "user",
+        "plan_approval": "explicit_revision"
+      },
+      "description": "Design example: bind qualified profile revisions and budgets before activation.",
+      "global_constraints": {
+        "autonomous_tool_execution_min_isolation": "tool_sandboxed",
+        "final_review_required": true,
+        "no_silent_model_or_billing_fallback": true,
+        "profile_fixed_per_attempt": true,
+        "require_approved_data_destination": true,
+        "require_enabled_profile": true,
+        "require_explicit_billing_path": true,
+        "require_passed_capabilities": true,
+        "review_context": "fresh_non_author"
+      },
+      "id": "personal-code-delivery",
+      "profile_groups": {
+        "adviser_qualified": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ],
+        "commander_qualified": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ],
+        "critical_qualified": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ],
+        "fast_qualified": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ],
+        "review_critical_qualified": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ],
+        "review_standard_qualified": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ],
+        "standard_qualified": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ]
+      },
+      "resource_policy": {
+        "account_capacity_policy_binding": "current_global_revision",
+        "call_reservations": "slices_of_attempt_reservation",
+        "candidate_order": [
+          "preference_band",
+          "uncertainty_band",
+          "bottleneck_quota_pressure",
+          "incremental_cash_estimate",
+          "completion_time_estimate",
+          "profile_id"
+        ],
+        "cash_budget_enforcement": "bounded_calls",
+        "fairness": "aging_and_run_round_robin",
+        "id": "protect_lead_then_balance",
+        "missing_cash_budget": "deny_cash_route",
+        "planning_budget_ref": "planning",
+        "queue_order": [
+          "lead_feedback",
+          "required_review_repair_and_critical_path",
+          "worker",
+          "optional_adviser"
+        ],
+        "reset_preference": "only_among_equivalent_candidates_all_windows_checked",
+        "run_budget_ref": "run",
+        "subscription_quota_enforcement": "conservative_estimate",
+        "unknown_quota": "require_explicit_conservative_mode"
+      },
+      "revision": 1,
+      "rules": [
+        {
+          "capabilities_all": [
+            "design_reasoning",
+            "structured_plan_output"
+          ],
+          "eligible_groups": [
+            "commander_qualified"
+          ],
+          "handoff": "explicit_checkpoint_record",
+          "id": "lead-planning",
+          "priority": 100,
+          "reroute": "propose_checkpoint_handoff_require_user_decision",
+          "when": {
+            "purpose": "lead",
+            "role": "commander"
+          }
+        },
+        {
+          "capabilities_all": [
+            "design_reasoning"
+          ],
+          "eligible_groups": [
+            "adviser_qualified"
+          ],
+          "id": "adviser-planning",
+          "lead_reserve_access": false,
+          "priority": 100,
+          "reroute": "within_approved_set",
+          "when": {
+            "purpose": "advice",
+            "role": "commander"
+          }
+        },
+        {
+          "capabilities_all": [
+            "bounded_code_edit",
+            "controlled_tools",
+            "candidate_capture"
+          ],
+          "eligible_groups": [
+            "fast_qualified"
+          ],
+          "id": "mechanical-worker",
+          "priority": 100,
+          "quality_escalation_groups": [
+            "standard_qualified"
+          ],
+          "reroute": "within_approved_set_preserve_requirements",
+          "when": {
+            "effective_class": "T1",
+            "readiness": "ready",
+            "role": "worker"
+          }
+        },
+        {
+          "capabilities_all": [
+            "bounded_implementation",
+            "controlled_tools",
+            "candidate_capture"
+          ],
+          "eligible_groups": [
+            "standard_qualified"
+          ],
+          "id": "bounded-worker",
+          "priority": 100,
+          "quality_escalation_groups": [
+            "critical_qualified"
+          ],
+          "reroute": "within_approved_set_preserve_requirements",
+          "when": {
+            "effective_class": "T2",
+            "readiness": "ready",
+            "role": "worker"
+          }
+        },
+        {
+          "capabilities_all": [
+            "critical_implementation",
+            "controlled_tools",
+            "candidate_capture"
+          ],
+          "eligible_groups": [
+            "critical_qualified"
+          ],
+          "id": "critical-worker",
+          "priority": 100,
+          "quality_escalation_groups": [],
+          "reroute": "within_approved_set_preserve_requirements",
+          "when": {
+            "effective_class": "T3",
+            "readiness": "ready",
+            "role": "worker"
+          }
+        },
+        {
+          "capabilities_all": [
+            "code_review",
+            "structured_findings"
+          ],
+          "eligible_groups": [
+            "review_standard_qualified"
+          ],
+          "id": "standard-review",
+          "independence": [
+            "fresh_context",
+            "non_author_attempt"
+          ],
+          "priority": 100,
+          "reroute": "within_approved_set_preserve_requirements",
+          "when": {
+            "effective_class_in": [
+              "T1",
+              "T2"
+            ],
+            "role": "reviewer"
+          }
+        },
+        {
+          "capabilities_all": [
+            "critical_code_review",
+            "structured_findings"
+          ],
+          "eligible_groups": [
+            "review_critical_qualified"
+          ],
+          "id": "critical-review",
+          "independence": [
+            "fresh_context",
+            "non_author_attempt",
+            "different_model_family_from_authors"
+          ],
+          "priority": 100,
+          "reroute": "within_approved_set_preserve_requirements",
+          "when": {
+            "effective_class": "T3",
+            "role": "reviewer"
+          }
+        }
+      ],
+      "schema_version": "karajan.rulebook.v1",
+      "status": "configured"
+    },
+    "schema_version": "karajan.routing.policy.v1"
+  },
+  "task": {
+    "authorization": {
+      "allowed_stages": [
+        "normal",
+        "quality"
+      ],
+      "approved_groups": {
+        "adviser_qualified": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ],
+        "commander_qualified": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ],
+        "critical_qualified": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ],
+        "fast_qualified": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ],
+        "review_critical_qualified": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ],
+        "review_standard_qualified": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ],
+        "standard_qualified": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ]
+      },
+      "approved_quality_stage_indices": [
+        0
+      ],
+      "budget_ref": "run",
+      "ceiling_profile_refs": [
+        {
+          "id": "fixture-profile",
+          "revision": 1
+        }
+      ],
+      "channel_ids": [
+        "fixture-channel"
+      ],
+      "currency_limits": {
+        "CNY": "0",
+        "USD": "0"
+      },
+      "data_destinations": [
+        "fixture-channel"
+      ],
+      "max_attempt_duration_seconds": 30,
+      "max_quality_repair_rounds": 2,
+      "min_isolation": "tool_sandboxed",
+      "profile_refs": [
+        {
+          "id": "fixture-profile",
+          "revision": 1
+        }
+      ],
+      "required_capabilities": [],
+      "tools": [
+        "fixture-tools"
+      ]
+    },
+    "authorization_digest": "d222cc23a40d9c12f32c6118d99579e208e0b7940bb0c87cefbe693fd5e0d7a2",
+    "authors": [],
+    "complexity": "T2",
+    "context_tokens": 1000,
+    "domains": [
+      "code"
+    ],
+    "duration_seconds": 30,
+    "failure_reason": null,
+    "paths": [
+      "src/example.py"
+    ],
+    "plan_revision": 1,
+    "planned_attempt_id": "fixture-next",
+    "planned_context_id": "fixture-next-context",
+    "previous_profile": null,
+    "purpose": null,
+    "quality_repair_rounds_used": 0,
+    "quality_stage_index": 0,
+    "readiness": "ready",
+    "required_capabilities": [],
+    "risk": "standard",
+    "role": "worker",
+    "root_task_id": "fixture-root",
+    "schema_version": "karajan.routing.task.v1",
+    "stage": "normal",
+    "task_id": "fixture-task",
+    "task_revision": 1,
+    "tools": [
+      "fixture-tools"
+    ]
+  }
+}

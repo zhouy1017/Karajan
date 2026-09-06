@@ -24,6 +24,7 @@ from .body_limit import BodyLimitMiddleware
 from .projects import register_project_routes
 from .resources import register_resource_routes
 from .runs import register_run_routes
+from .simulation import register_simulation_routes
 
 
 def _digest(value: str) -> str:
@@ -133,6 +134,7 @@ def create_app(
     app.add_middleware(BodyLimitMiddleware)
     projects = ProjectRegistry(state_directory / "projects.sqlite", allowed_roots)
     register_project_routes(app, projects)
+    register_simulation_routes(app, projects)
     register_run_routes(app, RunPlanner(state_directory / "runs.sqlite", projects))
     register_resource_routes(app, CapacityStore(state_directory / "capacity.sqlite"))
 

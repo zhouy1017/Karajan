@@ -1,0 +1,19 @@
+{
+  "original": {
+    "status": 422,
+    "reason": "ROUTING_INPUT_INVALID"
+  },
+  "ui_transformed": {
+    "status": 200,
+    "selected_profile": {
+      "id": "fixture-profile",
+      "revision": 1
+    }
+  },
+  "source_sha256": {
+    "frontend/src/RoutingSimulation.tsx": "1406bdffefc7d98d5087b9f71ab2a42b83c41bbcf5d2c7b4b978933b819c9503",
+    "backend/karajan/web/simulation.py": "702a076b98a862c6f0d07d2e8141d38f0cbd42eddcfc04a570e89832b8219a9a",
+    "backend/karajan/routing/evaluator.py": "e5d716a0f2f3e97d245462022a886fc99e7c1808b0cebfb6c14823ffe65d2a15",
+    "backend/karajan/routing/models.py": "06a5b4b65e84044823171d584555bf09b52043d45afca4a4ff1ed398e7d5c757"
+  }
+}

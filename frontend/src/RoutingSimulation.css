@@ -1,0 +1,126 @@
+.routing-simulation {
+  border: 1px solid #cbded3;
+  border-radius: 10px;
+  padding: 18px;
+  background: #fbfdfb;
+}
+.routing-simulation > summary {
+  font-weight: 650;
+}
+.routing-simulation h3 {
+  margin-top: 22px;
+}
+.simulation-boundary {
+  color: #446052;
+  background: #edf5ef;
+  padding: 14px;
+  border-radius: 7px;
+  line-height: 1.7;
+}
+.simulation-actions,
+.simulation-result > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.simulation-actions label {
+  margin: 0;
+}
+.simulation-actions input {
+  margin-top: 6px;
+}
+.simulation-source {
+  line-height: 1.7;
+  color: #436457;
+  overflow-wrap: anywhere;
+}
+.simulation-error {
+  background: #fff0e8;
+  color: #8a3826;
+  padding: 14px;
+  border-radius: 7px;
+  overflow-wrap: anywhere;
+}
+.simulation-task {
+  border: 1px solid #dce5df;
+  padding: 16px;
+  border-radius: 7px;
+  min-width: 0;
+}
+.simulation-task legend {
+  padding: 0 6px;
+  font-weight: 600;
+}
+.simulation-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+.simulation-fields div {
+  min-width: 0;
+}
+.simulation-fields dt {
+  color: #576d62;
+  font-size: 12px;
+}
+.simulation-fields dd {
+  margin: 6px 0 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.simulation-scroll {
+  overflow-x: auto;
+}
+.simulation-scroll table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 620px;
+  text-align: left;
+  font-size: 13px;
+}
+.simulation-scroll th,
+.simulation-scroll td {
+  padding: 12px;
+  border-bottom: 1px solid #d9e3dc;
+}
+.simulation-fact {
+  border-bottom: 1px solid #d9e3dc;
+  padding: 10px 0;
+  font-size: 13px;
+}
+.simulation-result {
+  border-top: 2px solid #86b49d;
+  margin-top: 28px;
+  padding-top: 10px;
+}
+.simulation-result p,
+.simulation-result h4 {
+  overflow-wrap: anywhere;
+}
+.simulation-candidate {
+  padding: 16px;
+  border: 1px solid #c9dfd0;
+  border-radius: 8px;
+  background: white;
+  margin: 12px 0;
+}
+.simulation-candidate.rejected {
+  border-color: #e4d0c6;
+}
+.simulation-candidate h4 {
+  margin: 0 0 16px;
+}
+.simulation-reasons {
+  padding-left: 22px;
+  line-height: 1.8;
+}
+.simulation-reasons small {
+  display: block;
+  color: #637268;
+  font-family: monospace;
+  overflow-wrap: anywhere;
+}

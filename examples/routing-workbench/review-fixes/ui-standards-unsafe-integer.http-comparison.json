@@ -1,0 +1,36 @@
+{
+  "original": {
+    "body_sha256": "871b3062d533c4585f1dccdfb98b1bb3f064486b0f2f83a1dd5ede815d5f7a6c",
+    "status": 200,
+    "selected_profile": {
+      "id": "fixture-profile",
+      "revision": 1
+    },
+    "reasons": [],
+    "candidate_reasons": [
+      []
+    ]
+  },
+  "actual_javascript_roundtrip": {
+    "body_sha256": "a18b4757fee2659f40a5a446d7b0f67d03885a2d4da7f5a4478cdf41ac2d491f",
+    "status": 200,
+    "selected_profile": null,
+    "reasons": [
+      "NO_ELIGIBLE_PROFILE"
+    ],
+    "candidate_reasons": [
+      [
+        "CAPABILITY_UNQUALIFIED:bounded_implementation",
+        "CAPABILITY_UNQUALIFIED:candidate_capture",
+        "CAPABILITY_UNQUALIFIED:controlled_tools",
+        "PROFILE_FACTS_STALE_OR_MISMATCHED"
+      ]
+    ]
+  },
+  "source_sha256": {
+    "frontend/src/RoutingSimulation.tsx": "2bc74b16c67e2fea096f22c9a4e8aeb5ef8e336f60df0fa190138d5159daaa99",
+    "backend/karajan/web/simulation.py": "702a076b98a862c6f0d07d2e8141d38f0cbd42eddcfc04a570e89832b8219a9a",
+    "backend/karajan/routing/evaluator.py": "e5d716a0f2f3e97d245462022a886fc99e7c1808b0cebfb6c14823ffe65d2a15",
+    "backend/karajan/routing/models.py": "06a5b4b65e84044823171d584555bf09b52043d45afca4a4ff1ed398e7d5c757"
+  }
+}

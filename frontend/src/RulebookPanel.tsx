@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import "./RulebookPanel.css";
+import { RoutingSimulation } from "./RoutingSimulation";
 
 type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 type ObjectValue = { [key: string]: Json };
@@ -1101,6 +1102,12 @@ export function RulebookPanel({
           </>
         )}
       </fieldset>
+      <RoutingSimulation
+        project={project}
+        csrf={csrf}
+        draft={draft}
+        onSessionExpired={onSessionExpired}
+      />
       {preview && (
         <section className="rulebook-preview" aria-label="发布预览">
           <h3>发布前核对</h3>
