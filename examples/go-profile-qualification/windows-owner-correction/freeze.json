@@ -1,0 +1,13 @@
+{
+  "base_commit": "771339e478dc69caf05be0a1e54547c91f199685",
+  "scope": "Windows ownership correction; no provider execution",
+  "files": {
+    "backend/karajan/projects/credential_sources.py": "75653d59353f53399f3fd41a5894d398a62c1ca92d607351f4682dde341076e1",
+    "tests/projects/test_credential_windows_owners.py": "552eb3b240c6a640b120594a1918870cd4211537c7fb46bd65732d968738e212",
+    "examples/go-profile-qualification/windows-owner-correction/final.xml": "64c6629ab04deb9715d328bf02228b2984280142e6bd546d6872a21ea5b971b2",
+    "examples/go-profile-qualification/windows-owner-correction/independent-review.md": "f141ce381f4b768aca2fdd34b8081d9d20acc4d10f6b003dbef8e4e30e47a2fa",
+    "examples/go-profile-qualification/windows-owner-correction/README.md": "2de05a15353a80f4b61dafb2be2a8c11796700308e269111e53e8180a3bf9497",
+    "examples/go-profile-qualification/windows-owner-correction/red-input.py.txt": "00b85ae2180b09c57d774f27fc9e4ec80ff272d94e32c9f6e0240412a044c34a",
+    "examples/go-profile-qualification/windows-owner-correction/red.xml": "e7f63229f9bf0ff4e34a362cd8eaddecefba1f65e96ab8e5804214a51b2cca98"
+  }
+}

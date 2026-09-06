@@ -165,7 +165,10 @@ def _windows_private(path: Path, *, directory: bool) -> None:
             str(path), 1, 5, ctypes.byref(owner), None, None, None, ctypes.byref(descriptor)
         ):
             raise CredentialSourceError("CREDENTIAL_PRIVATE_PERMISSIONS_INVALID")
-        if sid_text(owner) != principal_sid:
+        # Windows may assign an administrator token's default group as owner.
+        # These host principals already belong to the DACL trust set below;
+        # other owners remain forbidden, including with an OWNER RIGHTS ACE.
+        if sid_text(owner) not in {principal_sid, "S-1-5-32-544", "S-1-5-18"}:
             raise CredentialSourceError("CREDENTIAL_PRIVATE_PERMISSIONS_INVALID")
         text = wintypes.LPWSTR()
         if not advapi.ConvertSecurityDescriptorToStringSecurityDescriptorW(

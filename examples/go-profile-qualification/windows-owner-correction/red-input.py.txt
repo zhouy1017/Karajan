@@ -1,0 +1,109 @@
+"""Windows ownership observations at the public credential-store interface.
+
+Descriptor cases replace only the Win32 owner observation; actual NTFS DACLs,
+token identity, private files and SQLite remain real. No object owner is changed.
+"""
+
+import ctypes
+import json
+import os
+import subprocess
+import sys
+
+import pytest
+from karajan.projects.credential_sources import CredentialSourceError
+from test_credential_sources import case, register, service
+
+__all__ = ["case"]
+pytestmark = pytest.mark.skipif(sys.platform != "win32", reason="Windows security descriptors")
+
+
+@pytest.mark.parametrize(
+    ("owner_sid", "trusted"),
+    [("S-1-5-32-544", True), ("S-1-5-18", True), ("S-1-5-32-545", False), ("S-1-1-0", False)],
+)
+def test_only_current_user_or_trusted_host_owners_can_hold_private_state(
+    case, monkeypatch, owner_sid, trusted
+):
+    from ctypes import wintypes
+
+    loader = ctypes.WinDLL
+    api = loader("advapi32", use_last_error=True)
+    kernel = loader("kernel32", use_last_error=True)
+    pointer = ctypes.c_void_p
+    api.ConvertStringSidToSidW.argtypes = [wintypes.LPCWSTR, ctypes.POINTER(pointer)]
+    api.ConvertStringSidToSidW.restype = wintypes.BOOL
+    kernel.LocalFree.argtypes = [pointer]
+    kernel.LocalFree.restype = pointer
+    observed_owner = pointer()
+    assert api.ConvertStringSidToSidW(owner_sid, ctypes.byref(observed_owner))
+
+    def observed_library(name, **kwargs):
+        library = loader(name, **kwargs)
+        if name != "advapi32":
+            return library
+        read = library.GetNamedSecurityInfoW
+        read.argtypes = [
+            wintypes.LPWSTR,
+            wintypes.DWORD,
+            wintypes.DWORD,
+            *[ctypes.POINTER(pointer)] * 5,
+        ]
+        read.restype = wintypes.DWORD
+
+        def read_with_observed_owner(*arguments):
+            result = read(*arguments)
+            if result == 0:
+                ctypes.cast(arguments[3], ctypes.POINTER(pointer))[0] = observed_owner
+            return result
+
+        library.GetNamedSecurityInfoW = read_with_observed_owner
+        return library
+
+    monkeypatch.setattr(ctypes, "WinDLL", observed_library)
+    try:
+        if trusted:
+            record = register(case)
+            reopened = service(case)
+            assert reopened.resolve_exact(
+                case["project_id"], "secret:go", record["generation"], principal="owner"
+            ).reveal() == case["secret"]
+            assert reopened.current(case["project_id"], "secret:go", principal="owner") == record
+        else:
+            with pytest.raises(CredentialSourceError, match="CREDENTIAL_PRIVATE_PERMISSIONS_INVALID"):
+                register(case)
+    finally:
+        kernel.LocalFree(observed_owner)
+
+
+def test_native_default_owner_and_private_registration_are_compatible(case):
+    probe = case["private"].parent / "owner-observation"
+    probe.mkdir(mode=0o700)
+    script = r"""
+    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    function Classify([string]$sid) {
+        if ($sid -eq $identity.User.Value) { return 'current_user' }
+        if ($sid -eq 'S-1-5-32-544') { return 'builtin_administrators' }
+        if ($sid -eq 'S-1-5-18') { return 'local_system' }
+        return 'other'
+    }
+    $descriptor = [IO.Directory]::GetAccessControl($env:KARAJAN_OWNER_PROBE_PATH)
+    @{
+        object_owner = Classify ($descriptor.GetOwner([Security.Principal.SecurityIdentifier]).Value)
+        token_default_owner = Classify $identity.Owner.Value
+    } | ConvertTo-Json -Compress
+    """
+    result = subprocess.run(
+        ["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script],
+        env={**os.environ, "KARAJAN_OWNER_PROBE_PATH": str(probe)},
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    observation = json.loads(result.stdout)
+    print(json.dumps(observation, sort_keys=True))
+    assert observation["object_owner"] in {
+        "current_user", "builtin_administrators", "local_system"
+    }
+    assert register(case)["source"]["kind"] == "controller_local_key_file"

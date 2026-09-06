@@ -68,6 +68,8 @@ Profile 固定为 `opencode-go-isolated` / `1.18.29`、`glm-5.3-flash`、`api_ke
 项目数据库保存公开 generation 和撤销事实；私有凭据存储保存材料核对所需的私有数据。
 WSL 的私有目录须位于原生 Linux 文件系统，并由控制器管理该目录及父路径；不使用 DrvFS
 权限位假定 Windows 文件已经私有。Windows 路径则核对实际 owner/admin/SYSTEM DACL。
+对象 owner 也仅限当前 TokenUser、内置 Administrators 或 Local System；其它 owner 即使
+配有 OWNER RIGHTS ACE 也拒绝。可信 owner 不会跳过后续 DACL 检查。
 凭据内容变化即使保留文件名和 mtime，也不能继续使用旧 generation。运行时仅把解析后的
 内存凭据交给可信 suite/relay，原生 OpenCode 不接收 provider key。
 

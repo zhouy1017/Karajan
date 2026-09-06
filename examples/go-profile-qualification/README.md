@@ -46,9 +46,14 @@ Root 另外完成全树 Ruff、backend mypy（110 个源文件）、`uv lock --c
 返回同一记录，总请求数仍为五。两个 grant 已撤销，本地进程停止已确认，服务端远程停止仍为 unknown。
 
 [完整公开报告](live.report.json) 保留原始字节；[来源冻结与结果核对](live-freeze.json) 将其绑定到
-当前 12 个源码文件、Linux OpenCode 1.18.29 固定二进制和 [实测入口](run_live.py)。归档不包含
+该轮 `771339e` 的 12 个源码文件、Linux OpenCode 1.18.29 固定二进制和 [实测入口](run_live.py)。归档不包含
 provider key、凭据私有库或项目数据库。`fixture-*` 仍是样例配置中的标识名称；报告的实际来源为
 `official_go`，模型为 `glm-5.3-flash`。模型家族、订阅计费路径及配额值是样例登记，未由本次诊断验证。
+
+首次 CI 的 Linux/前端通过，Windows 暴露了私有状态 owner 必须等于 TokenUser 的兼容问题。
+[Windows 修正与独立复核](windows-owner-correction/README.md) 将 owner 限定到既定信任集合，
+完整 DACL 检查继续执行；新增五项与原 22 项通过，Linux 行为未改。原实测报告和摘要不重写，
+不把这次 Windows 文件变更归属于先前的真实 Go 执行。
 
 本次命令在 WSL 执行，`<private-key-file>` 表示用户本地凭据路径；诊断目录必须尚不存在，
 不能用重复命令重建额度。默认不加 `--live` 时返回 not_run 且不读取密钥：
