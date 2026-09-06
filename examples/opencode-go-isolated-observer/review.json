@@ -1,0 +1,49 @@
+{
+  "scope": "independent observe_go_tools Spec review",
+  "status": "passed_after_fix",
+  "findings": [
+    {
+      "id": "GO-OBSERVER-001",
+      "priority": 2,
+      "state": "closed",
+      "before": "native-before.junit.xml",
+      "after": "native-final.junit.xml",
+      "meaning": "Verify grant digest against full runtime_source descriptor, not artifact SHA alone"
+    }
+  ],
+  "source_sha256": {
+    "backend/karajan/isolation/go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+    "backend/karajan/isolation/opencode_runtime.py": "9d24f077cf1d159c78a43c9b420e3f8e20cac2448a057be2620344cb60b08102",
+    "backend/karajan/isolation/_opencode_namespace.py": "5c391e9394755c307bce3e79fe44d0dfd5ab3d14d06ff12d0b2b8967864b527a",
+    "backend/karajan/isolation/_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+    "backend/karajan/isolation/_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+    "backend/karajan/adapters/opencode/go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+    "backend/karajan/adapters/opencode/go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+    "backend/karajan/adapters/opencode/go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b",
+    "tests/isolation/test_opencode_go_composition.py": "889763b49f1e8752e44321b118659889005569d3d7dd8ead5471f65ee498e2db",
+    ".cache/go-observer-review/test_observer.py": "5430710ff791423a2f05b1c9c0862cc073acbb34b87c93ca7133109871e121bd"
+  },
+  "evidence_sha256": {
+    "before.junit.xml": "0aa1fa70444787d7d81bffd4fcb89bb8b22ba119b69bbd4064217e0f87f221e4",
+    "native-before.junit.xml": "87687e0de69247fc5c01e2319464bca0a4641bb0ec9d4e5aff662c2791c5eb18",
+    "runtime-mismatch.before.json": "7c2e250c1b2c4e10dc73fcb1b9f7a08e639df69f77f6c8df5d78fd2fbaa232b5",
+    "timeout-control.junit.xml": "99e954e9c17a01cfefbcb63cda40a75d6fac0f8ca46856f8a2d0cc9a8e5271df",
+    "native-final.junit.xml": "4dcd937b3e3f97a65d388fc26ec2cf292777f6514e54f2bd65dad58427d37427",
+    "test-observer-before-fix.txt": "bea853fc2032605943fdca5336a7246ceb3b4b4c6caf10914d845a9483c42c81"
+  },
+  "validation": {
+    "independent": "5 passed in 43.76s",
+    "ruff": "passed",
+    "origin": "http_fixture",
+    "execution": "actual Linux OpenCode, namespaces, UDS relay, SQLite"
+  },
+  "boundary": [
+    "No product edits",
+    "No real provider calls",
+    "No real credential access",
+    "dispatch_eligible=false",
+    "runtime_tools_status=not_run",
+    "provider_remote_stop=unknown",
+    "billing_limit_qualification=not_run"
+  ]
+}

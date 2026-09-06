@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="2" time="21.980" timestamp="2026-09-06T15:11:42.272184+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.go-namespace-review.test_namespace_review" name="test_native_file_permissions_and_inherited_material_boundaries" time="10.690" /><testcase classname=".cache.go-namespace-review.test_namespace_review" name="test_nonfixture_edit_rejects_before_testing_protected_contents" time="10.333"><failure message="AssertionError: [{'guess': 'SYNTHETIC_RIGHT_GUESS', 'permission_denied': True, 'content_mismatch': False}, {'guess': 'SYNTHETIC_WRONG_GUESS', 'permission_denied': False, 'content_mismatch': True}]&#10;assert False&#10; +  where False = all(&lt;generator object test_nonfixture_edit_rejects_before_testing_protected_contents.&lt;locals&gt;.&lt;genexpr&gt; at 0x75785f28cd40&gt;)">def test_nonfixture_edit_rejects_before_testing_protected_contents():
+        requests = []
+    
+        def receive(request):
+            requests.append(json.loads(request.content))
+            if len(requests) == 1:
+                calls = [
+                    {
+                        "index": index,
+                        "id": f"guess_{index}",
+                        "type": "function",
+                        "function": {
+                            "name": "edit",
+                            "arguments": json.dumps(
+                                {
+                                    "filePath": "/workspace/blocked.txt",
+                                    "oldString": guess,
+                                    "newString": "changed",
+                                }
+                            ),
+                        },
+                    }
+                    for index, guess in enumerate(("SYNTHETIC_RIGHT_GUESS", "SYNTHETIC_WRONG_GUESS"))
+                ]
+                return answer(
+                    stream(
+                        event(
+                            choices=[
+                                {
+                                    "index": 0,
+                                    "delta": {"tool_calls": calls},
+                                    "finish_reason": "tool_calls",
+                                }
+                            ]
+                        )
+                    )
+                )
+            return answer()
+    
+        with tempfile.TemporaryDirectory(prefix="karajan-edit-oracle-", dir="/tmp") as directory:
+            root = Path(directory)
+            relay = GoRelay(
+                "synthetic-provider-review-key",
+                "UNRELATED_CANARY",
+                client_factory=lambda: httpx.Client(
+                    transport=httpx.MockTransport(receive), trust_env=False
+                ),
+            )
+            upstream = root / "relay.sock"
+            relay.start(unix_socket=upstream)
+            runtime = IsolatedOpenCode(
+                Path(os.environ["KARAJAN_OPENCODE_LINUX_BINARY"]),
+                root / "run",
+                upstream,
+                relay.capability,
+            )
+            protected = runtime.workspace / "blocked.txt"
+            protected.write_text("SYNTHETIC_RIGHT_GUESS")
+            try:
+                runtime.start()
+                session = runtime.request(
+                    "POST", "/session", {"title": "Denied edit equality oracle", "agent": "probe"}
+                )
+                runtime.request(
+                    "POST",
+                    f"/session/{session['id']}/prompt_async",
+                    {
+                        "agent": "probe",
+                        "model": {"providerID": "opencode-go", "modelID": "glm-5.3-flash"},
+                        "parts": [{"type": "text", "text": "Try the two fixed edits once."}],
+                    },
+                )
+                states = []
+                deadline = time.monotonic() + 20
+                while time.monotonic() &lt; deadline:
+                    messages = runtime.request("GET", f"/session/{session['id']}/message")
+                    states = [
+                        part["state"]
+                        for message in messages
+                        for part in message["parts"]
+                        if part["type"] == "tool"
+                    ]
+                    if len(states) == 2 and all(state["status"] == "error" for state in states):
+                        if len(requests) &gt;= 2:
+                            break
+                    time.sleep(0.1)
+                assert protected.read_text() == "SYNTHETIC_RIGHT_GUESS"
+                assert len(states) == 2
+                assert len(requests) &gt;= 2
+                facts = [
+                    {
+                        "guess": state["input"]["oldString"],
+                        "permission_denied": state["error"].startswith(
+                            "The user has specified a rule"
+                        ),
+                        "content_mismatch": state["error"].startswith("Could not find oldString"),
+                    }
+                    for state in states
+                ]
+&gt;               assert all(fact["permission_denied"] for fact in facts), facts
+E               AssertionError: [{'guess': 'SYNTHETIC_RIGHT_GUESS', 'permission_denied': True, 'content_mismatch': False}, {'guess': 'SYNTHETIC_WRONG_GUESS', 'permission_denied': False, 'content_mismatch': True}]
+E               assert False
+E                +  where False = all(&lt;generator object test_nonfixture_edit_rejects_before_testing_protected_contents.&lt;locals&gt;.&lt;genexpr&gt; at 0x75785f28cd40&gt;)
+
+.cache/go-namespace-review/test_namespace_review.py:414: AssertionError</failure></testcase></testsuite></testsuites>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="3" time="0.251" timestamp="2026-09-06T14:50:10.867959+08:00" hostname="ProArt-Zhou"><testcase classname="tests.adapters.opencode.test_go_observer_guard" name="test_stale_grant_is_rejected_before_directory_creation[sent]" time="0.020"><failure message="Failed: DID NOT RAISE ValueError">tests\adapters\opencode\test_go_observer_guard.py:18: in test_stale_grant_is_rejected_before_directory_creation
+    with pytest.raises(ValueError, match="FRESH_ACTIVE_GRANT_REQUIRED"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_observer_guard" name="test_stale_grant_is_rejected_before_directory_creation[revoked]" time="0.013"><failure message="Failed: DID NOT RAISE ValueError">tests\adapters\opencode\test_go_observer_guard.py:18: in test_stale_grant_is_rejected_before_directory_creation
+    with pytest.raises(ValueError, match="FRESH_ACTIVE_GRANT_REQUIRED"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_observer_guard" name="test_stale_grant_is_rejected_before_directory_creation[binding-mismatch]" time="0.012"><failure message="Failed: DID NOT RAISE ValueError">tests\adapters\opencode\test_go_observer_guard.py:18: in test_stale_grant_is_rejected_before_directory_creation
+    with pytest.raises(ValueError, match="FRESH_ACTIVE_GRANT_REQUIRED"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError</failure></testcase></testsuite></testsuites>

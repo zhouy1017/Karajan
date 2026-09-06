@@ -1,0 +1,285 @@
+{
+  "schema_version": "karajan.isolated-opencode-go-observation.v1",
+  "scenario": "denied_read",
+  "scope": "fixed_native_tools",
+  "observation_origin": "official_go",
+  "runtime_tools_status": "not_run",
+  "dispatch_eligible": false,
+  "real_credential_passed_to_runtime": false,
+  "provider_remote_stop": "unknown",
+  "billing_limit_qualification": "not_run",
+  "grant_id": "5c477cfd70374234b153754ff7e9a68d",
+  "runtime_digest": "ae7628e3b7d65aff0df475a3526d1e0500c001ea3b351d3199d5cf75d2ef4b1a",
+  "runtime_source": {
+    "schema_version": "karajan.fixed-go-runtime-source.v1",
+    "execution_path": "linux-unshare-chroot-opencode-go-fixed-tools-v1",
+    "runtime_version": "1.18.29",
+    "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+    "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+    "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+    "machine": "x86_64",
+    "source_sha256": {
+      "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+      "opencode_runtime.py": "b6f0111144ca7b45e81f5824cd88d8adb8ba07a0542af1af1503a8b745d31e93",
+      "_opencode_namespace.py": "748934651027d518486e0ce05fcc1f72132530aa55b797cdbd15f26f5bc3e550",
+      "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+      "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+      "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+      "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+      "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b"
+    },
+    "system_executable_sha256": {
+      "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c",
+      "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+      "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+      "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+    },
+    "native_settings_digest": "e0a8d0daa8172f93abee79ac1b1640ca1663702933c11918c3477476de098a69"
+  },
+  "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+  "source_sha256": {
+    "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+    "opencode_runtime.py": "b6f0111144ca7b45e81f5824cd88d8adb8ba07a0542af1af1503a8b745d31e93",
+    "_opencode_namespace.py": "748934651027d518486e0ce05fcc1f72132530aa55b797cdbd15f26f5bc3e550",
+    "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+    "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+    "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+    "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+    "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b"
+  },
+  "runtime": {
+    "state": "running",
+    "runtime_version": "1.18.29",
+    "runtime_tools_status": "not_run",
+    "dispatch_eligible": false,
+    "namespace_pid": 1,
+    "namespaces": {
+      "user": "user:[4026532179]",
+      "mnt": "mnt:[4026532239]",
+      "pid": "pid:[4026532240]",
+      "net": "net:[4026532241]"
+    },
+    "host_mount_visible": false,
+    "wsl_interop_visible": false,
+    "native_control_fd_inherited": false,
+    "network_interfaces": [
+      "lo"
+    ],
+    "ipv4_routes": [],
+    "capabilities": {
+      "effective": "0000000000000000",
+      "permitted": "0000000000000000",
+      "bounding": "0000000000000000"
+    },
+    "no_new_privileges": true,
+    "runtime_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650"
+  },
+  "assistants": [
+    {
+      "model_matches": true,
+      "completed": true,
+      "stopped": false,
+      "error": false
+    },
+    {
+      "model_matches": true,
+      "completed": true,
+      "stopped": true,
+      "error": false
+    }
+  ],
+  "tools": [
+    {
+      "tool": "read",
+      "status": "error",
+      "path": "blocked.txt",
+      "permission_denied": true
+    }
+  ],
+  "fixture_changed": false,
+  "fixture_cases": null,
+  "blocked_file_unchanged": true,
+  "workspace_files": [
+    "blocked.txt",
+    "fixture.py"
+  ],
+  "native_cleanup": {
+    "local_stop": "confirmed",
+    "namespace_init_stopped": true,
+    "observed_processes": [
+      {
+        "pid": 28463,
+        "birth": "7148877",
+        "namespace_pid": 1
+      },
+      {
+        "pid": 28505,
+        "birth": "7149066",
+        "namespace_pid": 43
+      }
+    ],
+    "observed_processes_still_running": [],
+    "remote_stop": "unknown",
+    "runtime_tools_status": "not_run",
+    "dispatch_eligible": false
+  },
+  "relay_cleanup": {
+    "status": "closed",
+    "errors": []
+  },
+  "requests": [
+    {
+      "requested_model": "glm-5.3-flash",
+      "session_header_present": true,
+      "tool_results_in_request": 0,
+      "fixture_content_in_tool_result": false,
+      "denied_canary_in_request": false,
+      "requested_stream": true,
+      "reported_models": [
+        "glm-5.3-flash"
+      ],
+      "tool_names": [
+        "read"
+      ],
+      "usage": {
+        "prompt_tokens": 3138,
+        "completion_tokens": 62,
+        "total_tokens": 3200,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 48
+        }
+      },
+      "upstream_send_attempted": true,
+      "upstream_status": 200,
+      "upstream_response_complete": true,
+      "response_bytes": 12008,
+      "stream_terminated": true,
+      "protocol_passed": true,
+      "relay_completed": true,
+      "reason_codes": [],
+      "sequence": 1,
+      "journal_call_id": "b55b63f3-b7e7-4a32-b469-f1948cf9b5ac",
+      "finish_reason": "tool_calls",
+      "go_cost_trailer_seen": true,
+      "provider_reported_cost": "0",
+      "provider_reported_cost_unit": "unknown"
+    },
+    {
+      "requested_model": "glm-5.3-flash",
+      "session_header_present": true,
+      "tool_results_in_request": 1,
+      "fixture_content_in_tool_result": false,
+      "denied_canary_in_request": false,
+      "requested_stream": true,
+      "reported_models": [
+        "glm-5.3-flash"
+      ],
+      "tool_names": [],
+      "usage": {
+        "prompt_tokens": 3372,
+        "completion_tokens": 30,
+        "total_tokens": 3402,
+        "prompt_tokens_details": {
+          "cached_tokens": 3136
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 22
+        }
+      },
+      "upstream_send_attempted": true,
+      "upstream_status": 200,
+      "upstream_response_complete": true,
+      "response_bytes": 6114,
+      "stream_terminated": true,
+      "protocol_passed": true,
+      "relay_completed": true,
+      "reason_codes": [],
+      "sequence": 2,
+      "journal_call_id": "e34c592b-8eae-4eb6-b5ca-5181ee8ee52e",
+      "finish_reason": "stop",
+      "go_cost_trailer_seen": true,
+      "provider_reported_cost": "0",
+      "provider_reported_cost_unit": "unknown"
+    }
+  ],
+  "journal": {
+    "grant_id": "5c477cfd70374234b153754ff7e9a68d",
+    "binding": {
+      "attempt_id": "5c477cfd70374234b153754ff7e9a68d",
+      "auth_generation": "diagnostic:5c477cfd70374234b153754ff7e9a68d",
+      "channel": "opencode-go",
+      "expires_at": 1788678863.7618227,
+      "fence": 1,
+      "max_requests": 6,
+      "model": "glm-5.3-flash",
+      "profile_digest": "e232e3796b1720d03bb8a5c399e6e19929d3c5e08efea18ed6d4f2128a64e432",
+      "qualification_id": "diagnostic:5c477cfd70374234b153754ff7e9a68d",
+      "runtime_digest": "ae7628e3b7d65aff0df475a3526d1e0500c001ea3b351d3199d5cf75d2ef4b1a"
+    },
+    "created_at": 1788678623.7689984,
+    "revoked_at": 1788678648.5314524,
+    "state": "revoked",
+    "request_count": 2,
+    "calls": [
+      {
+        "call_id": "b55b63f3-b7e7-4a32-b469-f1948cf9b5ac",
+        "completed_at": 1788678642.2131171,
+        "grant_id": "5c477cfd70374234b153754ff7e9a68d",
+        "outcome": {
+          "protocol_passed": true,
+          "reason_codes": [],
+          "response_bytes": 12008,
+          "state": "response_received",
+          "upstream_status": 200,
+          "usage": {
+            "completion_tokens": 62,
+            "completion_tokens_details": {
+              "reasoning_tokens": 48
+            },
+            "prompt_tokens": 3138,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "total_tokens": 3200
+          }
+        },
+        "send_intent_at": 1788678634.8427112,
+        "sequence": 1,
+        "state": "response_received"
+      },
+      {
+        "call_id": "e34c592b-8eae-4eb6-b5ca-5181ee8ee52e",
+        "completed_at": 1788678648.453899,
+        "grant_id": "5c477cfd70374234b153754ff7e9a68d",
+        "outcome": {
+          "protocol_passed": true,
+          "reason_codes": [],
+          "response_bytes": 6114,
+          "state": "response_received",
+          "upstream_status": 200,
+          "usage": {
+            "completion_tokens": 30,
+            "completion_tokens_details": {
+              "reasoning_tokens": 22
+            },
+            "prompt_tokens": 3372,
+            "prompt_tokens_details": {
+              "cached_tokens": 3136
+            },
+            "total_tokens": 3402
+          }
+        },
+        "send_intent_at": 1788678642.292109,
+        "sequence": 2,
+        "state": "response_received"
+      }
+    ]
+  },
+  "reason_codes": [],
+  "status": "passed",
+  "registered_profile": false,
+  "observed_at": 1788678648.5858028
+}

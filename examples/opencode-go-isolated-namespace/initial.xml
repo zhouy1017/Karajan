@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="3" time="24.109" timestamp="2026-09-06T14:55:18.569116+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.go-namespace-review.test_namespace_review" name="test_closed_evidence_is_detached_from_callers_mutating_previous_result" time="8.098"><failure message="ProcessLookupError: [Errno 3] No such process">instance = (&lt;karajan.isolation.opencode_runtime.IsolatedOpenCode object at 0x7e052da46ea0&gt;, PosixPath('/tmp/karajan-ns-review-yr4h03rj'))
+
+    def test_closed_evidence_is_detached_from_callers_mutating_previous_result(instance):
+        runtime, _ = instance
+        runtime.start()
+        observed = runtime.probe_lifecycle()["observed_processes"]
+&gt;       closed = runtime.close()
+                 ^^^^^^^^^^^^^^^
+
+.cache/go-namespace-review/test_namespace_review.py:39: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/karajan/isolation/opencode_runtime.py:260: in close
+    item for item in self._observed.values() if _birth(item["pid"]) == item["birth"]
+                                                ^^^^^^^^^^^^^^^^^^^
+backend/karajan/isolation/opencode_runtime.py:25: in _birth
+    fields = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/proc/25543/stat'), encoding = 'locale', errors = None
+
+    def read_text(self, encoding=None, errors=None):
+        """
+        Open the file in text mode, read it, and close the file.
+        """
+        encoding = io.text_encoding(encoding)
+        with self.open(mode='r', encoding=encoding, errors=errors) as f:
+&gt;           return f.read()
+                   ^^^^^^^^
+E           ProcessLookupError: [Errno 3] No such process
+
+/usr/lib/python3.12/pathlib.py:1030: ProcessLookupError</failure></testcase><testcase classname=".cache.go-namespace-review.test_namespace_review" name="test_two_simultaneous_starts_cannot_launch_two_namespace_processes" time="7.797"><failure message="AssertionError: (2, ['OSError', {'state': 'running', 'runtime_version': '1.18.29', 'runtime_tools_status': 'not_run', 'dispatch_eligible': False, ...}])&#10;assert 2 == 1&#10; +  where 2 = len([&lt;Popen: returncode: None args: ['/usr/bin/unshare', '--user', '--map-root-us...&gt;, &lt;Popen: returncode: 1 args: ['/usr/bin/unshare', '--user', '--map-root-user'...&gt;])">instance = (&lt;karajan.isolation.opencode_runtime.IsolatedOpenCode object at 0x7e052da47500&gt;, PosixPath('/tmp/karajan-ns-review-5f3f4h80'))
+
+    def test_two_simultaneous_starts_cannot_launch_two_namespace_processes(instance):
+        runtime, _ = instance
+        original_socketpair = socket.socketpair
+        import subprocess
+    
+        original_popen = subprocess.Popen
+        launches = []
+        barrier = threading.Barrier(2)
+    
+        def paired(*args, **kwargs):
+            pair = original_socketpair(*args, **kwargs)
+            # Pause at the public OS port after both start calls crossed their guard.
+            barrier.wait(timeout=3)
+            return pair
+    
+        def spawned(*args, **kwargs):
+            process = original_popen(*args, **kwargs)
+            launches.append(process)
+            return process
+    
+        def start():
+            try:
+                return runtime.start()
+            except Exception as error:
+                return type(error).__name__
+    
+        try:
+            with patch("socket.socketpair", side_effect=paired), patch("subprocess.Popen", side_effect=spawned):
+                with ThreadPoolExecutor(max_workers=2) as pool:
+                    results = list(pool.map(lambda _: start(), range(2)))
+&gt;           assert len(launches) == 1, (len(launches), results)
+E           AssertionError: (2, ['OSError', {'state': 'running', 'runtime_version': '1.18.29', 'runtime_tools_status': 'not_run', 'dispatch_eligible': False, ...}])
+E           assert 2 == 1
+E            +  where 2 = len([&lt;Popen: returncode: None args: ['/usr/bin/unshare', '--user', '--map-root-us...&gt;, &lt;Popen: returncode: 1 args: ['/usr/bin/unshare', '--user', '--map-root-user'...&gt;])
+
+.cache/go-namespace-review/test_namespace_review.py:78: AssertionError</failure></testcase><testcase classname=".cache.go-namespace-review.test_namespace_review" name="test_public_management_limits_session_creation_and_rejects_extra_authority" time="7.754" /></testsuite></testsuites>

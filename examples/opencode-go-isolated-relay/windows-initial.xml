@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="6" time="0.678" timestamp="2026-09-06T14:30:01.339623+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.go-relay-review.test_relay_review" name="test_partial_response_failure_does_not_become_a_completed_response" time="0.105"><failure message="AssertionError: assert 'response_received' == 'send_unknown'&#10;  &#10;  - send_unknown&#10;  + response_received">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-isolated-runtime/.cache/go-relay-review/windows-tmp/test_partial_response_failure_0')
+
+    def test_partial_response_failure_does_not_become_a_completed_response(tmp_path):
+        auth = grant(tmp_path)
+    
+        class PartialStream(httpx.SyncByteStream):
+            def __iter__(self):
+                yield b"data: {"
+                raise httpx.ReadError("synthetic loss during SSE body")
+    
+        def receive(_):
+            return httpx.Response(200, headers={"content-type": "text/event-stream"}, stream=PartialStream())
+    
+        with running(auth, receive) as relay:
+            assert post(relay).status_code == 502
+        facts = auth.journal.snapshot(auth.grant_id)
+        assert facts["request_count"] == 1
+&gt;       assert facts["calls"][0]["state"] == "send_unknown"
+E       AssertionError: assert 'response_received' == 'send_unknown'
+E         
+E         - send_unknown
+E         + response_received
+
+.cache\go-relay-review\test_relay_review.py:62: AssertionError</failure></testcase><testcase classname=".cache.go-relay-review.test_relay_review" name="test_exact_authorization_binding_is_copied_and_verified_before_send[False]" time="0.072" /><testcase classname=".cache.go-relay-review.test_relay_review" name="test_exact_authorization_binding_is_copied_and_verified_before_send[True]" time="0.077" /><testcase classname=".cache.go-relay-review.test_relay_review" name="test_native_headers_do_not_select_logical_call_identity_or_expose_credentials" time="0.078" /><testcase classname=".cache.go-relay-review.test_relay_review" name="test_lost_send_intent_return_stops_before_upstream_and_preserves_durable_unknown" time="0.076" /><testcase classname=".cache.go-relay-review.test_relay_review" name="test_completion_failure_stays_visible_and_does_not_upgrade_journal_unknown" time="0.078" /></testsuite></testsuites>

@@ -1,0 +1,325 @@
+"""One controller-owned fixed OpenCode runtime in fresh Linux namespaces."""
+
+import hashlib
+import json
+import os
+import signal
+import socket
+import stat
+import struct
+import subprocess
+import sys
+import threading
+import time
+from pathlib import Path
+from typing import Any
+
+from ._opencode_inner import register_session, validate_request
+
+RUNTIME_SHA256 = "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650"
+MAX_FRAME = 1024 * 1024
+
+
+def _verify_runtime(path: Path) -> None:
+    with path.open("rb") as stream:
+        if hashlib.file_digest(stream, "sha256").hexdigest() != RUNTIME_SHA256:
+            raise ValueError("RUNTIME_ARTIFACT_MISMATCH")
+
+
+def _birth(pid: int) -> str | None:
+    try:
+        fields = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()
+        return None if fields[0] == "Z" else fields[19]
+    except (FileNotFoundError, ProcessLookupError):
+        return None
+
+
+def _namespace_processes(namespace: str) -> list[dict[str, Any]]:
+    observed = []
+    for entry in Path("/proc").iterdir():
+        if not entry.name.isdigit():
+            continue
+        try:
+            if os.readlink(entry / "ns/pid") != namespace:
+                continue
+            birth = _birth(int(entry.name))
+            if birth is not None:
+                status = (entry / "status").read_text().splitlines()
+                namespace_pid = int(
+                    next(line for line in status if line.startswith("NSpid:")).split()[-1]
+                )
+                observed.append(
+                    {"pid": int(entry.name), "birth": birth, "namespace_pid": namespace_pid}
+                )
+        except (FileNotFoundError, PermissionError, ProcessLookupError):
+            continue
+    return observed
+
+
+class IsolatedOpenCode:
+    runtime: Path
+    directory: Path
+    workspace: Path
+    upstream_socket: Path
+    capability: str
+    model_id: str
+    _request_lock: threading.RLock
+    _lifecycle_lock: threading.RLock
+    _close_lock: threading.RLock
+
+    def __init__(
+        self,
+        runtime: Path,
+        directory: Path,
+        upstream_socket: Path,
+        capability: str,
+        *,
+        model_id: str = "glm-5.3-flash",
+    ) -> None:
+        if sys.platform != "linux":
+            raise ValueError("LINUX_NAMESPACES_REQUIRED")
+        if model_id != "glm-5.3-flash":
+            raise ValueError("FIXED_MODEL_REQUIRED")
+        if not capability or len(capability) > 256 or not capability.isprintable():
+            raise ValueError("LOCAL_CAPABILITY_INVALID")
+        self.runtime = runtime.resolve(strict=True)
+        _verify_runtime(self.runtime)
+        self.upstream_socket = upstream_socket.resolve(strict=True)
+        if not stat.S_ISSOCK(self.upstream_socket.stat().st_mode):
+            raise ValueError("PATHNAME_SOCKET_REQUIRED")
+        if directory.exists() or directory.is_symlink():
+            raise ValueError("NEW_CONTROLLER_DIRECTORY_REQUIRED")
+        self.directory = directory.absolute()
+        self.directory.mkdir(mode=0o700)
+        self.workspace = self.directory / "workspace"
+        self.workspace.mkdir(mode=0o700)
+        self.capability = capability
+        self.model_id = model_id
+        self._process: subprocess.Popen[bytes] | None = None
+        self._control: socket.socket | None = None
+        self._snapshot: dict[str, Any] = {
+            "state": "not_started",
+            "runtime_tools_status": "not_run",
+            "dispatch_eligible": False,
+        }
+        self._closed: dict[str, Any] | None = None
+        self._sessions: set[str] = set()
+        self._request_lock = threading.RLock()
+        self._lifecycle_lock = threading.RLock()
+        self._close_lock = threading.RLock()
+        self._init_pidfd: int | None = None
+        self._init_identity: dict[str, Any] | None = None
+        self._observed: dict[int, dict[str, Any]] = {}
+
+    def start(self) -> dict[str, Any]:
+        if sys.platform != "linux":
+            raise ValueError("LINUX_NAMESPACES_REQUIRED")
+        with self._lifecycle_lock:
+            if self._snapshot["state"] != "not_started":
+                raise ValueError("RUNTIME_ALREADY_STARTED_OR_CLOSED")
+            self._snapshot["state"] = "starting"
+        outer: socket.socket | None = None
+        inner: socket.socket | None = None
+        try:
+            _verify_runtime(self.runtime)
+            fixture = self.workspace / "fixture.py"
+            if self.workspace.is_symlink():
+                raise ValueError("FIXTURE_MUST_BE_PRIVATE_REGULAR_FILE")
+            if fixture.exists() or fixture.is_symlink():
+                identity = fixture.lstat()
+                if not stat.S_ISREG(identity.st_mode) or identity.st_nlink != 1:
+                    raise ValueError("FIXTURE_MUST_BE_PRIVATE_REGULAR_FILE")
+            outer, inner = socket.socketpair()
+            outer.settimeout(30)
+            command = [
+                "/usr/bin/unshare",
+                "--user",
+                "--map-root-user",
+                "--mount",
+                "--propagation",
+                "private",
+                "--pid",
+                "--fork",
+                "--kill-child=KILL",
+                "--net",
+                "/usr/bin/python3",
+                str(Path(__file__).with_name("_opencode_namespace.py")),
+                str(self.directory),
+                str(self.runtime),
+                str(self.upstream_socket),
+                str(inner.fileno()),
+            ]
+            # Only process creation is inside the lifecycle lock. A blocked welcome
+            # never prevents close from withdrawing the control channel and killing init.
+            with self._lifecycle_lock:
+                if self._snapshot["state"] != "starting":
+                    raise ValueError("RUNTIME_START_CANCELLED")
+                self._control = outer
+                with (self.directory / "namespace.log").open("wb") as log:
+                    self._process = subprocess.Popen(
+                        command,
+                        cwd=self.directory,
+                        env={"PATH": "/usr/bin:/bin", "LANG": "C.UTF-8"},
+                        pass_fds=(inner.fileno(),),
+                        close_fds=True,
+                        stdin=subprocess.DEVNULL,
+                        stdout=log,
+                        stderr=log,
+                    )
+            inner.close()
+            self._send({"capability": self.capability, "model_id": self.model_id}, outer)
+            welcome = self._receive(outer)
+            with self._lifecycle_lock:
+                if self._snapshot["state"] != "starting":
+                    raise ValueError("RUNTIME_START_CANCELLED")
+                self._snapshot = welcome
+                processes = self._observe_processes()
+                self._init_identity = next(item for item in processes if item["namespace_pid"] == 1)
+                self._init_pidfd = os.pidfd_open(self._init_identity["pid"])
+                if _birth(self._init_identity["pid"]) != self._init_identity["birth"]:
+                    raise OSError("NAMESPACE_INIT_IDENTITY_CHANGED")
+            return self.snapshot()
+        except BaseException:
+            if inner is not None:
+                inner.close()
+            if outer is not None:
+                outer.close()
+            self.close()
+            raise
+
+    def _send(self, value: dict[str, Any], control: socket.socket) -> None:
+        payload = json.dumps(value, allow_nan=False).encode()
+        if len(payload) > MAX_FRAME:
+            raise ValueError("CONTROL_FRAME_TOO_LARGE")
+        control.sendall(struct.pack("!I", len(payload)) + payload)
+
+    def request(self, method: str, route: str, body: object = None) -> Any:
+        with self._request_lock:
+            with self._lifecycle_lock:
+                validate_request(method, route, body, self._sessions)
+                if self._control is None or self._snapshot["state"] != "running":
+                    raise ValueError("RUNTIME_NOT_RUNNING")
+                control = self._control
+            self._send({"method": method, "route": route, "body": body}, control)
+            response = self._receive(control)
+            if response.get("error"):
+                raise OSError(str(response["error"]))
+            with self._lifecycle_lock:
+                if self._snapshot["state"] != "running":
+                    raise ValueError("RUNTIME_NOT_RUNNING")
+                if method == "POST" and route == "/session":
+                    register_session(response["result"], self._sessions)
+            return response["result"]
+
+    def _receive(self, control: socket.socket) -> dict[str, Any]:
+
+        def read(size: int) -> bytes:
+            blocks = bytearray()
+            while len(blocks) < size:
+                block = control.recv(size - len(blocks))
+                if not block:
+                    raise OSError("NAMESPACE_CONTROL_CLOSED")
+                blocks.extend(block)
+            return bytes(blocks)
+
+        length = struct.unpack("!I", read(4))[0]
+        if length > MAX_FRAME:
+            raise ValueError("CONTROL_FRAME_TOO_LARGE")
+        result = json.loads(read(length))
+        if not isinstance(result, dict):
+            raise ValueError("CONTROL_RESPONSE_INVALID")
+        return result
+
+    def _observe_processes(self) -> list[dict[str, Any]]:
+        namespace = self._snapshot.get("namespaces", {}).get("pid")
+        processes = _namespace_processes(namespace) if namespace else []
+        self._observed.update({item["pid"]: dict(item) for item in processes})
+        return processes
+
+    def probe_lifecycle(self) -> dict[str, Any]:
+        with self._request_lock:
+            with self._lifecycle_lock:
+                if self._control is None or self._snapshot["state"] != "running":
+                    raise ValueError("RUNTIME_NOT_RUNNING")
+                control = self._control
+            self._send({"operation": "probe_lifecycle"}, control)
+            response = self._receive(control)
+            if response.get("error"):
+                raise OSError(str(response["error"]))
+            result: dict[str, Any] = response["result"]
+            with self._lifecycle_lock:
+                if self._snapshot["state"] != "running":
+                    raise ValueError("RUNTIME_NOT_RUNNING")
+                result["observed_processes"] = self._observe_processes()
+            return result
+
+    def snapshot(self) -> dict[str, Any]:
+        with self._lifecycle_lock:
+            snapshot: dict[str, Any] = json.loads(json.dumps(self._snapshot))
+        snapshot["runtime_sha256"] = RUNTIME_SHA256
+        return snapshot
+
+    def close(self) -> dict[str, Any]:
+        with self._close_lock:
+            return self._close()
+
+    def _close(self) -> dict[str, Any]:
+        if sys.platform != "linux":
+            raise ValueError("LINUX_NAMESPACES_REQUIRED")
+        if self._closed is not None:
+            retained: dict[str, Any] = json.loads(json.dumps(self._closed))
+            return retained
+        with self._lifecycle_lock:
+            self._snapshot["state"] = "closing"
+            self._observe_processes()
+            control, self._control = self._control, None
+            init_pidfd, self._init_pidfd = self._init_pidfd, None
+        if control is not None:
+            try:
+                control.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
+            control.close()
+        if init_pidfd is not None:
+            try:
+                signal.pidfd_send_signal(init_pidfd, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            finally:
+                os.close(init_pidfd)
+        stopped = True
+        if self._process is not None:
+            try:
+                self._process.kill()
+                self._process.wait(timeout=5)
+            except (OSError, subprocess.TimeoutExpired):
+                stopped = self._process.poll() is not None
+        deadline = time.monotonic() + 5
+        while True:
+            running = [
+                item for item in self._observed.values() if _birth(item["pid"]) == item["birth"]
+            ]
+            if not running or time.monotonic() >= deadline:
+                break
+            time.sleep(0.02)
+        init_stopped = (
+            None
+            if self._init_identity is None
+            else _birth(self._init_identity["pid"]) != self._init_identity["birth"]
+        )
+        stopped_without_launch = self._process is None
+        self._closed = {
+            "local_stop": "confirmed"
+            if stopped and (init_stopped or stopped_without_launch) and not running
+            else "unknown",
+            "namespace_init_stopped": init_stopped,
+            "observed_processes": list(self._observed.values()),
+            "observed_processes_still_running": running,
+            "remote_stop": "unknown",
+            "runtime_tools_status": "not_run",
+            "dispatch_eligible": False,
+        }
+        with self._lifecycle_lock:
+            self._snapshot["state"] = "closed"
+        result: dict[str, Any] = json.loads(json.dumps(self._closed))
+        return result

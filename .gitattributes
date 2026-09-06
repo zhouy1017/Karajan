@@ -35,3 +35,8 @@ examples/capacity-facts/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at
 # Run approval review reports preserve raw hashes and failure tracebacks.
 examples/run-routing-authorization/*.json -text whitespace=cr-at-eol
 examples/run-routing-authorization/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+
+# Go runtime source observations and actual review transcripts retain captured bytes.
+examples/opencode-go-isolated*/**/*.json -text whitespace=cr-at-eol
+examples/opencode-go-isolated*/**/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+examples/opencode-go-isolated*/**/*.txt -text whitespace=cr-at-eol

@@ -49,13 +49,13 @@ lint 覆盖仓库 Python 文件，类型检查覆盖 `backend/karajan`，pytest 
 
 前端 job 已成为当前 workflow 的必需依赖。不使用 `hashFiles(...)` 条件跳过、成功占位 job，或检测失败后返回成功。具体远端检查结果须引用当前提交运行，不能由本地构建成功推断。
 
-Python 两个系统的 job 同时安装固定 `opencode-ai@1.18.29`，以实际二进制执行本地模拟 provider 探针；缺失或版本不符不能将该检查静默跳过。WSL/Linux namespace canary 在目标机器有独立实证；hosted runner 不支持的隔离路径明确报告，不能升级为 Profile 资格。
+Python 两个系统的 job 同时安装固定 `opencode-ai@1.18.29`，以实际二进制执行本地模拟 provider 探针；缺失或版本不符不能将该检查静默跳过。固定 Go 隔离链路另外要求 Linux 原生 ELF、namespace 和 UDS 组合测试必须执行：设置 `KARAJAN_REQUIRE_OPENCODE_ISOLATION=1`，只在一次性的 Linux CI runner 中允许所需 user namespace。Windows 的 Linux 专用项明确跳过。CI 的本机观察不能升级为用户部署环境的 Profile 资格；[执行范围](m2-opencode-go-isolated.md) 单列。
 
 ## 凭据与真实资格验证
 
 workflow 权限限定为 `contents: read`；checkout 不持久保存 Git 凭据；不引用模型账号、订阅登录文件、provider key 或交付凭据，不上传这些材料。使用普通 `pull_request`，不借 `pull_request_target` 在高权限上下文运行 PR 代码。依赖安装需要网络，但测试只应使用本地夹具、假 provider、临时目录及临时进程。
 
-CI 绿色只表示这些离线契约和本地行为检查通过。它不能证明官方订阅身份、真实模型/参数接受情况、收费上界完整性、真实工具沙箱、远端取消，或用户机器上的 WSL2/容器隔离已合格。Linux/Windows hosted runner 测试也不能替代目标部署的资格记录。当前实施阶段按用户要求不进行现金 API 真实调用，其未执行资格保持 `not_run`；离线通过不解除该限制。[资格记录与验收范围](../architecture/05-build-and-validation.md)
+CI 绿色只表示这些离线契约和本地行为检查通过。它不能证明官方订阅身份、真实模型/参数接受情况、收费上界完整性、远端取消，或用户机器上的 WSL2/容器隔离已合格。Linux/Windows hosted runner 测试也不能替代目标部署的资格记录。用户已授权固定 OpenCode Go 通道的真实测试，其实测单独保存；其他通道的现金调用仍暂停，未执行资格保持 `not_run`。[资格记录与验收范围](../architecture/05-build-and-validation.md)
 
 真实资格以后可以采用独立的手动流程：绑定具体提交、Profile/runtime revision、目标环境、官方认证引用、测试范围和预算；只在已具备相应授权时运行。它不在公共 PR CI 中注入账号，不通过“缺账号则 skip 并整体 passed”制造资格。没有执行就记录 `not_run`，能力不支持记录 `unsupported`，违反契约记录 `failed`；只有对应真实用例执行成功才记录 `passed`。本次仅规定接口边界，没有创建或运行真实资格 workflow。
 

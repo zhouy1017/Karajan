@@ -1,0 +1,80 @@
+"""Explicitly authorized fixed live diagnostic; credential values never leave memory."""
+import hashlib
+import json
+import platform
+import sys
+import tempfile
+import time
+import uuid
+from pathlib import Path
+
+from karajan.adapters.opencode.go_journal import GoCallJournal
+from karajan.adapters.opencode.go_relay import GoRelayAuthorization
+from karajan.isolation.go_probe import observe_go_tools
+from karajan.isolation.opencode_runtime import RUNTIME_SHA256
+
+root = Path(__file__).resolve().parents[1]
+scenario = sys.argv[1]
+if scenario not in {"edit", "denied_read"}:
+    raise SystemExit("FIXED_SCENARIO_REQUIRED")
+destination = root / ".cache/go-isolated-live"
+destination.mkdir(exist_ok=True)
+report_path = destination / (scenario + ".report.json")
+start_path = destination / (scenario + ".start.json")
+if report_path.exists() or start_path.exists():
+    raise SystemExit("LIVE_DIAGNOSTIC_ALREADY_STARTED_NO_AUTOMATIC_RETRY")
+runtime = Path("/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode")
+credential = Path("/mnt/c/Users/Chooo/Playground/Karajan/opencodego.key.txt")
+if not credential.is_file() or not 16 <= credential.stat().st_size <= 4096:
+    raise SystemExit("CREDENTIAL_FILE_INVALID")
+secret = credential.read_text(encoding="utf-8-sig").strip()
+if not 16 <= len(secret) <= 4096 or not secret.isascii() or any(c.isspace() for c in secret):
+    raise SystemExit("CREDENTIAL_FILE_INVALID")
+directory = Path(tempfile.mkdtemp(prefix="karajan-go-live-"))
+identifier = uuid.uuid4().hex
+descriptor = {
+    "execution_path": "linux-unshare-chroot-opencode-go-fixed-diagnostic-v1",
+    "artifact_sha256": RUNTIME_SHA256,
+    "platform": platform.platform(),
+    "source_sha256": {str(path.relative_to(root)): hashlib.sha256(path.read_bytes()).hexdigest()
+                      for path in [
+                          root / "backend/karajan/isolation/go_probe.py",
+                          root / "backend/karajan/isolation/opencode_runtime.py",
+                          root / "backend/karajan/isolation/_opencode_namespace.py",
+                          root / "backend/karajan/isolation/_opencode_inner.py",
+                          root / "backend/karajan/isolation/_namespace.py",
+                          root / "backend/karajan/adapters/opencode/go_relay.py",
+                          root / "backend/karajan/adapters/opencode/go_journal.py",
+                          Path(__file__),
+                      ]},
+}
+binding = {
+    "qualification_id": "diagnostic:" + identifier, "attempt_id": identifier, "fence": 1,
+    "profile_digest": hashlib.sha256(b"non-registered-fixed-go-diagnostic").hexdigest(),
+    "runtime_digest": hashlib.sha256(json.dumps(descriptor, sort_keys=True).encode()).hexdigest(),
+    "channel": "opencode-go", "model": "glm-5.3-flash",
+    "auth_generation": "diagnostic:" + identifier, "expires_at": time.time() + 240,
+    "max_requests": 6,
+}
+start_path.write_text(json.dumps({"binding": binding, "runtime": descriptor,
+                                 "directory": str(directory), "registered_profile": False,
+                                 "credential_source": "user-authorized-local-file",
+                                 "started_at": time.time()}, indent=2) + "\n")
+journal = GoCallJournal(directory / "journal.sqlite")
+grant = journal.create_grant(binding, grant_id=identifier)
+result = observe_go_tools(runtime, directory / "run", secret,
+                          GoRelayAuthorization(journal, identifier, binding, grant["capability"]),
+                          scenario=scenario)
+result["runtime_source"] = descriptor
+result["registered_profile"] = False
+result["observed_at"] = time.time()
+encoded = json.dumps(result, indent=2)
+if secret in encoded or grant["capability"] in encoded:
+    raise SystemExit("SENSITIVE_REPORT_SUPPRESSED")
+report_path.write_text(encoded + "\n")
+print(json.dumps({"status": result["status"], "scenario": scenario,
+                  "reason_codes": result["reason_codes"],
+                  "requests": len(result["requests"]),
+                  "statuses": [request["upstream_status"] for request in result["requests"]],
+                  "local_stop": result["native_cleanup"].get("local_stop"),
+                  "report": str(report_path)}))

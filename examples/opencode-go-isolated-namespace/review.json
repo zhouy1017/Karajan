@@ -1,0 +1,201 @@
+{
+  "baseline": "15084c2d07f36165c1e00901d6689c3fd105b749",
+  "recorded_at": "2026-09-06T07:22:30.170269+00:00",
+  "scope": {
+    "backend/karajan/isolation/opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123",
+    "backend/karajan/isolation/_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+    "backend/karajan/isolation/_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766"
+  },
+  "author_tests_reviewed": {
+    "tests/isolation/test_opencode_runtime.py": "2194177e3e66933c7da1c3ec34a09bc326b8867ef64e992d5720a1e9aec6b07a"
+  },
+  "test": {
+    ".cache/go-namespace-review/test_namespace_review.py": "504c6b97f661767d07af5dc32c418dfd7050995ff708e8ff6f65ef6418f13da5"
+  },
+  "report": {
+    ".cache/go-namespace-review/review.md": "be694e32efb519dbd6f4dfd8b1eb94beaee22260d125e5de4569053831961813"
+  },
+  "helpers_and_existing_dependencies": {
+    "tests/adapters/opencode/test_go_relay.py": "845bfe069198365d3d3f1196877007e4667a061dee0c68969121c48349082cc2",
+    "backend/karajan/adapters/opencode/go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+    "backend/karajan/isolation/_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40"
+  },
+  "excluded_authored_dependency": {
+    "backend/karajan/adapters/opencode/go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d"
+  },
+  "initial_scope": {
+    "backend/karajan/isolation/opencode_runtime.py": "9d24f077cf1d159c78a43c9b420e3f8e20cac2448a057be2620344cb60b08102",
+    "backend/karajan/isolation/_opencode_namespace.py": "5c391e9394755c307bce3e79fe44d0dfd5ab3d14d06ff12d0b2b8967864b527a",
+    "backend/karajan/isolation/_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+    "tests/isolation/test_opencode_runtime.py": "62de15de65cf252c997159e06a92095d489956865c2de5f58e29149375c4032e"
+  },
+  "lifecycle_repaired_before_host_projection": {
+    "backend/karajan/isolation/opencode_runtime.py": "b6f0111144ca7b45e81f5824cd88d8adb8ba07a0542af1af1503a8b745d31e93",
+    "backend/karajan/isolation/_opencode_namespace.py": "748934651027d518486e0ce05fcc1f72132530aa55b797cdbd15f26f5bc3e550"
+  },
+  "test_history": {
+    ".cache/go-namespace-review/history/initial-test.py": "a8123a0761a1906f607806af8a14607f5b10678d537508a17adfc8354d0a2698",
+    ".cache/go-namespace-review/history/oracle-reproduction-test.py": "6f805d716b32c8f7e93e13dc552834c94e90f6dbb1815d7d24155d054e5abc76"
+  },
+  "unresolved_findings": [],
+  "resolved_findings": [
+    {
+      "id": "GO-NAMESPACE-001",
+      "priority": 2,
+      "title": "Actual procfs ESRCH escaped public close",
+      "original_evidence": "initial.xml",
+      "reproduction": "test_process_disappearing_during_proc_stat_read_does_not_break_close"
+    },
+    {
+      "id": "GO-NAMESPACE-002",
+      "priority": 2,
+      "title": "Concurrent starts spawned two owned namespace wrappers",
+      "original_evidence": "initial.xml",
+      "reproduction": "test_two_simultaneous_starts_cannot_launch_two_namespace_processes"
+    },
+    {
+      "id": "GO-NAMESPACE-003",
+      "priority": 2,
+      "title": "Returned close evidence aliased the retained receipt",
+      "original_evidence": "copy.xml",
+      "reproduction": "test_closed_evidence_is_detached_from_callers_mutating_previous_result"
+    },
+    {
+      "id": "GO-NAMESPACE-004",
+      "priority": 2,
+      "title": "Modified ELF after construction retained the pinned runtime identity",
+      "original_evidence": "artifact.xml",
+      "reproduction": "test_artifact_changed_after_construction_is_rejected_before_start"
+    },
+    {
+      "id": "GO-NAMESPACE-005",
+      "priority": 2,
+      "title": "Denied edit errors exposed a host-file content-matching oracle",
+      "original_evidence": "edit-oracle.xml",
+      "precise_property_before": "oracle-property-before.xml",
+      "reproduction": "test_nonfixture_edit_does_not_disclose_protected_contents",
+      "resolution_boundary": "Only fixture.py is mounted; other host files are absent from the namespace. This does not change the pinned native tool's permission ordering or qualify access to namespace-internal state."
+    }
+  ],
+  "evidence": {
+    "artifact.xml": {
+      "sha256": "1d568b432c09d42dd7d4d6c3450550b4f600cbebaf7f7c75f609c4dfc702cb13",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": "8.918"
+    },
+    "copy.xml": {
+      "sha256": "dd3193e158e2683d373fc405434b034cb6582f40a2405b0e9581c2e363c68640",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": "7.786"
+    },
+    "edit-oracle.xml": {
+      "sha256": "c72933a05188b32ad3ea83bc41572c5e68f137278eb2f2ff55025eca9804383b",
+      "tests": 2,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": "21.980"
+    },
+    "final.xml": {
+      "sha256": "7771dd97fbc36c238d23977ffe5d6fc93c723fc0e71ca85ad23855f42f3904b8",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": "67.325"
+    },
+    "initial.xml": {
+      "sha256": "29221d63751feb4e563b24e30598ec170f1d7982bee99b799f799e8bfb0f4727",
+      "tests": 3,
+      "failures": 2,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": "24.109"
+    },
+    "native-corrected.xml": {
+      "sha256": "9cb0cc279b083963d339f1ce123d32874b21430c7c7ae36d230771fd9b08a293",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": "11.680"
+    },
+    "native-detail.xml": {
+      "sha256": "b00a7a348fba1677a1dadc61e7816027c40d176875f455129cb2f6baf7e82048",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": "11.621"
+    },
+    "native-reasons.xml": {
+      "sha256": "e36e488c6a5f61479ed2b797e6c49d9e8769c722b036085ad0283c548af644c0",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": "11.071"
+    },
+    "native-shortreasons.xml": {
+      "sha256": "4135f297e7448c81588ed54a0c54a977814b6032c0e32d435970eaea86373123",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": "11.742"
+    },
+    "native.xml": {
+      "sha256": "3949a82a7e262850540094c357fa79d1f938b9038dfd1e1ed173cc463f6b793f",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": "9.996"
+    },
+    "oracle-property-before.xml": {
+      "sha256": "7b232fcb60f5473ad741f56ae8185791f8cd366c67f6302cdf918eef4ff0725d",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": "12.083"
+    },
+    "repaired-lifecycle.xml": {
+      "sha256": "0ee49cfbd077196816213cc94b8564f0cf857cb3f381e87ab79aeabda3df10d2",
+      "tests": 6,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": "52.929"
+    },
+    "windows-final.xml": {
+      "sha256": "0100a46bfdc381b26b0cdb1e4edff7bd05e0a72af50d10c6da47715bb057e74d",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 7,
+      "time_seconds": "0.182"
+    }
+  },
+  "validation": {
+    "wsl2": "7 passed",
+    "windows": "7 Linux skips; collection only",
+    "ruff": "passed for independent test"
+  },
+  "limits": [
+    "No product source edits, keys, provider calls or Git mutations",
+    "Actual pinned Linux ELF and real namespaces, local synthetic upstream only",
+    "Native Linux /tmp sockets and runtime directories automatically removed",
+    "Own journal and root qualification observer excluded from independent scope",
+    "Fixture-only mounting does not establish general task or Profile qualification",
+    "Native /tmp and internal process state retain separate unqualified boundaries",
+    "Local stop is distinct from remote stop, which remains unknown",
+    "native.xml includes an explicitly documented test-fixture assertion mistake"
+  ]
+}

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="10" time="4.421" timestamp="2026-09-06T14:32:12.967553+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.go-relay-review.test_relay_review" name="test_partial_response_failure_does_not_become_a_completed_response" time="0.289" /><testcase classname=".cache.go-relay-review.test_relay_review" name="test_exact_authorization_binding_is_copied_and_verified_before_send[False]" time="0.160" /><testcase classname=".cache.go-relay-review.test_relay_review" name="test_exact_authorization_binding_is_copied_and_verified_before_send[True]" time="0.157" /><testcase classname=".cache.go-relay-review.test_relay_review" name="test_native_headers_do_not_select_logical_call_identity_or_expose_credentials" time="0.348" /><testcase classname=".cache.go-relay-review.test_relay_review" name="test_lost_send_intent_return_stops_before_upstream_and_preserves_durable_unknown" time="0.171" /><testcase classname=".cache.go-relay-review.test_relay_review" name="test_completion_failure_stays_visible_and_does_not_upgrade_journal_unknown" time="0.158" /><testcase classname=".cache.go-relay-review.test_relay_review" name="test_cancel_revokes_before_close_and_does_not_claim_active_handler_stopped" time="2.339" /><testcase classname=".cache.go-relay-review.test_relay_review" name="test_unix_start_preserves_preexisting_socket_or_dangling_symlink[dangling_symlink]" time="0.026" /><testcase classname=".cache.go-relay-review.test_relay_review" name="test_unix_start_preserves_preexisting_socket_or_dangling_symlink[socket]" time="0.012"><failure message="OSError: [Errno 95] Operation not supported">existing = 'socket'
+
+&gt;   ???
+E   OSError: [Errno 95] Operation not supported
+
+C:\Users\Chooo\Playground\Karajan\.cache\go-isolated-runtime\.cache\go-relay-review\test_relay_review.py:225: OSError</failure></testcase><testcase classname=".cache.go-relay-review.test_relay_review" name="test_unix_cleanup_preserves_a_different_socket_at_its_old_path" time="0.019"><failure message="OSError: [Errno 95] Operation not supported">&gt;   ???
+
+C:\Users\Chooo\Playground\Karajan\.cache\go-isolated-runtime\.cache\go-relay-review\test_relay_review.py:245: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/karajan/adapters/opencode/go_relay.py:410: in start
+    self._server = Server(("127.0.0.1", 0), Handler)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/socketserver.py:457: in __init__
+    self.server_bind()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;karajan.adapters.opencode.go_relay.GoRelay.start.&lt;locals&gt;.Server object at 0x787a6f32e360&gt;
+
+    def server_bind(self) -&gt; None:
+        if unix_socket is None:
+            super().server_bind()
+        else:
+            # Keep the existing HTTP parser/lifecycle without ever
+            # allocating a host TCP listener for the namespace path.
+&gt;           self.socket.bind(str(unix_socket))
+E           OSError: [Errno 95] Operation not supported
+
+backend/karajan/adapters/opencode/go_relay.py:374: OSError</failure></testcase></testsuite></testsuites>

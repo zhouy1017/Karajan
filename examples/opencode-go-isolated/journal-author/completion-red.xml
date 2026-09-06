@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="2" time="0.158" timestamp="2026-09-06T14:16:45.012969+08:00" hostname="ProArt-Zhou"><testcase classname="tests.adapters.opencode.test_go_journal" name="test_committed_send_intent_is_history_after_lost_return_and_database_reopen" time="0.014" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_response_facts_are_durable_immutable_and_never_reissue_send_permission" time="0.009"><failure message="AttributeError: 'GoCallJournal' object has no attribute 'complete_call'">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-isolated-runtime/.cache/go-journal-evidence/completion-red-tmp/test_response_facts_are_durabl0')
+
+    def test_response_facts_are_durable_immutable_and_never_reissue_send_permission(
+        tmp_path: Path,
+    ) -&gt; None:
+        path = tmp_path / "journal.sqlite3"
+        journal = GoCallJournal(path, clock=lambda: 1000.0)
+        grant = journal.create_grant(binding(), grant_id="grant-1")
+        journal.begin_call("grant-1", "call-1", capability=grant["capability"], binding=binding())
+        outcome = {
+            "state": "response_received",
+            "upstream_status": 200,
+            "response_bytes": 100,
+            "usage": {"prompt_tokens": 21, "completion_tokens": 9, "total_tokens": 30},
+            "protocol_passed": True,
+            "reason_codes": [],
+        }
+&gt;       receipt = journal.complete_call(
+                  ^^^^^^^^^^^^^^^^^^^^^
+            "grant-1", "call-1", capability=grant["capability"], binding=binding(), outcome=outcome
+        )
+E       AttributeError: 'GoCallJournal' object has no attribute 'complete_call'
+
+tests\adapters\opencode\test_go_journal.py:62: AttributeError</failure></testcase></testsuite></testsuites>
