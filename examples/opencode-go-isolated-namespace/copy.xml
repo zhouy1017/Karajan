@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="7.786" timestamp="2026-09-06T14:57:06.243269+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.go-namespace-review.test_namespace_review" name="test_closed_evidence_is_detached_from_callers_mutating_previous_result" time="7.368"><failure message="AssertionError: assert 0 &gt;= 4&#10; +  where 0 = len([])&#10; +  and   4 = len([{'pid': 25955, 'birth': '7062425', 'namespace_pid': 1}, {'pid': 25995, 'birth': '7062486', 'namespace_pid': 41}, {'pid': 26050, 'birth': '7063068', 'namespace_pid': 56}, {'pid': 26051, 'birth': '7063070', 'namespace_pid': 57}])">instance = (&lt;karajan.isolation.opencode_runtime.IsolatedOpenCode object at 0x74d05f8cf140&gt;, PosixPath('/tmp/karajan-ns-review-lyufxdbl'))
+
+    def test_closed_evidence_is_detached_from_callers_mutating_previous_result(instance):
+        runtime, _ = instance
+        runtime.start()
+        observed = runtime.probe_lifecycle()["observed_processes"]
+        closed = runtime.close()
+        assert closed["local_stop"] == "confirmed"
+        assert len(closed["observed_processes"]) &gt;= len(observed) &gt;= 4
+        closed["observed_processes"].clear()
+        again = runtime.close()
+&gt;       assert len(again["observed_processes"]) &gt;= len(observed)
+E       AssertionError: assert 0 &gt;= 4
+E        +  where 0 = len([])
+E        +  and   4 = len([{'pid': 25955, 'birth': '7062425', 'namespace_pid': 1}, {'pid': 25995, 'birth': '7062486', 'namespace_pid': 41}, {'pid': 26050, 'birth': '7063068', 'namespace_pid': 56}, {'pid': 26051, 'birth': '7063070', 'namespace_pid': 57}])
+
+.cache/go-namespace-review/test_namespace_review.py:44: AssertionError</failure></testcase></testsuite></testsuites>

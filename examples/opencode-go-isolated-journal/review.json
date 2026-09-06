@@ -1,0 +1,36 @@
+{
+  "scope": "independent public GoCallJournal review",
+  "status": "passed_after_fix",
+  "findings": [
+    {
+      "id": "GO-JOURNAL-001",
+      "priority": 2,
+      "state": "closed",
+      "before": "before.junit.xml",
+      "after": "after.junit.xml"
+    }
+  ],
+  "source_sha256": {
+    "backend/karajan/adapters/opencode/go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+    "tests/adapters/opencode/test_go_journal.py": "40ee17ec6731a66f190c354267f04c4aea7ea56305729cca696cb5c0464fbd3c",
+    ".cache/go-journal-review/test_independent.py": "7cbbfe436276f7157c91c48f0049c29c7f420cc125040cc8e2a877916117e5ed",
+    ".cache/go-journal-review/child.py": "5c156231a384800d68263b89f997a7aa2eafa86671682c0626ed44fe92791e73"
+  },
+  "evidence_sha256": {
+    "before.junit.xml": "0239c7910c163cf34f5b166b7e2ec62711576a3808d07be44bd49692b1a4b298",
+    "after.junit.xml": "b43ad137247f146ce21afad61dd193a37d272dd10358cd7dc6867da71c351433",
+    "author-suite.before.junit.xml": "b395f195de21982e67781ed68df38096492a4307b320bfe42b938a02176ba0a5"
+  },
+  "validation": {
+    "independent": "11 passed in 0.76s",
+    "author_before": "51 passed in 1.89s",
+    "ruff": "passed"
+  },
+  "boundary": [
+    "No product edits",
+    "No provider requests",
+    "No real credential access",
+    "Windows SQLite and actual child processes",
+    "No runtime qualification claim"
+  ]
+}

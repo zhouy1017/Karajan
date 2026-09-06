@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="3" time="0.451" timestamp="2026-09-06T15:00:11.369001+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.go-observer-review.test_cli" name="test_no_live_in_real_subprocess_has_no_local_effects" time="0.238" /><testcase classname=".cache.go-observer-review.test_cli" name="test_existing_directory_rejection_precedes_source_and_credential_reads" time="0.043" /><testcase classname=".cache.go-observer-review.test_cli" name="test_observer_exception_revokes_the_persisted_grant_without_echoing_secret" time="0.016"><failure message="AssertionError: assert 'active' == 'revoked'&#10;  &#10;  - revoked&#10;  + active">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-611/test_observer_exception_revoke0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002112BB0F3E0&gt;
+capsys = &lt;_pytest.capture.CaptureFixture object at 0x000002112BB0E900&gt;
+
+    def test_observer_exception_revokes_the_persisted_grant_without_echoing_secret(
+        tmp_path, monkeypatch, capsys
+    ):
+        module = load_entrypoint()
+        secret = "synthetic-only-upstream-secret-for-cli-review"
+        credential = tmp_path / "synthetic-fixture.txt"
+        credential.write_text(secret)
+        output = tmp_path / "failed-observation"
+        monkeypatch.setattr(sys, "argv", arguments(output, credential, "--live"))
+        monkeypatch.setattr(module, "go_runtime_source", lambda _: {"synthetic_source": True})
+    
+        def failed_observer(runtime, directory, actual_secret, authorization, *, scenario):
+            assert actual_secret == secret
+            assert (output / "start.json").is_file()
+            assert authorization.journal.snapshot(authorization.grant_id)["request_count"] == 0
+            raise ValueError(secret)
+    
+        monkeypatch.setattr(module, "observe_go_tools", failed_observer)
+        assert module.main() == 1
+        captured = capsys.readouterr()
+        assert captured.err == ""
+        assert secret not in captured.out
+        assert json.loads(captured.out) == {"status": "failed", "error_type": "ValueError"}
+        start = json.loads((output / "start.json").read_text())
+        assert start["registered_profile"] is False
+        assert all(secret.encode() not in path.read_bytes() for path in output.iterdir())
+        snapshot = GoCallJournal(output / "journal.sqlite").snapshot(start["binding"]["attempt_id"])
+        assert snapshot["request_count"] == 0
+&gt;       assert snapshot["state"] == "revoked"
+E       AssertionError: assert 'active' == 'revoked'
+E         
+E         - revoked
+E         + active
+
+.cache\go-observer-review\test_cli.py:104: AssertionError</failure></testcase></testsuite></testsuites>

@@ -1,0 +1,150 @@
+{
+  "baseline": "15084c2",
+  "scope": [
+    "backend/karajan/adapters/opencode/go_journal.py",
+    "tests/adapters/opencode/test_go_journal.py"
+  ],
+  "sources": {
+    "backend/karajan/adapters/opencode/go_journal.py": {
+      "sha256": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+      "crlf_count": 0
+    },
+    "tests/adapters/opencode/test_go_journal.py": {
+      "sha256": "40ee17ec6731a66f190c354267f04c4aea7ea56305729cca696cb5c0464fbd3c",
+      "crlf_count": 0
+    }
+  },
+  "evidence": {
+    "red": {
+      "path": ".cache/go-journal-evidence/red.xml",
+      "sha256": "4f9db31c9dab467700c50120bab2c823b3eb3ea98a4cae8b8c1d7c75873318d1",
+      "tests": 1,
+      "failures": 0,
+      "errors": 1
+    },
+    "green": {
+      "path": ".cache/go-journal-evidence/green.xml",
+      "sha256": "e9cf363b0d2eefca3a7b99ccaa326916c64b3a1847acc6fe54dc9dc3be5e8340",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0
+    },
+    "completion-red": {
+      "path": ".cache/go-journal-evidence/completion-red.xml",
+      "sha256": "e68b0b70331a2dfa1977c3aae7765c3f54c1ec6ce3b34f15a2fa1e1745cf4d38",
+      "tests": 2,
+      "failures": 1,
+      "errors": 0
+    },
+    "completion-green": {
+      "path": ".cache/go-journal-evidence/completion-green.xml",
+      "sha256": "8cfbdd86c21f7fe6b2c591b3a6fe430cb3b5308c79e47f972e5db8fb9d9a6932",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0
+    },
+    "revoke-red": {
+      "path": ".cache/go-journal-evidence/revoke-red.xml",
+      "sha256": "fad4ccba3bcf79fec031baae682c8983cb83cd4793eeb5696d9e7730bba56e5a",
+      "tests": 4,
+      "failures": 1,
+      "errors": 0
+    },
+    "revoke-green": {
+      "path": ".cache/go-journal-evidence/revoke-green.xml",
+      "sha256": "60fa8cd7c09898bdc42b2f5b4a90173112bdb5ef2ac2d108b497ee4293646f30",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0
+    },
+    "facts-red": {
+      "path": ".cache/go-journal-evidence/facts-red.xml",
+      "sha256": "8ce949dd90fc6c40391ab8e33cb2a32cb3cef89a58e656bbc3ff999aad8fb934",
+      "tests": 10,
+      "failures": 6,
+      "errors": 0
+    },
+    "facts-green": {
+      "path": ".cache/go-journal-evidence/facts-green.xml",
+      "sha256": "20e8598a3e468457426f862e97cc3748fe996fed83e80d1375bc8b2c220c239c",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0
+    },
+    "boundaries": {
+      "path": ".cache/go-journal-evidence/boundaries.xml",
+      "sha256": "4768638af183332997235f262d15b721e6a58c486b7872862237e72bf3a12f7f",
+      "tests": 51,
+      "failures": 0,
+      "errors": 0
+    },
+    "final": {
+      "path": ".cache/go-journal-evidence/final.xml",
+      "sha256": "dfe4b7c5686b969dd91701e8bf07aeff4de8104e5800a8f7847f9674cfced8af",
+      "tests": 51,
+      "failures": 0,
+      "errors": 0
+    },
+    "wsl": {
+      "path": ".cache/go-journal-evidence/wsl.xml",
+      "sha256": "b4ea904a27b9dd82b2b49e8c4a644bc7c1d65f3d68b6fdc7e980a6140c468ea0",
+      "tests": 51,
+      "failures": 0,
+      "errors": 0
+    },
+    "regression": {
+      "path": ".cache/go-journal-evidence/regression.xml",
+      "sha256": "c9c397fbd37ec6a66414a8736cd8c0626395ca172e4674e8aa4d640ea4055741",
+      "tests": 148,
+      "failures": 13,
+      "errors": 0
+    },
+    "expiry-red": {
+      "path": ".cache/go-journal-evidence/expiry-red.xml",
+      "sha256": "0abfee69feb4de55e06eeccc735d22edefe38c94169b88d0d0ce7d7626b49a05",
+      "tests": 53,
+      "failures": 1,
+      "errors": 0
+    },
+    "expiry-green": {
+      "path": ".cache/go-journal-evidence/expiry-green.xml",
+      "sha256": "adb1e7615904dbccf30ef89321331dbf4bd70ac5b6602bc4a3e6659abbe99f97",
+      "tests": 64,
+      "failures": 0,
+      "errors": 0
+    },
+    "expiry-wsl": {
+      "path": ".cache/go-journal-evidence/expiry-wsl.xml",
+      "sha256": "94d3ee5dc723c9febc4cb971e53946dc27292a82371b652a12d23632c9e27c43",
+      "tests": 64,
+      "failures": 0,
+      "errors": 0
+    }
+  },
+  "validation": {
+    "ruff_check": "passed",
+    "ruff_format": "applied before expiry fix Windows/WSL 64-case runs",
+    "mypy": "passed, 1 source file",
+    "windows": "64 passed: 53 author + 11 independent tests rerun by author",
+    "wsl2": "64 passed: same public suites, rerun by author",
+    "regression_before_fix": "135 passed; 13 original native probes failed due to missing opencode.exe, subsequently resolved by root dependency setup"
+  },
+  "fix": {
+    "finding": "GO-JOURNAL-001",
+    "behavior": "Authenticated begin_call commits an expired-grant fact before rejecting; new intents remain denied after clock rollback and database reopen.",
+    "read_only": "snapshot/call_receipt never persist a new expiry observation",
+    "historical_freeze": ".cache/go-journal-evidence/history/before-GO-JOURNAL-001.freeze.json",
+    "independent_reviewer_status": "capacity_facts separately reran 11 tests and closed finding",
+    "independent_tests_rerun_sha256": "7cbbfe436276f7157c91c48f0049c29c7f420cc125040cc8e2a877916117e5ed",
+    "evidence_note": "Earlier XML files describe earlier source versions preserved by the historical freeze. expiry-green/expiry-wsl bind the current source."
+  },
+  "boundaries": [
+    "Internal trusted controller/relay port, not a public HTTP endpoint.",
+    "Grant/call IDs are trusted controller/relay identity, never native request identity.",
+    "Fresh begin_call returns send_allowed only after SQLite commit. Replay never returns it.",
+    "Lost create capability is unrecoverable; controller must retain fixed grant ID, not mint a replacement after losing the return.",
+    "Capability is stored only as SHA256, never in receipts or snapshots.",
+    "Completion is a local observation, never proof that remote computation stopped.",
+    "Journal has no provider calls, cash budget promise, or model/tool qualification grant."
+  ]
+}

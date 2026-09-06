@@ -1,0 +1,45 @@
+{
+  "binding": {
+    "qualification_id": "diagnostic:be39a51d092e45d3bbf4f7bd8dafd064",
+    "attempt_id": "be39a51d092e45d3bbf4f7bd8dafd064",
+    "fence": 1,
+    "profile_digest": "e232e3796b1720d03bb8a5c399e6e19929d3c5e08efea18ed6d4f2128a64e432",
+    "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3",
+    "channel": "opencode-go",
+    "model": "glm-5.3-flash",
+    "auth_generation": "diagnostic:be39a51d092e45d3bbf4f7bd8dafd064",
+    "expires_at": 1788679376.3110762,
+    "max_requests": 6
+  },
+  "runtime_source": {
+    "schema_version": "karajan.fixed-go-runtime-source.v1",
+    "execution_path": "linux-unshare-chroot-opencode-go-fixed-tools-v1",
+    "runtime_version": "1.18.29",
+    "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+    "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+    "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+    "machine": "x86_64",
+    "source_sha256": {
+      "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+      "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123",
+      "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+      "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+      "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+      "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+      "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+      "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b"
+    },
+    "system_executable_sha256": {
+      "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c",
+      "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+      "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+      "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+    },
+    "native_settings_digest": "e0a8d0daa8172f93abee79ac1b1640ca1663702933c11918c3477476de098a69"
+  },
+  "registered_profile": false,
+  "credential_source": "explicit-local-file-diagnostic",
+  "started_at": 1788679136.3110774,
+  "scenario": "denied_read",
+  "entrypoint_sha256": "f1816fd9ef8a28d122dfbb20c26097dd3f620b4bebc50c6b57ebc32d05a81715"
+}

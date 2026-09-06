@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="10.450" timestamp="2026-09-06T15:14:40.173879+08:00" hostname="ProArt-Zhou"><testcase classname="tests.isolation.test_opencode_runtime.IsolatedOpenCodeTests" name="test_only_the_fixed_fixture_is_projected_into_the_namespace_workspace" time="10.152"><failure message="AssertionError: Lists differ: ['alias.py', 'blocked.txt', 'fixture.py'] != ['fixture.py']&#10;&#10;First differing element 0:&#10;'alias.py'&#10;'fixture.py'&#10;&#10;First list contains 2 additional elements.&#10;First extra element 1:&#10;'blocked.txt'&#10;&#10;- ['alias.py', 'blocked.txt', 'fixture.py']&#10;+ ['fixture.py']">self = &lt;test_opencode_runtime.IsolatedOpenCodeTests testMethod=test_only_the_fixed_fixture_is_projected_into_the_namespace_workspace&gt;
+
+    def test_only_the_fixed_fixture_is_projected_into_the_namespace_workspace(self) -&gt; None:
+        from karajan.isolation.opencode_runtime import IsolatedOpenCode
+    
+        runtime = IsolatedOpenCode(self.runtime, self.root / "run", self.upstream, "synthetic-local-capability")
+        self.addCleanup(runtime.close)
+        (runtime.workspace / "fixture.py").write_text("PUBLIC_FIXTURE")
+        (runtime.workspace / "blocked.txt").write_text("SYNTHETIC_HOST_ONLY")
+        (runtime.workspace / "alias.py").symlink_to("blocked.txt")
+        runtime.start()
+        processes = runtime.probe_lifecycle()["observed_processes"]
+        init = next(process for process in processes if process["namespace_pid"] == 1)
+        projected = Path(f"/proc/{init['pid']}/root/workspace")
+&gt;       self.assertEqual(sorted(path.name for path in projected.iterdir()), ["fixture.py"])
+E       AssertionError: Lists differ: ['alias.py', 'blocked.txt', 'fixture.py'] != ['fixture.py']
+E       
+E       First differing element 0:
+E       'alias.py'
+E       'fixture.py'
+E       
+E       First list contains 2 additional elements.
+E       First extra element 1:
+E       'blocked.txt'
+E       
+E       - ['alias.py', 'blocked.txt', 'fixture.py']
+E       + ['fixture.py']
+
+tests/isolation/test_opencode_runtime.py:406: AssertionError</failure></testcase></testsuite></testsuites>

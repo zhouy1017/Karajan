@@ -13,14 +13,22 @@ import hmac
 import json
 import re
 import secrets
+import socket
+import stat
+import sys
 import threading
 import time
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from decimal import Decimal
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 import httpx
+
+from .go_journal import GoCallJournal, GoJournalError
 
 _UPSTREAM = "https://opencode.ai/zen/go/v1/chat/completions"
 _MODEL = "glm-5.3-flash"
@@ -30,6 +38,10 @@ _MAX_REQUESTS = 6
 _TOOLS = frozenset({"read", "edit"})
 _SESSION = re.compile(r"[A-Za-z0-9_-]{1,160}\Z")
 _COST = re.compile(r"(?:0|[1-9][0-9]{0,15})(?:\.[0-9]{1,24})?(?:[eE]([+-]?[0-9]{1,3}))?\Z")
+if sys.platform == "linux":
+    _UNIX_FAMILY = socket.AF_UNIX
+else:
+    _UNIX_FAMILY = socket.AF_INET  # Unix mode is rejected before creating a server.
 
 
 class _Rejected(Exception):
@@ -262,6 +274,16 @@ def _client() -> httpx.Client:
     return httpx.Client(timeout=90, trust_env=False, follow_redirects=False)
 
 
+@dataclass(frozen=True)
+class GoRelayAuthorization:
+    """Controller-owned grant; neither capability is an upstream provider key."""
+
+    journal: GoCallJournal
+    grant_id: str
+    binding: dict[str, Any]
+    capability: str = field(repr=False)
+
+
 class GoRelay:
     """One local diagnostic, at most six validated upstream send attempts.
 
@@ -276,6 +298,7 @@ class GoRelay:
         canary: str,
         *,
         client_factory: Callable[[], httpx.Client] | None = None,
+        authorization: GoRelayAuthorization | None = None,
     ) -> None:
         if (
             not secret
@@ -297,6 +320,18 @@ class GoRelay:
         self._closing = False
         self._server: ThreadingHTTPServer | None = None
         self._thread: threading.Thread | None = None
+        self._unix_socket: Path | None = None
+        self._socket_identity: tuple[int, int] | None = None
+        self._authorization = (
+            GoRelayAuthorization(
+                authorization.journal,
+                authorization.grant_id,
+                copy.deepcopy(authorization.binding),
+                authorization.capability,
+            )
+            if authorization is not None
+            else None
+        )
 
     @property
     def capability(self) -> str:
@@ -306,6 +341,8 @@ class GoRelay:
     def url(self) -> str:
         if self._server is None:
             raise RuntimeError("RELAY_NOT_STARTED")
+        if self._unix_socket is not None:
+            raise RuntimeError("UNIX_RELAY_HAS_NO_TCP_URL")
         return f"http://127.0.0.1:{self._server.server_port}/v1"
 
     @property
@@ -313,13 +350,29 @@ class GoRelay:
         with self._condition:
             return copy.deepcopy(self._receipts)
 
-    def start(self) -> None:
+    def start(self, *, unix_socket: Path | None = None) -> None:
         with self._condition:
             if self._server is not None or self._closing:
                 raise RuntimeError("RELAY_ALREADY_STARTED_OR_CLOSED")
+            if unix_socket is not None:
+                if sys.platform != "linux":
+                    raise RuntimeError("LINUX_UNIX_RELAY_REQUIRED")
+                unix_socket = unix_socket.parent.resolve(strict=True) / unix_socket.name
+                if unix_socket.exists() or unix_socket.is_symlink():
+                    raise RuntimeError("RELAY_SOCKET_PATH_EXISTS")
             owner = self
 
             class Server(ThreadingHTTPServer):
+                address_family: int = _UNIX_FAMILY if unix_socket is not None else socket.AF_INET
+
+                def server_bind(self) -> None:
+                    if unix_socket is None:
+                        super().server_bind()
+                    else:
+                        # Keep the existing HTTP parser/lifecycle without ever
+                        # allocating a host TCP listener for the namespace path.
+                        self.socket.bind(str(unix_socket))
+
                 def process_request(self, request: Any, client_address: Any) -> None:
                     # Count before spawning, including peers still sending headers.
                     with owner._condition:
@@ -355,6 +408,10 @@ class GoRelay:
                     self.connection.settimeout(5)
 
             self._server = Server(("127.0.0.1", 0), Handler)
+            if unix_socket is not None:
+                self._unix_socket = unix_socket
+                entry = unix_socket.lstat()
+                self._socket_identity = (entry.st_dev, entry.st_ino)
             self._server.daemon_threads = True
             self._thread = threading.Thread(
                 target=self._server.serve_forever,
@@ -446,6 +503,7 @@ class GoRelay:
                 "usage": {},
                 "upstream_send_attempted": False,
                 "upstream_status": None,
+                "upstream_response_complete": False,
                 "response_bytes": 0,
                 "stream_terminated": False,
                 "protocol_passed": False,
@@ -466,6 +524,21 @@ class GoRelay:
                 if self._closing:
                     raise _Rejected("RELAY_CLOSING", 503)
                 self._clients.add(client)
+                if self._authorization is not None:
+                    auth = self._authorization
+                    call_id = str(uuid4())
+                    try:
+                        grant = auth.journal.begin_call(
+                            auth.grant_id, call_id, capability=auth.capability, binding=auth.binding
+                        )
+                    except GoJournalError as error:
+                        reason = str(error)
+                        raise _Rejected(
+                            reason, 429 if reason == "REQUEST_LIMIT_REACHED" else 403
+                        ) from None
+                    if not grant["send_allowed"]:
+                        raise _Rejected("CALL_SEND_NOT_AUTHORIZED", 409)
+                    receipt["journal_call_id"] = call_id
                 receipt["upstream_send_attempted"] = True
                 self._receipts[receipt["sequence"] - 1] = copy.deepcopy(receipt)
             with client.stream(
@@ -498,6 +571,7 @@ class GoRelay:
                     if receipt["response_bytes"] > _RESPONSE_LIMIT:
                         raise _Rejected("UPSTREAM_RESPONSE_TOO_LARGE")
                     content.extend(chunk)
+                receipt["upstream_response_complete"] = True
                 receipt.update(_stream_facts(bytes(content), self._secret))
                 handler.send_response(200)
                 handler.send_header("Content-Type", "text/event-stream")
@@ -527,8 +601,38 @@ class GoRelay:
             with self._condition:
                 if client is not None:
                     self._clients.discard(client)
+                if receipt is not None and "journal_call_id" in receipt:
+                    self._complete_journal(receipt)
                 if receipt is not None and "sequence" in receipt:
                     self._receipts[receipt["sequence"] - 1] = receipt
+
+    def _complete_journal(self, receipt: dict[str, Any]) -> None:
+        auth = self._authorization
+        assert auth is not None
+        try:
+            auth.journal.complete_call(
+                auth.grant_id,
+                receipt["journal_call_id"],
+                capability=auth.capability,
+                binding=auth.binding,
+                outcome={
+                    "state": (
+                        "response_received"
+                        if receipt["upstream_response_complete"]
+                        else "send_unknown"
+                    ),
+                    "upstream_status": receipt["upstream_status"],
+                    "response_bytes": receipt["response_bytes"],
+                    "usage": receipt["usage"],
+                    "protocol_passed": receipt["protocol_passed"],
+                    "reason_codes": receipt["reason_codes"],
+                },
+            )
+        except Exception:
+            # Preserve the already durable unknown send if completion cannot be
+            # recorded. No retry, refund or remote-stop claim follows this error.
+            receipt["protocol_passed"] = False
+            receipt["reason_codes"].append("JOURNAL_COMPLETION_FAILED")
 
     def close(self) -> dict[str, Any]:
         errors: list[str] = []
@@ -553,4 +657,16 @@ class GoRelay:
                 self._condition.wait(timeout=max(0, deadline - time.monotonic()))
             if self._active:
                 errors.append("ACTIVE_HANDLER_REMAINS")
+        if self._unix_socket is not None:
+            try:
+                entry = self._unix_socket.lstat()
+                if (
+                    stat.S_ISSOCK(entry.st_mode)
+                    and (entry.st_dev, entry.st_ino) == self._socket_identity
+                ):
+                    self._unix_socket.unlink()
+            except FileNotFoundError:
+                pass
+            except OSError:
+                errors.append("RELAY_SOCKET_CLEANUP_FAILED")
         return {"status": "unknown" if errors else "closed", "errors": errors}

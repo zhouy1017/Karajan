@@ -61,6 +61,10 @@ jobs:
       - name: Install the locked OpenCode runtime
         run: npm ci --prefix runtimes/opencode --no-audit --no-fund
 
+      - name: Permit required namespaces on the ephemeral Linux test runner
+        if: runner.os == 'Linux'
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
       - name: Lint Python
         run: uv run --frozen --extra dev ruff check .
 
@@ -69,6 +73,8 @@ jobs:
 
       - name: Run tests, including contract tests
         run: uv run --frozen --extra dev pytest tests
+        env:
+          KARAJAN_REQUIRE_OPENCODE_ISOLATION: "1"
 
       - name: Check Go diagnostic boundaries without provider credentials
         run: >-
@@ -92,6 +98,18 @@ jobs:
           -o "pythonpath=backend tests/runs tests/web"
           examples/task-admission/spec
           examples/task-admission/standards
+
+      - name: Check isolated Go runtime independent boundaries without provider credentials
+        run: >-
+          uv run --frozen --extra dev pytest
+          -o "pythonpath=backend tests/adapters/opencode tests/isolation"
+          examples/opencode-go-isolated-journal
+          examples/opencode-go-isolated-relay
+          examples/opencode-go-isolated-observer
+          examples/opencode-go-isolated-namespace
+        env:
+          KARAJAN_REQUIRE_OPENCODE_ISOLATION: "1"
+          KARAJAN_OPENCODE_LINUX_BINARY: runtimes/opencode/node_modules/opencode-linux-x64/bin/opencode
 
   frontend-quality:
     name: frontend-quality

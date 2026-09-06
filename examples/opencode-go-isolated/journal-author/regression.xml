@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="13" skipped="0" tests="148" time="12.132" timestamp="2026-09-06T14:23:17.460094+08:00" hostname="ProArt-Zhou"><testcase classname="tests.adapters.opencode.test_go_journal" name="test_committed_send_intent_is_history_after_lost_return_and_database_reopen" time="0.013" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_response_facts_are_durable_immutable_and_never_reissue_send_permission" time="0.013" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_revocation_or_expiry_blocks_new_calls_but_preserves_unknown_send_and_completion[revoke]" time="0.015" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_revocation_or_expiry_blocks_new_calls_but_preserves_unknown_send_and_completion[expire]" time="0.013" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_completion_cannot_turn_missing_or_contradictory_response_into_protocol_success[outcome0]" time="0.009" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_completion_cannot_turn_missing_or_contradictory_response_into_protocol_success[outcome1]" time="0.009" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_completion_cannot_turn_missing_or_contradictory_response_into_protocol_success[outcome2]" time="0.009" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_completion_cannot_turn_missing_or_contradictory_response_into_protocol_success[outcome3]" time="0.009" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_completion_cannot_turn_missing_or_contradictory_response_into_protocol_success[outcome4]" time="0.009" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_completion_cannot_turn_missing_or_contradictory_response_into_protocol_success[outcome5]" time="0.009" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_concurrent_connections_commit_only_six_new_calls_or_one_shared_logical_call[False]" time="0.425" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_concurrent_connections_commit_only_six_new_calls_or_one_shared_logical_call[True]" time="0.689" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_every_binding_field_is_checked_before_new_intent_history_and_completion[change0]" time="0.011" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_every_binding_field_is_checked_before_new_intent_history_and_completion[change1]" time="0.010" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_every_binding_field_is_checked_before_new_intent_history_and_completion[change2]" time="0.010" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_every_binding_field_is_checked_before_new_intent_history_and_completion[change3]" time="0.010" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_every_binding_field_is_checked_before_new_intent_history_and_completion[change4]" time="0.010" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_every_binding_field_is_checked_before_new_intent_history_and_completion[change5]" time="0.011" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_every_binding_field_is_checked_before_new_intent_history_and_completion[change6]" time="0.010" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_every_binding_field_is_checked_before_new_intent_history_and_completion[change7]" time="0.010" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_every_binding_field_is_checked_before_new_intent_history_and_completion[change8]" time="0.010" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_invalid_capability_never_returns_history_or_changes_a_call[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]" time="0.010" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_invalid_capability_never_returns_history_or_changes_a_call[]" time="0.010" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_invalid_capability_never_returns_history_or_changes_a_call[secret\nsecret\nsecret\nsecret\nsecret\nsecret\nsecret\nsecret\nsecret\nsecret\nsecret\nsecret\nsecret\nsecret\nsecret\nsecret\nsecret\nsecret\nsecret\nsecret\n]" time="0.009" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_invalid_capability_never_returns_history_or_changes_a_call[\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49\u6c49]" time="0.010" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_capability_is_created_once_not_logged_and_snapshots_are_detached" time="0.010" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_invalid_grant_inputs_are_rejected_without_echo_or_persistence[change0]" time="0.004" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_invalid_grant_inputs_are_rejected_without_echo_or_persistence[change1]" time="0.004" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_invalid_grant_inputs_are_rejected_without_echo_or_persistence[change2]" time="0.004" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_invalid_grant_inputs_are_rejected_without_echo_or_persistence[change3]" time="0.004" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_invalid_grant_inputs_are_rejected_without_echo_or_persistence[change4]" time="0.004" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_invalid_grant_inputs_are_rejected_without_echo_or_persistence[change5]" time="0.004" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_invalid_grant_inputs_are_rejected_without_echo_or_persistence[change6]" time="0.004" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_invalid_grant_inputs_are_rejected_without_echo_or_persistence[change7]" time="0.004" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_invalid_grant_inputs_are_rejected_without_echo_or_persistence[change8]" time="0.005" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_invalid_grant_inputs_are_rejected_without_echo_or_persistence[change9]" time="0.004" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_only_strict_redacted_completion_facts_are_accepted[change0]" time="0.009" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_only_strict_redacted_completion_facts_are_accepted[change1]" time="0.009" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_only_strict_redacted_completion_facts_are_accepted[change2]" time="0.009" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_only_strict_redacted_completion_facts_are_accepted[change3]" time="0.009" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_only_strict_redacted_completion_facts_are_accepted[change4]" time="0.009" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_only_strict_redacted_completion_facts_are_accepted[change5]" time="0.009" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_only_strict_redacted_completion_facts_are_accepted[change6]" time="0.009" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_only_strict_redacted_completion_facts_are_accepted[change7]" time="0.009" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_only_strict_redacted_completion_facts_are_accepted[change8]" time="0.009" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_only_strict_redacted_completion_facts_are_accepted[change9]" time="0.010" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_only_strict_redacted_completion_facts_are_accepted[change10]" time="0.009" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_only_strict_redacted_completion_facts_are_accepted[change11]" time="0.009" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_only_strict_redacted_completion_facts_are_accepted[change12]" time="0.009" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_only_strict_redacted_completion_facts_are_accepted[change13]" time="0.010" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_only_strict_redacted_completion_facts_are_accepted[change14]" time="0.009" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_complete_stream_keeps_real_credential_only_at_upstream" time="0.099" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_invalid_request_cannot_send_upstream[patch0]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_invalid_request_cannot_send_upstream[patch1]" time="0.063" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_invalid_request_cannot_send_upstream[patch2]" time="0.061" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_invalid_request_cannot_send_upstream[patch3]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_invalid_request_cannot_send_upstream[patch4]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_invalid_request_cannot_send_upstream[patch5]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_invalid_request_cannot_send_upstream[patch6]" time="0.063" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_invalid_request_cannot_send_upstream[patch7]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_invalid_request_cannot_send_upstream[patch8]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_invalid_request_cannot_send_upstream[patch9]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_json_root_must_be_an_object[body0]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_json_root_must_be_an_object[42]" time="0.063" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_json_root_must_be_an_object[True]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_json_root_must_be_an_object[secret]" time="0.061" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_local_path_is_exact[/chat/completions?x=1]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_local_path_is_exact[/chat/completions/]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_local_path_is_exact[/models]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_capability_and_session_are_required_and_never_forward_arbitrary_headers" time="0.108" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_invalid_json_is_safely_rejected[{&quot;model&quot;:&quot;glm-5.3-flash&quot;,&quot;model&quot;:&quot;other&quot;}]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_invalid_json_is_safely_rejected[{&quot;temperature&quot;:NaN}]" time="0.061" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_invalid_json_is_safely_rejected[{]" time="0.077" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_invalid_json_is_safely_rejected[\xff]" time="0.061" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_request_body_limit_prevents_upstream_send" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_upstream_errors_never_echo_body_or_follow_redirects[302]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_upstream_errors_never_echo_body_or_follow_redirects[401]" time="0.061" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_upstream_errors_never_echo_body_or_follow_redirects[429]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_upstream_errors_never_echo_body_or_follow_redirects[500]" time="0.077" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_incomplete_or_foreign_stream_is_never_forwarded_as_success[data: {&quot;model&quot;: &quot;foreign-provider-model&quot;, &quot;choices&quot;: [{&quot;index&quot;: 0, &quot;delta&quot;: {&quot;tool_calls&quot;: null}, &quot;finish_reason&quot;: &quot;stop&quot;}]}\n\ndata: [DONE]\n\n-MODEL_MISMATCH]" time="0.061" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_incomplete_or_foreign_stream_is_never_forwarded_as_success[data: {&quot;choices&quot;: [{&quot;index&quot;: 0, &quot;delta&quot;: {&quot;tool_calls&quot;: null}, &quot;finish_reason&quot;: &quot;stop&quot;}]}\n\ndata: [DONE]\n\n-MISSING_MODEL]" time="0.063" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_incomplete_or_foreign_stream_is_never_forwarded_as_success[data: {&quot;model&quot;: &quot;glm-5.3-flash&quot;, &quot;choices&quot;: [{&quot;index&quot;: 0, &quot;delta&quot;: {&quot;tool_calls&quot;: null}, &quot;finish_reason&quot;: &quot;stop&quot;}]}\n\n-INCOMPLETE_SSE]" time="0.077" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_incomplete_or_foreign_stream_is_never_forwarded_as_success[data: {&quot;model&quot;: &quot;glm-5.3-flash&quot;, &quot;choices&quot;: [{&quot;index&quot;: 0, &quot;delta&quot;: {&quot;tool_calls&quot;: null}, &quot;finish_reason&quot;: &quot;stop&quot;}]}\n\ndata: [DONE]\n-INCOMPLETE_SSE]" time="0.076" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_incomplete_or_foreign_stream_is_never_forwarded_as_success[data: {&quot;model&quot;: &quot;glm-5.3-flash&quot;, &quot;choices&quot;: [{&quot;index&quot;: 0, &quot;delta&quot;: {&quot;tool_calls&quot;: null}, &quot;finish_reason&quot;: &quot;stop&quot;}]}\n\ndata: [DONE]\n\ndata: {&quot;model&quot;: &quot;glm-5.3-flash&quot;, &quot;choices&quot;: [{&quot;index&quot;: 0, &quot;delta&quot;: {&quot;tool_calls&quot;: null}, &quot;finish_reason&quot;: &quot;stop&quot;}]}\n\ndata: [DONE]\n\n-DATA_AFTER_TERMINATOR]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_incomplete_or_foreign_stream_is_never_forwarded_as_success[data: {&quot;model&quot;: &quot;glm-5.3-flash&quot;, &quot;choices&quot;: [{&quot;delta&quot;: {}, &quot;finish_reason&quot;: &quot;length&quot;}]}\n\ndata: [DONE]\n\n-UNSUCCESSFUL_FINISH]" time="0.061" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_incomplete_or_foreign_stream_is_never_forwarded_as_success[data: {&quot;error&quot;: {&quot;message&quot;: &quot;private-provider-error&quot;}}\n\ndata: [DONE]\n\n-UPSTREAM_ERROR_EVENT]" time="0.077" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_incomplete_or_foreign_stream_is_never_forwarded_as_success[data: {&quot;model&quot;: &quot;glm-5.3-flash&quot;, &quot;choices&quot;: [{&quot;delta&quot;: {}, &quot;finish_reason&quot;: null}]}\n\ndata: [DONE]\n\n-INCOMPLETE_SSE]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_incomplete_or_foreign_stream_is_never_forwarded_as_success[data: invalid-json\n\n-INVALID_SSE_JSON]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_usage_requires_bounded_integers[True]" time="0.061" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_usage_requires_bounded_integers[-1]" time="0.077" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_usage_requires_bounded_integers[1.5]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_usage_requires_bounded_integers[private-non-numeric]" time="0.077" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_usage_requires_bounded_integers[9223372036854775808]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_tool_loop_usage_and_detached_receipts_preserve_only_allowlisted_facts" time="0.061" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_unapproved_tool_name_is_rejected_without_retaining_its_text" time="0.061" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_credentials_split_over_deltas_never_reach_native[content]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_credentials_split_over_deltas_never_reach_native[reasoning_content]" time="0.061" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_credentials_split_over_deltas_never_reach_native[arguments]" time="0.079" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_unicode_escaped_credential_inside_tool_argument_json_is_rejected" time="0.078" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_denied_canary_is_detected_before_upstream_send" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_response_size_limit_fails_closed_instead_of_forwarding_truncated_evidence" time="0.078" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_transport_error_is_redacted_and_distinguished_from_an_http_reply" time="0.061" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_concurrent_requests_reserve_only_six_slots" time="0.077" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_close_reports_unknown_while_upstream_handler_is_unfinished" time="2.070" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_close_includes_connections_waiting_for_complete_http_headers" time="2.066" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_go_cost_trailer_after_done_keeps_native_bytes_and_usage" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_go_cost_trailer_accepts_bounded_decimal_strings_without_float_conversion[0]" time="0.078" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_go_cost_trailer_accepts_bounded_decimal_strings_without_float_conversion[1.4382e-5]" time="0.061" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_go_trailer_does_not_allow_other_post_done_data[trailer0]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_go_trailer_does_not_allow_other_post_done_data[trailer1]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_go_trailer_does_not_allow_other_post_done_data[trailer2]" time="0.063" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_go_trailer_does_not_allow_other_post_done_data[trailer3]" time="0.076" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_go_trailer_does_not_allow_other_post_done_data[trailer4]" time="0.063" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_go_trailer_does_not_allow_other_post_done_data[trailer5]" time="0.061" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_go_trailer_does_not_allow_other_post_done_data[trailer6]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_go_trailer_does_not_allow_other_post_done_data[trailer7]" time="0.063" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_go_trailer_does_not_allow_other_post_done_data[trailer8]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_go_trailer_is_once_only_and_strictly_after_done[before_done]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_go_trailer_is_once_only_and_strictly_after_done[duplicate]" time="0.077" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_go_trailer_is_once_only_and_strictly_after_done[extra_done]" time="0.078" /><testcase classname="tests.adapters.opencode.test_go_relay" name="test_go_trailer_is_once_only_and_strictly_after_done[new_content]" time="0.077" /><testcase classname="tests.adapters.opencode.test_go_live" name="test_cli_requires_live_before_reading_credential_or_runtime" time="0.002" /><testcase classname="tests.adapters.opencode.test_go_live" name="test_unknown_scenario_cannot_read_missing_files" time="0.002" /><testcase classname="tests.adapters.opencode.test_go_evidence" name="test_edit_requires_actual_tools_and_function_results" time="0.000" /><testcase classname="tests.adapters.opencode.test_go_evidence" name="test_denied_read_requires_permission_semantics_without_requiring_function_fix" time="0.000" /><testcase classname="tests.adapters.opencode.test_go_evidence" name="test_incomplete_observations_cannot_pass[changes0-NATIVE_EXECUTION_INCOMPLETE]" time="0.000" /><testcase classname="tests.adapters.opencode.test_go_evidence" name="test_incomplete_observations_cannot_pass[changes1-NATIVE_EXECUTION_INCOMPLETE]" time="0.000" /><testcase classname="tests.adapters.opencode.test_go_evidence" name="test_incomplete_observations_cannot_pass[changes2-PROVIDER_PROTOCOL_INCOMPLETE]" time="0.000" /><testcase classname="tests.adapters.opencode.test_go_evidence" name="test_incomplete_observations_cannot_pass[changes3-CLEANUP_INCOMPLETE]" time="0.000" /><testcase classname="tests.adapters.opencode.test_go_evidence" name="test_incomplete_observations_cannot_pass[changes4-CREDENTIAL_SCAN_FAILED]" time="0.000" /><testcase classname="tests.adapters.opencode.test_go_evidence" name="test_incomplete_observations_cannot_pass[changes5-CONFIGURATION_MISMATCH]" time="0.000" /><testcase classname="tests.adapters.opencode.test_go_evidence" name="test_incomplete_observations_cannot_pass[changes6-WORKSPACE_CHANGED]" time="0.000" /><testcase classname="tests.adapters.opencode.test_go_evidence" name="test_fixture_is_interpreted_without_executing_model_code" time="0.000" /><testcase classname="tests.adapters.opencode.test_management" name="test_management_redirect_is_rejected_before_forwarding_credentials[request]" time="0.518" /><testcase classname="tests.adapters.opencode.test_management" name="test_management_redirect_is_rejected_before_forwarding_credentials[open_events]" time="0.510" /><testcase classname="tests.adapters.opencode.test_opencode_probe" name="test_official_runtime_completes_a_real_read_tool_loop_through_the_local_broker" time="0.002"><failure message="FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-isolated-runtime/.cache/go-journal-evidence/regression-tmp/test_official_runtime_complete0')
+
+    def test_official_runtime_completes_a_real_read_tool_loop_through_the_local_broker(
+        tmp_path: Path,
+    ) -&gt; None:
+&gt;       report = OpenCodeProbe(runtime_path(), tmp_path / "probe").run("tool_loop")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\adapters\opencode\test_opencode_probe.py:20: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+backend\karajan\adapters\opencode\probe.py:73: in run
+    runtime = self.runtime.resolve(strict=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\pathlib.py:1240: in resolve
+    s = self._flavour.realpath(self, strict=strict)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'
+strict = True
+
+&gt;   ???
+E   FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'
+
+&lt;frozen ntpath&gt;:695: FileNotFoundError</failure></testcase><testcase classname="tests.adapters.opencode.test_opencode_probe" name="test_probe_persists_replayable_evidence_using_the_shared_identity_contract" time="0.002"><failure message="FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-isolated-runtime/.cache/go-journal-evidence/regression-tmp/test_probe_persists_replayable0')
+
+    def test_probe_persists_replayable_evidence_using_the_shared_identity_contract(
+        tmp_path: Path,
+    ) -&gt; None:
+        directory = tmp_path / "probe"
+&gt;       report = OpenCodeProbe(runtime_path(), directory).run("tool_loop")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\adapters\opencode\test_opencode_probe.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+backend\karajan\adapters\opencode\probe.py:73: in run
+    runtime = self.runtime.resolve(strict=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\pathlib.py:1240: in resolve
+    s = self._flavour.realpath(self, strict=strict)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'
+strict = True
+
+&gt;   ???
+E   FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'
+
+&lt;frozen ntpath&gt;:695: FileNotFoundError</failure></testcase><testcase classname="tests.adapters.opencode.test_opencode_probe" name="test_cleanup_failure_preserves_observations_and_still_closes_local_peers" time="0.002"><failure message="FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-isolated-runtime/.cache/go-journal-evidence/regression-tmp/test_cleanup_failure_preserves0')
+
+    def test_cleanup_failure_preserves_observations_and_still_closes_local_peers(
+        tmp_path: Path,
+    ) -&gt; None:
+        import socket
+    
+        directory = tmp_path / "probe"
+&gt;       report = OpenCodeProbe(runtime_path(), directory).run("cleanup_fault")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\adapters\opencode\test_opencode_probe.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+backend\karajan\adapters\opencode\probe.py:73: in run
+    runtime = self.runtime.resolve(strict=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\pathlib.py:1240: in resolve
+    s = self._flavour.realpath(self, strict=strict)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'
+strict = True
+
+&gt;   ???
+E   FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'
+
+&lt;frozen ntpath&gt;:695: FileNotFoundError</failure></testcase><testcase classname="tests.adapters.opencode.test_opencode_probe" name="test_public_cli_uses_isolated_configuration_and_never_promotes_live_qualification[False]" time="0.192"><failure message="AssertionError: {&quot;status&quot;: &quot;failed&quot;, &quot;reason&quot;: &quot;FileNotFoundError&quot;, &quot;live_qualified&quot;: false, &quot;profile_enabled&quot;: false}&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe', '-m', 'karajan.adapters.op...='{&quot;status&quot;: &quot;failed&quot;, &quot;reason&quot;: &quot;FileNotFoundError&quot;, &quot;live_qualified&quot;: false, &quot;profile_enabled&quot;: false}\n', stderr='').returncode">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-isolated-runtime/.cache/go-journal-evidence/regression-tmp/test_public_cli_uses_isolated_0')
+poison_proxy = False
+
+    @pytest.mark.parametrize("poison_proxy", [False, True])
+    def test_public_cli_uses_isolated_configuration_and_never_promotes_live_qualification(
+        tmp_path: Path,
+        poison_proxy: bool,
+    ) -&gt; None:
+        unrelated_config = tmp_path / "inherited.json"
+        unrelated_config.write_text(json.dumps({"model": "unrelated/must-not-run"}), encoding="utf-8")
+        environment = dict(os.environ)
+        environment.update(
+            {
+                "OPENCODE_CONFIG": str(unrelated_config),
+                "OPENAI_API_KEY": "synthetic-poison-not-a-real-key",
+            }
+        )
+        if poison_proxy:
+            environment.update(
+                {
+                    "HTTP_PROXY": "http://127.0.0.1:1",
+                    "http_proxy": "http://127.0.0.1:1",
+                    "HTTPS_PROXY": "http://127.0.0.1:1",
+                    "https_proxy": "http://127.0.0.1:1",
+                    "NO_PROXY": "",
+                    "no_proxy": "",
+                }
+            )
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "karajan.adapters.opencode",
+                "--runtime",
+                str(runtime_path()),
+                "--directory",
+                str(tmp_path / "probe"),
+                "--scenario",
+                "tool_loop",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+            env=environment,
+        )
+&gt;       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: {"status": "failed", "reason": "FileNotFoundError", "live_qualified": false, "profile_enabled": false}
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe', '-m', 'karajan.adapters.op...='{"status": "failed", "reason": "FileNotFoundError", "live_qualified": false, "profile_enabled": false}\n', stderr='').returncode
+
+tests\adapters\opencode\test_opencode_probe.py:113: AssertionError</failure></testcase><testcase classname="tests.adapters.opencode.test_opencode_probe" name="test_public_cli_uses_isolated_configuration_and_never_promotes_live_qualification[True]" time="0.189"><failure message="AssertionError: {&quot;status&quot;: &quot;failed&quot;, &quot;reason&quot;: &quot;FileNotFoundError&quot;, &quot;live_qualified&quot;: false, &quot;profile_enabled&quot;: false}&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe', '-m', 'karajan.adapters.op...='{&quot;status&quot;: &quot;failed&quot;, &quot;reason&quot;: &quot;FileNotFoundError&quot;, &quot;live_qualified&quot;: false, &quot;profile_enabled&quot;: false}\n', stderr='').returncode">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-isolated-runtime/.cache/go-journal-evidence/regression-tmp/test_public_cli_uses_isolated_1')
+poison_proxy = True
+
+    @pytest.mark.parametrize("poison_proxy", [False, True])
+    def test_public_cli_uses_isolated_configuration_and_never_promotes_live_qualification(
+        tmp_path: Path,
+        poison_proxy: bool,
+    ) -&gt; None:
+        unrelated_config = tmp_path / "inherited.json"
+        unrelated_config.write_text(json.dumps({"model": "unrelated/must-not-run"}), encoding="utf-8")
+        environment = dict(os.environ)
+        environment.update(
+            {
+                "OPENCODE_CONFIG": str(unrelated_config),
+                "OPENAI_API_KEY": "synthetic-poison-not-a-real-key",
+            }
+        )
+        if poison_proxy:
+            environment.update(
+                {
+                    "HTTP_PROXY": "http://127.0.0.1:1",
+                    "http_proxy": "http://127.0.0.1:1",
+                    "HTTPS_PROXY": "http://127.0.0.1:1",
+                    "https_proxy": "http://127.0.0.1:1",
+                    "NO_PROXY": "",
+                    "no_proxy": "",
+                }
+            )
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "karajan.adapters.opencode",
+                "--runtime",
+                str(runtime_path()),
+                "--directory",
+                str(tmp_path / "probe"),
+                "--scenario",
+                "tool_loop",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+            env=environment,
+        )
+&gt;       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: {"status": "failed", "reason": "FileNotFoundError", "live_qualified": false, "profile_enabled": false}
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe', '-m', 'karajan.adapters.op...='{"status": "failed", "reason": "FileNotFoundError", "live_qualified": false, "profile_enabled": false}\n', stderr='').returncode
+
+tests\adapters\opencode\test_opencode_probe.py:113: AssertionError</failure></testcase><testcase classname="tests.adapters.opencode.test_opencode_probe" name="test_every_request_including_the_second_tool_step_needs_fresh_admission" time="0.002"><failure message="FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-isolated-runtime/.cache/go-journal-evidence/regression-tmp/test_every_request_including_t0')
+
+    def test_every_request_including_the_second_tool_step_needs_fresh_admission(tmp_path: Path) -&gt; None:
+&gt;       report = OpenCodeProbe(runtime_path(), tmp_path / "probe").run("admission_limit")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\adapters\opencode\test_opencode_probe.py:124: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+backend\karajan\adapters\opencode\probe.py:73: in run
+    runtime = self.runtime.resolve(strict=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\pathlib.py:1240: in resolve
+    s = self._flavour.realpath(self, strict=strict)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'
+strict = True
+
+&gt;   ???
+E   FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'
+
+&lt;frozen ntpath&gt;:695: FileNotFoundError</failure></testcase><testcase classname="tests.adapters.opencode.test_opencode_probe" name="test_changed_effective_configuration_cannot_pass_as_the_fixed_profile[model]" time="0.003"><failure message="FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-isolated-runtime/.cache/go-journal-evidence/regression-tmp/test_changed_effective_configu0')
+tamper = 'model'
+
+    @pytest.mark.parametrize("tamper", ["model", "permission", "endpoint"])
+    def test_changed_effective_configuration_cannot_pass_as_the_fixed_profile(
+        tmp_path: Path, tamper: str
+    ) -&gt; None:
+&gt;       report = OpenCodeProbe(runtime_path(), tmp_path / "probe").run("tool_loop", tamper=tamper)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\adapters\opencode\test_opencode_probe.py:136: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+backend\karajan\adapters\opencode\probe.py:73: in run
+    runtime = self.runtime.resolve(strict=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\pathlib.py:1240: in resolve
+    s = self._flavour.realpath(self, strict=strict)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'
+strict = True
+
+&gt;   ???
+E   FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'
+
+&lt;frozen ntpath&gt;:695: FileNotFoundError</failure></testcase><testcase classname="tests.adapters.opencode.test_opencode_probe" name="test_changed_effective_configuration_cannot_pass_as_the_fixed_profile[permission]" time="0.002"><failure message="FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-isolated-runtime/.cache/go-journal-evidence/regression-tmp/test_changed_effective_configu1')
+tamper = 'permission'
+
+    @pytest.mark.parametrize("tamper", ["model", "permission", "endpoint"])
+    def test_changed_effective_configuration_cannot_pass_as_the_fixed_profile(
+        tmp_path: Path, tamper: str
+    ) -&gt; None:
+&gt;       report = OpenCodeProbe(runtime_path(), tmp_path / "probe").run("tool_loop", tamper=tamper)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\adapters\opencode\test_opencode_probe.py:136: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+backend\karajan\adapters\opencode\probe.py:73: in run
+    runtime = self.runtime.resolve(strict=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\pathlib.py:1240: in resolve
+    s = self._flavour.realpath(self, strict=strict)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'
+strict = True
+
+&gt;   ???
+E   FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'
+
+&lt;frozen ntpath&gt;:695: FileNotFoundError</failure></testcase><testcase classname="tests.adapters.opencode.test_opencode_probe" name="test_changed_effective_configuration_cannot_pass_as_the_fixed_profile[endpoint]" time="0.003"><failure message="FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-isolated-runtime/.cache/go-journal-evidence/regression-tmp/test_changed_effective_configu2')
+tamper = 'endpoint'
+
+    @pytest.mark.parametrize("tamper", ["model", "permission", "endpoint"])
+    def test_changed_effective_configuration_cannot_pass_as_the_fixed_profile(
+        tmp_path: Path, tamper: str
+    ) -&gt; None:
+&gt;       report = OpenCodeProbe(runtime_path(), tmp_path / "probe").run("tool_loop", tamper=tamper)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\adapters\opencode\test_opencode_probe.py:136: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+backend\karajan\adapters\opencode\probe.py:73: in run
+    runtime = self.runtime.resolve(strict=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\pathlib.py:1240: in resolve
+    s = self._flavour.realpath(self, strict=strict)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'
+strict = True
+
+&gt;   ???
+E   FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'
+
+&lt;frozen ntpath&gt;:695: FileNotFoundError</failure></testcase><testcase classname="tests.adapters.opencode.test_opencode_probe" name="test_runtime_retry_after_429_is_a_new_admitted_transport_receipt" time="0.003"><failure message="FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-isolated-runtime/.cache/go-journal-evidence/regression-tmp/test_runtime_retry_after_429_i0')
+
+    def test_runtime_retry_after_429_is_a_new_admitted_transport_receipt(tmp_path: Path) -&gt; None:
+&gt;       report = OpenCodeProbe(runtime_path(), tmp_path / "probe").run("rate_limit_once")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\adapters\opencode\test_opencode_probe.py:144: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+backend\karajan\adapters\opencode\probe.py:73: in run
+    runtime = self.runtime.resolve(strict=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\pathlib.py:1240: in resolve
+    s = self._flavour.realpath(self, strict=strict)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'
+strict = True
+
+&gt;   ???
+E   FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'
+
+&lt;frozen ntpath&gt;:695: FileNotFoundError</failure></testcase><testcase classname="tests.adapters.opencode.test_opencode_probe" name="test_disconnection_exposes_real_runtime_retries" time="0.003"><failure message="FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-isolated-runtime/.cache/go-journal-evidence/regression-tmp/test_disconnection_exposes_rea0')
+
+    def test_disconnection_exposes_real_runtime_retries(tmp_path: Path) -&gt; None:
+&gt;       report = OpenCodeProbe(runtime_path(), tmp_path / "probe").run("disconnect_once")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\adapters\opencode\test_opencode_probe.py:153: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+backend\karajan\adapters\opencode\probe.py:73: in run
+    runtime = self.runtime.resolve(strict=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\pathlib.py:1240: in resolve
+    s = self._flavour.realpath(self, strict=strict)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'
+strict = True
+
+&gt;   ???
+E   FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'
+
+&lt;frozen ntpath&gt;:695: FileNotFoundError</failure></testcase><testcase classname="tests.adapters.opencode.test_opencode_probe" name="test_header_timeout_is_reported_as_error_without_inventing_a_retry" time="0.002"><failure message="FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-isolated-runtime/.cache/go-journal-evidence/regression-tmp/test_header_timeout_is_reporte0')
+
+    def test_header_timeout_is_reported_as_error_without_inventing_a_retry(tmp_path: Path) -&gt; None:
+&gt;       report = OpenCodeProbe(runtime_path(), tmp_path / "probe").run("timeout_once")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\adapters\opencode\test_opencode_probe.py:166: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+backend\karajan\adapters\opencode\probe.py:73: in run
+    runtime = self.runtime.resolve(strict=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\pathlib.py:1240: in resolve
+    s = self._flavour.realpath(self, strict=strict)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'
+strict = True
+
+&gt;   ???
+E   FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'
+
+&lt;frozen ntpath&gt;:695: FileNotFoundError</failure></testcase><testcase classname="tests.adapters.opencode.test_opencode_probe" name="test_abort_records_bounded_post_cancel_observation_without_claiming_remote_stop" time="0.003"><failure message="FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-isolated-runtime/.cache/go-journal-evidence/regression-tmp/test_abort_records_bounded_pos0')
+
+    def test_abort_records_bounded_post_cancel_observation_without_claiming_remote_stop(
+        tmp_path: Path,
+    ) -&gt; None:
+&gt;       report = OpenCodeProbe(runtime_path(), tmp_path / "probe").run("cancel_stream")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\adapters\opencode\test_opencode_probe.py:179: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+backend\karajan\adapters\opencode\probe.py:73: in run
+    runtime = self.runtime.resolve(strict=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\pathlib.py:1240: in resolve
+    s = self._flavour.realpath(self, strict=strict)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'
+strict = True
+
+&gt;   ???
+E   FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-isolated-runtime\\runtimes\\opencode\\node_modules\\opencode-ai\\bin\\opencode.exe'
+
+&lt;frozen ntpath&gt;:695: FileNotFoundError</failure></testcase></testsuite></testsuites>

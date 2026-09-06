@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.206" timestamp="2026-09-06T15:01:24.577929+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.go-observer-review.test_cli" name="test_stdout_summary_does_not_echo_a_credential_embedded_in_the_output_path" time="0.060"><failure message="assert 'synthetic-s...y-credential' not in '{&quot;status&quot;: ...ort.json&quot;}\n'&#10;  &#10;  'synthetic-sensitive-directory-credential' is contained here:&#10;    s_not_e0\\synthetic-sensitive-directory-credential\\report.json&quot;}">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-613/test_stdout_summary_does_not_e0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001F4C8B8B500&gt;
+capsys = &lt;_pytest.capture.CaptureFixture object at 0x000001F4C8B8B590&gt;
+
+    def test_stdout_summary_does_not_echo_a_credential_embedded_in_the_output_path(
+        tmp_path, monkeypatch, capsys
+    ):
+        module = load_entrypoint()
+        secret = "synthetic-sensitive-directory-credential"
+        credential = tmp_path / "synthetic-fixture.txt"
+        credential.write_text(secret)
+        output = tmp_path / secret
+        monkeypatch.setattr(sys, "argv", arguments(output, credential, "--live"))
+        monkeypatch.setattr(module, "go_runtime_source", lambda _: {"synthetic_source": True})
+        monkeypatch.setattr(
+            module,
+            "observe_go_tools",
+            lambda *_, **__: {
+                "status": "failed",
+                "reason_codes": ["PROBE_EXECUTION_FAILED"],
+                "requests": [],
+                "native_cleanup": {"local_stop": "confirmed"},
+                "dispatch_eligible": False,
+            },
+        )
+        assert module.main() == 1
+        captured = capsys.readouterr()
+&gt;       assert secret not in captured.out
+E       assert 'synthetic-s...y-credential' not in '{"status": ...ort.json"}\n'
+E         
+E         'synthetic-sensitive-directory-credential' is contained here:
+E           s_not_e0\\synthetic-sensitive-directory-credential\\report.json"}
+
+.cache\go-observer-review\test_cli.py:130: AssertionError</failure></testcase></testsuite></testsuites>

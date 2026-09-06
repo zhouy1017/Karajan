@@ -1,0 +1,43 @@
+{
+  "scope": "Independent fixed diagnostic CLI negative review",
+  "status": "passed_after_fix",
+  "findings": [
+    {
+      "id": "GO-CLI-001",
+      "priority": 2,
+      "state": "closed",
+      "before": "cli-before.junit.xml",
+      "after": "cli-001-after.junit.xml"
+    },
+    {
+      "id": "GO-CLI-002",
+      "priority": 2,
+      "state": "closed",
+      "before": "cli-path-before.junit.xml",
+      "after": "cli-final.junit.xml"
+    }
+  ],
+  "source_sha256": {
+    "examples/opencode-go-isolated/run_live.py": "f1816fd9ef8a28d122dfbb20c26097dd3f620b4bebc50c6b57ebc32d05a81715",
+    "backend/karajan/adapters/opencode/go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+    ".cache/go-observer-review/test_cli.py": "34d8e4082612e9482ce8ee1d07f7866e3a2b753589598b6043f335199492b8ac"
+  },
+  "evidence_sha256": {
+    "cli-before.junit.xml": "80e6801c2e053dab04d8a597ef222bd272b34bce06fc124c354e6c2247678add",
+    "cli-path-before.junit.xml": "fb872df956a6646dd9823eaffa3964072f3429685a0ae8c2f0c2b74e2e8bc6c6",
+    "cli-001-after.junit.xml": "043c866086d45cbcccf7ea9c50b58ba9c6c68c129ef8a3fe18d498ac4c2ad6df",
+    "cli-final.junit.xml": "c0bff91932367d35e12b53afd038de80a2076ef6106b51e0d3294ebc6d322a4d"
+  },
+  "validation": {
+    "independent": "4 passed in 0.45s",
+    "ruff": "passed",
+    "execution": "Windows subprocess no-live; actual local SQLite with public observer exceptions"
+  },
+  "boundaries": [
+    "No product edits",
+    "Only self-created synthetic credential files",
+    "No real key reads or model requests",
+    "No Profile registration or activation",
+    "Runtime descriptor and observer replaced only for CLI negative controls; not actual runtime evidence"
+  ]
+}

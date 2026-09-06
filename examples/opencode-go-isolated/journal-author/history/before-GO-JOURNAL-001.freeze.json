@@ -1,0 +1,120 @@
+{
+  "baseline": "15084c2",
+  "scope": [
+    "backend/karajan/adapters/opencode/go_journal.py",
+    "tests/adapters/opencode/test_go_journal.py"
+  ],
+  "sources": {
+    "backend/karajan/adapters/opencode/go_journal.py": {
+      "sha256": "394958d3f020d6016404e88f7fed0a06525785b1f7f4523bdff173a7def2a451",
+      "crlf_count": 0
+    },
+    "tests/adapters/opencode/test_go_journal.py": {
+      "sha256": "4a3d2490190285eee2b545d0680b5457c6632f3f47c2352792c95f97983a3469",
+      "crlf_count": 0
+    }
+  },
+  "evidence": {
+    "red": {
+      "path": ".cache/go-journal-evidence/red.xml",
+      "sha256": "4f9db31c9dab467700c50120bab2c823b3eb3ea98a4cae8b8c1d7c75873318d1",
+      "tests": 1,
+      "failures": 0,
+      "errors": 1
+    },
+    "green": {
+      "path": ".cache/go-journal-evidence/green.xml",
+      "sha256": "e9cf363b0d2eefca3a7b99ccaa326916c64b3a1847acc6fe54dc9dc3be5e8340",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0
+    },
+    "completion-red": {
+      "path": ".cache/go-journal-evidence/completion-red.xml",
+      "sha256": "e68b0b70331a2dfa1977c3aae7765c3f54c1ec6ce3b34f15a2fa1e1745cf4d38",
+      "tests": 2,
+      "failures": 1,
+      "errors": 0
+    },
+    "completion-green": {
+      "path": ".cache/go-journal-evidence/completion-green.xml",
+      "sha256": "8cfbdd86c21f7fe6b2c591b3a6fe430cb3b5308c79e47f972e5db8fb9d9a6932",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0
+    },
+    "revoke-red": {
+      "path": ".cache/go-journal-evidence/revoke-red.xml",
+      "sha256": "fad4ccba3bcf79fec031baae682c8983cb83cd4793eeb5696d9e7730bba56e5a",
+      "tests": 4,
+      "failures": 1,
+      "errors": 0
+    },
+    "revoke-green": {
+      "path": ".cache/go-journal-evidence/revoke-green.xml",
+      "sha256": "60fa8cd7c09898bdc42b2f5b4a90173112bdb5ef2ac2d108b497ee4293646f30",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0
+    },
+    "facts-red": {
+      "path": ".cache/go-journal-evidence/facts-red.xml",
+      "sha256": "8ce949dd90fc6c40391ab8e33cb2a32cb3cef89a58e656bbc3ff999aad8fb934",
+      "tests": 10,
+      "failures": 6,
+      "errors": 0
+    },
+    "facts-green": {
+      "path": ".cache/go-journal-evidence/facts-green.xml",
+      "sha256": "20e8598a3e468457426f862e97cc3748fe996fed83e80d1375bc8b2c220c239c",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0
+    },
+    "boundaries": {
+      "path": ".cache/go-journal-evidence/boundaries.xml",
+      "sha256": "4768638af183332997235f262d15b721e6a58c486b7872862237e72bf3a12f7f",
+      "tests": 51,
+      "failures": 0,
+      "errors": 0
+    },
+    "final": {
+      "path": ".cache/go-journal-evidence/final.xml",
+      "sha256": "dfe4b7c5686b969dd91701e8bf07aeff4de8104e5800a8f7847f9674cfced8af",
+      "tests": 51,
+      "failures": 0,
+      "errors": 0
+    },
+    "wsl": {
+      "path": ".cache/go-journal-evidence/wsl.xml",
+      "sha256": "b4ea904a27b9dd82b2b49e8c4a644bc7c1d65f3d68b6fdc7e980a6140c468ea0",
+      "tests": 51,
+      "failures": 0,
+      "errors": 0
+    },
+    "regression": {
+      "path": ".cache/go-journal-evidence/regression.xml",
+      "sha256": "c9c397fbd37ec6a66414a8736cd8c0626395ca172e4674e8aa4d640ea4055741",
+      "tests": 148,
+      "failures": 13,
+      "errors": 0
+    }
+  },
+  "validation": {
+    "ruff_check": "passed",
+    "ruff_format": "applied before final Windows 51-case run",
+    "mypy": "passed, 1 source file",
+    "windows": "51 passed",
+    "wsl2": "51 passed before whitespace-only final format",
+    "regression": "135 passed; 13 existing native probe tests failed because this new worktree has no pinned opencode.exe installed"
+  },
+  "boundaries": [
+    "Internal trusted controller/relay port, not a public HTTP endpoint.",
+    "Grant/call IDs are trusted controller/relay identity, never native request identity.",
+    "Fresh begin_call returns send_allowed only after SQLite commit. Replay never returns it.",
+    "Lost create capability is unrecoverable; controller must retain fixed grant ID, not mint a replacement after losing the return.",
+    "Capability is stored only as SHA256, never in receipts or snapshots.",
+    "Completion is a local observation, never proof that remote computation stopped.",
+    "Journal has no provider calls, cash budget promise, or model/tool qualification grant."
+  ]
+}

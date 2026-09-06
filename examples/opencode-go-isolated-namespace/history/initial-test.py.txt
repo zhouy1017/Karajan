@@ -1,0 +1,107 @@
+"""Independent real Linux runtime checks; no provider or credential access."""
+
+import os
+import socket
+import sys
+import tempfile
+import threading
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+from unittest.mock import patch
+
+import pytest
+from karajan.isolation.opencode_runtime import IsolatedOpenCode
+
+pytestmark = pytest.mark.skipif(sys.platform != "linux", reason="real Linux namespaces")
+
+
+@pytest.fixture
+def instance():
+    artifact = Path(os.environ["KARAJAN_OPENCODE_LINUX_BINARY"])
+    with tempfile.TemporaryDirectory(prefix="karajan-ns-review-", dir="/tmp") as directory:
+        root = Path(directory)
+        listener = socket.socket(socket.AF_UNIX)
+        upstream = root / "inference.sock"
+        listener.bind(str(upstream))
+        listener.listen()
+        runtime = IsolatedOpenCode(artifact, root / "run", upstream, "synthetic-review-capability")
+        try:
+            yield runtime, root
+        finally:
+            runtime.close()
+            listener.close()
+
+
+def test_closed_evidence_is_detached_from_callers_mutating_previous_result(instance):
+    runtime, _ = instance
+    runtime.start()
+    observed = runtime.probe_lifecycle()["observed_processes"]
+    closed = runtime.close()
+    assert closed["local_stop"] == "confirmed"
+    assert len(closed["observed_processes"]) >= len(observed) >= 4
+    closed["observed_processes"].clear()
+    again = runtime.close()
+    assert len(again["observed_processes"]) >= len(observed)
+    assert again["remote_stop"] == "unknown"
+
+
+def test_two_simultaneous_starts_cannot_launch_two_namespace_processes(instance):
+    runtime, _ = instance
+    original_socketpair = socket.socketpair
+    import subprocess
+
+    original_popen = subprocess.Popen
+    launches = []
+    barrier = threading.Barrier(2)
+
+    def paired(*args, **kwargs):
+        pair = original_socketpair(*args, **kwargs)
+        # Pause at the public OS port after both start calls crossed their guard.
+        barrier.wait(timeout=3)
+        return pair
+
+    def spawned(*args, **kwargs):
+        process = original_popen(*args, **kwargs)
+        launches.append(process)
+        return process
+
+    def start():
+        try:
+            return runtime.start()
+        except Exception as error:
+            return type(error).__name__
+
+    try:
+        with patch("socket.socketpair", side_effect=paired), patch("subprocess.Popen", side_effect=spawned):
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                results = list(pool.map(lambda _: start(), range(2)))
+        assert len(launches) == 1, (len(launches), results)
+    finally:
+        for process in launches:
+            if process.poll() is None:
+                process.kill()
+            process.wait(timeout=5)
+
+
+def test_public_management_limits_session_creation_and_rejects_extra_authority(instance):
+    runtime, _ = instance
+    runtime.start()
+    sessions = []
+    for index in range(8):
+        session = runtime.request("POST", "/session", {"title": f"session-{index}", "agent": "probe"})
+        sessions.append(session["id"])
+    assert len(set(sessions)) == 8
+    with pytest.raises(ValueError, match="MANAGEMENT_REQUEST_NOT_ALLOWED"):
+        runtime.request("POST", "/session", {"title": "ninth", "agent": "probe"})
+    for method, route, body in (
+        ("PUT", "/auth/opencode-go", {"key": "synthetic"}),
+        ("PATCH", "/config", {"permission": "allow"}),
+        ("POST", "/session/" + sessions[0] + "/shell", {"command": "echo expanded"}),
+        ("POST", "/permission/synthetic/reply", {"reply": "always"}),
+        ("GET", "/session/ses_notcreated/message", None),
+        ("GET", "/config?directory=/tmp", None),
+    ):
+        with pytest.raises(ValueError, match="MANAGEMENT_REQUEST_NOT_ALLOWED"):
+            runtime.request(method, route, body)
+    assert runtime.request("GET", "/global/health")["healthy"] is True
+    assert runtime.close()["local_stop"] == "confirmed"

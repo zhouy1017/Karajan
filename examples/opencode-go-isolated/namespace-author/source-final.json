@@ -1,0 +1,99 @@
+{
+  "base": "15084c2",
+  "evidence_kind": "author_public_interface_tests",
+  "source_sha256": {
+    "backend/karajan/isolation/opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123",
+    "backend/karajan/isolation/_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+    "backend/karajan/isolation/_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+    "tests/isolation/test_opencode_runtime.py": "2194177e3e66933c7da1c3ec34a09bc326b8867ef64e992d5720a1e9aec6b07a"
+  },
+  "unchanged_dependency_sha256": {
+    "backend/karajan/isolation/_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40"
+  },
+  "runtime": {
+    "package": "opencode-linux-x64",
+    "version": "1.18.29",
+    "sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650"
+  },
+  "linux_final": {
+    "junit": "final.xml",
+    "sha256": "c34afa78c4ae6a4678373751f8715d0d72f528956d815829c35758bfcea1a41f",
+    "suite": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "22",
+      "time": "121.478",
+      "timestamp": "2026-09-06T15:17:17.263271+08:00",
+      "hostname": "ProArt-Zhou"
+    },
+    "cases": [
+      "test_artifact_atomic_replace_after_start_check_is_rejected_at_bound_inode",
+      "test_close_before_spawn_returns_promptly_and_prevents_late_process_creation",
+      "test_close_does_not_wait_for_the_native_startup_response",
+      "test_close_handles_exited_process_read_race_and_retains_immutable_evidence",
+      "test_close_observes_detached_setsid_subtree_stop_and_revokes_control",
+      "test_fixed_binary_version_is_observed_in_new_namespaces_and_stops",
+      "test_lost_startup_response_does_not_claim_unobserved_tree_stopped",
+      "test_namespace_reports_native_control_fd_absence_and_network_confinement",
+      "test_native_read_edit_reaches_only_the_fixed_unix_inference_peer",
+      "test_native_read_rejects_proc_control_configuration_and_nonfixture",
+      "test_only_the_fixed_fixture_is_projected_into_the_namespace_workspace",
+      "test_private_management_reads_fixed_native_configuration",
+      "test_private_management_rejects_body_authority_and_unissued_session_ids",
+      "test_start_rejects_fixture_symlinks_and_host_hardlinks"
+    ],
+    "distinct_public_tests": 14,
+    "additional_passed_subtests": 8,
+    "model_responses": "synthetic_http_sse",
+    "native_process_and_namespaces": "actual",
+    "startup_failure_injection": "socket_receive_boundary_only"
+  },
+  "checks": {
+    "ruff": "passed_four_files",
+    "ruff_format": "passed_four_files",
+    "mypy_windows": "passed_three_source_files",
+    "mypy_linux": "passed_three_source_files",
+    "windows_execution": "fourteen_explicit_platform_skips_not_isolation_evidence"
+  },
+  "scope_limits": {
+    "user_key_used": false,
+    "provider_requests": 0,
+    "runtime_tools_status": "not_run",
+    "dispatch_eligible": false,
+    "remote_stop": "unknown",
+    "lifecycle_probe_qualifies_native_shell": false,
+    "go_relay_journal_composition": "separate_root_author_evidence",
+    "independent_review": "not_performed_by_this_author",
+    "workspace_projection": "single_private_fixture_file_only",
+    "other_host_workspace_files": "not_projected",
+    "native_internal_tmp_proc_blanket_unreadability": "not_claimed"
+  },
+  "known_unresolved_author_failures": [],
+  "independent_review_corrections": {
+    "reviewer": "qualification_integration",
+    "findings": [
+      "process_exit_ESRCH_propagated_from_close",
+      "concurrent_start_spawned_two_namespaces",
+      "returned_nested_close_evidence_aliased_retained_evidence",
+      "artifact_change_between_constructor_and_start_was_not_rechecked",
+      "native_edit_errors_exposed_content_match_for_a_protected_workspace_file"
+    ],
+    "original_author_replay": [
+      "review-red.xml",
+      "artifact-red.xml",
+      "projection-red.xml"
+    ],
+    "focused_author_corrections": [
+      "receipt-correction.xml",
+      "start-correction.xml",
+      "artifact-correction.xml",
+      "cancel-bound-correction.xml",
+      "welcome-races-correction.xml",
+      "projection-correction.xml",
+      "oracle-correction.xml"
+    ],
+    "independent_final_recheck": "owned_by_reviewer_not_this_author_manifest"
+  }
+}

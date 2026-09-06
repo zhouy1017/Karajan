@@ -1,0 +1,83 @@
+{
+  "baseline": "15084c2d07f36165c1e00901d6689c3fd105b749",
+  "scope": {
+    "backend/karajan/adapters/opencode/go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec"
+  },
+  "test": {
+    ".cache/go-relay-review/test_relay_review.py": "c893465615ddc1ffcaf84d6b6b3fd695cc365c890e3fab8a22dbe5b9d5174448"
+  },
+  "helpers": {
+    "tests/adapters/opencode/test_go_relay.py": "845bfe069198365d3d3f1196877007e4667a061dee0c68969121c48349082cc2"
+  },
+  "excluded_authored_dependency": {
+    "backend/karajan/adapters/opencode/go_journal.py": "394958d3f020d6016404e88f7fed0a06525785b1f7f4523bdff173a7def2a451"
+  },
+  "unresolved_findings": [],
+  "resolved_findings": [
+    {
+      "title": "Partial SSE transport failure was recorded as response_received",
+      "initial_source_sha256": "15b74fd27f70e310215d113c3b56fd070390b6bfd75893418832bf798f81084d",
+      "reproduction": "test_partial_response_failure_does_not_become_a_completed_response",
+      "author_fix": "Require the response body to be fully read before response_received",
+      "initial_test_source_hash": null,
+      "initial_test_source_note": "Original JUnit retained; test source was subsequently expanded without separately freezing its initial bytes."
+    }
+  ],
+  "evidence": {
+    "windows-initial": {
+      "sha256": "8adf61de228bba44787135753f403771cfbaf93bb892399a72b5f6028e462e5c",
+      "tests": 6,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    "windows-expanded": {
+      "sha256": "6255e7e754417bac3b7e4d008b21413484ec1e1a49df7b27360f67758851f907",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3
+    },
+    "windows-final": {
+      "sha256": "24ff87f8c78315f758bf4079e3440c1eac3dcb7315c899dab5eabe358e9ce1e7",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3
+    },
+    "wsl": {
+      "sha256": "ea322175eaa98f398dc4f25b5f9be297a806b04c7f4f36f2316c73d0dbb4134d",
+      "tests": 10,
+      "failures": 2,
+      "errors": 0,
+      "skipped": 0
+    },
+    "wsl-native": {
+      "sha256": "f11e4f13d7948458ffc5627e7b37e978c32a47d175525661134c71dcaf45793f",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "wsl-final": {
+      "sha256": "42e6d3651615006b7e0a2ba220e799f6573b5ee93cdfb0faae10336a6e350723",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "validation": {
+    "windows": "8 passed, 3 Linux skips",
+    "wsl2": "11 passed",
+    "ruff": "passed"
+  },
+  "boundaries": [
+    "No product source edits",
+    "No key reads or provider calls",
+    "Own journal source not independently reviewed",
+    "Synthetic upstream HTTP only",
+    "Native Linux /tmp sockets automatically removed",
+    "No OS/model qualification claim"
+  ]
+}

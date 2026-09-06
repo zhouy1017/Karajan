@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="8.918" timestamp="2026-09-06T14:58:17.358193+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.go-namespace-review.test_namespace_review" name="test_artifact_changed_after_construction_is_rejected_before_start" time="8.513"><failure message="Failed: DID NOT RAISE ValueError">instance = (&lt;karajan.isolation.opencode_runtime.IsolatedOpenCode object at 0x7bb001f97200&gt;, PosixPath('/tmp/karajan-ns-review-nex3h3h2'))
+
+    def test_artifact_changed_after_construction_is_rejected_before_start(instance):
+        _, root = instance
+        artifact = root / "copied-opencode"
+        shutil.copy2(Path(os.environ["KARAJAN_OPENCODE_LINUX_BINARY"]), artifact)
+        runtime = IsolatedOpenCode(
+            artifact, root / "changed-run", root / "inference.sock", "synthetic-review-capability"
+        )
+        # The ELF still starts and reports its original version; only its exact bytes
+        # changed. Never mutate the shared installed artifact in this test.
+        with artifact.open("ab") as file:
+            file.write(b"independent-review-appended-bytes")
+        try:
+&gt;           with pytest.raises(ValueError, match="RUNTIME_ARTIFACT_MISMATCH"):
+E           Failed: DID NOT RAISE ValueError
+
+.cache/go-namespace-review/test_namespace_review.py:128: Failed</failure></testcase></testsuite></testsuites>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="3" time="23.926" timestamp="2026-09-06T14:58:11.036268+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.go-namespace-review.test_namespace_review" name="test_closed_evidence_is_detached_from_callers_mutating_previous_result" time="7.956"><failure message="AssertionError: assert 0 &gt;= 4&#10; +  where 0 = len([])&#10; +  and   4 = len([{'pid': 26130, 'birth': '7069417', 'namespace_pid': 1}, {'pid': 26171, 'birth': '7069525', 'namespace_pid': 42}, {'pid': 26196, 'birth': '7070109', 'namespace_pid': 56}, {'pid': 26197, 'birth': '7070111', 'namespace_pid': 57}])">instance = (&lt;karajan.isolation.opencode_runtime.IsolatedOpenCode object at 0x731452bcec00&gt;, PosixPath('/tmp/karajan-ns-review-dd0rnugp'))
+
+    
+    def test_closed_evidence_is_detached_from_callers_mutating_previous_result(instance):
+        runtime, _ = instance
+        runtime.start()
+        observed = runtime.probe_lifecycle()["observed_processes"]
+        closed = runtime.close()
+        assert closed["local_stop"] == "confirmed"
+        assert len(closed["observed_processes"]) &gt;= len(observed) &gt;= 4
+        closed["observed_processes"].clear()
+&gt;       again = runtime.close()
+E       AssertionError: assert 0 &gt;= 4
+E        +  where 0 = len([])
+E        +  and   4 = len([{'pid': 26130, 'birth': '7069417', 'namespace_pid': 1}, {'pid': 26171, 'birth': '7069525', 'namespace_pid': 42}, {'pid': 26196, 'birth': '7070109', 'namespace_pid': 56}, {'pid': 26197, 'birth': '7070111', 'namespace_pid': 57}])
+
+.cache/go-namespace-review/test_namespace_review.py:44: AssertionError</failure></testcase><testcase classname=".cache.go-namespace-review.test_namespace_review" name="test_two_simultaneous_starts_cannot_launch_two_namespace_processes" time="7.762"><failure message="AssertionError: (2, [{'state': 'running', 'runtime_version': '1.18.29', 'runtime_tools_status': 'not_run', 'dispatch_eligible': False, ...}, 'OSError'])&#10;assert 2 == 1&#10; +  where 2 = len([&lt;Popen: returncode: None args: ['/usr/bin/unshare', '--user', '--map-root-us...&gt;, &lt;Popen: returncode: 1 args: ['/usr/bin/unshare', '--user', '--map-root-user'...&gt;])">instance = (&lt;karajan.isolation.opencode_runtime.IsolatedOpenCode object at 0x731452c96e40&gt;, PosixPath('/tmp/karajan-ns-review-9mno3u1l'))
+
+    
+    def test_two_simultaneous_starts_cannot_launch_two_namespace_processes(instance):
+        runtime, _ = instance
+        original_socketpair = socket.socketpair
+        import subprocess
+    
+        original_popen = subprocess.Popen
+        launches = []
+        barrier = threading.Barrier(2)
+    
+        def paired(*args, **kwargs):
+            pair = original_socketpair(*args, **kwargs)
+            # Pause at the public OS port after both start calls crossed their guard.
+            # A correctly serialized second start cannot enter: release the first on
+            # timeout without manufacturing a startup failure in the corrected code.
+            try:
+                barrier.wait(timeout=3)
+            except threading.BrokenBarrierError:
+                pass
+            return pair
+    
+        def spawned(*args, **kwargs):
+            process = original_popen(*args, **kwargs)
+            launches.append(process)
+            return process
+    
+        def start():
+            try:
+                return runtime.start()
+            except Exception as error:
+                return type(error).__name__
+    
+        try:
+            with patch("socket.socketpair", side_effect=paired), patch("subprocess.Popen", side_effect=spawned):
+                with ThreadPoolExecutor(max_workers=2) as pool:
+&gt;                   results = list(pool.map(lambda _: start(), range(2)))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E                   AssertionError: (2, [{'state': 'running', 'runtime_version': '1.18.29', 'runtime_tools_status': 'not_run', 'dispatch_eligible': False, ...}, 'OSError'])
+E                   assert 2 == 1
+E                    +  where 2 = len([&lt;Popen: returncode: None args: ['/usr/bin/unshare', '--user', '--map-root-us...&gt;, &lt;Popen: returncode: 1 args: ['/usr/bin/unshare', '--user', '--map-root-user'...&gt;])
+
+.cache/go-namespace-review/test_namespace_review.py:83: AssertionError</failure></testcase><testcase classname=".cache.go-namespace-review.test_namespace_review" name="test_public_management_limits_session_creation_and_rejects_extra_authority" time="7.771" /></testsuite></testsuites>

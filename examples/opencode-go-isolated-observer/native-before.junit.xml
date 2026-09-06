@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="4" time="37.648" timestamp="2026-09-06T14:51:35.644658+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.go-observer-review.test_observer" name="test_actual_composition_reports_only_observed_scoped_facts[edit]" time="9.328" /><testcase classname=".cache.go-observer-review.test_observer" name="test_actual_composition_reports_only_observed_scoped_facts[denied_read]" time="9.361" /><testcase classname=".cache.go-observer-review.test_observer" name="test_transport_loss_is_unknown_and_stops_without_resetting_grant" time="8.917" /><testcase classname=".cache.go-observer-review.test_observer" name="test_actual_artifact_cannot_pass_under_a_grant_for_a_different_runtime" time="9.155"><failure message="AssertionError: assert 'passed' == 'failed'&#10;  &#10;  - failed&#10;  + passed">tmp_path = PosixPath('/tmp/pytest-of-chow/pytest-22/test_actual_artifact_cannot_pa0')
+
+    def test_actual_artifact_cannot_pass_under_a_grant_for_a_different_runtime(tmp_path):
+        result, requests, _ = run_observer(tmp_path, changed_binding={"runtime_digest": "b" * 64})
+        (DIRECTORY / "runtime-mismatch.before.json").write_text(
+            json.dumps(result, indent=2) + "\n", encoding="utf-8"
+        )
+&gt;       assert result["status"] == "failed"
+E       AssertionError: assert 'passed' == 'failed'
+E         
+E         - failed
+E         + passed
+
+.cache/go-observer-review/test_observer.py:101: AssertionError</failure></testcase></testsuite></testsuites>

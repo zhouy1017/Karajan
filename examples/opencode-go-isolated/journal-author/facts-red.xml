@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="6" skipped="0" tests="10" time="0.260" timestamp="2026-09-06T14:19:26.669924+08:00" hostname="ProArt-Zhou"><testcase classname="tests.adapters.opencode.test_go_journal" name="test_committed_send_intent_is_history_after_lost_return_and_database_reopen" time="0.013" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_response_facts_are_durable_immutable_and_never_reissue_send_permission" time="0.013" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_revocation_or_expiry_blocks_new_calls_but_preserves_unknown_send_and_completion[revoke]" time="0.013" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_revocation_or_expiry_blocks_new_calls_but_preserves_unknown_send_and_completion[expire]" time="0.010" /><testcase classname="tests.adapters.opencode.test_go_journal" name="test_completion_cannot_turn_missing_or_contradictory_response_into_protocol_success[outcome0]" time="0.010"><failure message="Failed: DID NOT RAISE GoJournalError">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-isolated-runtime/.cache/go-journal-evidence/facts-red-tmp/test_completion_cannot_turn_mi0')
+outcome = {'state': 'send_unknown', 'protocol_passed': True}
+
+    @pytest.mark.parametrize(
+        "outcome",
+        [
+            {"state": "send_unknown", "protocol_passed": True},
+            {
+                "state": "rejected",
+                "protocol_passed": True,
+                "upstream_status": 200,
+                "response_bytes": 100,
+            },
+            {"state": "response_received"},
+            {
+                "state": "response_received",
+                "protocol_passed": True,
+                "upstream_status": 500,
+                "response_bytes": 100,
+            },
+            {"state": "response_received", "protocol_passed": True, "upstream_status": 200},
+            {
+                "state": "response_received",
+                "protocol_passed": True,
+                "upstream_status": 200,
+                "response_bytes": 100,
+                "reason_codes": ["INCOMPLETE_SSE"],
+            },
+        ],
+    )
+    def test_completion_cannot_turn_missing_or_contradictory_response_into_protocol_success(
+        tmp_path: Path, outcome: dict[str, Any]
+    ) -&gt; None:
+        journal = GoCallJournal(tmp_path / "journal.sqlite3", clock=lambda: 1000.0)
+        grant = journal.create_grant(binding(), grant_id="grant-1")
+        journal.begin_call("grant-1", "call-1", capability=grant["capability"], binding=binding())
+        before = journal.snapshot("grant-1")
+&gt;       with pytest.raises(GoJournalError, match="^GO_JOURNAL_INPUT_INVALID$"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE GoJournalError
+
+tests\adapters\opencode\test_go_journal.py:152: Failed</failure></testcase><testcase classname="tests.adapters.opencode.test_go_journal" name="test_completion_cannot_turn_missing_or_contradictory_response_into_protocol_success[outcome1]" time="0.011"><failure message="Failed: DID NOT RAISE GoJournalError">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-isolated-runtime/.cache/go-journal-evidence/facts-red-tmp/test_completion_cannot_turn_mi1')
+outcome = {'state': 'rejected', 'protocol_passed': True, 'upstream_status': 200, 'response_bytes': 100}
+
+    @pytest.mark.parametrize(
+        "outcome",
+        [
+            {"state": "send_unknown", "protocol_passed": True},
+            {
+                "state": "rejected",
+                "protocol_passed": True,
+                "upstream_status": 200,
+                "response_bytes": 100,
+            },
+            {"state": "response_received"},
+            {
+                "state": "response_received",
+                "protocol_passed": True,
+                "upstream_status": 500,
+                "response_bytes": 100,
+            },
+            {"state": "response_received", "protocol_passed": True, "upstream_status": 200},
+            {
+                "state": "response_received",
+                "protocol_passed": True,
+                "upstream_status": 200,
+                "response_bytes": 100,
+                "reason_codes": ["INCOMPLETE_SSE"],
+            },
+        ],
+    )
+    def test_completion_cannot_turn_missing_or_contradictory_response_into_protocol_success(
+        tmp_path: Path, outcome: dict[str, Any]
+    ) -&gt; None:
+        journal = GoCallJournal(tmp_path / "journal.sqlite3", clock=lambda: 1000.0)
+        grant = journal.create_grant(binding(), grant_id="grant-1")
+        journal.begin_call("grant-1", "call-1", capability=grant["capability"], binding=binding())
+        before = journal.snapshot("grant-1")
+&gt;       with pytest.raises(GoJournalError, match="^GO_JOURNAL_INPUT_INVALID$"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE GoJournalError
+
+tests\adapters\opencode\test_go_journal.py:152: Failed</failure></testcase><testcase classname="tests.adapters.opencode.test_go_journal" name="test_completion_cannot_turn_missing_or_contradictory_response_into_protocol_success[outcome2]" time="0.011"><failure message="Failed: DID NOT RAISE GoJournalError">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-isolated-runtime/.cache/go-journal-evidence/facts-red-tmp/test_completion_cannot_turn_mi2')
+outcome = {'state': 'response_received'}
+
+    @pytest.mark.parametrize(
+        "outcome",
+        [
+            {"state": "send_unknown", "protocol_passed": True},
+            {
+                "state": "rejected",
+                "protocol_passed": True,
+                "upstream_status": 200,
+                "response_bytes": 100,
+            },
+            {"state": "response_received"},
+            {
+                "state": "response_received",
+                "protocol_passed": True,
+                "upstream_status": 500,
+                "response_bytes": 100,
+            },
+            {"state": "response_received", "protocol_passed": True, "upstream_status": 200},
+            {
+                "state": "response_received",
+                "protocol_passed": True,
+                "upstream_status": 200,
+                "response_bytes": 100,
+                "reason_codes": ["INCOMPLETE_SSE"],
+            },
+        ],
+    )
+    def test_completion_cannot_turn_missing_or_contradictory_response_into_protocol_success(
+        tmp_path: Path, outcome: dict[str, Any]
+    ) -&gt; None:
+        journal = GoCallJournal(tmp_path / "journal.sqlite3", clock=lambda: 1000.0)
+        grant = journal.create_grant(binding(), grant_id="grant-1")
+        journal.begin_call("grant-1", "call-1", capability=grant["capability"], binding=binding())
+        before = journal.snapshot("grant-1")
+&gt;       with pytest.raises(GoJournalError, match="^GO_JOURNAL_INPUT_INVALID$"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE GoJournalError
+
+tests\adapters\opencode\test_go_journal.py:152: Failed</failure></testcase><testcase classname="tests.adapters.opencode.test_go_journal" name="test_completion_cannot_turn_missing_or_contradictory_response_into_protocol_success[outcome3]" time="0.011"><failure message="Failed: DID NOT RAISE GoJournalError">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-isolated-runtime/.cache/go-journal-evidence/facts-red-tmp/test_completion_cannot_turn_mi3')
+outcome = {'state': 'response_received', 'protocol_passed': True, 'upstream_status': 500, 'response_bytes': 100}
+
+    @pytest.mark.parametrize(
+        "outcome",
+        [
+            {"state": "send_unknown", "protocol_passed": True},
+            {
+                "state": "rejected",
+                "protocol_passed": True,
+                "upstream_status": 200,
+                "response_bytes": 100,
+            },
+            {"state": "response_received"},
+            {
+                "state": "response_received",
+                "protocol_passed": True,
+                "upstream_status": 500,
+                "response_bytes": 100,
+            },
+            {"state": "response_received", "protocol_passed": True, "upstream_status": 200},
+            {
+                "state": "response_received",
+                "protocol_passed": True,
+                "upstream_status": 200,
+                "response_bytes": 100,
+                "reason_codes": ["INCOMPLETE_SSE"],
+            },
+        ],
+    )
+    def test_completion_cannot_turn_missing_or_contradictory_response_into_protocol_success(
+        tmp_path: Path, outcome: dict[str, Any]
+    ) -&gt; None:
+        journal = GoCallJournal(tmp_path / "journal.sqlite3", clock=lambda: 1000.0)
+        grant = journal.create_grant(binding(), grant_id="grant-1")
+        journal.begin_call("grant-1", "call-1", capability=grant["capability"], binding=binding())
+        before = journal.snapshot("grant-1")
+&gt;       with pytest.raises(GoJournalError, match="^GO_JOURNAL_INPUT_INVALID$"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE GoJournalError
+
+tests\adapters\opencode\test_go_journal.py:152: Failed</failure></testcase><testcase classname="tests.adapters.opencode.test_go_journal" name="test_completion_cannot_turn_missing_or_contradictory_response_into_protocol_success[outcome4]" time="0.010"><failure message="Failed: DID NOT RAISE GoJournalError">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-isolated-runtime/.cache/go-journal-evidence/facts-red-tmp/test_completion_cannot_turn_mi4')
+outcome = {'state': 'response_received', 'protocol_passed': True, 'upstream_status': 200}
+
+    @pytest.mark.parametrize(
+        "outcome",
+        [
+            {"state": "send_unknown", "protocol_passed": True},
+            {
+                "state": "rejected",
+                "protocol_passed": True,
+                "upstream_status": 200,
+                "response_bytes": 100,
+            },
+            {"state": "response_received"},
+            {
+                "state": "response_received",
+                "protocol_passed": True,
+                "upstream_status": 500,
+                "response_bytes": 100,
+            },
+            {"state": "response_received", "protocol_passed": True, "upstream_status": 200},
+            {
+                "state": "response_received",
+                "protocol_passed": True,
+                "upstream_status": 200,
+                "response_bytes": 100,
+                "reason_codes": ["INCOMPLETE_SSE"],
+            },
+        ],
+    )
+    def test_completion_cannot_turn_missing_or_contradictory_response_into_protocol_success(
+        tmp_path: Path, outcome: dict[str, Any]
+    ) -&gt; None:
+        journal = GoCallJournal(tmp_path / "journal.sqlite3", clock=lambda: 1000.0)
+        grant = journal.create_grant(binding(), grant_id="grant-1")
+        journal.begin_call("grant-1", "call-1", capability=grant["capability"], binding=binding())
+        before = journal.snapshot("grant-1")
+&gt;       with pytest.raises(GoJournalError, match="^GO_JOURNAL_INPUT_INVALID$"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE GoJournalError
+
+tests\adapters\opencode\test_go_journal.py:152: Failed</failure></testcase><testcase classname="tests.adapters.opencode.test_go_journal" name="test_completion_cannot_turn_missing_or_contradictory_response_into_protocol_success[outcome5]" time="0.011"><failure message="Failed: DID NOT RAISE GoJournalError">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-isolated-runtime/.cache/go-journal-evidence/facts-red-tmp/test_completion_cannot_turn_mi5')
+outcome = {'state': 'response_received', 'protocol_passed': True, 'upstream_status': 200, 'response_bytes': 100, ...}
+
+    @pytest.mark.parametrize(
+        "outcome",
+        [
+            {"state": "send_unknown", "protocol_passed": True},
+            {
+                "state": "rejected",
+                "protocol_passed": True,
+                "upstream_status": 200,
+                "response_bytes": 100,
+            },
+            {"state": "response_received"},
+            {
+                "state": "response_received",
+                "protocol_passed": True,
+                "upstream_status": 500,
+                "response_bytes": 100,
+            },
+            {"state": "response_received", "protocol_passed": True, "upstream_status": 200},
+            {
+                "state": "response_received",
+                "protocol_passed": True,
+                "upstream_status": 200,
+                "response_bytes": 100,
+                "reason_codes": ["INCOMPLETE_SSE"],
+            },
+        ],
+    )
+    def test_completion_cannot_turn_missing_or_contradictory_response_into_protocol_success(
+        tmp_path: Path, outcome: dict[str, Any]
+    ) -&gt; None:
+        journal = GoCallJournal(tmp_path / "journal.sqlite3", clock=lambda: 1000.0)
+        grant = journal.create_grant(binding(), grant_id="grant-1")
+        journal.begin_call("grant-1", "call-1", capability=grant["capability"], binding=binding())
+        before = journal.snapshot("grant-1")
+&gt;       with pytest.raises(GoJournalError, match="^GO_JOURNAL_INPUT_INVALID$"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE GoJournalError
+
+tests\adapters\opencode\test_go_journal.py:152: Failed</failure></testcase></testsuite></testsuites>
