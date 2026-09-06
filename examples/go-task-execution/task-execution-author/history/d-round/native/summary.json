@@ -1,0 +1,119 @@
+[
+  {
+    "scenario": "none",
+    "state": "executing",
+    "phase": "candidate_recorded",
+    "effect_claim": {
+      "intent_digest": "b87ecd3885ab1d6baf583763ac037e8fd6addb70b58e9a150d7af5ae1ce50130",
+      "runner": {
+        "birth": "6c826f68-21f8-4fe0-8956-b7942ed46a44:9846857",
+        "pid": 79797
+      }
+    },
+    "observation": {
+      "schema_version": "karajan.go-task-execution-observation.v1",
+      "intent_digest": "b87ecd3885ab1d6baf583763ac037e8fd6addb70b58e9a150d7af5ae1ce50130",
+      "failure": null,
+      "host": {
+        "state": "exited",
+        "launch_phase": "acknowledged",
+        "prepared_id": "go-task-start:6466a556-7c94-4634-a22b-3f0973b3febc",
+        "attempt_id": "422cc657-bb04-4718-a6b6-b06b8b4de48a"
+      },
+      "grant": {
+        "state": "revoked",
+        "request_count": 3,
+        "calls_digest": "6c3ed5a13d36cc590c8b7c3da07a349ce05e23d97b8bac7495217ce39ec87c17",
+        "unknown_calls": 0,
+        "revoked_at": 1788703601.4543266
+      },
+      "native_stop": "unknown",
+      "provider_remote_stop": "unknown",
+      "digest": "f3c083d5ade80fc86a3a10e462421dff3cb91436091f10baa940861f328b846c"
+    },
+    "source_sha256": "ad677b1d303450d5baa274d5330f0c42c2a1843522ad59f655c2f17bec93dbf6",
+    "current_controller_sources_match": true,
+    "native_status": "completed",
+    "native_stop": "confirmed",
+    "origin": "http_fixture",
+    "candidate": {
+      "content_sha256": "f16a10d0ee9280868c0e0bfaffebc782a2f249289d4d8789a83903c73900c82e",
+      "id": "909d4bec-5b6c-4ad6-be92-383160b10ed0",
+      "input_sha256": "e9fe6dc68a341ec2e201446ac9eeb41e8960dc9343e684229db05140acd40276",
+      "manifest_sha256": "9c9907b1f3716e00994bf6d842e65dc9f8756626a4de25e21b6d084fece50862",
+      "policy_sha256": "ea60e905c8e663caa8e947edb6f06bd47110bd92e6c1403498e0d3259539d623",
+      "revision": 1,
+      "series_id": "go-task-candidate:6466a556-7c94-4634-a22b-3f0973b3febc"
+    }
+  },
+  {
+    "scenario": "grant_reply_lost",
+    "state": "execution_unknown",
+    "phase": "effect_claimed",
+    "effect_claim": {
+      "intent_digest": "8d6439875ab76829e79bdf7011eb8ab0c52c32f12c2164b3f12c4b47d8ab3ae6",
+      "runner": {
+        "birth": "6c826f68-21f8-4fe0-8956-b7942ed46a44:9853853",
+        "pid": 79990
+      }
+    },
+    "observation": {
+      "schema_version": "karajan.go-task-execution-observation.v1",
+      "intent_digest": "8d6439875ab76829e79bdf7011eb8ab0c52c32f12c2164b3f12c4b47d8ab3ae6",
+      "failure": null,
+      "host": {
+        "state": "exited",
+        "launch_phase": "acknowledged",
+        "prepared_id": "go-task-start:8085deed-f44d-4234-910c-a588feb35324",
+        "attempt_id": "7cb7b6d8-4e43-4fad-af60-9f97c0a2dd42"
+      },
+      "grant": {
+        "state": "revoked",
+        "request_count": 0,
+        "calls_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "unknown_calls": 0,
+        "revoked_at": 1788703636.6652825
+      },
+      "native_stop": "unknown",
+      "provider_remote_stop": "unknown",
+      "digest": "3bf81062a507e19d58e5e9a643f02e681fbbf799a27dd0cb10e438cac5cd8f52"
+    },
+    "source_sha256": "c861d423e639c70d2150f87548c857321d2a754d5f831f63ac9c7cfc188faa15",
+    "current_controller_sources_match": true
+  },
+  {
+    "scenario": "cancel_after_send",
+    "state": "cancellation_pending",
+    "phase": "effect_claimed",
+    "effect_claim": {
+      "intent_digest": "79f13df0866703d423d28d1c59bc4ec934d7a6bc93d36cbfb215329995c15c6d",
+      "runner": {
+        "birth": "6c826f68-21f8-4fe0-8956-b7942ed46a44:9857256",
+        "pid": 80065
+      }
+    },
+    "observation": {
+      "schema_version": "karajan.go-task-execution-observation.v1",
+      "intent_digest": "79f13df0866703d423d28d1c59bc4ec934d7a6bc93d36cbfb215329995c15c6d",
+      "failure": null,
+      "host": {
+        "state": "exited",
+        "launch_phase": "acknowledged",
+        "prepared_id": "go-task-start:6af8358e-6e45-48e9-8b64-e8b0eef45f56",
+        "attempt_id": "afa34853-78cd-45a8-aba7-9debb8143936"
+      },
+      "grant": {
+        "state": "revoked",
+        "request_count": 1,
+        "calls_digest": "d6dcf244c6f272307a8ffcc39da8995937bc5514f963436b5eab0349c45e12d6",
+        "unknown_calls": 1,
+        "revoked_at": 1788703686.6101604
+      },
+      "native_stop": "unknown",
+      "provider_remote_stop": "unknown",
+      "digest": "c12ff766a6e7a164e2b7a1c2359e64e8237b31a0583676f8f527680c8903f290"
+    },
+    "source_sha256": "a1584bf18833d2b0d55397b98cbdbc70259230f14d349dc6e8b067f54ba77079",
+    "current_controller_sources_match": true
+  }
+]

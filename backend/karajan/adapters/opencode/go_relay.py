@@ -782,13 +782,14 @@ class GoRelay:
                         raise _Rejected("CONTEXT_PROVIDER_INPUT_EXCEEDED")
                     if completion > measured["requested_output_tokens"]:
                         raise _Rejected("CONTEXT_PROVIDER_OUTPUT_EXCEEDED")
+                receipt["protocol_passed"] = True
+                self._persist_receipt(receipt)
                 handler.send_response(200)
                 handler.send_header("Content-Type", "text/event-stream")
                 handler.send_header("Content-Length", str(len(content)))
                 handler.send_header("Connection", "close")
                 handler.end_headers()
                 handler.wfile.write(content)
-                receipt["protocol_passed"] = True
                 receipt["relay_completed"] = True
                 self._persist_receipt(receipt)
                 handler.close_connection = True
@@ -800,6 +801,8 @@ class GoRelay:
             self._error(handler, error.status, error.reason)
         except Exception:
             if receipt is not None:
+                receipt["protocol_passed"] = False
+                receipt["relay_completed"] = False
                 receipt["reason_codes"] = ["RELAY_TRANSPORT_ERROR"]
                 self._withdraw_context_sends(receipt)
                 self._persist_receipt(receipt)

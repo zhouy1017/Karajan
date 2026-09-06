@@ -223,9 +223,13 @@ class CredentialSourceStore:
         sources: Mapping[tuple[str, str], LocalKeyFile],
         private_directory: Path,
         clock: Callable[[], float] = time.time,
+        existing_only: bool = False,
     ) -> None:
+        if existing_only and not projects.existing_only:
+            raise CredentialSourceError("CREDENTIAL_EXISTING_PROJECT_REQUIRED")
         self.projects = projects
         self.clock = clock
+        existing_only = existing_only or projects.existing_only
         self._sources: dict[tuple[str, str], LocalKeyFile] = {}
         for identity, source in sources.items():
             if (
@@ -246,6 +250,8 @@ class CredentialSourceStore:
                 self._outside_repositories(db)
             _ancestors(self._directory)
             new = not self._directory.exists() and not self._directory.is_symlink()
+            if existing_only and new:
+                raise CredentialSourceError("CREDENTIAL_PRIVATE_STATE_INVALID")
             if new:
                 self._directory.mkdir(mode=0o700)
             _private(self._directory, directory=True)
@@ -265,6 +271,24 @@ class CredentialSourceStore:
                     private.execute("SELECT generation FROM material_seals LIMIT 1")
             with projects._transaction() as db:
                 self._outside_repositories(db)
+                if existing_only:
+                    from karajan.storage import require_schema
+
+                    require_schema(
+                        projects.database,
+                        {
+                            "credential_generations": [
+                                "generation",
+                                "project_id",
+                                "auth_ref",
+                                "record",
+                                "digest",
+                            ],
+                            "credential_current": ["project_id", "auth_ref", "generation"],
+                            "credential_revocations": ["generation", "record"],
+                        },
+                    )
+                    return
                 db.execute(
                     "CREATE TABLE IF NOT EXISTS credential_generations ("
                     "generation TEXT PRIMARY KEY, "
@@ -296,8 +320,8 @@ class CredentialSourceStore:
         _private(self._directory, directory=True)
         _private(self._private_db)
         db = sqlite3.connect(
-            self._private_db if write else self._private_db.as_uri() + "?mode=ro",
-            uri=not write,
+            self._private_db.as_uri() + ("?mode=rw" if write else "?mode=ro"),
+            uri=True,
             isolation_level=None,
             timeout=10,
         )

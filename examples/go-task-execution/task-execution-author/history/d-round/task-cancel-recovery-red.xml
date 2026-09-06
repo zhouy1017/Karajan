@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="2.000" timestamp="2026-09-06T21:42:05.541162+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_go_task_execution" name="test_reconcile_resumes_lost_cancel_cleanup_with_original_identity" time="0.967"><failure message="AssertionError: assert 'active' == 'revoked'&#10;  &#10;  - revoked&#10;  + active">history = (&lt;karajan.orchestration.go_task_execution.ApprovedGoTaskExecution object at 0x000002514D9EF9B0&gt;, 'ca6f80b4-4599-4e69-a83f-a3529aeac307', '1d12c69a-305b-4c0b-9118-c95a20fb53b6')
+tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-task-execution-v2/.cache/task-cancel-recovery-red-tmp/test_reconcile_resumes_lost_ca0')
+
+    def test_reconcile_resumes_lost_cancel_cleanup_with_original_identity(history, tmp_path):
+        from karajan.contracts.probe import AttemptManifest
+        from karajan.execution import ProcessSpec
+        from karajan.orchestration.go_execution_intent import GoLaunchSpec
+    
+        facade, run_id, operation_id = history
+        intents = facade.services.intents
+        operation = intents.prepare_intent(run_id, operation_id, principal="owner", command_key="prepare")
+        intent = operation["execution"]["intent"]
+        intents.admissions.routing.capacity.activate(intent["admission_id"], command_key=intent["activation_key"])
+        intents.activation_recorded(run_id, operation_id, principal="owner")
+        intents.launch_compiler = lambda op: GoLaunchSpec(ProcessSpec((sys.executable, "-c", "pass"), tmp_path), "c" * 64)
+        launch = intents.freeze_launch(run_id, operation_id, principal="owner")["execution"]["launch"]
+        intents.host.prepare(AttemptManifest.model_validate(launch["manifest"]), intent["start_key"], ProcessSpec((sys.executable, "-c", "pass"), tmp_path))
+        intents.host.initialize_control_once(intent["attempt_id"], prepared_id=intent["start_key"], fence=intent["fence"], authorization_ref=intent["authorization_ref"])
+        facade.services.journal.clock = lambda: 1000.0
+        facade.services.journal.create_grant(launch["grant_binding"], grant_id=intent["grant_id"])
+        intents.cancel_intent(run_id, operation_id, principal="owner")  # persisted; reply/cleanup lost
+        before = intents.admissions.routing.capacity.path.read_bytes()
+        result = facade.reconcile(run_id, operation_id, principal="owner")
+        assert result["cancel_requested"] is True
+&gt;       assert facade.services.journal.snapshot(intent["grant_id"])["state"] == "revoked"
+E       AssertionError: assert 'active' == 'revoked'
+E         
+E         - revoked
+E         + active
+
+tests\runs\test_go_task_execution.py:153: AssertionError</failure></testcase></testsuite></testsuites>

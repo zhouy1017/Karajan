@@ -1,0 +1,146 @@
+"""Independent consumer boundary checks, real SQLite/Git and synthetic effects.
+
+The reviewer authored intent persistence, excluded from this independent review.
+Trusted Host identity and native start/transport are explicit doubles; Run,
+Project, Capacity, Journal, credentials and operation records are real fixtures.
+"""
+
+import sys
+from contextlib import contextmanager
+from copy import deepcopy
+from dataclasses import replace
+
+import pytest
+from karajan.contracts.probe import AttemptManifest
+from karajan.execution import ProcessIdentity, ProcessSpec
+from karajan.orchestration import go_task_execution as consumer
+from karajan.orchestration.go_execution_intent import GoLaunchSpec
+from karajan.orchestration.go_task_binding import execution_source
+from karajan.runs import RunError
+from test_go_task_execution import (
+    case as case,
+    history as history,
+    projected as projected,
+    ready as ready,
+    reservation as reservation,
+)
+
+
+def launch(history, tmp_path, *, changed=None):
+    facade, run_id, operation_id = history
+    intents = facade.services.intents
+    op = intents.prepare_intent(run_id, operation_id, principal="owner", command_key="review-intent")
+    intent = op["execution"]["intent"]
+    intents.admissions.routing.capacity.activate(intent["admission_id"], command_key=intent["activation_key"])
+    intents.activation_recorded(run_id, operation_id, principal="owner")
+    spec = ProcessSpec((sys._base_executable, "-c", "pass"), tmp_path)
+    intents.launch_compiler = lambda operation: GoLaunchSpec(spec, "c" * 64)
+    op = intents.freeze_launch(run_id, operation_id, principal="owner")
+    manifest = deepcopy(op["execution"]["launch"]["manifest"])
+    if changed:
+        manifest.update(changed)
+    intents.host.prepare(AttemptManifest.model_validate(manifest), intent["start_key"], spec)
+    intents.host.initialize_control_once(intent["attempt_id"], prepared_id=intent["start_key"],
+                                        fence=manifest["fence"], authorization_ref=manifest["authorization_ref"])
+    return op
+
+
+@pytest.mark.parametrize("changed", [None, {"fence": 2}, {"budget_ref": "other-budget"}, {"profile_revision": 2}])
+def test_cleanup_matches_full_frozen_host_binding_not_just_attempt_and_start_key(history, tmp_path, changed):
+    facade, run_id, operation_id = history
+    op = launch(history, tmp_path, changed=changed)
+    intent = op["execution"]["intent"]
+    before = facade.services.intents.host.database.read_bytes()
+    result = facade.cancel(run_id, operation_id, principal="owner")
+    assert result["cancel_requested"]
+    snapshot = facade.services.intents.host.inspect(intent["attempt_id"])
+    if changed is None:
+        assert snapshot.state == "exited" and snapshot.business_status == "cancelled"
+    else:
+        assert facade.services.intents.host.database.read_bytes() == before
+        assert snapshot.state == "prepared" and snapshot.business_status == "pending"
+
+
+@pytest.fixture
+def consumer_case(history, projected, tmp_path, monkeypatch):
+    facade, run_id, operation_id = history
+    op = facade.get(run_id, operation_id, principal="owner")
+    mechanism = op["workspace"]["source_binding"]["profile_source"]["qualification"]["observation"]["binding"]["execution_start"]["source"]["runtime_source"]
+    source = {"native_task": {"qualified_mechanism_descriptor": mechanism}, "independent_fixture": True}
+    facade.services.intents.source = execution_source(source)
+    services = replace(facade.services, accounting=object(), credentials=projected["credentials"],
+                       fresh_source=lambda: deepcopy(source))
+    facade = consumer.ApprovedGoTaskExecution(services)
+    prepared = (facade, run_id, operation_id)
+    op = launch(prepared, tmp_path)
+    intents = services.intents
+    intents.record_host_prepared(run_id, operation_id, principal="owner")
+    intents.mark_start_unknown(run_id, operation_id, principal="owner")
+    services.journal.clock = lambda: 1000.0
+    identity = ProcessIdentity(43210, "explicit-synthetic-owned-runner")
+    monkeypatch.setattr(intents.host, "wait_for_runner_registration", lambda *a, **k: identity)
+    @contextmanager
+    def owned_identity(*args, **kwargs):
+        yield identity
+    monkeypatch.setattr(intents.host, "current_runner_guard", owned_identity)
+    return facade, (run_id, operation_id), op, source
+
+
+@pytest.mark.parametrize("fault", ["cancel_before_start", "cancel_before_send", "source_before_send", "double_start"])
+def test_actual_effect_callbacks_recheck_current_authority(consumer_case, monkeypatch, fault):
+    facade, args, op, source = consumer_case
+    starts, sends = [], []
+    class Native:
+        def start(self):
+            starts.append(True)
+            return {"explicit_test_native": True}
+    def producer(*a, start_native, send_guard, **kw):
+        if fault == "cancel_before_start":
+            facade.cancel(*args, principal="owner")
+            with pytest.raises(RunError):
+                start_native(Native())
+        else:
+            start_native(Native())
+            if fault == "double_start":
+                with pytest.raises(RunError, match="TASK_NATIVE_START_ALREADY_CLAIMED"):
+                    start_native(Native())
+            else:
+                if fault == "cancel_before_send":
+                    facade.cancel(*args, principal="owner")
+                else:
+                    source["deployment_changed"] = True
+                with pytest.raises(RunError):
+                    with send_guard():
+                        sends.append(True)
+        raise RuntimeError("synthetic-producer-stopped-after-boundary-check")
+    monkeypatch.setattr(consumer, "execute_go_task", producer)
+    with pytest.raises(RuntimeError, match="synthetic-producer-stopped"):
+        consumer.consume_go_task(facade.services, *args, principal="owner")
+    assert len(starts) == (0 if fault == "cancel_before_start" else 1)
+    assert sends == []
+    original = facade.services.journal.snapshot(op["execution"]["intent"]["grant_id"])
+    assert original["state"] == "revoked" and original["request_count"] == 0
+
+
+@pytest.mark.parametrize("boundary", ["claim", "grant"])
+def test_lost_one_use_return_cannot_claim_resolve_or_create_again(consumer_case, monkeypatch, boundary):
+    facade, args, op, _ = consumer_case
+    services = facade.services
+    port, method = (services.intents, "effect_start_claim") if boundary == "claim" else (services.journal, "create_grant")
+    original = getattr(port, method)
+    calls = []
+    def lost(*a, **kw):
+        calls.append(True)
+        original(*a, **kw)
+        raise RuntimeError("synthetic-response-lost")
+    monkeypatch.setattr(port, method, lost)
+    monkeypatch.setattr(consumer, "execute_go_task", lambda *a, **kw: pytest.fail("Lost one-use return reached native"))
+    with pytest.raises(RuntimeError, match="synthetic-response-lost"):
+        consumer.consume_go_task(services, *args, principal="owner")
+    monkeypatch.setattr(services.credentials, "resolve_exact", lambda *a, **kw: pytest.fail("Replay resolved credentials"))
+    result = consumer.consume_go_task(services, *args, principal="owner")
+    assert result["execution"]["effect_claim"] is not None
+    assert calls == [True]
+    if boundary == "grant":
+        snapshot = services.journal.snapshot(op["execution"]["intent"]["grant_id"])
+        assert snapshot["state"] == "revoked" and snapshot["request_count"] == 0

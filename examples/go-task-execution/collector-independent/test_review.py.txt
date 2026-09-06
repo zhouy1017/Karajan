@@ -1,0 +1,189 @@
+"""Independent #90 review: actual Git/CAS/Journal, synthetic producer only.
+
+Reviewer authored intent ports; this suite reviews Collector and Candidate
+behavior only. Shared author fixtures supply records, not test assertions.
+"""
+
+import hashlib
+import json
+from copy import deepcopy
+from dataclasses import replace
+
+import pytest
+from karajan.candidates import CandidateError, CandidateStore
+from karajan.isolation.go_task import GoTaskResult
+from karajan.orchestration.go_task_collector import ApprovedGoCollector, compile_go_capture
+from karajan.runs import RunError
+from test_baseline_materialization import registered as registered
+from test_go_task_collector import (
+    captured_case as captured_case,
+)
+from test_go_task_collector import (
+    case as case,
+)
+from test_go_task_collector import (
+    collection_case as collection_case,
+)
+from test_go_task_collector import (
+    projected as projected,
+)
+from test_go_task_collector import (
+    workspace_case as workspace_case,
+)
+from test_projected_capture import inputs
+
+
+def retained(contents):
+    return [
+        {"path": name, "sha256": hashlib.sha256(body).hexdigest(), "size": len(body)}
+        for name, body in sorted(contents.items())
+    ]
+
+
+def test_reopened_history_does_not_require_current_artifact_or_git_directories(registered):
+    store, baseline, files = registered
+    projection, contents, request = inputs(baseline, files)
+    first = store.freeze_projection(projection, contents, request)
+    store.objects.rename(store.directory / "retained-artifacts")
+    store.git_directory.rename(store.directory / "retained-git")
+    database = store.directory / "candidates.sqlite"
+    before = database.read_bytes()
+    reopened = CandidateStore(store.directory, existing_only=True)
+    found = reopened.lookup_projection_capture(
+        request, projection=projection, captured_files=retained(contents)
+    )
+    assert found == first
+    assert not store.objects.exists() and not store.git_directory.exists()
+    assert database.read_bytes() == before
+
+
+def test_every_successful_projection_freeze_is_exactly_recoverable(registered):
+    store, baseline, files = registered
+    projection, contents, request = inputs(baseline, files)
+    request["allowed_paths"].append(request["allowed_paths"][0])
+    # Either reject before commit, or preserve exact recovery of the accepted
+    # request. A successful commit cannot have a permanently invalid lookup key.
+    try:
+        frozen = store.freeze_projection(projection, contents, request)
+    except CandidateError:
+        return
+    assert (
+        store.lookup_projection_capture(
+            request, projection=projection, captured_files=retained(contents)
+        )["id"]
+        == frozen["id"]
+    )
+
+
+def test_older_exact_revision_is_readable_but_never_current_validation(registered):
+    store, baseline, files = registered
+    projection, contents, request = inputs(baseline, files)
+    first = store.freeze_projection(projection, contents, request)
+    other = contents | {"src/task.py": b"print('second distinct revision')\n"}
+    second = store.freeze_projection(projection, other, request)
+    assert second["revision"] == first["revision"] + 1
+    before = (store.directory / "candidates.sqlite").read_bytes()
+    restored = store.lookup_projection_capture(
+        request, projection=projection, captured_files=retained(contents)
+    )
+    assert restored == first
+    assert (store.directory / "candidates.sqlite").read_bytes() == before
+    gate = store.gate(
+        first["id"],
+        current={
+            key: first[key]
+            for key in ("repository_identity", "base_sha", "input_sha256", "policy_sha256")
+        },
+    )
+    assert not gate["local_gate_passed"]
+    assert {
+        "CANDIDATE_SUPERSEDED",
+        "CHECK_EVIDENCE_MISSING:tests",
+        "REVIEW_EVIDENCE_MISSING",
+    } <= set(gate["reasons"])
+
+
+def test_repeated_exact_history_is_ambiguous_instead_of_selecting_newest(registered):
+    store, baseline, files = registered
+    projection, contents, request = inputs(baseline, files)
+    store.freeze_projection(projection, contents, request)
+    store.freeze_projection(projection, contents | {"src/task.py": b"middle\n"}, request)
+    store.freeze_projection(projection, contents, request)
+    before = (store.directory / "candidates.sqlite").read_bytes()
+    with pytest.raises(CandidateError, match="CAPTURE_IDENTITY_AMBIGUOUS"):
+        store.lookup_projection_capture(
+            request, projection=projection, captured_files=retained(contents)
+        )
+    assert (store.directory / "candidates.sqlite").read_bytes() == before
+
+
+@pytest.mark.parametrize("change", ["review_environment", "reviewer", "writer_stop"])
+def test_full_freeze_policy_and_writer_are_part_of_history_identity(registered, change):
+    store, baseline, files = registered
+    projection, contents, request = inputs(baseline, files)
+    store.freeze_projection(projection, contents, request)
+    changed = deepcopy(request)
+    if change == "review_environment":
+        changed["policy"]["review"]["environment_sha256"] = "e" * 64
+    elif change == "reviewer":
+        changed["policy"]["review"]["approved_reviewers"] = [
+            {
+                "profile_id": "reviewer",
+                "profile_revision": 1,
+                "model_family": None,
+                "qualification_ref": "synthetic-only",
+            }
+        ]
+    else:
+        changed["writer"]["observation_ref"] = "another-stop"
+    assert (
+        store.lookup_projection_capture(
+            changed, projection=projection, captured_files=retained(contents)
+        )
+        is None
+    )
+
+
+@pytest.mark.parametrize("fault", ["call_id", "request_count", "capture_stop"])
+def test_normal_status_does_not_override_original_journal_and_stop_facts(captured_case, fault):
+    _, _, operation, candidates, journal, result = captured_case
+    report, capture = result.report, result.capture
+    if fault == "call_id":
+        report["requests"][0]["journal_call_id"] = "never-sent"
+    elif fault == "request_count":
+        report["journal"]["request_count"] += 1
+    else:
+        capture = replace(
+            capture, _stop_json=json.dumps({"local_stop": "unknown", "remote_stop": "unknown"})
+        )
+    changed = GoTaskResult(capture, json.dumps(report))
+    before = (candidates.directory / "candidates.sqlite").read_bytes()
+    with pytest.raises(RunError):
+        compile_go_capture(operation, changed, candidates, journal)
+    assert (candidates.directory / "candidates.sqlite").read_bytes() == before
+
+
+def test_recovery_after_candidate_commit_does_not_need_source_or_original_result(collection_case):
+    service, args, candidates, journal, result = collection_case
+    collector = ApprovedGoCollector(service, candidates, journal, source_check=lambda: None)
+    first = collector.collect(*args, principal="owner", runner=service.host.runner, result=result)
+    service.cancel_intent(*args, principal="owner")
+    before = {
+        p: p.read_bytes()
+        for p in (
+            candidates.directory / "candidates.sqlite",
+            journal.path,
+            service.admissions.routing.capacity.path,
+        )
+    }
+
+    def unavailable_source():
+        pytest.fail("Historical Collector recovery required current source")
+
+    reopened = ApprovedGoCollector(service, candidates, journal, source_check=unavailable_source)
+    assert reopened.recover(*args, principal="owner") == first
+    op = service.read(*args, principal="owner")
+    assert op["cancel_requested"] and op["state"] == "cancellation_pending"
+    assert all(path.read_bytes() == content for path, content in before.items())
+    candidate = candidates.get(first["id"])
+    assert candidate["request"]["policy"]["review"]["approved_reviewers"] == []

@@ -1,0 +1,81 @@
+{
+  "issue": "https://github.com/zhouy1017/Karajan/issues/90",
+  "reviewer": "ui_spec_finalize",
+  "standards": {
+    "findings": 0
+  },
+  "spec": {
+    "open_findings": 0,
+    "closed_findings": [
+      {
+        "reproduction": "test_explicit_credential_existing_mode_never_recreates_missing_public_project_ledger",
+        "id": "EXISTING-STORES-001",
+        "status": "closed",
+        "priority": 2,
+        "basis": "explicit existing-only must not create replacement dependency state",
+        "correction": "reject bootstrap parent before any transaction"
+      }
+    ]
+  },
+  "excluded": [
+    "CandidateStore reviewer-authored code",
+    "WIP factory/bootstrap",
+    "actual native/provider execution"
+  ],
+  "final_sources": {
+    "backend/karajan/storage.py": "15015c068e6d7d826ace7fc3e52705325a70cf03fadc766565e757ed53d44b47",
+    "backend/karajan/projects/registry.py": "57c3c8453202de5926e9a3c4dd4e32faf91ae0871724c71fe8bcd0cdb2cfd221",
+    "backend/karajan/projects/qualification.py": "b334874e019263037b07c6503e447e752f040ea704ec407661a22fd653d20775",
+    "backend/karajan/projects/demand.py": "0835fe706d521b566ada313b8267658defdb08e21a3917d3c098f57a8b0a967e",
+    "backend/karajan/projects/credential_sources.py": "6b402a323437a3054a48eade247ce10be82577d932952e06c3cc084358fe20e0",
+    "backend/karajan/runs/planning.py": "1b99f43f2bf7e9fd6af02ef1a332d07b225bc89a067f52b96fece5ea0791b86c",
+    "backend/karajan/capacity/store.py": "5ae2ff4f0d2a683a77b0e3a2f4c089d01674087455e6968bb0d76cf4181c3055",
+    "backend/karajan/orchestration/admission.py": "4b241a5bb69a33599b255aa5d3e791f98ecb8cc61ef27377357cdb18958df970",
+    "backend/karajan/orchestration/routing.py": "efb4dd358358d8f51c19d3a6415486ef00b3f8954f4b9aee77d878d006302487",
+    "backend/karajan/execution/host.py": "50aab019b04a3e13bed087ea16fd27e87a8de6ead1f5b42aeb20777c4ff29d62",
+    "backend/karajan/execution/_supervisor.py": "04ff20365586f58b589a9874c132c69030023c6ca15697cb4b184e10dd15eed5"
+  },
+  "test_sha256": "a198685609202819101a18c1dca9b77fbe961354fddc633b2da2047cdaef84ab",
+  "results": {
+    "credential-existing-red.xml": {
+      "sha256": "e78df963d4856490f5b656dbc70c5dc973fbe3c6abff1dd7f1370cecb754bc73",
+      "tests": 1,
+      "seconds": 0.155,
+      "skipped": 0,
+      "failures": 1,
+      "errors": 0
+    },
+    "boundaries.xml": {
+      "sha256": "d2c44e06da044d8786036852d712ea383affe7c3b446b339614d2dd634cbe489",
+      "tests": 21,
+      "seconds": 0.956,
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0
+    },
+    "correction.xml": {
+      "sha256": "9616acd533beecc3b651521fcaba7e7757cbea8d2bdfe588af96008d69f3d411",
+      "tests": 22,
+      "seconds": 0.949,
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0
+    },
+    "final-windows.xml": {
+      "sha256": "156c5df68d9cfd5be2433971603a596f6c9167c358c1f8a79ef7539e48d7ece8",
+      "tests": 27,
+      "seconds": 2.751,
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0
+    },
+    "final-linux.xml": {
+      "sha256": "a205058843c78ddd4ad0e9f6a096165888fa074b9c22d98a786a75493b7b2e18",
+      "tests": 27,
+      "seconds": 3.279,
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0
+    }
+  }
+}

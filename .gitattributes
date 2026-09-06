@@ -63,3 +63,15 @@ examples/go-task-execution-foundation/**/*.json -text whitespace=cr-at-eol
 examples/go-task-execution-foundation/**/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
 examples/go-task-execution-foundation/**/*.txt -text whitespace=cr-at-eol
 examples/go-task-execution-foundation/**/*.md -text whitespace=cr-at-eol
+
+# Preserve Spark repair reports, negative controls and their recorded byte hashes.
+examples/go-relay-publication/**/*.json -text whitespace=cr-at-eol
+examples/go-relay-publication/**/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+examples/go-relay-publication/**/*.txt -text whitespace=cr-at-eol
+examples/go-relay-publication/**/*.md -text whitespace=cr-at-eol
+
+# Approved Task evidence retains source snapshots, original failures and byte hashes.
+examples/go-task-execution/**/*.json -text whitespace=cr-at-eol
+examples/go-task-execution/**/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+examples/go-task-execution/**/*.txt -text whitespace=cr-at-eol
+examples/go-task-execution/**/*.md -text whitespace=cr-at-eol

@@ -1,0 +1,26 @@
+{
+  "issue": 90,
+  "finding": "CONSUMER-001",
+  "sha256": {
+    "backend/karajan/execution/host.py": "87860c4cca8aa37883ffbd69b4fac02808e9c7ad0db24c33245fe7ec38d16192",
+    "backend/karajan/orchestration/go_task_execution.py": "3bca8ad44860e11815e9ecb9dedae1edd9d9d556f4940f4fd6694af30cb30cf9",
+    "tests/execution/test_exact_cancellation.py": "e1000d3504ff30ad67102e9fd7679f7403517e1ba156fb3e3257ae36b1e925b7",
+    ".cache/exact-host-cancel-red.xml": "97b4d9b0542245589f5e3ff092c0dcbb7cbd1d2f667aa597199ad4816b1b3917",
+    ".cache/exact-host-cancel-green.xml": "8d1dac77dde91e78663f8e3115b27411da2be327ccb144fb227b04340ae596af",
+    ".cache/exact-host-regression.xml": "9ac4273e666a213f19da138aaa7469ac0a951e37ed5bd7bbf311d954c0dc1a81",
+    ".cache/task-execution-author/consumer-001/README.md": "7cb58cd5664b63d9ccaefefacb6f1470b326fdc5d97e4d1209f082c8c91f877a"
+  },
+  "independent_review": {
+    "status": "passed",
+    "finding": "CONSUMER-001 closed",
+    "report": ".cache/task-consumer-independent/final.json",
+    "windows": {
+      "passed": 10,
+      "seconds": 11.72
+    },
+    "wsl": {
+      "passed": 10,
+      "seconds": 8.57
+    }
+  }
+}

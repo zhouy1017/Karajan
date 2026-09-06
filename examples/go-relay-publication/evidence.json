@@ -1,0 +1,196 @@
+{
+  "schema_version": "karajan.go-relay-publication-evidence.v1",
+  "implementation_commit": "64e1e5b79c7d542e6c585b4c20cfb909d47a66ba",
+  "issue": "https://github.com/zhouy1017/Karajan/issues/87",
+  "pull_request": "https://github.com/zhouy1017/Karajan/pull/88",
+  "repair_model": "gpt-5.3-codex-spark",
+  "invocation": "local Codex CLI; existing ChatGPT login",
+  "source_sha256": {
+    "backend/karajan/adapters/opencode/go_relay.py": "3f52c0a3b4288035c4c85e08a50a37e7e840461083bb7d6e7efdfce7ba906c4a",
+    "tests/adapters/opencode/test_go_relay_nullable_names.py": "20dcd95bf02c88cd785c0ee5b579b3f158fae53bd57ee243e17ad5860ca66cf1"
+  },
+  "regression": {
+    "windows.xml": {
+      "tests": 99,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0
+    },
+    "linux.xml": {
+      "tests": 99,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0
+    }
+  },
+  "independent": {
+    "passed": 29,
+    "skipped": 0,
+    "open_findings": 0,
+    "old_cd45797_control": "expected failure at protocol_passed assertion"
+  },
+  "provider_calls": 0,
+  "evidence_layers": [
+    "C",
+    "P"
+  ],
+  "remote_ci": "pending for new PR head; older successful checks do not attest this revision",
+  "files": [
+    {
+      "source": ".cache/spark-independent/before-sources.json",
+      "published": "independent/before-sources.json",
+      "bytes": 480,
+      "sha256": "2d1e4e179fbd20bc4708ef371ed245880a6945d6781d836e935e231bd21bb727"
+    },
+    {
+      "source": ".cache/spark-independent/completion-lag-observed.json",
+      "published": "independent/completion-lag-observed.json",
+      "bytes": 304,
+      "sha256": "0b0977da9873a59f533f79d6a9dc751cf00745946855c4bafab3553a3abf5a93"
+    },
+    {
+      "source": ".cache/spark-independent/final/completion-lag-observed.json",
+      "published": "independent/final/completion-lag-observed.json",
+      "bytes": 304,
+      "sha256": "0b0977da9873a59f533f79d6a9dc751cf00745946855c4bafab3553a3abf5a93"
+    },
+    {
+      "source": ".cache/spark-independent/final/final-windows.xml",
+      "published": "independent/final/final-windows.xml",
+      "bytes": 15397,
+      "sha256": "bb48c792ac3c982c8436b4e16a01e9aece90c3ff315329d7b9545d7bc8d29f12"
+    },
+    {
+      "source": ".cache/spark-independent/final/nullable-final.py.txt",
+      "published": "independent/final/nullable-final.py.txt",
+      "bytes": 7358,
+      "sha256": "20dcd95bf02c88cd785c0ee5b579b3f158fae53bd57ee243e17ad5860ca66cf1"
+    },
+    {
+      "source": ".cache/spark-independent/final/old-source-control.xml",
+      "published": "independent/final/old-source-control.xml",
+      "bytes": 4178,
+      "sha256": "f110507b9ec02b44d6df36791e9799ae85610870eaaa127625b38b739c50c7e7"
+    },
+    {
+      "source": ".cache/spark-independent/final/publication-observed.json",
+      "published": "independent/final/publication-observed.json",
+      "bytes": 273,
+      "sha256": "fcc0d6c7d39dc8d3433cf6e14239ea44d2dc8bb8796e0b7b2eb4bb00293e571d"
+    },
+    {
+      "source": ".cache/spark-independent/final/README.md",
+      "published": "independent/final/README.md",
+      "bytes": 4379,
+      "sha256": "9f04f62d953b6906dee9181a415b75455b14178f10a8b39f8398d9c0116347e9"
+    },
+    {
+      "source": ".cache/spark-independent/final/relay-cd45797.py.txt",
+      "published": "independent/final/relay-cd45797.py.txt",
+      "bytes": 37953,
+      "sha256": "7ad54713e1c13a3ee993538a45fca269b8fb18894888c960d88c28d7d6e5122c"
+    },
+    {
+      "source": ".cache/spark-independent/final/relay-final.py.txt",
+      "published": "independent/final/relay-final.py.txt",
+      "bytes": 38102,
+      "sha256": "3f52c0a3b4288035c4c85e08a50a37e7e840461083bb7d6e7efdfce7ba906c4a"
+    },
+    {
+      "source": ".cache/spark-independent/final/review.json",
+      "published": "independent/final/review.json",
+      "bytes": 2895,
+      "sha256": "30b75c00cafd7d9fd1d90baf7c9ea4037c2313bccd1cfa1917f53b57099fe41f"
+    },
+    {
+      "source": ".cache/spark-independent/final/source-before.json",
+      "published": "independent/final/source-before.json",
+      "bytes": 255,
+      "sha256": "1627c2487477648e7337ed62a1b224f78746b9f3f6019e06d82d8e4d29740e68"
+    },
+    {
+      "source": ".cache/spark-independent/final/test_final_publication.py",
+      "published": "independent/final/test_final_publication.py.txt",
+      "bytes": 8230,
+      "sha256": "be4a64a791c6e5dd82019647b448d62f6f60d069da58d079bc3bc685241f6cb3"
+    },
+    {
+      "source": ".cache/spark-independent/final/test_old_source_control.py",
+      "published": "independent/final/test_old_source_control.py.txt",
+      "bytes": 970,
+      "sha256": "877620442b31b48e6398237c12b64ab063f4ce3acc3c9125be385f812d3636f8"
+    },
+    {
+      "source": ".cache/spark-independent/final/write-reset-observed.json",
+      "published": "independent/final/write-reset-observed.json",
+      "bytes": 621,
+      "sha256": "5a25d35f75bce5d19ec376c1c3cbe1b3533032fcfaf7d049dbdcecd4a472b362"
+    },
+    {
+      "source": ".cache/spark-independent/independent.xml",
+      "published": "independent/independent.xml",
+      "bytes": 5350,
+      "sha256": "a72510df9e6e06529bb1648d75fefd0df95e52319a678c3000db5223839f4835"
+    },
+    {
+      "source": ".cache/spark-independent/nullable-initial.py.txt",
+      "published": "independent/nullable-initial.py.txt",
+      "bytes": 4859,
+      "sha256": "164d263f6198e436740bead3fc1dee248e425a518af37279194972c5f7e07516"
+    },
+    {
+      "source": ".cache/spark-independent/publication-observed.json",
+      "published": "independent/publication-observed.json",
+      "bytes": 273,
+      "sha256": "fcc0d6c7d39dc8d3433cf6e14239ea44d2dc8bb8796e0b7b2eb4bb00293e571d"
+    },
+    {
+      "source": ".cache/spark-independent/regression.xml",
+      "published": "independent/regression.xml",
+      "bytes": 41044,
+      "sha256": "eb5bbb67cb4112beb1187f2931fa92f3c889c3cfcf136d9cda638d5d509155f9"
+    },
+    {
+      "source": ".cache/spark-independent/relay-initial.py.txt",
+      "published": "independent/relay-initial.py.txt",
+      "bytes": 38102,
+      "sha256": "3f52c0a3b4288035c4c85e08a50a37e7e840461083bb7d6e7efdfce7ba906c4a"
+    },
+    {
+      "source": ".cache/spark-independent/review.json",
+      "published": "independent/review.json",
+      "bytes": 2502,
+      "sha256": "7d435b9ca13f59da719a1be4f9fa796c86bce4bdfc54ebbecae2b9d32f43d5de"
+    },
+    {
+      "source": ".cache/spark-independent/review.md",
+      "published": "independent/review.md",
+      "bytes": 5835,
+      "sha256": "9dab3b29e158a31cfa39dbfd8ab1c28b9131bc5df693b6b30449dde3650769d1"
+    },
+    {
+      "source": ".cache/spark-independent/test_response_publication.py",
+      "published": "independent/test_response_publication.py.txt",
+      "bytes": 8196,
+      "sha256": "f10209a82e4d47990b7c9728fbf026dec2af43b4c0ae98a57b6661394668ba8d"
+    },
+    {
+      "source": ".cache/spark-independent/write-reset-observed.json",
+      "published": "independent/write-reset-observed.json",
+      "bytes": 621,
+      "sha256": "5a25d35f75bce5d19ec376c1c3cbe1b3533032fcfaf7d049dbdcecd4a472b362"
+    },
+    {
+      "source": ".cache/spark-repair/go_relay_nullable_boundary.publication-final.junit.xml",
+      "published": "regression/windows.xml",
+      "bytes": 16877,
+      "sha256": "0fba82552ab4b096fd5ae4d772db2f23f620bbecf5852f535f133292ea302761"
+    },
+    {
+      "source": ".cache/spark-repair/publication-final-linux.xml",
+      "published": "regression/linux.xml",
+      "bytes": 16877,
+      "sha256": "ef786be83f48c1da28d707ee2dbf0413f9853473c275c90d6c0b24130ea263c5"
+    }
+  ]
+}

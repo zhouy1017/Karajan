@@ -14,6 +14,8 @@ from typing import Any
 
 from pydantic import TypeAdapter, ValidationError
 
+from karajan.storage import open_database, require_schema
+
 from .configuration import VALIDATOR_REVISION, validate_configuration, validator_identity
 from .models import Identifier, ProjectCreate, ProjectUpdate, TaskPreview
 from .publication import (
@@ -61,6 +63,7 @@ class ProjectRegistry:
         *,
         clock: Callable[[], float] = time.time,
         preview_ttl_seconds: int = 300,
+        existing_only: bool = False,
     ) -> None:
         if type(preview_ttl_seconds) is not int or not 1 <= preview_ttl_seconds <= 3600:
             raise ProjectError("PREVIEW_TTL_INVALID")
@@ -68,6 +71,24 @@ class ProjectRegistry:
         self.clock = clock
         self.preview_ttl_seconds = preview_ttl_seconds
         self.allowed_roots = tuple(path.resolve() for path in allowed_roots)
+        self.existing_only = existing_only
+        if existing_only:
+            require_schema(
+                self.database,
+                {
+                    "projects": ["id", "snapshot"],
+                    "commands": ["principal", "key", "digest", "result"],
+                    "previews": ["id", "project_id", "configuration", "result"],
+                    "execution_policies": ["project_id", "id", "revision", "record"],
+                    "project_owners": ["project_id", "principal"],
+                    "rulebook_versions": ["project_id", "id", "revision", "digest", "result"],
+                    "rulebook_publications": ["sequence", "project_id", "result"],
+                    "effective_catalogs": ["project_id", "result"],
+                    "rulebook_conflicts": ["project_id", "id", "revision", "digests"],
+                    "publication_migrations": ["version"],
+                },
+            )
+            return
         with self._transaction() as db:
             db.execute(
                 "CREATE TABLE IF NOT EXISTS projects (id TEXT PRIMARY KEY, snapshot TEXT NOT NULL)"
@@ -90,7 +111,7 @@ class ProjectRegistry:
 
     @contextmanager
     def _transaction(self) -> Iterator[sqlite3.Connection]:
-        db = sqlite3.connect(self.database, timeout=10, isolation_level=None)
+        db = open_database(self.database, existing_only=self.existing_only, isolation_level=None)
         db.row_factory = sqlite3.Row
         try:
             db.execute("PRAGMA foreign_keys=ON")
