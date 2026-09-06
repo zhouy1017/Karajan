@@ -483,6 +483,14 @@ class GoRelay:
         with self._condition:
             return copy.deepcopy(self._receipts)
 
+    def _persist_receipt(self, receipt: dict[str, Any]) -> None:
+        sequence = receipt.get("sequence")
+        if type(sequence) is not int:
+            return
+        with self._condition:
+            if 1 <= sequence <= len(self._receipts):
+                self._receipts[sequence - 1] = copy.deepcopy(receipt)
+
     def start(self, *, unix_socket: Path | None = None) -> None:
         with self._condition:
             if self._server is not None or self._closing:
@@ -770,16 +778,19 @@ class GoRelay:
                 handler.wfile.write(content)
                 receipt["protocol_passed"] = True
                 receipt["relay_completed"] = True
+                self._persist_receipt(receipt)
                 handler.close_connection = True
         except _Rejected as error:
             if receipt is not None:
                 receipt["reason_codes"] = [error.reason]
                 self._withdraw_context_sends(receipt)
+                self._persist_receipt(receipt)
             self._error(handler, error.status, error.reason)
         except Exception:
             if receipt is not None:
                 receipt["reason_codes"] = ["RELAY_TRANSPORT_ERROR"]
                 self._withdraw_context_sends(receipt)
+                self._persist_receipt(receipt)
             self._error(handler, 502, "RELAY_TRANSPORT_ERROR")
         finally:
             if client is not None:
@@ -795,7 +806,7 @@ class GoRelay:
                 if receipt is not None and "journal_call_id" in receipt:
                     self._complete_journal(receipt)
                 if receipt is not None and "sequence" in receipt:
-                    self._receipts[receipt["sequence"] - 1] = receipt
+                    self._receipts[receipt["sequence"] - 1] = copy.deepcopy(receipt)
 
     def _recover_context_call(self, receipt: dict[str, Any], call_id: str) -> None:
         """Read a lost begin result; this never retries begin or grants a send."""
