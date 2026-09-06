@@ -1,0 +1,42 @@
+{
+  "schema_version": "karajan.reserved-routing.independent-spec.v1",
+  "base": "405ce11",
+  "reviewer": "ui_spec_finalize",
+  "sources": {
+    "backend/karajan/orchestration/routing.py": "5740524381cc2e0d170aa341b2c56b3b7ff2ec720bd5fc37eba6a6f192896222",
+    "backend/karajan/routing/evaluator.py": "6061dad8118d0166c289e099132447709692171c10ba244e06c654f8ff938a32",
+    "backend/karajan/routing/__init__.py": "2eb81abedbcee0b3cc495d3594c68b4311dded46f89daa46bfdc324de34c1928",
+    "backend/karajan/routing/quotas.py": "1f076247aef141cb2f0725f14c14801f9239034c7ad12b1458876c31af4d9a05"
+  },
+  "result": {
+    "tests": 10,
+    "passed": 10,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 3.35
+  },
+  "findings": [],
+  "history": {
+    "initial": {
+      "passed": 9,
+      "failed": 1
+    },
+    "cause": "fixture resubmitted equal observed_at; old balance correctly retained",
+    "correction": "strictly newer observation with explicit applied=True assertion",
+    "product_changed_for_correction": false
+  },
+  "artifacts": {
+    "test_reserved_routing_public.py": "2fb866935432fc6e899cdc830486ec134b33596f823e3879905486e82127a459",
+    "initial.xml": "12e470b18ca2b2641b6c116bf216a39f4b6b5a45bbfcb9d6fe6b522967d5c8c2",
+    "final.xml": "2cdaa75a301d51d1b879562b361bb5f3e36c0e291fb95d1b3c7554d5e3549c37",
+    "history/initial-test.py.txt": "5fffc49093796249c8dda20119a4519df757e9cc48bab3fac2ee74103b402d01",
+    "notes.md": "121999d2042ce2a9f254e93c3fc49ab73c7669270462e808cbcade33af156b6e",
+    "review.md": "bd1e9f7bab11faef4cdd57975384b6bbdc925e10281f4c21ffa066d60adfadc0"
+  },
+  "static_checks": [
+    "ruff passed",
+    "format passed"
+  ],
+  "provider_calls": 0,
+  "scope": "authority-only fixed profile revalidation; real stores; qualification explicitly synthetic; no Host/Go effect"
+}

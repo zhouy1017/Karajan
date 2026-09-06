@@ -21,6 +21,29 @@ def check_quota(
     capacity: dict[str, Any],
     rule: dict[str, Any],
 ) -> None:
+    _check_resources(row, task, policy, capacity, rule, revalidate_quota=True)
+
+
+def check_reserved_inputs(
+    row: dict[str, Any],
+    task: dict[str, Any],
+    policy: dict[str, Any],
+    capacity: dict[str, Any],
+    rule: dict[str, Any],
+) -> None:
+    """Validate bound demand; live quota validation belongs to the held admission."""
+    _check_resources(row, task, policy, capacity, rule, revalidate_quota=False)
+
+
+def _check_resources(
+    row: dict[str, Any],
+    task: dict[str, Any],
+    policy: dict[str, Any],
+    capacity: dict[str, Any],
+    rule: dict[str, Any],
+    *,
+    revalidate_quota: bool,
+) -> None:
     reasons = row["reason_codes"]
     key = reference(row["profile"])
     registered = next((p for p in policy["resources"]["profiles"] if reference(p) == key), None)
@@ -52,24 +75,26 @@ def check_quota(
         reasons.append("CAPACITY_POLICY_NOT_CURRENT")
     if current["lead_reserved_slots"] > current["max_active_attempts"]:
         reasons.append("CAPACITY_POLICY_INVALID")
-    slots = current["max_active_attempts"] - (0 if lead else current["lead_reserved_slots"])
-    row["concurrency"] = {
-        "active_attempts": account["active_attempts"],
-        "maximum": current["max_active_attempts"],
-        "role_reserved_slots": 0 if lead else current["lead_reserved_slots"],
-        "available_slots": max(0, slots - account["active_attempts"]),
-    }
-    if account["active_attempts"] >= slots:
-        reasons.append("CONCURRENCY_UNAVAILABLE")
+    if revalidate_quota:
+        slots = current["max_active_attempts"] - (0 if lead else current["lead_reserved_slots"])
+        row["concurrency"] = {
+            "active_attempts": account["active_attempts"],
+            "maximum": current["max_active_attempts"],
+            "role_reserved_slots": 0 if lead else current["lead_reserved_slots"],
+            "available_slots": max(0, slots - account["active_attempts"]),
+        }
+        if account["active_attempts"] >= slots:
+            reasons.append("CONCURRENCY_UNAVAILABLE")
     if task["duration_seconds"] > min(
         current["max_attempt_duration_seconds"],
         task["authorization"]["max_attempt_duration_seconds"],
     ):
         reasons.append("DURATION_LIMIT_EXCEEDED")
-    if account["cooldown_until"] is not None and capacity["as_of"] < account["cooldown_until"]:
-        reasons.append("ACCOUNT_COOLDOWN")
-    if account["exhaustion_observation_required"]:
-        reasons.append("EXHAUSTION_REQUIRES_NEW_OBSERVATION")
+    if revalidate_quota:
+        if account["cooldown_until"] is not None and capacity["as_of"] < account["cooldown_until"]:
+            reasons.append("ACCOUNT_COOLDOWN")
+        if account["exhaustion_observation_required"]:
+            reasons.append("EXHAUSTION_REQUIRES_NEW_OBSERVATION")
     if estimate is None:
         reasons.append("RESOURCE_ESTIMATE_MISSING")
         return
@@ -100,6 +125,18 @@ def check_quota(
         amount = units(demand["amount"])
         if amount <= 0:
             reasons.append(f"DEMAND_ESTIMATE_INVALID:{pool_id}")
+        if not revalidate_quota:
+            row["pool_evaluations"].append(
+                {
+                    "pool_id": pool_id,
+                    "unit": pool["unit"],
+                    "window_id": pool["window_id"],
+                    "demand": demand["amount"],
+                    "estimate_evidence_ref": estimate["evidence_ref"],
+                    "quota_revalidation_required": True,
+                }
+            )
+            continue
         remaining = (
             None if pool["reported_remaining"] is None else units(pool["reported_remaining"])
         )
@@ -195,8 +232,9 @@ def check_quota(
                 "capacity_policy_revision": account["policy_revision"],
             }
         )
-    row["sort_inputs"].update(
-        uncertainty_band=uncertainty,
-        bottleneck_quota_pressure=ratio(max(pressures) if pressures else None),
-        completion_time_estimate=estimate["completion_seconds"],
-    )
+    if revalidate_quota:
+        row["sort_inputs"].update(
+            uncertainty_band=uncertainty,
+            bottleneck_quota_pressure=ratio(max(pressures) if pressures else None),
+            completion_time_estimate=estimate["completion_seconds"],
+        )

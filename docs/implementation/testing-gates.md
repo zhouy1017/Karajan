@@ -26,6 +26,8 @@ Go Task 计量切片在两个 Python job 中增加固定 tokenizer 准备步骤�
 
 `examples/go-task-context` 的独立审查用例也是 Python 必需步骤；原有门、凭据隔离与 Windows/Linux 矩阵保持原要求。
 
+`examples/go-task-startup` 增加 41 项独立启动前复查用例，使用真实临时存储，覆盖固定原 Profile、授权来源变化、历史激活与最新容量边界。测试不启动模型，也不能替代受信 runner 的真实进程启动验收。[范围与锁顺序](m3-task-startup-guards.md) 单列，新增步骤仍由原 `quality-gate` 汇总。
+
 `python-quality` 在 `ubuntu-24.04` 和 `windows-2022` 上分别运行，均使用 Python 3.12。矩阵关闭 fail-fast，让一个系统失败时另一个仍能完成诊断；两者都必须成功。本切片将每个矩阵任务的运行上限调整为 30 分钟，以容纳新增的真实本机隔离回归；这不改变任何检查的成功条件。
 
 在仓库根目录依次执行：

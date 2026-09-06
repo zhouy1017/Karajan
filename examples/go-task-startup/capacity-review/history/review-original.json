@@ -1,0 +1,30 @@
+{
+  "schema_version": "karajan.capacity-pre-effect.independent-spec.v1",
+  "base": "405ce11",
+  "reviewer": "ui_spec_finalize",
+  "author": "capacity_facts",
+  "source": {
+    "backend/karajan/capacity/store.py": "2825bc579a5f7406f180176bf118c44b1b854511b79dc32232c18d540153b143"
+  },
+  "result": {
+    "tests": 31,
+    "passed": 31,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 1.54
+  },
+  "findings": [],
+  "artifacts": {
+    "test_pre_effect_contract.py": "5342468cdad5055a106bdeea7be80140991b79d0a6efc9d5b0897e1ab4d8dd95",
+    "final.xml": "6749629ca114c30910aa50b6069eb7d89f1d8e85f7d67347da0087e1e5eff116",
+    "review.md": "8b4d792690cba26fdc4ca3ee68e0516635de3f30adde5e2920306955c90ff40b",
+    "initial.xml": "8f2154c41a53a300621bddd28085aeea78009ba1a623356e83395593c1a66910",
+    "history/initial-test.py.txt": "1d504223302e57ff49bde2fbf99f765d4e482a27bda7633600fbcbdcdcdaf086",
+    "draft.json": "72978114d4e7ef1eb8293f3e0b5d16993d6c8984581f92ce5cadc4f4e9e3d2f3"
+  },
+  "claims": [
+    "real public CapacityStore transaction and command recovery",
+    "synthetic fixture observations, no Host/provider execution"
+  ],
+  "provider_calls": 0
+}

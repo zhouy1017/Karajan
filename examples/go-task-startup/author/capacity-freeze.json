@@ -1,0 +1,23 @@
+{
+  "frozen_at": "2026-09-06T10:32:39.650378+00:00",
+  "base": "405ce11c3af5485b1c29546240fb8d9f1b641b8c",
+  "files": {
+    "backend/karajan/capacity/store.py": "2825bc579a5f7406f180176bf118c44b1b854511b79dc32232c18d540153b143",
+    "tests/capacity/test_pre_effect_guard.py": "b54de43485f4d287747f19af822629ad233590bb717bd2bc1b203dc00a4d1bb9",
+    "tests/capacity/test_command_receipts.py": "d40ba0d6ebd75a58c741cdc6ab7f30ba84091b3cb63af4a878032e346e574369"
+  },
+  "checks": {
+    "capacity": "140 passed, 0 skipped, 7.02 seconds; capacity-final.xml",
+    "new_public_tests": "17 passed; boundaries-after-fixture-fix.xml",
+    "ruff": "check and format --check passed for owned three files",
+    "mypy": "store.py passed"
+  },
+  "provider_calls": 0,
+  "credential_reads": 0,
+  "independent_review": {
+    "reviewer": "ui_spec_finalize",
+    "result": "31 passed, no findings",
+    "evidence": ".cache\\capacity-pre-effect-draft\\final.xml",
+    "source_bound": "2825bc579a5f7406f180176bf118c44b1b854511b79dc32232c18d540153b143"
+  }
+}
