@@ -1,0 +1,1552 @@
+{
+  "scope": "synthetic-public-HTTP-fixture",
+  "project": {
+    "allowed_target_branches": [
+      "main"
+    ],
+    "configuration": {
+      "digest": "bd53d2bb88b31cd992a48c901fc7b08a46d828c6a583f4fe606c4b7e54182f81",
+      "dispatch_eligible": false,
+      "preview_id": "ca34cb53-5e14-4690-8378-93fd5220d2bc",
+      "revision": 1,
+      "status": "offline_valid"
+    },
+    "id": "1ce374be-ae09-4695-8c14-2d4d363c10d0",
+    "live_qualified": false,
+    "name": "SYNTHETIC v2 审批独立验收",
+    "repository": {
+      "base_ref": "main",
+      "base_sha": "c4cf945c22bb00671b9ffe172963dd64f212b460",
+      "identity_sha256": "5f82c118f7e9eb1d196e92602ee244c8653c1d1c995b2717182ddd6059401ec7",
+      "root": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\v2-ui-browser-repo"
+    },
+    "revision": 2,
+    "schema_version": "karajan.project.v1",
+    "target_branch": "main"
+  },
+  "run": {
+    "active_plan_revision": null,
+    "approvals": [],
+    "authorization_ceiling": {
+      "budget_ref": "run",
+      "channel_ids": [
+        "fixture-channel"
+      ],
+      "checks": [
+        "tests",
+        "independent_review"
+      ],
+      "currency_limits": {
+        "CNY": "0",
+        "USD": "0"
+      },
+      "data_destinations": [
+        "synthetic-local-fixture"
+      ],
+      "delivery": "pull_request",
+      "max_attempt_duration_seconds": 25,
+      "max_quality_repair_rounds": 2,
+      "min_isolation": "tool_sandboxed",
+      "profile_refs": [
+        {
+          "id": "fixture-profile",
+          "revision": 1
+        }
+      ],
+      "read_paths": [
+        "src",
+        "tests"
+      ],
+      "required_capabilities": [
+        "controlled_tools"
+      ],
+      "stage_permissions": {
+        "bounded-worker": {
+          "normal": true,
+          "quality_indices": [
+            0
+          ]
+        },
+        "mechanical-worker": {
+          "normal": false,
+          "quality_indices": []
+        },
+        "standard-review": {
+          "normal": true,
+          "quality_indices": []
+        }
+      },
+      "target_branch": "main",
+      "tools": [
+        "fixture-tools"
+      ],
+      "write_paths": [
+        "src",
+        "tests"
+      ]
+    },
+    "commander": {
+      "principal": "synthetic-lead",
+      "profile": {
+        "id": "fixture-profile",
+        "revision": 1
+      },
+      "purpose": "lead",
+      "term": 1
+    },
+    "configuration_snapshot": {
+      "configuration": {
+        "approved_profile_refs": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ],
+        "resources": {
+          "accounts": [
+            {
+              "id": "fixture-account",
+              "provider_id": "fixture-provider",
+              "secret_ref": "secret:fixture-reference"
+            }
+          ],
+          "budgets": [
+            {
+              "currency_limits": {
+                "CNY": "0",
+                "USD": "0"
+              },
+              "id": "planning",
+              "max_duration_seconds": 300,
+              "max_total_attempts": 8,
+              "scope": "planning"
+            },
+            {
+              "currency_limits": {
+                "CNY": "0",
+                "USD": "0"
+              },
+              "id": "run",
+              "max_duration_seconds": 300,
+              "max_total_attempts": 8,
+              "scope": "run"
+            }
+          ],
+          "capacity_policies": [
+            {
+              "account_id": "fixture-account",
+              "conservative_mode": {
+                "cooldown_seconds": 10,
+                "enabled": true,
+                "max_attempt_duration_seconds": 30,
+                "max_local_active_attempts": 1,
+                "observation_max_age_seconds": 60
+              }
+            }
+          ],
+          "channels": [
+            {
+              "account_id": "fixture-account",
+              "approved_data_destination": true,
+              "billing_path": "subscription_only",
+              "id": "fixture-channel"
+            }
+          ],
+          "profiles": [
+            {
+              "capability_evidence": [
+                {
+                  "capability": "bounded_code_edit",
+                  "evidence_ref": "fixture:bounded_code_edit",
+                  "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                  "provenance": "fixture",
+                  "runtime_version": "1",
+                  "status": "passed"
+                },
+                {
+                  "capability": "bounded_implementation",
+                  "evidence_ref": "fixture:bounded_implementation",
+                  "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                  "provenance": "fixture",
+                  "runtime_version": "1",
+                  "status": "passed"
+                },
+                {
+                  "capability": "candidate_capture",
+                  "evidence_ref": "fixture:candidate_capture",
+                  "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                  "provenance": "fixture",
+                  "runtime_version": "1",
+                  "status": "passed"
+                },
+                {
+                  "capability": "code_review",
+                  "evidence_ref": "fixture:code_review",
+                  "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                  "provenance": "fixture",
+                  "runtime_version": "1",
+                  "status": "passed"
+                },
+                {
+                  "capability": "controlled_tools",
+                  "evidence_ref": "fixture:controlled_tools",
+                  "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                  "provenance": "fixture",
+                  "runtime_version": "1",
+                  "status": "passed"
+                },
+                {
+                  "capability": "critical_code_review",
+                  "evidence_ref": "fixture:critical_code_review",
+                  "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                  "provenance": "fixture",
+                  "runtime_version": "1",
+                  "status": "passed"
+                },
+                {
+                  "capability": "critical_implementation",
+                  "evidence_ref": "fixture:critical_implementation",
+                  "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                  "provenance": "fixture",
+                  "runtime_version": "1",
+                  "status": "passed"
+                },
+                {
+                  "capability": "design_reasoning",
+                  "evidence_ref": "fixture:design_reasoning",
+                  "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                  "provenance": "fixture",
+                  "runtime_version": "1",
+                  "status": "passed"
+                },
+                {
+                  "capability": "structured_findings",
+                  "evidence_ref": "fixture:structured_findings",
+                  "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                  "provenance": "fixture",
+                  "runtime_version": "1",
+                  "status": "passed"
+                },
+                {
+                  "capability": "structured_plan_output",
+                  "evidence_ref": "fixture:structured_plan_output",
+                  "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                  "provenance": "fixture",
+                  "runtime_version": "1",
+                  "status": "passed"
+                }
+              ],
+              "enabled": true,
+              "id": "fixture-profile",
+              "max_class": "T3",
+              "model_family": "fixture-family",
+              "profile": {
+                "admission_granularity": "attempt",
+                "auth_ref": "secret:fixture-reference",
+                "binding": {
+                  "account_id": "fixture-account",
+                  "auth_mode": "none",
+                  "billing_path": "subscription_only",
+                  "channel_id": "fixture-channel",
+                  "model_id": "fixture-model",
+                  "native_settings": {},
+                  "runtime_kind": "fixture-runtime",
+                  "runtime_version": "1"
+                },
+                "id": "fixture-profile",
+                "required_permissions": [
+                  "fixture-tools"
+                ],
+                "revision": 1,
+                "usage_coverage": "unknown"
+              },
+              "quota_pool_refs": [
+                "service-fixture"
+              ],
+              "required_isolation": "tool_sandboxed",
+              "revision": 1
+            }
+          ],
+          "quota_pools": [
+            {
+              "account_id": "fixture-account",
+              "id": "service-fixture",
+              "kind": "service",
+              "limit": "100",
+              "observation_state": "unknown",
+              "unit": "percent"
+            }
+          ]
+        },
+        "rulebook": {
+          "collaboration": {
+            "command_mode": "lead_with_advisers",
+            "delivery_target": "pull_request",
+            "implementation_readiness": "ready",
+            "internal_delegation": "disabled_unless_admitted_and_observable",
+            "max_infrastructure_retries_per_root_task": 2,
+            "max_parallel_writers_per_project": 2,
+            "max_quality_repair_rounds": 2,
+            "merge_authority": "user",
+            "plan_approval": "explicit_revision"
+          },
+          "description": "Design example: bind qualified profile revisions and budgets before activation.",
+          "global_constraints": {
+            "autonomous_tool_execution_min_isolation": "tool_sandboxed",
+            "final_review_required": true,
+            "no_silent_model_or_billing_fallback": true,
+            "profile_fixed_per_attempt": true,
+            "require_approved_data_destination": true,
+            "require_enabled_profile": true,
+            "require_explicit_billing_path": true,
+            "require_passed_capabilities": true,
+            "review_context": "fresh_non_author"
+          },
+          "id": "personal-code-delivery",
+          "profile_groups": {
+            "adviser_qualified": [
+              {
+                "id": "fixture-profile",
+                "revision": 1
+              }
+            ],
+            "commander_qualified": [
+              {
+                "id": "fixture-profile",
+                "revision": 1
+              }
+            ],
+            "critical_qualified": [
+              {
+                "id": "fixture-profile",
+                "revision": 1
+              }
+            ],
+            "fast_qualified": [
+              {
+                "id": "fixture-profile",
+                "revision": 1
+              }
+            ],
+            "review_critical_qualified": [
+              {
+                "id": "fixture-profile",
+                "revision": 1
+              }
+            ],
+            "review_standard_qualified": [
+              {
+                "id": "fixture-profile",
+                "revision": 1
+              }
+            ],
+            "standard_qualified": [
+              {
+                "id": "fixture-profile",
+                "revision": 1
+              }
+            ]
+          },
+          "resource_policy": {
+            "account_capacity_policy_binding": "current_global_revision",
+            "call_reservations": "slices_of_attempt_reservation",
+            "candidate_order": [
+              "preference_band",
+              "uncertainty_band",
+              "bottleneck_quota_pressure",
+              "incremental_cash_estimate",
+              "completion_time_estimate",
+              "profile_id"
+            ],
+            "cash_budget_enforcement": "bounded_calls",
+            "fairness": "aging_and_run_round_robin",
+            "id": "protect_lead_then_balance",
+            "missing_cash_budget": "deny_cash_route",
+            "planning_budget_ref": "planning",
+            "queue_order": [
+              "lead_feedback",
+              "required_review_repair_and_critical_path",
+              "worker",
+              "optional_adviser"
+            ],
+            "reset_preference": "only_among_equivalent_candidates_all_windows_checked",
+            "run_budget_ref": "run",
+            "subscription_quota_enforcement": "conservative_estimate",
+            "unknown_quota": "require_explicit_conservative_mode"
+          },
+          "revision": 1,
+          "rules": [
+            {
+              "capabilities_all": [
+                "design_reasoning",
+                "structured_plan_output"
+              ],
+              "eligible_groups": [
+                "commander_qualified"
+              ],
+              "handoff": "explicit_checkpoint_record",
+              "id": "lead-planning",
+              "priority": 100,
+              "reroute": "propose_checkpoint_handoff_require_user_decision",
+              "when": {
+                "purpose": "lead",
+                "role": "commander"
+              }
+            },
+            {
+              "capabilities_all": [
+                "design_reasoning"
+              ],
+              "eligible_groups": [
+                "adviser_qualified"
+              ],
+              "id": "adviser-planning",
+              "lead_reserve_access": false,
+              "priority": 100,
+              "reroute": "within_approved_set",
+              "when": {
+                "purpose": "advice",
+                "role": "commander"
+              }
+            },
+            {
+              "capabilities_all": [
+                "bounded_code_edit",
+                "controlled_tools",
+                "candidate_capture"
+              ],
+              "eligible_groups": [
+                "fast_qualified"
+              ],
+              "id": "mechanical-worker",
+              "priority": 100,
+              "quality_escalation_groups": [
+                "standard_qualified"
+              ],
+              "reroute": "within_approved_set_preserve_requirements",
+              "when": {
+                "effective_class": "T1",
+                "readiness": "ready",
+                "role": "worker"
+              }
+            },
+            {
+              "capabilities_all": [
+                "bounded_implementation",
+                "controlled_tools",
+                "candidate_capture"
+              ],
+              "eligible_groups": [
+                "standard_qualified"
+              ],
+              "id": "bounded-worker",
+              "priority": 100,
+              "quality_escalation_groups": [
+                "critical_qualified"
+              ],
+              "reroute": "within_approved_set_preserve_requirements",
+              "when": {
+                "effective_class": "T2",
+                "readiness": "ready",
+                "role": "worker"
+              }
+            },
+            {
+              "capabilities_all": [
+                "critical_implementation",
+                "controlled_tools",
+                "candidate_capture"
+              ],
+              "eligible_groups": [
+                "critical_qualified"
+              ],
+              "id": "critical-worker",
+              "priority": 100,
+              "quality_escalation_groups": [],
+              "reroute": "within_approved_set_preserve_requirements",
+              "when": {
+                "effective_class": "T3",
+                "readiness": "ready",
+                "role": "worker"
+              }
+            },
+            {
+              "capabilities_all": [
+                "code_review",
+                "structured_findings"
+              ],
+              "eligible_groups": [
+                "review_standard_qualified"
+              ],
+              "id": "standard-review",
+              "independence": [
+                "fresh_context",
+                "non_author_attempt"
+              ],
+              "priority": 100,
+              "reroute": "within_approved_set_preserve_requirements",
+              "when": {
+                "effective_class_in": [
+                  "T1",
+                  "T2"
+                ],
+                "role": "reviewer"
+              }
+            },
+            {
+              "capabilities_all": [
+                "critical_code_review",
+                "structured_findings"
+              ],
+              "eligible_groups": [
+                "review_critical_qualified"
+              ],
+              "id": "critical-review",
+              "independence": [
+                "fresh_context",
+                "non_author_attempt",
+                "different_model_family_from_authors"
+              ],
+              "priority": 100,
+              "reroute": "within_approved_set_preserve_requirements",
+              "when": {
+                "effective_class": "T3",
+                "role": "reviewer"
+              }
+            }
+          ],
+          "schema_version": "karajan.rulebook.v1",
+          "status": "configured"
+        },
+        "schema_version": "karajan.project-config.v1"
+      },
+      "digest": "bd53d2bb88b31cd992a48c901fc7b08a46d828c6a583f4fe606c4b7e54182f81",
+      "project_revision": 2,
+      "repository": {
+        "base_ref": "main",
+        "base_sha": "c4cf945c22bb00671b9ffe172963dd64f212b460",
+        "identity_sha256": "5f82c118f7e9eb1d196e92602ee244c8653c1d1c995b2717182ddd6059401ec7",
+        "root": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\v2-ui-browser-repo"
+      },
+      "revision": 1,
+      "target_branch": "main"
+    },
+    "dispatch_enabled": false,
+    "execution_policy_snapshot": {
+      "activation_allowed": false,
+      "channel_destinations": {
+        "fixture-channel": "synthetic-local-fixture"
+      },
+      "configuration_digest": "bd53d2bb88b31cd992a48c901fc7b08a46d828c6a583f4fe606c4b7e54182f81",
+      "constraints": {
+        "channel_ids": [
+          "fixture-channel"
+        ],
+        "data_destinations": [
+          "synthetic-local-fixture"
+        ],
+        "min_isolation": "tool_sandboxed",
+        "profile_refs": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ],
+        "required_capabilities": [
+          "controlled_tools"
+        ],
+        "tools": [
+          "fixture-tools"
+        ]
+      },
+      "context_policy": {
+        "id": "synthetic-ui-context",
+        "input_accounting": "explicit_approved_upper_bound",
+        "reserved_output_tokens": 1024,
+        "revision": 1
+      },
+      "digest": "fa94f06891a7613b7231a56584550a44cacd7ad00984493363951eb230b09ba1",
+      "id": "synthetic-ui-policy",
+      "max_context_tokens": 8192,
+      "project_id": "1ce374be-ae09-4695-8c14-2d4d363c10d0",
+      "registered_at": 1788669569.5762799,
+      "registered_by": "owner",
+      "revision": 1,
+      "risk_policy": {
+        "id": "synthetic-ui-risk",
+        "mapping": {
+          "critical": "T3",
+          "standard": "T1"
+        },
+        "path_floors": [
+          {
+            "minimum_class": "T3",
+            "prefix": "src/auth"
+          }
+        ],
+        "revision": 1
+      },
+      "schema_version": "karajan.execution-policy.v1",
+      "tool_policy": {
+        "id": "synthetic-ui-tools",
+        "revision": 1,
+        "tool_permissions": {
+          "fixture-tools": [
+            "fixture-tools"
+          ]
+        }
+      }
+    },
+    "handoffs": [],
+    "id": "0d0cf1e2-cd07-4d84-b384-4a9f1bd688d3",
+    "latest_plan_revision": 1,
+    "live_qualification": "not_run",
+    "owner": "owner",
+    "participants": [
+      {
+        "principal": "synthetic-lead",
+        "profile": {
+          "id": "fixture-profile",
+          "revision": 1
+        },
+        "purpose": "lead"
+      },
+      {
+        "principal": "synthetic-next",
+        "profile": {
+          "id": "fixture-profile",
+          "revision": 1
+        },
+        "purpose": "candidate"
+      }
+    ],
+    "planning_intents": [
+      {
+        "budget_ref": "planning",
+        "created_at": 1788669569.5889657,
+        "dispatch_enabled": false,
+        "id": "88afda1c-46a8-483b-a917-b9c23ab85221",
+        "permissions": [
+          "read"
+        ],
+        "principal": "synthetic-lead",
+        "profile": {
+          "id": "fixture-profile",
+          "revision": 1
+        },
+        "receipt": {
+          "authority_revision": "synthetic-ui-authority-v1",
+          "budget_ref": "planning",
+          "intent_id": "88afda1c-46a8-483b-a917-b9c23ab85221",
+          "principal": "synthetic-lead",
+          "profile": {
+            "id": "fixture-profile",
+            "revision": 1
+          },
+          "provenance": "fixture",
+          "receipt_ref": "synthetic-ui-receipt-v2",
+          "run_id": "0d0cf1e2-cd07-4d84-b384-4a9f1bd688d3",
+          "state": "admitted",
+          "term": 1
+        },
+        "run_id": "0d0cf1e2-cd07-4d84-b384-4a9f1bd688d3",
+        "state": "admitted",
+        "term": 1
+      }
+    ],
+    "plans": [
+      {
+        "authorization_digest": "fe8ac4c08896a356a4112a760b5d789c1e07fe1c4978361d3ea32bfe19e7bf50",
+        "configuration_digest": "bd53d2bb88b31cd992a48c901fc7b08a46d828c6a583f4fe606c4b7e54182f81",
+        "impact": {
+          "added": [
+            "implement",
+            "review"
+          ],
+          "affected": [
+            "implement",
+            "review"
+          ],
+          "attempt_reconciliation": "not_run",
+          "authorization_changed": false,
+          "changed": [],
+          "removed": [],
+          "reusable": []
+        },
+        "intent_id": "88afda1c-46a8-483b-a917-b9c23ab85221",
+        "plan": {
+          "authorization": {
+            "budget_ref": "run",
+            "channel_ids": [
+              "fixture-channel"
+            ],
+            "checks": [
+              "tests",
+              "independent_review"
+            ],
+            "currency_limits": {
+              "CNY": "0",
+              "USD": "0"
+            },
+            "data_destinations": [
+              "synthetic-local-fixture"
+            ],
+            "delivery": "pull_request",
+            "max_attempt_duration_seconds": 25,
+            "max_quality_repair_rounds": 2,
+            "min_isolation": "tool_sandboxed",
+            "profile_refs": [
+              {
+                "id": "fixture-profile",
+                "revision": 1
+              }
+            ],
+            "read_paths": [
+              "src",
+              "tests"
+            ],
+            "required_capabilities": [
+              "controlled_tools"
+            ],
+            "stage_permissions": {
+              "bounded-worker": {
+                "normal": true,
+                "quality_indices": [
+                  0
+                ]
+              },
+              "mechanical-worker": {
+                "normal": false,
+                "quality_indices": []
+              },
+              "standard-review": {
+                "normal": true,
+                "quality_indices": []
+              }
+            },
+            "target_branch": "main",
+            "tools": [
+              "fixture-tools"
+            ],
+            "write_paths": [
+              "src"
+            ]
+          },
+          "summary": "合成审批样例：固定当前权限，保留独立审查与用户合并决定。",
+          "tasks": [
+            {
+              "acceptance": [
+                "合成报告符合明确需求"
+              ],
+              "complexity": "T2",
+              "context_tokens": 4096,
+              "depends_on": [],
+              "domains": [
+                "code",
+                "synthetic-report"
+              ],
+              "duration_seconds": 20,
+              "id": "implement",
+              "paths": [
+                "src/report.py"
+              ],
+              "purpose": null,
+              "readiness": "ready",
+              "required": true,
+              "required_capabilities": [
+                "controlled_tools"
+              ],
+              "revision": 1,
+              "risk": "standard",
+              "role": "worker",
+              "tools": [
+                "fixture-tools"
+              ]
+            },
+            {
+              "acceptance": [
+                "独立审查通过"
+              ],
+              "complexity": "T2",
+              "context_tokens": 4096,
+              "depends_on": [
+                "implement"
+              ],
+              "domains": [
+                "code",
+                "synthetic-report"
+              ],
+              "duration_seconds": 20,
+              "id": "review",
+              "paths": [
+                "src/report.py"
+              ],
+              "purpose": null,
+              "readiness": "ready",
+              "required": true,
+              "required_capabilities": [
+                "controlled_tools"
+              ],
+              "revision": 1,
+              "risk": "standard",
+              "role": "reviewer",
+              "tools": [
+                "fixture-tools"
+              ]
+            }
+          ]
+        },
+        "plan_digest": "7d8bded21852a020d39c540b2dc724c37cd5ce196726e347b028e627f90e2fec",
+        "plan_revision": 1,
+        "provenance": "fixture",
+        "routing_binding": {
+          "activation_allowed": false,
+          "authorization_ceiling_digest": "f9b1250f99414229e1db0a1e989d84ab232df957add87be0a658560edb2a3b43",
+          "configuration_digest": "bd53d2bb88b31cd992a48c901fc7b08a46d828c6a583f4fe606c4b7e54182f81",
+          "execution_policy": {
+            "digest": "fa94f06891a7613b7231a56584550a44cacd7ad00984493363951eb230b09ba1",
+            "id": "synthetic-ui-policy",
+            "project_id": "1ce374be-ae09-4695-8c14-2d4d363c10d0",
+            "registered_by": "owner",
+            "revision": 1
+          },
+          "rulebook": {
+            "digest": "037022d8cb9f5520179e242681908c0e5fbf3583ce933fe9681af7f2b022e789",
+            "id": "personal-code-delivery",
+            "revision": 1
+          },
+          "schema_version": "karajan.approved-routing-binding.v1",
+          "stage_grants": {
+            "bounded-worker": {
+              "normal": {
+                "standard_qualified": [
+                  {
+                    "id": "fixture-profile",
+                    "revision": 1
+                  }
+                ]
+              },
+              "quality": [
+                {
+                  "group": "critical_qualified",
+                  "index": 0,
+                  "profiles": [
+                    {
+                      "id": "fixture-profile",
+                      "revision": 1
+                    }
+                  ]
+                }
+              ]
+            },
+            "mechanical-worker": {
+              "normal": {},
+              "quality": []
+            },
+            "standard-review": {
+              "normal": {
+                "review_standard_qualified": [
+                  {
+                    "id": "fixture-profile",
+                    "revision": 1
+                  }
+                ]
+              },
+              "quality": []
+            }
+          },
+          "task_requirements": {
+            "implement": {
+              "complexity": "T2",
+              "context_tokens": 4096,
+              "domains": [
+                "code",
+                "synthetic-report"
+              ],
+              "duration_seconds": 20,
+              "paths": [
+                "src/report.py"
+              ],
+              "purpose": null,
+              "readiness": "ready",
+              "required_capabilities": [
+                "controlled_tools"
+              ],
+              "revision": 1,
+              "risk": "standard",
+              "role": "worker",
+              "tools": [
+                "fixture-tools"
+              ]
+            },
+            "review": {
+              "complexity": "T2",
+              "context_tokens": 4096,
+              "domains": [
+                "code",
+                "synthetic-report"
+              ],
+              "duration_seconds": 20,
+              "paths": [
+                "src/report.py"
+              ],
+              "purpose": null,
+              "readiness": "ready",
+              "required_capabilities": [
+                "controlled_tools"
+              ],
+              "revision": 1,
+              "risk": "standard",
+              "role": "reviewer",
+              "tools": [
+                "fixture-tools"
+              ]
+            }
+          }
+        },
+        "routing_digest": "deeda1c1f141141de460ac90e50af2fdf5c5798cc8c55f97ffcc6e3c19f03b7b",
+        "submitted_by": "synthetic-lead",
+        "term": 1
+      }
+    ],
+    "project_id": "1ce374be-ae09-4695-8c14-2d4d363c10d0",
+    "requirement": {
+      "acceptance": [
+        "仅验证页面与持久批准，不执行工具"
+      ],
+      "goal": "SYNTHETIC v2 完整授权审批示例"
+    },
+    "revision": 4,
+    "schema_version": "karajan.run-planning.v2",
+    "state": "awaiting_approval"
+  },
+  "v1_run": {
+    "active_plan_revision": null,
+    "approvals": [],
+    "authorization_ceiling": {
+      "budget_ref": "run",
+      "checks": [
+        "tests",
+        "independent_review"
+      ],
+      "delivery": "pull_request",
+      "profile_refs": [
+        {
+          "id": "fixture-profile",
+          "revision": 1
+        }
+      ],
+      "read_paths": [
+        "src",
+        "tests"
+      ],
+      "target_branch": "main",
+      "write_paths": [
+        "src",
+        "tests"
+      ]
+    },
+    "commander": {
+      "principal": "synthetic-lead",
+      "profile": {
+        "id": "fixture-profile",
+        "revision": 1
+      },
+      "purpose": "lead",
+      "term": 1
+    },
+    "configuration_snapshot": {
+      "configuration": {
+        "approved_profile_refs": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ],
+        "resources": {
+          "accounts": [
+            {
+              "id": "fixture-account",
+              "provider_id": "fixture-provider",
+              "secret_ref": "secret:fixture-reference"
+            }
+          ],
+          "budgets": [
+            {
+              "currency_limits": {
+                "CNY": "0",
+                "USD": "0"
+              },
+              "id": "planning",
+              "max_duration_seconds": 300,
+              "max_total_attempts": 8,
+              "scope": "planning"
+            },
+            {
+              "currency_limits": {
+                "CNY": "0",
+                "USD": "0"
+              },
+              "id": "run",
+              "max_duration_seconds": 300,
+              "max_total_attempts": 8,
+              "scope": "run"
+            }
+          ],
+          "capacity_policies": [
+            {
+              "account_id": "fixture-account",
+              "conservative_mode": {
+                "cooldown_seconds": 10,
+                "enabled": true,
+                "max_attempt_duration_seconds": 30,
+                "max_local_active_attempts": 1,
+                "observation_max_age_seconds": 60
+              }
+            }
+          ],
+          "channels": [
+            {
+              "account_id": "fixture-account",
+              "approved_data_destination": true,
+              "billing_path": "subscription_only",
+              "id": "fixture-channel"
+            }
+          ],
+          "profiles": [
+            {
+              "capability_evidence": [
+                {
+                  "capability": "bounded_code_edit",
+                  "evidence_ref": "fixture:bounded_code_edit",
+                  "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                  "provenance": "fixture",
+                  "runtime_version": "1",
+                  "status": "passed"
+                },
+                {
+                  "capability": "bounded_implementation",
+                  "evidence_ref": "fixture:bounded_implementation",
+                  "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                  "provenance": "fixture",
+                  "runtime_version": "1",
+                  "status": "passed"
+                },
+                {
+                  "capability": "candidate_capture",
+                  "evidence_ref": "fixture:candidate_capture",
+                  "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                  "provenance": "fixture",
+                  "runtime_version": "1",
+                  "status": "passed"
+                },
+                {
+                  "capability": "code_review",
+                  "evidence_ref": "fixture:code_review",
+                  "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                  "provenance": "fixture",
+                  "runtime_version": "1",
+                  "status": "passed"
+                },
+                {
+                  "capability": "controlled_tools",
+                  "evidence_ref": "fixture:controlled_tools",
+                  "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                  "provenance": "fixture",
+                  "runtime_version": "1",
+                  "status": "passed"
+                },
+                {
+                  "capability": "critical_code_review",
+                  "evidence_ref": "fixture:critical_code_review",
+                  "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                  "provenance": "fixture",
+                  "runtime_version": "1",
+                  "status": "passed"
+                },
+                {
+                  "capability": "critical_implementation",
+                  "evidence_ref": "fixture:critical_implementation",
+                  "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                  "provenance": "fixture",
+                  "runtime_version": "1",
+                  "status": "passed"
+                },
+                {
+                  "capability": "design_reasoning",
+                  "evidence_ref": "fixture:design_reasoning",
+                  "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                  "provenance": "fixture",
+                  "runtime_version": "1",
+                  "status": "passed"
+                },
+                {
+                  "capability": "structured_findings",
+                  "evidence_ref": "fixture:structured_findings",
+                  "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                  "provenance": "fixture",
+                  "runtime_version": "1",
+                  "status": "passed"
+                },
+                {
+                  "capability": "structured_plan_output",
+                  "evidence_ref": "fixture:structured_plan_output",
+                  "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                  "provenance": "fixture",
+                  "runtime_version": "1",
+                  "status": "passed"
+                }
+              ],
+              "enabled": true,
+              "id": "fixture-profile",
+              "max_class": "T3",
+              "model_family": "fixture-family",
+              "profile": {
+                "admission_granularity": "attempt",
+                "auth_ref": "secret:fixture-reference",
+                "binding": {
+                  "account_id": "fixture-account",
+                  "auth_mode": "none",
+                  "billing_path": "subscription_only",
+                  "channel_id": "fixture-channel",
+                  "model_id": "fixture-model",
+                  "native_settings": {},
+                  "runtime_kind": "fixture-runtime",
+                  "runtime_version": "1"
+                },
+                "id": "fixture-profile",
+                "required_permissions": [
+                  "fixture-tools"
+                ],
+                "revision": 1,
+                "usage_coverage": "unknown"
+              },
+              "quota_pool_refs": [
+                "service-fixture"
+              ],
+              "required_isolation": "tool_sandboxed",
+              "revision": 1
+            }
+          ],
+          "quota_pools": [
+            {
+              "account_id": "fixture-account",
+              "id": "service-fixture",
+              "kind": "service",
+              "limit": "100",
+              "observation_state": "unknown",
+              "unit": "percent"
+            }
+          ]
+        },
+        "rulebook": {
+          "collaboration": {
+            "command_mode": "lead_with_advisers",
+            "delivery_target": "pull_request",
+            "implementation_readiness": "ready",
+            "internal_delegation": "disabled_unless_admitted_and_observable",
+            "max_infrastructure_retries_per_root_task": 2,
+            "max_parallel_writers_per_project": 2,
+            "max_quality_repair_rounds": 2,
+            "merge_authority": "user",
+            "plan_approval": "explicit_revision"
+          },
+          "description": "Design example: bind qualified profile revisions and budgets before activation.",
+          "global_constraints": {
+            "autonomous_tool_execution_min_isolation": "tool_sandboxed",
+            "final_review_required": true,
+            "no_silent_model_or_billing_fallback": true,
+            "profile_fixed_per_attempt": true,
+            "require_approved_data_destination": true,
+            "require_enabled_profile": true,
+            "require_explicit_billing_path": true,
+            "require_passed_capabilities": true,
+            "review_context": "fresh_non_author"
+          },
+          "id": "personal-code-delivery",
+          "profile_groups": {
+            "adviser_qualified": [
+              {
+                "id": "fixture-profile",
+                "revision": 1
+              }
+            ],
+            "commander_qualified": [
+              {
+                "id": "fixture-profile",
+                "revision": 1
+              }
+            ],
+            "critical_qualified": [
+              {
+                "id": "fixture-profile",
+                "revision": 1
+              }
+            ],
+            "fast_qualified": [
+              {
+                "id": "fixture-profile",
+                "revision": 1
+              }
+            ],
+            "review_critical_qualified": [
+              {
+                "id": "fixture-profile",
+                "revision": 1
+              }
+            ],
+            "review_standard_qualified": [
+              {
+                "id": "fixture-profile",
+                "revision": 1
+              }
+            ],
+            "standard_qualified": [
+              {
+                "id": "fixture-profile",
+                "revision": 1
+              }
+            ]
+          },
+          "resource_policy": {
+            "account_capacity_policy_binding": "current_global_revision",
+            "call_reservations": "slices_of_attempt_reservation",
+            "candidate_order": [
+              "preference_band",
+              "uncertainty_band",
+              "bottleneck_quota_pressure",
+              "incremental_cash_estimate",
+              "completion_time_estimate",
+              "profile_id"
+            ],
+            "cash_budget_enforcement": "bounded_calls",
+            "fairness": "aging_and_run_round_robin",
+            "id": "protect_lead_then_balance",
+            "missing_cash_budget": "deny_cash_route",
+            "planning_budget_ref": "planning",
+            "queue_order": [
+              "lead_feedback",
+              "required_review_repair_and_critical_path",
+              "worker",
+              "optional_adviser"
+            ],
+            "reset_preference": "only_among_equivalent_candidates_all_windows_checked",
+            "run_budget_ref": "run",
+            "subscription_quota_enforcement": "conservative_estimate",
+            "unknown_quota": "require_explicit_conservative_mode"
+          },
+          "revision": 1,
+          "rules": [
+            {
+              "capabilities_all": [
+                "design_reasoning",
+                "structured_plan_output"
+              ],
+              "eligible_groups": [
+                "commander_qualified"
+              ],
+              "handoff": "explicit_checkpoint_record",
+              "id": "lead-planning",
+              "priority": 100,
+              "reroute": "propose_checkpoint_handoff_require_user_decision",
+              "when": {
+                "purpose": "lead",
+                "role": "commander"
+              }
+            },
+            {
+              "capabilities_all": [
+                "design_reasoning"
+              ],
+              "eligible_groups": [
+                "adviser_qualified"
+              ],
+              "id": "adviser-planning",
+              "lead_reserve_access": false,
+              "priority": 100,
+              "reroute": "within_approved_set",
+              "when": {
+                "purpose": "advice",
+                "role": "commander"
+              }
+            },
+            {
+              "capabilities_all": [
+                "bounded_code_edit",
+                "controlled_tools",
+                "candidate_capture"
+              ],
+              "eligible_groups": [
+                "fast_qualified"
+              ],
+              "id": "mechanical-worker",
+              "priority": 100,
+              "quality_escalation_groups": [
+                "standard_qualified"
+              ],
+              "reroute": "within_approved_set_preserve_requirements",
+              "when": {
+                "effective_class": "T1",
+                "readiness": "ready",
+                "role": "worker"
+              }
+            },
+            {
+              "capabilities_all": [
+                "bounded_implementation",
+                "controlled_tools",
+                "candidate_capture"
+              ],
+              "eligible_groups": [
+                "standard_qualified"
+              ],
+              "id": "bounded-worker",
+              "priority": 100,
+              "quality_escalation_groups": [
+                "critical_qualified"
+              ],
+              "reroute": "within_approved_set_preserve_requirements",
+              "when": {
+                "effective_class": "T2",
+                "readiness": "ready",
+                "role": "worker"
+              }
+            },
+            {
+              "capabilities_all": [
+                "critical_implementation",
+                "controlled_tools",
+                "candidate_capture"
+              ],
+              "eligible_groups": [
+                "critical_qualified"
+              ],
+              "id": "critical-worker",
+              "priority": 100,
+              "quality_escalation_groups": [],
+              "reroute": "within_approved_set_preserve_requirements",
+              "when": {
+                "effective_class": "T3",
+                "readiness": "ready",
+                "role": "worker"
+              }
+            },
+            {
+              "capabilities_all": [
+                "code_review",
+                "structured_findings"
+              ],
+              "eligible_groups": [
+                "review_standard_qualified"
+              ],
+              "id": "standard-review",
+              "independence": [
+                "fresh_context",
+                "non_author_attempt"
+              ],
+              "priority": 100,
+              "reroute": "within_approved_set_preserve_requirements",
+              "when": {
+                "effective_class_in": [
+                  "T1",
+                  "T2"
+                ],
+                "role": "reviewer"
+              }
+            },
+            {
+              "capabilities_all": [
+                "critical_code_review",
+                "structured_findings"
+              ],
+              "eligible_groups": [
+                "review_critical_qualified"
+              ],
+              "id": "critical-review",
+              "independence": [
+                "fresh_context",
+                "non_author_attempt",
+                "different_model_family_from_authors"
+              ],
+              "priority": 100,
+              "reroute": "within_approved_set_preserve_requirements",
+              "when": {
+                "effective_class": "T3",
+                "role": "reviewer"
+              }
+            }
+          ],
+          "schema_version": "karajan.rulebook.v1",
+          "status": "configured"
+        },
+        "schema_version": "karajan.project-config.v1"
+      },
+      "digest": "bd53d2bb88b31cd992a48c901fc7b08a46d828c6a583f4fe606c4b7e54182f81",
+      "project_revision": 2,
+      "repository": {
+        "base_ref": "main",
+        "base_sha": "c4cf945c22bb00671b9ffe172963dd64f212b460",
+        "identity_sha256": "5f82c118f7e9eb1d196e92602ee244c8653c1d1c995b2717182ddd6059401ec7",
+        "root": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\v2-ui-browser-repo"
+      },
+      "revision": 1,
+      "target_branch": "main"
+    },
+    "dispatch_enabled": false,
+    "handoffs": [],
+    "id": "bd9756c4-b4d2-43ed-a82f-1ac22002fc54",
+    "latest_plan_revision": 1,
+    "live_qualification": "not_run",
+    "owner": "owner",
+    "participants": [
+      {
+        "principal": "synthetic-lead",
+        "profile": {
+          "id": "fixture-profile",
+          "revision": 1
+        },
+        "purpose": "lead"
+      },
+      {
+        "principal": "synthetic-next",
+        "profile": {
+          "id": "fixture-profile",
+          "revision": 1
+        },
+        "purpose": "candidate"
+      }
+    ],
+    "planning_intents": [
+      {
+        "budget_ref": "planning",
+        "created_at": 1788669569.6058278,
+        "dispatch_enabled": false,
+        "id": "c70b7da2-9434-47ee-8ecf-10388f4863f6",
+        "permissions": [
+          "read"
+        ],
+        "principal": "synthetic-lead",
+        "profile": {
+          "id": "fixture-profile",
+          "revision": 1
+        },
+        "receipt": {
+          "authority_revision": "synthetic-ui-authority-v1",
+          "budget_ref": "planning",
+          "intent_id": "c70b7da2-9434-47ee-8ecf-10388f4863f6",
+          "principal": "synthetic-lead",
+          "profile": {
+            "id": "fixture-profile",
+            "revision": 1
+          },
+          "provenance": "fixture",
+          "receipt_ref": "synthetic-ui-receipt-v1",
+          "run_id": "bd9756c4-b4d2-43ed-a82f-1ac22002fc54",
+          "state": "admitted",
+          "term": 1
+        },
+        "run_id": "bd9756c4-b4d2-43ed-a82f-1ac22002fc54",
+        "state": "admitted",
+        "term": 1
+      }
+    ],
+    "plans": [
+      {
+        "authorization_digest": "fe8aa61291cdc8b632ef37344e665a5fca4ccfd3ab616058cfaad75bc9af555a",
+        "configuration_digest": "bd53d2bb88b31cd992a48c901fc7b08a46d828c6a583f4fe606c4b7e54182f81",
+        "impact": {
+          "added": [
+            "implement",
+            "review"
+          ],
+          "affected": [
+            "implement",
+            "review"
+          ],
+          "attempt_reconciliation": "not_run",
+          "authorization_changed": false,
+          "changed": [],
+          "removed": [],
+          "reusable": []
+        },
+        "intent_id": "c70b7da2-9434-47ee-8ecf-10388f4863f6",
+        "plan": {
+          "authorization": {
+            "budget_ref": "run",
+            "checks": [
+              "tests",
+              "independent_review"
+            ],
+            "delivery": "pull_request",
+            "profile_refs": [
+              {
+                "id": "fixture-profile",
+                "revision": 1
+              }
+            ],
+            "read_paths": [
+              "src",
+              "tests"
+            ],
+            "target_branch": "main",
+            "write_paths": [
+              "src"
+            ]
+          },
+          "summary": "合成审批样例：固定当前权限，保留独立审查与用户合并决定。",
+          "tasks": [
+            {
+              "acceptance": [
+                "合成报告符合明确需求"
+              ],
+              "complexity": "T2",
+              "depends_on": [],
+              "id": "implement",
+              "paths": [
+                "src/report.py"
+              ],
+              "readiness": "ready",
+              "required": true,
+              "revision": 1,
+              "risk": "standard",
+              "role": "worker"
+            },
+            {
+              "acceptance": [
+                "独立审查通过"
+              ],
+              "complexity": "T2",
+              "depends_on": [
+                "implement"
+              ],
+              "id": "review",
+              "paths": [
+                "src/report.py"
+              ],
+              "readiness": "ready",
+              "required": true,
+              "revision": 1,
+              "risk": "standard",
+              "role": "reviewer"
+            }
+          ]
+        },
+        "plan_digest": "d02dc7944562bd35908a2680354bd1344647201e20237ad0755838b81a49a26a",
+        "plan_revision": 1,
+        "provenance": "fixture",
+        "submitted_by": "synthetic-lead",
+        "term": 1
+      }
+    ],
+    "project_id": "1ce374be-ae09-4695-8c14-2d4d363c10d0",
+    "requirement": {
+      "acceptance": [
+        "仅验证页面与持久批准，不执行工具"
+      ],
+      "goal": "SYNTHETIC v1 兼容审批示例"
+    },
+    "revision": 4,
+    "schema_version": "karajan.run-planning.v1",
+    "state": "awaiting_approval"
+  }
+}

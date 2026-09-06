@@ -1,0 +1,16 @@
+{
+  "base": "35c00f7cbc04704c805c36e0b00ff1b743f2143b",
+  "files": {
+    "backend/karajan/orchestration/routing.py": "f66739fa0655f0dbe8ef709be82ad3cc9a22166dbc48c0830cdc515dd658e165",
+    "backend/karajan/routing/selection.py": "f119a2b4f26677d203eef2e5330a4246995cd0ef634ef79af2f513d55e6c548e",
+    "backend/karajan/routing/evaluator.py": "34b230cf7f363a44cee47b0d2e954ca2e616254bc1c8a546d5da1a4b9e737659",
+    "backend/karajan/routing/models.py": "b62e9e3c74b2053c336a656850f88f9cc8425dbab8553d4e86efa59314e919ef",
+    "backend/karajan/routing/__init__.py": "ba8d6b626c2d8eda272032c821935db82e8f038c7da41adf959513a2f71b9a81",
+    "backend/karajan/web/approved_routing.py": "daf20ae377998b75c11ae897f246bda05a26b83e5b9e8b12a6721c72bcb5b924",
+    "backend/karajan/web/app.py": "e8052420eb9c792e04cea5b4002f617f1329ac12ddabe2310cda989384a7336a",
+    "tests/routing/test_rule_selection.py": "c16f404384d7d6e5c9ef54753e7004fff2f65f11197112b45eca1ae90373c4c0",
+    "tests/web/test_approved_routing_http.py": "4b9a77a6a849aeb8c20d291f1e1a1d02447517ed570e917e3df3b928bb958ccd",
+    "tests/runs/test_approved_routing.py": "7267cf9faf66d0d357a090496b6d65e6c6fa83a0b31ea39586047269d5789726",
+    "tests/runs/test_approved_routing_capacity.py": "846d667a8556118ee5dcead20096ac7ad2f3efcee4b2732fa4d4483a52a67050"
+  }
+}

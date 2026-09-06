@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="3" time="0.205" timestamp="2026-09-06T13:51:50.915993+08:00" hostname="ProArt-Zhou"><testcase classname="tests.capacity.test_command_receipts" name="test_lost_admit_response_is_read_after_reopen_without_expiring_or_mutating_it" time="0.027" /><testcase classname="tests.capacity.test_command_receipts" name="test_cancellation_and_activation_cannot_both_win_after_a_reserved_snapshot[True]" time="0.024"><failure message="AttributeError: 'CapacityStore' object has no attribute 'cancel_unactivated'">ledger = (&lt;karajan.capacity.store.CapacityStore object at 0x000001C7EDAFFD40&gt;, [1000.0])
+activation_first = True
+
+    @pytest.mark.parametrize("activation_first", [True, False])
+    def test_cancellation_and_activation_cannot_both_win_after_a_reserved_snapshot(
+        ledger, activation_first
+    ):
+        store, clock = ledger
+        admission_id = store.admit(request(), command_key="reserve")["admission_id"]
+        assert store.snapshot()["reservations"][0]["state"] == "reserved"
+        other = CapacityStore(store.path, clock=lambda: clock[0])
+        cancellation = {"admission_id": admission_id, "evidence_ref": "controller:cancel-before-start"}
+    
+        if activation_first:
+            other.activate(admission_id, command_key="activate")
+            with pytest.raises(CapacityError, match="^CANNOT_RELEASE_ACTIVATED_ADMISSION$"):
+&gt;               store.cancel_unactivated(**cancellation, command_key="cancel")
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'CapacityStore' object has no attribute 'cancel_unactivated'
+
+tests\capacity\test_command_receipts.py:44: AttributeError</failure></testcase><testcase classname="tests.capacity.test_command_receipts" name="test_cancellation_and_activation_cannot_both_win_after_a_reserved_snapshot[False]" time="0.021"><failure message="AttributeError: 'CapacityStore' object has no attribute 'cancel_unactivated'">ledger = (&lt;karajan.capacity.store.CapacityStore object at 0x000001C7EDAFE210&gt;, [1000.0])
+activation_first = False
+
+    @pytest.mark.parametrize("activation_first", [True, False])
+    def test_cancellation_and_activation_cannot_both_win_after_a_reserved_snapshot(
+        ledger, activation_first
+    ):
+        store, clock = ledger
+        admission_id = store.admit(request(), command_key="reserve")["admission_id"]
+        assert store.snapshot()["reservations"][0]["state"] == "reserved"
+        other = CapacityStore(store.path, clock=lambda: clock[0])
+        cancellation = {"admission_id": admission_id, "evidence_ref": "controller:cancel-before-start"}
+    
+        if activation_first:
+            other.activate(admission_id, command_key="activate")
+            with pytest.raises(CapacityError, match="^CANNOT_RELEASE_ACTIVATED_ADMISSION$"):
+                store.cancel_unactivated(**cancellation, command_key="cancel")
+            assert store.snapshot()["reservations"][0]["state"] == "active"
+            assert store.command_receipt("cancel_unactivated", cancellation, command_key="cancel") is None
+        else:
+&gt;           result = store.cancel_unactivated(**cancellation, command_key="cancel")
+                     ^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'CapacityStore' object has no attribute 'cancel_unactivated'
+
+tests\capacity\test_command_receipts.py:48: AttributeError</failure></testcase></testsuite></testsuites>

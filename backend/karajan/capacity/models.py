@@ -85,6 +85,14 @@ class Policy(Contract):
         return value
 
 
+class ExpectedCapacity(Contract):
+    """Routing-time bindings rechecked under the actual admission transaction."""
+
+    policy_revision: Positive
+    pool_windows: Annotated[dict[Identifier, Identifier], Field(min_length=1, max_length=32)]
+    lead_reserve_access: bool
+
+
 class AdmissionRequest(Contract):
     attempt_id: Identifier
     run_id: Identifier
@@ -96,6 +104,7 @@ class AdmissionRequest(Contract):
     rulebook_revision: Identifier
     duration_seconds: Positive
     demand: dict[Identifier, str]
+    expected_capacity: ExpectedCapacity | None = None
 
     @field_validator("demand")
     @classmethod

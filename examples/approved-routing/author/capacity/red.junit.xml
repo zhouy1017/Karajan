@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="20" skipped="0" tests="26" time="0.999" timestamp="2026-09-06T13:06:49.880715+08:00" hostname="ProArt-Zhou"><testcase classname="tests.capacity.test_admission_bindings" name="test_policy_revision_changes_are_rejected_at_each_transaction_boundary[admit]" time="0.025"><failure message="karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID">tests\capacity\test_admission_bindings.py:110: in test_policy_revision_changes_are_rejected_at_each_transaction_boundary
+    store.admit(value, command_key="stale")
+backend\karajan\capacity\store.py:331: in admit
+    value = validate(AdmissionRequest, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:47: in validate
+    raise CapacityError("CAPACITY_INPUT_INVALID") from None
+E   karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID</failure></testcase><testcase classname="tests.capacity.test_admission_bindings" name="test_policy_revision_changes_are_rejected_at_each_transaction_boundary[activate]" time="0.019"><failure message="karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID">tests\capacity\test_admission_bindings.py:106: in test_policy_revision_changes_are_rejected_at_each_transaction_boundary
+    admitted = store.admit(value, command_key="reserve") if phase == "activate" else None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:331: in admit
+    value = validate(AdmissionRequest, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:47: in validate
+    raise CapacityError("CAPACITY_INPUT_INVALID") from None
+E   karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID</failure></testcase><testcase classname="tests.capacity.test_admission_bindings" name="test_window_rollover_rejects_estimate_bound_to_old_window[admit]" time="0.019"><failure message="karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID">tests\capacity\test_admission_bindings.py:129: in test_window_rollover_rejects_estimate_bound_to_old_window
+    store.admit(value, command_key="stale")
+backend\karajan\capacity\store.py:331: in admit
+    value = validate(AdmissionRequest, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:47: in validate
+    raise CapacityError("CAPACITY_INPUT_INVALID") from None
+E   karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID</failure></testcase><testcase classname="tests.capacity.test_admission_bindings" name="test_window_rollover_rejects_estimate_bound_to_old_window[activate]" time="0.018"><failure message="karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID">tests\capacity\test_admission_bindings.py:125: in test_window_rollover_rejects_estimate_bound_to_old_window
+    admitted = store.admit(value, command_key="reserve") if phase == "activate" else None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:331: in admit
+    value = validate(AdmissionRequest, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:47: in validate
+    raise CapacityError("CAPACITY_INPUT_INVALID") from None
+E   karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID</failure></testcase><testcase classname="tests.capacity.test_admission_bindings" name="test_same_window_uses_latest_balance_without_requiring_identical_observation[10-accepted-admit]" time="0.020"><failure message="karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID">tests\capacity\test_admission_bindings.py:154: in test_same_window_uses_latest_balance_without_requiring_identical_observation
+    store.admit(value, command_key="latest")
+backend\karajan\capacity\store.py:331: in admit
+    value = validate(AdmissionRequest, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:47: in validate
+    raise CapacityError("CAPACITY_INPUT_INVALID") from None
+E   karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID</failure></testcase><testcase classname="tests.capacity.test_admission_bindings" name="test_same_window_uses_latest_balance_without_requiring_identical_observation[10-accepted-activate]" time="0.018"><failure message="karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID">tests\capacity\test_admission_bindings.py:150: in test_same_window_uses_latest_balance_without_requiring_identical_observation
+    admitted = store.admit(value, command_key="reserve") if phase == "activate" else None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:331: in admit
+    value = validate(AdmissionRequest, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:47: in validate
+    raise CapacityError("CAPACITY_INPUT_INVALID") from None
+E   karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID</failure></testcase><testcase classname="tests.capacity.test_admission_bindings" name="test_same_window_uses_latest_balance_without_requiring_identical_observation[2-rejected-admit]" time="0.023"><failure message="karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID">tests\capacity\test_admission_bindings.py:154: in test_same_window_uses_latest_balance_without_requiring_identical_observation
+    store.admit(value, command_key="latest")
+backend\karajan\capacity\store.py:331: in admit
+    value = validate(AdmissionRequest, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:47: in validate
+    raise CapacityError("CAPACITY_INPUT_INVALID") from None
+E   karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID</failure></testcase><testcase classname="tests.capacity.test_admission_bindings" name="test_same_window_uses_latest_balance_without_requiring_identical_observation[2-rejected-activate]" time="0.022"><failure message="karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID">tests\capacity\test_admission_bindings.py:150: in test_same_window_uses_latest_balance_without_requiring_identical_observation
+    admitted = store.admit(value, command_key="reserve") if phase == "activate" else None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:331: in admit
+    value = validate(AdmissionRequest, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:47: in validate
+    raise CapacityError("CAPACITY_INPUT_INVALID") from None
+E   karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID</failure></testcase><testcase classname="tests.capacity.test_admission_bindings" name="test_expected_windows_must_cover_exact_registered_profile_pool_vector[short]" time="0.022"><failure message="karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID">tests\capacity\test_admission_bindings.py:174: in test_expected_windows_must_cover_exact_registered_profile_pool_vector
+    result = store.admit(value, command_key="incomplete")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:331: in admit
+    value = validate(AdmissionRequest, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:47: in validate
+    raise CapacityError("CAPACITY_INPUT_INVALID") from None
+E   karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID</failure></testcase><testcase classname="tests.capacity.test_admission_bindings" name="test_expected_windows_must_cover_exact_registered_profile_pool_vector[weekly]" time="0.021"><failure message="karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID">tests\capacity\test_admission_bindings.py:174: in test_expected_windows_must_cover_exact_registered_profile_pool_vector
+    result = store.admit(value, command_key="incomplete")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:331: in admit
+    value = validate(AdmissionRequest, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:47: in validate
+    raise CapacityError("CAPACITY_INPUT_INVALID") from None
+E   karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID</failure></testcase><testcase classname="tests.capacity.test_admission_bindings" name="test_expected_windows_must_cover_exact_registered_profile_pool_vector[extra]" time="0.021"><failure message="karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID">tests\capacity\test_admission_bindings.py:174: in test_expected_windows_must_cover_exact_registered_profile_pool_vector
+    result = store.admit(value, command_key="incomplete")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:331: in admit
+    value = validate(AdmissionRequest, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:47: in validate
+    raise CapacityError("CAPACITY_INPUT_INVALID") from None
+E   karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID</failure></testcase><testcase classname="tests.capacity.test_admission_bindings" name="test_reserve_access_can_only_narrow_existing_lead_role[commander-lead-False-False]" time="0.025"><failure message="karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID">tests\capacity\test_admission_bindings.py:194: in test_reserve_access_can_only_narrow_existing_lead_role
+    result = store.admit(value, command_key="reserve-access")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:331: in admit
+    value = validate(AdmissionRequest, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:47: in validate
+    raise CapacityError("CAPACITY_INPUT_INVALID") from None
+E   karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID</failure></testcase><testcase classname="tests.capacity.test_admission_bindings" name="test_reserve_access_can_only_narrow_existing_lead_role[commander-lead-True-True]" time="0.024"><failure message="karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID">tests\capacity\test_admission_bindings.py:194: in test_reserve_access_can_only_narrow_existing_lead_role
+    result = store.admit(value, command_key="reserve-access")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:331: in admit
+    value = validate(AdmissionRequest, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:47: in validate
+    raise CapacityError("CAPACITY_INPUT_INVALID") from None
+E   karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID</failure></testcase><testcase classname="tests.capacity.test_admission_bindings" name="test_reserve_access_can_only_narrow_existing_lead_role[commander-advice-True-False]" time="0.023"><failure message="karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID">tests\capacity\test_admission_bindings.py:194: in test_reserve_access_can_only_narrow_existing_lead_role
+    result = store.admit(value, command_key="reserve-access")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:331: in admit
+    value = validate(AdmissionRequest, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:47: in validate
+    raise CapacityError("CAPACITY_INPUT_INVALID") from None
+E   karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID</failure></testcase><testcase classname="tests.capacity.test_admission_bindings" name="test_reserve_access_can_only_narrow_existing_lead_role[worker-None-True-False]" time="0.023"><failure message="karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID">tests\capacity\test_admission_bindings.py:194: in test_reserve_access_can_only_narrow_existing_lead_role
+    result = store.admit(value, command_key="reserve-access")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:331: in admit
+    value = validate(AdmissionRequest, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:47: in validate
+    raise CapacityError("CAPACITY_INPUT_INVALID") from None
+E   karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID</failure></testcase><testcase classname="tests.capacity.test_admission_bindings" name="test_reserve_access_restriction_is_retained_at_activation" time="0.020"><failure message="karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID">tests\capacity\test_admission_bindings.py:202: in test_reserve_access_restriction_is_retained_at_activation
+    admitted = store.admit(value, command_key="reserve")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:331: in admit
+    value = validate(AdmissionRequest, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:47: in validate
+    raise CapacityError("CAPACITY_INPUT_INVALID") from None
+E   karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID</failure></testcase><testcase classname="tests.capacity.test_admission_bindings" name="test_restricted_lead_cannot_use_reserved_concurrency_slot" time="0.022"><failure message="karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID">tests\capacity\test_admission_bindings.py:220: in test_restricted_lead_cannot_use_reserved_concurrency_slot
+    denied = store.admit(restricted, command_key="restricted")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:331: in admit
+    value = validate(AdmissionRequest, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:47: in validate
+    raise CapacityError("CAPACITY_INPUT_INVALID") from None
+E   karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID</failure></testcase><testcase classname="tests.capacity.test_admission_bindings" name="test_partial_or_non_strict_binding_cannot_be_admitted[binding0]" time="0.018" /><testcase classname="tests.capacity.test_admission_bindings" name="test_partial_or_non_strict_binding_cannot_be_admitted[binding1]" time="0.018" /><testcase classname="tests.capacity.test_admission_bindings" name="test_partial_or_non_strict_binding_cannot_be_admitted[binding2]" time="0.018" /><testcase classname="tests.capacity.test_admission_bindings" name="test_partial_or_non_strict_binding_cannot_be_admitted[binding3]" time="0.019" /><testcase classname="tests.capacity.test_admission_bindings" name="test_partial_or_non_strict_binding_cannot_be_admitted[binding4]" time="0.019" /><testcase classname="tests.capacity.test_admission_bindings" name="test_partial_or_non_strict_binding_cannot_be_admitted[binding5]" time="0.018" /><testcase classname="tests.capacity.test_admission_bindings" name="test_legacy_payload_digest_and_replay_are_unchanged" time="0.022"><failure message="karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID">tests\capacity\test_admission_bindings.py:255: in test_legacy_payload_digest_and_replay_are_unchanged
+    assert reopened.admit({**value, "expected_capacity": None}, command_key="legacy") == admitted
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:331: in admit
+    value = validate(AdmissionRequest, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:47: in validate
+    raise CapacityError("CAPACITY_INPUT_INVALID") from None
+E   karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID</failure></testcase><testcase classname="tests.capacity.test_admission_bindings" name="test_bound_snapshot_cannot_double_spend_last_slot_across_runs" time="0.047"><failure message="karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID">tests\capacity\test_admission_bindings.py:275: in test_bound_snapshot_cannot_double_spend_last_slot_across_runs
+    results = list(executor.map(contend, values))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\concurrent\futures\_base.py:619: in result_iterator
+    yield _result_or_cancel(fs.pop())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\concurrent\futures\_base.py:317: in _result_or_cancel
+    return fut.result(timeout)
+           ^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\concurrent\futures\_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\concurrent\futures\_base.py:401: in __get_result
+    raise self._exception
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\concurrent\futures\thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\capacity\test_admission_bindings.py:272: in contend
+    return connection.admit(value, command_key=value["attempt_id"])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:331: in admit
+    value = validate(AdmissionRequest, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:47: in validate
+    raise CapacityError("CAPACITY_INPUT_INVALID") from None
+E   karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID</failure></testcase><testcase classname="tests.capacity.test_admission_bindings" name="test_replaying_bound_reservation_does_not_upgrade_or_duplicate_it" time="0.018"><failure message="karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID">tests\capacity\test_admission_bindings.py:283: in test_replaying_bound_reservation_does_not_upgrade_or_duplicate_it
+    admitted = store.admit(value, command_key="bound")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:331: in admit
+    value = validate(AdmissionRequest, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\capacity\store.py:47: in validate
+    raise CapacityError("CAPACITY_INPUT_INVALID") from None
+E   karajan.capacity.store.CapacityError: CAPACITY_INPUT_INVALID</failure></testcase></testsuite></testsuites>

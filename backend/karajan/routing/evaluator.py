@@ -1,6 +1,5 @@
 """Pure routing over supplied, versioned facts. A result never grants admission."""
 
-from pathlib import PurePosixPath, PureWindowsPath
 from typing import Any
 
 from karajan.contracts.credentials import contains_credential
@@ -9,50 +8,9 @@ from .compiler import RoutingError, compile_rulebook, digest, parse, reference
 from .models import CapacitySnapshot, PolicySnapshot, TaskSnapshot
 from .quotas import check_quota
 from .ranking import check_cash, rank
+from .selection import CLASSES, select_compiled_rule, validate_classification
 
-ALGORITHM_REVISION = "karajan.routing.lexicographic.v1"
-CLASSES = {"T1": 1, "T2": 2, "T3": 3}
-
-
-def _paths(value: str) -> tuple[str, ...]:
-    path = PurePosixPath(value)
-    if (
-        path.is_absolute()
-        or value != path.as_posix()
-        or not path.parts
-        or any(
-            part in {".", ".."} or part.rstrip(". ") != part or PureWindowsPath(part).is_reserved()
-            for part in path.parts
-        )
-        or any(char in value for char in '\\:*?[]<>|"\x00')
-        or not value.isprintable()
-    ):
-        raise RoutingError("ROUTING_PATH_INVALID")
-    return tuple(part.casefold() for part in path.parts)
-
-
-def _floor(task: dict[str, Any], risks: dict[str, Any]) -> str:
-    if task["risk"] not in risks["mapping"]:
-        raise RoutingError("RISK_MAPPING_REQUIRED")
-    values: list[str] = [task["complexity"], risks["mapping"][task["risk"]]]
-    for value in task["paths"]:
-        path = _paths(value)
-        for floor in risks["path_floors"]:
-            prefix = _paths(floor["prefix"])
-            if path[: len(prefix)] == prefix:
-                values.append(floor["minimum_class"])
-    return max(values, key=CLASSES.__getitem__)
-
-
-def _matches(rule: dict[str, Any], task: dict[str, Any], effective: str) -> bool:
-    when = rule["when"]
-    return (
-        all(when[key] is None or when[key] == task[key] for key in ("role", "purpose", "readiness"))
-        and (when["effective_class"] is None or when["effective_class"] == effective)
-        and (when["effective_class_in"] is None or effective in when["effective_class_in"])
-        and set(when["domains_all"]) <= set(task["domains"])
-        and (not when["risks_in"] or task["risk"] in when["risks_in"])
-    )
+ALGORITHM_REVISION = "karajan.routing.lexicographic.v2"
 
 
 def _unique(rows: list[dict[str, Any]], key: str) -> None:
@@ -87,15 +45,7 @@ def _validate(task: dict[str, Any], policy: dict[str, Any], capacity: dict[str, 
         _unique(profile["capability_evidence"], "capability")
         if len(profile["quota_pool_refs"]) != len(set(profile["quota_pool_refs"])):
             raise RoutingError("SNAPSHOT_IDENTITY_CONFLICT")
-    for floor in policy["risk_policy"]["path_floors"]:
-        _paths(floor["prefix"])
-    if policy["risk_policy"]["mapping"].get("critical", "T3") != "T3":
-        raise RoutingError("RISK_POLICY_FLOOR_INVALID")
-    for current in [task, *task["authors"]]:
-        for path in current["paths"]:
-            _paths(path)
-    if (task["role"] == "commander") != (task["purpose"] is not None):
-        raise RoutingError("TASK_PURPOSE_INVALID")
+    validate_classification(task, policy["risk_policy"])
 
 
 def _required(
@@ -210,7 +160,10 @@ def _profile_checks(
             reasons.append("ROLE_NOT_SUPPORTED")
         if not set(task["tools"]) <= set(facts["tools"]):
             reasons.append("TOOLS_NOT_SUPPORTED")
-        if facts["context_tokens"] is None or facts["context_tokens"] < task["context_tokens"]:
+        if (
+            facts["context_tokens"] is None
+            or facts["context_tokens"] < task["context_tokens"] + task["reserved_output_tokens"]
+        ):
             reasons.append("CONTEXT_CAPACITY_INSUFFICIENT")
         if any(
             facts["data_destination"] not in c["data_destinations"]
@@ -287,37 +240,12 @@ def evaluate_route(
         "scope": "simulation_only",
         "cash_sort": {"mode": "not_evaluated"},
     }
-    if task["readiness"] == "T0" and task["role"] == "worker":
-        report["reason_codes"] = ["TASK_NOT_READY"]
+    selection = select_compiled_rule(task, compiled, policy["risk_policy"])
+    for field in ("reason_codes", "effective_class", "rule_id", "matching_rules"):
+        report[field] = selection[field]
+    if selection["reason_codes"]:
         return report
-    try:
-        effective = max(
-            (
-                _floor(current, policy["risk_policy"])
-                for current in ([task, *task["authors"]] if task["role"] == "reviewer" else [task])
-            ),
-            key=CLASSES.__getitem__,
-        )
-    except RoutingError as error:
-        report["reason_codes"] = [error.code]
-        return report
-    report["effective_class"] = effective
-    matches = [r for r in compiled["document"]["rules"] if _matches(r, task, effective)]
-    report["matching_rules"] = [
-        {"id": r["id"], "priority": r["priority"]}
-        for r in sorted(matches, key=lambda r: (-r["priority"], r["id"]))
-    ]
-    highest = [
-        r for r in matches if r["priority"] == max((row["priority"] for row in matches), default=0)
-    ]
-    if len(highest) != 1:
-        report["reason_codes"] = ["RULE_AMBIGUOUS" if highest else "NO_RULE"]
-        return report
-    rule = highest[0]
-    report["rule_id"] = rule["id"]
-    if not rule["eligible_groups"] or not rule["capabilities_all"]:
-        report["reason_codes"] = ["RULE_REQUIREMENT_EMPTY"]
-        return report
+    effective, rule = selection["effective_class"], selection["rule"]
     if task["stage"] not in task["authorization"]["allowed_stages"]:
         report["reason_codes"] = ["STAGE_NOT_AUTHORIZED"]
         return report

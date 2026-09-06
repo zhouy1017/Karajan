@@ -1,0 +1,59 @@
+{
+  "schema_version": "karajan.independent-spec-review.v1",
+  "reviewed_at": "2026-09-06T05:33:52.732879+00:00",
+  "scope": "Owner conservative Attempt estimate public store",
+  "source_hashes": {
+    "backend/karajan/projects/demand.py": "0bb92458332401f63e15eebb6531977005527cdb3cd070e247f089388d47f76a",
+    "tests/projects/test_demand_store.py": "ead3079313801f127e03b4135a3fee628cbdaf7f3678d1edee2aa047d834078e",
+    "docs/implementation/m3-attempt-estimates.md": "40b55d9677e1fb12573214cffe827a83a80e6cc7855e0a90e2b29a0b71db05bd",
+    "examples/approved-routing/routing/spec/fixture.py": "de3c85ca2d5a99afb551dc5dbee5ae5f9dc75deb613cd5a36356551530a5113c"
+  },
+  "results": {
+    "tests": 13,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "junit": "final.junit.xml",
+    "execution": "actual published test path",
+    "test_cases": [
+      "test_public_registration_binds_exact_approved_sources_and_preserves_prediction_semantics",
+      "test_owner_cannot_inject_calibration_price_or_source_binding[confidence-known]",
+      "test_owner_cannot_inject_calibration_price_or_source_binding[price-value1]",
+      "test_owner_cannot_inject_calibration_price_or_source_binding[binding-value2]",
+      "test_newer_revoked_record_does_not_fall_back_to_older_valid_forecast",
+      "test_controller_clock_expiry_cannot_be_hidden_by_old_capacity_as_of",
+      "test_complete_current_window_identity_must_match_pool_binding[account_id]",
+      "test_complete_current_window_identity_must_match_pool_binding[unit]",
+      "test_complete_current_window_identity_must_match_pool_binding[window_kind]",
+      "test_complete_current_window_identity_must_match_pool_binding[omitted]",
+      "test_window_independent_forecast_rebinds_only_after_new_real_capacity_observation",
+      "test_new_approved_task_revision_invalidates_forecast_for_prior_approval",
+      "test_internal_projection_under_real_project_guard_blocks_revocation_until_exit"
+    ]
+  },
+  "findings": [],
+  "unresolved_findings": [],
+  "checks": [
+    "Ruff check published Python files passed",
+    "Ruff format --check published Python files passed"
+  ],
+  "inputs": "Spec-owned synthetic Git/SQLite fixtures and public configuration/Run commands; no author test helper",
+  "provider_calls": false,
+  "credentials_read": false,
+  "project_git_modified": false,
+  "state_publication": false,
+  "history": "Historical raw reports retained under history/; their counts are not added to final results",
+  "artifact_sha256": {
+    "final.junit.xml": "edbea1e9e986828594d630d9d84c493d45e9d8bda0c05c5d5f879107f91dc1e7",
+    "history/development.junit.xml": "993e41c4e14b50c203ee667e809b5423741fd085e9884f5c602da60cecf0d561",
+    "README.md": "c1b861d6b9dc8161aae34dba88a5e9a78cedc9c32aaef5d05ee31326219fe74b",
+    "source-final.json": "8e1a6454efd1151360f62beef97619c6cc634be296c4e1d716f1cf8c6d7b6387",
+    "test_public_demand.py": "eeb57cba2e1d39a9a8cfaa0511bc2857b93dc776ce13cd5091a88c1c6e5b906a"
+  },
+  "shared_fixture": "../.. /routing/spec/fixture.py, also pinned in source_hashes; independently importable without collecting routing tests",
+  "limitations": [
+    "owner_conservative_estimate only; unknown confidence and null price",
+    "Planning receipt is explicit fixture",
+    "No admission/model/provider/cash qualification"
+  ]
+}

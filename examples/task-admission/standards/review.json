@@ -1,0 +1,60 @@
+{
+  "axis": "Standards",
+  "base_commit": "5818835",
+  "review_target": "working tree files at exact recorded hashes",
+  "reviewed_at_utc": "2026-09-06T06:08:08.573053+00:00",
+  "findings": [],
+  "reviewed_files": {
+    "backend/karajan/orchestration/admission.py": "675bd8ec973458bd3ed98f236466102001b3290696f6e578d9e341cf3d88c0d8",
+    "backend/karajan/orchestration/routing.py": "a3c81c993a2ac1cd5fc05d94bee84a663b1d369b0980901a30d14d28593dc9bd",
+    "backend/karajan/web/admission.py": "a032e36aebe71cc4c7f13222d452eef2378369a4f2c4a95b3067bd7ceb829f18",
+    "backend/karajan/web/app.py": "acd00ef20e1ea307d83f28473f607b82b84f8c805f69dd1012ea43c84776ea75",
+    "tests/runs/test_task_admission.py": "e6dc82c491f986f1276bc163163504e37584960f6e8c89c6b152b9abef432c1b",
+    "tests/runs/test_admission_guard.py": "0660e93328bdfe84a1fc2f22f4140f58ed2f01555c6a9001828e761447c31154",
+    "tests/web/test_task_admission_http.py": "dc4f203e6911673bc364cc2c59abd02a3f3b24b6742a771e10725ad6e4d65ad4"
+  },
+  "excluded_authored_scope": "capacity/store.py and tests/capacity/test_command_receipts.py",
+  "excluded_but_consumed_capacity_source_sha256": "676f4a46cfd53fac5256cdea08e8ae8cd318b295bd159c9bf2fee5a90edef30d",
+  "independent_tests": {
+    "path": "examples/task-admission/standards/test_admission_standards.py",
+    "sha256": "5ce8239007e33b95a0887bd77e124f25bff02e6f559e40e6c0cd3d853efa024a",
+    "passed": 39,
+    "failed": 0,
+    "junit": "examples/task-admission/standards/junit.xml",
+    "junit_sha256": "f8aa850b5b6e8edaf9f888691d89ac5cdb4edb70a7edd4217802a9bc83a88f6a",
+    "pythonpath": "backend tests/runs tests/web",
+    "published_path_rerun": "passed",
+    "ruff": "passed"
+  },
+  "helper_sources": {
+    "tests/runs/test_task_admission.py": "e6dc82c491f986f1276bc163163504e37584960f6e8c89c6b152b9abef432c1b",
+    "tests/runs/test_approved_routing_capacity.py": "dc3765bc4944e7e317f283f0224c083e0849c29f9f8e1d85273af44eed068508",
+    "tests/runs/test_routing_authorization.py": "748c8e56f60e291cdf27c3296be674ed9ada83f3871e7e5f7da5cf936ccbfc87",
+    "tests/runs/test_planning.py": "ab9711b269a848cf85625a3a600083beaeb4294d12ea9c231eaecf1e736efbbb",
+    "tests/web/test_v2_approval_workbench.py": "90519bea1b940fa66ad41814f5fe4d2302d6918b34a956ec293dcc19ecc68aa8",
+    "tests/web/test_runs_http.py": "13fe62cf4cc22b71af0ce532b1e8f974b12a19762b2232b87ef2e8e13ad367f3",
+    "examples/projects/offline-configuration.json": "a286b101251e33a44c351b99edff5a07f9c325cef9be79eb90c251a0e9cb204f",
+    "pyproject.toml": "2cd9a2adb43f7ad74ef6b81ba0c76e349e4d7c438ad457accb9a23e5cc3f7493"
+  },
+  "published_files": {
+    "examples/task-admission/standards/history/start-sources.json": "92be90911e42ac16cbe05ed918ee23917c95fc5c22798cb28aba3e606f8eda1b",
+    "examples/task-admission/standards/junit.xml": "f8aa850b5b6e8edaf9f888691d89ac5cdb4edb70a7edd4217802a9bc83a88f6a",
+    "examples/task-admission/standards/README.md": "f860cc855d0d6f50a1c9189a6e98a91d8cb55e47b3c56ffc4ca5a00a8fc4a750",
+    "examples/task-admission/standards/review.md": "7ba0230641022c71ff7896fc7de3abdca00c1b0bea73c0d33c2dd3ce8a0784ad",
+    "examples/task-admission/standards/source.json": "4c77c94dfcc11ce135a332ff109b61a8b429cc07fa2db900360f53e3d8d14f66",
+    "examples/task-admission/standards/test_admission_standards.py": "5ce8239007e33b95a0887bd77e124f25bff02e6f559e40e6c0cd3d853efa024a"
+  },
+  "boundaries": [
+    "Actual public estimate revocation waits until the routing guard releases the project transaction.",
+    "Real Capacity commits followed by lost responses recover without action replay, even after estimate revocation or reservation expiry.",
+    "Owner/session checks and strict empty HTTP bodies prevent uploaded execution authority.",
+    "Current expiration and external released/active/unknown states project without additional Capacity effects.",
+    "Source hashes were verified unchanged after the published-path run."
+  ],
+  "limitations": [
+    "The author's own Capacity implementation is explicitly excluded from independent review.",
+    "The Spec axis is reviewed separately.",
+    "Positive qualification/planning receipt sources are labelled test fixtures; no runtime or provider qualification is claimed.",
+    "Reservation never authorizes Host/model execution and does not establish cross-database atomicity."
+  ]
+}

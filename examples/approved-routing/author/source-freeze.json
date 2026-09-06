@@ -1,0 +1,57 @@
+{
+  "base": "35c00f7cbc04704c805c36e0b00ff1b743f2143b",
+  "source_hashes": {
+    "backend/karajan/capacity/models.py": "d626c7fad458a44d434917efddd7393611452fd88437bc1ea097a12e769e5193",
+    "backend/karajan/capacity/store.py": "10a39b7a6238b417aa48a1a9c104fef582e8d1ef6fc4d025fa75632035092f98",
+    "backend/karajan/orchestration/routing.py": "0a2e35b3daf76d79f7b3c8745e718a094ccd6d0049e5c40cf8fed66bf7bcfb4a",
+    "backend/karajan/projects/demand.py": "0bb92458332401f63e15eebb6531977005527cdb3cd070e247f089388d47f76a",
+    "backend/karajan/projects/qualification.py": "f11749353b434eb821dadac8c9f07a59e2c1b3a2b5b684197809795c43ecfee5",
+    "backend/karajan/routing/__init__.py": "f69a4e35049dd4812605b6d30b5908bfacff3662d413a2faa51a1f4f2e41d7bf",
+    "backend/karajan/routing/evaluator.py": "681775528b41d89bc96b28b46fd10019fbaafd07c68fde616f52ecfb9b45f4ab",
+    "backend/karajan/routing/models.py": "b62e9e3c74b2053c336a656850f88f9cc8425dbab8553d4e86efa59314e919ef",
+    "backend/karajan/routing/selection.py": "dc85fa0954317be29ff831fcb1689266f6a8b6fb5a2511cdc82c0342eee2ae12",
+    "backend/karajan/runs/validation.py": "2d16de54a463c1a80ef97cbec605ebf6a3b9981087aeeca8e0191fc3520b0ee5",
+    "backend/karajan/web/app.py": "e8052420eb9c792e04cea5b4002f617f1329ac12ddabe2310cda989384a7336a",
+    "backend/karajan/web/approved_routing.py": "daf20ae377998b75c11ae897f246bda05a26b83e5b9e8b12a6721c72bcb5b924",
+    "tests/capacity/test_admission_bindings.py": "4c1acf1b6bf086358cd2d5538f615f9ddf966dc69e146515a27a69bfaf9b9fe6",
+    "tests/projects/test_demand_store.py": "ead3079313801f127e03b4135a3fee628cbdaf7f3678d1edee2aa047d834078e",
+    "tests/projects/test_qualification_store.py": "0701b9f3c393bfce61a58fc96a6202978de739736d55b6f934bf203411f65bfc",
+    "tests/routing/test_rule_selection.py": "c16f404384d7d6e5c9ef54753e7004fff2f65f11197112b45eca1ae90373c4c0",
+    "tests/runs/test_approved_routing.py": "7267cf9faf66d0d357a090496b6d65e6c6fa83a0b31ea39586047269d5789726",
+    "tests/runs/test_approved_routing_capacity.py": "dc3765bc4944e7e317f283f0224c083e0849c29f9f8e1d85273af44eed068508",
+    "tests/web/test_approved_routing_http.py": "4b9a77a6a849aeb8c20d291f1e1a1d02447517ed570e917e3df3b928bb958ccd"
+  },
+  "verification": [
+    {
+      "file": "trusted-routing-author-results.xml",
+      "tests": 562,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1
+    },
+    {
+      "file": "trusted-routing-final-affected.xml",
+      "tests": 248,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "trusted-routing-wsl-results.xml",
+      "tests": 104,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "scope_notes": [
+    "Initial broad regression predates the custom-group and exact-destination fixes; final affected regression and WSL include both fixes.",
+    "Three routing files were subsequently normalized CRLF to LF only; mapping is retained and independent replays bind final bytes.",
+    "No model, provider credential or cash call in this implementation verification.",
+    "Positive selection integration test uses an explicitly synthetic qualification source. Production assessments retain unknown qualification and do not reserve or execute."
+  ],
+  "root_review": [
+    "Read Standards/identity/transaction behavior in qualification and demand producer implementations; no additional actionable finding. These modules were authored by another agent and independently Spec-tested by a third.",
+    "Capacity binding source and public old-API compatibility reviewed; independent Standards report is published separately."
+  ]
+}

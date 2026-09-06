@@ -1,0 +1,29 @@
+{
+  "axis": "Standards",
+  "base": "35c00f7cbc04704c805c36e0b00ff1b743f2143b",
+  "findings": [],
+  "frozen_files": {
+    "backend/karajan/capacity/models.py": "d626c7fad458a44d434917efddd7393611452fd88437bc1ea097a12e769e5193",
+    "backend/karajan/capacity/store.py": "10a39b7a6238b417aa48a1a9c104fef582e8d1ef6fc4d025fa75632035092f98",
+    "tests/capacity/test_admission_bindings.py": "4c1acf1b6bf086358cd2d5538f615f9ddf966dc69e146515a27a69bfaf9b9fe6",
+    "docs/implementation/m3-capacity-routing-admission.md": "8abd6e4abf0c4e264830bd688ab5f4c14be87267e40d5e5ee09d8a1b59ea3826"
+  },
+  "independent_tests": {
+    "path": ".cache/capacity-standards/test_independent.py",
+    "sha256": "693ea557d64f09644a961c4bce8bfc515b49c509643e8fee08d05b0f7ac02a31",
+    "passed": 15,
+    "junit": ".cache/capacity-standards/independent.junit.xml"
+  },
+  "boundaries": [
+    "Actual pre-change package created SQLite reservations and command receipts; new package successfully replays absent and explicit-null binding requests and legacy activation receipts.",
+    "The shared _evaluate runs within _command BEGIN IMMEDIATE for both admit and activate.",
+    "Current-policy invalidation rejects activation even after replaying an old admitted receipt.",
+    "True access cannot elevate worker/reviewer/check/adviser. False access reaches unknown-quota conservative reserved-slot checks.",
+    "No provider calls, credentials or product/Git mutations."
+  ],
+  "limitations": [
+    "This is the assigned Standards axis only, not the independent Spec review.",
+    "The lower capacity API still accepts legacy requests without expected_capacity by design; production builder must always supply controller-derived bindings.",
+    "Capacity receipts do not authorize real model activation and do not prove cross-database atomicity."
+  ]
+}

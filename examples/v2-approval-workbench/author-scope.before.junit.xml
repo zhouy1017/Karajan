@@ -1,0 +1,549 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="1" failures="1" errors="0" time="1.1255">
+    <testsuite name="src/ProjectRuns.v2.test.tsx" timestamp="2026-09-06T03:17:23.770Z" hostname="ProArt-Zhou" tests="1" failures="1" errors="0" skipped="0" time="1.1255">
+        <testcase classname="src/ProjectRuns.v2.test.tsx" name="shows every v2 authorization dimension before explicitly approving its exact frozen revision" time="1.1238529">
+            <failure message="Unable to find role=&quot;region&quot; and name &quot;完整执行授权（v2）&quot;
+
+Ignored nodes: comments, script, style
+[36m&lt;body&gt;[39m
+  [36m&lt;div&gt;[39m
+    [36m&lt;section[39m
+      [33mclass[39m=[32m&quot;project-form&quot;[39m
+    [36m&gt;[39m
+      [36m&lt;h2&gt;[39m
+        [0m授权示例[0m
+        [0m · 需求与计划[0m
+      [36m&lt;/h2&gt;[39m
+      [36m&lt;button[39m
+        [33mclass[39m=[32m&quot;secondary&quot;[39m
+      [36m&gt;[39m
+        [0m新建需求[0m
+      [36m&lt;/button&gt;[39m
+      [36m&lt;p[39m
+        [33mclass[39m=[32m&quot;field-help&quot;[39m
+      [36m&gt;[39m
+        [0m查看已保存需求和当前方案。真实模型执行尚未启用。[0m
+      [36m&lt;/p&gt;[39m
+      [36m&lt;div[39m
+        [33mclass[39m=[32m&quot;form-actions&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;button[39m
+          [33mclass[39m=[32m&quot;secondary&quot;[39m
+        [36m&gt;[39m
+          [0m审阅 v2 授权[0m
+        [36m&lt;/button&gt;[39m
+      [36m&lt;/div&gt;[39m
+      [36m&lt;article[39m
+        [33mclass[39m=[32m&quot;run-detail&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;h3&gt;[39m
+          [0m审阅 v2 授权[0m
+        [36m&lt;/h3&gt;[39m
+        [36m&lt;ul&gt;[39m
+          [36m&lt;li&gt;[39m
+            [0m功能通过测试[0m
+          [36m&lt;/li&gt;[39m
+        [36m&lt;/ul&gt;[39m
+        [36m&lt;p[39m
+          [33mclass[39m=[32m&quot;field-help&quot;[39m
+        [36m&gt;[39m
+          [0m主 Commander · [0m
+          [0mlead[0m
+          [0m · 第[0m
+          [0m [0m
+          [0m2[0m
+          [0m 任[0m
+        [36m&lt;/p&gt;[39m
+        [36m&lt;h3&gt;[39m
+          [0m计划第 [0m
+          [0m3[0m
+          [0m 版[0m
+        [36m&lt;/h3&gt;[39m
+        [36m&lt;p&gt;[39m
+          [0m限定来源与工具的实施计划[0m
+        [36m&lt;/p&gt;[39m
+        [36m&lt;section[39m
+          [33mclass[39m=[32m&quot;preview-result&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;h4&gt;[39m
+            [0m本次授权范围[0m
+          [36m&lt;/h4&gt;[39m
+          [36m&lt;p&gt;[39m
+            [0m允许读取：[0m
+            [0msrc、tests[0m
+          [36m&lt;/p&gt;[39m
+          [36m&lt;p&gt;[39m
+            [0m允许修改：[0m
+            [0msrc[0m
+          [36m&lt;/p&gt;[39m
+          [36m&lt;p&gt;[39m
+            [0m允许的模型配置：[0m
+            [0mworker-alpha（版本 2）、review-beta（版本 3）[0m
+          [36m&lt;/p&gt;[39m
+          [36m&lt;p&gt;[39m
+            [0m必需检查：[0m
+            [0munit-tests、独立审查[0m
+          [36m&lt;/p&gt;[39m
+          [36m&lt;p&gt;[39m
+            [0m交付：[0m
+            [0m向 main 创建 PR；合并由你决定[0m
+          [36m&lt;/p&gt;[39m
+          [36m&lt;p&gt;[39m
+            [0m预算上限：[0m
+            [0mUSD 10，CNY 99[0m
+            [0m；[0m
+            [0m8[0m
+            [0m 次尝试、[0m
+            [0m300[0m
+            [0m 秒。[0m
+          [36m&lt;/p&gt;[39m
+        [36m&lt;/section&gt;[39m
+        [36m&lt;div[39m
+          [33mclass[39m=[32m&quot;project-grid&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;article[39m
+            [33mclass[39m=[32m&quot;project-card&quot;[39m
+          [36m&gt;[39m
+            [36m&lt;h4&gt;[39m
+              [0mimplement[0m
+            [36m&lt;/h4&gt;[39m
+            [36m&lt;span&gt;[39m
+              [0m实现[0m
+              [0m [0m
+              [0m· [0m
+              [0mT2[0m
+            [36m&lt;/span&gt;[39m
+            [36m&lt;p&gt;[39m
+              [0m必需任务[0m
+            [36m&lt;/p&gt;[39m
+            [36m&lt;p&gt;[39m
+              [0m前置任务：[0m
+              [0m无[0m
+            [36m&lt;/p&gt;[39m
+            [36m&lt;p&gt;[39m
+              [0msrc/feature.py[0m
+            [36m&lt;/p&gt;[39m
+            [36m&lt;ul&gt;[39m
+              [36m&lt;li&gt;[39m
+                [0m功能通过测试[0m
+              [36m&lt;/li&gt;[39m
+            [36m&lt;/ul&gt;[39m
+          [36m&lt;/article&gt;[39m
+        [36m&lt;/div&gt;[39m
+        [36m&lt;button&gt;[39m
+          [0m确认这份计划[0m
+        [36m&lt;/button&gt;[39m
+      [36m&lt;/article&gt;[39m
+    [36m&lt;/section&gt;[39m
+  [36m&lt;/div&gt;[39m
+[36m&lt;/body&gt;[39m
+
+Ignored nodes: comments, script, style
+[36m&lt;body&gt;[39m
+  [36m&lt;div&gt;[39m
+    [36m&lt;section[39m
+      [33mclass[39m=[32m&quot;project-form&quot;[39m
+    [36m&gt;[39m
+      [36m&lt;h2&gt;[39m
+        [0m授权示例[0m
+        [0m · 需求与计划[0m
+      [36m&lt;/h2&gt;[39m
+      [36m&lt;button[39m
+        [33mclass[39m=[32m&quot;secondary&quot;[39m
+      [36m&gt;[39m
+        [0m新建需求[0m
+      [36m&lt;/button&gt;[39m
+      [36m&lt;p[39m
+        [33mclass[39m=[32m&quot;field-help&quot;[39m
+      [36m&gt;[39m
+        [0m查看已保存需求和当前方案。真实模型执行尚未启用。[0m
+      [36m&lt;/p&gt;[39m
+      [36m&lt;div[39m
+        [33mclass[39m=[32m&quot;form-actions&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;button[39m
+          [33mclass[39m=[32m&quot;secondary&quot;[39m
+        [36m&gt;[39m
+          [0m审阅 v2 授权[0m
+        [36m&lt;/button&gt;[39m
+      [36m&lt;/div&gt;[39m
+      [36m&lt;article[39m
+        [33mclass[39m=[32m&quot;run-detail&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;h3&gt;[39m
+          [0m审阅 v2 授权[0m
+        [36m&lt;/h3&gt;[39m
+        [36m&lt;ul&gt;[39m
+          [36m&lt;li&gt;[39m
+            [0m功能通过测试[0m
+          [36m&lt;/li&gt;[39m
+        [36m&lt;/ul&gt;[39m
+        [36m&lt;p[39m
+          [33mclass[39m=[32m&quot;field-help&quot;[39m
+        [36m&gt;[39m
+          [0m主 Commander · [0m
+          [0mlead[0m
+          [0m · 第[0m
+          [0m [0m
+          [0m2[0m
+          [0m 任[0m
+        [36m&lt;/p&gt;[39m
+        [36m&lt;h3&gt;[39m
+          [0m计划第 [0m
+          [0m3[0m
+          [0m 版[0m
+        [36m&lt;/h3&gt;[39m
+        [36m&lt;p&gt;[39m
+          [0m限定来源与工具的实施计划[0m
+        [36m&lt;/p&gt;[39m
+        [36m&lt;section[39m
+          [33mclass[39m=[32m&quot;preview-result&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;h4&gt;[39m
+            [0m本次授权范围[0m
+          [36m&lt;/h4&gt;[39m
+          [36m&lt;p&gt;[39m
+            [0m允许读取：[0m
+            [0msrc、tests[0m
+          [36m&lt;/p&gt;[39m
+          [36m&lt;p&gt;[39m
+            [0m允许修改：[0m
+            [0msrc[0m
+          [36m&lt;/p&gt;[39m
+          [36m&lt;p&gt;[39m
+            [0m允许的模型配置：[0m
+            [0mworker-alpha（版本 2）、review-beta（版本 3）[0m
+          [36m&lt;/p&gt;[39m
+          [36m&lt;p&gt;[39m
+            [0m必需检查：[0m
+            [0munit-tests、独立审查[0m
+          [36m&lt;/p&gt;[39m
+          [36m&lt;p&gt;[39m
+            [0m交付：[0m
+            [0m向 main 创建 PR；合并由你决定[0m
+          [36m&lt;/p&gt;[39m
+          [36m&lt;p&gt;[39m
+            [0m预算上限：[0m
+            [0mUSD 10，CNY 99[0m
+            [0m；[0m
+            [0m8[0m
+            [0m 次尝试、[0m
+            [0m300[0m
+            [0m 秒。[0m
+          [36m&lt;/p&gt;[39m
+        [36m&lt;/section&gt;[39m
+        [36m&lt;div[39m
+          [33mclass[39m=[32m&quot;project-grid&quot;[39m
+        [36m&gt;[39m
+          [36m&lt;article[39m
+            [33mclass[39m=[32m&quot;project-card&quot;[39m
+          [36m&gt;[39m
+            [36m&lt;h4&gt;[39m
+              [0mimplement[0m
+            [36m&lt;/h4&gt;[39m
+            [36m&lt;span&gt;[39m
+              [0m实现[0m
+              [0m [0m
+              [0m· [0m
+              [0mT2[0m
+            [36m&lt;/span&gt;[39m
+            [36m&lt;p&gt;[39m
+              [0m必需任务[0m
+            [36m&lt;/p&gt;[39m
+            [36m&lt;p&gt;[39m
+              [0m前置任务：[0m
+              [0m无[0m
+            [36m&lt;/p&gt;[39m
+            [36m&lt;p&gt;[39m
+              [0msrc/feature.py[0m
+            [36m&lt;/p&gt;[39m
+            [36m&lt;ul&gt;[39m
+              [36m&lt;li&gt;[39m
+                [0m功能通过测试[0m
+              [36m&lt;/li&gt;[39m
+            [36m&lt;/ul&gt;[39m
+          [36m&lt;/article&gt;[39m
+        [36m&lt;/div&gt;[39m
+        [36m&lt;button&gt;[39m
+          [0m确认这份计划[0m
+        [36m&lt;/button&gt;[39m
+      [36m&lt;/article&gt;[39m
+    [36m&lt;/section&gt;[39m
+  [36m&lt;/div&gt;[39m
+[36m&lt;/body&gt;[39m" type="TestingLibraryElementError">
+TestingLibraryElementError: Unable to find role=&quot;region&quot; and name &quot;完整执行授权（v2）&quot;
+
+Ignored nodes: comments, script, style
+&lt;body&gt;
+  &lt;div&gt;
+    &lt;section
+      class=&quot;project-form&quot;
+    &gt;
+      &lt;h2&gt;
+        授权示例
+         · 需求与计划
+      &lt;/h2&gt;
+      &lt;button
+        class=&quot;secondary&quot;
+      &gt;
+        新建需求
+      &lt;/button&gt;
+      &lt;p
+        class=&quot;field-help&quot;
+      &gt;
+        查看已保存需求和当前方案。真实模型执行尚未启用。
+      &lt;/p&gt;
+      &lt;div
+        class=&quot;form-actions&quot;
+      &gt;
+        &lt;button
+          class=&quot;secondary&quot;
+        &gt;
+          审阅 v2 授权
+        &lt;/button&gt;
+      &lt;/div&gt;
+      &lt;article
+        class=&quot;run-detail&quot;
+      &gt;
+        &lt;h3&gt;
+          审阅 v2 授权
+        &lt;/h3&gt;
+        &lt;ul&gt;
+          &lt;li&gt;
+            功能通过测试
+          &lt;/li&gt;
+        &lt;/ul&gt;
+        &lt;p
+          class=&quot;field-help&quot;
+        &gt;
+          主 Commander · 
+          lead
+           · 第
+           
+          2
+           任
+        &lt;/p&gt;
+        &lt;h3&gt;
+          计划第 
+          3
+           版
+        &lt;/h3&gt;
+        &lt;p&gt;
+          限定来源与工具的实施计划
+        &lt;/p&gt;
+        &lt;section
+          class=&quot;preview-result&quot;
+        &gt;
+          &lt;h4&gt;
+            本次授权范围
+          &lt;/h4&gt;
+          &lt;p&gt;
+            允许读取：
+            src、tests
+          &lt;/p&gt;
+          &lt;p&gt;
+            允许修改：
+            src
+          &lt;/p&gt;
+          &lt;p&gt;
+            允许的模型配置：
+            worker-alpha（版本 2）、review-beta（版本 3）
+          &lt;/p&gt;
+          &lt;p&gt;
+            必需检查：
+            unit-tests、独立审查
+          &lt;/p&gt;
+          &lt;p&gt;
+            交付：
+            向 main 创建 PR；合并由你决定
+          &lt;/p&gt;
+          &lt;p&gt;
+            预算上限：
+            USD 10，CNY 99
+            ；
+            8
+             次尝试、
+            300
+             秒。
+          &lt;/p&gt;
+        &lt;/section&gt;
+        &lt;div
+          class=&quot;project-grid&quot;
+        &gt;
+          &lt;article
+            class=&quot;project-card&quot;
+          &gt;
+            &lt;h4&gt;
+              implement
+            &lt;/h4&gt;
+            &lt;span&gt;
+              实现
+               
+              · 
+              T2
+            &lt;/span&gt;
+            &lt;p&gt;
+              必需任务
+            &lt;/p&gt;
+            &lt;p&gt;
+              前置任务：
+              无
+            &lt;/p&gt;
+            &lt;p&gt;
+              src/feature.py
+            &lt;/p&gt;
+            &lt;ul&gt;
+              &lt;li&gt;
+                功能通过测试
+              &lt;/li&gt;
+            &lt;/ul&gt;
+          &lt;/article&gt;
+        &lt;/div&gt;
+        &lt;button&gt;
+          确认这份计划
+        &lt;/button&gt;
+      &lt;/article&gt;
+    &lt;/section&gt;
+  &lt;/div&gt;
+&lt;/body&gt;
+
+Ignored nodes: comments, script, style
+&lt;body&gt;
+  &lt;div&gt;
+    &lt;section
+      class=&quot;project-form&quot;
+    &gt;
+      &lt;h2&gt;
+        授权示例
+         · 需求与计划
+      &lt;/h2&gt;
+      &lt;button
+        class=&quot;secondary&quot;
+      &gt;
+        新建需求
+      &lt;/button&gt;
+      &lt;p
+        class=&quot;field-help&quot;
+      &gt;
+        查看已保存需求和当前方案。真实模型执行尚未启用。
+      &lt;/p&gt;
+      &lt;div
+        class=&quot;form-actions&quot;
+      &gt;
+        &lt;button
+          class=&quot;secondary&quot;
+        &gt;
+          审阅 v2 授权
+        &lt;/button&gt;
+      &lt;/div&gt;
+      &lt;article
+        class=&quot;run-detail&quot;
+      &gt;
+        &lt;h3&gt;
+          审阅 v2 授权
+        &lt;/h3&gt;
+        &lt;ul&gt;
+          &lt;li&gt;
+            功能通过测试
+          &lt;/li&gt;
+        &lt;/ul&gt;
+        &lt;p
+          class=&quot;field-help&quot;
+        &gt;
+          主 Commander · 
+          lead
+           · 第
+           
+          2
+           任
+        &lt;/p&gt;
+        &lt;h3&gt;
+          计划第 
+          3
+           版
+        &lt;/h3&gt;
+        &lt;p&gt;
+          限定来源与工具的实施计划
+        &lt;/p&gt;
+        &lt;section
+          class=&quot;preview-result&quot;
+        &gt;
+          &lt;h4&gt;
+            本次授权范围
+          &lt;/h4&gt;
+          &lt;p&gt;
+            允许读取：
+            src、tests
+          &lt;/p&gt;
+          &lt;p&gt;
+            允许修改：
+            src
+          &lt;/p&gt;
+          &lt;p&gt;
+            允许的模型配置：
+            worker-alpha（版本 2）、review-beta（版本 3）
+          &lt;/p&gt;
+          &lt;p&gt;
+            必需检查：
+            unit-tests、独立审查
+          &lt;/p&gt;
+          &lt;p&gt;
+            交付：
+            向 main 创建 PR；合并由你决定
+          &lt;/p&gt;
+          &lt;p&gt;
+            预算上限：
+            USD 10，CNY 99
+            ；
+            8
+             次尝试、
+            300
+             秒。
+          &lt;/p&gt;
+        &lt;/section&gt;
+        &lt;div
+          class=&quot;project-grid&quot;
+        &gt;
+          &lt;article
+            class=&quot;project-card&quot;
+          &gt;
+            &lt;h4&gt;
+              implement
+            &lt;/h4&gt;
+            &lt;span&gt;
+              实现
+               
+              · 
+              T2
+            &lt;/span&gt;
+            &lt;p&gt;
+              必需任务
+            &lt;/p&gt;
+            &lt;p&gt;
+              前置任务：
+              无
+            &lt;/p&gt;
+            &lt;p&gt;
+              src/feature.py
+            &lt;/p&gt;
+            &lt;ul&gt;
+              &lt;li&gt;
+                功能通过测试
+              &lt;/li&gt;
+            &lt;/ul&gt;
+          &lt;/article&gt;
+        &lt;/div&gt;
+        &lt;button&gt;
+          确认这份计划
+        &lt;/button&gt;
+      &lt;/article&gt;
+    &lt;/section&gt;
+  &lt;/div&gt;
+&lt;/body&gt;
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/ProjectRuns.v2.test.tsx:101:37
+            </failure>
+        </testcase>
+    </testsuite>
+</testsuites>

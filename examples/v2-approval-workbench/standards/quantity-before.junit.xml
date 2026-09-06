@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="11" failures="1" errors="0" time="1.1258349">
+    <testsuite name=".cache/v2-ui-standards/independent.test.tsx" timestamp="2026-09-06T03:44:41.705Z" hostname="ProArt-Zhou" tests="11" failures="1" errors="0" skipped="10" time="1.1258349">
+        <testcase classname=".cache/v2-ui-standards/independent.test.tsx" name="permits reviewing a genuine persisted decimal-string zero written as 0e0" time="1.1244614">
+            <failure message="Unable to find role=&quot;heading&quot; and name &quot;完整执行授权（v2）&quot;
+
+Ignored nodes: comments, script, style
+[36m&lt;body&gt;[39m
+  [36m&lt;div&gt;[39m
+    [36m&lt;section[39m
+      [33mclass[39m=[32m&quot;project-form&quot;[39m
+    [36m&gt;[39m
+      [36m&lt;h2&gt;[39m
+        [0mSYNTHETIC v2 审批独立验收[0m
+        [0m · 需求与计划[0m
+      [36m&lt;/h2&gt;[39m
+      [36m&lt;button[39m
+        [33mclass[39m=[32m&quot;secondary&quot;[39m
+      [36m&gt;[39m
+        [0m新建需求[0m
+      [36m&lt;/button&gt;[39m
+      [36m&lt;p[39m
+        [33mclass[39m=[32m&quot;field-help&quot;[39m
+      [36m&gt;[39m
+        [0m查看已保存需求和当前方案。真实模型执行尚未启用。[0m
+      [36m&lt;/p&gt;[39m
+      [36m&lt;div[39m
+        [33mclass[39m=[32m&quot;form-actions&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;button[39m
+          [33mclass[39m=[32m&quot;secondary&quot;[39m
+        [36m&gt;[39m
+          [0mSYNTHETIC v2 完整授权审批示例[0m
+        [36m&lt;/button&gt;[39m
+      [36m&lt;/div&gt;[39m
+      [36m&lt;article[39m
+        [33mclass[39m=[32m&quot;run-detail&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;h3&gt;[39m
+          [0mSYNTHETIC v2 完整授权审批示例[0m
+        [36m&lt;/h3&gt;[39m
+        [36m&lt;ul&gt;[39m
+          [36m&lt;li&gt;[39m
+            [0m仅验证页面与持久批准，不执行工具[0m
+          [36m&lt;/li&gt;[39m
+        [36m&lt;/ul&gt;[39m
+        [36m&lt;p[39m
+          [33mclass[39m=[32m&quot;field-help&quot;[39m
+        [36m&gt;[39m
+          [0m主 Commander · [0m
+          [0msynthetic-lead[0m
+          [0m · 第[0m
+          [0m [0m
+          [0m1[0m
+          [0m 任[0m
+        [36m&lt;/p&gt;[39m
+        [36m&lt;h3&gt;[39m
+          [0m计划第 [0m
+          [0m2[0m
+          [0m 版[0m
+        [36m&lt;/h3&gt;[39m
+        [36m&lt;p&gt;[39m
+          [0m合成审批样例：固定当前权限，保留独立审查与用户合并决定。[0m
+        [36m&lt;/p&gt;[39m
+        [36m&lt;p[39m
+          [33mclass[39m=[32m&quot;notice error&quot;[39m
+          [33mrole[39m=[32m&quot;alert&quot;[39m
+        [36m&gt;[39m
+          [0mv2 授权材料不完整或固定版本不一致，暂不能确认。请重新读取计划。[0m
+        [36m&lt;/p&gt;[39m
+      [36m&lt;/article&gt;[39m
+    [36m&lt;/section&gt;[39m
+  [36m&lt;/div&gt;[39m
+[36m&lt;/body&gt;[39m
+
+Ignored nodes: comments, script, style
+[36m&lt;body&gt;[39m
+  [36m&lt;div&gt;[39m
+    [36m&lt;section[39m
+      [33mclass[39m=[32m&quot;project-form&quot;[39m
+    [36m&gt;[39m
+      [36m&lt;h2&gt;[39m
+        [0mSYNTHETIC v2 审批独立验收[0m
+        [0m · 需求与计划[0m
+      [36m&lt;/h2&gt;[39m
+      [36m&lt;button[39m
+        [33mclass[39m=[32m&quot;secondary&quot;[39m
+      [36m&gt;[39m
+        [0m新建需求[0m
+      [36m&lt;/button&gt;[39m
+      [36m&lt;p[39m
+        [33mclass[39m=[32m&quot;field-help&quot;[39m
+      [36m&gt;[39m
+        [0m查看已保存需求和当前方案。真实模型执行尚未启用。[0m
+      [36m&lt;/p&gt;[39m
+      [36m&lt;div[39m
+        [33mclass[39m=[32m&quot;form-actions&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;button[39m
+          [33mclass[39m=[32m&quot;secondary&quot;[39m
+        [36m&gt;[39m
+          [0mSYNTHETIC v2 完整授权审批示例[0m
+        [36m&lt;/button&gt;[39m
+      [36m&lt;/div&gt;[39m
+      [36m&lt;article[39m
+        [33mclass[39m=[32m&quot;run-detail&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;h3&gt;[39m
+          [0mSYNTHETIC v2 完整授权审批示例[0m
+        [36m&lt;/h3&gt;[39m
+        [36m&lt;ul&gt;[39m
+          [36m&lt;li&gt;[39m
+            [0m仅验证页面与持久批准，不执行工具[0m
+          [36m&lt;/li&gt;[39m
+        [36m&lt;/ul&gt;[39m
+        [36m&lt;p[39m
+          [33mclass[39m=[32m&quot;field-help&quot;[39m
+        [36m&gt;[39m
+          [0m主 Commander · [0m
+          [0msynthetic-lead[0m
+          [0m · 第[0m
+          [0m [0m
+          [0m1[0m
+          [0m 任[0m
+        [36m&lt;/p&gt;[39m
+        [36m&lt;h3&gt;[39m
+          [0m计划第 [0m
+          [0m2[0m
+          [0m 版[0m
+        [36m&lt;/h3&gt;[39m
+        [36m&lt;p&gt;[39m
+          [0m合成审批样例：固定当前权限，保留独立审查与用户合并决定。[0m
+        [36m&lt;/p&gt;[39m
+        [36m&lt;p[39m
+          [33mclass[39m=[32m&quot;notice error&quot;[39m
+          [33mrole[39m=[32m&quot;alert&quot;[39m
+        [36m&gt;[39m
+          [0mv2 授权材料不完整或固定版本不一致，暂不能确认。请重新读取计划。[0m
+        [36m&lt;/p&gt;[39m
+      [36m&lt;/article&gt;[39m
+    [36m&lt;/section&gt;[39m
+  [36m&lt;/div&gt;[39m
+[36m&lt;/body&gt;[39m" type="TestingLibraryElementError">
+TestingLibraryElementError: Unable to find role=&quot;heading&quot; and name &quot;完整执行授权（v2）&quot;
+
+Ignored nodes: comments, script, style
+&lt;body&gt;
+  &lt;div&gt;
+    &lt;section
+      class=&quot;project-form&quot;
+    &gt;
+      &lt;h2&gt;
+        SYNTHETIC v2 审批独立验收
+         · 需求与计划
+      &lt;/h2&gt;
+      &lt;button
+        class=&quot;secondary&quot;
+      &gt;
+        新建需求
+      &lt;/button&gt;
+      &lt;p
+        class=&quot;field-help&quot;
+      &gt;
+        查看已保存需求和当前方案。真实模型执行尚未启用。
+      &lt;/p&gt;
+      &lt;div
+        class=&quot;form-actions&quot;
+      &gt;
+        &lt;button
+          class=&quot;secondary&quot;
+        &gt;
+          SYNTHETIC v2 完整授权审批示例
+        &lt;/button&gt;
+      &lt;/div&gt;
+      &lt;article
+        class=&quot;run-detail&quot;
+      &gt;
+        &lt;h3&gt;
+          SYNTHETIC v2 完整授权审批示例
+        &lt;/h3&gt;
+        &lt;ul&gt;
+          &lt;li&gt;
+            仅验证页面与持久批准，不执行工具
+          &lt;/li&gt;
+        &lt;/ul&gt;
+        &lt;p
+          class=&quot;field-help&quot;
+        &gt;
+          主 Commander · 
+          synthetic-lead
+           · 第
+           
+          1
+           任
+        &lt;/p&gt;
+        &lt;h3&gt;
+          计划第 
+          2
+           版
+        &lt;/h3&gt;
+        &lt;p&gt;
+          合成审批样例：固定当前权限，保留独立审查与用户合并决定。
+        &lt;/p&gt;
+        &lt;p
+          class=&quot;notice error&quot;
+          role=&quot;alert&quot;
+        &gt;
+          v2 授权材料不完整或固定版本不一致，暂不能确认。请重新读取计划。
+        &lt;/p&gt;
+      &lt;/article&gt;
+    &lt;/section&gt;
+  &lt;/div&gt;
+&lt;/body&gt;
+
+Ignored nodes: comments, script, style
+&lt;body&gt;
+  &lt;div&gt;
+    &lt;section
+      class=&quot;project-form&quot;
+    &gt;
+      &lt;h2&gt;
+        SYNTHETIC v2 审批独立验收
+         · 需求与计划
+      &lt;/h2&gt;
+      &lt;button
+        class=&quot;secondary&quot;
+      &gt;
+        新建需求
+      &lt;/button&gt;
+      &lt;p
+        class=&quot;field-help&quot;
+      &gt;
+        查看已保存需求和当前方案。真实模型执行尚未启用。
+      &lt;/p&gt;
+      &lt;div
+        class=&quot;form-actions&quot;
+      &gt;
+        &lt;button
+          class=&quot;secondary&quot;
+        &gt;
+          SYNTHETIC v2 完整授权审批示例
+        &lt;/button&gt;
+      &lt;/div&gt;
+      &lt;article
+        class=&quot;run-detail&quot;
+      &gt;
+        &lt;h3&gt;
+          SYNTHETIC v2 完整授权审批示例
+        &lt;/h3&gt;
+        &lt;ul&gt;
+          &lt;li&gt;
+            仅验证页面与持久批准，不执行工具
+          &lt;/li&gt;
+        &lt;/ul&gt;
+        &lt;p
+          class=&quot;field-help&quot;
+        &gt;
+          主 Commander · 
+          synthetic-lead
+           · 第
+           
+          1
+           任
+        &lt;/p&gt;
+        &lt;h3&gt;
+          计划第 
+          2
+           版
+        &lt;/h3&gt;
+        &lt;p&gt;
+          合成审批样例：固定当前权限，保留独立审查与用户合并决定。
+        &lt;/p&gt;
+        &lt;p
+          class=&quot;notice error&quot;
+          role=&quot;alert&quot;
+        &gt;
+          v2 授权材料不完整或固定版本不一致，暂不能确认。请重新读取计划。
+        &lt;/p&gt;
+      &lt;/article&gt;
+    &lt;/section&gt;
+  &lt;/div&gt;
+&lt;/body&gt;
+ ❯ waitForWrapper frontend/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ frontend/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ .cache/v2-ui-standards/independent.test.tsx:49:16
+            </failure>
+        </testcase>
+        <testcase classname=".cache/v2-ui-standards/independent.test.tsx" name="shows plan limits separately from the larger original ceiling and keeps ordered stage identities" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname=".cache/v2-ui-standards/independent.test.tsx" name="sends exactly the reviewed v2 identity and does not copy displayed authorization into the command" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname=".cache/v2-ui-standards/independent.test.tsx" name="a conflict followed by a failed read revokes approval until the plan is freshly reviewed" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname=".cache/v2-ui-standards/independent.test.tsx" name="an uncertain retry preserves the exact body and idempotency key" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname=".cache/v2-ui-standards/independent.test.tsx" name="late detail from an old project cannot overwrite the newly reviewed project" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname=".cache/v2-ui-standards/independent.test.tsx" name="late failed approval from an old login view cannot create an error in the replacement view" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname=".cache/v2-ui-standards/independent.test.tsx" name="switching Run and returning never retains the earlier review checkbox" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname=".cache/v2-ui-standards/independent.test.tsx" name="incomplete authority is non-actionable: missing-routing-digest" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname=".cache/v2-ui-standards/independent.test.tsx" name="incomplete authority is non-actionable: unknown-version" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname=".cache/v2-ui-standards/independent.test.tsx" name="incomplete authority is non-actionable: foreign-policy-owner" time="0">
+            <skipped/>
+        </testcase>
+    </testsuite>
+</testsuites>

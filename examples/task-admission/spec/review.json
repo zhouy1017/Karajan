@@ -1,0 +1,56 @@
+{
+  "review_axis": "Spec",
+  "base": "5818835",
+  "reviewer": "ui_spec_finalize",
+  "independence": "Participated in bounded design planning; did not implement the admission slice or edit author tests. Independent tests and synthetic fixtures are owned by this reviewer.",
+  "status": "passed",
+  "open_findings": [],
+  "closed_findings": [
+    {
+      "id": "SPEC-ADMISSION-EXPIRY",
+      "priority": "P2",
+      "origin": "independent Spec",
+      "problem": "Expired unsent reservation remained reserved in operation get/advance and blocked a new enqueue although CapacityFacts no longer counted the hold.",
+      "red_evidence": "history/expiry.red.junit.xml",
+      "fix": "ApprovedTaskAdmission._refresh projects current CapacityFacts state in get/advance and before enqueue pending checks; immutable receipts remain historical.",
+      "verified_by": "test_expiry_repro.py: five public checks covering expiry, direct re-enqueue, actual process response loss, active and unknown protection.",
+      "status": "closed"
+    }
+  ],
+  "verification": {
+    "command": "python -m pytest examples/task-admission/spec -q -o 'pythonpath=backend tests/runs tests/web' --basetemp=.cache/v2-admission-spec/published-final --junitxml=examples/task-admission/spec/final.junit.xml",
+    "actual_published_path_run": true,
+    "tests": 22,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "junit_seconds": "9.060",
+    "breakdown": {
+      "public_admission": 16,
+      "expiry": 5,
+      "in_process_asgi": 1
+    },
+    "real_process_crash_cases": 3,
+    "ruff_check": "passed",
+    "ruff_format_check": "passed",
+    "non_failing_dependency_deprecation_warnings": 2
+  },
+  "provenance": {
+    "real": "Local persisted project/run/estimate/capacity/admission stores, public APIs, SQLite locking, process termination and reopening.",
+    "synthetic": "Repository/Run inputs, qualification double in positive cases, capacity observation/forecast values, and test-only bootstrap input.",
+    "asgi": "Real application wiring in process via TestClient; no live HTTP listener/browser.",
+    "not_performed": [
+      "Host dispatch",
+      "provider requests",
+      "model execution",
+      "cash qualification",
+      "runtime_tools provider qualification"
+    ]
+  },
+  "history": {
+    "fixture-capability-correction.junit.xml": "12 failed, 1 passed; synthetic double omitted required capability observations. Test-input correction only.",
+    "fixture-window-correction.junit.xml": "1 failed, 12 passed; premature fixed-window observation correctly remained unapplied. Test-input correction only.",
+    "expiry.red.junit.xml": "1 failed, 13 passed; actual expiry product finding, now closed. Historical checks are not additional final coverage."
+  },
+  "source_final_sha256": "370b8e91f9c2688aeca9f362d50611b6698658cda40e45370e7ea7b4a01864c3"
+}

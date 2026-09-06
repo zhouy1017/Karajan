@@ -17,9 +17,14 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
 from karajan.capacity import CapacityStore
+from karajan.orchestration.admission import ApprovedTaskAdmission
+from karajan.orchestration.routing import ApprovedRunRouting
 from karajan.projects import ProjectRegistry
+from karajan.projects.qualification import ProfileQualificationStore
 from karajan.runs import RunPlanner
 
+from .admission import register_admission_routes
+from .approved_routing import register_approved_routing_routes
 from .body_limit import BodyLimitMiddleware
 from .projects import register_project_routes
 from .resources import register_resource_routes
@@ -135,8 +140,15 @@ def create_app(
     projects = ProjectRegistry(state_directory / "projects.sqlite", allowed_roots)
     register_project_routes(app, projects)
     register_simulation_routes(app, projects)
-    register_run_routes(app, RunPlanner(state_directory / "runs.sqlite", projects))
-    register_resource_routes(app, CapacityStore(state_directory / "capacity.sqlite"))
+    planner = RunPlanner(state_directory / "runs.sqlite", projects)
+    capacity = CapacityStore(state_directory / "capacity.sqlite")
+    register_run_routes(app, planner)
+    register_resource_routes(app, capacity)
+    routing = ApprovedRunRouting(planner, ProfileQualificationStore(projects), capacity)
+    register_approved_routing_routes(app, routing)
+    register_admission_routes(
+        app, ApprovedTaskAdmission(state_directory / "task-admissions.sqlite", routing)
+    )
 
     @app.middleware("http")
     async def session_boundary(

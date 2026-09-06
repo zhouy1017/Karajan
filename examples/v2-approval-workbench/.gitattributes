@@ -1,0 +1,4 @@
+*.json -text whitespace=cr-at-eol
+*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+*.md -text whitespace=cr-at-eol
+spec/*.py -text whitespace=cr-at-eol

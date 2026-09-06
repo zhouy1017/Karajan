@@ -1,0 +1,58 @@
+{
+  "schema_version": "karajan.independent-spec-review.v1",
+  "reviewed_at": "2026-09-06T05:33:52.716879+00:00",
+  "scope": "Fixed local fixture Profile qualification public store",
+  "source_hashes": {
+    "backend/karajan/projects/qualification.py": "f11749353b434eb821dadac8c9f07a59e2c1b3a2b5b684197809795c43ecfee5",
+    "tests/projects/test_qualification_store.py": "0701b9f3c393bfce61a58fc96a6202978de739736d55b6f934bf203411f65bfc",
+    "docs/implementation/m3-profile-qualification.md": "5e332d70fc5cd5656b16123609266c1775b3bfa5ce06b694cffae43f2e54a8bb"
+  },
+  "results": {
+    "tests": 11,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "junit": "final.junit.xml",
+    "execution": "actual published test path",
+    "test_cases": [
+      "test_actual_three_process_results_and_persistent_scope_are_not_inferred_from_declarations",
+      "test_old_observation_cannot_qualify_changed_identity_even_with_updated_frozen_registration[model]",
+      "test_old_observation_cannot_qualify_changed_identity_even_with_updated_frozen_registration[native]",
+      "test_old_observation_cannot_qualify_changed_identity_even_with_updated_frozen_registration[account]",
+      "test_old_observation_cannot_qualify_changed_identity_even_with_updated_frozen_registration[declaration]",
+      "test_revocation_survives_new_service_and_original_observation_remains_immutable",
+      "test_real_database_guard_holds_concurrent_revocation_until_exit",
+      "test_unknown_runtime_and_uploaded_style_declarations_never_produce_live_qualification",
+      "test_later_persisted_start_without_result_blocks_fallback_to_prior_pass",
+      "test_clock_rollback_and_exact_expiry_do_not_return_facts[5999.0]",
+      "test_clock_rollback_and_exact_expiry_do_not_return_facts[6090.0]"
+    ]
+  },
+  "findings": [],
+  "unresolved_findings": [],
+  "checks": [
+    "Ruff check published Python files passed",
+    "Ruff format --check published Python files passed"
+  ],
+  "inputs": "Spec-owned synthetic Git/SQLite fixtures and public configuration/Run commands; no author test helper",
+  "provider_calls": false,
+  "credentials_read": false,
+  "project_git_modified": false,
+  "state_publication": false,
+  "history": "Historical raw reports retained under history/; their counts are not added to final results",
+  "artifact_sha256": {
+    "final.junit.xml": "31e06e66d3f58118cae6898ce8c01b532b7a836457910b04270e25635ed07452",
+    "history/development-review.json": "89afbd4767ff5043ad2497367cb026719d2d7a90ebbc31abdf2edc07176424ad",
+    "history/development.junit.xml": "5861a4eefc000f6e60a09a77f31110f838b70627dd1488ebfe6de84905fd8a9a",
+    "README.md": "aff047f97538927cdecf6e1a6ea46c54e91a9f24327c85728dd5f2a6fbb9d9bb",
+    "source-final.json": "67d5970b4dd9ad3c4bcaf491dc608ad6bc20fa5f0912631bad28dc8e6345506d",
+    "test_public_qualification.py": "94ad4aaa852b73b58aed990f8790a08e7f356d45482fe442ce70193f235534be"
+  },
+  "process_evidence": "Three real fixed subprocess operations; recording wrapper does not replace return values",
+  "fault_injection": "One controller crash after persisted start; no fallback to older pass",
+  "limitations": [
+    "local_fixture only",
+    "No runtime_tools/model-context/cash qualification",
+    "Project guard only, no cross-database atomicity"
+  ]
+}

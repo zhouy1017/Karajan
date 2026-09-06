@@ -1,0 +1,20 @@
+[
+  {
+    "path": "backend/karajan/routing/selection.py",
+    "before_sha256": "f119a2b4f26677d203eef2e5330a4246995cd0ef634ef79af2f513d55e6c548e",
+    "after_sha256": "dc85fa0954317be29ff831fcb1689266f6a8b6fb5a2511cdc82c0342eee2ae12",
+    "change": "CRLF to LF only"
+  },
+  {
+    "path": "backend/karajan/routing/__init__.py",
+    "before_sha256": "ba8d6b626c2d8eda272032c821935db82e8f038c7da41adf959513a2f71b9a81",
+    "after_sha256": "f69a4e35049dd4812605b6d30b5908bfacff3662d413a2faa51a1f4f2e41d7bf",
+    "change": "CRLF to LF only"
+  },
+  {
+    "path": "backend/karajan/routing/evaluator.py",
+    "before_sha256": "34b230cf7f363a44cee47b0d2e954ca2e616254bc1c8a546d5da1a4b9e737659",
+    "after_sha256": "681775528b41d89bc96b28b46fd10019fbaafd07c68fde616f52ecfb9b45f4ab",
+    "change": "CRLF to LF only"
+  }
+]

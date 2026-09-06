@@ -205,13 +205,9 @@ class Author(Contract):
     paths: Names
 
 
-class TaskSnapshot(Contract):
-    schema_version: Literal["karajan.routing.task.v1"]
-    task_id: Identifier
-    task_revision: Positive
-    root_task_id: Identifier
-    plan_revision: Positive
-    authorization_digest: Digest
+class TaskClassification(Contract):
+    """Approved requirements and recorded authors, independent of route permission."""
+
     role: Role
     purpose: Literal["lead", "advice"] | None
     readiness: Literal["T0", "ready"]
@@ -219,9 +215,20 @@ class TaskSnapshot(Contract):
     risk: Identifier
     domains: Names
     paths: Names
+    authors: list[Author]
+
+
+class TaskSnapshot(TaskClassification):
+    schema_version: Literal["karajan.routing.task.v1"]
+    task_id: Identifier
+    task_revision: Positive
+    root_task_id: Identifier
+    plan_revision: Positive
+    authorization_digest: Digest
     required_capabilities: Names
     tools: Names
     context_tokens: Positive
+    reserved_output_tokens: Count = 0
     duration_seconds: Positive
     stage: Stage
     quality_stage_index: Count
@@ -230,7 +237,6 @@ class TaskSnapshot(Contract):
     quality_repair_rounds_used: Count
     planned_attempt_id: Identifier
     planned_context_id: Identifier
-    authors: list[Author]
     authorization: Authorization
 
 

@@ -1,0 +1,68 @@
+{
+  "schema_version": "karajan.v2-ui-browser-observation.v1",
+  "captured_at": "2026-09-06T03:44:22.161535+00:00",
+  "origin": "http://127.0.0.1:8766",
+  "fixture": "Synthetic public Registry/RunPlanner seed; no provider credentials or model calls.",
+  "source_sha256": {
+    "frontend/src/ProjectRuns.tsx": "ef49cb9feda8b84e5fe02bc08885ac77b2dc867ac3bf0d04c945df24699a2849",
+    "frontend/src/RoutingAuthorization.tsx": "4842ce659223a77fe45ea77557242dce88a67bafe603bd314e9af3467a297baa",
+    "frontend/src/styles.css": "296e7bbdb8ee0bc47d925ec6decd710ac75568e49d345cc73e707443af1c02e8"
+  },
+  "observed_through": "Codex in-app browser CUA accessibility/DOM and one viewport screenshot; persisted rows read separately via SQLite mode=ro.",
+  "browser_observations": [
+    "Initial v2 r1 displayed read/write scope, fixed service/model/channel/runtime, tool permissions, zero CNY/USD limits, 25-second attempt, two repair rounds, normal/quality groups, task requirements and fixed policies/digests.",
+    "Confirmation started disabled. Checking the complete-scope acknowledgement enabled it.",
+    "While r1 was displayed and checked, public seed advance created r2 with a 24-second attempt and removed quality escalation.",
+    "Clicking the old r1 confirmation read back r2, displayed the changed-plan message, cleared acknowledgement and disabled confirmation.",
+    "Acknowledging r2 and confirming displayed v2 approval success and dispatch-not-enabled text.",
+    "Full reload and reopening the Run displayed approved r2 and no confirm button.",
+    "The v1 fixture retained its original scope and confirm button; clicking confirmed v1 successfully.",
+    "The observed desktop viewport showed wrapped content, a clear acknowledgement, disabled action and readable changed-plan message without overlap."
+  ],
+  "persisted_observations": [
+    {
+      "id": "a2cf9c08-8bc4-4b58-9209-19d0163c7de0",
+      "schema_version": "karajan.run-planning.v2",
+      "state": "executing",
+      "approval_count": 1,
+      "approval": {
+        "approved_at": 1788666100.4621167,
+        "approved_by": "owner",
+        "authorization_digest": "7fdd10e5d03a72b885ad806da8effaf20868f3ca9ea004b18cf20d8fb94ab633",
+        "configuration_digest": "bd53d2bb88b31cd992a48c901fc7b08a46d828c6a583f4fe606c4b7e54182f81",
+        "dispatch_enabled": false,
+        "id": "b07f3a19-f847-4a5c-bcda-7d635368c67f",
+        "plan_digest": "60db13791fb878ab307b7af5fd09d306f1bf57ed39c5106b4d94bd4035268ef9",
+        "plan_revision": 2,
+        "routing_digest": "92bff6f23ef04708e42b990a0ebda1d42c43dddb4d6c40f2db40d3c7a12d23b7",
+        "run_id": "a2cf9c08-8bc4-4b58-9209-19d0163c7de0",
+        "schema_version": "karajan.approve-plan.v2",
+        "term": 1
+      },
+      "dispatch_enabled": false
+    },
+    {
+      "id": "4c157977-ceb4-46cf-9fde-7239f0eae986",
+      "schema_version": "karajan.run-planning.v1",
+      "state": "executing",
+      "approval_count": 1,
+      "approval": {
+        "approved_at": 1788666163.456443,
+        "approved_by": "owner",
+        "authorization_digest": "fe8aa61291cdc8b632ef37344e665a5fca4ccfd3ab616058cfaad75bc9af555a",
+        "configuration_digest": "bd53d2bb88b31cd992a48c901fc7b08a46d828c6a583f4fe606c4b7e54182f81",
+        "dispatch_enabled": false,
+        "id": "7a043fff-8770-4f4a-9cef-190ba807a534",
+        "plan_digest": "dbeb7b70ff9e67b36f096a5f4aabcff98757963b0ccdb0940f1210605a5605d3",
+        "plan_revision": 1,
+        "run_id": "4c157977-ceb4-46cf-9fde-7239f0eae986",
+        "term": 1
+      },
+      "dispatch_enabled": false
+    }
+  ],
+  "limits": [
+    "Initial frozen product only; later review fixes require fresh source binding and targeted recheck.",
+    "No claim of browser-tested network disconnect, arbitrary cross-project races, narrow viewport, real execution, qualification or resource admission."
+  ]
+}

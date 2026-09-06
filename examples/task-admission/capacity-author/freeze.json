@@ -1,0 +1,21 @@
+{
+  "base": "5818835",
+  "files": {
+    "backend/karajan/capacity/store.py": "676f4a46cfd53fac5256cdea08e8ae8cd318b295bd159c9bf2fee5a90edef30d",
+    "tests/capacity/test_command_receipts.py": "1f7aaaa457f0916359a491517fa379ea1dbb73a48b546b6844906657c5a42243"
+  },
+  "windows_capacity_passed": 123,
+  "wsl_capacity_passed": 123,
+  "new_public_cases": 20,
+  "ruff": "passed",
+  "mypy": "passed: capacity/store.py",
+  "line_endings": "LF",
+  "evidence": [
+    ".cache/command-receipts/red.junit.xml",
+    ".cache/command-receipts/green.junit.xml",
+    ".cache/command-receipts/cancel-red.junit.xml",
+    ".cache/command-receipts/cancel-green.junit.xml",
+    ".cache/command-receipts/final.junit.xml",
+    ".cache/command-receipts/wsl.junit.xml"
+  ]
+}

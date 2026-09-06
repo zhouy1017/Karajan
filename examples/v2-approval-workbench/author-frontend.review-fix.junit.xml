@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="153" failures="0" errors="0" time="34.8186851">
+    <testsuite name="src/App.test.tsx" timestamp="2026-09-06T03:49:43.686Z" hostname="ProArt-Zhou" tests="5" failures="0" errors="0" skipped="0" time="1.6027123">
+        <testcase classname="src/App.test.tsx" name="opens shared resources and leaves the view when the owner session expires" time="0.2348728">
+        </testcase>
+        <testcase classname="src/App.test.tsx" name="revokes the session with CSRF before returning to the login page" time="0.0764139">
+        </testcase>
+        <testcase classname="src/App.test.tsx" name="exchanges the local code and lists authenticated projects without preserving the code" time="0.31933">
+        </testcase>
+        <testcase classname="src/App.test.tsx" name="registers a repository with CSRF and reuses the command identity after an unknown response" time="0.6458943">
+        </testcase>
+        <testcase classname="src/App.test.tsx" name="requires a new preview after editing configuration and applies only the saved preview identity" time="0.3246469">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/NewRunForm.test.tsx" timestamp="2026-09-06T03:49:43.688Z" hostname="ProArt-Zhou" tests="9" failures="0" errors="0" skipped="0" time="6.2130556">
+        <testcase classname="src/NewRunForm.test.tsx" name="recovers the same pending request after reopening even when the project configuration changed" time="0.6997584">
+        </testcase>
+        <testcase classname="src/NewRunForm.test.tsx" name="does not send a request when the session binding cannot be established" time="0.0749445">
+        </testcase>
+        <testcase classname="src/NewRunForm.test.tsx" name="does not send until the original request identity is durably stored in this tab" time="0.6171478">
+        </testcase>
+        <testcase classname="src/NewRunForm.test.tsx" name="keeps an unreadable pending record blocked instead of replacing it with a new request" time="0.6647493">
+        </testcase>
+        <testcase classname="src/NewRunForm.test.tsx" name="isolates pending commands by project and only retries them on an explicit click" time="0.6470817">
+        </testcase>
+        <testcase classname="src/NewRunForm.test.tsx" name="isolates pending commands by session and only retries them on an explicit click" time="0.6623785">
+        </testcase>
+        <testcase classname="src/NewRunForm.test.tsx" name="retains malformed success as unknown and removes pending identity only after a usable confirmation" time="0.682196">
+        </testcase>
+        <testcase classname="src/NewRunForm.test.tsx" name="does not let an old unmounted response remove a newer pending requirement" time="1.2510967">
+        </testcase>
+        <testcase classname="src/NewRunForm.test.tsx" name="saves the users requirement against the displayed project snapshot and reuses an uncertain request" time="0.9119186">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/ProjectRuns.test.tsx" timestamp="2026-09-06T03:49:43.689Z" hostname="ProArt-Zhou" tests="4" failures="0" errors="0" skipped="0" time="0.5011264">
+        <testcase classname="src/ProjectRuns.test.tsx" name="keeps a Commander handoff pending until the user decides and submits only the current proposal" time="0.2103185">
+        </testcase>
+        <testcase classname="src/ProjectRuns.test.tsx" name="prevents handoff approval when fixed profile material is missing" time="0.0790049">
+        </testcase>
+        <testcase classname="src/ProjectRuns.test.tsx" name="prevents handoff approval when fixed budget material is missing" time="0.0772398">
+        </testcase>
+        <testcase classname="src/ProjectRuns.test.tsx" name="shows a persisted requirement and approves the exact displayed plan without sending model commands" time="0.1329711">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/ProjectRuns.v2.test.tsx" timestamp="2026-09-06T03:49:43.690Z" hostname="ProArt-Zhou" tests="15" failures="0" errors="0" skipped="0" time="2.2608149">
+        <testcase classname="src/ProjectRuns.v2.test.tsx" name="shows every v2 authorization dimension before explicitly approving its exact frozen revision" time="0.3019203">
+        </testcase>
+        <testcase classname="src/ProjectRuns.v2.test.tsx" name="never offers a legacy approval for missing-routing material" time="0.0630814">
+        </testcase>
+        <testcase classname="src/ProjectRuns.v2.test.tsx" name="never offers a legacy approval for missing-binding material" time="0.0595272">
+        </testcase>
+        <testcase classname="src/ProjectRuns.v2.test.tsx" name="never offers a legacy approval for different-task material" time="0.0755456">
+        </testcase>
+        <testcase classname="src/ProjectRuns.v2.test.tsx" name="never offers a legacy approval for different-owner material" time="0.0637805">
+        </testcase>
+        <testcase classname="src/ProjectRuns.v2.test.tsx" name="never offers a legacy approval for unknown-version material" time="0.0753535">
+        </testcase>
+        <testcase classname="src/ProjectRuns.v2.test.tsx" name="never offers a legacy approval for missing-version material" time="0.0762888">
+        </testcase>
+        <testcase classname="src/ProjectRuns.v2.test.tsx" name="never offers a legacy approval for v2-under-v1 material" time="0.0754013">
+        </testcase>
+        <testcase classname="src/ProjectRuns.v2.test.tsx" name="requires fresh review after PLAN_REVISION_STALE and submits only the newly displayed scope" time="0.3066144">
+        </testcase>
+        <testcase classname="src/ProjectRuns.v2.test.tsx" name="requires fresh review after RUN_PROTOCOL_VERSION_MISMATCH and submits only the newly displayed scope" time="0.2948014">
+        </testcase>
+        <testcase classname="src/ProjectRuns.v2.test.tsx" name="preserves domain-validated exponent notation in the original currency amount" time="0.0919224">
+        </testcase>
+        <testcase classname="src/ProjectRuns.v2.test.tsx" name="retries an uncertain approval with its original body and idempotency key" time="0.2490493">
+        </testcase>
+        <testcase classname="src/ProjectRuns.v2.test.tsx" name="does not carry consent when switching Runs" time="0.1877898">
+        </testcase>
+        <testcase classname="src/ProjectRuns.v2.test.tsx" name="ignores a late Run response from the previously selected project" time="0.1406118">
+        </testcase>
+        <testcase classname="src/ProjectRuns.v2.test.tsx" name="revokes the displayed confirmation when a stale approval cannot reload its current plan" time="0.1974237">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/ResourcePanel.test.tsx" timestamp="2026-09-06T03:49:43.691Z" hostname="ProArt-Zhou" tests="30" failures="0" errors="0" skipped="0" time="6.4943773">
+        <testcase classname="src/ResourcePanel.test.tsx" name="shows an empty account view without suggesting known quota or an editable default" time="0.0898154">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="separates service quota and local allowance and withholds availability from stale or unknown reports" time="0.0351144">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="saves only Commander reserve changes with the current revision and refreshes the quota view" time="0.4138128">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="reuses the command identity when the same settings are retried after a lost response" time="0.316912">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="refreshes conflicting settings and waits for a new user submission instead of overwriting them" time="0.4636133">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="prevents saving an old policy when reading the replacement after a conflict fails" time="0.2643083">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="shows account cooldown and exhaustion and renders resource names as plain text" time="0.019159">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="rejects negative protection and excess reserved slots before any write" time="0.6440368">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="notifies the parent when the session expires during read" time="0.0157647">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="notifies the parent when the session expires during save" time="0.2936977">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="ignores a late 401 from the previous session&apos;s read operation" time="0.0192917">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="ignores a late ok from the previous session&apos;s read operation" time="0.0146369">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="ignores a late network from the previous session&apos;s read operation" time="0.0154534">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="ignores a late 401 from the previous session&apos;s refresh operation" time="0.0395789">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="ignores a late ok from the previous session&apos;s refresh operation" time="0.0983788">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="ignores a late network from the previous session&apos;s refresh operation" time="0.0914809">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="ignores a late 401 from the previous session&apos;s save operation" time="0.3051949">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="ignores a late ok from the previous session&apos;s save operation" time="0.2972991">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="ignores a late network from the previous session&apos;s save operation" time="0.2908007">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="ignores the previous session&apos;s delayed read response body" time="0.0135618">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="ignores the previous session&apos;s delayed save response body" time="0.280174">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="does not expire a newly mounted panel when an unmounted panel receives 401" time="0.0133667">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="ignores a late 401 while reading the previous session&apos;s conflict policy back" time="0.2746649">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="ignores a late ok while reading the previous session&apos;s conflict policy back" time="0.3120817">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="ignores a late network while reading the previous session&apos;s conflict policy back" time="0.3116461">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="ignores a late 401 while reading the previous session&apos;s saved policy back" time="0.2651697">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="ignores a late ok while reading the previous session&apos;s saved policy back" time="0.2940893">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="ignores a late network while reading the previous session&apos;s saved policy back" time="0.2604913">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="preserves a dot-segment account identity in the policy query" time="0.1198984">
+        </testcase>
+        <testcase classname="src/ResourcePanel.test.tsx" name="shows reported limits and rejects protection above an exact decimal limit" time="0.6188155">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/RoutingSimulation.test.tsx" timestamp="2026-09-06T03:49:43.694Z" hostname="ProArt-Zhou" tests="48" failures="0" errors="0" skipped="0" time="7.7554595">
+        <testcase classname="src/RoutingSimulation.test.tsx" name="waits for explicit input and runs inside the rulebook editor without publication writes" time="0.3490225">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="replaces only the current rulebook and sends frozen authorization and resources unchanged" time="0.1194334">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="shows selected and rejected candidates, every reason and server-ranked components" time="0.1129999">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="makes blocked outcomes explicit without suggesting activation" time="0.1220849">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="shows imported provenance, snapshot timestamps and unknown values without inventing availability" time="0.0872343">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="exports exactly the composed input and unchanged complete server report" time="0.2286105">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="sends identical bytes on repeat simulation with identical facts" time="0.1846776">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="invalidates a completed result after changing task" time="0.1148272">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="invalidates a completed result after changing draft" time="0.1087782">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="invalidates a completed result after changing file" time="0.1506679">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="invalidates a completed result after changing example" time="0.185363">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="rejects duplicate file data before any simulation request" time="0.0751282">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="rejects escaped duplicate file data before any simulation request" time="0.0613984">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="rejects invalid file data before any simulation request" time="0.0611054">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="rejects missing file data before any simulation request" time="0.0770777">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="accepts the same field names in different objects and commas/braces inside strings" time="0.0613417">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="checks the composed UTF-8 body size rather than file characters" time="0.1114197">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="clears the old result and handles a 422 simulation failure" time="0.1548125">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="clears the old result and handles a malformed simulation failure" time="0.1676396">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="clears the old result and handles a wrong scope simulation failure" time="0.1691033">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="clears the old result and handles a network simulation failure" time="0.1848657">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="expires only the active session on example 401" time="0.0604981">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="expires only the active session on simulate 401" time="0.108923">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="discards late example headers after mount, session, project, draft or task changes" time="0.7090214">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="discards late simulate headers after mount, session, project, draft or task changes" time="1.7678955">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="rechecks edit scope after delayed example JSON parsing" time="0.0581433">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="rechecks edit scope after delayed simulate JSON parsing" time="0.1268568">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="discards delayed imported text after unmount changes" time="0.0562197">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="discards delayed imported text after csrf changes" time="0.0626191">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="discards delayed imported text after project changes" time="0.0615819">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="discards delayed imported text after draft changes" time="0.0625817">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="discards delayed imported text after task changes" time="0.109883">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="does not mix a late old result into a newer result" time="0.1676474">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="renders the original prototype-like evidence reference without crashing" time="0.093918">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="keeps constructor literal in evidence, reason and field labels" time="0.1247598">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="keeps toString literal in evidence, reason and field labels" time="0.1228287">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="rejects the original overflowing cooldown file without sending a null replacement" time="0.0752962">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="rejects the imported non-finite or unsafe integer 9007199254740993" time="0.0609343">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="rejects the imported non-finite or unsafe integer -1e400" time="0.0471695">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="rejects the imported non-finite or unsafe integer 9007199254740992.1" time="0.061666">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="accepts finite floating input 1.0 under the existing IEEE contract" time="0.1221794">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="accepts finite floating input 1e3 under the existing IEEE contract" time="0.107785">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="accepts finite floating input 0.1 under the existing IEEE contract" time="0.1234545">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="accepts finite floating input 1.2500 under the existing IEEE contract" time="0.1257801">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="accepts finite floating input 5e-324 under the existing IEEE contract" time="0.0930828">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="accepts finite floating input 0.0e400 under the existing IEEE contract" time="0.1237128">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="accepts finite floating input 0.1234567890123456789 under the existing IEEE contract" time="0.1098133">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="accepts finite floating input 1e-400 under the existing IEEE contract" time="0.1215808">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/RulebookPanel.test.tsx" timestamp="2026-09-06T03:49:43.697Z" hostname="ProArt-Zhou" tests="42" failures="0" errors="0" skipped="0" time="9.9911391">
+        <testcase classname="src/RulebookPanel.test.tsx" name="opens the project rulebook from App and expires its owner session" time="0.202832">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="edits matrix groups, registered members, priority, limits and ordering while retaining advanced fields" time="0.35303">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="publishes empty groups as waiting configuration and displays retained version history" time="0.2008512">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="invalidates a preview after any form change" time="0.1514906">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="shows compiler problems and does not publish an invalid rulebook" time="0.1066796">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="retries the identical publication after an unknown network outcome" time="0.2020917">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="retries the identical publication after an unknown server outcome" time="0.2002913">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="retries the identical publication after an unknown json outcome" time="0.1860285">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="retries the identical publication after an unknown incomplete outcome" time="0.169327">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="refreshes authority after a preview conflict and requires a new preview" time="0.1410281">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="refreshes authority after a publish conflict and requires a new preview" time="0.1987217">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="keeps publication unavailable if the conflict refresh fails" time="0.1201167">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="imports advanced conditions and configurable limits while invalidating the previous preview" time="0.2059258">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="rejects imported changes to fixed global rules without replacing the editor" time="0.0624825">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="rejects imported changes to fixed collaboration rules without replacing the editor" time="0.0762593">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="imports into an unconfigured project and rejects non Rulebook documents" time="0.1223385">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="exports the complete edited document" time="0.0779536">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="ignores a delayed import after csrf changes" time="0.093013">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="ignores a delayed import after project changes" time="0.0918168">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="ignores a delayed import after unmount changes" time="0.0769311">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="ignores late read headers, including 401, after scope changes" time="0.7842058">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="ignores late refresh headers, including 401, after scope changes" time="0.755578">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="ignores late preview headers, including 401, after scope changes" time="0.7469459">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="ignores late publish headers, including 401, after scope changes" time="1.233785">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="rechecks scope after delayed read JSON parsing" time="0.0971549">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="rechecks scope after delayed refresh JSON parsing" time="0.0923641">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="rechecks scope after delayed preview JSON parsing" time="0.0933358">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="rechecks scope after delayed publish JSON parsing" time="0.1223981">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="prevents duplicate publication while its first response is pending" time="0.0911594">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="restores an unresolved draft and exact command after reopening with a newer server configuration" time="0.2157239">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="isolates an unresolved record from a different project and restores only when returning to its scope" time="0.1720016">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="isolates an unresolved record from a different csrf and restores only when returning to its scope" time="0.1696364">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="does not send a publication until the full pending identity is durably recorded" time="0.1368933">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="blocks malformed pending records without overwriting or sending them" time="0.1719915">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="does not let an unmounted successful response erase a reopened pending record" time="0.2313911">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="retains the original publication across App navigation to 资源与配额" time="0.3896222">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="retains the original publication across App navigation to 检查配置" time="0.3684061">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="retains the original publication across App navigation to 需求与计划" time="0.4198012">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="retains the original publication across App navigation to 另一项目" time="0.3981522">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="compares rules by identity and displays only a changed priority field" time="0.077319">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="reports rule additions, removals and ordering explicitly" time="0.108061">
+        </testcase>
+        <testcase classname="src/RulebookPanel.test.tsx" name="displays escalation stage order and preserves it through a form round trip" time="0.0738628">
+        </testcase>
+    </testsuite>
+</testsuites>

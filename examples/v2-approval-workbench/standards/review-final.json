@@ -1,0 +1,72 @@
+{
+  "schema_version": "karajan.independent-review.v1",
+  "axis": "Standards",
+  "status": "passed_after_fix",
+  "verified_at_utc": "2026-09-06T04:41:13.429027+00:00",
+  "base_commit": "8329a1e028d53c6da5598f620c37aa8a2c62f0f2",
+  "source_sha256": {
+    "frontend/src/ProjectRuns.tsx": "ef49cb9feda8b84e5fe02bc08885ac77b2dc867ac3bf0d04c945df24699a2849",
+    "frontend/src/RoutingAuthorization.tsx": "2136f41abb5ee40df4549bf1913cba4a70551d55a78ad4756f91666a6942ce49",
+    "frontend/src/styles.css": "296e7bbdb8ee0bc47d925ec6decd710ac75568e49d345cc73e707443af1c02e8"
+  },
+  "findings": {
+    "remaining": [],
+    "closed": [
+      {
+        "id": "V2-UI-STANDARDS-001",
+        "priority": "P2",
+        "problem": "A valid persisted USD=0e0 decimal string made v2 authorization non-actionable.",
+        "fix": "Preserve the authenticated server amount string; do not impose a narrower decimal grammar or convert it to Number.",
+        "original_failure": "quantity-before.junit.xml",
+        "original_input": "quantity-view.json",
+        "final_case": "permits reviewing a genuine persisted decimal-string zero written as 0e0"
+      }
+    ]
+  },
+  "validation": {
+    "passed": 11,
+    "failed": 0,
+    "errors": 0,
+    "seconds": 1.8352072,
+    "report": "standards-final.junit.xml",
+    "suite_path": "examples/v2-approval-workbench/standards/independent.test.tsx",
+    "execution": "Existing final report already names the published test path and binds the same frozen source hashes; no repeat run was needed for this finalization."
+  },
+  "coverage": [
+    "Plan limits versus original ceiling; ordered stage memberships",
+    "Exact v2 schema, term, revision, four digests and CSRF",
+    "409 followed by failed read removes the actionable plan",
+    "Uncertain retry keeps the same request and idempotency key",
+    "Late project-detail and old-session approval responses do not overwrite the replacement view",
+    "Changing Run resets the reviewed checkbox",
+    "Missing routing digest, unknown version and foreign policy owner cannot be approved"
+  ],
+  "historical_evidence": {
+    "quantity_before": "One product failure and ten filtered/skipped tests.",
+    "standards_before": "One product failure plus one reviewer text-selector ambiguity, not two product findings.",
+    "unchanged_original_bytes": [
+      "quantity-view.json",
+      "quantity-before.junit.xml",
+      "standards-before.junit.xml"
+    ],
+    "fixture_publication": "valid-view.json removes only the unused top-level v1_run from the cached original. The v2 project and Run material are unchanged; historical input hash in standards-initial.json refers to the original larger fixture.",
+    "test_publication": "Previously verified Prettier-normalized test strings are identical after import relocation normalization; no TypeScript compiler-API equivalence check is claimed."
+  },
+  "reproduce": "node frontend/node_modules/vitest/vitest.mjs run --config examples/v2-approval-workbench/standards/vitest.config.mjs --reporter=default --reporter=junit --outputFile=.cache/v2-ui-standards/replay.junit.xml",
+  "limitations": [
+    "Component/JSDOM tests with controlled fetch; root owns browser evidence.",
+    "Quantity fixture came from public domain submission plus authenticated HTTP; this suite consumes its saved response.",
+    "No live provider, credential, account quota, runtime qualification or dispatch validation."
+  ],
+  "evidence_sha256": {
+    "independent.test.tsx": "4a4a240fb327a59c1c15047eedd8ce6925ab6954439008a522c2b88fa7bd60c1",
+    "quantity-before.junit.xml": "86812b52b4b1c5c64771bb355baed45ce3c1a6743c15bf1836dd6b0a4b7c42e1",
+    "quantity-view.json": "a74509ca1c9c9c087a194dd9dc25b46d83aeb84c5c28d386d3b88c12ba3c3d02",
+    "README.md": "d9551094a1006380ec4b057ac29336ea9d6f2ef240f8b1837ab676955fb75a12",
+    "standards-before.junit.xml": "c3bcb4f9c55f03b192ea0a873145fcd582b2a71ae5a2548ac5584b57df3b1851",
+    "standards-final.junit.xml": "62e9dc1aa25e666488921f2bc1efa6042d698b5bb96e054d83f58e72301b8206",
+    "standards-initial.json": "d69bd0381893b1d65ba7c100ae61d02c80992270d796aae21c66fd184abe49e5",
+    "valid-view.json": "e93b43b65e7837d575cc9030f4f59f66812f6461773195d558787d672d6a0bab",
+    "vitest.config.mjs": "9a90a6f5ec7a35a7ec1923aef5ed3c1dff392a6aa437b9067744cdb4b764e5fc"
+  }
+}

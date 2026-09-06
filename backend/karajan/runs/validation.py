@@ -16,9 +16,26 @@ def validate_creation(
     if any((ref["id"], ref["revision"]) not in approved for ref in authorization["profile_refs"]):
         raise ValueError("PROFILE_NOT_APPROVED")
     for person in people:
-        group = "adviser_qualified" if person["purpose"] == "advice" else "commander_qualified"
+        rulebook = config["rulebook"]
+        if request.get("schema_version") == "karajan.create-run.v2":
+            purpose = "advice" if person["purpose"] == "advice" else "lead"
+            groups = {
+                group
+                for rule in rulebook["rules"]
+                if rule["when"]["role"] == "commander"
+                and rule["when"].get("purpose") in (None, purpose)
+                for group in rule["eligible_groups"]
+            }
+        else:
+            groups = {
+                "adviser_qualified" if person["purpose"] == "advice" else "commander_qualified"
+            }
+        # Membership only permits this planning participant to be proposed. Its
+        # actual planning intent still needs a separate trusted admission receipt.
         candidates = {
-            (ref["id"], ref["revision"]) for ref in config["rulebook"]["profile_groups"][group]
+            (ref["id"], ref["revision"])
+            for group in groups
+            for ref in rulebook["profile_groups"].get(group, [])
         }
         if (person["profile"]["id"], person["profile"]["revision"]) not in candidates & approved:
             raise ValueError("PLANNER_PROFILE_NOT_APPROVED")

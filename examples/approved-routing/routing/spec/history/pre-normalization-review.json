@@ -1,0 +1,59 @@
+{
+  "schema_version": "karajan.independent-spec-review.v1",
+  "reviewed_at": "2026-09-06T05:26:13.410624+00:00",
+  "scope": "ApprovedRunRouting public persisted assessment, no admission/effect",
+  "source_hashes": {
+    "backend/karajan/orchestration/routing.py": "0a2e35b3daf76d79f7b3c8745e718a094ccd6d0049e5c40cf8fed66bf7bcfb4a",
+    "backend/karajan/routing/selection.py": "f119a2b4f26677d203eef2e5330a4246995cd0ef634ef79af2f513d55e6c548e",
+    "backend/karajan/routing/evaluator.py": "34b230cf7f363a44cee47b0d2e954ca2e616254bc1c8a546d5da1a4b9e737659",
+    "backend/karajan/routing/models.py": "b62e9e3c74b2053c336a656850f88f9cc8425dbab8553d4e86efa59314e919ef",
+    "backend/karajan/routing/__init__.py": "ba8d6b626c2d8eda272032c821935db82e8f038c7da41adf959513a2f71b9a81",
+    "backend/karajan/runs/validation.py": "2d16de54a463c1a80ef97cbec605ebf6a3b9981087aeeca8e0191fc3520b0ee5",
+    "backend/karajan/runs/planning.py": "2a93ea0e0e75563ffe6e415ce9c2634973bde4f7cedce489528d03c6fa23d247",
+    "backend/karajan/projects/demand.py": "0bb92458332401f63e15eebb6531977005527cdb3cd070e247f089388d47f76a",
+    "backend/karajan/projects/qualification.py": "f11749353b434eb821dadac8c9f07a59e2c1b3a2b5b684197809795c43ecfee5"
+  },
+  "results": {
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "junit": "final.junit.xml"
+  },
+  "findings": [
+    {
+      "id": "legacy-commander-group-name",
+      "origin": "Root identified; independently reproduced by Spec",
+      "state": "closed",
+      "red_evidence": "renamed-commander.junit.xml",
+      "fixed_by": "Root changed v2 participant resolution to commander rules normal eligible groups",
+      "verification": "Original public renamed-group test and full 10-case replay passed"
+    }
+  ],
+  "unresolved_findings": [],
+  "preparation_corrections": [
+    "Initial custom rule reused its own quality group and correctly failed compile",
+    "Updated Task content initially reused prior Task revision and correctly failed validation"
+  ],
+  "provider_calls": false,
+  "injected_runtime_qualification": false,
+  "assessment_admission_effect": false,
+  "foreign_run_capacity_fixture": "Real public admit/activate/record_usage to prove existing cross-Run balances; assessment preserves those rows",
+  "checks": [
+    "ruff check independent test passed",
+    "ruff format --check independent test passed"
+  ],
+  "limitations": [
+    "All real-source assessments remain blocked without trusted runtime_tools qualification",
+    "Historical idempotent receipts are not refreshed authorization",
+    "No claimed model/provider/cash or execution qualification"
+  ],
+  "artifact_sha256": {
+    "test_public_assessment.py": "077b59ceffb348a6fd22e4eebecc811e32764f4517b7139cfbc8ff192a9a0d75",
+    "final.junit.xml": "c2693bcbb2fc47d15583db75f1bf38c0e821832708909490dc1eac64a8fe8f79",
+    "renamed-commander.junit.xml": "4a635017e301e1b83b7ec2a406067828df99cbfe1e7eff2f0b3c9d2d338acbf0",
+    "README.md": "00fdcfb65ac644f70402e16b0073c5e328142da5e9325fd3ebf6757935c9b6f2",
+    "source-final.json": "aee95ddc61d816c4853f2d69622eb2ceeda6c960aa9be204fba1cb709aad00c8"
+  },
+  "source_hashes_verified_after_destination_fix_replay": true
+}

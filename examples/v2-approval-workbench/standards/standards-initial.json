@@ -1,0 +1,32 @@
+{
+  "schema_version": "karajan.independent-review.v1",
+  "axis": "Standards",
+  "status": "awaiting_original_input_replay",
+  "fixed_point": "8329a1e028d53c6da5598f620c37aa8a2c62f0f2",
+  "finding": {
+    "id": "V2-UI-STANDARDS-001",
+    "priority": "P2",
+    "path": "frontend/src/RoutingAuthorization.tsx",
+    "location": "readRoutingScope currency_limits parser",
+    "problem": "The authenticated domain accepts and preserves finite Decimal strings such as USD=0e0, but the UI requires digits with an optional decimal point and makes the entire valid v2 authorization non-actionable.",
+    "basis": "Domain Quantity calls resources.units/Decimal; m3-v2-approval-workbench promises to review persisted v2 plans and preserve server decimal strings.",
+    "reproduction": "quantity-view.json is a genuine public RunPlanner submission plus HTTP GET, with original ceiling USD=0 and plan revision 2 USD=0e0. The independent UI input renders the normal ProjectRuns component and fails to find the complete v2 review panel or approval button. No digest was fabricated or edited.",
+    "before": "quantity-before.junit.xml: one actual failing product case, ten other cases filtered out",
+    "suggested_fix": "Preserve and display the authenticated server decimal string without Number conversion or imposing a narrower lexical grammar."
+  },
+  "initial_source_sha256": {
+    "frontend/src/ProjectRuns.tsx": "ef49cb9feda8b84e5fe02bc08885ac77b2dc867ac3bf0d04c945df24699a2849",
+    "frontend/src/RoutingAuthorization.tsx": "4842ce659223a77fe45ea77557242dce88a67bafe603bd314e9af3467a297baa",
+    "frontend/src/styles.css": "296e7bbdb8ee0bc47d925ec6decd710ac75568e49d345cc73e707443af1c02e8"
+  },
+  "input_sha256": {
+    "quantity-view.json": "a74509ca1c9c9c087a194dd9dc25b46d83aeb84c5c28d386d3b88c12ba3c3d02",
+    "valid-view.json": "376745addda573c4d8933034d6026fd4e639a44a93478f61bd76b9cdc7692f8c",
+    "quantity-before.junit.xml": "86812b52b4b1c5c64771bb355baed45ce3c1a6743c15bf1836dd6b0a4b7c42e1"
+  },
+  "history": "Initial 11-case run had this product failure, nine passing controls and one reviewer selector ambiguity because two tasks shared a text string. Only the selector was corrected to assert both occurrences. That harness correction is not a product red/green claim. The focused original money case was then rerun and failed again.",
+  "limitations": [
+    "JSDOM/component and synthetic fetch tests only; real browser verification belongs to root.",
+    "No product source, old evidence, Git state, credential or live/model/cash service was changed or used."
+  ]
+}

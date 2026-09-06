@@ -1,0 +1,52 @@
+{
+  "schema_version": "karajan.v2-ui-browser-quantity.v1",
+  "captured_at": "2026-09-06T03:53:14.780500+00:00",
+  "origin": "http://127.0.0.1:8767",
+  "source_sha256": {
+    "frontend/src/ProjectRuns.tsx": "ef49cb9feda8b84e5fe02bc08885ac77b2dc867ac3bf0d04c945df24699a2849",
+    "frontend/src/RoutingAuthorization.tsx": "2136f41abb5ee40df4549bf1913cba4a70551d55a78ad4756f91666a6942ce49",
+    "frontend/src/styles.css": "296e7bbdb8ee0bc47d925ec6decd710ac75568e49d345cc73e707443af1c02e8"
+  },
+  "build_sha256": {
+    "frontend\\dist\\assets\\index-BYvAcYCM.js": "4469056be8fb37e051198b929a409e0fd9e3cd8ab24699d394012513280944f5",
+    "frontend\\dist\\assets\\index-cpX-68Ic.css": "2f259fe7c9bbcb95b2d8e748ef3771a48e3b9536b899806296f8f3d169727df8",
+    "frontend\\dist\\index.html": "0035e6f48b40b874d860eb3a296eb3d630df553ce71dee30b4efcb89c9864bae"
+  },
+  "observed_through": "Real in-app browser CUA and separate mode=ro SQLite read-back.",
+  "browser_observations": [
+    "Opened the new built app against the independently seeded valid Quantity boundary, without changing the earlier approved fixtures.",
+    "The full v2 scope displayed the exact original text: 原币限额：CNY 0，USD 0e0.",
+    "The existing budget ceiling still displayed USD 0 separately; the complete-scope acknowledgement started unchecked and confirmation disabled.",
+    "Acknowledging and confirming displayed: v2 授权已确认；尚未启用实际派发。",
+    "The confirmed plan remained visible with the exact 0e0 amount."
+  ],
+  "persisted": {
+    "run_id": "21ac9caf-2c9f-4839-be00-dbc10a921736",
+    "state": "executing",
+    "latest_plan_revision": 2,
+    "currency_limits": {
+      "CNY": "0",
+      "USD": "0e0"
+    },
+    "approval_count": 1,
+    "approval": {
+      "approved_at": 1788666759.6806343,
+      "approved_by": "owner",
+      "authorization_digest": "89438372936b5c304ef2a710ceca2c6f4af1ed8cb62591d5a03fbbd45548055f",
+      "configuration_digest": "bd53d2bb88b31cd992a48c901fc7b08a46d828c6a583f4fe606c4b7e54182f81",
+      "dispatch_enabled": false,
+      "id": "d5ae28dc-e9e3-4890-b56a-5bd8d777d1eb",
+      "plan_digest": "e2f6ced72ceeebf6de6520fb88eed6f35a965ba178ac408f8fefa8789ca29111",
+      "plan_revision": 2,
+      "routing_digest": "8ea0fa0406f40c951c80ce7254054737174c0b36e68b71793d082e0aed04dc61",
+      "run_id": "21ac9caf-2c9f-4839-be00-dbc10a921736",
+      "schema_version": "karajan.approve-plan.v2",
+      "term": 1
+    },
+    "dispatch_enabled": false
+  },
+  "limits": [
+    "Synthetic local fixture only; no model, provider credential, resource admission or execution.",
+    "The browser targeted the actual reported Quantity regression; unrelated race tests are attributed to independent interaction tests."
+  ]
+}

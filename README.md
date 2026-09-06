@@ -10,11 +10,11 @@
 
 PRD、8 个 M0 Issues、20 个 M1–M4 实现任务和独立 CI 任务已发布。M0 契约、执行恢复、预算和运行探针已分批实现，本地项目工作台已可登记仓库与预览、保存配置；真实账户资格尚未通过。后续任务见 [完整任务清单](docs/planning/v1-backlog.md) 与 [需求覆盖审计](docs/implementation/requirement-coverage.md)；GitHub 实际编号见 [发布记录](docs/planning/v1/github-publication.json)。
 
-用户已于 2026-09-06 授权固定 OpenCode Go 通道的实际测试，额度由 provider 限制；其他通道的现金调用仍暂停。离线与真实证据逐项区分，诊断成功不自动启用执行配置。开发验证方式见 [测试与合并质量门](docs/implementation/testing-gates.md)。
+用户已于 2026-09-06 授权固定 OpenCode Go 通道的实际测试，额度由 provider 限制；[Go 实测 PR #48](https://github.com/zhouy1017/Karajan/pull/48) 保存工具执行与权限拒绝证据。其他通道的现金调用仍暂停。离线与真实证据逐项区分，诊断成功不自动启用执行配置。开发验证方式见 [测试与合并质量门](docs/implementation/testing-gates.md)。
 
 ## 本地工作台
 
-[启动说明与实际验证](docs/implementation/m1-local-workbench.md) 包含依赖安装、构建和本机运行方式。服务启动后使用本地文件中的一次性访问码登录；项目状态、配置预览和版本化保存使用实际 SQLite。[需求与计划页面](docs/implementation/m1-run-workbench.md) 可保存需求、审阅并确认既有计划、决定指定 Commander 交接。当前尚不能从页面派发真实模型任务。
+[启动说明与实际验证](docs/implementation/m1-local-workbench.md) 包含依赖安装、构建和本机运行方式。服务启动后使用本地文件中的一次性访问码登录；项目状态、配置预览和版本化保存使用实际 SQLite。[需求与计划页面](docs/implementation/m1-run-workbench.md) 可保存需求、审阅并确认既有计划、决定指定 Commander 交接。[v2 授权审阅](docs/implementation/m3-v2-approval-workbench.md) 展示已有计划的完整服务、工具、资源与分发阶段范围，并确认精确版本；计划变化后必须重新审阅。当前尚不能从页面派发真实模型任务。
 
 [交付协调协议](docs/implementation/m1-delivery.md) 已提供本地可运行验证：固定候选推送、同一 PR 身份恢复、当前提交 CI 与暂停/取消。示例使用本地 Git 和明确的 PR 替身，生产交付仍等待当前候选权威、真实凭据与执行资格接线。
 
@@ -24,9 +24,13 @@ PRD、8 个 M0 Issues、20 个 M1–M4 实现任务和独立 CI 任务已发布�
 
 [共享配额池](docs/implementation/m3-shared-capacity.md) 已提供跨 Run/模型的多窗口准入、当前 Commander 保护量、消费核销与未知额度规则。[资源工作台](docs/implementation/m3-resource-workbench.md) 可查看已有账户的共享窗口并保存 Commander 保护量，显示报告来源与未知状态。[容量事实导出](docs/implementation/m3-capacity-facts.md) 从同一账本只读捕获来源、覆盖与多 Run 占用，供统一路由组装器使用。实际调度接线与真实来源观察仍在推进。
 
-[Rulebook 路由](docs/implementation/m3-rulebook-routing.md) 已提供严格编译、固定快照模拟和候选解释，涵盖资格、原授权范围、多池压力、Commander 保护及原币预算。[规则版本发布](docs/implementation/m3-rulebook-publication.md) 提供矩阵编辑、服务器预览和不可变版本，旧 Run 保留固定规则并服从当前资格撤销。[模拟工作台](docs/implementation/m3-routing-workbench.md) 可用明确的离线快照演练当前编辑，查看候选顺序和淘汰原因。可信事实组装、旧 Run 显式采用和实际统一派发仍待接入；模拟或发布不会启用执行配置。
+[Rulebook 路由](docs/implementation/m3-rulebook-routing.md) 已提供严格编译、固定快照模拟和候选解释，涵盖资格、原授权范围、多池压力、Commander 保护及原币预算。[规则版本发布](docs/implementation/m3-rulebook-publication.md) 提供矩阵编辑、服务器预览和不可变版本，旧 Run 保留固定规则并服从当前资格撤销。[模拟工作台](docs/implementation/m3-routing-workbench.md) 可用明确的离线快照演练当前编辑，查看候选顺序和淘汰原因。批准 Run 的正常 Worker 判断已接入可信事实组装；旧 Run 显式采用和实际统一派发仍待接入，模拟或发布不会启用执行配置。
 
 [串行执行协调](docs/implementation/m1-serial-orchestration.md) 已把批准计划、真实本机进程、固定候选、检查和独立审查串联为可恢复的离线流程。暂停、取消、输入变化与根任务重试都有持久记录；真实来源、资源原子准入和多 Worker 集成仍待接通。
+
+[已批准 Run 路由判断](docs/implementation/m3-approved-run-routing.md) 已直接消费持久批准、逐规则许可、当前资格、显式任务预测和容量账本，保存候选与排除依据，并提供认证 HTTP 入口。未取得真实资格的来源保持阻塞；判断收据不预留资源或启动 Agent。
+
+[任务配额准入](docs/implementation/m3-task-admission.md) 将该判断接到持久准入意图、真实容量预留、丢失响应恢复、取消与到期状态。未获真实资格时不建预留；预留后的 Agent 激活与实际执行仍待接通。
 
 ## 完整架构设计
 

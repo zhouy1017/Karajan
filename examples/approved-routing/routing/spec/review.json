@@ -1,0 +1,79 @@
+{
+  "schema_version": "karajan.independent-spec-review.v1",
+  "reviewed_at": "2026-09-06T05:33:52.741882+00:00",
+  "scope": "Approved Run persisted routing assessment; no admission/effect",
+  "source_hashes": {
+    "backend/karajan/orchestration/routing.py": "0a2e35b3daf76d79f7b3c8745e718a094ccd6d0049e5c40cf8fed66bf7bcfb4a",
+    "backend/karajan/routing/selection.py": "dc85fa0954317be29ff831fcb1689266f6a8b6fb5a2511cdc82c0342eee2ae12",
+    "backend/karajan/routing/evaluator.py": "681775528b41d89bc96b28b46fd10019fbaafd07c68fde616f52ecfb9b45f4ab",
+    "backend/karajan/routing/models.py": "b62e9e3c74b2053c336a656850f88f9cc8425dbab8553d4e86efa59314e919ef",
+    "backend/karajan/routing/__init__.py": "f69a4e35049dd4812605b6d30b5908bfacff3662d413a2faa51a1f4f2e41d7bf",
+    "backend/karajan/runs/validation.py": "2d16de54a463c1a80ef97cbec605ebf6a3b9981087aeeca8e0191fc3520b0ee5",
+    "backend/karajan/runs/planning.py": "2a93ea0e0e75563ffe6e415ce9c2634973bde4f7cedce489528d03c6fa23d247",
+    "backend/karajan/projects/demand.py": "0bb92458332401f63e15eebb6531977005527cdb3cd070e247f089388d47f76a",
+    "backend/karajan/projects/qualification.py": "f11749353b434eb821dadac8c9f07a59e2c1b3a2b5b684197809795c43ecfee5"
+  },
+  "results": {
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "junit": "final.junit.xml",
+    "execution": "actual published test path",
+    "test_cases": [
+      "test_only_selected_rule_grants_apply_even_when_another_rule_approves_same_group",
+      "test_valid_renamed_commander_group_can_create_approved_run_without_legacy_group_name",
+      "test_real_cross_run_usage_and_reservation_are_separate_and_assessment_has_no_admission",
+      "test_old_receipt_replay_is_historical_and_new_command_reads_latest_unknown_observation",
+      "test_pending_new_plan_does_not_replace_active_approved_requirements",
+      "test_unapproved_task_and_unimplemented_lineage_never_get_assessed_as_workers",
+      "test_current_identity_restriction_preserves_frozen_plan_but_rejects_profile",
+      "test_estimate_absence_revocation_and_expiry_never_fill_a_default_vector[missing]",
+      "test_estimate_absence_revocation_and_expiry_never_fill_a_default_vector[revoked]",
+      "test_estimate_absence_revocation_and_expiry_never_fill_a_default_vector[expired]"
+    ]
+  },
+  "findings": [
+    {
+      "id": "legacy-commander-group-name",
+      "origin": "Root identified; Spec independently reproduced",
+      "state": "closed",
+      "red_evidence": "history/renamed-commander.red.junit.xml",
+      "verification": "Exact public renamed-group case and full 10-case published-path replay passed"
+    }
+  ],
+  "unresolved_findings": [],
+  "checks": [
+    "Ruff check published Python files passed",
+    "Ruff format --check published Python files passed"
+  ],
+  "inputs": "Spec-owned synthetic Git/SQLite fixtures and public configuration/Run commands; no author test helper",
+  "provider_calls": false,
+  "credentials_read": false,
+  "project_git_modified": false,
+  "state_publication": false,
+  "history": "Historical raw reports retained under history/; their counts are not added to final results",
+  "artifact_sha256": {
+    "final.junit.xml": "adf3e30b8c58d08ff411355acf1adb2a04804e429bc729d2d35d5c15cea0084e",
+    "fixture.py": "de3c85ca2d5a99afb551dc5dbee5ae5f9dc75deb613cd5a36356551530a5113c",
+    "history/line-ending-normalization.json": "c1d4c6f973c6cd4f1e234a2b7c7d746ac2b4fdf47ff3ed379b457424fb8a278b",
+    "history/pre-normalization-review.json": "98bcd768146adf6d7d65df6b9c1b2b14de3b59d33fc9af8c8f529a35480f84a9",
+    "history/pre-normalization-source.json": "aee95ddc61d816c4853f2d69622eb2ceeda6c960aa9be204fba1cb709aad00c8",
+    "history/pre-normalization.junit.xml": "c2693bcbb2fc47d15583db75f1bf38c0e821832708909490dc1eac64a8fe8f79",
+    "history/preparation-input-corrections.junit.xml": "961fe5b3954473e4a5da3346c006b71acfb6be890ac4ea6c7921238e40496317",
+    "history/renamed-commander.red.junit.xml": "4a635017e301e1b83b7ec2a406067828df99cbfe1e7eff2f0b3c9d2d338acbf0",
+    "README.md": "cf1cac7087a867f49f5b9049a29ff33e52768fe7311557b1d596aba9cc119e75",
+    "source-final.json": "93b3f5732cb257f0cd8bf273c1caa91c07fe58eec91875f52fa30d1213b505f2",
+    "test_public_assessment.py": "68e0dddc42d93321768ed050ec7608793f78a478e139e83121753e66d1b79102"
+  },
+  "normalization": "Current LF product source hashes verified and full published-path suite rerun; old source/report/JUnit and mapping retained under history/",
+  "preparation_corrections": [
+    "Invalid custom ordinary/quality group overlap was correctly rejected",
+    "Changed Task content initially reused an old revision and was correctly rejected"
+  ],
+  "limitations": [
+    "Trusted runtime_tools qualification remains missing; real-source assessments blocked",
+    "Historical idempotent receipt is not a new authorization",
+    "Foreign Run public capacity usage is a fixture; assessment adds no admission"
+  ]
+}

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.459" timestamp="2026-09-06T13:23:30.551438+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.approved-routing-spec.test_public_assessment" name="test_valid_renamed_commander_group_can_create_approved_run_without_legacy_group_name" time="0.234"><failure message="KeyError: 'commander_qualified'">.cache\approved-routing-spec\test_public_assessment.py:367: in test_valid_renamed_commander_group_can_create_approved_run_without_legacy_group_name
+    case = seeded(tmp_path, renamed_commander=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.cache\approved-routing-spec\test_public_assessment.py:141: in seeded
+    run = planner.create(
+backend\karajan\runs\planning.py:165: in create
+    validate_creation(request, project, exported["configuration"], principal)
+backend\karajan\runs\validation.py:21: in validate_creation
+    (ref["id"], ref["revision"]) for ref in config["rulebook"]["profile_groups"][group]
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'commander_qualified'</failure></testcase></testsuite></testsuites>

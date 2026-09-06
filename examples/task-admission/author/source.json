@@ -1,0 +1,62 @@
+{
+  "base": "58188352367e15864ce3b59a5270823ca1868b46",
+  "source_sha256": {
+    "backend/karajan/orchestration/admission.py": "675bd8ec973458bd3ed98f236466102001b3290696f6e578d9e341cf3d88c0d8",
+    "backend/karajan/orchestration/routing.py": "a3c81c993a2ac1cd5fc05d94bee84a663b1d369b0980901a30d14d28593dc9bd",
+    "backend/karajan/capacity/store.py": "676f4a46cfd53fac5256cdea08e8ae8cd318b295bd159c9bf2fee5a90edef30d",
+    "backend/karajan/web/admission.py": "a032e36aebe71cc4c7f13222d452eef2378369a4f2c4a95b3067bd7ceb829f18",
+    "backend/karajan/web/app.py": "acd00ef20e1ea307d83f28473f607b82b84f8c805f69dd1012ea43c84776ea75",
+    "tests/runs/test_task_admission.py": "e6dc82c491f986f1276bc163163504e37584960f6e8c89c6b152b9abef432c1b",
+    "tests/runs/test_admission_guard.py": "0660e93328bdfe84a1fc2f22f4140f58ed2f01555c6a9001828e761447c31154",
+    "tests/web/test_task_admission_http.py": "dc4f203e6911673bc364cc2c59abd02a3f3b24b6742a771e10725ad6e4d65ad4",
+    "tests/capacity/test_command_receipts.py": "1f7aaaa457f0916359a491517fa379ea1dbb73a48b546b6844906657c5a42243"
+  },
+  "validation": {
+    "backend_related": {
+      "passed": 603,
+      "skipped": 1,
+      "skip_reason": "POSIX symlink case on Windows"
+    },
+    "wsl_new_admission_http": {
+      "passed": 19
+    },
+    "capacity_windows": {
+      "passed": 123
+    },
+    "capacity_wsl": {
+      "passed": 123
+    },
+    "mypy_sources": 103,
+    "ruff": "passed",
+    "independent_published_workflow": {
+      "passed": 61,
+      "spec": 22,
+      "standards": 39
+    },
+    "prior_public_boundaries": {
+      "passed": 70
+    }
+  },
+  "independent_capacity_standards": {
+    "reviewer": "root",
+    "scope": [
+      "command payload normalization and legacy idempotency",
+      "read-only command lookup",
+      "atomic state check before unactivated cancellation",
+      "usage recording and activation prerequisites"
+    ],
+    "findings": 0,
+    "method": "read complete changed Capacity code and existing lifecycle/usage boundaries; author tests separately labelled"
+  },
+  "effects": {
+    "provider_calls": 0,
+    "credentials_used": false,
+    "agent_activation": false
+  },
+  "artifacts": {
+    "examples\\task-admission\\author\\backend.xml": "97c2caf61e1dab9c1fd49ab05fdcff8994af620565501e13ec249c7c2b82e2bc",
+    "examples\\task-admission\\author\\prior-boundaries.xml": "5ac13fd83bb670e25de3b78419962fbb911f2cbf5e0971f948aa761f5cd4edbf",
+    "examples\\task-admission\\author\\workflow.xml": "364f3653a500951e2e2a82c1e7b230b2df8e9818433086be3e8169eb67a1f320",
+    "examples\\task-admission\\author\\wsl.xml": "d6d998528ce77a382020b4a320847c09dd6fd5c41f9ff6130b3272b9ed08dc19"
+  }
+}
