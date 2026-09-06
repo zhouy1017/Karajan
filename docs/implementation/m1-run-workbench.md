@@ -55,3 +55,5 @@ Web 没有模型计划提交、资源回执内容注入或交接提案创建路�
 对应固定样例材料：project `a02f2f5a-be94-497f-ae60-700ac5cad7a1`，Run `2c1802c3-146b-4174-916f-046827990b4c`，计划摘要 `b83f79f78c5102af977df9b9126dd4784aa11cca8182dbca5bb62ecec6b06ef4`，检查点内容摘要 `973d78dbcbec622b5c486104a0530475bb2ff19167fe09e96bc7ba1d711a8b9d`。这些是本地测试身份，不是外部服务资格。
 
 完整 M1-06 仍需 Run/Task/Attempt 与交付/资源的统一快照和持久事件、SSE 重连、暂停/取消/恢复及当前阻塞动作。当前页面没有伪造这些状态或实时配额余额。
+
+本切片已随 [PR #35](https://github.com/zhouy1017/Karajan/pull/35) 提交，完整 commit 为 `370eefb573a3d92fc0095509da2d10a0559099c1`；双系统后端、前端与必需汇总门已在 [GitHub CI](https://github.com/zhouy1017/Karajan/actions/runs/33971900785) 通过。PR 尚未合并，源码通过不改变上述真实资格和集成限制。

@@ -1,0 +1,551 @@
+{
+  "schema_version": "karajan.delivery-probe.v1",
+  "result": "passed",
+  "source_sha256": "0cc680ad275ef374a3496246091cd574a232b444ff94d94f6d3ec99b8c4ab17f",
+  "execution_scope": "offline_fixture",
+  "live_qualification": "not_run",
+  "cash_api_calls": 0,
+  "model_calls": 0,
+  "external_pr_calls": 0,
+  "real_local_git": true,
+  "pr_double": "persistent_local_json",
+  "verification": "scripted_fixture_receipt_not_real_candidate_review",
+  "states": [
+    "planned",
+    "pushed",
+    "reconciling",
+    "awaiting_ci",
+    "awaiting_ci",
+    "delivered"
+  ],
+  "transitions": [
+    {
+      "schema_version": "karajan.delivery.v1",
+      "id": "fa41961f-73e7-4ade-ad20-f76874ff8d7a",
+      "request": {
+        "run_id": "offline-run-1",
+        "delivery_revision": 1,
+        "repository_id": "offline-repo",
+        "managed_branch": "codex/karajan-offline-run-1",
+        "base_branch": "main",
+        "tested_base_sha": "a3f6bf9fb613718c747ed601ed7cfec724984e5b",
+        "candidate_id": "fixture-candidate",
+        "content_sha256": "1e81270f1a47dce22a2e4985250c74b2e3374443734f1492b03ea2cd2af4ec48",
+        "tree_sha": "43c2b899ef7c676752f641a3979dddadafe20940",
+        "commit_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+        "authorization_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "evidence_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "verification_ref": "fixture-verification",
+        "expected_old_sha": null,
+        "require_ci": true
+      },
+      "binding_sha256": "2b26580164ff2fc1a956171a0fb5ec56a88b7d0563b7e8addaf572a40248e673",
+      "state": "planned",
+      "control_state": "active",
+      "reason": null,
+      "operations": [],
+      "production_qualified": false,
+      "execution_scope": "offline_fixture",
+      "remote_observation": null,
+      "pr": null,
+      "ci": {
+        "sha": null,
+        "status": "unknown"
+      },
+      "merge": {
+        "merged": false
+      },
+      "completion": {
+        "requirements_satisfied": false,
+        "scope": "offline_fixture"
+      }
+    },
+    {
+      "binding_sha256": "2b26580164ff2fc1a956171a0fb5ec56a88b7d0563b7e8addaf572a40248e673",
+      "ci": {
+        "sha": null,
+        "status": "unknown"
+      },
+      "completion": {
+        "requirements_satisfied": false,
+        "scope": "offline_fixture"
+      },
+      "control_state": "active",
+      "execution_scope": "offline_fixture",
+      "id": "fa41961f-73e7-4ade-ad20-f76874ff8d7a",
+      "merge": {
+        "merged": false
+      },
+      "operations": [
+        {
+          "activation": {
+            "at": "2026-09-05T15:43:37.139379+00:00",
+            "binding_sha256": "2b26580164ff2fc1a956171a0fb5ec56a88b7d0563b7e8addaf572a40248e673",
+            "id": "02a9b248-0a57-40e6-8f8c-6014a77ff412",
+            "verification_receipt": {
+              "authority_revision": "offline-scripted-authority",
+              "binding_sha256": "2b26580164ff2fc1a956171a0fb5ec56a88b7d0563b7e8addaf572a40248e673",
+              "decision": "allow",
+              "provenance": "fixture",
+              "receipt_ref": "fixture-verification"
+            }
+          },
+          "id": "ef7e7d2d-3928-4b17-8cde-6c0eb03907bf",
+          "observation": {
+            "repository_id": "offline-repo",
+            "head_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+            "base_sha": "a3f6bf9fb613718c747ed601ed7cfec724984e5b"
+          },
+          "state": "confirmed",
+          "step": "push"
+        }
+      ],
+      "pr": null,
+      "production_qualified": false,
+      "reason": null,
+      "remote_observation": {
+        "repository_id": "offline-repo",
+        "head_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+        "base_sha": "a3f6bf9fb613718c747ed601ed7cfec724984e5b"
+      },
+      "request": {
+        "authorization_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "base_branch": "main",
+        "candidate_id": "fixture-candidate",
+        "commit_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+        "content_sha256": "1e81270f1a47dce22a2e4985250c74b2e3374443734f1492b03ea2cd2af4ec48",
+        "delivery_revision": 1,
+        "evidence_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "expected_old_sha": null,
+        "managed_branch": "codex/karajan-offline-run-1",
+        "repository_id": "offline-repo",
+        "require_ci": true,
+        "run_id": "offline-run-1",
+        "tested_base_sha": "a3f6bf9fb613718c747ed601ed7cfec724984e5b",
+        "tree_sha": "43c2b899ef7c676752f641a3979dddadafe20940",
+        "verification_ref": "fixture-verification"
+      },
+      "schema_version": "karajan.delivery.v1",
+      "state": "pushed"
+    },
+    {
+      "binding_sha256": "2b26580164ff2fc1a956171a0fb5ec56a88b7d0563b7e8addaf572a40248e673",
+      "ci": {
+        "sha": null,
+        "status": "unknown"
+      },
+      "completion": {
+        "requirements_satisfied": false,
+        "scope": "offline_fixture"
+      },
+      "control_state": "active",
+      "execution_scope": "offline_fixture",
+      "id": "fa41961f-73e7-4ade-ad20-f76874ff8d7a",
+      "merge": {
+        "merged": false
+      },
+      "operations": [
+        {
+          "activation": {
+            "at": "2026-09-05T15:43:37.139379+00:00",
+            "binding_sha256": "2b26580164ff2fc1a956171a0fb5ec56a88b7d0563b7e8addaf572a40248e673",
+            "id": "02a9b248-0a57-40e6-8f8c-6014a77ff412",
+            "verification_receipt": {
+              "authority_revision": "offline-scripted-authority",
+              "binding_sha256": "2b26580164ff2fc1a956171a0fb5ec56a88b7d0563b7e8addaf572a40248e673",
+              "decision": "allow",
+              "provenance": "fixture",
+              "receipt_ref": "fixture-verification"
+            }
+          },
+          "id": "ef7e7d2d-3928-4b17-8cde-6c0eb03907bf",
+          "observation": {
+            "base_sha": "a3f6bf9fb613718c747ed601ed7cfec724984e5b",
+            "head_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+            "repository_id": "offline-repo"
+          },
+          "state": "confirmed",
+          "step": "push"
+        },
+        {
+          "activation": {
+            "at": "2026-09-05T15:43:37.581819+00:00",
+            "binding_sha256": "2b26580164ff2fc1a956171a0fb5ec56a88b7d0563b7e8addaf572a40248e673",
+            "id": "2bdac62b-215b-4698-b69d-272856988b71",
+            "verification_receipt": {
+              "authority_revision": "offline-scripted-authority",
+              "binding_sha256": "2b26580164ff2fc1a956171a0fb5ec56a88b7d0563b7e8addaf572a40248e673",
+              "decision": "allow",
+              "provenance": "fixture",
+              "receipt_ref": "fixture-verification"
+            }
+          },
+          "expected_pr_id": null,
+          "id": "74c9cb94-5664-459f-9aa0-18b8eb17737d",
+          "observation": null,
+          "state": "send_unknown",
+          "step": "pr"
+        }
+      ],
+      "pr": null,
+      "production_qualified": false,
+      "reason": "REMOTE_RESULT_UNKNOWN",
+      "remote_observation": {
+        "base_sha": "a3f6bf9fb613718c747ed601ed7cfec724984e5b",
+        "head_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+        "repository_id": "offline-repo"
+      },
+      "request": {
+        "authorization_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "base_branch": "main",
+        "candidate_id": "fixture-candidate",
+        "commit_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+        "content_sha256": "1e81270f1a47dce22a2e4985250c74b2e3374443734f1492b03ea2cd2af4ec48",
+        "delivery_revision": 1,
+        "evidence_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "expected_old_sha": null,
+        "managed_branch": "codex/karajan-offline-run-1",
+        "repository_id": "offline-repo",
+        "require_ci": true,
+        "run_id": "offline-run-1",
+        "tested_base_sha": "a3f6bf9fb613718c747ed601ed7cfec724984e5b",
+        "tree_sha": "43c2b899ef7c676752f641a3979dddadafe20940",
+        "verification_ref": "fixture-verification"
+      },
+      "schema_version": "karajan.delivery.v1",
+      "state": "reconciling"
+    },
+    {
+      "binding_sha256": "2b26580164ff2fc1a956171a0fb5ec56a88b7d0563b7e8addaf572a40248e673",
+      "ci": {
+        "sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+        "status": "pending"
+      },
+      "completion": {
+        "requirements_satisfied": false,
+        "scope": "offline_fixture"
+      },
+      "control_state": "active",
+      "execution_scope": "offline_fixture",
+      "id": "fa41961f-73e7-4ade-ad20-f76874ff8d7a",
+      "merge": {
+        "merged": false
+      },
+      "operations": [
+        {
+          "activation": {
+            "at": "2026-09-05T15:43:37.139379+00:00",
+            "binding_sha256": "2b26580164ff2fc1a956171a0fb5ec56a88b7d0563b7e8addaf572a40248e673",
+            "id": "02a9b248-0a57-40e6-8f8c-6014a77ff412",
+            "verification_receipt": {
+              "authority_revision": "offline-scripted-authority",
+              "binding_sha256": "2b26580164ff2fc1a956171a0fb5ec56a88b7d0563b7e8addaf572a40248e673",
+              "decision": "allow",
+              "provenance": "fixture",
+              "receipt_ref": "fixture-verification"
+            }
+          },
+          "id": "ef7e7d2d-3928-4b17-8cde-6c0eb03907bf",
+          "observation": {
+            "base_sha": "a3f6bf9fb613718c747ed601ed7cfec724984e5b",
+            "head_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+            "repository_id": "offline-repo"
+          },
+          "state": "confirmed",
+          "step": "push"
+        },
+        {
+          "activation": {
+            "at": "2026-09-05T15:43:37.581819+00:00",
+            "binding_sha256": "2b26580164ff2fc1a956171a0fb5ec56a88b7d0563b7e8addaf572a40248e673",
+            "id": "2bdac62b-215b-4698-b69d-272856988b71",
+            "verification_receipt": {
+              "authority_revision": "offline-scripted-authority",
+              "binding_sha256": "2b26580164ff2fc1a956171a0fb5ec56a88b7d0563b7e8addaf572a40248e673",
+              "decision": "allow",
+              "provenance": "fixture",
+              "receipt_ref": "fixture-verification"
+            }
+          },
+          "expected_pr_id": null,
+          "id": "74c9cb94-5664-459f-9aa0-18b8eb17737d",
+          "observation": {
+            "id": "offline-pr-1",
+            "run_id": "offline-run-1",
+            "repository_id": "offline-repo",
+            "managed_branch": "codex/karajan-offline-run-1",
+            "base_branch": "main",
+            "head_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+            "state": "open",
+            "merged": false,
+            "ci_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+            "ci_status": "pending"
+          },
+          "state": "confirmed",
+          "step": "pr"
+        }
+      ],
+      "pr": {
+        "id": "offline-pr-1",
+        "run_id": "offline-run-1",
+        "repository_id": "offline-repo",
+        "managed_branch": "codex/karajan-offline-run-1",
+        "base_branch": "main",
+        "head_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+        "state": "open",
+        "merged": false,
+        "ci_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+        "ci_status": "pending"
+      },
+      "production_qualified": false,
+      "reason": null,
+      "remote_observation": {
+        "repository_id": "offline-repo",
+        "head_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+        "base_sha": "a3f6bf9fb613718c747ed601ed7cfec724984e5b"
+      },
+      "request": {
+        "authorization_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "base_branch": "main",
+        "candidate_id": "fixture-candidate",
+        "commit_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+        "content_sha256": "1e81270f1a47dce22a2e4985250c74b2e3374443734f1492b03ea2cd2af4ec48",
+        "delivery_revision": 1,
+        "evidence_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "expected_old_sha": null,
+        "managed_branch": "codex/karajan-offline-run-1",
+        "repository_id": "offline-repo",
+        "require_ci": true,
+        "run_id": "offline-run-1",
+        "tested_base_sha": "a3f6bf9fb613718c747ed601ed7cfec724984e5b",
+        "tree_sha": "43c2b899ef7c676752f641a3979dddadafe20940",
+        "verification_ref": "fixture-verification"
+      },
+      "schema_version": "karajan.delivery.v1",
+      "state": "awaiting_ci"
+    },
+    {
+      "binding_sha256": "2b26580164ff2fc1a956171a0fb5ec56a88b7d0563b7e8addaf572a40248e673",
+      "ci": {
+        "sha": "a3f6bf9fb613718c747ed601ed7cfec724984e5b",
+        "status": "success"
+      },
+      "completion": {
+        "requirements_satisfied": false,
+        "scope": "offline_fixture"
+      },
+      "control_state": "active",
+      "execution_scope": "offline_fixture",
+      "id": "fa41961f-73e7-4ade-ad20-f76874ff8d7a",
+      "merge": {
+        "merged": false
+      },
+      "operations": [
+        {
+          "activation": {
+            "at": "2026-09-05T15:43:37.139379+00:00",
+            "binding_sha256": "2b26580164ff2fc1a956171a0fb5ec56a88b7d0563b7e8addaf572a40248e673",
+            "id": "02a9b248-0a57-40e6-8f8c-6014a77ff412",
+            "verification_receipt": {
+              "authority_revision": "offline-scripted-authority",
+              "binding_sha256": "2b26580164ff2fc1a956171a0fb5ec56a88b7d0563b7e8addaf572a40248e673",
+              "decision": "allow",
+              "provenance": "fixture",
+              "receipt_ref": "fixture-verification"
+            }
+          },
+          "id": "ef7e7d2d-3928-4b17-8cde-6c0eb03907bf",
+          "observation": {
+            "base_sha": "a3f6bf9fb613718c747ed601ed7cfec724984e5b",
+            "head_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+            "repository_id": "offline-repo"
+          },
+          "state": "confirmed",
+          "step": "push"
+        },
+        {
+          "activation": {
+            "at": "2026-09-05T15:43:37.581819+00:00",
+            "binding_sha256": "2b26580164ff2fc1a956171a0fb5ec56a88b7d0563b7e8addaf572a40248e673",
+            "id": "2bdac62b-215b-4698-b69d-272856988b71",
+            "verification_receipt": {
+              "authority_revision": "offline-scripted-authority",
+              "binding_sha256": "2b26580164ff2fc1a956171a0fb5ec56a88b7d0563b7e8addaf572a40248e673",
+              "decision": "allow",
+              "provenance": "fixture",
+              "receipt_ref": "fixture-verification"
+            }
+          },
+          "expected_pr_id": null,
+          "id": "74c9cb94-5664-459f-9aa0-18b8eb17737d",
+          "observation": {
+            "id": "offline-pr-1",
+            "run_id": "offline-run-1",
+            "repository_id": "offline-repo",
+            "managed_branch": "codex/karajan-offline-run-1",
+            "base_branch": "main",
+            "head_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+            "state": "open",
+            "merged": false,
+            "ci_sha": "a3f6bf9fb613718c747ed601ed7cfec724984e5b",
+            "ci_status": "success"
+          },
+          "state": "confirmed",
+          "step": "pr"
+        }
+      ],
+      "pr": {
+        "id": "offline-pr-1",
+        "run_id": "offline-run-1",
+        "repository_id": "offline-repo",
+        "managed_branch": "codex/karajan-offline-run-1",
+        "base_branch": "main",
+        "head_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+        "state": "open",
+        "merged": false,
+        "ci_sha": "a3f6bf9fb613718c747ed601ed7cfec724984e5b",
+        "ci_status": "success"
+      },
+      "production_qualified": false,
+      "reason": null,
+      "remote_observation": {
+        "repository_id": "offline-repo",
+        "head_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+        "base_sha": "a3f6bf9fb613718c747ed601ed7cfec724984e5b"
+      },
+      "request": {
+        "authorization_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "base_branch": "main",
+        "candidate_id": "fixture-candidate",
+        "commit_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+        "content_sha256": "1e81270f1a47dce22a2e4985250c74b2e3374443734f1492b03ea2cd2af4ec48",
+        "delivery_revision": 1,
+        "evidence_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "expected_old_sha": null,
+        "managed_branch": "codex/karajan-offline-run-1",
+        "repository_id": "offline-repo",
+        "require_ci": true,
+        "run_id": "offline-run-1",
+        "tested_base_sha": "a3f6bf9fb613718c747ed601ed7cfec724984e5b",
+        "tree_sha": "43c2b899ef7c676752f641a3979dddadafe20940",
+        "verification_ref": "fixture-verification"
+      },
+      "schema_version": "karajan.delivery.v1",
+      "state": "awaiting_ci"
+    },
+    {
+      "binding_sha256": "2b26580164ff2fc1a956171a0fb5ec56a88b7d0563b7e8addaf572a40248e673",
+      "ci": {
+        "sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+        "status": "success"
+      },
+      "completion": {
+        "requirements_satisfied": true,
+        "scope": "offline_fixture"
+      },
+      "control_state": "active",
+      "execution_scope": "offline_fixture",
+      "id": "fa41961f-73e7-4ade-ad20-f76874ff8d7a",
+      "merge": {
+        "merged": false
+      },
+      "operations": [
+        {
+          "activation": {
+            "at": "2026-09-05T15:43:37.139379+00:00",
+            "binding_sha256": "2b26580164ff2fc1a956171a0fb5ec56a88b7d0563b7e8addaf572a40248e673",
+            "id": "02a9b248-0a57-40e6-8f8c-6014a77ff412",
+            "verification_receipt": {
+              "authority_revision": "offline-scripted-authority",
+              "binding_sha256": "2b26580164ff2fc1a956171a0fb5ec56a88b7d0563b7e8addaf572a40248e673",
+              "decision": "allow",
+              "provenance": "fixture",
+              "receipt_ref": "fixture-verification"
+            }
+          },
+          "id": "ef7e7d2d-3928-4b17-8cde-6c0eb03907bf",
+          "observation": {
+            "base_sha": "a3f6bf9fb613718c747ed601ed7cfec724984e5b",
+            "head_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+            "repository_id": "offline-repo"
+          },
+          "state": "confirmed",
+          "step": "push"
+        },
+        {
+          "activation": {
+            "at": "2026-09-05T15:43:37.581819+00:00",
+            "binding_sha256": "2b26580164ff2fc1a956171a0fb5ec56a88b7d0563b7e8addaf572a40248e673",
+            "id": "2bdac62b-215b-4698-b69d-272856988b71",
+            "verification_receipt": {
+              "authority_revision": "offline-scripted-authority",
+              "binding_sha256": "2b26580164ff2fc1a956171a0fb5ec56a88b7d0563b7e8addaf572a40248e673",
+              "decision": "allow",
+              "provenance": "fixture",
+              "receipt_ref": "fixture-verification"
+            }
+          },
+          "expected_pr_id": null,
+          "id": "74c9cb94-5664-459f-9aa0-18b8eb17737d",
+          "observation": {
+            "id": "offline-pr-1",
+            "run_id": "offline-run-1",
+            "repository_id": "offline-repo",
+            "managed_branch": "codex/karajan-offline-run-1",
+            "base_branch": "main",
+            "head_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+            "state": "open",
+            "merged": false,
+            "ci_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+            "ci_status": "success"
+          },
+          "state": "confirmed",
+          "step": "pr"
+        }
+      ],
+      "pr": {
+        "id": "offline-pr-1",
+        "run_id": "offline-run-1",
+        "repository_id": "offline-repo",
+        "managed_branch": "codex/karajan-offline-run-1",
+        "base_branch": "main",
+        "head_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+        "state": "open",
+        "merged": false,
+        "ci_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+        "ci_status": "success"
+      },
+      "production_qualified": false,
+      "reason": null,
+      "remote_observation": {
+        "repository_id": "offline-repo",
+        "head_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+        "base_sha": "a3f6bf9fb613718c747ed601ed7cfec724984e5b"
+      },
+      "request": {
+        "authorization_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "base_branch": "main",
+        "candidate_id": "fixture-candidate",
+        "commit_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+        "content_sha256": "1e81270f1a47dce22a2e4985250c74b2e3374443734f1492b03ea2cd2af4ec48",
+        "delivery_revision": 1,
+        "evidence_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "expected_old_sha": null,
+        "managed_branch": "codex/karajan-offline-run-1",
+        "repository_id": "offline-repo",
+        "require_ci": true,
+        "run_id": "offline-run-1",
+        "tested_base_sha": "a3f6bf9fb613718c747ed601ed7cfec724984e5b",
+        "tree_sha": "43c2b899ef7c676752f641a3979dddadafe20940",
+        "verification_ref": "fixture-verification"
+      },
+      "schema_version": "karajan.delivery.v1",
+      "state": "delivered"
+    }
+  ],
+  "remote": {
+    "repository_id": "offline-repo",
+    "head_sha": "5380f2b6c6b12517c06e04a5a57c6e613be588df",
+    "base_sha": "a3f6bf9fb613718c747ed601ed7cfec724984e5b"
+  }
+}
