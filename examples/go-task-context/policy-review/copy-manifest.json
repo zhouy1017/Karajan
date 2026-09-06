@@ -1,0 +1,26 @@
+[
+  {
+    "from": ".cache\\execution-policy-v2-review\\before.xml",
+    "to": "examples\\go-task-context\\policy-review\\before.xml",
+    "sha256": "82466246ad12624084d5d55e4ccecd5d03471b5b0654f17d9df4aea2d31c16f2",
+    "byte_identical": true
+  },
+  {
+    "from": ".cache\\execution-policy-v2-review\\before-sources.json",
+    "to": "examples\\go-task-context\\policy-review\\before-sources.json",
+    "sha256": "68d9b909ace49cfdcc21a0a5dc072430d204cee8fdba57bb34d7cf30a87139e0",
+    "byte_identical": true
+  },
+  {
+    "from": ".cache\\execution-policy-v2-review\\legacy-execution-policy.py.txt",
+    "to": "examples\\go-task-context\\policy-review\\legacy-execution-policy.py.txt",
+    "sha256": "097fd61ff89d9c51715cd8f3ea9d33fc87f15bce449b74441ef3af3a86adbd11",
+    "byte_identical": true
+  },
+  {
+    "from": ".cache\\execution-policy-v2-review\\test_independent.py",
+    "to": "examples\\go-task-context\\policy-review\\test_before.py.txt",
+    "sha256": "6fb98ffbfb09e58ca92eb6635867214871cf5c232145bcea812af88f05dd4ded",
+    "byte_identical": true
+  }
+]

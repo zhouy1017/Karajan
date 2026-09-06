@@ -1,0 +1,62 @@
+{
+  "schema_version": "karajan.independent-go-context-review.v1",
+  "reviewer": "/root/qualification_integration",
+  "review_date": "2026-09-06",
+  "scope": "New context accounting and relay/journal measurement consumption; prior authored Task grant changes excluded",
+  "findings": [
+    {
+      "id": "GO-CONTEXT-REVIEW-001",
+      "priority": 2,
+      "state": "closed",
+      "description": "Lost begin/completion results left durable unknown Task calls without revoking remaining sends"
+    },
+    {
+      "id": "GO-CONTEXT-REVIEW-002",
+      "priority": 2,
+      "state": "closed",
+      "description": "A later lower usage frame erased a provider-reported exceedance"
+    }
+  ],
+  "before": {
+    "passed": 2,
+    "failed": 3,
+    "seconds": 1.92,
+    "relay_sha256": "6e6e74db3c2419873bbaabee780b48f80d5ff5498c9d3d21d77b89a16821fd6d"
+  },
+  "after": {
+    "passed": 10,
+    "failed": 0,
+    "seconds": 3.12
+  },
+  "publication_validation": {
+    "passed": 10,
+    "failed": 0,
+    "seconds": 3.13,
+    "pythonpath": "backend tests/adapters/opencode tests/projects tests/runs tests/web"
+  },
+  "source_sha256": {
+    "backend/karajan/adapters/opencode/go_context.py": "ab351b634e38351bed631db97734d1e519fc7e4577b0fb094f2651fa112d0428",
+    "backend/karajan/adapters/opencode/go_relay.py": "2d90f224f0b33e04adc693c33ac58ffd3904296b596c5c23c155a65cab7c992a",
+    "backend/karajan/adapters/opencode/go_journal.py": "a63f3f4d314f2a64bdd9a4f8e7dd43b2c24d5bc9388a9404976e6200a05bbfdd"
+  },
+  "test_sha256": {
+    "examples/go-task-context/relay-review/test_independent_context_relay.py": "53710bd94fdd639be6ed55e97acbb703fbed59d95ce869af9c63d9237f7b69b4",
+    "examples/go-task-context/relay-review/test_revocation_failure.py": "0978f29055cedd39997bbcac288e412014304408accf0e6af744e431b5be0f2d",
+    "examples/go-task-context/relay-review/test_recovery_and_compatibility.py": "3ee82174cc99300d1470f1b9bc560108cb4992c6014955860391fccb4e4e972e"
+  },
+  "helper_sha256": {
+    "tests/adapters/opencode/test_go_context.py": "78746cd03d26499dbc0ef30e7274504fb14d65987307cb8457dfe03c6451f715",
+    "tests/adapters/opencode/test_go_relay.py": "845bfe069198365d3d3f1196877007e4667a061dee0c68969121c48349082cc2",
+    "tests/adapters/opencode/test_go_task_grants.py": "8a1e450a0a43596fc3b76335398d1951297a20b3794f8f6f554c69446132c8a4",
+    "tests/adapters/opencode/test_go_relay_journal.py": "762423a14a2e846d7e02947ef904d1a8426b30e0335d115d0207ee8a1562778f"
+  },
+  "evidence_sha256": {
+    "examples/go-task-context/relay-review/before.xml": "5b32df37e24447a2f83dd1177c746cd6728c4be7529cc10eb5c14038fd8bb9cd",
+    "examples/go-task-context/relay-review/after.xml": "477763c2cc963ac6a76f94aac85907cf4468fc365e307dbb209f6904d78af6f2",
+    "examples/go-task-context/relay-review/README.md": "c763f8ba6e2695f0a2d7102166036e2c78d96377b58bce5bcde8b48128bca2b8"
+  },
+  "test_upstream": "Synthetic HTTP only; actual local HTTP server and SQLite journal",
+  "actual_provider_called": false,
+  "actual_credentials_read": false,
+  "qualification_granted": false
+}

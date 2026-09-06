@@ -1,0 +1,21 @@
+{
+  "schema_version": "karajan.go-context-measurement.v1",
+  "model": "glm-5.3-flash",
+  "measurement_method": "reference_tokenizer_estimate",
+  "measurement_confidence": "local_estimate",
+  "request_digest": "125734ffaf52bc197101c1c0751660d3eb01c75da59878a97a20a85d5a81ea07",
+  "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+  "local_input_tokens": 13,
+  "fixed_margin": 16,
+  "ratio_margin_basis_points": 1000,
+  "margin_tokens": 18,
+  "accounted_input_tokens": 31,
+  "requested_output_tokens": 128,
+  "approved_input_tokens": 31,
+  "reserved_output_tokens": 128,
+  "operating_context_tokens": 159,
+  "declared_context_tokens": 1000000,
+  "declared_max_output_tokens": 131072,
+  "template_reasoning_effort": "max",
+  "template_clear_thinking": false
+}

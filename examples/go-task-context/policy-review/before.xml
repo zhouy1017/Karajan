@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="9" time="6.079" timestamp="2026-09-06T18:13:09.867185+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.execution-policy-v2-review.test_independent" name="test_cannot_register_ratio_that_the_bound_measurement_source_always_rejects" time="0.728"><failure message="Failed: DID NOT RAISE ProjectError">approved = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x0000017ED3192210&gt;, 'project_id': '66ea3973-af02-47...C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-684/test_cannot_register_ratio_tha0/fixture/repository'), ...}
+
+    def test_cannot_register_ratio_that_the_bound_measurement_source_always_rejects(approved):
+        body, counter = measured_policy(approved, ratio=10_001)
+        with pytest.raises(GoContextError, match="^GO_CONTEXT_INVALID_LIMITS$"):
+            measure(counter, 10_001)
+&gt;       with pytest.raises(ProjectError, match="EXECUTION_POLICY_INVALID"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ProjectError
+
+.cache\execution-policy-v2-review\test_independent.py:84: Failed</failure></testcase><testcase classname=".cache.execution-policy-v2-review.test_independent" name="test_maximum_supported_ratio_is_accepted_by_both_public_interfaces" time="0.796" /><testcase classname=".cache.execution-policy-v2-review.test_independent" name="test_v1_nonobject_registration_keeps_the_domain_error_contract[None]" time="0.291"><failure message="AttributeError: 'NoneType' object has no attribute 'get'">approved = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x0000017ED3276930&gt;, 'project_id': '775bd245-e8cb-45...C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-684/test_v1_nonobject_registration0/fixture/repository'), ...}
+value = None
+
+    @pytest.mark.parametrize("value", [None, [], "not-an-object"])
+    def test_v1_nonobject_registration_keeps_the_domain_error_contract(approved, value):
+        with pytest.raises(ProjectError, match="EXECUTION_POLICY_INVALID"):
+&gt;           register(approved, value)
+
+.cache\execution-policy-v2-review\test_independent.py:99: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.cache\execution-policy-v2-review\test_independent.py:66: in register
+    return approved["projects"].register_execution_policy(
+backend\karajan\projects\registry.py:709: in register_execution_policy
+    document = validate_policy(request, json.loads(stored["configuration"]))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+request = None
+configuration = {'approved_profile_refs': [{'id': 'fixture-profile', 'revision': 1}], 'resources': {'accounts': [{'id': 'fixture-accou...le_fixed_per_attempt': True, ...}, 'id': 'personal-code-delivery', ...}, 'schema_version': 'karajan.project-config.v1'}
+
+    def validate_policy(request: dict[str, Any], configuration: dict[str, Any]) -&gt; dict[str, Any]:
+        model = (
+            ExecutionPolicyV2
+&gt;           if request.get("schema_version") == "karajan.execution-policy.v2"
+               ^^^^^^^^^^^
+            else ExecutionPolicy
+        )
+E       AttributeError: 'NoneType' object has no attribute 'get'
+
+backend\karajan\projects\execution_policy.py:94: AttributeError</failure></testcase><testcase classname=".cache.execution-policy-v2-review.test_independent" name="test_v1_nonobject_registration_keeps_the_domain_error_contract[value1]" time="0.290"><failure message="AttributeError: 'list' object has no attribute 'get'">approved = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x0000017ED3274560&gt;, 'project_id': '4f24640f-8daf-47...C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-684/test_v1_nonobject_registration1/fixture/repository'), ...}
+value = []
+
+    @pytest.mark.parametrize("value", [None, [], "not-an-object"])
+    def test_v1_nonobject_registration_keeps_the_domain_error_contract(approved, value):
+        with pytest.raises(ProjectError, match="EXECUTION_POLICY_INVALID"):
+&gt;           register(approved, value)
+
+.cache\execution-policy-v2-review\test_independent.py:99: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.cache\execution-policy-v2-review\test_independent.py:66: in register
+    return approved["projects"].register_execution_policy(
+backend\karajan\projects\registry.py:709: in register_execution_policy
+    document = validate_policy(request, json.loads(stored["configuration"]))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+request = []
+configuration = {'approved_profile_refs': [{'id': 'fixture-profile', 'revision': 1}], 'resources': {'accounts': [{'id': 'fixture-accou...le_fixed_per_attempt': True, ...}, 'id': 'personal-code-delivery', ...}, 'schema_version': 'karajan.project-config.v1'}
+
+    def validate_policy(request: dict[str, Any], configuration: dict[str, Any]) -&gt; dict[str, Any]:
+        model = (
+            ExecutionPolicyV2
+&gt;           if request.get("schema_version") == "karajan.execution-policy.v2"
+               ^^^^^^^^^^^
+            else ExecutionPolicy
+        )
+E       AttributeError: 'list' object has no attribute 'get'
+
+backend\karajan\projects\execution_policy.py:94: AttributeError</failure></testcase><testcase classname=".cache.execution-policy-v2-review.test_independent" name="test_v1_nonobject_registration_keeps_the_domain_error_contract[not-an-object]" time="0.278"><failure message="AttributeError: 'str' object has no attribute 'get'">approved = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x0000017ED330B860&gt;, 'project_id': '1e862647-5bc5-4b...C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-684/test_v1_nonobject_registration2/fixture/repository'), ...}
+value = 'not-an-object'
+
+    @pytest.mark.parametrize("value", [None, [], "not-an-object"])
+    def test_v1_nonobject_registration_keeps_the_domain_error_contract(approved, value):
+        with pytest.raises(ProjectError, match="EXECUTION_POLICY_INVALID"):
+&gt;           register(approved, value)
+
+.cache\execution-policy-v2-review\test_independent.py:99: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.cache\execution-policy-v2-review\test_independent.py:66: in register
+    return approved["projects"].register_execution_policy(
+backend\karajan\projects\registry.py:709: in register_execution_policy
+    document = validate_policy(request, json.loads(stored["configuration"]))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+request = 'not-an-object'
+configuration = {'approved_profile_refs': [{'id': 'fixture-profile', 'revision': 1}], 'resources': {'accounts': [{'id': 'fixture-accou...le_fixed_per_attempt': True, ...}, 'id': 'personal-code-delivery', ...}, 'schema_version': 'karajan.project-config.v1'}
+
+    def validate_policy(request: dict[str, Any], configuration: dict[str, Any]) -&gt; dict[str, Any]:
+        model = (
+            ExecutionPolicyV2
+&gt;           if request.get("schema_version") == "karajan.execution-policy.v2"
+               ^^^^^^^^^^^
+            else ExecutionPolicy
+        )
+E       AttributeError: 'str' object has no attribute 'get'
+
+backend\karajan\projects\execution_policy.py:94: AttributeError</failure></testcase><testcase classname=".cache.execution-policy-v2-review.test_independent" name="test_v1_normalized_shape_and_digest_match_pinned_old_implementation" time="0.309" /><testcase classname=".cache.execution-policy-v2-review.test_independent" name="test_renaming_policy_and_validation_does_not_allow_child_revision_reuse" time="0.790" /><testcase classname=".cache.execution-policy-v2-review.test_independent" name="test_unresolved_or_duplicate_required_checks_cannot_create_a_run[checks0]" time="0.774" /><testcase classname=".cache.execution-policy-v2-review.test_independent" name="test_unresolved_or_duplicate_required_checks_cannot_create_a_run[checks1]" time="0.755" /></testsuite></testsuites>

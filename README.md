@@ -34,6 +34,8 @@ PRD、8 个 M0 Issues、20 个 M1–M4 实现任务和独立 CI 任务已发布�
 
 [任务配额准入](docs/implementation/m3-task-admission.md) 将该判断接到持久准入意图、真实容量预留、丢失响应恢复、取消与到期状态。未获真实资格时不建预留；预留后的 Agent 激活与实际执行仍待接通。
 
+[Go Task 上下文与验证政策](docs/implementation/m3-go-task-context.md) 将固定官方参考 tokenizer、批准余量和完整工具历史计量接入持久发送账本，并用 ExecutionPolicy v2 固定检查与环境定义。真实 OpenCode 的本机离线组合已验证；实际 Run 启动、可信收集与完整交付继续推进。
+
 ## 完整架构设计
 
 从 [Karajan 完整架构设计 v1](docs/architecture/README.md) 开始阅读。它是当前设计入口，覆盖：

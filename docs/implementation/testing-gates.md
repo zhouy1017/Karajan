@@ -22,6 +22,10 @@
 
 ## Python 必需检查
 
+Go Task 计量切片在两个 Python job 中增加固定 tokenizer 准备步骤：仅从固定官方 revision 下载三个公开数据文件，校验长度与 SHA-256 后发布到本地目录。`KARAJAN_REQUIRE_GO_TOKENIZER=1` 使缺少制品成为失败；`HF_HUB_OFFLINE` 和 `TRANSFORMERS_OFFLINE` 在测试阶段禁止库自动下载。准备脚本本身有本地故障测试，原生请求组合在 Linux namespace 中实际执行，未向真实 provider 发送请求。[实现范围](m3-go-task-context.md) 与 [独立检查](../../examples/go-task-context/README.md) 单列。
+
+`examples/go-task-context` 的独立审查用例也是 Python 必需步骤；原有门、凭据隔离与 Windows/Linux 矩阵保持原要求。
+
 `python-quality` 在 `ubuntu-24.04` 和 `windows-2022` 上分别运行，均使用 Python 3.12。矩阵关闭 fail-fast，让一个系统失败时另一个仍能完成诊断；两者都必须成功。本切片将每个矩阵任务的运行上限调整为 30 分钟，以容纳新增的真实本机隔离回归；这不改变任何检查的成功条件。
 
 在仓库根目录依次执行：

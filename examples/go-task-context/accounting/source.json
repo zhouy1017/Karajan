@@ -1,0 +1,52 @@
+{
+  "schema_version": "karajan.go-context-source.v1",
+  "model": "glm-5.3-flash",
+  "channel": "opencode-go",
+  "measurement_method": "reference_tokenizer_estimate",
+  "libraries": {
+    "transformers": "5.16.1",
+    "tokenizers": "0.23.2",
+    "Jinja2": "3.1.6"
+  },
+  "artifacts": {
+    "tokenizer.json": {
+      "sha256": "19e773648cb4e65de8660ea6365e10acca112d42a854923df93db4a6f333a82d",
+      "bytes": 20217442,
+      "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/690b705278a3a58e538fcb37c2ca8b5f9511213c/tokenizer.json"
+    },
+    "tokenizer_config.json": {
+      "sha256": "98b1271574f41abf89427ae2dda030d94dc9478f0edc5a8bd240db213c6fd5fc",
+      "bytes": 761,
+      "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/690b705278a3a58e538fcb37c2ca8b5f9511213c/tokenizer_config.json"
+    },
+    "chat_template.jinja": {
+      "sha256": "0c4099f3382d6c92700dfb99725025360966fd73032f0ecf32377c0d9e6309c5",
+      "bytes": 10950,
+      "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/690b705278a3a58e538fcb37c2ca8b5f9511213c/chat_template.jinja"
+    }
+  },
+  "normalizer": {
+    "id": "openai-compatible-text-functions.v1",
+    "implementation_sha256": "ab351b634e38351bed631db97734d1e519fc7e4577b0fb094f2651fa112d0428",
+    "generation_prompt": true,
+    "add_special_tokens": false,
+    "default_reasoning_effort": "max",
+    "default_clear_thinking": false,
+    "tool_argument_normalization": "duplicate-rejecting-json-object",
+    "request_digest_encoding": "ordered-json-utf8-compact"
+  },
+  "declared_capacity": {
+    "basis": "provider_declared",
+    "context_tokens": 1000000,
+    "max_output_tokens": 131072,
+    "catalog_revision": "98383f3755693d8b173ec1a2ff8bd0ae851ef207",
+    "channel_record_url": "https://github.com/anomalyco/models.dev/blob/98383f3755693d8b173ec1a2ff8bd0ae851ef207/providers/opencode-go/models/glm-5.3-flash.toml",
+    "model_record_url": "https://github.com/anomalyco/models.dev/blob/98383f3755693d8b173ec1a2ff8bd0ae851ef207/models/zhipuai/glm-5.3-flash.toml",
+    "channel_record_sha256": "04995d39482667fe746b81bb5bd2ad08817ee0a11ad2de0d93a9d774f54c68f0",
+    "model_record_sha256": "541b4e2dc3b05cfae7e89766882eff3dc6e733b8309d9d11fe9037d5bd374b0a",
+    "model_documentation": "https://docs.z.ai/guides/vlm/glm-5.3-flash",
+    "channel_documentation": "https://opencode.ai/docs/go/"
+  },
+  "server_exact_accounting": false,
+  "qualification_granted": false
+}

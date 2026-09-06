@@ -1,0 +1,97 @@
+{
+  "schema_version": "karajan.execution-policy-v2.author-correction.v1",
+  "base": "33d98d3",
+  "sources": {
+    "backend/karajan/projects/execution_policy.py": "e683da5cea3c62ac803f035a8c16cf26c60a4ad7fbfdbcc239e16061c1900b8f",
+    "backend/karajan/projects/registry.py": "8915ac500d896ee4896766ff6746de96df983828b0aa60b75c9935fbb5993c7b",
+    "backend/karajan/runs/routing_authorization.py": "5d49803ad9b5b9453a5869c1eb34bf20c3ac16ecd5e2bfb494d0e0191c3313a3",
+    "tests/projects/test_execution_policy_v2.py": "00559611319d7b82e757c8aa2e0f52cc41d989d2b773b0b641713a74fcd580dd"
+  },
+  "line_endings": {
+    "backend/karajan/projects/execution_policy.py": "LF",
+    "backend/karajan/projects/registry.py": "LF",
+    "backend/karajan/runs/routing_authorization.py": "LF",
+    "tests/projects/test_execution_policy_v2.py": "LF"
+  },
+  "new_author_cases": 36,
+  "model_calls": 0,
+  "provider_calls": 0,
+  "reports": {
+    "independent-green.xml": "ead736b2ae5882be03bef5587027bfd29867ad55ce81d44ae809ed61170d5c54",
+    "nonobject-green.xml": "938b891584be5b1a1e5851e57db9d99f018f9f88a6b0323d6b18f398d99fac7b",
+    "nonobject-red.xml": "321036dcdf72bda095bb13c47d1dd7443d3ea6e7a44a99e011cdcb88684362fb",
+    "ratio-green.xml": "afc3a981cf120945c763cb5fab39b42f40d4282d398ca825bdd452bcd3265c22",
+    "ratio-red.xml": "d99256d8359e9795c04d21856bb89ce1d6ab1a4e4e24f6a49499540611ee0df3",
+    "README.md": "a64bf6949f617d8e4bacb03a9c5f66e2832d0c53a0ec487b2882fbcbcf06d1e8",
+    "static.txt": "752864e9a9948674d3a5a1c52b8572dca1a3078e40b0d6bc89b2684add7e909a",
+    "windows-final.xml": "cad45aab58f97e7534a44a3fab1cb307f013db0be3afaf8a328f11de45ef8257",
+    "wsl-final.xml": "0063f479c0d6099a0b2c489e13cfad3db57b7d78b5c74adf6a98ae1704632294"
+  },
+  "results": {
+    "independent-green.xml": {
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "nonobject-green.xml": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "nonobject-red.xml": {
+      "tests": 3,
+      "failures": 3,
+      "errors": 0,
+      "skipped": 0
+    },
+    "ratio-green.xml": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "ratio-red.xml": {
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    "windows-final.xml": {
+      "tests": 266,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "wsl-final.xml": {
+      "tests": 36,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "independent_finding_owner": "capacity_facts",
+  "historical_sources": {
+    ".cache\\execution-policy-v2-review\\test_independent.py": "6fb98ffbfb09e58ca92eb6635867214871cf5c232145bcea812af88f05dd4ded",
+    ".cache\\execution-policy-v2-review\\before.xml": "82466246ad12624084d5d55e4ccecd5d03471b5b0654f17d9df4aea2d31c16f2",
+    ".cache\\execution-policy-v2\\freeze.json": "6362a406c6021f8415504dbc11f4cc345f2771e593488be3dbf499a605f39db1"
+  },
+  "static_checks": "passed; see static.txt",
+  "notes": [
+    "Independent-green is author rerun of unchanged independent tests, not independent verdict.",
+    "Original freeze/final XML retained; correction directory supplements them.",
+    "Red-step test source hashes were not captured; red XML is actual intermediate behavior, not final test source."
+  ],
+  "independent_final": {
+    "directory": "examples/go-task-context/policy-review",
+    "passed": 9,
+    "skipped": 0,
+    "seconds": 4.48,
+    "findings": {
+      "POLICY-V2-001": "closed",
+      "POLICY-V2-002": "closed"
+    },
+    "product_sha256": "e683da5cea3c62ac803f035a8c16cf26c60a4ad7fbfdbcc239e16061c1900b8f"
+  }
+}

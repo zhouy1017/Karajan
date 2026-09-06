@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="2" time="1.335" timestamp="2026-09-06T17:50:24.312456+08:00" hostname="ProArt-Zhou"><testcase classname="tests.adapters.opencode.test_go_context" name="test_counts_actual_official_template_without_exposing_request" time="0.426" /><testcase classname="tests.adapters.opencode.test_go_context" name="test_counts_json_string_tool_arguments_reasoning_and_complete_tool_history" time="0.003"><failure message="karajan.adapters.opencode.go_context.GoContextError: GO_CONTEXT_MEASUREMENT_FAILED">accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x00000236B66CC1D0&gt;
+
+    def test_counts_json_string_tool_arguments_reasoning_and_complete_tool_history(
+        accounting: GoRequestAccounting,
+    ) -&gt; None:
+        initial = measure(accounting, payload())
+        request = tool_history()
+        original = json.dumps(request)
+&gt;       after_tool = measure(accounting, request)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\adapters\opencode\test_go_context.py:116: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\adapters\opencode\test_go_context.py:49: in measure
+    return accounting.measure(request, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x00000236B66CC1D0&gt;
+payload = {'model': 'glm-5.3-flash', 'stream': True, 'max_tokens': 128, 'messages': [{'role': 'system', 'content': 'Make only th...p.py"}'}}]}, {'role': 'tool', 'tool_call_id': 'call_read_1', 'content': 'def clamp(x, lo, hi):\n    return x\n'}], ...}
+approved_input_tokens = 4000, reserved_output_tokens = 128
+operating_context_tokens = 8192, fixed_margin = 16
+ratio_margin_basis_points = 1000
+
+    def measure(
+        self,
+        payload: dict[str, Any],
+        *,
+        approved_input_tokens: int,
+        reserved_output_tokens: int,
+        operating_context_tokens: int,
+        fixed_margin: int,
+        ratio_margin_basis_points: int,
+    ) -&gt; dict[str, Any]:
+        try:
+            raw = _encoded(payload)
+            if len(raw) &gt; _BODY_BYTES:
+                raise GoContextError("GO_CONTEXT_REQUEST_TOO_LARGE")
+            request = json.loads(raw)
+            # Use upstream template semantics, including role/control tokens and tools.
+            result: Any = render_jinja_template(
+                [request["messages"]],
+                tools=request.get("tools"),
+                chat_template=self._template,
+                add_generation_prompt=True,
+                reasoning_effort=request.get("reasoning_effort", "max"),
+                clear_thinking=request.get("clear_thinking", False),
+            )
+            local = len(self._tokenizer.encode(result[0][0], add_special_tokens=False).ids)
+            margin = fixed_margin + (local * ratio_margin_basis_points + 9999) // 10_000
+            return ContextMeasurement(
+                schema_version="karajan.go-context-measurement.v1",
+                model=_MODEL,
+                measurement_method="reference_tokenizer_estimate",
+                measurement_confidence="local_estimate",
+                request_digest=_sha(raw),
+                source_sha256=self._source_sha256,
+                local_input_tokens=local,
+                fixed_margin=fixed_margin,
+                ratio_margin_basis_points=ratio_margin_basis_points,
+                margin_tokens=margin,
+                accounted_input_tokens=local + margin,
+                requested_output_tokens=request["max_tokens"],
+                approved_input_tokens=approved_input_tokens,
+                reserved_output_tokens=reserved_output_tokens,
+                operating_context_tokens=operating_context_tokens,
+                declared_context_tokens=_CONTEXT,
+                declared_max_output_tokens=_OUTPUT,
+                template_reasoning_effort=request.get("reasoning_effort", "max"),
+                template_clear_thinking=request.get("clear_thinking", False),
+            ).model_dump()
+        except GoContextError:
+            raise
+        except Exception:
+&gt;           raise GoContextError("GO_CONTEXT_MEASUREMENT_FAILED") from None
+E           karajan.adapters.opencode.go_context.GoContextError: GO_CONTEXT_MEASUREMENT_FAILED
+
+backend\karajan\adapters\opencode\go_context.py:221: GoContextError</failure></testcase></testsuite></testsuites>

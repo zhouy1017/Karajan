@@ -82,6 +82,13 @@ def validate_authorization(
     policy: dict[str, Any],
     config: dict[str, Any],
 ) -> None:
+    if policy["schema_version"] == "karajan.execution-policy.v2":
+        checks = proposed["checks"]
+        available = {row["id"] for row in policy["validation"]["checks"]} | {
+            policy["validation"]["review"]["id"]
+        }
+        if len(set(checks)) != len(checks) or not set(checks) <= available:
+            raise ValueError("VALIDATION_CHECKS_NOT_RESOLVED")
     hard = policy["constraints"]
     for kind in ("channel_ids", "tools", "data_destinations"):
         values = proposed[kind]

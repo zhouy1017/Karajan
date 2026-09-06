@@ -26,6 +26,11 @@ jobs:
     name: python-quality (${{ matrix.os }}, Python 3.12)
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
+    env:
+      KARAJAN_GO_TOKENIZER_DIRECTORY: .cache/go-context-artifacts
+      KARAJAN_REQUIRE_GO_TOKENIZER: "1"
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
     strategy:
       fail-fast: false
       matrix:
@@ -52,6 +57,9 @@ jobs:
 
       - name: Install locked development dependencies
         run: uv sync --frozen --extra dev
+
+      - name: Provision the verified official tokenizer before offline tests
+        run: python .github/scripts/provision_go_tokenizer.py --directory .cache/go-context-artifacts
 
       - name: Set up pinned Node.js for the runtime probe
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -122,6 +130,12 @@ jobs:
         env:
           KARAJAN_REQUIRE_OPENCODE_ISOLATION: "1"
           KARAJAN_OPENCODE_LINUX_BINARY: runtimes/opencode/node_modules/opencode-linux-x64/bin/opencode
+
+      - name: Check task context and validation policy independent boundaries
+        run: >-
+          uv run --frozen --extra dev pytest
+          -o "pythonpath=backend tests/adapters/opencode tests/projects tests/runs tests/web"
+          examples/go-task-context
 
   frontend-quality:
     name: frontend-quality

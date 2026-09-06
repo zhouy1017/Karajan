@@ -47,3 +47,7 @@ examples/go-profile*/**/*.txt -text whitespace=cr-at-eol
 examples/go-suite-independent-review/**/*.json -text whitespace=cr-at-eol
 examples/go-suite-independent-review/**/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
 examples/go-suite-independent-review/**/*.txt -text whitespace=cr-at-eol
+examples/go-task-context/**/*.json -text whitespace=cr-at-eol
+examples/go-task-context/**/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+examples/go-task-context/policy-review/*.txt -text whitespace=cr-at-eol
+examples/go-task-context/policy-review/test_policy_review.py -text whitespace=cr-at-eol

@@ -31,6 +31,10 @@ _Reason = Literal[
     "ACTIVE_HANDLER_REMAINS",
     "CHOICE_AFTER_FINISH",
     "CLIENT_CLOSE_FAILED",
+    "CONTEXT_PROVIDER_USAGE_MISSING",
+    "CONTEXT_PROVIDER_INPUT_EXCEEDED",
+    "CONTEXT_PROVIDER_OUTPUT_EXCEEDED",
+    "CONTEXT_REVOCATION_FAILED",
     "DATA_AFTER_TERMINATOR",
     "DENIED_CANARY_IN_REQUEST",
     "DUPLICATE_JSON_KEY",
@@ -290,7 +294,13 @@ class GoCallJournal:
         return {"grant_id": grant_id, "revoked_at": revoked_at}
 
     def begin_call(
-        self, grant_id: str, call_id: str, *, capability: str, binding: object
+        self,
+        grant_id: str,
+        call_id: str,
+        *,
+        capability: str,
+        binding: object,
+        request_context: object | None = None,
     ) -> dict[str, Any]:
         """Commit an unknown send, then grant send permission once, only in this return.
 
@@ -302,12 +312,19 @@ class GoCallJournal:
         """
         _validated(_CallRef, {"grant_id": grant_id, "call_id": call_id})
         value = _binding(binding)
+        context = None
+        if request_context is not None:
+            from .go_context import ContextMeasurement
+
+            context = _validated(ContextMeasurement, request_context)
         receipt = None
         with self._transaction() as db:
             grant = self._grant(db, grant_id)
             self._authenticate(grant, value, capability)
             old = self._call(db, grant_id, call_id)
             if old is not None:
+                if old.get("request_context") != context:
+                    raise GoJournalError("CALL_CONTEXT_CONFLICT")
                 return {"send_allowed": False, "receipt": old}
             now = self._now()
             if grant["revoked_at"] is not None:
@@ -332,6 +349,8 @@ class GoCallJournal:
                     "completed_at": None,
                     "outcome": None,
                 }
+                if context is not None:
+                    receipt["request_context"] = context
                 db.execute(
                     "INSERT INTO go_calls VALUES (?, ?, ?)", (grant_id, call_id, _encoded(receipt))
                 )
