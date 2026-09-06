@@ -1,0 +1,28 @@
+{
+  "observed_at": "2026-09-06T02:22:59.483404+00:00",
+  "provider": "opencode-go",
+  "endpoint_origin": "https://opencode.ai/zen/go/v1",
+  "credential_ref": "local-user-opencode-go-key",
+  "scope": "live-connectivity-only",
+  "mode": "text",
+  "runtime_qualification": "not_run",
+  "activation_allowed": false,
+  "requested_model": "glm-5.3-flash",
+  "http_status": 200,
+  "reported_model": "glm-5.3-flash",
+  "usage": {
+    "prompt_tokens": 53,
+    "completion_tokens": 238,
+    "total_tokens": 291,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 230
+    }
+  },
+  "finish_reason": "stop",
+  "content": "KARAJAN_GO_OK",
+  "expected_content_match": true,
+  "evidence_stage": "historical_prototype"
+}

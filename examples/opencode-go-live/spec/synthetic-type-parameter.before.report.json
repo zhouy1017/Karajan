@@ -1,0 +1,105 @@
+{
+  "schema_version": "karajan.opencode-go-diagnostic.v1",
+  "observed_at": "2026-09-06T02:58:18.616991+00:00",
+  "provider": "opencode-go",
+  "requested_model": "glm-5.3-flash",
+  "scenario": "edit",
+  "scope": "live-opencode-runtime-through-credential-relay",
+  "runtime_direct_provider_connection": false,
+  "real_credential_passed_to_runtime": false,
+  "profile_enabled": false,
+  "dispatch_eligible": false,
+  "full_qualification": "not_run",
+  "workspace_os_isolation": "not_run",
+  "provider_remote_cancel": "not_run",
+  "billing_limit_qualification": "not_run",
+  "credential_source": "explicit_local_file",
+  "source_sha256": {
+    "go_live.py": "db6f46fff461da56e9c0d217e4f957d72b0da23f3036a1cbaa9eb155e6094264",
+    "go_evidence.py": "132b2fe7127706a11251e6c333c723685112417f5376cd250307eb17c5f5d999",
+    "go_relay.py": "1af386a8e37729e33fe6307dfe670eb35e68838a566ba2c50b9377ef54a4af2b",
+    "_server.py": "6827bdf9f26b6a38fab4b5b8eecaa3fb00f33c15ee93977f94c15f1ec5836255",
+    "management.py": "1dc5d87c03c38d89df94962183d3ca8da84863753506ccc2f83f858c1b908b68"
+  },
+  "runtime_version": "1.18.29",
+  "configuration_accepted": true,
+  "effective_model": "opencode-go/glm-5.3-flash",
+  "effective_enabled_providers": [
+    "opencode-go"
+  ],
+  "workspace_root_matches": true,
+  "assistant_messages": [
+    {
+      "modelID": "glm-5.3-flash",
+      "providerID": "opencode-go",
+      "finish": "stop",
+      "completed": true,
+      "tokens": {
+        "cache": {}
+      },
+      "error_type": null
+    }
+  ],
+  "tool_results": [
+    {
+      "tool": "read",
+      "status": "completed",
+      "path": "fixture.py",
+      "error_category": null
+    },
+    {
+      "tool": "edit",
+      "status": "completed",
+      "path": "fixture.py",
+      "error_category": null
+    }
+  ],
+  "session_error_names": [],
+  "before_file_sha256": "5ce9939a494a0ebeb2ed030c5f45258d0e22be107290c2b887b632418ef73363",
+  "after_file_sha256": "262c200b723248da1ecdc6624dc7294cc532eb7940e2edbee5c6567913ec761a",
+  "fixture_file_changed": true,
+  "blocked_file_unchanged": true,
+  "workspace_files": [
+    "blocked.txt",
+    "fixture.py"
+  ],
+  "function_cases_passed": [
+    true,
+    true,
+    true,
+    true
+  ],
+  "process_cleanup": {
+    "scope": "server_process_only",
+    "status": "exited",
+    "errors": []
+  },
+  "relay_cleanup": {
+    "status": "closed",
+    "errors": []
+  },
+  "provider_requests": [
+    {
+      "sequence": 1,
+      "requested_model": "glm-5.3-flash",
+      "reported_models": [
+        "glm-5.3-flash"
+      ],
+      "upstream_send_attempted": true,
+      "upstream_status": 200,
+      "stream_terminated": true,
+      "relay_completed": true,
+      "protocol_passed": true,
+      "reason_codes": [],
+      "denied_canary_in_request": false
+    }
+  ],
+  "credential_scan": {
+    "completed": true,
+    "scanned_files": 2,
+    "leak_files": [],
+    "errors": []
+  },
+  "reason_codes": [],
+  "status": "passed"
+}

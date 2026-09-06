@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.223" timestamp="2026-09-06T10:58:18.461262+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.go-probe-spec.test_public_probe" name="test_unapproved_type_parameter_expression_is_not_a_safe_fixture" time="0.024"><failure message="AssertionError: assert 'passed' == 'failed'&#10;  &#10;  - failed&#10;  + passed">harness = namespace(scenario='edit', fault='type_parameter', prompt_calls=1, server_closed=1, relay_closed=1, relay_started=1, r...ndowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-556/test_unapproved_type_parameter0/probe-output'))
+
+    def test_unapproved_type_parameter_expression_is_not_a_safe_fixture(harness):
+        harness.fault = "type_parameter"
+        result = run(harness)
+&gt;       assert result["status"] == "failed"
+E       AssertionError: assert 'passed' == 'failed'
+E         
+E         - failed
+E         + passed
+
+.cache\go-probe-spec\test_public_probe.py:310: AssertionError</failure></testcase></testsuite></testsuites>

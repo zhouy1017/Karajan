@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.308" timestamp="2026-09-06T10:57:05.250803+08:00" hostname="ProArt-Zhou"><testcase classname="tests.adapters.opencode.test_go_relay" name="test_close_includes_connections_waiting_for_complete_http_headers" time="0.097"><failure message="AssertionError: assert {'status': 'c... 'errors': []} == {'status': 'u...LER_REMAINS']}&#10;  &#10;  Differing items:&#10;  {'errors': []} != {'errors': ['ACTIVE_HANDLER_REMAINS']}&#10;  {'status': 'closed'} != {'status': 'unknown'}&#10;  Use -v to get more diff">def test_close_includes_connections_waiting_for_complete_http_headers() -&gt; None:
+        with running() as (relay, requests):
+            connection = socket.create_connection(("127.0.0.1", urlsplit(relay.url).port), timeout=5)
+            try:
+                connection.sendall(b"POST /v1/chat/completions HTTP/1.1\r\nHost: localhost\r\n")
+                with httpx.Client(trust_env=False) as client:
+                    assert client.get(relay.url).status_code == 405
+&gt;               assert relay.close() == {
+                    "status": "unknown", "errors": ["ACTIVE_HANDLER_REMAINS"],
+                }
+E               AssertionError: assert {'status': 'c... 'errors': []} == {'status': 'u...LER_REMAINS']}
+E                 
+E                 Differing items:
+E                 {'errors': []} != {'errors': ['ACTIVE_HANDLER_REMAINS']}
+E                 {'status': 'closed'} != {'status': 'unknown'}
+E                 Use -v to get more diff
+
+tests\adapters\opencode\test_go_relay.py:587: AssertionError</failure></testcase></testsuite></testsuites>

@@ -1,0 +1,112 @@
+{
+  "http_status": 200,
+  "content_type": "text/event-stream",
+  "byte_count": 18477,
+  "events_run_length_encoded": [
+    {
+      "repeat_count": 84,
+      "shape": {
+        "kind": "json",
+        "keys": [
+          "choices",
+          "created",
+          "id",
+          "model",
+          "object"
+        ],
+        "model": "glm-5.3-flash",
+        "choices": [
+          {
+            "index": 0,
+            "finish_reason": null,
+            "delta_keys": [
+              "reasoning_content",
+              "role"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "repeat_count": 4,
+      "shape": {
+        "kind": "json",
+        "keys": [
+          "choices",
+          "created",
+          "id",
+          "model",
+          "object"
+        ],
+        "model": "glm-5.3-flash",
+        "choices": [
+          {
+            "index": 0,
+            "finish_reason": null,
+            "delta_keys": [
+              "content",
+              "role"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "repeat_count": 1,
+      "shape": {
+        "kind": "json",
+        "keys": [
+          "choices",
+          "created",
+          "id",
+          "model",
+          "object",
+          "usage"
+        ],
+        "model": "glm-5.3-flash",
+        "choices": [
+          {
+            "index": 0,
+            "finish_reason": "stop",
+            "delta_keys": [
+              "content",
+              "role"
+            ]
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 21,
+          "completion_tokens": 92,
+          "total_tokens": 113,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 84
+          }
+        }
+      }
+    },
+    {
+      "repeat_count": 1,
+      "shape": {
+        "kind": "DONE"
+      }
+    },
+    {
+      "repeat_count": 1,
+      "shape": {
+        "kind": "json",
+        "keys": [
+          "choices",
+          "cost"
+        ],
+        "model": null,
+        "choices": []
+      }
+    }
+  ],
+  "source_sha256": "8c78bd2c5b5b16d77333a871160c86cf781792f9f9d0d7f839be2cce9a4bbb9b",
+  "observed_content": "field names, model ID and numeric usage only; no response text retained",
+  "scope": "actual_official_go_stream_shape_observation"
+}

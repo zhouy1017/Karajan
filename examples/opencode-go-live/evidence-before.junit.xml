@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="0.172" timestamp="2026-09-06T10:41:17.083966+08:00" hostname="ProArt-Zhou"><testcase classname="" name="tests.adapters.opencode.test_go_evidence" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\Users\Chooo\Playground\Karajan\tests\adapters\opencode\test_go_evidence.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\adapters\opencode\test_go_evidence.py:5: in &lt;module&gt;
+    from karajan.adapters.opencode.go_evidence import check_fixture, evaluate_observation
+E   ModuleNotFoundError: No module named 'karajan.adapters.opencode.go_evidence'</error></testcase></testsuite></testsuites>

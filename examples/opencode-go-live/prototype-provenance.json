@@ -1,0 +1,32 @@
+[
+  {
+    "file": "direct_models.json",
+    "source_file": "models-21dfcae4a5.json",
+    "source_sha256": "eb2ad9455a7cce803c9692e2170f148b96e601a21f6a02b3abb8f02986a8d5d2",
+    "transform": "normalize tool paths to basenames, omit local pid, add evidence-stage notes"
+  },
+  {
+    "file": "direct_text.json",
+    "source_file": "text-4761947f6e.json",
+    "source_sha256": "729b8b09f1edc19a49cb4fdddd1c068045d4f35842f3576120f360589899ec6d",
+    "transform": "normalize tool paths to basenames, omit local pid, add evidence-stage notes"
+  },
+  {
+    "file": "prototype_edit_recorder_error.json",
+    "source_file": "runtime-9fb201070e/report.json",
+    "source_sha256": "1a69ac00be695b44826ac5f9732fdbdd301a8b29abff9ed4d9b34f8db944dd0b",
+    "transform": "normalize tool paths to basenames, omit local pid, add evidence-stage notes"
+  },
+  {
+    "file": "prototype_edit.json",
+    "source_file": "runtime-a9f7bc1f18/report.json",
+    "source_sha256": "b4c0a6ee002413d3afc686951388a5780de6869ddd7ad874f61aa1e81f90abb8",
+    "transform": "normalize tool paths to basenames, omit local pid, add evidence-stage notes"
+  },
+  {
+    "file": "prototype_denied_read.json",
+    "source_file": "runtime-5ad57c434b/report.json",
+    "source_sha256": "a6bcc88ac50ddd486893207c7658f26fbf1f4f7bcb8b432ecb1bfe9a75c5ac58",
+    "transform": "normalize tool paths to basenames, omit local pid, add evidence-stage notes"
+  }
+]

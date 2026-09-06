@@ -1,0 +1,80 @@
+{
+  "schema": "karajan.independent-spec-evidence.v1",
+  "observed_at": "2026-09-06T03:12:03.120053+00:00",
+  "verdict": "passed",
+  "scope": "synthetic-public-GoLiveProbe-and-CLI-boundaries",
+  "real_provider_calls": 0,
+  "real_credentials_read": false,
+  "runtime_executed": false,
+  "relay_protocol_tested": false,
+  "profile_qualification": "not_run",
+  "tests": {
+    "passed": 29,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 0.574
+  },
+  "entrypoints": [
+    "GoLiveProbe.run",
+    "main"
+  ],
+  "source_hashes_checked_before_and_after_test": true,
+  "source_sha256": {
+    "go_live.py": "3b35606c2fdd8052265ddb15bc375be3b0d54637840ac5947173d4186bb33c4a",
+    "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b",
+    "go_relay.py": "ca2aa659644baf8a78c374a3ceac441eb905f39de4ce495320cd6501cda535df",
+    "_server.py": "6827bdf9f26b6a38fab4b5b8eecaa3fb00f33c15ee93977f94c15f1ec5836255",
+    "management.py": "1dc5d87c03c38d89df94962183d3ca8da84863753506ccc2f83f858c1b908b68"
+  },
+  "findings": [
+    {
+      "id": "GO-SPEC-01",
+      "severity": "P2",
+      "state": "resolved",
+      "summary": "The restricted fixture interpreter admitted FunctionDef.type_params and reported the edit scenario passed.",
+      "original_input": "type-parameter.input.py.txt",
+      "before": {
+        "tests": 1,
+        "failures": 1,
+        "public_probe_status": "passed",
+        "evidence_sha256": "132b2fe7127706a11251e6c333c723685112417f5376cd250307eb17c5f5d999"
+      },
+      "after": {
+        "test": "test_unapproved_type_parameter_expression_is_not_a_safe_fixture",
+        "public_probe_status": "failed",
+        "reason_code": "FIXTURE_BEHAVIOR_FAILED"
+      },
+      "limit": "No unexpected_callable execution was observed; this was a false positive in accepted fixture syntax."
+    }
+  ],
+  "coverage": [
+    "Independent edit and denied_read success criteria; denied_read does not require a fixed clamp.",
+    "Missing tools, unchanged edits, wrong paths, extra files, generic tool errors and denial-side edits fail.",
+    "Incomplete last assistant, session errors, model drift, empty receipts and provider failures fail.",
+    "Runtime, effective configuration and workspace mismatches submit no prompt.",
+    "Timeout and abort failure still clean both peers; uncertain or failing cleanup fails.",
+    "A first-poll relay failure aborts once without sleeping or waiting for native completion.",
+    "No live flag, missing credential and existing output stop before applicable credential/peer boundaries.",
+    "Synthetic credential leaks, a leak straddling the 64 KiB scan boundary and unreadable artifacts fail.",
+    "Every completed run asserts zero socket connection attempts and disabled profile/dispatch qualification."
+  ],
+  "artifact_sha256": {
+    "final.junit.xml": "defee32810e4e38b4d451568690b963bd8919f87535a66273dd996ecfe4d1672",
+    "synthetic-type-parameter.before.report.json": "1e2c210aaa09c93042e439c8d81d5b1585d81fff85c4cadb83a1f9d870d46f56",
+    "test_public_probe.py": "b6358b235dc17b18824ca2aee15645ac42d85c92e33893ee8c6ed2b9e4fa7c3f",
+    "type-parameter.before.junit.xml": "9fc9cf1602a8cfe7e4365a70901c0e58364cd902be453b7b52479415b33360f4",
+    "type-parameter.input.py.txt": "262c200b723248da1ecdc6624dc7294cc532eb7940e2edbee5c6567913ec761a"
+  },
+  "test_input_semantics": {
+    "comparison": "ast.dump without source locations",
+    "matches_original_cache": true,
+    "change": "Published test import whitespace and line formatting only.",
+    "original_cache_sha256": "fb0ebcb9e098db23bf20af6722dae1f33c144164e4b6f8ee34f8fb3d8c409619",
+    "published_test_sha256": "b6358b235dc17b18824ca2aee15645ac42d85c92e33893ee8c6ed2b9e4fa7c3f"
+  },
+  "validation": {
+    "ruff_check_dot": "passed",
+    "published_pytest_tests": 29
+  }
+}

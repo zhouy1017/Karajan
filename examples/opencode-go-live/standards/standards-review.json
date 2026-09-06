@@ -1,0 +1,109 @@
+{
+  "schema_version": "karajan.independent-review.v1",
+  "axis": "Standards",
+  "status": "passed",
+  "reviewed_at_utc": "2026-09-06T03:14:05.488349+00:00",
+  "fixed_point": "0a30e0f17408f253a5e9ee2d758554af47cd24f9",
+  "scope": "Go live/evidence/relay WIP and its published diagnostic claims; existing server/management dependencies read for lifecycle context.",
+  "open_findings": [],
+  "closed_findings": [
+    {
+      "id": "GO-STANDARDS-001",
+      "priority": "P2",
+      "standard": "m2-05 and implementation record: the native runtime receives a local capability, never the provider credential.",
+      "problem": "Valid upstream SSE echoed a synthetic provider credential through literal or JSON-escaped content and ordinary content/reasoning/tool-argument delta fragments. All five original HTTP cases actually returned 200 before repair.",
+      "resolution": "Buffered SSE is checked before forwarding, including decoded strings, assembled deltas and the exact Go cost trailer. Echoes now reject with a fixed error and sanitized failing receipt.",
+      "before": [
+        "standards-before.junit.xml: 2 failed, 3 passed",
+        "standards-fragments-before.junit.xml: 3 failed, 5 deselected"
+      ],
+      "after": "standards-final.junit.xml: original five failing cases and three controls passed, 8 total."
+    }
+  ],
+  "source_sha256": {
+    "backend/karajan/adapters/opencode/go_live.py": "3b35606c2fdd8052265ddb15bc375be3b0d54637840ac5947173d4186bb33c4a",
+    "backend/karajan/adapters/opencode/go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b",
+    "backend/karajan/adapters/opencode/go_relay.py": "ca2aa659644baf8a78c374a3ceac441eb905f39de4ce495320cd6501cda535df",
+    "backend/karajan/adapters/opencode/_server.py": "6827bdf9f26b6a38fab4b5b8eecaa3fb00f33c15ee93977f94c15f1ec5836255",
+    "backend/karajan/adapters/opencode/management.py": "1dc5d87c03c38d89df94962183d3ca8da84863753506ccc2f83f858c1b908b68"
+  },
+  "published_input": {
+    "original_sha256": "12425f52bdc8b58f4ad6cc8a1282c3fbf96d5e492eb27b8179d1800ef4754886",
+    "published_sha256": "902f5c657653482bdb8ce0464f1e01495110eacd2a9bf1c701557f2924a6227e",
+    "change": "Formatting and import-block whitespace only; ast.dump equality was asserted before replay."
+  },
+  "independent_verification": {
+    "tests_passed": 8,
+    "tests_failed": 0,
+    "reported_pytest_seconds": 0.71,
+    "source_unchanged_during_tests": true,
+    "ruff": "Published independent test file passes Ruff after formatting."
+  },
+  "evidence_sha256": {
+    "examples/opencode-go-live/standards/independent_cases.py": "902f5c657653482bdb8ce0464f1e01495110eacd2a9bf1c701557f2924a6227e",
+    "examples/opencode-go-live/standards/standards-before.junit.xml": "e9581020943e1befeb65b0b4a0acc2f993432a3b92a6f2ae49cb279225cea59f",
+    "examples/opencode-go-live/standards/standards-fragments-before.junit.xml": "90693532f5a26d2139ca981ac9e47ef693fc21fd20f2700cba9640d06168aa90",
+    "examples/opencode-go-live/standards/standards-final.junit.xml": "2b3bc3ae08cff403b96132dc19ba448aa3f630f45837701acece89c5ed1fa76d"
+  },
+  "observed_artifact_sha256": {
+    "examples/opencode-go-live/edit.report.json": "8c50a3f2191153715cd144e844f4fb6b0c22071e8175430ba5258342ebb6ecf1",
+    "examples/opencode-go-live/denied_read.report.json": "5da7aece0183ee3f417222b637d214cfbb78d69fec9f176dcbddde5fea2d6db5",
+    "examples/opencode-go-live/strict-trailer-failure.report.json": "55f3e1d352811badc1f713a83326ac99504d6082b116e55fd9d80c4ac3550438",
+    "examples/opencode-go-live/sse-shape.json": "8c97a93d387b202fdac9179b0132fb499cbc37d17effd415b4b533632762425a",
+    "examples/opencode-go-live/sse-trailer.json": "54d03123c92977503a72d7ac29aef1ade470bf24ec87bf67cada0533e5a1b827",
+    "examples/opencode-go-live/README.md": "1e6c007f72daae715eef07ac73f89b4737c501584c6e0b9314309cd8355d0832",
+    "docs/implementation/m2-opencode-go-live.md": "8a06dc6b072bd289de126a92efb876f83cef2c6393f32bb94c691f3dbbc12afd"
+  },
+  "evidence_assessment": [
+    "Both final live reports bind all five current sources and independently re-evaluate as passed. Edit has three requests, read/edit and four successful cases; denied_read has two requests, explicit rule denial, no changes or upstream canary. Both report scans of 28 files with no leaks.",
+    "The earlier six HTTP 200 trailer rejects remain failed with no tool execution. Prototypes are labelled as older evidence without final source binding. The shape/trailer observations retain types and usage, not response text; null cost is explained as uncollected.",
+    "The post-DONE exception is one exact choices=[]/bounded decimal-string cost frame; extra content, tools and duplicate trailers still reject. Cost unit remains unknown. Relay failures request native abort; type parameters remain outside the bounded expression checker.",
+    "The Windows/Linux workflow explicitly runs the published Spec and Standards paths with frozen dev dependencies and without live flags. Author JUnit records for 97 Windows, 82 WSL and 37 workflow-command cases were inspected; no remote CI result is claimed."
+  ],
+  "limitations": [
+    "This reviewer used synthetic credentials and local MockTransport only; the two live reports were inspected, not independently executed. No real key was read, no live provider called, no product edited and no Git mutation performed.",
+    "No general encoded-secret detection, full process-tree/network isolation, provider stop, quota/cash qualification, Profile activation or dispatch is claimed. Published Windows/WSL author regressions are not this reviewer's execution."
+  ],
+  "standards_basis": [
+    "CONTEXT.md",
+    "docs/agents/issue-tracker.md",
+    "docs/planning/v1/issues/m2-05.md",
+    "docs/implementation/m2-opencode-go-live.md",
+    "code-review skill smell baseline; no actionable material smell beyond the corrected boundary finding."
+  ],
+  "reviewed_delivery_files_sha256": {
+    ".github/workflows/ci.yml": "535dc05d15b0bb0085389ea882bfe85a7dbd24fa7ec6069f4e2f560f0e160338"
+  },
+  "observed_author_checks": {
+    "windows.junit.xml": {
+      "counts": {
+        "tests": 97,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "c671ae6b090e5eb3a764c7a03c5018877be54d8c80cfdbb831e53f95e8b7904a",
+      "provenance": "author execution inspected, not reviewer rerun"
+    },
+    "wsl.junit.xml": {
+      "counts": {
+        "tests": 82,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "fe6542a710a9acdee62665987883bc294302243900c8c22c8798104c5b7a8011",
+      "provenance": "author execution inspected, not reviewer rerun"
+    },
+    "workflow-offline.junit.xml": {
+      "counts": {
+        "tests": 37,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "059d9c5467be637a950151d1fd2289c2ff178be83b00deebe4215c416ce39958",
+      "provenance": "author execution inspected, not reviewer rerun"
+    }
+  }
+}

@@ -1,0 +1,244 @@
+{
+  "schema_version": "karajan.opencode-go-diagnostic.v1",
+  "observed_at": "2026-09-06T03:07:35.779553+00:00",
+  "provider": "opencode-go",
+  "requested_model": "glm-5.3-flash",
+  "scenario": "edit",
+  "scope": "live-opencode-runtime-through-credential-relay",
+  "runtime_direct_provider_connection": false,
+  "real_credential_passed_to_runtime": false,
+  "profile_enabled": false,
+  "dispatch_eligible": false,
+  "full_qualification": "not_run",
+  "workspace_os_isolation": "not_run",
+  "provider_remote_cancel": "not_run",
+  "billing_limit_qualification": "not_run",
+  "credential_source": "explicit_local_file",
+  "source_sha256": {
+    "go_live.py": "3b35606c2fdd8052265ddb15bc375be3b0d54637840ac5947173d4186bb33c4a",
+    "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b",
+    "go_relay.py": "ca2aa659644baf8a78c374a3ceac441eb905f39de4ce495320cd6501cda535df",
+    "_server.py": "6827bdf9f26b6a38fab4b5b8eecaa3fb00f33c15ee93977f94c15f1ec5836255",
+    "management.py": "1dc5d87c03c38d89df94962183d3ca8da84863753506ccc2f83f858c1b908b68"
+  },
+  "runtime_version": "1.18.29",
+  "configuration_accepted": true,
+  "effective_model": "opencode-go/glm-5.3-flash",
+  "effective_enabled_providers": [
+    "opencode-go"
+  ],
+  "workspace_root_matches": true,
+  "assistant_messages": [
+    {
+      "modelID": "glm-5.3-flash",
+      "providerID": "opencode-go",
+      "finish": "tool-calls",
+      "completed": true,
+      "tokens": {
+        "input": 3233,
+        "output": 42,
+        "total": 3296,
+        "reasoning": 21,
+        "cache": {
+          "read": 0,
+          "write": 0
+        }
+      },
+      "error_type": null
+    },
+    {
+      "modelID": "glm-5.3-flash",
+      "providerID": "opencode-go",
+      "finish": "tool-calls",
+      "completed": true,
+      "tokens": {
+        "input": 181,
+        "output": 74,
+        "total": 3512,
+        "reasoning": 57,
+        "cache": {
+          "read": 3200,
+          "write": 0
+        }
+      },
+      "error_type": null
+    },
+    {
+      "modelID": "glm-5.3-flash",
+      "providerID": "opencode-go",
+      "finish": "stop",
+      "completed": true,
+      "tokens": {
+        "input": 192,
+        "output": 25,
+        "total": 3545,
+        "reasoning": 0,
+        "cache": {
+          "read": 3328,
+          "write": 0
+        }
+      },
+      "error_type": null
+    }
+  ],
+  "tool_results": [
+    {
+      "tool": "read",
+      "status": "completed",
+      "path": "fixture.py",
+      "error_category": null
+    },
+    {
+      "tool": "edit",
+      "status": "completed",
+      "path": "fixture.py",
+      "error_category": null
+    }
+  ],
+  "session_error_names": [],
+  "before_file_sha256": "5ce9939a494a0ebeb2ed030c5f45258d0e22be107290c2b887b632418ef73363",
+  "after_file_sha256": "1738403352bac024c8a423907c9d960dbd80ee9e3173ad0245f027b656aa0c65",
+  "fixture_file_changed": true,
+  "blocked_file_unchanged": true,
+  "workspace_files": [
+    "blocked.txt",
+    "fixture.py"
+  ],
+  "function_cases_passed": [
+    true,
+    true,
+    true,
+    true
+  ],
+  "process_cleanup": {
+    "scope": "server_process_only",
+    "status": "exited",
+    "forced_kill": false,
+    "pid": 29612,
+    "errors": [],
+    "exit_code": 1
+  },
+  "relay_cleanup": {
+    "status": "closed",
+    "errors": []
+  },
+  "provider_requests": [
+    {
+      "requested_model": "glm-5.3-flash",
+      "session_header_present": true,
+      "tool_results_in_request": 0,
+      "fixture_content_in_tool_result": false,
+      "denied_canary_in_request": false,
+      "requested_stream": true,
+      "reported_models": [
+        "glm-5.3-flash"
+      ],
+      "tool_names": [
+        "read"
+      ],
+      "usage": {
+        "prompt_tokens": 3233,
+        "completion_tokens": 63,
+        "total_tokens": 3296,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 21
+        }
+      },
+      "upstream_send_attempted": true,
+      "upstream_status": 200,
+      "response_bytes": 13293,
+      "stream_terminated": true,
+      "protocol_passed": true,
+      "relay_completed": true,
+      "reason_codes": [],
+      "sequence": 1,
+      "finish_reason": "tool_calls",
+      "go_cost_trailer_seen": true,
+      "provider_reported_cost": "0",
+      "provider_reported_cost_unit": "unknown"
+    },
+    {
+      "requested_model": "glm-5.3-flash",
+      "session_header_present": true,
+      "tool_results_in_request": 1,
+      "fixture_content_in_tool_result": true,
+      "denied_canary_in_request": false,
+      "requested_stream": true,
+      "reported_models": [
+        "glm-5.3-flash"
+      ],
+      "tool_names": [
+        "edit"
+      ],
+      "usage": {
+        "prompt_tokens": 3381,
+        "completion_tokens": 131,
+        "total_tokens": 3512,
+        "prompt_tokens_details": {
+          "cached_tokens": 3200
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 57
+        }
+      },
+      "upstream_send_attempted": true,
+      "upstream_status": 200,
+      "response_bytes": 27757,
+      "stream_terminated": true,
+      "protocol_passed": true,
+      "relay_completed": true,
+      "reason_codes": [],
+      "sequence": 2,
+      "finish_reason": "tool_calls",
+      "go_cost_trailer_seen": true,
+      "provider_reported_cost": "0",
+      "provider_reported_cost_unit": "unknown"
+    },
+    {
+      "requested_model": "glm-5.3-flash",
+      "session_header_present": true,
+      "tool_results_in_request": 2,
+      "fixture_content_in_tool_result": true,
+      "denied_canary_in_request": false,
+      "requested_stream": true,
+      "reported_models": [
+        "glm-5.3-flash"
+      ],
+      "tool_names": [],
+      "usage": {
+        "prompt_tokens": 3520,
+        "completion_tokens": 25,
+        "total_tokens": 3545,
+        "prompt_tokens_details": {
+          "cached_tokens": 3328
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "upstream_send_attempted": true,
+      "upstream_status": 200,
+      "response_bytes": 4897,
+      "stream_terminated": true,
+      "protocol_passed": true,
+      "relay_completed": true,
+      "reason_codes": [],
+      "sequence": 3,
+      "finish_reason": "stop",
+      "go_cost_trailer_seen": true,
+      "provider_reported_cost": "0",
+      "provider_reported_cost_unit": "unknown"
+    }
+  ],
+  "credential_scan": {
+    "completed": true,
+    "scanned_files": 28,
+    "leak_files": [],
+    "errors": []
+  },
+  "reason_codes": [],
+  "status": "passed"
+}
