@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="9" time="10.503" timestamp="2026-09-06T22:30:00.065486+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.task-intent-independent.test_intent_boundaries" name="test_lost_activation_reply_then_cancel_reopens_only_original_history" time="0.987" /><testcase classname=".cache.task-intent-independent.test_intent_boundaries" name="test_frozen_launch_is_detached_and_history_survives_removed_live_compiler" time="0.978" /><testcase classname=".cache.task-intent-independent.test_intent_boundaries" name="test_missing_operation_database_is_not_recreated_by_history[read_operation]" time="1.009" /><testcase classname=".cache.task-intent-independent.test_intent_boundaries" name="test_missing_operation_database_is_not_recreated_by_history[open_existing]" time="0.924" /><testcase classname=".cache.task-intent-independent.test_intent_boundaries" name="test_observer_records_mismatched_resources_without_touching_them" time="0.949" /><testcase classname=".cache.task-intent-independent.test_intent_boundaries" name="test_control_lost_reply_and_disabled_reopen_cannot_rearm" time="0.956"><failure message="AssertionError: assert 'prepared' == 'unattempted'&#10;  &#10;  - unattempted&#10;  + prepared">lifecycle = (&lt;karajan.orchestration.go_execution_intent.GoExecutionIntents object at 0x000001D7BC307230&gt;, ('703aeafd-ec63-4527-a8ad-bfdd1c71f6a3', '62aaf7bb-7129-4740-93a5-ca764badf50e'))
+
+    def test_control_lost_reply_and_disabled_reopen_cannot_rearm(lifecycle):
+        service, args = lifecycle
+        identity = host_control(service, args)
+        assert service.host.initialize_control_once(**identity)["inserted"] is True
+        service.host.set_control(
+            identity["attempt_id"], fence=identity["fence"],
+            authorization_ref=identity["authorization_ref"], dispatch_enabled=False,
+        )
+        reopened_host = RunnerHost(service.host.directory, existing_only=True)
+        before = reopened_host.database.read_bytes()
+        replay = reopened_host.initialize_control_once(**identity)
+        assert replay["inserted"] is replay["dispatch_enabled"] is replay["activation_allowed"] is False
+        assert reopened_host.database.read_bytes() == before
+&gt;       assert reopened_host.inspect(identity["attempt_id"]).launch_phase == "unattempted"
+E       AssertionError: assert 'prepared' == 'unattempted'
+E         
+E         - unattempted
+E         + prepared
+
+.cache\task-intent-independent\test_intent_boundaries.py:182: AssertionError</failure></testcase><testcase classname=".cache.task-intent-independent.test_intent_boundaries" name="test_concurrent_withdrawal_and_initialization_finish_with_withdrawn_control" time="1.187" /><testcase classname=".cache.task-intent-independent.test_intent_boundaries" name="test_capture_lost_reply_and_late_candidate_link_preserve_original_identity" time="1.516" /><testcase classname=".cache.task-intent-independent.test_intent_boundaries" name="test_other_owner_cannot_read_reopen_cleanup_or_change_phase" time="0.963" /></testsuite></testsuites>

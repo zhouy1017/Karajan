@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="2" time="1.710" timestamp="2026-09-06T21:20:57.720413+08:00" hostname="ProArt-Zhou"><testcase classname="tests.candidates.test_capture_recovery" name="test_existing_only_missing_empty_and_reconnected_ledger_do_not_initialize" time="0.057" /><testcase classname="tests.candidates.test_capture_recovery" name="test_exact_capture_lookup_recovers_original_not_latest_without_tree_or_writes" time="1.523"><failure message="AttributeError: 'CandidateStore' object has no attribute 'lookup_projection_capture'">registered = (&lt;karajan.candidates.store.CandidateStore object at 0x00000235B2D15910&gt;, {'repository_identity': 'baseline-fixture', '... 'docs/untouched.md': b'Preserve this unprojected file.\n', 'data/bytes.bin': b'\x00\xff\x80\r\n', '.empty': b'', ...})
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-800/test_exact_capture_lookup_reco0')
+
+    def test_exact_capture_lookup_recovers_original_not_latest_without_tree_or_writes(registered, tmp_path):
+        store, baseline, files = registered
+        projection, contents, request = inputs(baseline, files)
+        captured = descriptors(contents)
+        original = store.freeze_projection(projection, contents, request)
+        contents["src/task.py"] = b"another result\n"
+        later = store.freeze_projection(projection, contents, request)
+        assert later["id"] != original["id"]
+        (tmp_path / "trusted").rename(tmp_path / "old-source")
+        store.git_directory.rename(store.directory / "unavailable.git")
+        store.objects.rename(store.directory / "unavailable-artifacts")
+        database = store.directory / "candidates.sqlite"
+        before = database.read_bytes()
+&gt;       found = store.lookup_projection_capture(request, projection=projection, captured_files=captured)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'CandidateStore' object has no attribute 'lookup_projection_capture'
+
+tests\candidates\test_capture_recovery.py:52: AttributeError</failure></testcase></testsuite></testsuites>

@@ -1,0 +1,40 @@
+{
+  "schema_version": "karajan.author-freeze.v1",
+  "issue": 90,
+  "base": "858bd5a",
+  "product_and_inputs": {
+    "backend/karajan/orchestration/go_task_execution.py": "fb2e726ba7639f27c04a054f7115c4a49ad563424e7af44e66b457ccc29677b1",
+    "backend/karajan/orchestration/_go_task_runner.py": "0a43cf7b1924b40a66ea35e354e15a6cce697b954c243c8808a7bf7500343822",
+    "tests/runs/test_go_task_execution.py": "81dd72b782899bc9a37f4af2de019be02848e951a9bda409bf49427202a29db2",
+    "tests/runs/test_go_task_execution_native.py": "c11bb8564646d99718b90a9122ce0316f59e95e8ace13f52b5ede16957e68b66",
+    "tests/runs/task_execution_fixture.py": "14b9a28587b2a550011213be69f8e38e956e81548ec8ec82c427da1cebedb3c2",
+    "tests/runs/_task_execution_fixture_entry.py": "32ee5933cff7f896c1faf901f0640782e587b28f9a0a09371f79f14fff038077"
+  },
+  "evidence": {
+    ".cache/task-activation-recovery-red.xml": "063db0710bbc3bd6cc8b222d2e7786dcbc93ca480ec4fb0875429d8e8b72c9a3",
+    ".cache/task-activation-recovery-green.xml": "4432c00ec30329207fad98782b16043dadd36c6a65efcc866239cdc3327e4a30",
+    ".cache/task-cancel-recovery-red.xml": "5c3696c081463b16f81e7ed6156d4436ae5b96fae0f4cd308b5e6f08628c7ee2",
+    ".cache/task-cancel-recovery-final.xml": "6ed24c9897e401005a172baab88a38cfe48392d578017277a68bd3ac2d63ca4e",
+    ".cache/task-full-native-a.xml": "a9c8ae39fe6029e59ce2f22ba10fc5989d548c4070038218f8fa10a6b2979aa4",
+    ".cache/task-full-native-b.xml": "5ba002145b49727099fce9354d54dc204e706936c16519c9dddd8c74d66909c2",
+    ".cache/task-full-native-c.xml": "645dd13cf711ef578d154b1d39341aa30ad09a818d6b7ce49dfc0ef3940d06aa",
+    ".cache/task-full-native-d.xml": "7a4fb0746068a2a8cc11d3dfe61d9ce85b356e438d56899a977a55019d962076",
+    ".cache/task-facade-final-linux.xml": "9b03952633b81b0b099b3799ece7123f521a5c4303c11bb65e8d1af1de8e50ed",
+    ".cache/task-execution-author/native/summary.json": "3e7820416859af0df8813df8fbd906c16ed8100ae6bf8f8d1be8831a298339c4",
+    ".cache/task-execution-author/native/cancel_after_send/public-operation.json": "b983b2c75b48e61d378a2704f57f195a7ce572cc542a9faa740d322895c3591c",
+    ".cache/task-execution-author/native/cancel_after_send/source-manifest.json": "a1584bf18833d2b0d55397b98cbdbc70259230f14d349dc6e8b067f54ba77079",
+    ".cache/task-execution-author/native/grant_reply_lost/public-operation.json": "ee94c1a5cede451a869ca26426b697cd7117947e6baf51fb0e04c1ea08f13c33",
+    ".cache/task-execution-author/native/grant_reply_lost/source-manifest.json": "c861d423e639c70d2150f87548c857321d2a754d5f831f63ac9c7cfc188faa15",
+    ".cache/task-execution-author/native/none/public-operation.json": "b3462ed58d841ff224e89e3ca0ce9c1ac80ac72e9febe2f3c0bb5eb98ff4917e",
+    ".cache/task-execution-author/native/none/source-manifest.json": "ad677b1d303450d5baa274d5330f0c42c2a1843522ad59f655c2f17bec93dbf6",
+    ".cache/task-execution-author/README.md": "0214d2b6ff685f8a070206b5ac3f24e253d08b8b4b832a7d77407e1d1b1999a6"
+  },
+  "validation": {
+    "public_windows": "11 passed",
+    "public_linux": "11 passed",
+    "actual_linux_native_loopback": "3 passed",
+    "provider_calls": "not_run",
+    "independent_review": "root coordination required"
+  },
+  "subsequent_changes": "Parent storage/Relay integration and CONSUMER-001 exact Host cancellation after d evidence; final source pending."
+}

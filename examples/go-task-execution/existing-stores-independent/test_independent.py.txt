@@ -1,0 +1,176 @@
+"""Independent existing-store boundaries: real SQLite, no credential/model use."""
+
+import sqlite3
+from functools import partial
+
+import pytest
+from karajan.projects import ProjectRegistry
+from karajan.projects.credential_sources import CredentialSourceError, CredentialSourceStore
+from karajan.projects.demand import AttemptEstimateStore
+from karajan.projects.qualification import ProfileQualificationStore
+from karajan.capacity import CapacityStore
+from karajan.execution import RunnerHost
+from karajan.orchestration.admission import ApprovedTaskAdmission
+from karajan.orchestration.routing import ApprovedRunRouting
+from karajan.runs import RunPlanner
+from karajan.storage import ExistingStoreError
+from test_go_execution_intent import case as case, projected as projected, reservation as reservation, ready as ready, prepared as prepared
+from karajan.orchestration.go_execution_intent import GoExecutionIntents
+
+
+def test_explicit_credential_existing_mode_never_recreates_missing_public_project_ledger(tmp_path):
+    database = tmp_path / "projects.sqlite"
+    projects = ProjectRegistry(database, [tmp_path])
+    retained = tmp_path / "retained.sqlite"
+    database.rename(retained)
+    before = retained.read_bytes()
+    with pytest.raises((CredentialSourceError, ValueError, sqlite3.Error)):
+        CredentialSourceStore(
+            projects, sources={}, private_directory=tmp_path / "private", existing_only=True
+        )
+    assert not database.exists(), "existing_only credential open recreated its missing Project ledger"
+    assert not (tmp_path / "private").exists()
+    assert retained.read_bytes() == before
+
+
+def stores(tmp_path):
+    projects = ProjectRegistry(tmp_path / "projects.sqlite", [tmp_path])
+    qualification = ProfileQualificationStore(projects)
+    planner = RunPlanner(tmp_path / "runs.sqlite", projects)
+    capacity = CapacityStore(tmp_path / "capacity.sqlite")
+    routing = ApprovedRunRouting(planner, qualification, capacity)
+    admission = ApprovedTaskAdmission(tmp_path / "admission.sqlite", routing)
+    host = RunnerHost(tmp_path / "host")
+    return projects, planner, capacity, routing, admission, host
+
+
+@pytest.mark.parametrize("kind", ["qualification", "estimate", "routing"])
+def test_derived_existing_service_never_provisions_its_missing_schema(tmp_path, kind):
+    projects, planner, capacity, routing, _, _ = stores(tmp_path)
+    path, table = {
+        "qualification": (projects.database, "profile_qualification_starts"),
+        "estimate": (projects.database, "attempt_estimates"),
+        "routing": (planner.database, "approved_routing_assessments"),
+    }[kind]
+    with sqlite3.connect(path) as db:
+        db.execute(f"DROP TABLE {table}")
+    before = path.read_bytes()
+    projects = ProjectRegistry(projects.database, [tmp_path], existing_only=True)
+    planner = RunPlanner(planner.database, projects, existing_only=True)
+    constructor = {
+        "qualification": lambda: ProfileQualificationStore(projects),
+        "estimate": lambda: AttemptEstimateStore(planner),
+        "routing": lambda: ApprovedRunRouting(planner, ProfileQualificationStore(projects), CapacityStore(capacity.path, existing_only=True)),
+    }[kind]
+    with pytest.raises(ExistingStoreError, match="EXISTING_STORE_SCHEMA_UNSUPPORTED"):
+        constructor()
+    assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize("kind", ["run", "admission"])
+@pytest.mark.parametrize("state", ["missing", "empty"])
+def test_separate_existing_store_never_initializes_missing_or_empty_ledger(tmp_path, kind, state):
+    _, planner, _, routing, _, _ = stores(tmp_path)
+    projects = ProjectRegistry(planner.projects.database, [tmp_path], existing_only=True)
+    planner = RunPlanner(planner.database, projects, existing_only=True)
+    routing = ApprovedRunRouting(planner, ProfileQualificationStore(projects), CapacityStore(routing.capacity.path, existing_only=True))
+    path = tmp_path / "absent" / "missing.sqlite"
+    if state == "empty":
+        path.parent.mkdir()
+        path.write_bytes(b"")
+    with pytest.raises(ExistingStoreError):
+        if kind == "run":
+            RunPlanner(path, planner.projects, existing_only=True)
+        else:
+            ApprovedTaskAdmission(path, routing, existing_only=True)
+    assert not path.exists() or path.read_bytes() == b""
+    if state == "missing":
+        assert not path.parent.exists()
+
+
+@pytest.mark.parametrize("kind", ["project", "run", "capacity", "host", "admission", "qualification", "estimate"])
+@pytest.mark.parametrize("replacement", ["missing", "empty"])
+def test_reconnect_rejects_lost_or_replaced_ledger_without_writing(tmp_path, kind, replacement):
+    projects, planner, capacity, routing, admission, host = stores(tmp_path)
+    projects = ProjectRegistry(projects.database, [tmp_path], existing_only=True)
+    planner = RunPlanner(planner.database, projects, existing_only=True)
+    capacity = CapacityStore(capacity.path, existing_only=True)
+    qualification = ProfileQualificationStore(projects)
+    estimates = AttemptEstimateStore(planner)
+    routing = ApprovedRunRouting(planner, qualification, capacity, estimates=estimates)
+    admission = ApprovedTaskAdmission(admission.database, routing, existing_only=True)
+    host = RunnerHost(host.directory, existing_only=True)
+    # Admission ownership reads a Run first. Use an existing author-free Run
+    # public read only in its dedicated full-chain test below; here a missing
+    # upstream Run must also prevent creating the missing admission database.
+    path, read = {
+        "project": (projects.database, partial(projects.get, "absent")),
+        "run": (planner.database, partial(planner.get, "absent", principal="owner")),
+        "capacity": (capacity.path, capacity.snapshot),
+        "host": (host.database, partial(host.inspect, "absent")),
+        "admission": (admission.database, partial(admission.get, "absent", "absent", principal="owner")),
+        "qualification": (projects.database, partial(qualification.get, "absent", "absent", principal="owner")),
+        "estimate": (projects.database, partial(estimates.get, "absent", "absent", 1, principal="owner")),
+    }[kind]
+    retained = path.with_suffix(".retained")
+    path.rename(retained)
+    if replacement == "empty":
+        path.write_bytes(b"")
+    old = retained.read_bytes()
+    with pytest.raises(Exception) as caught:
+        read()
+    assert str(path) not in str(caught.value)
+    assert not path.exists() or path.read_bytes() == b""
+    assert retained.read_bytes() == old
+
+
+def reopened_execution(prepared):
+    original, args = prepared
+    old_route = original.admissions.routing
+    projects = ProjectRegistry(old_route.planner.projects.database, old_route.planner.projects.allowed_roots, existing_only=True)
+    planner = RunPlanner(old_route.planner.database, projects, existing_only=True)
+    route = ApprovedRunRouting(planner, ProfileQualificationStore(projects), CapacityStore(old_route.capacity.path, existing_only=True))
+    admission = ApprovedTaskAdmission(original.admissions.database, route, existing_only=True)
+    return GoExecutionIntents(admission, source=original.source, host=RunnerHost(original.host.directory, existing_only=True)), args
+
+
+def test_real_approved_operation_history_reopens_without_writes(prepared):
+    original, args = prepared
+    old_route = original.admissions.routing
+    paths = [original.admissions.database, old_route.planner.database, old_route.planner.projects.database, old_route.capacity.path, original.host.database]
+    before = {path: path.read_bytes() for path in paths}
+    reopened, _ = reopened_execution(prepared)
+    old = original.read(*args, principal="owner")
+    actual = reopened.read(*args, principal="owner")
+    assert actual == old
+    actual["execution"]["intent"]["grant_id"] = "caller-mutated"
+    assert reopened.read(*args, principal="owner") == old
+    assert {path: path.read_bytes() for path in paths} == before
+
+
+def test_admission_missing_reconnect_after_successful_real_run_owner_read(prepared):
+    reopened, args = reopened_execution(prepared)
+    path = reopened.admissions.database
+    retained = path.with_suffix(".retained")
+    path.rename(retained)
+    assert reopened.admissions.routing.planner.get(args[0], principal="owner")["id"] == args[0]
+    with pytest.raises(ExistingStoreError, match="EXISTING_STORE_UNAVAILABLE"):
+        reopened.admissions.get(*args, principal="owner")
+    assert not path.exists()
+
+
+@pytest.mark.parametrize("kind", ["run", "admission", "routing"])
+def test_existing_child_rejects_initializing_parent_before_any_disk_change(tmp_path, kind):
+    projects, planner, capacity, routing, admission, _ = stores(tmp_path)
+    before = {path: path.read_bytes() for path in tmp_path.rglob("*") if path.is_file()}
+    if kind == "run":
+        action = lambda: RunPlanner(tmp_path / "uncreated.sqlite", projects, existing_only=True)
+    elif kind == "admission":
+        action = lambda: ApprovedTaskAdmission(tmp_path / "uncreated.sqlite", routing, existing_only=True)
+    else:
+        existing_projects = ProjectRegistry(projects.database, [tmp_path], existing_only=True)
+        existing_planner = RunPlanner(planner.database, existing_projects, existing_only=True)
+        action = lambda: ApprovedRunRouting(existing_planner, routing.qualifications, capacity)
+    with pytest.raises(ValueError, match="EXISTING_STORE_PARENT_MODE_REQUIRED"):
+        action()
+    assert {path: path.read_bytes() for path in tmp_path.rglob("*") if path.is_file()} == before

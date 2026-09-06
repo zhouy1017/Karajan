@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="9" skipped="0" tests="9" time="0.365" timestamp="2026-09-06T21:22:19.048375+08:00" hostname="ProArt-Zhou"><testcase classname="tests.execution.test_control_initialization" name="test_control_is_inserted_once_and_identical_replay_is_readonly" time="0.021"><failure message="AttributeError: 'RunnerHost' object has no attribute 'initialize_control_once'">prepared_host = (&lt;karajan.execution.host.RunnerHost object at 0x0000024DF49CF830&gt;, {'attempt_id': 'attempt-local-1', 'prepared_id': 'original-start', 'fence': 1, 'authorization_ref': 'authorization-test-1'})
+
+    def test_control_is_inserted_once_and_identical_replay_is_readonly(prepared_host):
+        host, arguments = prepared_host
+&gt;       first = host.initialize_control_once(**arguments)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'RunnerHost' object has no attribute 'initialize_control_once'
+
+tests\execution\test_control_initialization.py:28: AttributeError</failure></testcase><testcase classname="tests.execution.test_control_initialization" name="test_disabled_control_is_observed_without_reenabling" time="0.017"><failure message="AttributeError: 'RunnerHost' object has no attribute 'initialize_control_once'">prepared_host = (&lt;karajan.execution.host.RunnerHost object at 0x0000024DF49CFAD0&gt;, {'attempt_id': 'attempt-local-1', 'prepared_id': 'original-start', 'fence': 1, 'authorization_ref': 'authorization-test-1'})
+
+    def test_disabled_control_is_observed_without_reenabling(prepared_host):
+        host, arguments = prepared_host
+&gt;       host.initialize_control_once(**arguments)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'RunnerHost' object has no attribute 'initialize_control_once'
+
+tests\execution\test_control_initialization.py:40: AttributeError</failure></testcase><testcase classname="tests.execution.test_control_initialization" name="test_cancellation_before_first_initialization_creates_no_control" time="0.021"><failure message="AttributeError: 'RunnerHost' object has no attribute 'initialize_control_once'">prepared_host = (&lt;karajan.execution.host.RunnerHost object at 0x0000024DF49CEB70&gt;, {'attempt_id': 'attempt-local-1', 'prepared_id': 'original-start', 'fence': 1, 'authorization_ref': 'authorization-test-1'})
+
+    def test_cancellation_before_first_initialization_creates_no_control(prepared_host):
+        host, arguments = prepared_host
+        host.cancel(arguments["attempt_id"], "cancel-before-control")
+        before = host.database.read_bytes()
+        with pytest.raises(LaunchDenied):
+&gt;           host.initialize_control_once(**arguments)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'RunnerHost' object has no attribute 'initialize_control_once'
+
+tests\execution\test_control_initialization.py:55: AttributeError</failure></testcase><testcase classname="tests.execution.test_control_initialization" name="test_wrong_launch_identity_cannot_initialize_control[prepared_id]" time="0.017"><failure message="AttributeError: 'RunnerHost' object has no attribute 'initialize_control_once'">prepared_host = (&lt;karajan.execution.host.RunnerHost object at 0x0000024DF49CEA20&gt;, {'attempt_id': 'attempt-local-1', 'prepared_id': 'original-start', 'fence': 1, 'authorization_ref': 'authorization-test-1'})
+change = 'prepared_id'
+
+    @pytest.mark.parametrize("change", ["prepared_id", "fence", "authorization_ref"])
+    def test_wrong_launch_identity_cannot_initialize_control(prepared_host, change):
+        host, arguments = prepared_host
+        arguments = arguments | {change: 2 if change == "fence" else "different"}
+        before = host.database.read_bytes()
+        with pytest.raises((LaunchDenied, ValueError)):
+&gt;           host.initialize_control_once(**arguments)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'RunnerHost' object has no attribute 'initialize_control_once'
+
+tests\execution\test_control_initialization.py:67: AttributeError</failure></testcase><testcase classname="tests.execution.test_control_initialization" name="test_wrong_launch_identity_cannot_initialize_control[fence]" time="0.016"><failure message="AttributeError: 'RunnerHost' object has no attribute 'initialize_control_once'">prepared_host = (&lt;karajan.execution.host.RunnerHost object at 0x0000024DF49CE2D0&gt;, {'attempt_id': 'attempt-local-1', 'prepared_id': 'original-start', 'fence': 1, 'authorization_ref': 'authorization-test-1'})
+change = 'fence'
+
+    @pytest.mark.parametrize("change", ["prepared_id", "fence", "authorization_ref"])
+    def test_wrong_launch_identity_cannot_initialize_control(prepared_host, change):
+        host, arguments = prepared_host
+        arguments = arguments | {change: 2 if change == "fence" else "different"}
+        before = host.database.read_bytes()
+        with pytest.raises((LaunchDenied, ValueError)):
+&gt;           host.initialize_control_once(**arguments)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'RunnerHost' object has no attribute 'initialize_control_once'
+
+tests\execution\test_control_initialization.py:67: AttributeError</failure></testcase><testcase classname="tests.execution.test_control_initialization" name="test_wrong_launch_identity_cannot_initialize_control[authorization_ref]" time="0.016"><failure message="AttributeError: 'RunnerHost' object has no attribute 'initialize_control_once'">prepared_host = (&lt;karajan.execution.host.RunnerHost object at 0x0000024DF49CD5B0&gt;, {'attempt_id': 'attempt-local-1', 'prepared_id': 'original-start', 'fence': 1, 'authorization_ref': 'authorization-test-1'})
+change = 'authorization_ref'
+
+    @pytest.mark.parametrize("change", ["prepared_id", "fence", "authorization_ref"])
+    def test_wrong_launch_identity_cannot_initialize_control(prepared_host, change):
+        host, arguments = prepared_host
+        arguments = arguments | {change: 2 if change == "fence" else "different"}
+        before = host.database.read_bytes()
+        with pytest.raises((LaunchDenied, ValueError)):
+&gt;           host.initialize_control_once(**arguments)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'RunnerHost' object has no attribute 'initialize_control_once'
+
+tests\execution\test_control_initialization.py:67: AttributeError</failure></testcase><testcase classname="tests.execution.test_control_initialization" name="test_newer_control_is_never_replaced_by_initialization" time="0.020"><failure message="AttributeError: 'RunnerHost' object has no attribute 'initialize_control_once'">prepared_host = (&lt;karajan.execution.host.RunnerHost object at 0x0000024DF49CC500&gt;, {'attempt_id': 'attempt-local-1', 'prepared_id': 'original-start', 'fence': 1, 'authorization_ref': 'authorization-test-1'})
+
+    def test_newer_control_is_never_replaced_by_initialization(prepared_host):
+        host, arguments = prepared_host
+        host.set_control(
+            arguments["attempt_id"], fence=2,
+            authorization_ref=arguments["authorization_ref"], dispatch_enabled=False,
+        )
+        before = host.database.read_bytes()
+        with pytest.raises(LaunchDenied):
+&gt;           host.initialize_control_once(**arguments)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'RunnerHost' object has no attribute 'initialize_control_once'
+
+tests\execution\test_control_initialization.py:79: AttributeError</failure></testcase><testcase classname="tests.execution.test_control_initialization" name="test_concurrent_initializers_create_one_control" time="0.019"><failure message="AttributeError: 'RunnerHost' object has no attribute 'initialize_control_once'">prepared_host = (&lt;karajan.execution.host.RunnerHost object at 0x0000024DF49E9DC0&gt;, {'attempt_id': 'attempt-local-1', 'prepared_id': 'original-start', 'fence': 1, 'authorization_ref': 'authorization-test-1'})
+
+    def test_concurrent_initializers_create_one_control(prepared_host):
+        host, arguments = prepared_host
+        barrier = Barrier(2)
+        def initialize():
+            barrier.wait()
+            return host.initialize_control_once(**arguments)
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            futures = [pool.submit(initialize) for _ in range(2)]
+&gt;           assert sorted(f.result()["inserted"] for f in futures) == [False, True]
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\execution\test_control_initialization.py:91: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\execution\test_control_initialization.py:91: in &lt;genexpr&gt;
+    assert sorted(f.result()["inserted"] for f in futures) == [False, True]
+                  ^^^^^^^^^^
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\concurrent\futures\_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\concurrent\futures\_base.py:401: in __get_result
+    raise self._exception
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\concurrent\futures\thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def initialize():
+        barrier.wait()
+&gt;       return host.initialize_control_once(**arguments)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'RunnerHost' object has no attribute 'initialize_control_once'
+
+tests\execution\test_control_initialization.py:88: AttributeError</failure></testcase><testcase classname="tests.execution.test_control_initialization" name="test_missing_existing_host_ledger_is_not_recreated" time="0.017"><failure message="AttributeError: 'RunnerHost' object has no attribute 'initialize_control_once'">prepared_host = (&lt;karajan.execution.host.RunnerHost object at 0x0000024DF49FD460&gt;, {'attempt_id': 'attempt-local-1', 'prepared_id': 'original-start', 'fence': 1, 'authorization_ref': 'authorization-test-1'})
+
+    def test_missing_existing_host_ledger_is_not_recreated(prepared_host):
+        host, arguments = prepared_host
+        host.database.rename(host.database.with_suffix(".saved"))
+        with pytest.raises(sqlite3.Error):
+&gt;           host.initialize_control_once(**arguments)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'RunnerHost' object has no attribute 'initialize_control_once'
+
+tests\execution\test_control_initialization.py:98: AttributeError</failure></testcase></testsuite></testsuites>
