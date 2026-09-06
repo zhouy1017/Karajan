@@ -22,6 +22,16 @@ from karajan.routing.compiler import digest
 from karajan.runs import RunError
 
 from .admission import ApprovedTaskAdmission
+from .candidate_subjects import (
+    assert_cycle_quiescent,
+    candidate_identity,
+    check_is_current,
+    current_subject,
+    cycle_for_check,
+    cycles,
+    parse_transition,
+    transition_pending,
+)
 from .execution_budget import claim_process, current_process
 from .go_execution_intent import GoExecutionIntents, _connection
 from .go_task_collector import _validation_policy
@@ -71,10 +81,12 @@ class ApprovedCandidateChecks:
         host: RunnerHost | None = None,
         launch_compiler: Callable[[dict[str, Any]], CheckLaunchSpec] | None = None,
         controller_source: Callable[[], dict[str, Any]] | None = None,
+        subject_validator: Callable[..., None] | None = None,
     ) -> None:
         self.admissions, self.candidates, self.runner = admissions, candidates, runner
         self.host, self.launch_compiler = host, launch_compiler
         self.controller_source = controller_source
+        self.subject_validator = subject_validator
 
     def get(self, run_id: str, operation_id: str, *, principal: str) -> dict[str, Any] | None:
         operation = GoExecutionIntents.read_operation(
@@ -96,7 +108,7 @@ class ApprovedCandidateChecks:
             return None
         # Every external read/stop happens without the operation lock. A missing
         # optional runtime/Host does not prevent recovery of a committed Evidence.
-        for row in original["validation"]["checks"]["runs"]:
+        for row in [row for cycle in cycles(original) for row in cycle["checks"]["runs"]]:
             execution = execution_document(row)
             if (
                 row.get("host_prepared_id") is not None
@@ -148,6 +160,12 @@ class ApprovedCandidateChecks:
                     )
             if row.get("evidence_submit_claim") is not None and row.get("evidence") is None:
                 self._recover_evidence(run_id, operation_id, row)
+            elif (
+                row["phase"] == "observed"
+                and self.runner is not None
+                and not check_is_current(original, row["check_run_id"])
+            ):
+                self._submit_evidence(run_id, operation_id, row["check_run_id"])
             if original["cancel_requested"]:
                 self._cleanup(run_id, operation_id, row)
         with _connection(self.admissions.database, readonly=False) as db:
@@ -157,7 +175,7 @@ class ApprovedCandidateChecks:
                 return None
             before = json.dumps(validation, sort_keys=True)
             if operation["cancel_requested"]:
-                for row in validation["checks"]["runs"]:
+                for row in [row for cycle in cycles(operation) for row in cycle["checks"]["runs"]]:
                     if row["phase"] in {"prepared", "claimed"}:
                         row["phase"] = "cancelled"
             self._summarize(operation)
@@ -167,6 +185,14 @@ class ApprovedCandidateChecks:
 
     def advance(self, run_id: str, operation_id: str, *, principal: str) -> dict[str, Any]:
         GoExecutionIntents._check_owner(self.admissions, run_id, operation_id, principal)
+        operation = GoExecutionIntents.read_operation(
+            self.admissions, run_id, operation_id, principal=principal
+        )
+        if transition_pending(operation):
+            transition = parse_transition(operation)
+            if transition is not None and transition["phase"] == "ready":
+                return self._install_subject(run_id, operation_id, principal)
+            return self.reconcile(run_id, operation_id, principal=principal) or {}
         history = self.get(run_id, operation_id, principal=principal)
         if history is not None:
             observed = next(
@@ -197,6 +223,8 @@ class ApprovedCandidateChecks:
         start_after = None
         with _connection(self.admissions.database, readonly=False) as db:
             operation = self.admissions._load(db, run_id, operation_id)
+            if transition_pending(operation):
+                return dict(deepcopy(operation["validation"]))
             with self._current_run(operation, principal) as run:
                 fresh = self._prepare(run, operation, principal)
                 if "validation" not in operation:
@@ -236,9 +264,66 @@ class ApprovedCandidateChecks:
             return self.get(run_id, operation_id, principal=principal) or result
         return result
 
+    def _install_subject(self, run_id: str, operation_id: str, principal: str) -> dict[str, Any]:
+        with _connection(self.admissions.database, readonly=False) as db:
+            operation = self.admissions._load(db, run_id, operation_id)
+            if operation["cancel_requested"] or operation.get("execution", {}).get(
+                "cancel_requested"
+            ):
+                raise RunError("CANDIDATE_CHECKS_CANCELLED")
+            transition = parse_transition(operation)
+            if transition is None or transition["phase"] == "installed":
+                return dict(deepcopy(operation["validation"]))
+            if transition["phase"] != "ready":
+                raise RunError("REVIEW_SUBJECT_TRANSITION_PENDING")
+            with self._current_run(operation, principal) as run:
+                previous = operation["validation"]
+                current = current_subject(operation, self.candidates)
+                if transition["expected_subject_digest"] != digest(
+                    current["subject"]
+                ) or transition["binding"]["source_candidate"] != candidate_identity(
+                    current["candidate"]
+                ):
+                    raise RunError("REVIEW_SUBJECT_BINDING_MISMATCH")
+                assert_cycle_quiescent(operation)
+                candidate = self.candidates.lookup_review_rebind(
+                    transition["binding"], command_key=transition["command_key"]
+                )
+                if candidate is None or candidate_identity(candidate) != transition["receipt"]:
+                    raise RunError("REVIEW_SUBJECT_RECEIPT_MISMATCH")
+                subject = deepcopy(previous["subject"])
+                subject.update(
+                    revision=subject["revision"] + 1, candidate=candidate_identity(candidate)
+                )
+                installed = deepcopy(transition)
+                installed["phase"] = "installed"
+                prospective = deepcopy(operation)
+                prospective["validation"] = {
+                    "subject": subject,
+                    "review_binding": installed,
+                    "subject_transition": installed,
+                }
+                fresh = self._prepare(run, prospective, principal)
+                archive = {
+                    key: deepcopy(value)
+                    for key, value in previous.items()
+                    if key not in {"history", "subject_transition", "intent_history"}
+                }
+                fresh.update(
+                    history=[*deepcopy(previous.get("history", [])), archive],
+                    review_binding=installed,
+                    subject_transition=deepcopy(installed),
+                )
+                if "intent_history" in previous:
+                    fresh["intent_history"] = deepcopy(previous["intent_history"])
+                operation["validation"] = fresh
+                self.admissions._save(db, operation)
+                return dict(deepcopy(fresh))
+
     @staticmethod
-    def _summarize(operation: dict[str, Any]) -> None:
-        validation = operation["validation"]
+    def _summarize(operation: dict[str, Any], validation: dict[str, Any] | None = None) -> None:
+        if validation is None:
+            validation = operation["validation"]
         rows = validation["checks"]["runs"]
         if operation["cancel_requested"]:
             stopped = all(
@@ -371,7 +456,7 @@ class ApprovedCandidateChecks:
                 raise RunError("CANDIDATE_CHECK_EVIDENCE_CONFLICT")
             row["evidence"] = deepcopy(evidence)
             row["phase"] = "recorded"
-            self._summarize(operation)
+            self._summarize(operation, cycle_for_check(operation, check_run_id))
             self.admissions._save(db, operation)
 
     def _submit_evidence(self, run_id: str, operation_id: str, check_run_id: str) -> None:
@@ -429,7 +514,7 @@ class ApprovedCandidateChecks:
                 raise RunError("CANDIDATE_CHECK_OBSERVATION_CONFLICT")
             current["evidence_request"], current["evidence_submit_claim"] = request, claim
             current["phase"] = "evidence_submit_claimed"
-            self._summarize(operation)
+            self._summarize(operation, cycle_for_check(operation, check_run_id))
             self.admissions._save(db, operation)
         # This sole submission follows a durable once-claim. Recovery reads the
         # complete request+log identity; it never retries an uncertain submission.
@@ -450,6 +535,8 @@ class ApprovedCandidateChecks:
         with _connection(self.admissions.database, readonly=False) as db:
             db.execute("PRAGMA query_only=ON")
             operation = self.admissions._load(db, run_id, operation_id)
+            if transition_pending(operation) or not check_is_current(operation, check_run_id):
+                raise RunError("CANDIDATE_CHECK_SUBJECT_NOT_CURRENT")
             row = self._row(operation, check_run_id)
             with self._current_run(operation, principal) as run:
                 fresh = self._prepare(run, operation, principal)
@@ -468,7 +555,7 @@ class ApprovedCandidateChecks:
 
     @staticmethod
     def _row(operation: dict[str, Any], check_run_id: str) -> dict[str, Any]:
-        for row in operation.get("validation", {}).get("checks", {}).get("runs", []):
+        for row in cycle_for_check(operation, check_run_id)["checks"]["runs"]:
             if row["check_run_id"] == check_run_id:
                 current: dict[str, Any] = row
                 return current
@@ -489,7 +576,7 @@ class ApprovedCandidateChecks:
             current["host_observation"] = asdict(snapshot)
             if current["phase"] == "host_start_claimed":
                 current["phase"] = "host_started"
-                operation["validation"]["checks"]["phase"] = current["phase"]
+                cycle_for_check(operation, check_run_id)["checks"]["phase"] = current["phase"]
             self.admissions._save(db, operation)
 
     def consume_check(
@@ -506,6 +593,8 @@ class ApprovedCandidateChecks:
             self.admissions, run_id, operation_id, principal=principal
         )
         row = self._row(original, check_run_id)
+        if not check_is_current(original, check_run_id) or transition_pending(original):
+            return self.reconcile(run_id, operation_id, principal=principal)
         if row.get("native_claim") is not None or row.get("observation") is not None:
             return self.reconcile(run_id, operation_id, principal=principal)
         if self.host is None or self.runner is None:
@@ -523,6 +612,8 @@ class ApprovedCandidateChecks:
                     raise RunError("CANDIDATE_CHECK_RUNNER_CHANGED")
         with _connection(self.admissions.database, readonly=False) as db:
             operation = self.admissions._load(db, run_id, operation_id)
+            if transition_pending(operation) or not check_is_current(operation, check_run_id):
+                raise RunError("CANDIDATE_CHECK_SUBJECT_NOT_CURRENT")
             held = self._row(operation, check_run_id)
             if operation["cancel_requested"]:
                 raise RunError("CANDIDATE_CHECKS_CANCELLED")
@@ -561,7 +652,9 @@ class ApprovedCandidateChecks:
                     if isinstance(error, RunError)
                     else "CANDIDATE_CHECK_EXECUTION_FAILED"
                 ]
-                operation["validation"]["checks"]["phase"] = "reconciliation_required"
+                cycle_for_check(operation, check_run_id)["checks"]["phase"] = (
+                    "reconciliation_required"
+                )
                 self.admissions._save(db, operation)
             raise RunError("CANDIDATE_CHECK_EXECUTION_FAILED") from None
         return self.get(run_id, operation_id, principal=principal)
@@ -657,7 +750,7 @@ class ApprovedCandidateChecks:
                 raise RunError("CANDIDATE_CHECK_OBSERVATION_CONFLICT")
             row["observation"] = document
             row["phase"] = "observed"
-            operation["validation"]["checks"]["phase"] = "observed"
+            cycle_for_check(operation, check_run_id)["checks"]["phase"] = "observed"
             self.admissions._save(db, operation)
 
     @contextmanager
@@ -687,6 +780,16 @@ class ApprovedCandidateChecks:
                     != run["configuration_snapshot"]["repository"]
                 ):
                     raise RunError("CANDIDATE_CHECKS_REPOSITORY_CHANGED")
+                transition = parse_transition(operation)
+                binding = (
+                    transition
+                    if transition is not None and transition["phase"] == "ready"
+                    else operation.get("validation", {}).get("review_binding")
+                )
+                if binding is not None:
+                    if self.subject_validator is None:
+                        raise RunError("REVIEW_BINDING_PRODUCER_REQUIRED")
+                    self.subject_validator(project_db, run, operation, binding, principal=principal)
                 yield run
 
     def _claim(
@@ -808,6 +911,15 @@ class ApprovedCandidateChecks:
         ):
             raise RunError("CANDIDATE_CHECKS_CAPTURE_MISMATCH")
         policy = _validation_policy(source)
+        retained_subject = None
+        if operation.get("validation") is not None:
+            resolved = current_subject(operation, self.candidates)
+            retained_subject, candidate = resolved["subject"], resolved["candidate"]
+            installed = operation["validation"].get("review_binding")
+            if installed is not None:
+                policy["review"]["approved_reviewers"] = [
+                    row["reviewer"] for row in installed["binding"]["reviewer_sources"]
+                ]
         if candidate["request"]["policy"] != policy:
             raise RunError("CANDIDATE_CHECKS_POLICY_MISMATCH")
         current = {
@@ -852,6 +964,8 @@ class ApprovedCandidateChecks:
             "plan_digest": plan["plan_digest"],
             "execution_policy_digest": source["execution_policy"]["digest"],
         }
+        if retained_subject is not None:
+            subject = retained_subject
         if self.runner is None or self.controller_source is None:
             raise RunError("CANDIDATE_CHECK_RUNNER_REQUIRED")
         controller = self.controller_source()
@@ -896,7 +1010,7 @@ class ApprovedCandidateChecks:
         result = {
             "schema_version": "karajan.candidate-validation.v1",
             "subject": subject,
-            "checks": {"revision": 1, "phase": "prepared", "runs": executions},
+            "checks": {"revision": subject["revision"], "phase": "prepared", "runs": executions},
             "review": "not_run",
             "local_gate_passed": False,
             "delivery_eligible": False,

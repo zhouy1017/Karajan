@@ -219,6 +219,7 @@ def open_check_services(
     from karajan.isolation.check_runner import FixedCheckRunner, PythonCheckEnvironment
 
     from .candidate_checks import ApprovedCandidateChecks, CheckLaunchSpec
+    from .reviewer_binding import ApprovedReviewerBindings
 
     settings = CheckSettings.from_document(settings.document())
     actual, bootstrap_sha = _read_bootstrap(settings.control_directory)
@@ -233,7 +234,8 @@ def open_check_services(
     )
     planner = RunPlanner(settings.state_directory / "runs.sqlite", projects, existing_only=True)
     capacity = CapacityStore(settings.state_directory / "capacity.sqlite", existing_only=True)
-    routing = ApprovedRunRouting(planner, ProfileQualificationStore(projects), capacity)
+    qualifications = ProfileQualificationStore(projects)
+    routing = ApprovedRunRouting(planner, qualifications, capacity)
     admissions = ApprovedTaskAdmission(
         settings.state_directory / "task-admissions.sqlite", routing, existing_only=True
     )
@@ -322,6 +324,9 @@ def open_check_services(
         host=host,
         launch_compiler=launch,
         controller_source=current_source,
+        subject_validator=ApprovedReviewerBindings(
+            admissions, candidates, qualifications
+        ).current_locked,
     )
 
 
