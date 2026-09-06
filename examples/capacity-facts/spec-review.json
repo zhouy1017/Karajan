@@ -1,0 +1,80 @@
+{
+  "base_commit": "07da55e80f5a2c92cf6b3b5612e5e5a706d0cc72",
+  "evidence_bindings": [
+    {
+      "path": "examples/capacity-facts/spec-review/cases.py",
+      "sha256": "cc85af153a2d28666c490955594a72216443feed4b1f0c0f0c42615e0ee3ed46"
+    },
+    {
+      "path": "examples/capacity-facts/spec-review/test_independent_spec.py",
+      "sha256": "dcddb59e162abb589cc3bf08371c9edc2a0218a29321956176d01cfaf03d7a3a"
+    },
+    {
+      "path": "examples/capacity-facts/spec-independent.junit.xml",
+      "sha256": "b2728b0bb42a4b29604eb72b6eb8537356ea986451180501241f3403b0c58c30"
+    },
+    {
+      "path": "examples/capacity-facts/spec-observed-cases.json",
+      "sha256": "d6df5d77e09e8e921b051d012bcb02d527103b07e6f0357002ad575ac8fe613c"
+    }
+  ],
+  "findings": [],
+  "limits": [
+    "No provider qualification, credentials, or cash API operations were performed.",
+    "The no-network test blocked socket connect/connect_ex and observed zero calls; no remote service was contacted.",
+    "No full Run builder, routing activation, cash accounting, or cross-database admission is accepted by this review.",
+    "Frozen facts are a typed immutable value and source hash, not an authorization signature.",
+    "Before/after comparisons cover all nine logical SQLite tables. Storage headers, journals, and operational timing are not claimed byte-identical."
+  ],
+  "product_changes_by_reviewer": false,
+  "review_axis": "Spec",
+  "schema_version": "karajan.capacity-facts.spec-review.v1",
+  "scope": "CapacityStore.routing_facts capacity_fragment only",
+  "source_bindings": [
+    {
+      "path": "backend/karajan/capacity/facts.py",
+      "sha256": "7e26ff6786c7ec8e1531f948ab0cf0d4af58ff8e7ccca9fabf6ebee07c7ee9a9"
+    },
+    {
+      "path": "backend/karajan/capacity/store.py",
+      "sha256": "b9547e2e625661e26c5efb5dbe6550fa73025e8b7157ce15d3653e72d963abff"
+    },
+    {
+      "path": "backend/karajan/capacity/__init__.py",
+      "sha256": "125b22eb0a65bd099947f2918b3690a2853109f0a79299cd8696d8851d0f3699"
+    },
+    {
+      "path": "backend/karajan/capacity/models.py",
+      "sha256": "bd58f6b0c98991cfaff402e863cebbab6f819b54ba244a05db56b4706d40d7ad"
+    },
+    {
+      "path": "backend/karajan/resources/broker.py",
+      "sha256": "cb1d6444a8ea17aa3c86ce4f32db769d205a2dedcaa257be00666bd9ebff8df4"
+    },
+    {
+      "path": "tests/capacity/test_routing_facts.py",
+      "sha256": "af57e1bb0800e70775129d826d34abaa26144a16a34f8523c89b083c84d76208"
+    }
+  ],
+  "verification": {
+    "command": ".venv/Scripts/python.exe -m pytest examples/capacity-facts/spec-review/test_independent_spec.py -q --junitxml=examples/capacity-facts/spec-independent.junit.xml",
+    "errors": 0,
+    "failures": 0,
+    "junit_seconds": 0.537,
+    "skipped": 0,
+    "testcases": [
+      "test_independent_partial_coverage_preserves_future_slice",
+      "test_independent_expiration_does_not_write_or_release_unknown",
+      "test_independent_all_window_kinds_keep_unattributed_use",
+      "test_independent_exhaustion_survives_current_unknown_and_later_unapplied",
+      "test_independent_negative_remaining_is_a_fact_and_conversion_gap",
+      "test_independent_aggregate_above_single_quantity_range_is_not_clamped",
+      "test_independent_account_filter_and_current_policy",
+      "test_independent_one_snapshot_survives_committed_concurrent_update[policy]",
+      "test_independent_one_snapshot_survives_committed_concurrent_update[usage]",
+      "test_independent_bad_clock_and_export_do_not_connect_or_write"
+    ],
+    "tests": 10,
+    "timestamp": "2026-09-06T10:10:43.644372+08:00"
+  }
+}

@@ -1,0 +1,135 @@
+{
+  "schema_version": "karajan.capacity-facts-freeze.v1",
+  "captured_at": "2026-09-06T02:17:18.262692+00:00",
+  "base_commit": "07da55e80f5a2c92cf6b3b5612e5e5a706d0cc72",
+  "branch": "codex/m3-capacity-routing-facts",
+  "bindings": {
+    ".gitattributes": {
+      "working_sha256": "1dbea104d1df7dad0c5cff9e43187e2e343fcbf485900b0608c6877cc319d074",
+      "git_index_sha256": "1dbea104d1df7dad0c5cff9e43187e2e343fcbf485900b0608c6877cc319d074",
+      "representation": "identical"
+    },
+    "README.md": {
+      "working_sha256": "da661d3593bc966dfac00f3905827ba7f701b313b832a3fdefcdb9b94ae76413",
+      "git_index_sha256": "da661d3593bc966dfac00f3905827ba7f701b313b832a3fdefcdb9b94ae76413",
+      "representation": "identical"
+    },
+    "backend/karajan/capacity/__init__.py": {
+      "working_sha256": "125b22eb0a65bd099947f2918b3690a2853109f0a79299cd8696d8851d0f3699",
+      "git_index_sha256": "125b22eb0a65bd099947f2918b3690a2853109f0a79299cd8696d8851d0f3699",
+      "representation": "identical"
+    },
+    "backend/karajan/capacity/facts.py": {
+      "working_sha256": "7e26ff6786c7ec8e1531f948ab0cf0d4af58ff8e7ccca9fabf6ebee07c7ee9a9",
+      "git_index_sha256": "7e26ff6786c7ec8e1531f948ab0cf0d4af58ff8e7ccca9fabf6ebee07c7ee9a9",
+      "representation": "identical"
+    },
+    "backend/karajan/capacity/store.py": {
+      "working_sha256": "b9547e2e625661e26c5efb5dbe6550fa73025e8b7157ce15d3653e72d963abff",
+      "git_index_sha256": "b9547e2e625661e26c5efb5dbe6550fa73025e8b7157ce15d3653e72d963abff",
+      "representation": "identical"
+    },
+    "docs/implementation/m3-capacity-facts.md": {
+      "working_sha256": "79a03f7c7d36ead5dfe055a12d045ea613164fffde5d587c5592039e7dff0fe2",
+      "git_index_sha256": "79a03f7c7d36ead5dfe055a12d045ea613164fffde5d587c5592039e7dff0fe2",
+      "representation": "identical"
+    },
+    "docs/implementation/m3-routing-workbench.md": {
+      "working_sha256": "b6d7ed285b7c2d0695d87a48532c206e81a9cae943ae0871543e63842881bd7b",
+      "git_index_sha256": "b6d7ed285b7c2d0695d87a48532c206e81a9cae943ae0871543e63842881bd7b",
+      "representation": "identical"
+    },
+    "docs/implementation/requirement-coverage.md": {
+      "working_sha256": "52189dfb0a421cc279af9cbc58ac1b23af9b73a8917d28a60641332d63fd05b3",
+      "git_index_sha256": "52189dfb0a421cc279af9cbc58ac1b23af9b73a8917d28a60641332d63fd05b3",
+      "representation": "identical"
+    },
+    "examples/capacity-facts/README.md": {
+      "working_sha256": "c5fcf3fc2cb30fdc4bea24739f65bee59d90162af00d53eed6ac5f03e2e3a165",
+      "git_index_sha256": "c5fcf3fc2cb30fdc4bea24739f65bee59d90162af00d53eed6ac5f03e2e3a165",
+      "representation": "identical"
+    },
+    "examples/capacity-facts/author-verification.json": {
+      "working_sha256": "326f7fc2057921c4edad467735648f79582806675b5ce4863741b979c7754f95",
+      "git_index_sha256": "326f7fc2057921c4edad467735648f79582806675b5ce4863741b979c7754f95",
+      "representation": "identical"
+    },
+    "examples/capacity-facts/capacity-routing-facts-after-first.junit.xml": {
+      "working_sha256": "402b5183a20a0f2b2e1ae4dcac5a232d27cf47e4942ba1dcbf7919c3559028d0",
+      "git_index_sha256": "402b5183a20a0f2b2e1ae4dcac5a232d27cf47e4942ba1dcbf7919c3559028d0",
+      "representation": "identical"
+    },
+    "examples/capacity-facts/capacity-routing-facts-all.junit.xml": {
+      "working_sha256": "b20c19a25fd448534d60ea227cc9af79429569757c150a39b3d7ff3bf7913d64",
+      "git_index_sha256": "b20c19a25fd448534d60ea227cc9af79429569757c150a39b3d7ff3bf7913d64",
+      "representation": "identical"
+    },
+    "examples/capacity-facts/capacity-routing-facts-author.junit.xml": {
+      "working_sha256": "f1d86511807228bdec18f3d62f447410e696c3edfe51795d20e1be512c0de6bc",
+      "git_index_sha256": "f1d86511807228bdec18f3d62f447410e696c3edfe51795d20e1be512c0de6bc",
+      "representation": "identical"
+    },
+    "examples/capacity-facts/capacity-routing-facts-before.junit.xml": {
+      "working_sha256": "33969a741fcea507919d0c077762335b0a56f2e54c11d570a51e46c52f515f5b",
+      "git_index_sha256": "33969a741fcea507919d0c077762335b0a56f2e54c11d570a51e46c52f515f5b",
+      "representation": "identical"
+    },
+    "examples/capacity-facts/capacity-routing-facts-wsl.junit.xml": {
+      "working_sha256": "4a95aa2a445e80bdd78b155b8e8dffcb41a0383e7ecb4353c4d8b89c1bcbfbe7",
+      "git_index_sha256": "4a95aa2a445e80bdd78b155b8e8dffcb41a0383e7ecb4353c4d8b89c1bcbfbe7",
+      "representation": "identical"
+    },
+    "examples/capacity-facts/root-standards.json": {
+      "working_sha256": "e5c7ab15b37b5731f806401dd56c90670cd5966d87987c3accb885e3b0bb1053",
+      "git_index_sha256": "e5c7ab15b37b5731f806401dd56c90670cd5966d87987c3accb885e3b0bb1053",
+      "representation": "identical"
+    },
+    "examples/capacity-facts/spec-independent.junit.xml": {
+      "working_sha256": "b2728b0bb42a4b29604eb72b6eb8537356ea986451180501241f3403b0c58c30",
+      "git_index_sha256": "b2728b0bb42a4b29604eb72b6eb8537356ea986451180501241f3403b0c58c30",
+      "representation": "identical"
+    },
+    "examples/capacity-facts/spec-observed-cases.json": {
+      "working_sha256": "d6df5d77e09e8e921b051d012bcb02d527103b07e6f0357002ad575ac8fe613c",
+      "git_index_sha256": "d6df5d77e09e8e921b051d012bcb02d527103b07e6f0357002ad575ac8fe613c",
+      "representation": "identical"
+    },
+    "examples/capacity-facts/spec-review.json": {
+      "working_sha256": "eba203b49fa74b7f1f718ae37258c6794ea58d99ff3ccde41957bc25c932aac9",
+      "git_index_sha256": "eba203b49fa74b7f1f718ae37258c6794ea58d99ff3ccde41957bc25c932aac9",
+      "representation": "identical"
+    },
+    "examples/capacity-facts/spec-review.md": {
+      "working_sha256": "53b3dc7ec827c7ed79022d0b08cdd3007ff2fba8b18ac30a2e57c4c975408b8d",
+      "git_index_sha256": "53b3dc7ec827c7ed79022d0b08cdd3007ff2fba8b18ac30a2e57c4c975408b8d",
+      "representation": "identical"
+    },
+    "examples/capacity-facts/spec-review/cases.py": {
+      "working_sha256": "cc85af153a2d28666c490955594a72216443feed4b1f0c0f0c42615e0ee3ed46",
+      "git_index_sha256": "cc85af153a2d28666c490955594a72216443feed4b1f0c0f0c42615e0ee3ed46",
+      "representation": "identical"
+    },
+    "examples/capacity-facts/spec-review/test_independent_spec.py": {
+      "working_sha256": "dcddb59e162abb589cc3bf08371c9edc2a0218a29321956176d01cfaf03d7a3a",
+      "git_index_sha256": "dcddb59e162abb589cc3bf08371c9edc2a0218a29321956176d01cfaf03d7a3a",
+      "representation": "identical"
+    },
+    "tests/capacity/test_routing_facts.py": {
+      "working_sha256": "af57e1bb0800e70775129d826d34abaa26144a16a34f8523c89b083c84d76208",
+      "git_index_sha256": "af57e1bb0800e70775129d826d34abaa26144a16a34f8523c89b083c84d76208",
+      "representation": "identical"
+    }
+  },
+  "scope": "Every staged source, test, documentation and evidence file for this slice except this manifest; unchanged dependencies are bound by the base commit. Prior reports retain their actual source and evidence bytes.",
+  "checks": {
+    "windows_capacity": "77 passed; capacity-routing-facts-all.junit.xml",
+    "wsl_capacity": "77 passed; capacity-routing-facts-wsl.junit.xml",
+    "spec": "10 passed; spec-review.json",
+    "standards": "no findings; root-standards.json",
+    "ruff": "check . passed",
+    "mypy": "backend/karajan passed; 91 sources",
+    "remote_ci": "not_run at freeze; record actual result after publication"
+  },
+  "activation_allowed": false,
+  "live_qualification": "not_run"
+}

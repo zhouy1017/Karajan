@@ -29,6 +29,9 @@ examples/routing-workbench/*.json -text whitespace=cr-at-eol
 examples/routing-workbench/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
 examples/routing-workbench/review-fixes/*.json -text whitespace=cr-at-eol
 examples/routing-workbench/review-fixes/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+# Preserve capacity capture observations and actual test reports.
+examples/capacity-facts/*.json -text whitespace=cr-at-eol
+examples/capacity-facts/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
 # Run approval review reports preserve raw hashes and failure tracebacks.
 examples/run-routing-authorization/*.json -text whitespace=cr-at-eol
 examples/run-routing-authorization/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
