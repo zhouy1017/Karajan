@@ -48,6 +48,29 @@ class IsolationProbeTests(unittest.TestCase):
         self.assertEqual(result.stderr, "")
         return result.returncode, json.loads(result.stdout)
 
+    def assert_applicable_canary_checks_passed(self, code: int, report: dict) -> None:
+        checks = {check["id"]: check for check in report["checks"]}
+        self.assertEqual(len(checks), 13)
+        for name, check in checks.items():
+            if name != "wsl_interop":
+                self.assertEqual(check["status"], "passed", check)
+        interop = checks["wsl_interop"]
+        self.assertFalse(interop["evidence"]["sandbox_executed"])
+        self.assertFalse(report["dispatch_eligible"])
+        if Path("/mnt/c/Windows/System32/cmd.exe").is_file():
+            self.assertTrue(interop["evidence"]["baseline_executed"])
+            self.assertEqual(interop["status"], "passed", interop)
+            self.assertEqual(code, 0, report)
+            self.assertEqual(report["status"], "passed")
+            self.assertEqual(report["reason_codes"], [])
+        else:
+            self.assertFalse(interop["evidence"]["baseline_executed"])
+            self.assertIsNone(interop["evidence"]["fixture_digest"])
+            self.assertEqual(interop["status"], "not_run", interop)
+            self.assertEqual(code, 1, report)
+            self.assertEqual(report["status"], "not_run")
+            self.assertEqual(report["reason_codes"], ["CANARY_CHECK_NOT_RUN"])
+
     @unittest.skipIf(sys.platform == "linux", "Windows cannot qualify Linux namespaces")
     def test_native_windows_does_not_claim_linux_isolation(self) -> None:
         code, report = self.invoke()
@@ -66,7 +89,7 @@ class IsolationProbeTests(unittest.TestCase):
         if code == 2 and os.environ.get("KARAJAN_REQUIRE_UNSHARE") != "1":
             self.skipTest("This environment cannot create the required namespaces")
 
-        self.assertEqual(code, 0, report)
+        self.assert_applicable_canary_checks_passed(code, report)
         checks = {check["id"]: check for check in report["checks"]}
         for name in ["symlink_escape", "environment", "inherited_fds", "host_proc", "capabilities"]:
             self.assertEqual(checks[name]["status"], "passed", checks[name])
@@ -80,7 +103,7 @@ class IsolationProbeTests(unittest.TestCase):
         if code == 2 and os.environ.get("KARAJAN_REQUIRE_UNSHARE") != "1":
             self.skipTest("This environment cannot create the required namespaces")
 
-        self.assertEqual(code, 0)
+        self.assert_applicable_canary_checks_passed(code, report)
         checks = {check["id"]: check for check in report["checks"]}
         self.assertEqual(checks["workspace_read_write"]["status"], "passed")
         self.assertEqual(checks["protected_files"]["status"], "passed")
@@ -94,7 +117,7 @@ class IsolationProbeTests(unittest.TestCase):
         if code == 2 and os.environ.get("KARAJAN_REQUIRE_UNSHARE") != "1":
             self.skipTest("This environment cannot create the required namespaces")
 
-        self.assertEqual(code, 0, report)
+        self.assert_applicable_canary_checks_passed(code, report)
         checks = {check["id"]: check for check in report["checks"]}
         self.assertEqual(checks["network_endpoints"]["status"], "passed")
         self.assertEqual(checks["network_endpoints"]["evidence"]["baseline_receipts"], 4)
@@ -124,7 +147,7 @@ class IsolationProbeTests(unittest.TestCase):
         if code == 2 and os.environ.get("KARAJAN_REQUIRE_UNSHARE") != "1":
             self.skipTest("This environment cannot create the required namespaces")
 
-        self.assertEqual(code, 0, report)
+        self.assert_applicable_canary_checks_passed(code, report)
         checks = {check["id"]: check for check in report["checks"]}
         self.assertEqual(checks["process_cancel"]["status"], "passed")
         facts = checks["process_cancel"]["evidence"]
@@ -195,7 +218,7 @@ class IsolationProbeTests(unittest.TestCase):
         if code == 2 and os.environ.get("KARAJAN_REQUIRE_UNSHARE") != "1":
             self.skipTest("This environment cannot create the required namespaces")
 
-        self.assertEqual(code, 0, report)
+        self.assert_applicable_canary_checks_passed(code, report)
         checks = {check["id"]: check for check in report["checks"]}
         self.assertEqual(checks["candidate_collection"]["status"], "passed")
         evidence = checks["candidate_collection"]["evidence"]
@@ -237,10 +260,15 @@ class IsolationProbeTests(unittest.TestCase):
         code, report = self.invoke()
         if code == 2 and os.environ.get("KARAJAN_REQUIRE_UNSHARE") != "1":
             self.skipTest("This environment cannot create the required namespaces")
-        acknowledgement = require_qualified(
-            report, self.spec["binding"], scope="fixed_python_canary"
-        )
-        self.assertFalse(acknowledgement["dispatch_eligible"])
+        self.assert_applicable_canary_checks_passed(code, report)
+        if Path("/mnt/c/Windows/System32/cmd.exe").is_file():
+            acknowledgement = require_qualified(
+                report, self.spec["binding"], scope="fixed_python_canary"
+            )
+            self.assertFalse(acknowledgement["dispatch_eligible"])
+        else:
+            with self.assertRaisesRegex(ValueError, "CANARY_EVIDENCE_INCOMPLETE"):
+                require_qualified(report, self.spec["binding"], scope="fixed_python_canary")
         wrong_binding = {**self.spec["binding"], "fence": 2}
         with self.assertRaisesRegex(ValueError, "BINDING_MISMATCH"):
             require_qualified(report, wrong_binding, scope="fixed_python_canary")
