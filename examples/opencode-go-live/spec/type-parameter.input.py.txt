@@ -1,0 +1,2 @@
+def clamp[T: unexpected_callable()](value, low, high):
+    return max(low, min(value, high))

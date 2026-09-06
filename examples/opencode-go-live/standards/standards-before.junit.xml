@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="5" time="0.508" timestamp="2026-09-06T10:51:42.853321+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.go-probe-standards.independent_cases" name="test_upstream_credential_echo_never_reaches_native_runtime[literal]" time="0.109"><failure message="AssertionError: Credential-bearing valid SSE was forwarded to native&#10;assert 200 &gt;= 400&#10; +  where 200 = &lt;Response [200 OK]&gt;.status_code">escaped = False
+
+    @pytest.mark.parametrize("escaped", [False, True], ids=["literal", "json-unicode-escaped"])
+    def test_upstream_credential_echo_never_reaches_native_runtime(escaped):
+        raw = stream("upstream diagnostic: " + SECRET)
+        if escaped:
+            raw = raw.replace(SECRET.encode(), "".join(f"\\u{ord(c):04x}" for c in SECRET).encode())
+        response, receipts, sent, cleanup = request_from_mock_upstream(raw)
+        assert len(sent) == 1
+        assert sent[0].headers["Authorization"] == f"Bearer {SECRET}"
+        assert cleanup == {"status": "closed", "errors": []}
+&gt;       assert response.status_code &gt;= 400, "Credential-bearing valid SSE was forwarded to native"
+E       AssertionError: Credential-bearing valid SSE was forwarded to native
+E       assert 200 &gt;= 400
+E        +  where 200 = &lt;Response [200 OK]&gt;.status_code
+
+.cache\go-probe-standards\independent_cases.py:71: AssertionError</failure></testcase><testcase classname=".cache.go-probe-standards.independent_cases" name="test_upstream_credential_echo_never_reaches_native_runtime[json-unicode-escaped]" time="0.071"><failure message="AssertionError: Credential-bearing valid SSE was forwarded to native&#10;assert 200 &gt;= 400&#10; +  where 200 = &lt;Response [200 OK]&gt;.status_code">escaped = True
+
+    @pytest.mark.parametrize("escaped", [False, True], ids=["literal", "json-unicode-escaped"])
+    def test_upstream_credential_echo_never_reaches_native_runtime(escaped):
+        raw = stream("upstream diagnostic: " + SECRET)
+        if escaped:
+            raw = raw.replace(SECRET.encode(), "".join(f"\\u{ord(c):04x}" for c in SECRET).encode())
+        response, receipts, sent, cleanup = request_from_mock_upstream(raw)
+        assert len(sent) == 1
+        assert sent[0].headers["Authorization"] == f"Bearer {SECRET}"
+        assert cleanup == {"status": "closed", "errors": []}
+&gt;       assert response.status_code &gt;= 400, "Credential-bearing valid SSE was forwarded to native"
+E       AssertionError: Credential-bearing valid SSE was forwarded to native
+E       assert 200 &gt;= 400
+E        +  where 200 = &lt;Response [200 OK]&gt;.status_code
+
+.cache\go-probe-standards\independent_cases.py:71: AssertionError</failure></testcase><testcase classname=".cache.go-probe-standards.independent_cases" name="test_clean_upstream_stream_still_passes_without_content_in_receipts" time="0.066" /><testcase classname=".cache.go-probe-standards.independent_cases" name="test_incomplete_upstream_stream_cannot_be_forwarded_as_success" time="0.061" /><testcase classname=".cache.go-probe-standards.independent_cases" name="test_credential_scan_detects_cross_chunk_boundary" time="0.009" /></testsuite></testsuites>

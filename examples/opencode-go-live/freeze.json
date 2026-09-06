@@ -1,0 +1,189 @@
+{
+  "base_commit": "0a30e0f17408f253a5e9ee2d758554af47cd24f9",
+  "staged_files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "535dc05d15b0bb0085389ea882bfe85a7dbd24fa7ec6069f4e2f560f0e160338"
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "e2aa782bb88151c7da087f5d56001e0cbc3c3f69a232f122e0c93e9af7aefeee"
+    },
+    {
+      "path": "README.md",
+      "sha256": "87c7e2242db0502a2020431ef025734132e38a51052d8cce54e60c38aad4f064"
+    },
+    {
+      "path": "backend/karajan/adapters/opencode/go_evidence.py",
+      "sha256": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b"
+    },
+    {
+      "path": "backend/karajan/adapters/opencode/go_live.py",
+      "sha256": "3b35606c2fdd8052265ddb15bc375be3b0d54637840ac5947173d4186bb33c4a"
+    },
+    {
+      "path": "backend/karajan/adapters/opencode/go_relay.py",
+      "sha256": "ca2aa659644baf8a78c374a3ceac441eb905f39de4ce495320cd6501cda535df"
+    },
+    {
+      "path": "docs/implementation/m2-opencode-go-live.md",
+      "sha256": "8a06dc6b072bd289de126a92efb876f83cef2c6393f32bb94c691f3dbbc12afd"
+    },
+    {
+      "path": "docs/planning/v1/issues/m2-05.md",
+      "sha256": "f0000de52c6927e5e9b7d0170f260340ed0d29f97bdaba82c025c9219e98b8b7"
+    },
+    {
+      "path": "examples/opencode-go-live/.gitattributes",
+      "sha256": "c9a43db411a49d5878844e172782c3d660457ae4e36955a2aa01a1fdd632009c"
+    },
+    {
+      "path": "examples/opencode-go-live/README.md",
+      "sha256": "2c23e5efb606ad91e47b29a2be9a10255660399fdc5ec351f3232643aaf4461d"
+    },
+    {
+      "path": "examples/opencode-go-live/denied_read.report.json",
+      "sha256": "5da7aece0183ee3f417222b637d214cfbb78d69fec9f176dcbddde5fea2d6db5"
+    },
+    {
+      "path": "examples/opencode-go-live/direct_models.json",
+      "sha256": "de6400f1bfef7477ed8c5c6fda0a68816d2aea8ae20059c6bba8c23a82cc0bed"
+    },
+    {
+      "path": "examples/opencode-go-live/direct_text.json",
+      "sha256": "a23076a575c52b7e8261d0463469424cedf475e74d37e87df16a2a8df6a39646"
+    },
+    {
+      "path": "examples/opencode-go-live/edit.report.json",
+      "sha256": "8c50a3f2191153715cd144e844f4fb6b0c22071e8175430ba5258342ebb6ecf1"
+    },
+    {
+      "path": "examples/opencode-go-live/evidence-before.junit.xml",
+      "sha256": "8bea60e521496229a71f1579e30d571825dbd30dd5b31a6405f5573a9dce3995"
+    },
+    {
+      "path": "examples/opencode-go-live/prototype-provenance.json",
+      "sha256": "490ae9ab4e28a2a50748d367f738e023d4e670bf650ca0c27df69abbd5e51c7a"
+    },
+    {
+      "path": "examples/opencode-go-live/prototype_denied_read.json",
+      "sha256": "610a67053ebf0142c5900c246d4b80d99e139a8efc172ec695ae0b4b74ad5523"
+    },
+    {
+      "path": "examples/opencode-go-live/prototype_edit.json",
+      "sha256": "c73ccd3d449a49a152ccf41c28f462fef1ca2719f5bbb112640a908a73b3d67a"
+    },
+    {
+      "path": "examples/opencode-go-live/prototype_edit_recorder_error.json",
+      "sha256": "1a6ccb9cf76e1a20dc1e5e1cc75e5ecc2ee9ec39ff64f798dbbd34e64477a524"
+    },
+    {
+      "path": "examples/opencode-go-live/relay-before.junit.xml",
+      "sha256": "e1d6f10a96efc4dc5d7df2b4e31699f965814a50b4684c9f4eff30256de1e377"
+    },
+    {
+      "path": "examples/opencode-go-live/relay-cleanup-before.junit.xml",
+      "sha256": "3ac25b142e37a3e01079d0db7c01cb7e86bb9a3ad597e8d1725449f4aa96d58c"
+    },
+    {
+      "path": "examples/opencode-go-live/relay-trailer-before.junit.xml",
+      "sha256": "22c09f9239a94919812d3cf21011dbc0f5b5b2391d5d854e0a0c15c9bedd75e5"
+    },
+    {
+      "path": "examples/opencode-go-live/spec/README.md",
+      "sha256": "0d25ee701aef8e01464896dfa905c81d9b50e25a9cc531fb6ffd318fdcf955a4"
+    },
+    {
+      "path": "examples/opencode-go-live/spec/final.junit.xml",
+      "sha256": "defee32810e4e38b4d451568690b963bd8919f87535a66273dd996ecfe4d1672"
+    },
+    {
+      "path": "examples/opencode-go-live/spec/report.json",
+      "sha256": "9e0a332cfa76084413d428a1563ee3acdab772e7f11a6af964431ef69191bb05"
+    },
+    {
+      "path": "examples/opencode-go-live/spec/synthetic-type-parameter.before.report.json",
+      "sha256": "1e2c210aaa09c93042e439c8d81d5b1585d81fff85c4cadb83a1f9d870d46f56"
+    },
+    {
+      "path": "examples/opencode-go-live/spec/test_public_probe.py",
+      "sha256": "b6358b235dc17b18824ca2aee15645ac42d85c92e33893ee8c6ed2b9e4fa7c3f"
+    },
+    {
+      "path": "examples/opencode-go-live/spec/type-parameter.before.junit.xml",
+      "sha256": "9fc9cf1602a8cfe7e4365a70901c0e58364cd902be453b7b52479415b33360f4"
+    },
+    {
+      "path": "examples/opencode-go-live/spec/type-parameter.input.py.txt",
+      "sha256": "262c200b723248da1ecdc6624dc7294cc532eb7940e2edbee5c6567913ec761a"
+    },
+    {
+      "path": "examples/opencode-go-live/sse-shape.json",
+      "sha256": "8c97a93d387b202fdac9179b0132fb499cbc37d17effd415b4b533632762425a"
+    },
+    {
+      "path": "examples/opencode-go-live/sse-trailer.json",
+      "sha256": "54d03123c92977503a72d7ac29aef1ade470bf24ec87bf67cada0533e5a1b827"
+    },
+    {
+      "path": "examples/opencode-go-live/standards/README.md",
+      "sha256": "7d854430c395f7d4f8245515f1708f3a9da0072d0c696e5c27c08aa4f4cebe7e"
+    },
+    {
+      "path": "examples/opencode-go-live/standards/independent_cases.py",
+      "sha256": "902f5c657653482bdb8ce0464f1e01495110eacd2a9bf1c701557f2924a6227e"
+    },
+    {
+      "path": "examples/opencode-go-live/standards/standards-before.junit.xml",
+      "sha256": "e9581020943e1befeb65b0b4a0acc2f993432a3b92a6f2ae49cb279225cea59f"
+    },
+    {
+      "path": "examples/opencode-go-live/standards/standards-final.junit.xml",
+      "sha256": "2b3bc3ae08cff403b96132dc19ba448aa3f630f45837701acece89c5ed1fa76d"
+    },
+    {
+      "path": "examples/opencode-go-live/standards/standards-fragments-before.junit.xml",
+      "sha256": "90693532f5a26d2139ca981ac9e47ef693fc21fd20f2700cba9640d06168aa90"
+    },
+    {
+      "path": "examples/opencode-go-live/standards/standards-review.json",
+      "sha256": "1a17fdaacb1e1f629eef63cd47e4fe90170278956a59bf7cc370cb8f86eafb9d"
+    },
+    {
+      "path": "examples/opencode-go-live/standards/standards-review.md",
+      "sha256": "ea5c80787911f7649dc4aae6f4e7437b2783919c0f15aa5faf2cc0370832d4a8"
+    },
+    {
+      "path": "examples/opencode-go-live/strict-trailer-failure.report.json",
+      "sha256": "55f3e1d352811badc1f713a83326ac99504d6082b116e55fd9d80c4ac3550438"
+    },
+    {
+      "path": "examples/opencode-go-live/windows.junit.xml",
+      "sha256": "c671ae6b090e5eb3a764c7a03c5018877be54d8c80cfdbb831e53f95e8b7904a"
+    },
+    {
+      "path": "examples/opencode-go-live/workflow-offline.junit.xml",
+      "sha256": "059d9c5467be637a950151d1fd2289c2ff178be83b00deebe4215c416ce39958"
+    },
+    {
+      "path": "examples/opencode-go-live/wsl.junit.xml",
+      "sha256": "fe6542a710a9acdee62665987883bc294302243900c8c22c8798104c5b7a8011"
+    },
+    {
+      "path": "tests/adapters/opencode/test_go_evidence.py",
+      "sha256": "0bc177607256ec2bb86c54f47a7875be1025261a67b5c1e884efda6b993c2688"
+    },
+    {
+      "path": "tests/adapters/opencode/test_go_live.py",
+      "sha256": "829deb6001014a5d2ee3df77422c98420ab83f9ba67ca756e1a1d85294167239"
+    },
+    {
+      "path": "tests/adapters/opencode/test_go_relay.py",
+      "sha256": "845bfe069198365d3d3f1196877007e4667a061dee0c68969121c48349082cc2"
+    }
+  ],
+  "index_matches_working_bytes": true,
+  "real_report_source_bindings": "match index",
+  "actual_key_in_selected_files": false,
+  "scope": "Go diagnostic slice; no Profile activation"
+}
