@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="4" time="1.214" timestamp="2026-09-06T13:11:26.902331+08:00" hostname="ProArt-Zhou"><testcase classname="tests.projects.test_demand_store" name="test_registration_binds_approved_run_and_survives_restart_and_revocation" time="0.264"><failure message="karajan.projects.demand.DemandError: PROFILE_POOL_UNIT_MISMATCH">approved = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x000001436D29FD70&gt;, 'project_id': '394a8a7b-855a-4d...rajan/.cache/trusted-routing-integration/.cache/demand-green/test_registration_binds_approv0/fixture/repository'), ...}
+
+    def test_registration_binds_approved_run_and_survives_restart_and_revocation(
+        approved: dict,
+    ) -&gt; None:
+&gt;       observed = register(approved)
+                   ^^^^^^^^^^^^^^^^^^
+
+tests\projects\test_demand_store.py:236: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\projects\test_demand_store.py:212: in register
+    return store(approved).register(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.projects.demand.AttemptEstimateStore object at 0x000001436D590410&gt;
+run_id = 'e38f3342-1af9-4dc1-943f-9905ec3b7af6', task_id = 'implement'
+profile_ref = {'id': 'fixture-profile', 'revision': 1}
+request = {'id': 'report-prediction', 'revision': 1, 'source_kind': 'owner_conservative_estimate', 'validity_seconds': 60, ...}
+principal = 'owner', command_key = 'estimate'
+
+    def register(
+        self,
+        run_id: str,
+        task_id: str,
+        profile_ref: dict[str, Any],
+        request: dict[str, Any],
+        *,
+        principal: str,
+        command_key: str,
+    ) -&gt; dict[str, Any]:
+        identifier(principal)
+        identifier(command_key)
+        identifier(task_id)
+        try:
+            request = Prediction.model_validate(request).model_dump()
+        except (ValidationError, ValueError, ArithmeticError):
+            raise DemandError("RESOURCE_ESTIMATE_INPUT_INVALID") from None
+        identity = digest([run_id, task_id, profile_ref, request])
+        with self.planner.activation_guard(run_id) as run:
+            if principal != run["owner"]:
+                raise DemandError("ESTIMATE_OWNER_REQUIRED")
+            with self.projects._transaction() as db:
+                self.projects._require_owner(db, run["project_id"], principal)
+                replay = db.execute(
+                    "SELECT * FROM attempt_estimate_commands WHERE principal=? AND key=?",
+                    (principal, command_key),
+                ).fetchone()
+                if replay is not None:
+                    if replay["digest"] != identity:
+                        raise DemandError("IDEMPOTENCY_CONFLICT")
+                    return dict(json.loads(replay["result"]))
+                bound = _binding(
+                    run, task_id, profile_ref, effective_catalog(db, run["project_id"])
+                )
+                predictions = request["demand"]
+                if len({p["pool_id"] for p in predictions}) != len(predictions) or (
+                    {p["pool_id"] for p in predictions} != {p["id"] for p in bound["pools"]}
+                ):
+                    raise DemandError("PROFILE_POOL_VECTOR_INVALID")
+                for prediction in predictions:
+                    pool = next(p for p in bound["pools"] if p["id"] == prediction["pool_id"])
+                    if prediction["unit"] != pool["unit"]:
+&gt;                       raise DemandError("PROFILE_POOL_UNIT_MISMATCH")
+E                       karajan.projects.demand.DemandError: PROFILE_POOL_UNIT_MISMATCH
+
+backend\karajan\projects\demand.py:277: DemandError</failure></testcase><testcase classname="tests.projects.test_demand_store" name="test_locked_consumer_works_inside_run_and_qualification_guards" time="0.241"><failure message="karajan.projects.demand.DemandError: PROFILE_POOL_UNIT_MISMATCH">approved = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x000001436D591850&gt;, 'project_id': '0c2a966a-08b7-48...rajan/.cache/trusted-routing-integration/.cache/demand-green/test_locked_consumer_works_ins0/fixture/repository'), ...}
+
+    def test_locked_consumer_works_inside_run_and_qualification_guards(approved: dict) -&gt; None:
+&gt;       register(approved)
+
+tests\projects\test_demand_store.py:259: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\projects\test_demand_store.py:212: in register
+    return store(approved).register(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.projects.demand.AttemptEstimateStore object at 0x000001436D5909E0&gt;
+run_id = '4fa630f3-16d7-4983-9e11-48ee0696015d', task_id = 'implement'
+profile_ref = {'id': 'fixture-profile', 'revision': 1}
+request = {'id': 'report-prediction', 'revision': 1, 'source_kind': 'owner_conservative_estimate', 'validity_seconds': 60, ...}
+principal = 'owner', command_key = 'estimate'
+
+    def register(
+        self,
+        run_id: str,
+        task_id: str,
+        profile_ref: dict[str, Any],
+        request: dict[str, Any],
+        *,
+        principal: str,
+        command_key: str,
+    ) -&gt; dict[str, Any]:
+        identifier(principal)
+        identifier(command_key)
+        identifier(task_id)
+        try:
+            request = Prediction.model_validate(request).model_dump()
+        except (ValidationError, ValueError, ArithmeticError):
+            raise DemandError("RESOURCE_ESTIMATE_INPUT_INVALID") from None
+        identity = digest([run_id, task_id, profile_ref, request])
+        with self.planner.activation_guard(run_id) as run:
+            if principal != run["owner"]:
+                raise DemandError("ESTIMATE_OWNER_REQUIRED")
+            with self.projects._transaction() as db:
+                self.projects._require_owner(db, run["project_id"], principal)
+                replay = db.execute(
+                    "SELECT * FROM attempt_estimate_commands WHERE principal=? AND key=?",
+                    (principal, command_key),
+                ).fetchone()
+                if replay is not None:
+                    if replay["digest"] != identity:
+                        raise DemandError("IDEMPOTENCY_CONFLICT")
+                    return dict(json.loads(replay["result"]))
+                bound = _binding(
+                    run, task_id, profile_ref, effective_catalog(db, run["project_id"])
+                )
+                predictions = request["demand"]
+                if len({p["pool_id"] for p in predictions}) != len(predictions) or (
+                    {p["pool_id"] for p in predictions} != {p["id"] for p in bound["pools"]}
+                ):
+                    raise DemandError("PROFILE_POOL_VECTOR_INVALID")
+                for prediction in predictions:
+                    pool = next(p for p in bound["pools"] if p["id"] == prediction["pool_id"])
+                    if prediction["unit"] != pool["unit"]:
+&gt;                       raise DemandError("PROFILE_POOL_UNIT_MISMATCH")
+E                       karajan.projects.demand.DemandError: PROFILE_POOL_UNIT_MISMATCH
+
+backend\karajan\projects\demand.py:277: DemandError</failure></testcase><testcase classname="tests.projects.test_demand_store" name="test_missing_and_expired_estimates_are_not_replaced_by_task_limits" time="0.239"><failure message="karajan.projects.demand.DemandError: PROFILE_POOL_UNIT_MISMATCH">approved = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x000001436D448D70&gt;, 'project_id': 'fcb8312c-197d-44...rajan/.cache/trusted-routing-integration/.cache/demand-green/test_missing_and_expired_estim0/fixture/repository'), ...}
+
+    def test_missing_and_expired_estimates_are_not_replaced_by_task_limits(approved: dict) -&gt; None:
+        assert estimate(approved)["reason_codes"] == ["RESOURCE_ESTIMATE_MISSING"]
+&gt;       register(approved)
+
+tests\projects\test_demand_store.py:278: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\projects\test_demand_store.py:212: in register
+    return store(approved).register(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.projects.demand.AttemptEstimateStore object at 0x000001436D44ADE0&gt;
+run_id = 'd3ab1b75-a9bf-44c9-a70f-1e3e3c86b66e', task_id = 'implement'
+profile_ref = {'id': 'fixture-profile', 'revision': 1}
+request = {'id': 'report-prediction', 'revision': 1, 'source_kind': 'owner_conservative_estimate', 'validity_seconds': 60, ...}
+principal = 'owner', command_key = 'estimate'
+
+    def register(
+        self,
+        run_id: str,
+        task_id: str,
+        profile_ref: dict[str, Any],
+        request: dict[str, Any],
+        *,
+        principal: str,
+        command_key: str,
+    ) -&gt; dict[str, Any]:
+        identifier(principal)
+        identifier(command_key)
+        identifier(task_id)
+        try:
+            request = Prediction.model_validate(request).model_dump()
+        except (ValidationError, ValueError, ArithmeticError):
+            raise DemandError("RESOURCE_ESTIMATE_INPUT_INVALID") from None
+        identity = digest([run_id, task_id, profile_ref, request])
+        with self.planner.activation_guard(run_id) as run:
+            if principal != run["owner"]:
+                raise DemandError("ESTIMATE_OWNER_REQUIRED")
+            with self.projects._transaction() as db:
+                self.projects._require_owner(db, run["project_id"], principal)
+                replay = db.execute(
+                    "SELECT * FROM attempt_estimate_commands WHERE principal=? AND key=?",
+                    (principal, command_key),
+                ).fetchone()
+                if replay is not None:
+                    if replay["digest"] != identity:
+                        raise DemandError("IDEMPOTENCY_CONFLICT")
+                    return dict(json.loads(replay["result"]))
+                bound = _binding(
+                    run, task_id, profile_ref, effective_catalog(db, run["project_id"])
+                )
+                predictions = request["demand"]
+                if len({p["pool_id"] for p in predictions}) != len(predictions) or (
+                    {p["pool_id"] for p in predictions} != {p["id"] for p in bound["pools"]}
+                ):
+                    raise DemandError("PROFILE_POOL_VECTOR_INVALID")
+                for prediction in predictions:
+                    pool = next(p for p in bound["pools"] if p["id"] == prediction["pool_id"])
+                    if prediction["unit"] != pool["unit"]:
+&gt;                       raise DemandError("PROFILE_POOL_UNIT_MISMATCH")
+E                       karajan.projects.demand.DemandError: PROFILE_POOL_UNIT_MISMATCH
+
+backend\karajan\projects\demand.py:277: DemandError</failure></testcase><testcase classname="tests.projects.test_demand_store" name="test_unapproved_identity_cannot_register" time="0.251" /></testsuite></testsuites>

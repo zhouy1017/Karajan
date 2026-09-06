@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="6" time="1.905" timestamp="2026-09-06T13:21:53.907582+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.approved-routing-spec.test_public_assessment" name="test_only_selected_rule_grants_apply_even_when_another_rule_approves_same_group" time="0.240"><failure message="assert False is True">.cache\approved-routing-spec\test_public_assessment.py:345: in test_only_selected_rule_grants_apply_even_when_another_rule_approves_same_group
+    case = seeded(tmp_path, normal=False, custom_rule=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.cache\approved-routing-spec\test_public_assessment.py:79: in seeded
+    assert rule_preview["can_publish"] is True
+E   assert False is True</failure></testcase><testcase classname=".cache.approved-routing-spec.test_public_assessment" name="test_real_cross_run_usage_and_reservation_are_separate_and_assessment_has_no_admission" time="0.287" /><testcase classname=".cache.approved-routing-spec.test_public_assessment" name="test_old_receipt_replay_is_historical_and_new_command_reads_latest_unknown_observation" time="0.287" /><testcase classname=".cache.approved-routing-spec.test_public_assessment" name="test_pending_new_plan_does_not_replace_active_approved_requirements" time="0.267"><failure message="karajan.runs.planning.RunError: TASK_REVISION_REUSED">.cache\approved-routing-spec\test_public_assessment.py:445: in test_pending_new_plan_does_not_replace_active_approved_requirements
+    case["planner"].submit_plan(
+backend\karajan\runs\planning.py:486: in submit_plan
+    return self._command("submit_plan", request, principal, command_key, apply)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\runs\planning.py:276: in _command
+    raise RunError(error)
+E   karajan.runs.planning.RunError: TASK_REVISION_REUSED</failure></testcase><testcase classname=".cache.approved-routing-spec.test_public_assessment" name="test_unapproved_task_and_unimplemented_lineage_never_get_assessed_as_workers" time="0.299" /><testcase classname=".cache.approved-routing-spec.test_public_assessment" name="test_current_identity_restriction_preserves_frozen_plan_but_rejects_profile" time="0.293" /></testsuite></testsuites>

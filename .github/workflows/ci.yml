@@ -76,6 +76,16 @@ jobs:
           examples/opencode-go-live/spec/test_public_probe.py
           examples/opencode-go-live/standards/independent_cases.py
 
+      - name: Check approved-routing public boundaries without provider credentials
+        run: >-
+          uv run --frozen --extra dev pytest
+          -o "pythonpath=backend tests/web tests/runs"
+          examples/approved-routing/qualification/spec/test_public_qualification.py
+          examples/approved-routing/demand/spec/test_public_demand.py
+          examples/approved-routing/routing/spec/test_public_assessment.py
+          examples/approved-routing/capacity/standards/test_capacity_standards.py
+          examples/approved-routing/routing/standards/test_routing_standards.py
+
   frontend-quality:
     name: frontend-quality
     runs-on: ubuntu-24.04

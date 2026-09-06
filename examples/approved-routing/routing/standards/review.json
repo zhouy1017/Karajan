@@ -1,0 +1,67 @@
+{
+  "axis": "Standards",
+  "base_commit": "35c00f7cbc04704c805c36e0b00ff1b743f2143b",
+  "findings": [],
+  "reviewed_at_utc": "2026-09-06T05:36:02.215210+00:00",
+  "scope": "approved Run routing assessment",
+  "source_manifest": "source.json",
+  "reviewed_files": {
+    "backend/karajan/orchestration/routing.py": "0a2e35b3daf76d79f7b3c8745e718a094ccd6d0049e5c40cf8fed66bf7bcfb4a",
+    "backend/karajan/routing/selection.py": "dc85fa0954317be29ff831fcb1689266f6a8b6fb5a2511cdc82c0342eee2ae12",
+    "backend/karajan/routing/evaluator.py": "681775528b41d89bc96b28b46fd10019fbaafd07c68fde616f52ecfb9b45f4ab",
+    "backend/karajan/routing/models.py": "b62e9e3c74b2053c336a656850f88f9cc8425dbab8553d4e86efa59314e919ef",
+    "backend/karajan/routing/__init__.py": "f69a4e35049dd4812605b6d30b5908bfacff3662d413a2faa51a1f4f2e41d7bf",
+    "backend/karajan/web/approved_routing.py": "daf20ae377998b75c11ae897f246bda05a26b83e5b9e8b12a6721c72bcb5b924",
+    "backend/karajan/web/app.py": "e8052420eb9c792e04cea5b4002f617f1329ac12ddabe2310cda989384a7336a",
+    "tests/routing/test_rule_selection.py": "c16f404384d7d6e5c9ef54753e7004fff2f65f11197112b45eca1ae90373c4c0",
+    "tests/web/test_approved_routing_http.py": "4b9a77a6a849aeb8c20d291f1e1a1d02447517ed570e917e3df3b928bb958ccd",
+    "tests/runs/test_approved_routing.py": "7267cf9faf66d0d357a090496b6d65e6c6fa83a0b31ea39586047269d5789726",
+    "tests/runs/test_approved_routing_capacity.py": "dc3765bc4944e7e317f283f0224c083e0849c29f9f8e1d85273af44eed068508",
+    "backend/karajan/runs/validation.py": "2d16de54a463c1a80ef97cbec605ebf6a3b9981087aeeca8e0191fc3520b0ee5"
+  },
+  "independent_test": {
+    "path": "examples/approved-routing/routing/standards/test_routing_standards.py",
+    "sha256": "8d7e7117f320d3ce12497e74f04891613df5bb4c845ac97673c38dac2588ead4",
+    "passed": 21,
+    "failed": 0,
+    "junit": "junit.xml",
+    "junit_sha256": "5894502ba692552e1def9031048009f4f91c07d77caedfb0f5fa068675a7a82e"
+  },
+  "helper_files": {
+    "tests/web/test_v2_approval_workbench.py": "90519bea1b940fa66ad41814f5fe4d2302d6918b34a956ec293dcc19ecc68aa8",
+    "tests/web/test_runs_http.py": "13fe62cf4cc22b71af0ce532b1e8f974b12a19762b2232b87ef2e8e13ad367f3",
+    "tests/runs/test_routing_authorization.py": "748c8e56f60e291cdf27c3296be674ed9ada83f3871e7e5f7da5cf936ccbfc87",
+    "tests/runs/test_planning.py": "ab9711b269a848cf85625a3a600083beaeb4294d12ea9c231eaecf1e736efbbb",
+    "examples/projects/offline-configuration.json": "a286b101251e33a44c351b99edff5a07f9c325cef9be79eb90c251a0e9cb204f",
+    "pyproject.toml": "2cd9a2adb43f7ad74ef6b81ba0c76e349e4d7c438ad457accb9a23e5cc3f7493"
+  },
+  "legacy_source_files": {},
+  "published_evidence_files": {
+    "examples/approved-routing/routing/standards/author-scope.junit.xml": "245455fe82d9a9afacff91e680e51a666c9f40cf8bdd9d2582132937adb50663",
+    "examples/approved-routing/routing/standards/history/line-ending-normalization.json": "c1d4c6f973c6cd4f1e234a2b7c7d746ac2b4fdf47ff3ed379b457424fb8a278b",
+    "examples/approved-routing/routing/standards/history/start-sources.json": "7603138a7cf920e557a46efd47f5c14d2328ec199e9a111050aab2eae544643b",
+    "examples/approved-routing/routing/standards/junit.xml": "5894502ba692552e1def9031048009f4f91c07d77caedfb0f5fa068675a7a82e",
+    "examples/approved-routing/routing/standards/README.md": "178b94b9f9ffce67a07a0d957c6627c60ac3095a1714c45108028c5fae157b72",
+    "examples/approved-routing/routing/standards/review.md": "dc5167e4f0a258731bd6bc14e4776afffd5fadae1ebd60eec6f922ee0f3c2171",
+    "examples/approved-routing/routing/standards/source.json": "4d4fa310250e55728fdb5cb47ae9f841dbe1f35b7180ce5a0af9e24eb7558cd5",
+    "examples/approved-routing/routing/standards/test_routing_standards.py": "8d7e7117f320d3ce12497e74f04891613df5bb4c845ac97673c38dac2588ead4"
+  },
+  "environment": {
+    "python": "3.12.14",
+    "system": "Windows"
+  },
+  "verification": {
+    "published_test_rerun": "passed",
+    "ruff": "passed",
+    "reviewed_sources_unchanged_after_tests": true
+  },
+  "limitations": [
+    "Standards axis only; Spec review is independent.",
+    "No provider invocation or runtime model qualification was performed.",
+    "Capacity receipts and routing assessments do not authorize real execution or prove cross-database atomicity."
+  ],
+  "author_scope_tests": {
+    "passed": 22,
+    "junit": "author-scope.junit.xml"
+  }
+}

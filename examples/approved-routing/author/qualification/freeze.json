@@ -1,0 +1,14 @@
+{
+  "schema_version": "karajan.qualification-development-freeze.v1",
+  "scope": "local_fixture_only",
+  "files": {
+    "backend/karajan/projects/qualification.py": "f11749353b434eb821dadac8c9f07a59e2c1b3a2b5b684197809795c43ecfee5",
+    "tests/projects/test_qualification_store.py": "0701b9f3c393bfce61a58fc96a6202978de739736d55b6f934bf203411f65bfc",
+    "docs/implementation/m3-profile-qualification.md": "5e332d70fc5cd5656b16123609266c1775b3bfa5ce06b694cffae43f2e54a8bb"
+  },
+  "tests": {
+    "windows_regression": "233 passed, 14 subtests passed",
+    "focused": "19 passed"
+  },
+  "evidence_directory": ".cache/qualification-evidence"
+}

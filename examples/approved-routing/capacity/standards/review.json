@@ -1,0 +1,78 @@
+{
+  "axis": "Standards",
+  "base_commit": "35c00f7cbc04704c805c36e0b00ff1b743f2143b",
+  "findings": [],
+  "reviewed_at_utc": "2026-09-06T05:36:02.176204+00:00",
+  "scope": "capacity admission bindings",
+  "source_manifest": "source.json",
+  "reviewed_files": {
+    "backend/karajan/capacity/models.py": "d626c7fad458a44d434917efddd7393611452fd88437bc1ea097a12e769e5193",
+    "backend/karajan/capacity/store.py": "10a39b7a6238b417aa48a1a9c104fef582e8d1ef6fc4d025fa75632035092f98",
+    "tests/capacity/test_admission_bindings.py": "4c1acf1b6bf086358cd2d5538f615f9ddf966dc69e146515a27a69bfaf9b9fe6",
+    "docs/implementation/m3-capacity-routing-admission.md": "8abd6e4abf0c4e264830bd688ab5f4c14be87267e40d5e5ee09d8a1b59ea3826"
+  },
+  "independent_test": {
+    "path": "examples/approved-routing/capacity/standards/test_capacity_standards.py",
+    "sha256": "374114ce9959c298850306cb256e017639bfbd65129884583289da5f08ae7732",
+    "passed": 15,
+    "failed": 0,
+    "junit": "junit.xml",
+    "junit_sha256": "b075fb3c959da0d606056f6cd0972c0e13bb3b5aecdcb25989731ca85626584d"
+  },
+  "helper_files": {},
+  "legacy_source_files": {
+    "__init__.py": {
+      "copied_sha256": "125b22eb0a65bd099947f2918b3690a2853109f0a79299cd8696d8851d0f3699",
+      "git_blob_content_sha256": "125b22eb0a65bd099947f2918b3690a2853109f0a79299cd8696d8851d0f3699",
+      "comparison": "byte-identical",
+      "source": "35c00f7cbc04704c805c36e0b00ff1b743f2143b:backend/karajan/capacity/__init__.py"
+    },
+    "models.py": {
+      "copied_sha256": "bd58f6b0c98991cfaff402e863cebbab6f819b54ba244a05db56b4706d40d7ad",
+      "git_blob_content_sha256": "bd58f6b0c98991cfaff402e863cebbab6f819b54ba244a05db56b4706d40d7ad",
+      "comparison": "byte-identical",
+      "source": "35c00f7cbc04704c805c36e0b00ff1b743f2143b:backend/karajan/capacity/models.py"
+    },
+    "store.py": {
+      "copied_sha256": "b9547e2e625661e26c5efb5dbe6550fa73025e8b7157ce15d3653e72d963abff",
+      "git_blob_content_sha256": "b9547e2e625661e26c5efb5dbe6550fa73025e8b7157ce15d3653e72d963abff",
+      "comparison": "byte-identical",
+      "source": "35c00f7cbc04704c805c36e0b00ff1b743f2143b:backend/karajan/capacity/store.py"
+    },
+    "facts.py": {
+      "copied_sha256": "7e26ff6786c7ec8e1531f948ab0cf0d4af58ff8e7ccca9fabf6ebee07c7ee9a9",
+      "git_blob_content_sha256": "7e26ff6786c7ec8e1531f948ab0cf0d4af58ff8e7ccca9fabf6ebee07c7ee9a9",
+      "comparison": "byte-identical",
+      "source": "35c00f7cbc04704c805c36e0b00ff1b743f2143b:backend/karajan/capacity/facts.py"
+    }
+  },
+  "published_evidence_files": {
+    "examples/approved-routing/capacity/standards/history/independent.junit.xml": "4ba6f4e03183eb2d551494355e0e001b4c934abb142fb5071bc682fec1aff914",
+    "examples/approved-routing/capacity/standards/history/review.md": "5e7290010b0a2dd904ef945b029e78cc7e6e8fa861afdcfcf1e085aebbe29097",
+    "examples/approved-routing/capacity/standards/history/source-verification.json": "f30a906425a0bbb465f7cb7c8396fe1db372855c53aca55584fbbdd115310349",
+    "examples/approved-routing/capacity/standards/junit.xml": "b075fb3c959da0d606056f6cd0972c0e13bb3b5aecdcb25989731ca85626584d",
+    "examples/approved-routing/capacity/standards/legacy_capacity/__init__.py": "125b22eb0a65bd099947f2918b3690a2853109f0a79299cd8696d8851d0f3699",
+    "examples/approved-routing/capacity/standards/legacy_capacity/facts.py": "7e26ff6786c7ec8e1531f948ab0cf0d4af58ff8e7ccca9fabf6ebee07c7ee9a9",
+    "examples/approved-routing/capacity/standards/legacy_capacity/models.py": "bd58f6b0c98991cfaff402e863cebbab6f819b54ba244a05db56b4706d40d7ad",
+    "examples/approved-routing/capacity/standards/legacy_capacity/ruff.toml": "8be7cf52db3305fad29aefdd01155e7c72da5e7520f049222bc6c1770ae49daa",
+    "examples/approved-routing/capacity/standards/legacy_capacity/store.py": "b9547e2e625661e26c5efb5dbe6550fa73025e8b7157ce15d3653e72d963abff",
+    "examples/approved-routing/capacity/standards/README.md": "9a4a327c997975b3d4151a5e55791a2ad06472b67e22cf3585a2764b3e1d4c89",
+    "examples/approved-routing/capacity/standards/review.md": "b09d633a9d3a0ad5421e00710bd3711b7c05ddd219189c1685a4d8cf2839065a",
+    "examples/approved-routing/capacity/standards/source.json": "22e9c87118430c01324aa02635cf19022f8c82b4e977cbd725ed516502f99dbc",
+    "examples/approved-routing/capacity/standards/test_capacity_standards.py": "374114ce9959c298850306cb256e017639bfbd65129884583289da5f08ae7732"
+  },
+  "environment": {
+    "python": "3.12.14",
+    "system": "Windows"
+  },
+  "verification": {
+    "published_test_rerun": "passed",
+    "ruff": "passed",
+    "reviewed_sources_unchanged_after_tests": true
+  },
+  "limitations": [
+    "Standards axis only; Spec review is independent.",
+    "No provider invocation or runtime model qualification was performed.",
+    "Capacity receipts and routing assessments do not authorize real execution or prove cross-database atomicity."
+  ]
+}

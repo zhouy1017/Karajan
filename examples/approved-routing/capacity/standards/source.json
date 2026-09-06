@@ -1,0 +1,12 @@
+{
+  "axis": "Standards",
+  "base_commit": "35c00f7cbc04704c805c36e0b00ff1b743f2143b",
+  "head_at_review": "35c00f7cbc04704c805c36e0b00ff1b743f2143b",
+  "review_target": "working tree files, including new files not present in HEAD",
+  "files": {
+    "backend/karajan/capacity/models.py": "d626c7fad458a44d434917efddd7393611452fd88437bc1ea097a12e769e5193",
+    "backend/karajan/capacity/store.py": "10a39b7a6238b417aa48a1a9c104fef582e8d1ef6fc4d025fa75632035092f98",
+    "tests/capacity/test_admission_bindings.py": "4c1acf1b6bf086358cd2d5538f615f9ddf966dc69e146515a27a69bfaf9b9fe6",
+    "docs/implementation/m3-capacity-routing-admission.md": "8abd6e4abf0c4e264830bd688ab5f4c14be87267e40d5e5ee09d8a1b59ea3826"
+  }
+}

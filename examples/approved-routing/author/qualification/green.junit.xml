@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="0.671" timestamp="2026-09-06T12:56:11.218856+08:00" hostname="ProArt-Zhou"><testcase classname="tests.projects.test_qualification_store" name="test_public_qualification_persists_real_process_observation_and_revocation" time="0.314"><failure message="karajan.projects.qualification.QualificationError: QUALIFICATION_SOURCE_UNSUPPORTED">case = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x0000021BD1DE8BC0&gt;, 'project_id': 'ac8be261-ab2b-41...cache/trusted-routing-integration/.cache/qualification-green/test_public_qualification_pers0/fixture/repository'), ...}
+
+    def test_public_qualification_persists_real_process_observation_and_revocation(case: dict) -&gt; None:
+&gt;       observed = qualify(case)
+                   ^^^^^^^^^^^^^
+
+tests\projects\test_qualification_store.py:63: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\projects\test_qualification_store.py:49: in qualify
+    return ProfileQualificationStore(case["projects"], clock=lambda: case["clock"][0]).qualify_local_fixture(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.projects.qualification.ProfileQualificationStore object at 0x0000021BD1F264E0&gt;
+project_id = 'ac8be261-ab2b-4195-8108-bf22e6b90826'
+profile_ref = {'id': 'fixture-profile', 'revision': 1}, principal = 'owner'
+command_key = 'qualify'
+fixture_root = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/trusted-routing-integration/.cache/qualification-green/test_public_qualification_pers0/fixture')
+validity_seconds = 60
+
+    def qualify_local_fixture(
+        self, project_id: str, profile_ref: dict[str, Any], *, principal: str,
+        command_key: str, fixture_root: Path, validity_seconds: int,
+    ) -&gt; dict[str, Any]:
+        identifier(command_key)
+        if type(validity_seconds) is not int or not 1 &lt;= validity_seconds &lt;= 86400:
+            raise QualificationError("QUALIFICATION_VALIDITY_INVALID")
+        root = _safe_root(fixture_root)
+        runtime = _runtime(root)
+        request_digest = digest([project_id, profile_ref, str(root), validity_seconds])
+        with self._owned(project_id, principal) as db:
+            previous = db.execute(
+                "SELECT * FROM profile_qualification_starts WHERE principal=? AND command_key=?",
+                (principal, command_key),
+            ).fetchone()
+            if previous is not None:
+                if previous["request_digest"] != request_digest:
+                    raise QualificationError("IDEMPOTENCY_CONFLICT")
+                return self._record(db, previous["id"])
+            bound = self._binding(db, project_id, profile_ref)
+            profile = bound["registration"]["profile"]
+            binding = profile["binding"]
+            if (
+                binding["runtime_kind"] != "fixture-runtime"
+                or binding["runtime_version"] != "1"
+                or binding["model_id"] != "fixture-model"
+                or binding["auth_mode"] != "none"
+                or binding["billing_path"] != "subscription_only"
+                or binding["native_settings"] != {}
+                or not set(profile["required_permissions"]) &lt;= {"read", "write"}
+                or not Path(bound["repository"]["root"]).resolve().is_relative_to(root)
+            ):
+&gt;               raise QualificationError("QUALIFICATION_SOURCE_UNSUPPORTED")
+E               karajan.projects.qualification.QualificationError: QUALIFICATION_SOURCE_UNSUPPORTED
+
+backend\karajan\projects\qualification.py:184: QualificationError</failure></testcase><testcase classname="tests.projects.test_qualification_store" name="test_expiry_and_frozen_identity_mismatch_fail_closed" time="0.208"><failure message="karajan.projects.qualification.QualificationError: QUALIFICATION_SOURCE_UNSUPPORTED">case = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x0000021BD1FD6090&gt;, 'project_id': '4cb1c38a-29d2-48...cache/trusted-routing-integration/.cache/qualification-green/test_expiry_and_frozen_identit0/fixture/repository'), ...}
+
+    def test_expiry_and_frozen_identity_mismatch_fail_closed(case: dict) -&gt; None:
+&gt;       qualify(case)
+
+tests\projects\test_qualification_store.py:87: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\projects\test_qualification_store.py:49: in qualify
+    return ProfileQualificationStore(case["projects"], clock=lambda: case["clock"][0]).qualify_local_fixture(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.projects.qualification.ProfileQualificationStore object at 0x0000021BD1FD5AC0&gt;
+project_id = '4cb1c38a-29d2-4804-acef-6cb7cd5857d7'
+profile_ref = {'id': 'fixture-profile', 'revision': 1}, principal = 'owner'
+command_key = 'qualify'
+fixture_root = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/trusted-routing-integration/.cache/qualification-green/test_expiry_and_frozen_identit0/fixture')
+validity_seconds = 60
+
+    def qualify_local_fixture(
+        self, project_id: str, profile_ref: dict[str, Any], *, principal: str,
+        command_key: str, fixture_root: Path, validity_seconds: int,
+    ) -&gt; dict[str, Any]:
+        identifier(command_key)
+        if type(validity_seconds) is not int or not 1 &lt;= validity_seconds &lt;= 86400:
+            raise QualificationError("QUALIFICATION_VALIDITY_INVALID")
+        root = _safe_root(fixture_root)
+        runtime = _runtime(root)
+        request_digest = digest([project_id, profile_ref, str(root), validity_seconds])
+        with self._owned(project_id, principal) as db:
+            previous = db.execute(
+                "SELECT * FROM profile_qualification_starts WHERE principal=? AND command_key=?",
+                (principal, command_key),
+            ).fetchone()
+            if previous is not None:
+                if previous["request_digest"] != request_digest:
+                    raise QualificationError("IDEMPOTENCY_CONFLICT")
+                return self._record(db, previous["id"])
+            bound = self._binding(db, project_id, profile_ref)
+            profile = bound["registration"]["profile"]
+            binding = profile["binding"]
+            if (
+                binding["runtime_kind"] != "fixture-runtime"
+                or binding["runtime_version"] != "1"
+                or binding["model_id"] != "fixture-model"
+                or binding["auth_mode"] != "none"
+                or binding["billing_path"] != "subscription_only"
+                or binding["native_settings"] != {}
+                or not set(profile["required_permissions"]) &lt;= {"read", "write"}
+                or not Path(bound["repository"]["root"]).resolve().is_relative_to(root)
+            ):
+&gt;               raise QualificationError("QUALIFICATION_SOURCE_UNSUPPORTED")
+E               karajan.projects.qualification.QualificationError: QUALIFICATION_SOURCE_UNSUPPORTED
+
+backend\karajan\projects\qualification.py:184: QualificationError</failure></testcase></testsuite></testsuites>

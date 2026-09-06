@@ -1,0 +1,29 @@
+{
+  "schema_version": "karajan.capacity-admission-freeze.v1",
+  "frozen_at": "2026-09-06T05:09:20.222904+00:00",
+  "base_commit": "35c00f7",
+  "files": {
+    "backend/karajan/capacity/models.py": "d626c7fad458a44d434917efddd7393611452fd88437bc1ea097a12e769e5193",
+    "backend/karajan/capacity/store.py": "10a39b7a6238b417aa48a1a9c104fef582e8d1ef6fc4d025fa75632035092f98",
+    "tests/capacity/test_admission_bindings.py": "4c1acf1b6bf086358cd2d5538f615f9ddf966dc69e146515a27a69bfaf9b9fe6",
+    "docs/implementation/m3-capacity-routing-admission.md": "8abd6e4abf0c4e264830bd688ab5f4c14be87267e40d5e5ee09d8a1b59ea3826"
+  },
+  "red": {
+    "junit": "red.junit.xml",
+    "failed": 20,
+    "passed": 6,
+    "note": "Before product implementation; test source subsequently received Ruff formatting only"
+  },
+  "green": {
+    "junit": "regression.junit.xml",
+    "passed": 103,
+    "new_cases": 26
+  },
+  "checks": [
+    "ruff check backend/karajan/capacity tests/capacity passed",
+    "ruff format --check modified Python files passed",
+    "mypy backend/karajan/capacity passed for 6 files"
+  ],
+  "provider_calls": false,
+  "git_mutations": false
+}

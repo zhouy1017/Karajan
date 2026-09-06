@@ -1,0 +1,55 @@
+{
+  "schema_version": "karajan.independent-spec-review.v1",
+  "reviewed_at": "2026-09-06T05:14:08.632312+00:00",
+  "scope": "fixed local fixture Profile qualification public-store behavior",
+  "source_freeze": ".cache/qualification-evidence/freeze.json",
+  "source_hashes": {
+    "backend/karajan/projects/qualification.py": "f11749353b434eb821dadac8c9f07a59e2c1b3a2b5b684197809795c43ecfee5",
+    "tests/projects/test_qualification_store.py": "0701b9f3c393bfce61a58fc96a6202978de739736d55b6f934bf203411f65bfc",
+    "docs/implementation/m3-profile-qualification.md": "5e332d70fc5cd5656b16123609266c1775b3bfa5ce06b694cffae43f2e54a8bb"
+  },
+  "findings": [],
+  "unresolved_findings": [],
+  "results": {
+    "tests": 11,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "junit": "results.junit.xml",
+    "test_cases": [
+      "test_actual_three_process_results_and_persistent_scope_are_not_inferred_from_declarations",
+      "test_old_observation_cannot_qualify_changed_identity_even_with_updated_frozen_registration[model]",
+      "test_old_observation_cannot_qualify_changed_identity_even_with_updated_frozen_registration[native]",
+      "test_old_observation_cannot_qualify_changed_identity_even_with_updated_frozen_registration[account]",
+      "test_old_observation_cannot_qualify_changed_identity_even_with_updated_frozen_registration[declaration]",
+      "test_revocation_survives_new_service_and_original_observation_remains_immutable",
+      "test_real_database_guard_holds_concurrent_revocation_until_exit",
+      "test_unknown_runtime_and_uploaded_style_declarations_never_produce_live_qualification",
+      "test_later_persisted_start_without_result_blocks_fallback_to_prior_pass",
+      "test_clock_rollback_and_exact_expiry_do_not_return_facts[5999.0]",
+      "test_clock_rollback_and_exact_expiry_do_not_return_facts[6090.0]"
+    ]
+  },
+  "checks": [
+    "ruff check independent test passed",
+    "ruff format --check independent test passed"
+  ],
+  "test_inputs": "Independent new synthetic Git repositories and public configuration registration; explicit offline catalog example",
+  "process_evidence": "Real fixed subprocess write/check/review; recording wrapper delegates and does not replace return values",
+  "fault_injection": "One controller crash after durable start, to verify unknown does not fall back to old pass",
+  "provider_calls": false,
+  "credentials_read": false,
+  "production_source_modified": false,
+  "project_git_modified": false,
+  "test_fixture_git_mutations": "Authorized init/add/commit only under .cache/qualification-spec/run1",
+  "limitations": [
+    "local_fixture only",
+    "No runtime_tools qualification",
+    "No cross-database atomicity claim"
+  ],
+  "artifact_sha256": {
+    "test_public_qualification.py": "7034307574668ccddb641ac79ce8268e9bffcc07d8e508dea3bcde215b61cfbe",
+    "results.junit.xml": "5861a4eefc000f6e60a09a77f31110f838b70627dd1488ebfe6de84905fd8a9a",
+    "README.md": "a19fc2cb32c6ae1ed5517a33b91629df1e76e723ff47605f2c4f591283d96a5d"
+  }
+}

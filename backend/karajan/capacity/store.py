@@ -329,6 +329,10 @@ class CapacityStore:
 
     def admit(self, request: dict[str, Any], *, command_key: str) -> dict[str, Any]:
         value = validate(AdmissionRequest, request)
+        # Keep historical command hashes and stored requests stable for callers
+        # predating routing bindings, including a model-dumped optional None.
+        if value["expected_capacity"] is None:
+            del value["expected_capacity"]
 
         def apply(db: sqlite3.Connection) -> dict[str, Any]:
             if (
@@ -356,7 +360,7 @@ class CapacityStore:
             now = self._now()
             held = self._held(db, profile["account_id"], now)
             reasons, observations, availability = self._evaluate(
-                db, value, profile, policy, held, now
+                db, value, profile, policy, held, now, policy_revision=policy_row["revision"]
             )
             decision: dict[str, Any] = {
                 "decision": "rejected" if reasons else "admitted",
@@ -458,6 +462,7 @@ class CapacityStore:
                 json.loads(row["data"]),
                 [other for other in held if other["id"] != admission_id],
                 now,
+                policy_revision=row["revision"],
             )
             result = {
                 "decision": "rejected" if reasons else "capacity_revalidated",
@@ -770,13 +775,24 @@ class CapacityStore:
         policy: dict[str, Any],
         held: list[dict[str, Any]],
         now: float,
+        *,
+        policy_revision: int,
     ) -> tuple[list[str], dict[str, Any], dict[str, str]]:
         if set(request["demand"]) != set(profile["pool_ids"]):
             return ["POOL_VECTOR_MISMATCH"], {}, {}
+        expected = request.get("expected_capacity")
+        if expected is not None and set(expected["pool_windows"]) != set(profile["pool_ids"]):
+            return ["CAPACITY_WINDOW_VECTOR_MISMATCH"], {}, {}
         reasons: list[str] = []
+        if expected is not None and expected["policy_revision"] != policy_revision:
+            reasons.append("CAPACITY_POLICY_REVISION_CHANGED")
         observations: dict[str, Any] = {}
         available: dict[str, str] = {}
-        lead = request["role"] == "commander" and request["purpose"] == "lead"
+        lead = (
+            request["role"] == "commander"
+            and request["purpose"] == "lead"
+            and (expected is None or expected["lead_reserve_access"])
+        )
         slots = policy["max_active_attempts"] - (0 if lead else policy["lead_reserved_slots"])
         if len(held) >= slots:
             reasons.append("ACCOUNT_CONCURRENCY_EXHAUSTED")
@@ -794,6 +810,10 @@ class CapacityStore:
             pool = self._pool(db, pool_id)
             observed = self._observation(db, pool_id)
             observations[pool_id] = observed
+            if expected is not None and (
+                observed is None or observed["window_id"] != expected["pool_windows"][pool_id]
+            ):
+                reasons.append("CAPACITY_WINDOW_CHANGED:" + pool_id)
             if (
                 observed is None
                 or observed["observed_at"] > now
