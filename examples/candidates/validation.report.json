@@ -1,0 +1,487 @@
+{
+  "schema_version": "karajan.candidate-probe.v1",
+  "case_id": "real-git-local-validation",
+  "recorded_at": "2026-09-05T14:03:07.527252+00:00",
+  "os": "Windows-11-10.0.26200-SP0",
+  "isolation": "local_guarded",
+  "status": "passed",
+  "conditions": {
+    "real_git_tree_matches": true,
+    "actual_check_process_passed": true,
+    "fixture_review_only": true,
+    "local_gate_initially_passed": true,
+    "new_candidate_created": true,
+    "old_gate_invalidated": true,
+    "actual_check_process_failed": true,
+    "new_gate_blocked": true,
+    "no_production_delivery_claim": true,
+    "trusted_baseline_unchanged": true
+  },
+  "input_sha256": "4fd00cd97ef57a94f110e1fa21ff3131d8c6174863658056e205874a75ea6798",
+  "source_sha256": {
+    "backend/karajan/candidates/__init__.py": "198c1b07b42c74941e893c69877ee3d6594b64104236313732d97db6700b4d6e",
+    "backend/karajan/candidates/models.py": "99e99e5cb8f3ae6d6b02f9f0047e8239e8bc8901670c217e88cc6a6d31180769",
+    "backend/karajan/candidates/store.py": "0f49018508992606a304d05cee28324e896a85a6057e78b870552c2694e00b32",
+    "examples/candidates/probe_validation.py": "e291bb0b247d6dd04036e1a29845d76685dc482ab523a0fb12701abeda94c7a6"
+  },
+  "candidate": {
+    "schema_version": "karajan.candidate.v1",
+    "id": "284b5238-6882-4f5f-8687-cc9cb86f7ddb",
+    "series_id": "fixture-run/fixture-task",
+    "revision": 1,
+    "repository_identity": "fixture-repository",
+    "base_sha": "10ea1614469bbc04aab1029382bc03da6ebbf70f",
+    "tree_sha": "11bece263d16c7345841b428a610db7f3054b18a",
+    "input_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "content_sha256": "2092eb961f9c57ddde4bf8aaa7e1a9d0eacfad9bbf4e42fe1f6418713157a02d",
+    "manifest_sha256": "ba2c595e10be917741bcc047dd27a04198afe48116392bc06720d1dd1f13b66f",
+    "manifest": [
+      {
+        "path": "app.py",
+        "mode": "100644",
+        "blob_sha": "1c385b9c7523c2f5d64ebbe748e82cd4d6c9486a",
+        "artifact": {
+          "sha256": "fbf786686eccc3f356b46aa39e66aaa0aeb9f216e16c14fd316006aa01c6cb73",
+          "size": 19,
+          "path": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\candidate-validation-probe-20260905-r3\\state\\artifacts\\fbf786686eccc3f356b46aa39e66aaa0aeb9f216e16c14fd316006aa01c6cb73"
+        }
+      }
+    ],
+    "changed_paths": [
+      "app.py"
+    ],
+    "request": {
+      "series_id": "fixture-run/fixture-task",
+      "baseline_id": "85234ab2a0670b65467d50cf06fae4da5159e082a4fed862520ee35ecf3e9ad8",
+      "input_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "allowed_paths": [
+        "app.py"
+      ],
+      "task_class": "T2",
+      "writer": {
+        "attempt_id": "worker-1",
+        "fence": 1,
+        "stopped": true,
+        "observation_ref": "fixture:stopped"
+      },
+      "authors": [
+        {
+          "attempt_id": "worker-1",
+          "fence": 1,
+          "profile_id": "fixture-fast",
+          "profile_revision": 1,
+          "model_family": "fixture-family-a",
+          "context_id": "worker-context",
+          "provenance_ref": "fixture:author"
+        }
+      ],
+      "policy": {
+        "id": "fixture-trusted-checks",
+        "revision": 1,
+        "checks": [
+          {
+            "id": "content-check",
+            "revision": 1,
+            "argv": [
+              "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+              "-I",
+              "-c",
+              "from pathlib import Path; assert Path('app.py').read_bytes() == b\"print('candidate')\\n\"; print('content check passed')"
+            ],
+            "environment_sha256": "9bcf310c015aeda74b9781c17537fb17e76217d96bd60609b6b44ef41d4b5f7f"
+          }
+        ],
+        "review": {
+          "revision": 1,
+          "environment_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "approved_reviewers": [
+            {
+              "profile_id": "fixture-fast",
+              "profile_revision": 1,
+              "model_family": "fixture-family-a",
+              "qualification_ref": "fixture:reviewer"
+            }
+          ]
+        }
+      }
+    },
+    "policy_sha256": "fa93abdf207d277334f1c85d44891d2b5accbba2c7a91fea5ba949cf80dca7e5",
+    "frozen_at": "2026-09-05T14:03:07.316401+00:00"
+  },
+  "changed_candidate": {
+    "schema_version": "karajan.candidate.v1",
+    "id": "fe281bd2-7909-4fe0-b635-53c6f7a341be",
+    "series_id": "fixture-run/fixture-task",
+    "revision": 2,
+    "repository_identity": "fixture-repository",
+    "base_sha": "10ea1614469bbc04aab1029382bc03da6ebbf70f",
+    "tree_sha": "990eca570251d61c6fe3893f15c13e9afdcb4721",
+    "input_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "content_sha256": "c8b9dca463b5085a8ee12aa194c736c13015a9737b41c3e0fda75a6b8b72228a",
+    "manifest_sha256": "ab54b0372fc68c34f7ebcb7be8fdad693b3b2b0bb69a936d266c5663d703ac31",
+    "manifest": [
+      {
+        "path": "app.py",
+        "mode": "100644",
+        "blob_sha": "ce6fbf01d226f6e79d69b215133bf70ce823cad5",
+        "artifact": {
+          "sha256": "5d84b96c3fa6d5ac01ea84c72e3eb746f4ea4a5e7e9146ceeaf6c922c3e24e13",
+          "size": 16,
+          "path": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\candidate-validation-probe-20260905-r3\\state\\artifacts\\5d84b96c3fa6d5ac01ea84c72e3eb746f4ea4a5e7e9146ceeaf6c922c3e24e13"
+        }
+      }
+    ],
+    "changed_paths": [
+      "app.py"
+    ],
+    "request": {
+      "series_id": "fixture-run/fixture-task",
+      "baseline_id": "85234ab2a0670b65467d50cf06fae4da5159e082a4fed862520ee35ecf3e9ad8",
+      "input_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "allowed_paths": [
+        "app.py"
+      ],
+      "task_class": "T2",
+      "writer": {
+        "attempt_id": "worker-1",
+        "fence": 1,
+        "stopped": true,
+        "observation_ref": "fixture:stopped"
+      },
+      "authors": [
+        {
+          "attempt_id": "worker-1",
+          "fence": 1,
+          "profile_id": "fixture-fast",
+          "profile_revision": 1,
+          "model_family": "fixture-family-a",
+          "context_id": "worker-context",
+          "provenance_ref": "fixture:author"
+        }
+      ],
+      "policy": {
+        "id": "fixture-trusted-checks",
+        "revision": 1,
+        "checks": [
+          {
+            "id": "content-check",
+            "revision": 1,
+            "argv": [
+              "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+              "-I",
+              "-c",
+              "from pathlib import Path; assert Path('app.py').read_bytes() == b\"print('candidate')\\n\"; print('content check passed')"
+            ],
+            "environment_sha256": "9bcf310c015aeda74b9781c17537fb17e76217d96bd60609b6b44ef41d4b5f7f"
+          }
+        ],
+        "review": {
+          "revision": 1,
+          "environment_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "approved_reviewers": [
+            {
+              "profile_id": "fixture-fast",
+              "profile_revision": 1,
+              "model_family": "fixture-family-a",
+              "qualification_ref": "fixture:reviewer"
+            }
+          ]
+        }
+      }
+    },
+    "policy_sha256": "fa93abdf207d277334f1c85d44891d2b5accbba2c7a91fea5ba949cf80dca7e5",
+    "frozen_at": "2026-09-05T14:03:07.432946+00:00"
+  },
+  "passing_check": {
+    "id": "b24ff2fe-0485-4e54-aae6-5f3a6b08a54a",
+    "kind": "check",
+    "input": {
+      "evidence_key": "passing-check",
+      "candidate_id": "284b5238-6882-4f5f-8687-cc9cb86f7ddb",
+      "policy_sha256": "fa93abdf207d277334f1c85d44891d2b5accbba2c7a91fea5ba949cf80dca7e5",
+      "input_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "environment_sha256": "9bcf310c015aeda74b9781c17537fb17e76217d96bd60609b6b44ef41d4b5f7f",
+      "observation_ref": "probe:passing-check",
+      "provenance": "trusted_observation",
+      "check_id": "content-check",
+      "check_revision": 1,
+      "executor_ref": "probe:python-process",
+      "exit_code": 0,
+      "outcome": "completed"
+    },
+    "status": "passed",
+    "reasons": [],
+    "log": {
+      "sha256": "a68c1b82dd13d63d7798d6a6b1aa8cfa237ea1f6968a5c99458c4028a10c48bb",
+      "size": 22,
+      "path": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\candidate-validation-probe-20260905-r3\\state\\artifacts\\a68c1b82dd13d63d7798d6a6b1aa8cfa237ea1f6968a5c99458c4028a10c48bb"
+    },
+    "recorded_at": "2026-09-05T14:03:07.364472+00:00"
+  },
+  "fixture_review": {
+    "id": "e5b850d0-798a-4169-a71d-afe6a3870bd5",
+    "kind": "review",
+    "input": {
+      "evidence_key": "fixture-review",
+      "candidate_id": "284b5238-6882-4f5f-8687-cc9cb86f7ddb",
+      "policy_sha256": "fa93abdf207d277334f1c85d44891d2b5accbba2c7a91fea5ba949cf80dca7e5",
+      "input_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "environment_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "observation_ref": "fixture:review-result",
+      "provenance": "fixture",
+      "review_revision": 1,
+      "check_evidence_ids": [
+        "b24ff2fe-0485-4e54-aae6-5f3a6b08a54a"
+      ],
+      "actor": {
+        "attempt_id": "fixture-review-attempt",
+        "fence": 1,
+        "profile_id": "fixture-fast",
+        "profile_revision": 1,
+        "model_family": "fixture-family-a",
+        "context_id": "fixture-fresh-context",
+        "provenance_ref": "fixture:context"
+      },
+      "author_reasoning_included": false,
+      "verdict": "passed",
+      "findings": []
+    },
+    "status": "passed",
+    "reasons": [],
+    "log": {
+      "sha256": "4108d2d4aa06c5b3fdd443fbb86bb9f87aee1fc3543bdf5f59b0b3e37eaa24e0",
+      "size": 43,
+      "path": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\candidate-validation-probe-20260905-r3\\state\\artifacts\\4108d2d4aa06c5b3fdd443fbb86bb9f87aee1fc3543bdf5f59b0b3e37eaa24e0"
+    },
+    "recorded_at": "2026-09-05T14:03:07.370472+00:00"
+  },
+  "failing_check": {
+    "id": "21d4deef-3830-4bed-908c-f5d1f0f76256",
+    "kind": "check",
+    "input": {
+      "evidence_key": "failing-check",
+      "candidate_id": "fe281bd2-7909-4fe0-b635-53c6f7a341be",
+      "policy_sha256": "fa93abdf207d277334f1c85d44891d2b5accbba2c7a91fea5ba949cf80dca7e5",
+      "input_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "environment_sha256": "9bcf310c015aeda74b9781c17537fb17e76217d96bd60609b6b44ef41d4b5f7f",
+      "observation_ref": "probe:failing-check",
+      "provenance": "trusted_observation",
+      "check_id": "content-check",
+      "check_revision": 1,
+      "executor_ref": "probe:python-process",
+      "exit_code": 1,
+      "outcome": "completed"
+    },
+    "status": "failed",
+    "reasons": [],
+    "log": {
+      "sha256": "0e435cb95b38438426c72eb0920b4b02ac908246e0f95681e50f0a1f2741ed35",
+      "size": 92,
+      "path": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\candidate-validation-probe-20260905-r3\\state\\artifacts\\0e435cb95b38438426c72eb0920b4b02ac908246e0f95681e50f0a1f2741ed35"
+    },
+    "recorded_at": "2026-09-05T14:03:07.478326+00:00"
+  },
+  "initial_gate": {
+    "schema_version": "karajan.candidate-gate.v1",
+    "candidate_id": "284b5238-6882-4f5f-8687-cc9cb86f7ddb",
+    "local_gate_passed": true,
+    "delivery_eligible": false,
+    "live_qualification": "not_run",
+    "reasons": [],
+    "evidence": [
+      {
+        "id": "b24ff2fe-0485-4e54-aae6-5f3a6b08a54a",
+        "input": {
+          "candidate_id": "284b5238-6882-4f5f-8687-cc9cb86f7ddb",
+          "check_id": "content-check",
+          "check_revision": 1,
+          "environment_sha256": "9bcf310c015aeda74b9781c17537fb17e76217d96bd60609b6b44ef41d4b5f7f",
+          "evidence_key": "passing-check",
+          "executor_ref": "probe:python-process",
+          "exit_code": 0,
+          "input_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "observation_ref": "probe:passing-check",
+          "outcome": "completed",
+          "policy_sha256": "fa93abdf207d277334f1c85d44891d2b5accbba2c7a91fea5ba949cf80dca7e5",
+          "provenance": "trusted_observation"
+        },
+        "kind": "check",
+        "log": {
+          "path": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\candidate-validation-probe-20260905-r3\\state\\artifacts\\a68c1b82dd13d63d7798d6a6b1aa8cfa237ea1f6968a5c99458c4028a10c48bb",
+          "sha256": "a68c1b82dd13d63d7798d6a6b1aa8cfa237ea1f6968a5c99458c4028a10c48bb",
+          "size": 22
+        },
+        "reasons": [],
+        "recorded_at": "2026-09-05T14:03:07.364472+00:00",
+        "status": "passed",
+        "effective_status": "passed"
+      },
+      {
+        "id": "e5b850d0-798a-4169-a71d-afe6a3870bd5",
+        "input": {
+          "actor": {
+            "attempt_id": "fixture-review-attempt",
+            "context_id": "fixture-fresh-context",
+            "fence": 1,
+            "model_family": "fixture-family-a",
+            "profile_id": "fixture-fast",
+            "profile_revision": 1,
+            "provenance_ref": "fixture:context"
+          },
+          "author_reasoning_included": false,
+          "candidate_id": "284b5238-6882-4f5f-8687-cc9cb86f7ddb",
+          "check_evidence_ids": [
+            "b24ff2fe-0485-4e54-aae6-5f3a6b08a54a"
+          ],
+          "environment_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "evidence_key": "fixture-review",
+          "findings": [],
+          "input_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "observation_ref": "fixture:review-result",
+          "policy_sha256": "fa93abdf207d277334f1c85d44891d2b5accbba2c7a91fea5ba949cf80dca7e5",
+          "provenance": "fixture",
+          "review_revision": 1,
+          "verdict": "passed"
+        },
+        "kind": "review",
+        "log": {
+          "path": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\candidate-validation-probe-20260905-r3\\state\\artifacts\\4108d2d4aa06c5b3fdd443fbb86bb9f87aee1fc3543bdf5f59b0b3e37eaa24e0",
+          "sha256": "4108d2d4aa06c5b3fdd443fbb86bb9f87aee1fc3543bdf5f59b0b3e37eaa24e0",
+          "size": 43
+        },
+        "reasons": [],
+        "recorded_at": "2026-09-05T14:03:07.370472+00:00",
+        "status": "passed",
+        "effective_status": "passed"
+      }
+    ]
+  },
+  "old_gate_after_change": {
+    "schema_version": "karajan.candidate-gate.v1",
+    "candidate_id": "284b5238-6882-4f5f-8687-cc9cb86f7ddb",
+    "local_gate_passed": false,
+    "delivery_eligible": false,
+    "live_qualification": "not_run",
+    "reasons": [
+      "CANDIDATE_SUPERSEDED",
+      "CHECK_NOT_PASSED:content-check",
+      "REVIEW_NOT_PASSED"
+    ],
+    "evidence": [
+      {
+        "id": "b24ff2fe-0485-4e54-aae6-5f3a6b08a54a",
+        "input": {
+          "candidate_id": "284b5238-6882-4f5f-8687-cc9cb86f7ddb",
+          "check_id": "content-check",
+          "check_revision": 1,
+          "environment_sha256": "9bcf310c015aeda74b9781c17537fb17e76217d96bd60609b6b44ef41d4b5f7f",
+          "evidence_key": "passing-check",
+          "executor_ref": "probe:python-process",
+          "exit_code": 0,
+          "input_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "observation_ref": "probe:passing-check",
+          "outcome": "completed",
+          "policy_sha256": "fa93abdf207d277334f1c85d44891d2b5accbba2c7a91fea5ba949cf80dca7e5",
+          "provenance": "trusted_observation"
+        },
+        "kind": "check",
+        "log": {
+          "path": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\candidate-validation-probe-20260905-r3\\state\\artifacts\\a68c1b82dd13d63d7798d6a6b1aa8cfa237ea1f6968a5c99458c4028a10c48bb",
+          "sha256": "a68c1b82dd13d63d7798d6a6b1aa8cfa237ea1f6968a5c99458c4028a10c48bb",
+          "size": 22
+        },
+        "reasons": [],
+        "recorded_at": "2026-09-05T14:03:07.364472+00:00",
+        "status": "passed",
+        "effective_status": "invalidated"
+      },
+      {
+        "id": "e5b850d0-798a-4169-a71d-afe6a3870bd5",
+        "input": {
+          "actor": {
+            "attempt_id": "fixture-review-attempt",
+            "context_id": "fixture-fresh-context",
+            "fence": 1,
+            "model_family": "fixture-family-a",
+            "profile_id": "fixture-fast",
+            "profile_revision": 1,
+            "provenance_ref": "fixture:context"
+          },
+          "author_reasoning_included": false,
+          "candidate_id": "284b5238-6882-4f5f-8687-cc9cb86f7ddb",
+          "check_evidence_ids": [
+            "b24ff2fe-0485-4e54-aae6-5f3a6b08a54a"
+          ],
+          "environment_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "evidence_key": "fixture-review",
+          "findings": [],
+          "input_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "observation_ref": "fixture:review-result",
+          "policy_sha256": "fa93abdf207d277334f1c85d44891d2b5accbba2c7a91fea5ba949cf80dca7e5",
+          "provenance": "fixture",
+          "review_revision": 1,
+          "verdict": "passed"
+        },
+        "kind": "review",
+        "log": {
+          "path": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\candidate-validation-probe-20260905-r3\\state\\artifacts\\4108d2d4aa06c5b3fdd443fbb86bb9f87aee1fc3543bdf5f59b0b3e37eaa24e0",
+          "sha256": "4108d2d4aa06c5b3fdd443fbb86bb9f87aee1fc3543bdf5f59b0b3e37eaa24e0",
+          "size": 43
+        },
+        "reasons": [],
+        "recorded_at": "2026-09-05T14:03:07.370472+00:00",
+        "status": "passed",
+        "effective_status": "invalidated"
+      }
+    ]
+  },
+  "new_gate": {
+    "schema_version": "karajan.candidate-gate.v1",
+    "candidate_id": "fe281bd2-7909-4fe0-b635-53c6f7a341be",
+    "local_gate_passed": false,
+    "delivery_eligible": false,
+    "live_qualification": "not_run",
+    "reasons": [
+      "CHECK_NOT_PASSED:content-check",
+      "REVIEW_EVIDENCE_MISSING"
+    ],
+    "evidence": [
+      {
+        "id": "21d4deef-3830-4bed-908c-f5d1f0f76256",
+        "input": {
+          "candidate_id": "fe281bd2-7909-4fe0-b635-53c6f7a341be",
+          "check_id": "content-check",
+          "check_revision": 1,
+          "environment_sha256": "9bcf310c015aeda74b9781c17537fb17e76217d96bd60609b6b44ef41d4b5f7f",
+          "evidence_key": "failing-check",
+          "executor_ref": "probe:python-process",
+          "exit_code": 1,
+          "input_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "observation_ref": "probe:failing-check",
+          "outcome": "completed",
+          "policy_sha256": "fa93abdf207d277334f1c85d44891d2b5accbba2c7a91fea5ba949cf80dca7e5",
+          "provenance": "trusted_observation"
+        },
+        "kind": "check",
+        "log": {
+          "path": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\candidate-validation-probe-20260905-r3\\state\\artifacts\\0e435cb95b38438426c72eb0920b4b02ac908246e0f95681e50f0a1f2741ed35",
+          "sha256": "0e435cb95b38438426c72eb0920b4b02ac908246e0f95681e50f0a1f2741ed35",
+          "size": 92
+        },
+        "reasons": [],
+        "recorded_at": "2026-09-05T14:03:07.478326+00:00",
+        "status": "failed",
+        "effective_status": "failed"
+      }
+    ]
+  },
+  "model_calls": 0,
+  "cash_api_calls": 0,
+  "live_qualification": "not_run",
+  "limitations": [
+    "Review and writer-stop/qualification attestations are fixtures.",
+    "Only fixed local fixture code was executed; no OS sandbox qualification.",
+    "No Agent scheduling, RunnerHost integration or delivery activation.",
+    "No GitHub PR or CI integration."
+  ]
+}

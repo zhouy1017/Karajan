@@ -1,0 +1,23 @@
+{
+  "project_id": "replace-with-project-id",
+  "project_revision": 2,
+  "configuration_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+  "requirement": {
+    "goal": "Add an offline report",
+    "acceptance": ["The report is repeatable"]
+  },
+  "participants": [
+    {"principal": "lead", "profile": {"id": "fixture-profile", "revision": 1}, "purpose": "lead"},
+    {"principal": "adviser", "profile": {"id": "fixture-profile", "revision": 1}, "purpose": "advice"},
+    {"principal": "replacement", "profile": {"id": "fixture-profile", "revision": 1}, "purpose": "candidate"}
+  ],
+  "authorization": {
+    "profile_refs": [{"id": "fixture-profile", "revision": 1}],
+    "read_paths": ["src", "tests"],
+    "write_paths": ["src", "tests"],
+    "budget_ref": "run",
+    "checks": ["tests", "independent_review"],
+    "delivery": "pull_request",
+    "target_branch": "main"
+  }
+}

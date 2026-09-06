@@ -13,6 +13,7 @@ body {
 }
 button,
 input,
+select,
 textarea {
   font: inherit;
 }
@@ -35,6 +36,7 @@ a:focus-visible {
   outline-offset: 4px;
 }
 input,
+select,
 textarea {
   width: 100%;
   border: 1px solid #cdd8d2;
@@ -45,6 +47,7 @@ textarea {
   outline: none;
 }
 input:focus,
+select:focus,
 textarea:focus {
   border-color: #16634f;
   box-shadow: 0 0 0 3px #16634f18;
@@ -302,6 +305,7 @@ fieldset {
 }
 .form-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 12px;
   margin-top: 22px;
@@ -362,4 +366,10 @@ textarea {
   font-size: 12px;
   line-height: 1.7;
   resize: vertical;
+}
+.run-detail {
+  overflow-wrap: anywhere;
+}
+.project-form > h2 + button {
+  margin-top: 20px;
 }
