@@ -460,6 +460,22 @@ class CandidateStore:
             "directory": str(target),
         }
 
+    def rebind_reviewers(self, binding: object, *, command_key: str) -> dict[str, Any]:
+        """Append only a reviewer-set policy revision under the caller's current guards.
+
+        This controller-only port grants no Reviewer qualification or authority.
+        New effects verify the complete CAS; exact replay returns original history.
+        """
+        from ._review_binding import rebind
+
+        return rebind(self, binding, command_key=command_key)
+
+    def lookup_review_rebind(self, binding: object, *, command_key: str) -> dict[str, Any] | None:
+        """Read one exact immutable commit without artifacts, Git, clock or writes."""
+        from ._review_binding import lookup
+
+        return lookup(self, binding, command_key=command_key)
+
     def materialize_baseline(self, baseline_id: str, destination: Path) -> dict[str, Any]:
         """Restore a registered baseline without consulting the source repository."""
         baseline = self.get_baseline(baseline_id)
