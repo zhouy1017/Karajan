@@ -1,0 +1,47 @@
+{
+  "review_axis": "Standards",
+  "reviewer": "root",
+  "reviewed_at": "2026-09-06T02:15:15Z",
+  "base_commit": "07da55e80f5a2c92cf6b3b5612e5e5a706d0cc72",
+  "source_bindings": [
+    {
+      "path": "backend/karajan/capacity/facts.py",
+      "sha256": "7e26ff6786c7ec8e1531f948ab0cf0d4af58ff8e7ccca9fabf6ebee07c7ee9a9"
+    },
+    {
+      "path": "backend/karajan/capacity/store.py",
+      "sha256": "b9547e2e625661e26c5efb5dbe6550fa73025e8b7157ce15d3653e72d963abff"
+    },
+    {
+      "path": "backend/karajan/capacity/__init__.py",
+      "sha256": "125b22eb0a65bd099947f2918b3690a2853109f0a79299cd8696d8851d0f3699"
+    },
+    {
+      "path": "tests/capacity/test_routing_facts.py",
+      "sha256": "af57e1bb0800e70775129d826d34abaa26144a16a34f8523c89b083c84d76208"
+    }
+  ],
+  "findings": [],
+  "inspected": [
+    "One public CapacityStore method owns a mode=ro/query_only/BEGIN transaction; first pool SELECT anchors the snapshot before the one trusted clock read. Missing database cannot be created through this entry point.",
+    "Account filters are strict and complete. Projection includes all account pools and all Run holds, and preserves current policy, raw applied observation, historical numeric observation, source references, coverage IDs, lifecycle and usage evidence.",
+    "The capacity module reuses existing _pool_usage and _exhausted semantics; it does not call mutating _held or alter existing admit/resource_view behavior.",
+    "Immutable canonical data is separate from its fresh decoded copy. Content/source hashes bind data, not authority; no consumer is told this is an admission or live qualification.",
+    "Unknown, stale, exhausted and negative/aggregate out-of-range quantities remain explicit; no confidence, task demand, cash remaining or permission is invented."
+  ],
+  "executed": {
+    "command": "WSL Ubuntu: PYTHONPATH=backend /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest tests/capacity -q -p no:cacheprovider --junitxml=.cache/capacity-routing-facts-wsl.junit.xml",
+    "result": "77 passed",
+    "seconds": 6.0,
+    "junit": "capacity-routing-facts-wsl.junit.xml",
+    "sha256": "4a95aa2a445e80bdd78b155b8e8dffcb41a0383e7ecb4353c4d8b89c1bcbfbe7",
+    "final_root_lint": "ruff check . passed after independent evidence scripts were added"
+  },
+  "limits": [
+    "Review and tests cover a capacity input fragment, not Run authorization, provider qualification, cash accounting or unified admission.",
+    "Read-only assertions concern logical database content. SQLite operational journal/header behavior is not claimed byte-identical.",
+    "No live model or cash API request was made. Independent Spec owns its socket rejection/count observation; this Standards check does not claim a remote receiver experiment."
+  ],
+  "activation_allowed": false,
+  "live_qualification": "not_run"
+}

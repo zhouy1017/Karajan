@@ -1,0 +1,2784 @@
+[
+  {
+    "after": {
+      "commands": {
+        "count": 13,
+        "sha256": "3fe1e3f628c368ab7db251ee44fff9d7ad6ea38244274d51d4b45b5478c99233"
+      },
+      "failures": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "lifecycle": {
+        "count": 4,
+        "sha256": "d98a8c54516ea6c7d959c3efd3cc5c95420e339d9a3a6dbb1a383ca57738f935"
+      },
+      "observations": {
+        "count": 1,
+        "sha256": "c393e968a530c33a2d8015b0dd67cd43453b7422207936ab684d9683cf9c0921"
+      },
+      "policies": {
+        "count": 1,
+        "sha256": "04d2cb850e3e2172e57c5b0feb1cf33caabad10d7524e43caa4344392cadaacf"
+      },
+      "pools": {
+        "count": 1,
+        "sha256": "252061c2af799d2769904649dfe0c0752796d8791e3b1cb327be201c75535d22"
+      },
+      "profiles": {
+        "count": 2,
+        "sha256": "605a8483c416f3d953f0b3174bf703565234acf0c8477618b62ebea1acf4947c"
+      },
+      "reservations": {
+        "count": 2,
+        "sha256": "b3a05e009d9a69ccd4193ef1bf63462179f949ff754110b6860fdf6a44de5266"
+      },
+      "usage": {
+        "count": 2,
+        "sha256": "f6c68145f51e33774d0f2331e500a41a0305ae88906b8603a4ba1b6691b4f1d1"
+      }
+    },
+    "all_tables_unchanged": true,
+    "before": {
+      "commands": {
+        "count": 13,
+        "sha256": "3fe1e3f628c368ab7db251ee44fff9d7ad6ea38244274d51d4b45b5478c99233"
+      },
+      "failures": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "lifecycle": {
+        "count": 4,
+        "sha256": "d98a8c54516ea6c7d959c3efd3cc5c95420e339d9a3a6dbb1a383ca57738f935"
+      },
+      "observations": {
+        "count": 1,
+        "sha256": "c393e968a530c33a2d8015b0dd67cd43453b7422207936ab684d9683cf9c0921"
+      },
+      "policies": {
+        "count": 1,
+        "sha256": "04d2cb850e3e2172e57c5b0feb1cf33caabad10d7524e43caa4344392cadaacf"
+      },
+      "pools": {
+        "count": 1,
+        "sha256": "252061c2af799d2769904649dfe0c0752796d8791e3b1cb327be201c75535d22"
+      },
+      "profiles": {
+        "count": 2,
+        "sha256": "605a8483c416f3d953f0b3174bf703565234acf0c8477618b62ebea1acf4947c"
+      },
+      "reservations": {
+        "count": 2,
+        "sha256": "b3a05e009d9a69ccd4193ef1bf63462179f949ff754110b6860fdf6a44de5266"
+      },
+      "usage": {
+        "count": 2,
+        "sha256": "f6c68145f51e33774d0f2331e500a41a0305ae88906b8603a4ba1b6691b4f1d1"
+      }
+    },
+    "facts_sha256": "c0b2dba4ed67b461862af8f7eeeaa419922b0ac640417f8dd51606101add46f0",
+    "name": "aggregate-above-scalar-limit",
+    "observed": [
+      {
+        "account_id": "account-a",
+        "cooldown_until": null,
+        "exhaustion_requires_new_observation": false,
+        "held_attempts": 0,
+        "policy_revision": 1,
+        "pools": [
+          {
+            "diagnostics": [
+              "OBSERVATION_CONFIDENCE_UNAVAILABLE",
+              "ROUTING_QUANTITY_OUT_OF_RANGE"
+            ],
+            "exhaustion_requires_new_observation": false,
+            "future_reserved": "0.000000",
+            "id": "pool-fixed",
+            "local_uncovered": "18446744073709.551614",
+            "reported_remaining": "9223372036854.775807",
+            "window_kind": "fixed"
+          }
+        ],
+        "unknown_attempts": 0
+      }
+    ],
+    "public_inputs": [
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "pool-fixed",
+            "kind": "service",
+            "unit": "requests",
+            "window_kind": "fixed"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-0"
+        },
+        "method": "register_pool"
+      },
+      {
+        "args": [
+          {
+            "amount": "9223372036854.775807",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "9223372036854.775807",
+            "metric": "remaining",
+            "observed_at": 1000.0,
+            "pool_id": "pool-fixed",
+            "reset_at": 1010.0,
+            "source": "fixture",
+            "source_ref": "spec-observation-1",
+            "window_id": "window-old"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-1"
+        },
+        "method": "observe"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "profile-a",
+            "pool_ids": [
+              "pool-fixed"
+            ],
+            "revision": 1
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-2"
+        },
+        "method": "register_profile"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "profile-b",
+            "pool_ids": [
+              "pool-fixed"
+            ],
+            "revision": 1
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-3"
+        },
+        "method": "register_profile"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "conservative_mode": null,
+            "lead_reserve": {},
+            "lead_reserved_slots": 0,
+            "max_active_attempts": 20,
+            "max_attempt_duration_seconds": 60,
+            "observation_max_age_seconds": 60,
+            "require_official_observation": false,
+            "safety_margin": {}
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-4",
+          "expected_revision": 0
+        },
+        "method": "activate_policy"
+      },
+      {
+        "args": [
+          {
+            "attempt_id": "attempt-first",
+            "authorization_ref": "spec-approved-scope",
+            "demand": {
+              "pool-fixed": "1"
+            },
+            "duration_seconds": 9,
+            "profile_id": "profile-a",
+            "profile_revision": 1,
+            "purpose": null,
+            "role": "worker",
+            "rulebook_revision": "rules-run-a",
+            "run_id": "run-a"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-5"
+        },
+        "method": "admit",
+        "returned_admission_id": "b75e1843-3c84-440f-a813-b86373c6bfd5"
+      },
+      {
+        "args": [
+          {
+            "attempt_id": "attempt-second",
+            "authorization_ref": "spec-approved-scope",
+            "demand": {
+              "pool-fixed": "1"
+            },
+            "duration_seconds": 9,
+            "profile_id": "profile-b",
+            "profile_revision": 1,
+            "purpose": null,
+            "role": "worker",
+            "rulebook_revision": "rules-run-b",
+            "run_id": "run-b"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-6"
+        },
+        "method": "admit",
+        "returned_admission_id": "bce11db5-3544-4f1a-b327-dffbd61ce880"
+      },
+      {
+        "args": [
+          "b75e1843-3c84-440f-a813-b86373c6bfd5"
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-7"
+        },
+        "method": "activate"
+      },
+      {
+        "args": [
+          "bce11db5-3544-4f1a-b327-dffbd61ce880"
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-8"
+        },
+        "method": "activate"
+      },
+      {
+        "args": [
+          {
+            "admission_id": "b75e1843-3c84-440f-a813-b86373c6bfd5",
+            "amounts": {
+              "pool-fixed": "9223372036854.775807"
+            },
+            "attribution_ref": "spec-window-evidence",
+            "evidence_ref": "spec-usage-evidence-large-first",
+            "id": "large-first",
+            "window_ids": {
+              "pool-fixed": "window-old"
+            }
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-9"
+        },
+        "method": "record_usage"
+      },
+      {
+        "args": [
+          {
+            "admission_id": "bce11db5-3544-4f1a-b327-dffbd61ce880",
+            "amounts": {
+              "pool-fixed": "9223372036854.775807"
+            },
+            "attribution_ref": "spec-window-evidence",
+            "evidence_ref": "spec-usage-evidence-large-second",
+            "id": "large-second",
+            "window_ids": {
+              "pool-fixed": "window-old"
+            }
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-10"
+        },
+        "method": "record_usage"
+      },
+      {
+        "args": [
+          "b75e1843-3c84-440f-a813-b86373c6bfd5"
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-11",
+          "evidence_ref": "spec-end-evidence",
+          "local_ended": true,
+          "not_sent": false,
+          "remote_ended": true,
+          "usage_complete": true
+        },
+        "method": "reconcile"
+      },
+      {
+        "args": [
+          "bce11db5-3544-4f1a-b327-dffbd61ce880"
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-12",
+          "evidence_ref": "spec-end-evidence",
+          "local_ended": true,
+          "not_sent": false,
+          "remote_ended": true,
+          "usage_complete": true
+        },
+        "method": "reconcile"
+      }
+    ]
+  },
+  {
+    "after_sha256": "499a4151c1ae600c16ab0f76593a57d58669f29882e892b5cc30948f07e5005d",
+    "before_sha256": "b25980e4f4b0f0bb4e0d320209440f320fa3b23c4b2f69ca9acb2e32da3dd1bb",
+    "during_sha256": "b25980e4f4b0f0bb4e0d320209440f320fa3b23c4b2f69ca9acb2e32da3dd1bb",
+    "future_reserved": [
+      "5.000000",
+      "5.000000",
+      "5.000000"
+    ],
+    "local_uncovered": [
+      "2.000000",
+      "2.000000",
+      "2.000000"
+    ],
+    "name": "concurrent-policy",
+    "operation": "policy",
+    "policy_revisions": [
+      1,
+      1,
+      2
+    ],
+    "update_committed_while_read_paused": true,
+    "updated_public_input": {
+      "account_id": "account-a",
+      "conservative_mode": null,
+      "lead_reserve": {},
+      "lead_reserved_slots": 2,
+      "max_active_attempts": 20,
+      "max_attempt_duration_seconds": 60,
+      "observation_max_age_seconds": 60,
+      "require_official_observation": false,
+      "safety_margin": {}
+    }
+  },
+  {
+    "after_sha256": "4805ef7a4f9a9d725e3100dc5a97007e586a6c94f3879eba18a477d42ef64bf5",
+    "before_sha256": "a85bf328528b2546dac884de73557362c27d421ca5cff9c6df30c0be86483791",
+    "during_sha256": "a85bf328528b2546dac884de73557362c27d421ca5cff9c6df30c0be86483791",
+    "future_reserved": [
+      "5.000000",
+      "5.000000",
+      "3.000000"
+    ],
+    "local_uncovered": [
+      "2.000000",
+      "2.000000",
+      "4.000000"
+    ],
+    "name": "concurrent-usage",
+    "operation": "usage",
+    "policy_revisions": [
+      1,
+      1,
+      1
+    ],
+    "update_committed_while_read_paused": true,
+    "updated_public_input": {
+      "admission_id": "e8e535ef-e75e-432f-9f01-a2b5b2bc40ae",
+      "amounts": {
+        "pool-fixed": "2"
+      },
+      "attribution_ref": "spec-window-evidence",
+      "evidence_ref": "spec-usage-evidence-uncovered-second",
+      "id": "concurrent-usage",
+      "window_ids": {
+        "pool-fixed": "window-old"
+      }
+    }
+  },
+  {
+    "after": {
+      "commands": {
+        "count": 9,
+        "sha256": "627193748c58ac60bfae84560493d7fbfa5c806d10fc30f5019cda6b3155a052"
+      },
+      "failures": {
+        "count": 1,
+        "sha256": "293bb01b67f82b60a54ed9da3114ad89b38442ee287809943bebac7a90cf52a6"
+      },
+      "lifecycle": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "observations": {
+        "count": 4,
+        "sha256": "91db99fe909b5c67d9d710e6c8fceb83ba5eba54160a9d9a440146d9aa877004"
+      },
+      "policies": {
+        "count": 1,
+        "sha256": "04d2cb850e3e2172e57c5b0feb1cf33caabad10d7524e43caa4344392cadaacf"
+      },
+      "pools": {
+        "count": 1,
+        "sha256": "252061c2af799d2769904649dfe0c0752796d8791e3b1cb327be201c75535d22"
+      },
+      "profiles": {
+        "count": 2,
+        "sha256": "605a8483c416f3d953f0b3174bf703565234acf0c8477618b62ebea1acf4947c"
+      },
+      "reservations": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "usage": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "all_tables_unchanged": true,
+    "before": {
+      "commands": {
+        "count": 9,
+        "sha256": "627193748c58ac60bfae84560493d7fbfa5c806d10fc30f5019cda6b3155a052"
+      },
+      "failures": {
+        "count": 1,
+        "sha256": "293bb01b67f82b60a54ed9da3114ad89b38442ee287809943bebac7a90cf52a6"
+      },
+      "lifecycle": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "observations": {
+        "count": 4,
+        "sha256": "91db99fe909b5c67d9d710e6c8fceb83ba5eba54160a9d9a440146d9aa877004"
+      },
+      "policies": {
+        "count": 1,
+        "sha256": "04d2cb850e3e2172e57c5b0feb1cf33caabad10d7524e43caa4344392cadaacf"
+      },
+      "pools": {
+        "count": 1,
+        "sha256": "252061c2af799d2769904649dfe0c0752796d8791e3b1cb327be201c75535d22"
+      },
+      "profiles": {
+        "count": 2,
+        "sha256": "605a8483c416f3d953f0b3174bf703565234acf0c8477618b62ebea1acf4947c"
+      },
+      "reservations": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "usage": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "facts_sha256": "a645ceb53de8438df8c595cc7819414b61b796ad50ad44488d46b769304ffca8",
+    "name": "exhausted-unknown-unapplied",
+    "observed": [
+      {
+        "account_id": "account-a",
+        "cooldown_until": null,
+        "exhaustion_requires_new_observation": true,
+        "held_attempts": 0,
+        "policy_revision": 1,
+        "pools": [
+          {
+            "diagnostics": [
+              "OBSERVATION_CONFIDENCE_UNAVAILABLE",
+              "QUOTA_UNKNOWN",
+              "EXHAUSTION_REQUIRES_NEW_OBSERVATION"
+            ],
+            "exhaustion_requires_new_observation": true,
+            "future_reserved": "0.000000",
+            "id": "pool-fixed",
+            "local_uncovered": "0.000000",
+            "reported_remaining": null,
+            "window_kind": "fixed"
+          }
+        ],
+        "unknown_attempts": 0
+      }
+    ],
+    "public_inputs": [
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "pool-fixed",
+            "kind": "service",
+            "unit": "requests",
+            "window_kind": "fixed"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-0"
+        },
+        "method": "register_pool"
+      },
+      {
+        "args": [
+          {
+            "amount": "80",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1000.0,
+            "pool_id": "pool-fixed",
+            "reset_at": 1010.0,
+            "source": "fixture",
+            "source_ref": "spec-observation-1",
+            "window_id": "window-old"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-1"
+        },
+        "method": "observe"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "profile-a",
+            "pool_ids": [
+              "pool-fixed"
+            ],
+            "revision": 1
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-2"
+        },
+        "method": "register_profile"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "profile-b",
+            "pool_ids": [
+              "pool-fixed"
+            ],
+            "revision": 1
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-3"
+        },
+        "method": "register_profile"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "conservative_mode": null,
+            "lead_reserve": {},
+            "lead_reserved_slots": 0,
+            "max_active_attempts": 20,
+            "max_attempt_duration_seconds": 60,
+            "observation_max_age_seconds": 60,
+            "require_official_observation": false,
+            "safety_margin": {}
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-4",
+          "expected_revision": 0
+        },
+        "method": "activate_policy"
+      },
+      {
+        "args": [
+          {
+            "amount": "0",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1001.0,
+            "pool_id": "pool-fixed",
+            "reset_at": 1010.0,
+            "source": "fixture",
+            "source_ref": "spec-observation-5",
+            "window_id": "window-old"
+          }
+        ],
+        "clock": 1001.0,
+        "kwargs": {
+          "command_key": "spec-event-5"
+        },
+        "method": "observe"
+      },
+      {
+        "args": [
+          "account-a"
+        ],
+        "clock": 1001.0,
+        "kwargs": {
+          "command_key": "spec-event-6",
+          "evidence_ref": "spec-exhausted-error",
+          "reason": "QUOTA_EXHAUSTED",
+          "retry_after_seconds": 2
+        },
+        "method": "record_failure"
+      },
+      {
+        "args": [
+          {
+            "amount": null,
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "unknown",
+            "observed_at": 1004.0,
+            "pool_id": "pool-fixed",
+            "reset_at": 1010.0,
+            "source": "fixture",
+            "source_ref": "spec-observation-7",
+            "window_id": "window-old"
+          }
+        ],
+        "clock": 1004.0,
+        "kwargs": {
+          "command_key": "spec-event-7"
+        },
+        "method": "observe"
+      },
+      {
+        "args": [
+          {
+            "amount": "100",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1005.0,
+            "pool_id": "pool-fixed",
+            "reset_at": 1020.0,
+            "source": "fixture",
+            "source_ref": "spec-observation-8",
+            "window_id": "window-premature"
+          }
+        ],
+        "clock": 1005.0,
+        "kwargs": {
+          "command_key": "spec-event-8"
+        },
+        "method": "observe"
+      }
+    ]
+  },
+  {
+    "after": {
+      "commands": {
+        "count": 21,
+        "sha256": "7621d8db2739fe6948aa4a2aa57097a2a41460e12b0cbbd03def926eebc95350"
+      },
+      "failures": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "lifecycle": {
+        "count": 6,
+        "sha256": "4942637ed19d1c15e58ded8c7b90a50bb581769fd79b4c3fa5b69156f0ec0739"
+      },
+      "observations": {
+        "count": 2,
+        "sha256": "9f771c0381f888c5a268ff104d249f3704f3789724719de4e05bd411921702ca"
+      },
+      "policies": {
+        "count": 1,
+        "sha256": "04d2cb850e3e2172e57c5b0feb1cf33caabad10d7524e43caa4344392cadaacf"
+      },
+      "pools": {
+        "count": 2,
+        "sha256": "e90fba44f29bd03d771b05aaa3b24c48e9742fab9b9fb5b2e98906d54742f338"
+      },
+      "profiles": {
+        "count": 2,
+        "sha256": "6f2d3d86a5eeba191c25f42bd08cee2a4074367d50d09998af603096130fe2be"
+      },
+      "reservations": {
+        "count": 5,
+        "sha256": "0869808cc4b60c3099e13501ff3fe8f0b1dc3bfd07b6682e9053064721593b8b"
+      },
+      "usage": {
+        "count": 3,
+        "sha256": "5ce64b3d105ef7e81645d6ecd76c8486e591ff3e4e20825edf475b0e43c8b637"
+      }
+    },
+    "all_tables_unchanged": true,
+    "before": {
+      "commands": {
+        "count": 21,
+        "sha256": "7621d8db2739fe6948aa4a2aa57097a2a41460e12b0cbbd03def926eebc95350"
+      },
+      "failures": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "lifecycle": {
+        "count": 6,
+        "sha256": "4942637ed19d1c15e58ded8c7b90a50bb581769fd79b4c3fa5b69156f0ec0739"
+      },
+      "observations": {
+        "count": 2,
+        "sha256": "9f771c0381f888c5a268ff104d249f3704f3789724719de4e05bd411921702ca"
+      },
+      "policies": {
+        "count": 1,
+        "sha256": "04d2cb850e3e2172e57c5b0feb1cf33caabad10d7524e43caa4344392cadaacf"
+      },
+      "pools": {
+        "count": 2,
+        "sha256": "e90fba44f29bd03d771b05aaa3b24c48e9742fab9b9fb5b2e98906d54742f338"
+      },
+      "profiles": {
+        "count": 2,
+        "sha256": "6f2d3d86a5eeba191c25f42bd08cee2a4074367d50d09998af603096130fe2be"
+      },
+      "reservations": {
+        "count": 5,
+        "sha256": "0869808cc4b60c3099e13501ff3fe8f0b1dc3bfd07b6682e9053064721593b8b"
+      },
+      "usage": {
+        "count": 3,
+        "sha256": "5ce64b3d105ef7e81645d6ecd76c8486e591ff3e4e20825edf475b0e43c8b637"
+      }
+    },
+    "facts_sha256": "cf53775b14dcd695f3e0052a674c15a392cdd9ff40a88084102bf342b481cbe7",
+    "name": "mixed-lifecycle",
+    "observed": [
+      {
+        "account_id": "account-a",
+        "cooldown_until": null,
+        "exhaustion_requires_new_observation": false,
+        "held_attempts": 2,
+        "policy_revision": 1,
+        "pools": [
+          {
+            "diagnostics": [
+              "OBSERVATION_CONFIDENCE_UNAVAILABLE",
+              "WINDOW_EXPIRED"
+            ],
+            "exhaustion_requires_new_observation": false,
+            "future_reserved": "12.000000",
+            "id": "pool-fixed",
+            "local_uncovered": "6.000000",
+            "reported_remaining": "80.000000",
+            "window_kind": "fixed"
+          },
+          {
+            "diagnostics": [
+              "OBSERVATION_CONFIDENCE_UNAVAILABLE",
+              "WINDOW_EXPIRED"
+            ],
+            "exhaustion_requires_new_observation": false,
+            "future_reserved": "12.000000",
+            "id": "pool-rolling",
+            "local_uncovered": "6.000000",
+            "reported_remaining": "80.000000",
+            "window_kind": "rolling"
+          }
+        ],
+        "unknown_attempts": 1
+      }
+    ],
+    "public_inputs": [
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "pool-fixed",
+            "kind": "service",
+            "unit": "requests",
+            "window_kind": "fixed"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-0"
+        },
+        "method": "register_pool"
+      },
+      {
+        "args": [
+          {
+            "amount": "80",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1000.0,
+            "pool_id": "pool-fixed",
+            "reset_at": 1010.0,
+            "source": "fixture",
+            "source_ref": "spec-observation-1",
+            "window_id": "window-old"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-1"
+        },
+        "method": "observe"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "pool-rolling",
+            "kind": "service",
+            "unit": "requests",
+            "window_kind": "rolling"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-2"
+        },
+        "method": "register_pool"
+      },
+      {
+        "args": [
+          {
+            "amount": "80",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1000.0,
+            "pool_id": "pool-rolling",
+            "reset_at": 1010.0,
+            "source": "fixture",
+            "source_ref": "spec-observation-3",
+            "window_id": "window-old"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-3"
+        },
+        "method": "observe"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "profile-a",
+            "pool_ids": [
+              "pool-fixed",
+              "pool-rolling"
+            ],
+            "revision": 1
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-4"
+        },
+        "method": "register_profile"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "profile-b",
+            "pool_ids": [
+              "pool-fixed",
+              "pool-rolling"
+            ],
+            "revision": 1
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-5"
+        },
+        "method": "register_profile"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "conservative_mode": null,
+            "lead_reserve": {},
+            "lead_reserved_slots": 0,
+            "max_active_attempts": 20,
+            "max_attempt_duration_seconds": 60,
+            "observation_max_age_seconds": 60,
+            "require_official_observation": false,
+            "safety_margin": {}
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-6",
+          "expected_revision": 0
+        },
+        "method": "activate_policy"
+      },
+      {
+        "args": [
+          {
+            "attempt_id": "attempt-active",
+            "authorization_ref": "spec-approved-scope",
+            "demand": {
+              "pool-fixed": "8",
+              "pool-rolling": "8"
+            },
+            "duration_seconds": 9,
+            "profile_id": "profile-a",
+            "profile_revision": 1,
+            "purpose": null,
+            "role": "worker",
+            "rulebook_revision": "rules-run-a",
+            "run_id": "run-a"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-7"
+        },
+        "method": "admit",
+        "returned_admission_id": "10d75af3-36b8-4c8f-95f8-83f8b3879115"
+      },
+      {
+        "args": [
+          "10d75af3-36b8-4c8f-95f8-83f8b3879115"
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-8"
+        },
+        "method": "activate"
+      },
+      {
+        "args": [
+          {
+            "admission_id": "10d75af3-36b8-4c8f-95f8-83f8b3879115",
+            "amounts": {
+              "pool-fixed": "3",
+              "pool-rolling": "3"
+            },
+            "attribution_ref": "spec-window-evidence",
+            "evidence_ref": "spec-usage-evidence-active-use",
+            "id": "active-use",
+            "window_ids": {
+              "pool-fixed": "window-old",
+              "pool-rolling": "window-old"
+            }
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-9"
+        },
+        "method": "record_usage"
+      },
+      {
+        "args": [
+          {
+            "attempt_id": "attempt-unknown",
+            "authorization_ref": "spec-approved-scope",
+            "demand": {
+              "pool-fixed": "8",
+              "pool-rolling": "8"
+            },
+            "duration_seconds": 9,
+            "profile_id": "profile-b",
+            "profile_revision": 1,
+            "purpose": null,
+            "role": "worker",
+            "rulebook_revision": "rules-run-b",
+            "run_id": "run-b"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-10"
+        },
+        "method": "admit",
+        "returned_admission_id": "0b248372-4fee-4f30-9311-012025a206bb"
+      },
+      {
+        "args": [
+          "0b248372-4fee-4f30-9311-012025a206bb"
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-11"
+        },
+        "method": "activate"
+      },
+      {
+        "args": [
+          {
+            "admission_id": "0b248372-4fee-4f30-9311-012025a206bb",
+            "amounts": {
+              "pool-fixed": "1",
+              "pool-rolling": "1"
+            },
+            "attribution_ref": "spec-window-evidence",
+            "evidence_ref": "spec-usage-evidence-unknown-use",
+            "id": "unknown-use",
+            "window_ids": {
+              "pool-fixed": "window-old",
+              "pool-rolling": "window-old"
+            }
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-12"
+        },
+        "method": "record_usage"
+      },
+      {
+        "args": [
+          "0b248372-4fee-4f30-9311-012025a206bb"
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-13",
+          "evidence_ref": "spec-end-evidence",
+          "local_ended": true,
+          "not_sent": false,
+          "remote_ended": false,
+          "usage_complete": false
+        },
+        "method": "reconcile"
+      },
+      {
+        "args": [
+          {
+            "attempt_id": "attempt-expired-reserved",
+            "authorization_ref": "spec-approved-scope",
+            "demand": {
+              "pool-fixed": "8",
+              "pool-rolling": "8"
+            },
+            "duration_seconds": 2,
+            "profile_id": "profile-a",
+            "profile_revision": 1,
+            "purpose": null,
+            "role": "worker",
+            "rulebook_revision": "rules-run-a",
+            "run_id": "run-a"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-14"
+        },
+        "method": "admit",
+        "returned_admission_id": "959b0704-3a93-4409-b1fd-ea392c7f6879"
+      },
+      {
+        "args": [
+          {
+            "attempt_id": "attempt-ended",
+            "authorization_ref": "spec-approved-scope",
+            "demand": {
+              "pool-fixed": "2",
+              "pool-rolling": "2"
+            },
+            "duration_seconds": 9,
+            "profile_id": "profile-a",
+            "profile_revision": 1,
+            "purpose": null,
+            "role": "worker",
+            "rulebook_revision": "rules-run-a",
+            "run_id": "run-a"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-15"
+        },
+        "method": "admit",
+        "returned_admission_id": "dee4fa13-4420-4aa2-8269-6ee4dbdea9c7"
+      },
+      {
+        "args": [
+          "dee4fa13-4420-4aa2-8269-6ee4dbdea9c7"
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-16"
+        },
+        "method": "activate"
+      },
+      {
+        "args": [
+          {
+            "admission_id": "dee4fa13-4420-4aa2-8269-6ee4dbdea9c7",
+            "amounts": {
+              "pool-fixed": "2",
+              "pool-rolling": "2"
+            },
+            "attribution_ref": "spec-window-evidence",
+            "evidence_ref": "spec-usage-evidence-ended-use",
+            "id": "ended-use",
+            "window_ids": {
+              "pool-fixed": "window-old",
+              "pool-rolling": "window-old"
+            }
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-17"
+        },
+        "method": "record_usage"
+      },
+      {
+        "args": [
+          "dee4fa13-4420-4aa2-8269-6ee4dbdea9c7"
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-18",
+          "evidence_ref": "spec-end-evidence",
+          "local_ended": true,
+          "not_sent": false,
+          "remote_ended": true,
+          "usage_complete": true
+        },
+        "method": "reconcile"
+      },
+      {
+        "args": [
+          {
+            "attempt_id": "attempt-released",
+            "authorization_ref": "spec-approved-scope",
+            "demand": {
+              "pool-fixed": "2",
+              "pool-rolling": "2"
+            },
+            "duration_seconds": 9,
+            "profile_id": "profile-a",
+            "profile_revision": 1,
+            "purpose": null,
+            "role": "worker",
+            "rulebook_revision": "rules-run-a",
+            "run_id": "run-a"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-19"
+        },
+        "method": "admit",
+        "returned_admission_id": "b5f308b8-c067-409d-9810-07ef0e089751"
+      },
+      {
+        "args": [
+          "b5f308b8-c067-409d-9810-07ef0e089751"
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-20",
+          "evidence_ref": "spec-unsent-evidence",
+          "local_ended": true,
+          "not_sent": true,
+          "remote_ended": true,
+          "usage_complete": false
+        },
+        "method": "reconcile"
+      }
+    ]
+  },
+  {
+    "after": {
+      "commands": {
+        "count": 6,
+        "sha256": "1616cae164fde98fa25eaab851b1f8b9de2d6ffa3f019878a60c3e88e17f1755"
+      },
+      "failures": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "lifecycle": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "observations": {
+        "count": 2,
+        "sha256": "d63a7f9f8c8fe93550f7dc24d5c0d782d3f0f794501dc36379d49aac319ac450"
+      },
+      "policies": {
+        "count": 1,
+        "sha256": "04d2cb850e3e2172e57c5b0feb1cf33caabad10d7524e43caa4344392cadaacf"
+      },
+      "pools": {
+        "count": 1,
+        "sha256": "252061c2af799d2769904649dfe0c0752796d8791e3b1cb327be201c75535d22"
+      },
+      "profiles": {
+        "count": 2,
+        "sha256": "605a8483c416f3d953f0b3174bf703565234acf0c8477618b62ebea1acf4947c"
+      },
+      "reservations": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "usage": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "all_tables_unchanged": true,
+    "before": {
+      "commands": {
+        "count": 6,
+        "sha256": "1616cae164fde98fa25eaab851b1f8b9de2d6ffa3f019878a60c3e88e17f1755"
+      },
+      "failures": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "lifecycle": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "observations": {
+        "count": 2,
+        "sha256": "d63a7f9f8c8fe93550f7dc24d5c0d782d3f0f794501dc36379d49aac319ac450"
+      },
+      "policies": {
+        "count": 1,
+        "sha256": "04d2cb850e3e2172e57c5b0feb1cf33caabad10d7524e43caa4344392cadaacf"
+      },
+      "pools": {
+        "count": 1,
+        "sha256": "252061c2af799d2769904649dfe0c0752796d8791e3b1cb327be201c75535d22"
+      },
+      "profiles": {
+        "count": 2,
+        "sha256": "605a8483c416f3d953f0b3174bf703565234acf0c8477618b62ebea1acf4947c"
+      },
+      "reservations": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "usage": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "facts_sha256": "8f3740e7f9fdde62faf59d048e10065f129398fb207593fcda99548daffe8c0c",
+    "name": "negative-remaining",
+    "observed": [
+      {
+        "account_id": "account-a",
+        "cooldown_until": null,
+        "exhaustion_requires_new_observation": true,
+        "held_attempts": 0,
+        "policy_revision": 1,
+        "pools": [
+          {
+            "diagnostics": [
+              "OBSERVATION_CONFIDENCE_UNAVAILABLE",
+              "REPORTED_USAGE_EXCEEDS_LIMIT",
+              "EXHAUSTION_REQUIRES_NEW_OBSERVATION",
+              "ROUTING_QUANTITY_OUT_OF_RANGE"
+            ],
+            "exhaustion_requires_new_observation": true,
+            "future_reserved": "0.000000",
+            "id": "pool-fixed",
+            "local_uncovered": "0.000000",
+            "reported_remaining": "-1.000000",
+            "window_kind": "fixed"
+          }
+        ],
+        "unknown_attempts": 0
+      }
+    ],
+    "public_inputs": [
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "pool-fixed",
+            "kind": "service",
+            "unit": "requests",
+            "window_kind": "fixed"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-0"
+        },
+        "method": "register_pool"
+      },
+      {
+        "args": [
+          {
+            "amount": "80",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1000.0,
+            "pool_id": "pool-fixed",
+            "reset_at": 1010.0,
+            "source": "fixture",
+            "source_ref": "spec-observation-1",
+            "window_id": "window-old"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-1"
+        },
+        "method": "observe"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "profile-a",
+            "pool_ids": [
+              "pool-fixed"
+            ],
+            "revision": 1
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-2"
+        },
+        "method": "register_profile"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "profile-b",
+            "pool_ids": [
+              "pool-fixed"
+            ],
+            "revision": 1
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-3"
+        },
+        "method": "register_profile"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "conservative_mode": null,
+            "lead_reserve": {},
+            "lead_reserved_slots": 0,
+            "max_active_attempts": 20,
+            "max_attempt_duration_seconds": 60,
+            "observation_max_age_seconds": 60,
+            "require_official_observation": false,
+            "safety_margin": {}
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-4",
+          "expected_revision": 0
+        },
+        "method": "activate_policy"
+      },
+      {
+        "args": [
+          {
+            "amount": "101",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "used",
+            "observed_at": 1001.0,
+            "pool_id": "pool-fixed",
+            "reset_at": 1010.0,
+            "source": "fixture",
+            "source_ref": "spec-observation-5",
+            "window_id": "window-old"
+          }
+        ],
+        "clock": 1001.0,
+        "kwargs": {
+          "command_key": "spec-event-5"
+        },
+        "method": "observe"
+      }
+    ]
+  },
+  {
+    "after": {
+      "commands": {
+        "count": 5,
+        "sha256": "e72581738611da28922a0fae289f8371203dab2d146996eb0f9ab116d8488a2b"
+      },
+      "failures": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "lifecycle": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "observations": {
+        "count": 1,
+        "sha256": "86be60796f63de610f61d9b1a8826a7f884f8d40abfccef0dad6dcbed6cbeb94"
+      },
+      "policies": {
+        "count": 1,
+        "sha256": "04d2cb850e3e2172e57c5b0feb1cf33caabad10d7524e43caa4344392cadaacf"
+      },
+      "pools": {
+        "count": 1,
+        "sha256": "252061c2af799d2769904649dfe0c0752796d8791e3b1cb327be201c75535d22"
+      },
+      "profiles": {
+        "count": 2,
+        "sha256": "605a8483c416f3d953f0b3174bf703565234acf0c8477618b62ebea1acf4947c"
+      },
+      "reservations": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "usage": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "all_tables_unchanged": true,
+    "before": {
+      "commands": {
+        "count": 5,
+        "sha256": "e72581738611da28922a0fae289f8371203dab2d146996eb0f9ab116d8488a2b"
+      },
+      "failures": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "lifecycle": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "observations": {
+        "count": 1,
+        "sha256": "86be60796f63de610f61d9b1a8826a7f884f8d40abfccef0dad6dcbed6cbeb94"
+      },
+      "policies": {
+        "count": 1,
+        "sha256": "04d2cb850e3e2172e57c5b0feb1cf33caabad10d7524e43caa4344392cadaacf"
+      },
+      "pools": {
+        "count": 1,
+        "sha256": "252061c2af799d2769904649dfe0c0752796d8791e3b1cb327be201c75535d22"
+      },
+      "profiles": {
+        "count": 2,
+        "sha256": "605a8483c416f3d953f0b3174bf703565234acf0c8477618b62ebea1acf4947c"
+      },
+      "reservations": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "usage": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "facts_sha256": "e0e7c65ddd03288493ca90f15b824708d8b618ba46beffb84c763ee968e52c86",
+    "name": "no-network",
+    "observed": [
+      {
+        "account_id": "account-a",
+        "cooldown_until": null,
+        "exhaustion_requires_new_observation": false,
+        "held_attempts": 0,
+        "policy_revision": 1,
+        "pools": [
+          {
+            "diagnostics": [
+              "OBSERVATION_CONFIDENCE_UNAVAILABLE"
+            ],
+            "exhaustion_requires_new_observation": false,
+            "future_reserved": "0.000000",
+            "id": "pool-fixed",
+            "local_uncovered": "0.000000",
+            "reported_remaining": "80.000000",
+            "window_kind": "fixed"
+          }
+        ],
+        "unknown_attempts": 0
+      }
+    ],
+    "public_inputs": [
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "pool-fixed",
+            "kind": "service",
+            "unit": "requests",
+            "window_kind": "fixed"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-0"
+        },
+        "method": "register_pool"
+      },
+      {
+        "args": [
+          {
+            "amount": "80",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1000.0,
+            "pool_id": "pool-fixed",
+            "reset_at": 1010.0,
+            "source": "fixture",
+            "source_ref": "spec-observation-1",
+            "window_id": "window-old"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-1"
+        },
+        "method": "observe"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "profile-a",
+            "pool_ids": [
+              "pool-fixed"
+            ],
+            "revision": 1
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-2"
+        },
+        "method": "register_profile"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "profile-b",
+            "pool_ids": [
+              "pool-fixed"
+            ],
+            "revision": 1
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-3"
+        },
+        "method": "register_profile"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "conservative_mode": null,
+            "lead_reserve": {},
+            "lead_reserved_slots": 0,
+            "max_active_attempts": 20,
+            "max_attempt_duration_seconds": 60,
+            "observation_max_age_seconds": 60,
+            "require_official_observation": false,
+            "safety_margin": {}
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-4",
+          "expected_revision": 0
+        },
+        "method": "activate_policy"
+      }
+    ]
+  },
+  {
+    "after": {
+      "commands": {
+        "count": 10,
+        "sha256": "a6fd607e0ed0279b03559bcfad809455c301090c399add1515161fe81a6833fd"
+      },
+      "failures": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "lifecycle": {
+        "count": 1,
+        "sha256": "57b2a53190ec560ca536173b63c15aeb4ab3913718d58a0185a7d75a1e7619a4"
+      },
+      "observations": {
+        "count": 2,
+        "sha256": "125627e6341c391177da2de1b18fa8bf1b5659641a96669b3cdb67604e58ebef"
+      },
+      "policies": {
+        "count": 1,
+        "sha256": "04d2cb850e3e2172e57c5b0feb1cf33caabad10d7524e43caa4344392cadaacf"
+      },
+      "pools": {
+        "count": 1,
+        "sha256": "252061c2af799d2769904649dfe0c0752796d8791e3b1cb327be201c75535d22"
+      },
+      "profiles": {
+        "count": 2,
+        "sha256": "605a8483c416f3d953f0b3174bf703565234acf0c8477618b62ebea1acf4947c"
+      },
+      "reservations": {
+        "count": 1,
+        "sha256": "c295f436ed150f89e811b24b30cdab8ecd56cbb00b537fbb15d5ae3992ff6776"
+      },
+      "usage": {
+        "count": 2,
+        "sha256": "4b56f9ae042d65890a5e6709e616f5956a495e4fdc5366771b2564021c7251ea"
+      }
+    },
+    "all_tables_unchanged": true,
+    "before": {
+      "commands": {
+        "count": 10,
+        "sha256": "a6fd607e0ed0279b03559bcfad809455c301090c399add1515161fe81a6833fd"
+      },
+      "failures": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "lifecycle": {
+        "count": 1,
+        "sha256": "57b2a53190ec560ca536173b63c15aeb4ab3913718d58a0185a7d75a1e7619a4"
+      },
+      "observations": {
+        "count": 2,
+        "sha256": "125627e6341c391177da2de1b18fa8bf1b5659641a96669b3cdb67604e58ebef"
+      },
+      "policies": {
+        "count": 1,
+        "sha256": "04d2cb850e3e2172e57c5b0feb1cf33caabad10d7524e43caa4344392cadaacf"
+      },
+      "pools": {
+        "count": 1,
+        "sha256": "252061c2af799d2769904649dfe0c0752796d8791e3b1cb327be201c75535d22"
+      },
+      "profiles": {
+        "count": 2,
+        "sha256": "605a8483c416f3d953f0b3174bf703565234acf0c8477618b62ebea1acf4947c"
+      },
+      "reservations": {
+        "count": 1,
+        "sha256": "c295f436ed150f89e811b24b30cdab8ecd56cbb00b537fbb15d5ae3992ff6776"
+      },
+      "usage": {
+        "count": 2,
+        "sha256": "4b56f9ae042d65890a5e6709e616f5956a495e4fdc5366771b2564021c7251ea"
+      }
+    },
+    "facts_sha256": "761c1d1acd037643f56dac86e57a19adf01999629ab5916e98bd4395c1e95203",
+    "name": "partial-coverage",
+    "observed": [
+      {
+        "account_id": "account-a",
+        "cooldown_until": null,
+        "exhaustion_requires_new_observation": false,
+        "held_attempts": 1,
+        "policy_revision": 1,
+        "pools": [
+          {
+            "diagnostics": [
+              "OBSERVATION_CONFIDENCE_UNAVAILABLE"
+            ],
+            "exhaustion_requires_new_observation": false,
+            "future_reserved": "5.000000",
+            "id": "pool-fixed",
+            "local_uncovered": "2.000000",
+            "reported_remaining": "80.000000",
+            "window_kind": "fixed"
+          }
+        ],
+        "unknown_attempts": 0
+      }
+    ],
+    "public_inputs": [
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "pool-fixed",
+            "kind": "service",
+            "unit": "requests",
+            "window_kind": "fixed"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-0"
+        },
+        "method": "register_pool"
+      },
+      {
+        "args": [
+          {
+            "amount": "80",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1000.0,
+            "pool_id": "pool-fixed",
+            "reset_at": 1010.0,
+            "source": "fixture",
+            "source_ref": "spec-observation-1",
+            "window_id": "window-old"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-1"
+        },
+        "method": "observe"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "profile-a",
+            "pool_ids": [
+              "pool-fixed"
+            ],
+            "revision": 1
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-2"
+        },
+        "method": "register_profile"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "profile-b",
+            "pool_ids": [
+              "pool-fixed"
+            ],
+            "revision": 1
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-3"
+        },
+        "method": "register_profile"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "conservative_mode": null,
+            "lead_reserve": {},
+            "lead_reserved_slots": 0,
+            "max_active_attempts": 20,
+            "max_attempt_duration_seconds": 60,
+            "observation_max_age_seconds": 60,
+            "require_official_observation": false,
+            "safety_margin": {}
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-4",
+          "expected_revision": 0
+        },
+        "method": "activate_policy"
+      },
+      {
+        "args": [
+          {
+            "attempt_id": "attempt-active",
+            "authorization_ref": "spec-approved-scope",
+            "demand": {
+              "pool-fixed": "8"
+            },
+            "duration_seconds": 9,
+            "profile_id": "profile-a",
+            "profile_revision": 1,
+            "purpose": null,
+            "role": "worker",
+            "rulebook_revision": "rules-run-a",
+            "run_id": "run-a"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-5"
+        },
+        "method": "admit",
+        "returned_admission_id": "d6eab13c-051a-4b4d-aab0-4bcd3e9ccf26"
+      },
+      {
+        "args": [
+          "d6eab13c-051a-4b4d-aab0-4bcd3e9ccf26"
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-6"
+        },
+        "method": "activate"
+      },
+      {
+        "args": [
+          {
+            "admission_id": "d6eab13c-051a-4b4d-aab0-4bcd3e9ccf26",
+            "amounts": {
+              "pool-fixed": "1"
+            },
+            "attribution_ref": "spec-window-evidence",
+            "evidence_ref": "spec-usage-evidence-covered-first",
+            "id": "covered-first",
+            "window_ids": {
+              "pool-fixed": "window-old"
+            }
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-7"
+        },
+        "method": "record_usage"
+      },
+      {
+        "args": [
+          {
+            "admission_id": "d6eab13c-051a-4b4d-aab0-4bcd3e9ccf26",
+            "amounts": {
+              "pool-fixed": "2"
+            },
+            "attribution_ref": "spec-window-evidence",
+            "evidence_ref": "spec-usage-evidence-uncovered-second",
+            "id": "uncovered-second",
+            "window_ids": {
+              "pool-fixed": "window-old"
+            }
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-8"
+        },
+        "method": "record_usage"
+      },
+      {
+        "args": [
+          {
+            "amount": "80",
+            "coverage_ref": "spec-explicit-coverage",
+            "covered_usage_ids": [
+              "covered-first"
+            ],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1001.0,
+            "pool_id": "pool-fixed",
+            "reset_at": 1010.0,
+            "source": "fixture",
+            "source_ref": "spec-observation-9",
+            "window_id": "window-old"
+          }
+        ],
+        "clock": 1001.0,
+        "kwargs": {
+          "command_key": "spec-event-9"
+        },
+        "method": "observe"
+      }
+    ]
+  },
+  {
+    "after": {
+      "commands": {
+        "count": 7,
+        "sha256": "2439a0a7cc659743eeb6ff7e476e10969d17fcc24432b4343f646cebfa2fd371"
+      },
+      "failures": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "lifecycle": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "observations": {
+        "count": 1,
+        "sha256": "86be60796f63de610f61d9b1a8826a7f884f8d40abfccef0dad6dcbed6cbeb94"
+      },
+      "policies": {
+        "count": 3,
+        "sha256": "3ca3010f64926142ea96f6b9ba8361fa8e0f2d373c88ede59c2e4fc919077e0b"
+      },
+      "pools": {
+        "count": 1,
+        "sha256": "252061c2af799d2769904649dfe0c0752796d8791e3b1cb327be201c75535d22"
+      },
+      "profiles": {
+        "count": 2,
+        "sha256": "605a8483c416f3d953f0b3174bf703565234acf0c8477618b62ebea1acf4947c"
+      },
+      "reservations": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "usage": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "all_tables_unchanged": true,
+    "before": {
+      "commands": {
+        "count": 7,
+        "sha256": "2439a0a7cc659743eeb6ff7e476e10969d17fcc24432b4343f646cebfa2fd371"
+      },
+      "failures": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "lifecycle": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "observations": {
+        "count": 1,
+        "sha256": "86be60796f63de610f61d9b1a8826a7f884f8d40abfccef0dad6dcbed6cbeb94"
+      },
+      "policies": {
+        "count": 3,
+        "sha256": "3ca3010f64926142ea96f6b9ba8361fa8e0f2d373c88ede59c2e4fc919077e0b"
+      },
+      "pools": {
+        "count": 1,
+        "sha256": "252061c2af799d2769904649dfe0c0752796d8791e3b1cb327be201c75535d22"
+      },
+      "profiles": {
+        "count": 2,
+        "sha256": "605a8483c416f3d953f0b3174bf703565234acf0c8477618b62ebea1acf4947c"
+      },
+      "reservations": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "usage": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "facts_sha256": "1d0ab7aae14cd21496b2d894e7cbce54cbf8e0bb6c02538481b8f7336d3bac6f",
+    "name": "policy-and-filter",
+    "observed": [
+      {
+        "account_id": "account-a",
+        "cooldown_until": null,
+        "exhaustion_requires_new_observation": false,
+        "held_attempts": 0,
+        "policy_revision": 2,
+        "pools": [
+          {
+            "diagnostics": [
+              "OBSERVATION_CONFIDENCE_UNAVAILABLE"
+            ],
+            "exhaustion_requires_new_observation": false,
+            "future_reserved": "0.000000",
+            "id": "pool-fixed",
+            "local_uncovered": "0.000000",
+            "reported_remaining": "80.000000",
+            "window_kind": "fixed"
+          }
+        ],
+        "unknown_attempts": 0
+      },
+      {
+        "account_id": "account-policy-only",
+        "cooldown_until": null,
+        "exhaustion_requires_new_observation": false,
+        "held_attempts": 0,
+        "policy_revision": 1,
+        "pools": [],
+        "unknown_attempts": 0
+      }
+    ],
+    "public_inputs": [
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "pool-fixed",
+            "kind": "service",
+            "unit": "requests",
+            "window_kind": "fixed"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-0"
+        },
+        "method": "register_pool"
+      },
+      {
+        "args": [
+          {
+            "amount": "80",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1000.0,
+            "pool_id": "pool-fixed",
+            "reset_at": 1010.0,
+            "source": "fixture",
+            "source_ref": "spec-observation-1",
+            "window_id": "window-old"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-1"
+        },
+        "method": "observe"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "profile-a",
+            "pool_ids": [
+              "pool-fixed"
+            ],
+            "revision": 1
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-2"
+        },
+        "method": "register_profile"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "profile-b",
+            "pool_ids": [
+              "pool-fixed"
+            ],
+            "revision": 1
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-3"
+        },
+        "method": "register_profile"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "conservative_mode": null,
+            "lead_reserve": {},
+            "lead_reserved_slots": 0,
+            "max_active_attempts": 20,
+            "max_attempt_duration_seconds": 60,
+            "observation_max_age_seconds": 60,
+            "require_official_observation": false,
+            "safety_margin": {}
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-4",
+          "expected_revision": 0
+        },
+        "method": "activate_policy"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-policy-only",
+            "conservative_mode": null,
+            "lead_reserve": {},
+            "lead_reserved_slots": 2,
+            "max_active_attempts": 20,
+            "max_attempt_duration_seconds": 60,
+            "observation_max_age_seconds": 60,
+            "require_official_observation": false,
+            "safety_margin": {}
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-5",
+          "expected_revision": 0
+        },
+        "method": "activate_policy"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "conservative_mode": null,
+            "lead_reserve": {},
+            "lead_reserved_slots": 3,
+            "max_active_attempts": 20,
+            "max_attempt_duration_seconds": 60,
+            "observation_max_age_seconds": 60,
+            "require_official_observation": false,
+            "safety_margin": {
+              "pool-fixed": "4"
+            }
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-6",
+          "expected_revision": 1
+        },
+        "method": "activate_policy"
+      }
+    ]
+  },
+  {
+    "after": {
+      "commands": {
+        "count": 23,
+        "sha256": "209e79387a4772725ed7f211b8f4af9e410fda122c26dc626d94eb892bb478ec"
+      },
+      "failures": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "lifecycle": {
+        "count": 4,
+        "sha256": "cf5b0f7b27ce69d1b9acbf1513fc8d687373e24caf64b141de1bdeb023891137"
+      },
+      "observations": {
+        "count": 8,
+        "sha256": "97288423f4036a6e923445ed60570d87eb20864c4c2c2bd6e0a885ae09904ca6"
+      },
+      "policies": {
+        "count": 1,
+        "sha256": "04d2cb850e3e2172e57c5b0feb1cf33caabad10d7524e43caa4344392cadaacf"
+      },
+      "pools": {
+        "count": 4,
+        "sha256": "b7e825cc416c3c5a71baf54f3b2f9d9509a4456676fbafadeb3d977feebef1e9"
+      },
+      "profiles": {
+        "count": 2,
+        "sha256": "50f391605e87fdf12566b465e49d46d542e086a92f0226a56f4f007125362696"
+      },
+      "reservations": {
+        "count": 2,
+        "sha256": "793d09eccda71597690213402ce0e40e7814e44cb6ed92dc0a5629e351033482"
+      },
+      "usage": {
+        "count": 2,
+        "sha256": "f3aa8b78ac2619b1b6ad6d0cd4cbe499f0a7f00aa2d3587ba529d72888de7e4a"
+      }
+    },
+    "all_tables_unchanged": true,
+    "before": {
+      "commands": {
+        "count": 23,
+        "sha256": "209e79387a4772725ed7f211b8f4af9e410fda122c26dc626d94eb892bb478ec"
+      },
+      "failures": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "lifecycle": {
+        "count": 4,
+        "sha256": "cf5b0f7b27ce69d1b9acbf1513fc8d687373e24caf64b141de1bdeb023891137"
+      },
+      "observations": {
+        "count": 8,
+        "sha256": "97288423f4036a6e923445ed60570d87eb20864c4c2c2bd6e0a885ae09904ca6"
+      },
+      "policies": {
+        "count": 1,
+        "sha256": "04d2cb850e3e2172e57c5b0feb1cf33caabad10d7524e43caa4344392cadaacf"
+      },
+      "pools": {
+        "count": 4,
+        "sha256": "b7e825cc416c3c5a71baf54f3b2f9d9509a4456676fbafadeb3d977feebef1e9"
+      },
+      "profiles": {
+        "count": 2,
+        "sha256": "50f391605e87fdf12566b465e49d46d542e086a92f0226a56f4f007125362696"
+      },
+      "reservations": {
+        "count": 2,
+        "sha256": "793d09eccda71597690213402ce0e40e7814e44cb6ed92dc0a5629e351033482"
+      },
+      "usage": {
+        "count": 2,
+        "sha256": "f3aa8b78ac2619b1b6ad6d0cd4cbe499f0a7f00aa2d3587ba529d72888de7e4a"
+      }
+    },
+    "facts_sha256": "aafc677766e2431e54b9b958f027f5111053f9e88fc0d81dbafd07c62179ae86",
+    "name": "window-attribution",
+    "observed": [
+      {
+        "account_id": "account-a",
+        "cooldown_until": null,
+        "exhaustion_requires_new_observation": false,
+        "held_attempts": 0,
+        "policy_revision": 1,
+        "pools": [
+          {
+            "diagnostics": [
+              "OBSERVATION_CONFIDENCE_UNAVAILABLE"
+            ],
+            "exhaustion_requires_new_observation": false,
+            "future_reserved": "0.000000",
+            "id": "pool-balance",
+            "local_uncovered": "6.000000",
+            "reported_remaining": "80.000000",
+            "window_kind": "balance"
+          },
+          {
+            "diagnostics": [
+              "OBSERVATION_CONFIDENCE_UNAVAILABLE"
+            ],
+            "exhaustion_requires_new_observation": false,
+            "future_reserved": "0.000000",
+            "id": "pool-fixed",
+            "local_uncovered": "3.000000",
+            "reported_remaining": "80.000000",
+            "window_kind": "fixed"
+          },
+          {
+            "diagnostics": [
+              "OBSERVATION_CONFIDENCE_UNAVAILABLE"
+            ],
+            "exhaustion_requires_new_observation": false,
+            "future_reserved": "0.000000",
+            "id": "pool-rolling",
+            "local_uncovered": "6.000000",
+            "reported_remaining": "80.000000",
+            "window_kind": "rolling"
+          },
+          {
+            "diagnostics": [
+              "OBSERVATION_CONFIDENCE_UNAVAILABLE"
+            ],
+            "exhaustion_requires_new_observation": false,
+            "future_reserved": "0.000000",
+            "id": "pool-unknown",
+            "local_uncovered": "6.000000",
+            "reported_remaining": "80.000000",
+            "window_kind": "unknown"
+          }
+        ],
+        "unknown_attempts": 0
+      }
+    ],
+    "public_inputs": [
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "pool-fixed",
+            "kind": "service",
+            "unit": "requests",
+            "window_kind": "fixed"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-0"
+        },
+        "method": "register_pool"
+      },
+      {
+        "args": [
+          {
+            "amount": "80",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1000.0,
+            "pool_id": "pool-fixed",
+            "reset_at": 1010.0,
+            "source": "fixture",
+            "source_ref": "spec-observation-1",
+            "window_id": "window-old"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-1"
+        },
+        "method": "observe"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "pool-rolling",
+            "kind": "service",
+            "unit": "requests",
+            "window_kind": "rolling"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-2"
+        },
+        "method": "register_pool"
+      },
+      {
+        "args": [
+          {
+            "amount": "80",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1000.0,
+            "pool_id": "pool-rolling",
+            "reset_at": 1010.0,
+            "source": "fixture",
+            "source_ref": "spec-observation-3",
+            "window_id": "window-old"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-3"
+        },
+        "method": "observe"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "pool-balance",
+            "kind": "service",
+            "unit": "requests",
+            "window_kind": "balance"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-4"
+        },
+        "method": "register_pool"
+      },
+      {
+        "args": [
+          {
+            "amount": "80",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1000.0,
+            "pool_id": "pool-balance",
+            "reset_at": 1010.0,
+            "source": "fixture",
+            "source_ref": "spec-observation-5",
+            "window_id": "window-old"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-5"
+        },
+        "method": "observe"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "pool-unknown",
+            "kind": "service",
+            "unit": "requests",
+            "window_kind": "unknown"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-6"
+        },
+        "method": "register_pool"
+      },
+      {
+        "args": [
+          {
+            "amount": "80",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1000.0,
+            "pool_id": "pool-unknown",
+            "reset_at": 1010.0,
+            "source": "fixture",
+            "source_ref": "spec-observation-7",
+            "window_id": "window-old"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-7"
+        },
+        "method": "observe"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "profile-a",
+            "pool_ids": [
+              "pool-fixed",
+              "pool-rolling",
+              "pool-balance",
+              "pool-unknown"
+            ],
+            "revision": 1
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-8"
+        },
+        "method": "register_profile"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "id": "profile-b",
+            "pool_ids": [
+              "pool-fixed",
+              "pool-rolling",
+              "pool-balance",
+              "pool-unknown"
+            ],
+            "revision": 1
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-9"
+        },
+        "method": "register_profile"
+      },
+      {
+        "args": [
+          {
+            "account_id": "account-a",
+            "conservative_mode": null,
+            "lead_reserve": {},
+            "lead_reserved_slots": 0,
+            "max_active_attempts": 20,
+            "max_attempt_duration_seconds": 60,
+            "observation_max_age_seconds": 60,
+            "require_official_observation": false,
+            "safety_margin": {}
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-10",
+          "expected_revision": 0
+        },
+        "method": "activate_policy"
+      },
+      {
+        "args": [
+          {
+            "attempt_id": "attempt-attributed",
+            "authorization_ref": "spec-approved-scope",
+            "demand": {
+              "pool-balance": "3",
+              "pool-fixed": "3",
+              "pool-rolling": "3",
+              "pool-unknown": "3"
+            },
+            "duration_seconds": 9,
+            "profile_id": "profile-a",
+            "profile_revision": 1,
+            "purpose": null,
+            "role": "worker",
+            "rulebook_revision": "rules-run-a",
+            "run_id": "run-a"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-11"
+        },
+        "method": "admit",
+        "returned_admission_id": "c19b662c-c5ff-4e5d-ac12-1c4df40b66ba"
+      },
+      {
+        "args": [
+          {
+            "attempt_id": "attempt-unattributed",
+            "authorization_ref": "spec-approved-scope",
+            "demand": {
+              "pool-balance": "3",
+              "pool-fixed": "3",
+              "pool-rolling": "3",
+              "pool-unknown": "3"
+            },
+            "duration_seconds": 9,
+            "profile_id": "profile-b",
+            "profile_revision": 1,
+            "purpose": null,
+            "role": "worker",
+            "rulebook_revision": "rules-run-b",
+            "run_id": "run-b"
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-12"
+        },
+        "method": "admit",
+        "returned_admission_id": "2cfb51dd-1033-476d-9995-6b9455a76f98"
+      },
+      {
+        "args": [
+          "c19b662c-c5ff-4e5d-ac12-1c4df40b66ba"
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-13"
+        },
+        "method": "activate"
+      },
+      {
+        "args": [
+          "2cfb51dd-1033-476d-9995-6b9455a76f98"
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-14"
+        },
+        "method": "activate"
+      },
+      {
+        "args": [
+          {
+            "admission_id": "c19b662c-c5ff-4e5d-ac12-1c4df40b66ba",
+            "amounts": {
+              "pool-balance": "3",
+              "pool-fixed": "3",
+              "pool-rolling": "3",
+              "pool-unknown": "3"
+            },
+            "attribution_ref": "spec-window-evidence",
+            "evidence_ref": "spec-usage-evidence-attributed-use",
+            "id": "attributed-use",
+            "window_ids": {
+              "pool-balance": "window-old",
+              "pool-fixed": "window-old",
+              "pool-rolling": "window-old",
+              "pool-unknown": "window-old"
+            }
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-15"
+        },
+        "method": "record_usage"
+      },
+      {
+        "args": [
+          {
+            "admission_id": "2cfb51dd-1033-476d-9995-6b9455a76f98",
+            "amounts": {
+              "pool-balance": "3",
+              "pool-fixed": "3",
+              "pool-rolling": "3",
+              "pool-unknown": "3"
+            },
+            "attribution_ref": null,
+            "evidence_ref": "spec-usage-evidence-unattributed-use",
+            "id": "unattributed-use",
+            "window_ids": {
+              "pool-balance": null,
+              "pool-fixed": null,
+              "pool-rolling": null,
+              "pool-unknown": null
+            }
+          }
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-16"
+        },
+        "method": "record_usage"
+      },
+      {
+        "args": [
+          "c19b662c-c5ff-4e5d-ac12-1c4df40b66ba"
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-17",
+          "evidence_ref": "spec-end-evidence",
+          "local_ended": true,
+          "not_sent": false,
+          "remote_ended": true,
+          "usage_complete": true
+        },
+        "method": "reconcile"
+      },
+      {
+        "args": [
+          "2cfb51dd-1033-476d-9995-6b9455a76f98"
+        ],
+        "clock": 1000.0,
+        "kwargs": {
+          "command_key": "spec-event-18",
+          "evidence_ref": "spec-end-evidence",
+          "local_ended": true,
+          "not_sent": false,
+          "remote_ended": true,
+          "usage_complete": true
+        },
+        "method": "reconcile"
+      },
+      {
+        "args": [
+          {
+            "amount": "80",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1011.0,
+            "pool_id": "pool-fixed",
+            "reset_at": 1020.0,
+            "source": "fixture",
+            "source_ref": "spec-observation-19",
+            "window_id": "window-new"
+          }
+        ],
+        "clock": 1011.0,
+        "kwargs": {
+          "command_key": "spec-event-19"
+        },
+        "method": "observe"
+      },
+      {
+        "args": [
+          {
+            "amount": "80",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1011.0,
+            "pool_id": "pool-rolling",
+            "reset_at": 1020.0,
+            "source": "fixture",
+            "source_ref": "spec-observation-20",
+            "window_id": "window-new"
+          }
+        ],
+        "clock": 1011.0,
+        "kwargs": {
+          "command_key": "spec-event-20"
+        },
+        "method": "observe"
+      },
+      {
+        "args": [
+          {
+            "amount": "80",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1011.0,
+            "pool_id": "pool-balance",
+            "reset_at": 1020.0,
+            "source": "fixture",
+            "source_ref": "spec-observation-21",
+            "window_id": "window-new"
+          }
+        ],
+        "clock": 1011.0,
+        "kwargs": {
+          "command_key": "spec-event-21"
+        },
+        "method": "observe"
+      },
+      {
+        "args": [
+          {
+            "amount": "80",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1011.0,
+            "pool_id": "pool-unknown",
+            "reset_at": 1020.0,
+            "source": "fixture",
+            "source_ref": "spec-observation-22",
+            "window_id": "window-new"
+          }
+        ],
+        "clock": 1011.0,
+        "kwargs": {
+          "command_key": "spec-event-22"
+        },
+        "method": "observe"
+      }
+    ]
+  }
+]
