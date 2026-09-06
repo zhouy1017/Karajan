@@ -1,0 +1,67 @@
+{
+  "observed_at": "2026-09-05T19:56:19Z",
+  "level": "U+C",
+  "method": "Root operated the actual authenticated local browser through CUA; independent read-only SQLite snapshots captured surrounding state. Screenshots were visually inspected in the task transcript, not saved as files.",
+  "url": "http://127.0.0.1:8765/",
+  "project_id": "a02f2f5a-be94-497f-ae60-700ac5cad7a1",
+  "cases": [
+    {
+      "input": "Load built-in fixed sample under saved personal-code-delivery v2",
+      "observed": "bounded-worker / T2 / fixture-profile v1; one eligible candidate"
+    },
+    {
+      "input": "Repeat unchanged simulation and expand input binding",
+      "observed": "Same rule, candidate and all three displayed snapshot hashes"
+    },
+    {
+      "input": "Set task complexity to T1; current fast_qualified group is empty",
+      "observed": "Old report removed immediately; new simulation blocked with NO_STAGE_CANDIDATE"
+    },
+    {
+      "input": "Set readiness to T0",
+      "observed": "TASK_NOT_READY; no candidate"
+    },
+    {
+      "input": "Restore readiness ready; set critical risk while complexity is T1",
+      "observed": "critical-worker / effective T3 / fixture-profile v1"
+    },
+    {
+      "input": "Edit critical-worker draft priority from 100 to 102",
+      "observed": "Old report removed; next simulation displays priority 102 and a changed rule/policy hash"
+    },
+    {
+      "input": "Reload final rebuilt UI, reopen same saved project and load sample",
+      "observed": "Saved critical-worker priority is still 100; original bounded-worker T2 and snapshot hashes return"
+    },
+    {
+      "input": "Expand input binding in 554px viewport before and after CSS repair",
+      "observed": "Before: rule hash overflowed card and page scrolled horizontally. After: full hash wraps inside card and horizontal page scrollbar disappears."
+    }
+  ],
+  "repeat_snapshot_sha256": {
+    "task": "626b4238580e58ae8e3a179c5232e420115da0a1e0583ad1e1b8c54118dc6731",
+    "policy": "4e32edc87de9baa820fce7255f95861b67642ad0c5ee6308d4449d14da7d863d",
+    "capacity": "99c877122bda55e8719c203ae184cb06441a958eaf3f497943e97746b7810279"
+  },
+  "state_comparison": {
+    "identical": true,
+    "scope": "Project record, full published rulebook, profile enabled flags, publication history, and all logical Run/capacity table counts and row hashes captured by the helper. Session/bootstrap stores were not read.",
+    "files": [
+      "browser-before.json",
+      "browser-after.json",
+      "browser-final.json"
+    ]
+  },
+  "final_source_sha256": {
+    "backend/karajan/web/simulation.py": "702a076b98a862c6f0d07d2e8141d38f0cbd42eddcfc04a570e89832b8219a9a",
+    "backend/karajan/web/app.py": "40642b0019a5ce7755e9135a066fb4fa1a680c62f863566e2c60bc207ad285a0",
+    "backend/karajan/routing/example.v1.json": "0d4263ab2f0c53db6fa33bee59223149a3f9824f2a94f1752f83dd20094b874d",
+    "frontend/src/RoutingSimulation.tsx": "2bc74b16c67e2fea096f22c9a4e8aeb5ef8e336f60df0fa190138d5159daaa99",
+    "frontend/src/RoutingSimulation.css": "0f3ad6dba38c1ac910eb2d0a73fadbb8e3986fb9a280e30a3d17929face424fe",
+    "frontend/src/RulebookPanel.tsx": "6adf542b21eaa92b3d2442e68499256f196e4bad1c0c604f6ea67ef787bbfaac"
+  },
+  "pre_numeric_and_css_fix_ui_sha256": "1406bdffefc7d98d5087b9f71ab2a42b83c41bbcf5d2c7b4b978933b819c9503",
+  "scope_limit": "Normal/T1/T0/critical/edit cases were observed before the numeric-import and CSS-only fixes; final browser reran sample and digest rendering. File import, multi-candidate rank, authentication races, duplicate keys and numerical edge cases are covered by component/HTTP checks, not claimed as real browser actions. Model endpoint zero-receive evidence is in HTTP tests, not inferred from the page counter.",
+  "live_qualification": "not_run",
+  "activation_allowed": false
+}

@@ -1,0 +1,358 @@
+{
+  "project": {
+    "allowed_target_branches": [
+      "main"
+    ],
+    "configuration": {
+      "digest": "45082cea1a872816a189797e601e71960703ced504830cc97a4934f3e3a2caa5",
+      "dispatch_eligible": false,
+      "preview_id": "9ad3105d-c4cf-43d3-9d02-7777bbca9333",
+      "revision": 2,
+      "status": "draft"
+    },
+    "id": "a02f2f5a-be94-497f-ae60-700ac5cad7a1",
+    "live_qualified": false,
+    "name": "离线验收样例 · 不调用模型",
+    "published_rulebook": {
+      "activation_allowed": false,
+      "at": 1788635917.4770024,
+      "configuration_revision": 2,
+      "live_qualification": "not_run",
+      "preview_id": "9ad3105d-c4cf-43d3-9d02-7777bbca9333",
+      "principal": "owner",
+      "project_id": "a02f2f5a-be94-497f-ae60-700ac5cad7a1",
+      "project_revision": 3,
+      "publication_id": "0125d3ce-5cde-4b82-ae58-e1886976ff6d",
+      "rulebook": {
+        "id": "personal-code-delivery",
+        "revision": 2,
+        "rulebook_sha256": "cbb2c7f623f208c93944e41fd36c6eb5b875fec5c1d6bad9e4382a91accbb9cc"
+      },
+      "schema_version": "karajan.rulebook-publication.v1",
+      "state": "waiting_qualification"
+    },
+    "repository": {
+      "base_ref": "main",
+      "base_sha": "988e77213af47bf74b7f4ebcf18eae9f75ce4640",
+      "identity_sha256": "777f380a87a0a3e44e33fd25593966a6332b1aeb9594890ee6f647bfdf795f2a",
+      "root": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\workbench-repositories\\run-review"
+    },
+    "revision": 3,
+    "schema_version": "karajan.project.v1",
+    "target_branch": "main"
+  },
+  "rulebook": {
+    "collaboration": {
+      "command_mode": "lead_with_advisers",
+      "delivery_target": "pull_request",
+      "implementation_readiness": "ready",
+      "internal_delegation": "disabled_unless_admitted_and_observable",
+      "max_infrastructure_retries_per_root_task": 2,
+      "max_parallel_writers_per_project": 1,
+      "max_quality_repair_rounds": 2,
+      "merge_authority": "user",
+      "plan_approval": "explicit_revision"
+    },
+    "description": "离线发布验收：调整任务优先级，保留旧 Run 的已批准规则。",
+    "global_constraints": {
+      "autonomous_tool_execution_min_isolation": "tool_sandboxed",
+      "final_review_required": true,
+      "no_silent_model_or_billing_fallback": true,
+      "profile_fixed_per_attempt": true,
+      "require_approved_data_destination": true,
+      "require_enabled_profile": true,
+      "require_explicit_billing_path": true,
+      "require_passed_capabilities": true,
+      "review_context": "fresh_non_author"
+    },
+    "id": "personal-code-delivery",
+    "profile_groups": {
+      "adviser_qualified": [
+        {
+          "id": "fixture-profile",
+          "revision": 1
+        }
+      ],
+      "commander_qualified": [
+        {
+          "id": "fixture-profile",
+          "revision": 1
+        }
+      ],
+      "critical_qualified": [
+        {
+          "id": "fixture-profile",
+          "revision": 1
+        }
+      ],
+      "fast_qualified": [],
+      "review_critical_qualified": [
+        {
+          "id": "fixture-profile",
+          "revision": 1
+        }
+      ],
+      "review_standard_qualified": [
+        {
+          "id": "fixture-profile",
+          "revision": 1
+        }
+      ],
+      "standard_qualified": [
+        {
+          "id": "fixture-profile",
+          "revision": 1
+        }
+      ]
+    },
+    "resource_policy": {
+      "account_capacity_policy_binding": "current_global_revision",
+      "call_reservations": "slices_of_attempt_reservation",
+      "candidate_order": [
+        "preference_band",
+        "uncertainty_band",
+        "bottleneck_quota_pressure",
+        "incremental_cash_estimate",
+        "completion_time_estimate",
+        "profile_id"
+      ],
+      "cash_budget_enforcement": "bounded_calls",
+      "fairness": "aging_and_run_round_robin",
+      "id": "protect_lead_then_balance",
+      "missing_cash_budget": "deny_cash_route",
+      "planning_budget_ref": "planning",
+      "queue_order": [
+        "lead_feedback",
+        "required_review_repair_and_critical_path",
+        "worker",
+        "optional_adviser"
+      ],
+      "reset_preference": "only_among_equivalent_candidates_all_windows_checked",
+      "run_budget_ref": "run",
+      "subscription_quota_enforcement": "conservative_estimate",
+      "unknown_quota": "require_explicit_conservative_mode"
+    },
+    "revision": 2,
+    "rules": [
+      {
+        "capabilities_all": [
+          "design_reasoning",
+          "structured_plan_output"
+        ],
+        "eligible_groups": [
+          "commander_qualified"
+        ],
+        "handoff": "explicit_checkpoint_record",
+        "id": "lead-planning",
+        "priority": 100,
+        "reroute": "propose_checkpoint_handoff_require_user_decision",
+        "when": {
+          "purpose": "lead",
+          "role": "commander"
+        }
+      },
+      {
+        "capabilities_all": [
+          "design_reasoning"
+        ],
+        "eligible_groups": [
+          "adviser_qualified"
+        ],
+        "id": "adviser-planning",
+        "lead_reserve_access": false,
+        "priority": 100,
+        "reroute": "within_approved_set",
+        "when": {
+          "purpose": "advice",
+          "role": "commander"
+        }
+      },
+      {
+        "capabilities_all": [
+          "bounded_code_edit",
+          "controlled_tools",
+          "candidate_capture"
+        ],
+        "eligible_groups": [
+          "fast_qualified"
+        ],
+        "id": "mechanical-worker",
+        "priority": 101,
+        "quality_escalation_groups": [
+          "standard_qualified"
+        ],
+        "reroute": "within_approved_set_preserve_requirements",
+        "when": {
+          "effective_class": "T1",
+          "readiness": "ready",
+          "role": "worker"
+        }
+      },
+      {
+        "capabilities_all": [
+          "bounded_implementation",
+          "controlled_tools",
+          "candidate_capture"
+        ],
+        "eligible_groups": [
+          "standard_qualified"
+        ],
+        "id": "bounded-worker",
+        "priority": 100,
+        "quality_escalation_groups": [
+          "critical_qualified"
+        ],
+        "reroute": "within_approved_set_preserve_requirements",
+        "when": {
+          "effective_class": "T2",
+          "readiness": "ready",
+          "role": "worker"
+        }
+      },
+      {
+        "capabilities_all": [
+          "critical_implementation",
+          "controlled_tools",
+          "candidate_capture"
+        ],
+        "eligible_groups": [
+          "critical_qualified"
+        ],
+        "id": "critical-worker",
+        "priority": 100,
+        "quality_escalation_groups": [],
+        "reroute": "within_approved_set_preserve_requirements",
+        "when": {
+          "effective_class": "T3",
+          "readiness": "ready",
+          "role": "worker"
+        }
+      },
+      {
+        "capabilities_all": [
+          "code_review",
+          "structured_findings"
+        ],
+        "eligible_groups": [
+          "review_standard_qualified"
+        ],
+        "id": "standard-review",
+        "independence": [
+          "fresh_context",
+          "non_author_attempt"
+        ],
+        "priority": 100,
+        "reroute": "within_approved_set_preserve_requirements",
+        "when": {
+          "effective_class_in": [
+            "T1",
+            "T2"
+          ],
+          "role": "reviewer"
+        }
+      },
+      {
+        "capabilities_all": [
+          "critical_code_review",
+          "structured_findings"
+        ],
+        "eligible_groups": [
+          "review_critical_qualified"
+        ],
+        "id": "critical-review",
+        "independence": [
+          "fresh_context",
+          "non_author_attempt",
+          "different_model_family_from_authors"
+        ],
+        "priority": 100,
+        "reroute": "within_approved_set_preserve_requirements",
+        "when": {
+          "effective_class": "T3",
+          "role": "reviewer"
+        }
+      }
+    ],
+    "schema_version": "karajan.rulebook.v1",
+    "status": "configured"
+  },
+  "profile_enabled": [
+    true
+  ],
+  "publications": [
+    {
+      "activation_allowed": false,
+      "at": 1788635917.4770024,
+      "configuration_revision": 2,
+      "live_qualification": "not_run",
+      "preview_id": "9ad3105d-c4cf-43d3-9d02-7777bbca9333",
+      "principal": "owner",
+      "project_id": "a02f2f5a-be94-497f-ae60-700ac5cad7a1",
+      "project_revision": 3,
+      "publication_id": "0125d3ce-5cde-4b82-ae58-e1886976ff6d",
+      "rulebook": {
+        "id": "personal-code-delivery",
+        "revision": 2,
+        "rulebook_sha256": "cbb2c7f623f208c93944e41fd36c6eb5b875fec5c1d6bad9e4382a91accbb9cc"
+      },
+      "schema_version": "karajan.rulebook-publication.v1",
+      "state": "waiting_qualification"
+    }
+  ],
+  "unchanged_stores": {
+    "runs.sqlite": {
+      "run_commands": {
+        "rows": 10,
+        "sha256": "3ee890c4c8f00da659e5f8bb8f51607a52390f95228b70bef1e81a020692addb"
+      },
+      "run_events": {
+        "rows": 10,
+        "sha256": "6fccd7e6acebc67ab113ddca6459cb94084b6a519dbb3f70fd72aa784ac83a46"
+      },
+      "runs": {
+        "rows": 2,
+        "sha256": "a60b535179dc95d6d1fd30b7d75e268cfea2c7855d9aac859733107444d89174"
+      }
+    },
+    "capacity.sqlite": {
+      "commands": {
+        "rows": 18,
+        "sha256": "87089fab4c7ec4674ea6deed7ef677622ddbe5ff901366971118d4a43ade1c47"
+      },
+      "failures": {
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "lifecycle": {
+        "rows": 4,
+        "sha256": "ebc6bb2c04e75b1bc10dbf5449142bcbe9f79f60d085d67ae4ee01bf56b30df9"
+      },
+      "observations": {
+        "rows": 4,
+        "sha256": "4c72412ad46611b49dabfaf439e9418a813754a16e9bf9322723161aa2047704"
+      },
+      "policies": {
+        "rows": 2,
+        "sha256": "f6a5f77c71539dd6812cf950f631fc6e9dcb4c2025ce027ff1ebf12a4eecabc1"
+      },
+      "pools": {
+        "rows": 3,
+        "sha256": "db78fe6fb4d35858092bd34382dac549138ab4b92283f4dd82b3b53c47982d67"
+      },
+      "profiles": {
+        "rows": 2,
+        "sha256": "8c66905fc4066eacf25243f52a1559c0c36c99c9d1b421e853cc8716868b36a4"
+      },
+      "reservations": {
+        "rows": 2,
+        "sha256": "aec3d4cf7ba1c7c8a5f0061bf53e3dbbb84000a81b8b905a55468f09d6e7bf80"
+      },
+      "usage": {
+        "rows": 1,
+        "sha256": "6fee629c99af4c609aa8719b09771050eeefc68f4b9bb4976d677dfa5dc8aa0f"
+      }
+    }
+  },
+  "live_qualification": "not_run",
+  "activation_allowed": false
+}

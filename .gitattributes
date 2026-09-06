@@ -24,3 +24,8 @@ examples/rulebook-publication/*.json -text whitespace=cr-at-eol
 examples/rulebook-publication/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
 examples/rulebook-publication/review-fixes/*.json -text whitespace=cr-at-eol
 examples/rulebook-publication/review-fixes/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+# Routing workbench reports and original review inputs keep their captured bytes.
+examples/routing-workbench/*.json -text whitespace=cr-at-eol
+examples/routing-workbench/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+examples/routing-workbench/review-fixes/*.json -text whitespace=cr-at-eol
+examples/routing-workbench/review-fixes/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol

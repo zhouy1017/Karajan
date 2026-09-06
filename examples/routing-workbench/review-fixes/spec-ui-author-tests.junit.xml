@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="36" failures="0" errors="0" time="6.521178">
+    <testsuite name="src/RoutingSimulation.test.tsx" timestamp="2026-09-05T19:47:34.940Z" hostname="ProArt-Zhou" tests="36" failures="0" errors="0" skipped="0" time="6.521178">
+        <testcase classname="src/RoutingSimulation.test.tsx" name="waits for explicit input and runs inside the rulebook editor without publication writes" time="0.3048159">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="replaces only the current rulebook and sends frozen authorization and resources unchanged" time="0.1239621">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="shows selected and rejected candidates, every reason and server-ranked components" time="0.1299994">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="makes blocked outcomes explicit without suggesting activation" time="0.0787162">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="shows imported provenance, snapshot timestamps and unknown values without inventing availability" time="0.1029952">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="exports exactly the composed input and unchanged complete server report" time="0.2328492">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="sends identical bytes on repeat simulation with identical facts" time="0.1691498">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="invalidates a completed result after changing task" time="0.1130224">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="invalidates a completed result after changing draft" time="0.125185">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="invalidates a completed result after changing file" time="0.1651645">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="invalidates a completed result after changing example" time="0.1868183">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="rejects duplicate file data before any simulation request" time="0.0604766">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="rejects escaped duplicate file data before any simulation request" time="0.0615793">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="rejects invalid file data before any simulation request" time="0.0597308">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="rejects missing file data before any simulation request" time="0.0620283">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="accepts the same field names in different objects and commas/braces inside strings" time="0.0620167">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="checks the composed UTF-8 body size rather than file characters" time="0.1242289">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="clears the old result and handles a 422 simulation failure" time="0.1573226">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="clears the old result and handles a malformed simulation failure" time="0.1676708">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="clears the old result and handles a wrong scope simulation failure" time="0.1850951">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="clears the old result and handles a network simulation failure" time="0.186027">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="expires only the active session on example 401" time="0.0615696">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="expires only the active session on simulate 401" time="0.1082461">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="discards late example headers after mount, session, project, draft or task changes" time="0.7114596">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="discards late simulate headers after mount, session, project, draft or task changes" time="1.7568858">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="rechecks edit scope after delayed example JSON parsing" time="0.0589157">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="rechecks edit scope after delayed simulate JSON parsing" time="0.1135578">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="discards delayed imported text after unmount changes" time="0.0567742">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="discards delayed imported text after csrf changes" time="0.0620759">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="discards delayed imported text after project changes" time="0.0461244">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="discards delayed imported text after draft changes" time="0.0620407">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="discards delayed imported text after task changes" time="0.1124689">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="does not mix a late old result into a newer result" time="0.1509156">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="renders the original prototype-like evidence reference without crashing" time="0.1081948">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="keeps constructor literal in evidence, reason and field labels" time="0.1268839">
+        </testcase>
+        <testcase classname="src/RoutingSimulation.test.tsx" name="keeps toString literal in evidence, reason and field labels" time="0.1243728">
+        </testcase>
+    </testsuite>
+</testsuites>

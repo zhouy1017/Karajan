@@ -1,0 +1,295 @@
+{
+  "schema_version": "karajan.spec-review.v1",
+  "reviewed_at_utc": "2026-09-05T19:48:55.391996+00:00",
+  "reviewer": "report_to_decisions",
+  "scope": "Authenticated stateless simulation API and frozen UI boundary; explicit imported/fixture task, policy and capacity snapshots only.",
+  "result": "no_unclosed_actionable_findings_in_reviewed_scope",
+  "findings": [],
+  "independently_executed": {
+    "author_http_cases": {
+      "passed": 21,
+      "evidence": "spec-api-first.junit.xml"
+    },
+    "additional_http_cases": {
+      "passed": 10,
+      "duration_seconds": 2.7,
+      "evidence": "spec-api-final.junit.xml"
+    },
+    "author_ui_interactions": {
+      "passed": 36,
+      "vitest_duration_seconds": 7.32,
+      "evidence": "spec-ui-author-tests.junit.xml"
+    }
+  },
+  "additional_http_coverage": [
+    "Exact supplied three snapshots produce the public evaluate_route result and identical repeated HTTP bytes, independent of the project current Rulebook.",
+    "New group, empty authorization ceiling, and added quality stage cannot silently rewrite raw task authorization or select an unauthorized candidate.",
+    "Root duplicate fields and nested Unicode-escaped duplicate names in both orders are rejected.",
+    "A valid multi-byte UTF-8 request padded to 65,536 bytes succeeds; one extra byte is rejected.",
+    "A revoked actual browser session cannot fetch the fixture or submit simulation."
+  ],
+  "closed_pre_review_ui_points": [
+    "Eligible candidates are ordered by the service rank.",
+    "The final composed UTF-8 request is bounded to the actual server limit before fetch.",
+    "Import rejects decoded duplicate JSON keys rather than silently losing them in JSON.parse."
+  ],
+  "additional_ui_review": "Read the own-property label fix and independently ran the author public regressions using root label-prototype.input.json, including __proto__, constructor and toString; no React crash remained.",
+  "side_effect_evidence": {
+    "scope": "Actual application projects/runs/capacity SQLite logical tables only, populated with an existing Run and active reservation before simulation.",
+    "before": {
+      "capacity": {
+        "commands": {
+          "rows": 5,
+          "sha256": "5847814c7784a87216a7cd97efb76016db6188f450fb7f416f4ee699085633b4"
+        },
+        "failures": {
+          "rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "lifecycle": {
+          "rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "observations": {
+          "rows": 1,
+          "sha256": "a185987fc2722a0ac4e7cd6116cb037039ecab031e0d6de04c57e4adac88bd2f"
+        },
+        "policies": {
+          "rows": 1,
+          "sha256": "60fed9c5d2512c6ee01be281df6e7f3bc009374912300330374a62db8aafeebe"
+        },
+        "pools": {
+          "rows": 1,
+          "sha256": "6d7241b3c75b2b28a0768bad13bccfef2f09f167f097aae5e4c245b62b2caeb6"
+        },
+        "profiles": {
+          "rows": 1,
+          "sha256": "51306b9a063708afdab737be6bd1f089f20063e05b60dc88b695285248e5f789"
+        },
+        "reservations": {
+          "rows": 1,
+          "sha256": "09b1ba23f93c65244df6f8384298a5a998b28d0e1ececf1716d072eccdd485e2"
+        },
+        "usage": {
+          "rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        }
+      },
+      "projects": {
+        "commands": {
+          "rows": 3,
+          "sha256": "cb21e69ee477d792276708ceacc9c378f2002839cc0d587ec4c201c54aa69f9b"
+        },
+        "effective_catalogs": {
+          "rows": 1,
+          "sha256": "664ecd6666811c64026d714cc9bfb7d0feee424d51602e7920a7849caddbc846"
+        },
+        "previews": {
+          "rows": 1,
+          "sha256": "bbd8d5ef974da25772d29a89f75251156245bce6114138d5d2e831a3ddf959e1"
+        },
+        "project_owners": {
+          "rows": 1,
+          "sha256": "50c6bb62a9c4122583bd7ded6b080cf0da61a37cc852f15754ea3c099c1a0d90"
+        },
+        "projects": {
+          "rows": 1,
+          "sha256": "a259ac856fc9a31b3d369420e8d8e5f980aa511e871dfa225298a10da67e8a30"
+        },
+        "publication_migrations": {
+          "rows": 1,
+          "sha256": "043f347c2cdc0d8ce70c38775d24e556c0290acf6d0c87a3a52aa85471cb8d02"
+        },
+        "rulebook_conflicts": {
+          "rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "rulebook_publications": {
+          "rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "rulebook_versions": {
+          "rows": 1,
+          "sha256": "fc38b008377d3cd2152d062ce9608daf87c155316ba0cb8711d1fefe0e1f5e2d"
+        }
+      },
+      "runs": {
+        "run_commands": {
+          "rows": 1,
+          "sha256": "5db1adf886ea2b288f4b300ad9c38480b1aebefca8c80bf4822a2c2cf2852ad2"
+        },
+        "run_events": {
+          "rows": 1,
+          "sha256": "46b9791d09ba56bc5daff910525f0ae1fe0ec18e5c5237eff43212b5f0dc754f"
+        },
+        "runs": {
+          "rows": 1,
+          "sha256": "0388fc9cc33bd86967ed0bbcc095ffe12d3f7de012662001921ad4ab79784db2"
+        }
+      }
+    },
+    "after": {
+      "capacity": {
+        "commands": {
+          "rows": 5,
+          "sha256": "5847814c7784a87216a7cd97efb76016db6188f450fb7f416f4ee699085633b4"
+        },
+        "failures": {
+          "rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "lifecycle": {
+          "rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "observations": {
+          "rows": 1,
+          "sha256": "a185987fc2722a0ac4e7cd6116cb037039ecab031e0d6de04c57e4adac88bd2f"
+        },
+        "policies": {
+          "rows": 1,
+          "sha256": "60fed9c5d2512c6ee01be281df6e7f3bc009374912300330374a62db8aafeebe"
+        },
+        "pools": {
+          "rows": 1,
+          "sha256": "6d7241b3c75b2b28a0768bad13bccfef2f09f167f097aae5e4c245b62b2caeb6"
+        },
+        "profiles": {
+          "rows": 1,
+          "sha256": "51306b9a063708afdab737be6bd1f089f20063e05b60dc88b695285248e5f789"
+        },
+        "reservations": {
+          "rows": 1,
+          "sha256": "09b1ba23f93c65244df6f8384298a5a998b28d0e1ececf1716d072eccdd485e2"
+        },
+        "usage": {
+          "rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        }
+      },
+      "projects": {
+        "commands": {
+          "rows": 3,
+          "sha256": "cb21e69ee477d792276708ceacc9c378f2002839cc0d587ec4c201c54aa69f9b"
+        },
+        "effective_catalogs": {
+          "rows": 1,
+          "sha256": "664ecd6666811c64026d714cc9bfb7d0feee424d51602e7920a7849caddbc846"
+        },
+        "previews": {
+          "rows": 1,
+          "sha256": "bbd8d5ef974da25772d29a89f75251156245bce6114138d5d2e831a3ddf959e1"
+        },
+        "project_owners": {
+          "rows": 1,
+          "sha256": "50c6bb62a9c4122583bd7ded6b080cf0da61a37cc852f15754ea3c099c1a0d90"
+        },
+        "projects": {
+          "rows": 1,
+          "sha256": "a259ac856fc9a31b3d369420e8d8e5f980aa511e871dfa225298a10da67e8a30"
+        },
+        "publication_migrations": {
+          "rows": 1,
+          "sha256": "043f347c2cdc0d8ce70c38775d24e556c0290acf6d0c87a3a52aa85471cb8d02"
+        },
+        "rulebook_conflicts": {
+          "rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "rulebook_publications": {
+          "rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "rulebook_versions": {
+          "rows": 1,
+          "sha256": "fc38b008377d3cd2152d062ce9608daf87c155316ba0cb8711d1fefe0e1f5e2d"
+        }
+      },
+      "runs": {
+        "run_commands": {
+          "rows": 1,
+          "sha256": "5db1adf886ea2b288f4b300ad9c38480b1aebefca8c80bf4822a2c2cf2852ad2"
+        },
+        "run_events": {
+          "rows": 1,
+          "sha256": "46b9791d09ba56bc5daff910525f0ae1fe0ec18e5c5237eff43212b5f0dc754f"
+        },
+        "runs": {
+          "rows": 1,
+          "sha256": "0388fc9cc33bd86967ed0bbcc095ffe12d3f7de012662001921ad4ab79784db2"
+        }
+      }
+    },
+    "all_21_tables_equal": true,
+    "local_fake_model_listener_received": 0,
+    "listener_bound_to": "Submitted explicit fixture Profile.native_settings.endpoint; its fixture profile evidence hashes were updated in the test, and that profile was selected.",
+    "basis": "Observed public test behavior and table digests, not response model_calls constant."
+  },
+  "history": {
+    "first_command": "PYTHONPATH=backend;tests/web .venv/Scripts/python.exe -m pytest tests/web/test_simulation_http.py examples/routing-workbench/review-fixes/spec-api-review.py -q --junitxml=examples/routing-workbench/review-fixes/spec-api-first.junit.xml",
+    "first_result": "30 passed, 1 failed / 6.78 seconds. Only the reviewer expected the wrong denial code for the empty ceiling; the API correctly rejected it with RUN_CEILING_PROFILE_DENIED.",
+    "first_review_script_sha256": "d523b48f49635b2ad479a42e393a829a3072c986164515be609da307dd3b7cd9",
+    "correction": "Updated the reviewer assertion to the existing documented code; also included multi-byte text in the boundary input. No product source changed; original failed XML retained. All 10 independent cases rerun successfully.",
+    "pre_review_three_ui_points": "Originally static source findings. No pre-fix failed UI run is claimed for those three points."
+  },
+  "limitations": [
+    "UI tests use controlled HTTP responses; actual browser integration remains root-owned validation.",
+    "Imported source labels and qualifications are supplied simulation facts, not current Run or live provider authority.",
+    "No adoption, F03/F05 enabling, real model calls, cash API calls or actual provider quota import was tested.",
+    "Host and resources cash ledgers are not initialized by this application; they are not falsely reported as experimentally checked. Source inspection found no simulation dependency calling Broker or Host."
+  ],
+  "source_sha256": {
+    "backend/karajan/web/simulation.py": "702a076b98a862c6f0d07d2e8141d38f0cbd42eddcfc04a570e89832b8219a9a",
+    "backend/karajan/web/app.py": "40642b0019a5ce7755e9135a066fb4fa1a680c62f863566e2c60bc207ad285a0",
+    "backend/karajan/routing/example.v1.json": "0d4263ab2f0c53db6fa33bee59223149a3f9824f2a94f1752f83dd20094b874d",
+    "frontend/src/RoutingSimulation.tsx": "1406bdffefc7d98d5087b9f71ab2a42b83c41bbcf5d2c7b4b978933b819c9503",
+    "frontend/src/RoutingSimulation.test.tsx": "a938c59431939787b5431d5b97b6f792176a94df2f0d837bb3bae5ea08a4d089",
+    "backend/karajan/web/body_limit.py": "a69fa4e4cec9b562503fded35d466ae2456012165422b99d5ec29299bb94ef1a",
+    "backend/karajan/web/projects.py": "0699265da33d7b548d04248549e9b3a443d9071d94adb5172e6ea6ce8b9edf67",
+    "backend/karajan/web/resources.py": "51d88e3c686b67d804c0cd7faffb8439263f5100f968997c659f9d0564af21e0",
+    "backend/karajan/web/runs.py": "ec5b57185e8274b8ecf7f8fe5582c2c761f65c3fdf83f8614da30343da7fe88e",
+    "backend/karajan/web/__init__.py": "4b485055d55aa7e39bc4fb5224b10a495c5c6d3c4979e214244ff5281fe54254",
+    "backend/karajan/web/__main__.py": "216ef604b3ae338c10b84c0d301a86725946560c9bbf4bcc4b9fe85524613c25",
+    "backend/karajan/routing/compiler.py": "11f1e504b04ac0fa596583e1210f456890b9c79622c3fb5f94e941c57b35daa8",
+    "backend/karajan/routing/evaluator.py": "e5d716a0f2f3e97d245462022a886fc99e7c1808b0cebfb6c14823ffe65d2a15",
+    "backend/karajan/routing/fixture.py": "491ecf20a6b5efd1dc0cc9386a3513607b467eef3ffccfcc76d0b3afa2269bec",
+    "backend/karajan/routing/models.py": "06a5b4b65e84044823171d584555bf09b52043d45afca4a4ff1ed398e7d5c757",
+    "backend/karajan/routing/quotas.py": "6a9e332943436a6f76ad558b9a064da2b77905922460bbb9dc535b8726f16f53",
+    "backend/karajan/routing/ranking.py": "c1b8dfe7464834af3d8ca0b852059b006ec857065ab663cb31fc7f5087c8a99a",
+    "backend/karajan/routing/__init__.py": "0f33eab0165f5fd322d16105c343da220a8365aacf6168992a53559e24e7ca3f",
+    "backend/karajan/routing/__main__.py": "30607a3cdd15dd1d7e31731fa32262cdcf34f956c02929779836b9195fabc663",
+    "backend/karajan/projects/configuration.py": "3dd388edeea88bd74292725b0680e8f47c46e9a07023215dd8c67273df489b03",
+    "backend/karajan/projects/legacy_evaluation.py": "50630560406b7bdcc11d36221a14d605f6a1c5cfe36f32e4b64d2e4f23064d51",
+    "backend/karajan/projects/models.py": "ae082cf980f09ce6cb315d8d873875181c6c6f482d0bd581378d1b8ac5e7d698",
+    "backend/karajan/projects/publication.py": "b57cd2ef51738b1f9871b55670a0c7b3e434bc6b25ee2c5b3eebc34b0516124a",
+    "backend/karajan/projects/registry.py": "aca0573465ce00350547790b3336ea18be64d7b947128d87aff7308d94827458",
+    "backend/karajan/projects/__init__.py": "9e3b2ead9e3ab7b2a52d22205acaeb42db20e2f609552f0be91f0c5d91c236e0",
+    "backend/karajan/runs/models.py": "bb848445114e25a94662dff578759cb5dc8fcdd80bbcd0ca4a00b5141ec3f68d",
+    "backend/karajan/runs/planning.py": "f90c4d61965167d61ff9821d0bdb7d958ed3176e978e64995a97773483d4f2bc",
+    "backend/karajan/runs/validation.py": "e1cf7672799792a7959d9a310ca0a854d3be63a2ab602e727969c966285ebd00",
+    "backend/karajan/runs/__init__.py": "9cecae6387250b4b049423e017763b201fb3b3f8af56b9a52d66581cc125b753",
+    "backend/karajan/runs/__main__.py": "7a890fc6ec9fdc24b57a784d29ac69bc629067a9838de0c47b544425cf8ed414",
+    "backend/karajan/capacity/models.py": "bd58f6b0c98991cfaff402e863cebbab6f819b54ba244a05db56b4706d40d7ad",
+    "backend/karajan/capacity/probe.py": "ebf14b026b19cd805ec35a2003b89ebd63d7162b2d0dd5c9ab49bb79d76e6c55",
+    "backend/karajan/capacity/store.py": "ecce38cfeb1a5ca9e878934266d2e3e37d72831375c1e20a445fb539df97be01",
+    "backend/karajan/capacity/__init__.py": "40bb4ac634db80514b97a271d428dec8d74432488492b87fedcc3eeda4676edf",
+    "backend/karajan/capacity/__main__.py": "163e50708ddbe8e193d0dcb47a81beb6d291abbb965dc15e85d9417af0b02933",
+    "backend/karajan/contracts/credentials.py": "17257218593bf80f30ba5a1eec003dc0afce69b9f49cd581df16d08530782fc6",
+    "backend/karajan/contracts/probe.py": "7201236169624c597c9ac4747ade03fdfee86d60e8aab5d92fafb6ad8ec7ea8b",
+    "backend/karajan/contracts/__init__.py": "e905480b39cd165ebd4b0904b5820acd7fe4396c3d97da725b3e3738cbcd74d8",
+    "frontend/src/RulebookPanel.tsx": "6adf542b21eaa92b3d2442e68499256f196e4bad1c0c604f6ea67ef787bbfaac",
+    "tests/web/test_simulation_http.py": "a5a371399264f52681c264fba2a9165e139e3fc3c7bab0fe3ed6d36f83158238",
+    "tests/web/test_rulebook_http.py": "cea8af5da8059345cb46fe1248c1aa90f7793ca7884dac1609bd4cec12ecf954",
+    "backend/karajan/resources/broker.py": "cb1d6444a8ea17aa3c86ce4f32db769d205a2dedcaa257be00666bd9ebff8df4",
+    "examples/projects/offline-configuration.json": "a286b101251e33a44c351b99edff5a07f9c325cef9be79eb90c251a0e9cb204f",
+    "examples/routing/fixed-input.json": "0d4263ab2f0c53db6fa33bee59223149a3f9824f2a94f1752f83dd20094b874d",
+    "examples/routing/published-report.json": "252ed2d87fc464c8bfc817a1b8a72d8790cbfe1856683df4b415430df2302da2"
+  },
+  "evidence_sha256": {
+    "spec-api-final.junit.xml": "a5f1b2798f881d04a6370916014c2c3842c604b1663070510e4a96c4a0e032de",
+    "spec-api-first.junit.xml": "3c3cf12a23f2c91570f553257d4ad571979af0b6e0428b61c35d9273e207da18",
+    "spec-api-inputs.json": "6c990d9df2111d43d9e48b0860295878aabaff42ddcb17d33424615f2b9cfe1c",
+    "spec-api-review.py": "48ab3f4e1df2bdd3067917306f292cbf7a60ad72fa66c7384766a922e7aaed16",
+    "spec-ui-author-tests.junit.xml": "4a24f27a8291f385be2d57226fb8e8ed9a0d1992d06cd0846567173aa8ccc6e2"
+  }
+}

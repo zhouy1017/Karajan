@@ -1,0 +1,30 @@
+{
+  "observed_at": "2026-09-05T19:44:40.779544+00:00",
+  "review_scope": "Root independent Standards inspection of frozen simulation API, app registration and fixed fixture only",
+  "findings": [],
+  "source_sha256": {
+    "backend/karajan/web/simulation.py": "702a076b98a862c6f0d07d2e8141d38f0cbd42eddcfc04a570e89832b8219a9a",
+    "backend/karajan/web/app.py": "40642b0019a5ce7755e9135a066fb4fa1a680c62f863566e2c60bc207ad285a0",
+    "backend/karajan/routing/example.v1.json": "0d4263ab2f0c53db6fa33bee59223149a3f9824f2a94f1752f83dd20094b874d",
+    "tests/web/test_simulation_http.py": "a5a371399264f52681c264fba2a9165e139e3fc3c7bab0fe3ed6d36f83158238"
+  },
+  "tests": {
+    "windows_web_and_routing": {
+      "passed": 137,
+      "seconds": 11.6,
+      "junit": "routing-workbench-root-backend.junit.xml"
+    },
+    "wsl_new_api": {
+      "passed": 21,
+      "seconds": 4.18,
+      "junit": "routing-workbench-wsl.junit.xml"
+    }
+  },
+  "static_checks": {
+    "ruff": "check . passed",
+    "strict_mypy": "backend/karajan passed, 90 source files"
+  },
+  "observed_boundary": "Actual authenticated stateless handler uses evaluate_route with all three supplied snapshots. Existing projects/runs/capacity logical tables remain identical and a locally bound endpoint receives zero requests; this does not claim a separate Host or cash database was involved.",
+  "activation_allowed": false,
+  "live_qualification": "not_run"
+}
