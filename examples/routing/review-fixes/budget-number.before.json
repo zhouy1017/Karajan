@@ -1,0 +1,20 @@
+{
+  "schema_version": "karajan.routing.standards-review.v1",
+  "observed_at": "2026-09-05T18:19:41.935264+00:00",
+  "source_sha256": {
+    "backend/karajan/routing/evaluator.py": "e5d716a0f2f3e97d245462022a886fc99e7c1808b0cebfb6c14823ffe65d2a15",
+    "backend/karajan/routing/models.py": "96406ae8759ce6ebb09a7f88173c49c3d8372c9b3cf8671152b96aee38035683",
+    "backend/karajan/routing/ranking.py": "c1b8dfe7464834af3d8ca0b852059b006ec857065ab663cb31fc7f5087c8a99a"
+  },
+  "input_sha256": "7987ae50d9696a1df3d372415cc6a6b5b17aca5c7540043112e05918b790deee",
+  "public_call": "evaluate_route(input.task,input.policy,input.capacity)",
+  "observation": {
+    "exception_type": "ValueError",
+    "is_RoutingError": false,
+    "message": "Amounts must be finite."
+  },
+  "expected": "RoutingError with a stable invalid-policy code, without echoing input values.",
+  "cash_api_calls": 0,
+  "real_model_calls": 0,
+  "activation_allowed": false
+}

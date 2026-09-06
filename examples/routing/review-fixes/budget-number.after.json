@@ -1,0 +1,26 @@
+{
+  "schema_version": "karajan.routing.standards-review.v1",
+  "observed_at": "2026-09-05T18:23:05.169495+00:00",
+  "input_sha256": "7987ae50d9696a1df3d372415cc6a6b5b17aca5c7540043112e05918b790deee",
+  "source_sha256": {
+    "backend/karajan/routing/evaluator.py": "e5d716a0f2f3e97d245462022a886fc99e7c1808b0cebfb6c14823ffe65d2a15",
+    "backend/karajan/routing/models.py": "06a5b4b65e84044823171d584555bf09b52043d45afca4a4ff1ed398e7d5c757",
+    "backend/karajan/routing/ranking.py": "c1b8dfe7464834af3d8ca0b852059b006ec857065ab663cb31fc7f5087c8a99a"
+  },
+  "public_call": "evaluate_route(input.task,input.policy,input.capacity)",
+  "observation": {
+    "exception_type": "RoutingError",
+    "is_RoutingError": true,
+    "code": "POLICY_SNAPSHOT_INVALID",
+    "issues": [
+      {
+        "path": "resources",
+        "code": "value_error"
+      }
+    ]
+  },
+  "status": "passed",
+  "cash_api_calls": 0,
+  "real_model_calls": 0,
+  "activation_allowed": false
+}

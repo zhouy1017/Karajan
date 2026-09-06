@@ -1,0 +1,23 @@
+{
+  "schema_version": "karajan.routing.compiler-review.observation.v1",
+  "observed_at": "2026-09-05T18:04:08.195143+00:00",
+  "input_sha256": "7acb8f3f6cffa60079d0129a33818ae0914bff44a8d0e41aa65bbcd1e1a2c0c7",
+  "source_sha256": {
+    "backend/karajan/routing/compiler.py": "11f1e504b04ac0fa596583e1210f456890b9c79622c3fb5f94e941c57b35daa8",
+    "backend/karajan/routing/models.py": "b574a49dcee0438fa8d935c673ae2532932c1affd10cdf98862d690d8cf382a8"
+  },
+  "observation": {
+    "direct": {
+      "status": "rejected",
+      "reason_code": "RULEBOOK_INVALID"
+    },
+    "parse_then_compile": {
+      "status": "rejected",
+      "reason_code": "RULEBOOK_INVALID"
+    }
+  },
+  "status": "passed",
+  "cash_api_calls": 0,
+  "real_model_calls": 0,
+  "activation_allowed": false
+}

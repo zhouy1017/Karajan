@@ -1,0 +1,15 @@
+{
+  "schema_version": "karajan.routing.compiler-review.observation.v1",
+  "recorded_at": "2026-09-05T18:03:06.848418+00:00",
+  "provenance": "Historical transcription of the independent Standards reviewers actual public-API tool output earlier in this task. The old uncommitted source was not rerun after changes.",
+  "original_source_sha256": null,
+  "observation": {
+    "direct": "RULEBOOK_INVALID",
+    "parse_bool_value": true,
+    "parse_bool_type": "bool",
+    "compiled_after_parse": "compiled"
+  },
+  "cash_api_calls": 0,
+  "real_model_calls": 0,
+  "activation_allowed": false
+}

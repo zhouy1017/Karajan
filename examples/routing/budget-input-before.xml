@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="5" time="0.226" timestamp="2026-09-06T02:21:33.096976+08:00" hostname="ProArt-Zhou"><testcase classname="tests.routing.test_budget_input" name="test_invalid_catalog_budget_has_a_stable_safe_routing_error[NaN]" time="0.003"><failure message="ValueError: Amounts must be finite.">tests\routing\test_budget_input.py:15: in test_invalid_catalog_budget_has_a_stable_safe_routing_error
+    evaluate_route(task, policy, capacity)
+backend\karajan\routing\evaluator.py:373: in evaluate_route
+    check_cash(candidate, task, policy, capacity)
+backend\karajan\routing\ranking.py:98: in check_cash
+    elif any(value is not None and units(value) &lt; upper for value in bounds.values()):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\routing\ranking.py:98: in &lt;genexpr&gt;
+    elif any(value is not None and units(value) &lt; upper for value in bounds.values()):
+                                   ^^^^^^^^^^^^
+backend\karajan\resources\broker.py:29: in units
+    raise ValueError("Amounts must be finite.")
+E   ValueError: Amounts must be finite.</failure></testcase><testcase classname="tests.routing.test_budget_input" name="test_invalid_catalog_budget_has_a_stable_safe_routing_error[-1]" time="0.002"><failure message="ValueError: Amounts require nonnegative, finite, six-place precision.">tests\routing\test_budget_input.py:15: in test_invalid_catalog_budget_has_a_stable_safe_routing_error
+    evaluate_route(task, policy, capacity)
+backend\karajan\routing\evaluator.py:373: in evaluate_route
+    check_cash(candidate, task, policy, capacity)
+backend\karajan\routing\ranking.py:98: in check_cash
+    elif any(value is not None and units(value) &lt; upper for value in bounds.values()):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\routing\ranking.py:98: in &lt;genexpr&gt;
+    elif any(value is not None and units(value) &lt; upper for value in bounds.values()):
+                                   ^^^^^^^^^^^^
+backend\karajan\resources\broker.py:31: in units
+    raise ValueError("Amounts require nonnegative, finite, six-place precision.")
+E   ValueError: Amounts require nonnegative, finite, six-place precision.</failure></testcase><testcase classname="tests.routing.test_budget_input" name="test_invalid_catalog_budget_has_a_stable_safe_routing_error[1.0000001]" time="0.002"><failure message="ValueError: Amounts require nonnegative, finite, six-place precision.">tests\routing\test_budget_input.py:15: in test_invalid_catalog_budget_has_a_stable_safe_routing_error
+    evaluate_route(task, policy, capacity)
+backend\karajan\routing\evaluator.py:373: in evaluate_route
+    check_cash(candidate, task, policy, capacity)
+backend\karajan\routing\ranking.py:98: in check_cash
+    elif any(value is not None and units(value) &lt; upper for value in bounds.values()):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\routing\ranking.py:98: in &lt;genexpr&gt;
+    elif any(value is not None and units(value) &lt; upper for value in bounds.values()):
+                                   ^^^^^^^^^^^^
+backend\karajan\resources\broker.py:34: in units
+    raise ValueError("Amounts require nonnegative, finite, six-place precision.")
+E   ValueError: Amounts require nonnegative, finite, six-place precision.</failure></testcase><testcase classname="tests.routing.test_budget_input" name="test_invalid_catalog_budget_has_a_stable_safe_routing_error[not-a-number]" time="0.002"><failure message="ValueError: Invalid decimal amount">backend\karajan\resources\broker.py:25: in units
+    amount = Decimal(value)
+             ^^^^^^^^^^^^^^
+E   decimal.InvalidOperation: [&lt;class 'decimal.ConversionSyntax'&gt;]
+
+The above exception was the direct cause of the following exception:
+tests\routing\test_budget_input.py:15: in test_invalid_catalog_budget_has_a_stable_safe_routing_error
+    evaluate_route(task, policy, capacity)
+backend\karajan\routing\evaluator.py:373: in evaluate_route
+    check_cash(candidate, task, policy, capacity)
+backend\karajan\routing\ranking.py:98: in check_cash
+    elif any(value is not None and units(value) &lt; upper for value in bounds.values()):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\routing\ranking.py:98: in &lt;genexpr&gt;
+    elif any(value is not None and units(value) &lt; upper for value in bounds.values()):
+                                   ^^^^^^^^^^^^
+backend\karajan\resources\broker.py:27: in units
+    raise ValueError("Invalid decimal amount") from error
+E   ValueError: Invalid decimal amount</failure></testcase><testcase classname="tests.routing.test_budget_input" name="test_unknown_catalog_budget_still_uses_missing_budget_decision" time="0.002" /></testsuite></testsuites>

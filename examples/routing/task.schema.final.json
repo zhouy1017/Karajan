@@ -1,0 +1,500 @@
+{
+  "$defs": {
+    "Author": {
+      "additionalProperties": false,
+      "properties": {
+        "attempt_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Attempt Id",
+          "type": "string"
+        },
+        "complexity": {
+          "enum": [
+            "T1",
+            "T2",
+            "T3"
+          ],
+          "title": "Complexity",
+          "type": "string"
+        },
+        "context_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Context Id",
+          "type": "string"
+        },
+        "model_family": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Model Family"
+        },
+        "paths": {
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Paths",
+          "type": "array"
+        },
+        "profile": {
+          "$ref": "#/$defs/ProfileRef"
+        },
+        "risk": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Risk",
+          "type": "string"
+        }
+      },
+      "required": [
+        "profile",
+        "model_family",
+        "attempt_id",
+        "context_id",
+        "complexity",
+        "risk",
+        "paths"
+      ],
+      "title": "Author",
+      "type": "object"
+    },
+    "Authorization": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed_stages": {
+          "items": {
+            "enum": [
+              "normal",
+              "quality"
+            ],
+            "type": "string"
+          },
+          "title": "Allowed Stages",
+          "type": "array"
+        },
+        "approved_groups": {
+          "patternProperties": {
+            "^[^\\s\\x00-\\x1f\\x7f]+$": {
+              "items": {
+                "$ref": "#/$defs/ProfileRef"
+              },
+              "maxItems": 1000,
+              "type": "array"
+            }
+          },
+          "propertyNames": {
+            "maxLength": 256,
+            "minLength": 1
+          },
+          "title": "Approved Groups",
+          "type": "object"
+        },
+        "approved_quality_stage_indices": {
+          "items": {
+            "maximum": 1000000000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "title": "Approved Quality Stage Indices",
+          "type": "array"
+        },
+        "budget_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Budget Ref",
+          "type": "string"
+        },
+        "ceiling_profile_refs": {
+          "items": {
+            "$ref": "#/$defs/ProfileRef"
+          },
+          "maxItems": 1000,
+          "title": "Ceiling Profile Refs",
+          "type": "array"
+        },
+        "channel_ids": {
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Channel Ids",
+          "type": "array"
+        },
+        "currency_limits": {
+          "patternProperties": {
+            "^[A-Z]{3}$": {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "title": "Currency Limits",
+          "type": "object"
+        },
+        "data_destinations": {
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Data Destinations",
+          "type": "array"
+        },
+        "max_attempt_duration_seconds": {
+          "exclusiveMinimum": 0,
+          "maximum": 1000000000,
+          "title": "Max Attempt Duration Seconds",
+          "type": "integer"
+        },
+        "max_quality_repair_rounds": {
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Max Quality Repair Rounds",
+          "type": "integer"
+        },
+        "min_isolation": {
+          "enum": [
+            "attempt_isolated",
+            "tool_sandboxed"
+          ],
+          "title": "Min Isolation",
+          "type": "string"
+        },
+        "profile_refs": {
+          "items": {
+            "$ref": "#/$defs/ProfileRef"
+          },
+          "maxItems": 1000,
+          "title": "Profile Refs",
+          "type": "array"
+        },
+        "required_capabilities": {
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Required Capabilities",
+          "type": "array"
+        },
+        "tools": {
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Tools",
+          "type": "array"
+        }
+      },
+      "required": [
+        "profile_refs",
+        "channel_ids",
+        "tools",
+        "data_destinations",
+        "required_capabilities",
+        "min_isolation",
+        "ceiling_profile_refs",
+        "allowed_stages",
+        "approved_groups",
+        "approved_quality_stage_indices",
+        "budget_ref",
+        "currency_limits",
+        "max_attempt_duration_seconds",
+        "max_quality_repair_rounds"
+      ],
+      "title": "Authorization",
+      "type": "object"
+    },
+    "ProfileRef": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "revision": {
+          "exclusiveMinimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "revision"
+      ],
+      "title": "ProfileRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "authorization": {
+      "$ref": "#/$defs/Authorization"
+    },
+    "authorization_digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Authorization Digest",
+      "type": "string"
+    },
+    "authors": {
+      "items": {
+        "$ref": "#/$defs/Author"
+      },
+      "title": "Authors",
+      "type": "array"
+    },
+    "complexity": {
+      "enum": [
+        "T1",
+        "T2",
+        "T3"
+      ],
+      "title": "Complexity",
+      "type": "string"
+    },
+    "context_tokens": {
+      "exclusiveMinimum": 0,
+      "maximum": 1000000000,
+      "title": "Context Tokens",
+      "type": "integer"
+    },
+    "domains": {
+      "items": {
+        "maxLength": 256,
+        "minLength": 1,
+        "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+        "type": "string"
+      },
+      "maxItems": 1000,
+      "title": "Domains",
+      "type": "array"
+    },
+    "duration_seconds": {
+      "exclusiveMinimum": 0,
+      "maximum": 1000000000,
+      "title": "Duration Seconds",
+      "type": "integer"
+    },
+    "failure_reason": {
+      "anyOf": [
+        {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Failure Reason"
+    },
+    "paths": {
+      "items": {
+        "maxLength": 256,
+        "minLength": 1,
+        "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+        "type": "string"
+      },
+      "maxItems": 1000,
+      "title": "Paths",
+      "type": "array"
+    },
+    "plan_revision": {
+      "exclusiveMinimum": 0,
+      "maximum": 1000000000,
+      "title": "Plan Revision",
+      "type": "integer"
+    },
+    "planned_attempt_id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+      "title": "Planned Attempt Id",
+      "type": "string"
+    },
+    "planned_context_id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+      "title": "Planned Context Id",
+      "type": "string"
+    },
+    "previous_profile": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ProfileRef"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "purpose": {
+      "anyOf": [
+        {
+          "enum": [
+            "lead",
+            "advice"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Purpose"
+    },
+    "quality_repair_rounds_used": {
+      "maximum": 1000000000,
+      "minimum": 0,
+      "title": "Quality Repair Rounds Used",
+      "type": "integer"
+    },
+    "quality_stage_index": {
+      "maximum": 1000000000,
+      "minimum": 0,
+      "title": "Quality Stage Index",
+      "type": "integer"
+    },
+    "readiness": {
+      "enum": [
+        "T0",
+        "ready"
+      ],
+      "title": "Readiness",
+      "type": "string"
+    },
+    "required_capabilities": {
+      "items": {
+        "maxLength": 256,
+        "minLength": 1,
+        "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+        "type": "string"
+      },
+      "maxItems": 1000,
+      "title": "Required Capabilities",
+      "type": "array"
+    },
+    "risk": {
+      "maxLength": 256,
+      "minLength": 1,
+      "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+      "title": "Risk",
+      "type": "string"
+    },
+    "role": {
+      "enum": [
+        "commander",
+        "worker",
+        "reviewer"
+      ],
+      "title": "Role",
+      "type": "string"
+    },
+    "root_task_id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+      "title": "Root Task Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "karajan.routing.task.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "stage": {
+      "enum": [
+        "normal",
+        "quality"
+      ],
+      "title": "Stage",
+      "type": "string"
+    },
+    "task_id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+      "title": "Task Id",
+      "type": "string"
+    },
+    "task_revision": {
+      "exclusiveMinimum": 0,
+      "maximum": 1000000000,
+      "title": "Task Revision",
+      "type": "integer"
+    },
+    "tools": {
+      "items": {
+        "maxLength": 256,
+        "minLength": 1,
+        "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+        "type": "string"
+      },
+      "maxItems": 1000,
+      "title": "Tools",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "task_id",
+    "task_revision",
+    "root_task_id",
+    "plan_revision",
+    "authorization_digest",
+    "role",
+    "purpose",
+    "readiness",
+    "complexity",
+    "risk",
+    "domains",
+    "paths",
+    "required_capabilities",
+    "tools",
+    "context_tokens",
+    "duration_seconds",
+    "stage",
+    "quality_stage_index",
+    "failure_reason",
+    "previous_profile",
+    "quality_repair_rounds_used",
+    "planned_attempt_id",
+    "planned_context_id",
+    "authors",
+    "authorization"
+  ],
+  "title": "TaskSnapshot",
+  "type": "object"
+}

@@ -1,0 +1,7 @@
+{
+  "path": "backend/karajan/contracts/credentials.py",
+  "before_sha256": "0184bc0f18dd301f58def658cc7c0510f787c953a8d21f4aa8fcc80f51a24395",
+  "after_sha256": "17257218593bf80f30ba5a1eec003dc0afce69b9f49cd581df16d08530782fc6",
+  "change": "Remove exactly one extra blank line at EOF; all function bytes unchanged",
+  "behavioral_change": false
+}

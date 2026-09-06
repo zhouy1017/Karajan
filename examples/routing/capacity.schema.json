@@ -1,0 +1,770 @@
+{
+  "$defs": {
+    "AccountState": {
+      "additionalProperties": false,
+      "properties": {
+        "active_attempts": {
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Active Attempts",
+          "type": "integer"
+        },
+        "cash_remaining": {
+          "patternProperties": {
+            "^[A-Z]{3}$": {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "title": "Cash Remaining",
+          "type": "object"
+        },
+        "cooldown_until": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Cooldown Until"
+        },
+        "current_policy_revision": {
+          "exclusiveMinimum": 0,
+          "maximum": 1000000000,
+          "title": "Current Policy Revision",
+          "type": "integer"
+        },
+        "exhaustion_observation_required": {
+          "title": "Exhaustion Observation Required",
+          "type": "boolean"
+        },
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "policy": {
+          "$ref": "#/$defs/Policy"
+        },
+        "policy_revision": {
+          "exclusiveMinimum": 0,
+          "maximum": 1000000000,
+          "title": "Policy Revision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "policy_revision",
+        "current_policy_revision",
+        "policy",
+        "active_attempts",
+        "cash_remaining",
+        "cooldown_until",
+        "exhaustion_observation_required"
+      ],
+      "title": "AccountState",
+      "type": "object"
+    },
+    "ConservativeMode": {
+      "additionalProperties": false,
+      "properties": {
+        "cooldown_seconds": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 1000000,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cooldown Seconds"
+        },
+        "enabled": {
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "max_attempt_duration_seconds": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 1000000,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Attempt Duration Seconds"
+        },
+        "max_local_active_attempts": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 1000000,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Local Active Attempts"
+        },
+        "observation_max_age_seconds": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 1000000,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Observation Max Age Seconds"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "title": "ConservativeMode",
+      "type": "object"
+    },
+    "Demand": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Amount",
+          "type": "string"
+        },
+        "pool_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Pool Id",
+          "type": "string"
+        },
+        "unit": {
+          "enum": [
+            "requests",
+            "tokens",
+            "percent"
+          ],
+          "title": "Unit",
+          "type": "string"
+        },
+        "window_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Window Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pool_id",
+        "unit",
+        "window_id",
+        "amount"
+      ],
+      "title": "Demand",
+      "type": "object"
+    },
+    "Estimate": {
+      "additionalProperties": false,
+      "properties": {
+        "completion_seconds": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Completion Seconds"
+        },
+        "confidence": {
+          "enum": [
+            "known",
+            "calibrated",
+            "unknown"
+          ],
+          "title": "Confidence",
+          "type": "string"
+        },
+        "demand": {
+          "items": {
+            "$ref": "#/$defs/Demand"
+          },
+          "title": "Demand",
+          "type": "array"
+        },
+        "evidence_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Evidence Ref",
+          "type": "string"
+        },
+        "price": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PriceQuote"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "profile": {
+          "$ref": "#/$defs/ProfileRef"
+        }
+      },
+      "required": [
+        "profile",
+        "demand",
+        "confidence",
+        "completion_seconds",
+        "price",
+        "evidence_ref"
+      ],
+      "title": "Estimate",
+      "type": "object"
+    },
+    "FXSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Evidence Ref",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "observed_at": {
+          "title": "Observed At",
+          "type": "number"
+        },
+        "rates": {
+          "patternProperties": {
+            "^[A-Z]{3}$": {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "title": "Rates",
+          "type": "object"
+        },
+        "reference_currency": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Reference Currency",
+          "type": "string"
+        },
+        "revision": {
+          "exclusiveMinimum": 0,
+          "maximum": 1000000000,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "valid_until": {
+          "title": "Valid Until",
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "revision",
+        "reference_currency",
+        "rates",
+        "observed_at",
+        "valid_until",
+        "evidence_ref"
+      ],
+      "title": "FXSnapshot",
+      "type": "object"
+    },
+    "Policy": {
+      "additionalProperties": false,
+      "properties": {
+        "account_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Account Id",
+          "type": "string"
+        },
+        "conservative_mode": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ConservativeMode"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lead_reserve": {
+          "patternProperties": {
+            "^[^\\s\\x00-\\x1f\\x7f]+$": {
+              "type": "string"
+            }
+          },
+          "propertyNames": {
+            "maxLength": 256,
+            "minLength": 1
+          },
+          "title": "Lead Reserve",
+          "type": "object"
+        },
+        "lead_reserved_slots": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Lead Reserved Slots",
+          "type": "integer"
+        },
+        "max_active_attempts": {
+          "exclusiveMinimum": 0,
+          "maximum": 1000000,
+          "title": "Max Active Attempts",
+          "type": "integer"
+        },
+        "max_attempt_duration_seconds": {
+          "exclusiveMinimum": 0,
+          "maximum": 1000000,
+          "title": "Max Attempt Duration Seconds",
+          "type": "integer"
+        },
+        "observation_max_age_seconds": {
+          "exclusiveMinimum": 0,
+          "maximum": 1000000,
+          "title": "Observation Max Age Seconds",
+          "type": "integer"
+        },
+        "require_official_observation": {
+          "title": "Require Official Observation",
+          "type": "boolean"
+        },
+        "safety_margin": {
+          "patternProperties": {
+            "^[^\\s\\x00-\\x1f\\x7f]+$": {
+              "type": "string"
+            }
+          },
+          "propertyNames": {
+            "maxLength": 256,
+            "minLength": 1
+          },
+          "title": "Safety Margin",
+          "type": "object"
+        }
+      },
+      "required": [
+        "account_id",
+        "max_active_attempts",
+        "max_attempt_duration_seconds",
+        "observation_max_age_seconds",
+        "require_official_observation",
+        "safety_margin",
+        "lead_reserve",
+        "lead_reserved_slots",
+        "conservative_mode"
+      ],
+      "title": "Policy",
+      "type": "object"
+    },
+    "PoolState": {
+      "additionalProperties": false,
+      "properties": {
+        "account_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Account Id",
+          "type": "string"
+        },
+        "confidence": {
+          "enum": [
+            "known",
+            "calibrated",
+            "unknown"
+          ],
+          "title": "Confidence",
+          "type": "string"
+        },
+        "coverage_ref": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Coverage Ref"
+        },
+        "evidence_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Evidence Ref",
+          "type": "string"
+        },
+        "future_reserved": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Future Reserved",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "service",
+            "platform_allowance"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "local_uncovered": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Local Uncovered",
+          "type": "string"
+        },
+        "observed_at": {
+          "title": "Observed At",
+          "type": "number"
+        },
+        "reported_limit": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reported Limit"
+        },
+        "reported_remaining": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reported Remaining"
+        },
+        "reset_at": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reset At"
+        },
+        "source": {
+          "enum": [
+            "official",
+            "fixture",
+            "manual",
+            "local_ledger"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "unit": {
+          "enum": [
+            "requests",
+            "tokens",
+            "percent"
+          ],
+          "title": "Unit",
+          "type": "string"
+        },
+        "window_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Window Id",
+          "type": "string"
+        },
+        "window_kind": {
+          "enum": [
+            "fixed",
+            "rolling",
+            "balance",
+            "unknown"
+          ],
+          "title": "Window Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "account_id",
+        "kind",
+        "unit",
+        "window_kind",
+        "window_id",
+        "reported_remaining",
+        "reported_limit",
+        "local_uncovered",
+        "future_reserved",
+        "observed_at",
+        "reset_at",
+        "source",
+        "confidence",
+        "evidence_ref",
+        "coverage_ref"
+      ],
+      "title": "PoolState",
+      "type": "object"
+    },
+    "PriceQuote": {
+      "additionalProperties": false,
+      "properties": {
+        "coverage": {
+          "enum": [
+            "all_calls",
+            "partial",
+            "unknown"
+          ],
+          "title": "Coverage",
+          "type": "string"
+        },
+        "currency": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Currency",
+          "type": "string"
+        },
+        "estimated_cash": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Estimated Cash"
+        },
+        "evidence_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Evidence Ref",
+          "type": "string"
+        },
+        "observed_at": {
+          "title": "Observed At",
+          "type": "number"
+        },
+        "price_revision": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Price Revision",
+          "type": "string"
+        },
+        "profile_digest": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Profile Digest",
+          "type": "string"
+        },
+        "runtime_version": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Runtime Version",
+          "type": "string"
+        },
+        "upper_bound": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Upper Bound"
+        },
+        "valid_until": {
+          "title": "Valid Until",
+          "type": "number"
+        }
+      },
+      "required": [
+        "price_revision",
+        "profile_digest",
+        "runtime_version",
+        "currency",
+        "estimated_cash",
+        "upper_bound",
+        "coverage",
+        "observed_at",
+        "valid_until",
+        "evidence_ref"
+      ],
+      "title": "PriceQuote",
+      "type": "object"
+    },
+    "ProfileRef": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "revision": {
+          "exclusiveMinimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "revision"
+      ],
+      "title": "ProfileRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "accounts": {
+      "items": {
+        "$ref": "#/$defs/AccountState"
+      },
+      "title": "Accounts",
+      "type": "array"
+    },
+    "as_of": {
+      "title": "As Of",
+      "type": "number"
+    },
+    "budget_remaining": {
+      "patternProperties": {
+        "^[^\\s\\x00-\\x1f\\x7f]+$": {
+          "patternProperties": {
+            "^[A-Z]{3}$": {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "propertyNames": {
+        "maxLength": 256,
+        "minLength": 1
+      },
+      "title": "Budget Remaining",
+      "type": "object"
+    },
+    "estimates": {
+      "items": {
+        "$ref": "#/$defs/Estimate"
+      },
+      "title": "Estimates",
+      "type": "array"
+    },
+    "fx": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/FXSnapshot"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+      "title": "Id",
+      "type": "string"
+    },
+    "pools": {
+      "items": {
+        "$ref": "#/$defs/PoolState"
+      },
+      "title": "Pools",
+      "type": "array"
+    },
+    "revision": {
+      "exclusiveMinimum": 0,
+      "maximum": 1000000000,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": "karajan.routing.capacity.v1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "id",
+    "revision",
+    "as_of",
+    "accounts",
+    "pools",
+    "estimates",
+    "budget_remaining",
+    "fx"
+  ],
+  "title": "CapacitySnapshot",
+  "type": "object"
+}
