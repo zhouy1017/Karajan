@@ -84,3 +84,12 @@ C/P 必须使用真实 stores、临时 Git/CAS、Host/隔离进程；规划/资�
 这项观察仅确认失败位置与结果，不据同名用例断言不同 PR 必然同根因。G = failed；本地 C/P 结果和独立审查不替代此失败。指定本地 `gpt-5.3-codex-spark` 的修复仍因额度不可用而未完成，未派给 Copilot、未跳过或放宽检查。PR 保持 Draft，Issue 保持 Open；合并由 owner 决定。
 
 <!-- candidate-pr97-ci:end -->
+
+<!-- reviewer-subject-slices-progress:start -->
+## 绑定与验证版本切片进展（2026-09-07）
+
+#99 已发布 [Draft PR #102](https://github.com/zhouy1017/Karajan/pull/102)，#100 / #101 已发布 [Draft PR #103](https://github.com/zhouy1017/Karajan/pull/103)。本地规则集合、可信绑定、验证版本交接和实际 Check 重跑已有对应 C/P 证据，尚未进入 dev；原父票 AC 保留。
+
+真实 Reviewer 角色资格、容量选路、模型 Review / Evidence 及最终交付还未完成，生产缺合格角色仍 blocked。相关候选需各自当前 CI 和 owner 合并；PR97/98 的 Linux 失败与 Spark 额度阻塞已单列，不以新切片发布宣告父票完成。
+
+<!-- reviewer-subject-slices-progress:end -->

@@ -22,7 +22,13 @@
       96,
       99
     ],
-    "snapshot": "approved-reviewer-binding-issue.md"
+    "snapshot": "approved-reviewer-binding-issue.md",
+    "pr": 103,
+    "pr_url": "https://github.com/zhouy1017/Karajan/pull/103",
+    "first_candidate_commit": "d05456c0d8b3fd20b45ecbd8a4ea5c7951ee3bc3",
+    "implementation_commit": "1fc97849697cfe89a79595cba07e9ec028c6d0b2",
+    "local_evidence": "passed; scope detailed in published README",
+    "remote_G": "pending"
   },
   "subject": {
     "number": 101,
@@ -33,6 +39,12 @@
       96,
       100
     ],
-    "snapshot": "candidate-subject-transition-issue.md"
+    "snapshot": "candidate-subject-transition-issue.md",
+    "pr": 103,
+    "pr_url": "https://github.com/zhouy1017/Karajan/pull/103",
+    "first_candidate_commit": "d05456c0d8b3fd20b45ecbd8a4ea5c7951ee3bc3",
+    "implementation_commit": "1fc97849697cfe89a79595cba07e9ec028c6d0b2",
+    "local_evidence": "passed; scope detailed in published README",
+    "remote_G": "pending"
   }
 }

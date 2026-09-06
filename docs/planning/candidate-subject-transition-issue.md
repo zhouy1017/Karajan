@@ -22,4 +22,15 @@ Parent: #94。Blocked by: #96、#100。本票覆盖 #94 原验收中的 Reviewer
 
 ## 保留与状态
 
-当前无已进入 dev 的完成项；本地实现进行中。规划、Writer/角色资格若使用显式 fixture，只证明对应 C/P；不声明 #95 真实 Reviewer、#93 真实规划或父票整链 S。生产没有真实 Reviewer 资格时仍需 blocked。#14 的生产 GitHub 交付与完整 v1 不在本票内。
+当前无已进入 dev 的完成项；本地实现已形成 Draft PR #103，详见下方候选证据。规划、Writer/角色资格若使用显式 fixture，只证明对应 C/P；不声明 #95 真实 Reviewer、#93 真实规划或父票整链 S。生产没有真实 Reviewer 资格时仍需 blocked。#14 的生产 GitHub 交付与完整 v1 不在本票内。
+
+<!-- reviewer-subject-local-progress:start -->
+## 本地候选与交付进展（2026-09-07）
+
+- **已进入 dev 的完成项：** 无，原 AC 与依赖完整保留；Issue 仍 Open / in-progress。
+- **已发布本地实现：** [Draft PR #103](https://github.com/zhouy1017/Karajan/pull/103)，首次候选 `d05456c0d8b3fd20b45ecbd8a4ea5c7951ee3bc3`，实现 `1fc97849697cfe89a79595cba07e9ec028c6d0b2`。16 作者 C、5 独立边界设计及旧 Checks 回归通过。WSL 一次运行16C＋2P通过：A/B各两项真实 namespace Checks全部重跑；活跃旧进程与并发取消拒绝切换并确认停止。
+- **验证：** [逐项证据与限制](https://github.com/zhouy1017/Karajan/blob/d05456c0d8b3fd20b45ecbd8a4ea5c7951ee3bc3/examples/reviewer-validation-subject/README.md)。独立 Standards / Spec 无确认问题；Ruff、mypy 139 backend 源通过；原始源码/输入/失败历史和5份真实Check日志已冻结。原始证据空白诊断如实保留。
+- **剩余工作：** 本 PR 当前必需 CI 与 owner 合并尚未完成，G pending。正路径的 Reviewer 资格使用显式 double；生产真实 Store 缺角色资格仍 blocked，无真实 Reviewer 或 S 通过记录。#95 的实际角色资格、容量准入、模型 Review 与交付判定保留。
+- **阻塞：** 依赖 PR97/98 当前 Linux CI 失败，指定本地 Spark 额度不可用，尚未完成修复；不能以本地通过替代当前 CI。
+
+<!-- reviewer-subject-local-progress:end -->

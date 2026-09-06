@@ -99,3 +99,12 @@ Worker native stopped 不等于 remote_ended/usage_complete。不能为了腾出
 剩余工作：子票覆盖原验收中的资格集合、可信绑定或新 subject 消费；原验收清单保持不变。绑定准备无需等待 Reviewer 模型执行，真实 Review 仍等待新 subject 全部 Checks。
 
 阻塞：当前生产角色资格只有 Go Worker，不能借用为 Reviewer；新资格和实际 Review/S 仍由 #95 跟踪。基础 Task/relay CI 修复及真实规划 #93 的原依赖保持。
+
+<!-- reviewer-subject-slices-progress:start -->
+## 绑定与验证版本切片进展（2026-09-07）
+
+#99 已发布 [Draft PR #102](https://github.com/zhouy1017/Karajan/pull/102)，#100 / #101 已发布 [Draft PR #103](https://github.com/zhouy1017/Karajan/pull/103)。本地规则集合、可信绑定、验证版本交接和实际 Check 重跑已有对应 C/P 证据，尚未进入 dev；原父票 AC 保留。
+
+真实 Reviewer 角色资格、容量选路、模型 Review / Evidence 及最终交付还未完成，生产缺合格角色仍 blocked。相关候选需各自当前 CI 和 owner 合并；PR97/98 的 Linux 失败与 Spark 额度阻塞已单列，不以新切片发布宣告父票完成。
+
+<!-- reviewer-subject-slices-progress:end -->

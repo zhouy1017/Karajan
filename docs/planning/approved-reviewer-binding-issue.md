@@ -22,6 +22,17 @@ Parent: #95。Blocked by: #96、#99。这是绑定准备阶段；不等待 Revie
 
 ## 保留与状态
 
-当前无已进入 dev 的完成项；本地实现进行中。#95 原有真实只读 Reviewer suite/Profile qualification、实际选路/Capacity/模型 Review/S 保留。当前角色资格验证可能读取私有凭据核对 seal，返回值不含密钥；本票不能把它描述为零凭据读取。历史读取另走不依赖当前资格的路径。
+当前无已进入 dev 的完成项；本地实现已形成 Draft PR #103，详见下方候选证据。#95 原有真实只读 Reviewer suite/Profile qualification、实际选路/Capacity/模型 Review/S 保留。当前角色资格验证可能读取私有凭据核对 seal，返回值不含密钥；本票不能把它描述为零凭据读取。历史读取另走不依赖当前资格的路径。
 
 本票可在 #94 全部检查完成之前准备绑定；实际 Reviewer 执行必须等待派生 subject 的全部有效 Checks。父票 #95 对 #94/#93 的最终依赖保持，不据此宣称整链完成。
+
+<!-- reviewer-subject-local-progress:start -->
+## 本地候选与交付进展（2026-09-07）
+
+- **已进入 dev 的完成项：** 无，原 AC 与依赖完整保留；Issue 仍 Open / in-progress。
+- **已发布本地实现：** [Draft PR #103](https://github.com/zhouy1017/Karajan/pull/103)，首次候选 `d05456c0d8b3fd20b45ecbd8a4ea5c7951ee3bc3`，实现 `1fc97849697cfe89a79595cba07e9ec028c6d0b2`。18 作者 C 在 Windows / WSL 通过；root 独立审查并复跑 Linux 同18项。可信来源、当前交集、先持久意图/claim、精确恢复和 A→B→C 谱系已实现。
+- **验证：** [逐项证据与限制](https://github.com/zhouy1017/Karajan/blob/d05456c0d8b3fd20b45ecbd8a4ea5c7951ee3bc3/examples/reviewer-validation-subject/README.md)。独立 Standards / Spec 无确认问题；Ruff、mypy 139 backend 源通过；原始源码/输入/失败历史和5份真实Check日志已冻结。原始证据空白诊断如实保留。
+- **剩余工作：** 本 PR 当前必需 CI 与 owner 合并尚未完成，G pending。正路径的 Reviewer 资格使用显式 double；生产真实 Store 缺角色资格仍 blocked，无真实 Reviewer 或 S 通过记录。#95 的实际角色资格、容量准入、模型 Review 与交付判定保留。
+- **阻塞：** 依赖 PR97/98 当前 Linux CI 失败，指定本地 Spark 额度不可用，尚未完成修复；不能以本地通过替代当前 CI。
+
+<!-- reviewer-subject-local-progress:end -->
