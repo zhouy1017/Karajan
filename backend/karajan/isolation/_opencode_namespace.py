@@ -62,9 +62,9 @@ def main(directory: Path, runtime: Path, upstream: Path, control_fd: int) -> Non
         ):
             raise ValueError("RUNTIME_ARTIFACT_MISMATCH")
     for row in projection:
-        source = verify_projected_file(directory / "workspace", row)
+        projected_source = verify_projected_file(directory / "workspace", row)
         target = root / "workspace" / row["path"]
-        mount("--bind", str(source), str(target))
+        mount("--bind", str(projected_source), str(target))
         verify_projected_file(root / "workspace", row)
         if not row["writable"]:
             mount("-o", "remount,bind,ro", str(target))
