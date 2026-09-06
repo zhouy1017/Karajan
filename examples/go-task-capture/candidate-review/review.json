@@ -1,0 +1,44 @@
+{
+  "schema_version": "karajan.independent-review.v1",
+  "base": "1534825",
+  "scope": "new CandidateStore baseline-read and projection-freeze integration",
+  "findings": [],
+  "product_changes": false,
+  "cases": 13,
+  "windows": {
+    "passed": 13,
+    "result": "windows-final.xml",
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 13.499
+  },
+  "wsl": {
+    "passed": 13,
+    "result": "wsl-final.xml",
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 2.257
+  },
+  "commands": [
+    "python -m pytest .cache/candidate-review/test_projection_public.py -o \"pythonpath=backend tests/candidates\" -q --junitxml=.cache/candidate-review/windows-final.xml",
+    "PYTHONPATH=<worktree>/backend:<worktree>/tests/candidates python -m pytest -p no:cacheprovider <worktree>/.cache/candidate-review/test_projection_public.py -q --junitxml=<worktree>/.cache/candidate-review/wsl-final.xml"
+  ],
+  "checks": {
+    "format": "passed",
+    "ruff": "passed"
+  },
+  "history": {
+    "initial": "12 passed / 1 failed; Windows stdout CRLF fixture expectation; no product change",
+    "original_test": "history/initial-test.py.txt",
+    "original_result": "initial.xml"
+  },
+  "source_sha256": {
+    "backend/karajan/candidates/store.py": "9096bc2904d34ec01ab3adb22da45f151b94bfda90fd3e942890ba93675243ca",
+    "backend/karajan/candidates/_projection.py": "73c8a2edf707937af6a53fae7e1e124ccc98d32e8f13159540ebe11767ab7ce9",
+    ".cache/candidate-review/test_projection_public.py": "29e1f317f99597faf695215b7dc62f6d57c4963460e58e186f966af042206bbf",
+    ".cache/candidate-review/windows-final.xml": "8ffabd70dbf23249eead2bd4f05613f65fa1c0d4d9449fadec47746f63874c34",
+    ".cache/candidate-review/wsl-final.xml": "ed76201add2f7fbeeeefed3569dd5737c8cc423342aaa849dbff0aab0741f146",
+    ".cache/candidate-review/initial.xml": "41074cd6c8fb87d71846860e7e07ed1154f305e8af6d269ea124181f87f4029d",
+    ".cache/candidate-review/history/initial-test.py.txt": "a64e1066a6ce24f1ed2624ee0168e167bf6a7d335fbe1561b60fe7d54199f457"
+  }
+}

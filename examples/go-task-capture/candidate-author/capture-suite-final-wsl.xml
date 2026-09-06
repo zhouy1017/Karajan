@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="26" time="68.893" timestamp="2026-09-06T19:12:30.158231+08:00" hostname="ProArt-Zhou"><testcase classname="tests.projects.test_go_suite" name="test_source_binds_controller_identity_and_fixture_origin" time="0.028" /><testcase classname="tests.projects.test_go_suite" name="test_fixed_official_source_rejects_other_provider_registration" time="0.006" /><testcase classname="tests.projects.test_go_suite" name="test_identity_or_bound_changes_are_rejected_before_effect[credential]" time="0.012" /><testcase classname="tests.projects.test_go_suite" name="test_identity_or_bound_changes_are_rejected_before_effect[fence]" time="0.014" /><testcase classname="tests.projects.test_go_suite" name="test_identity_or_bound_changes_are_rejected_before_effect[expiry]" time="0.013" /><testcase classname="tests.projects.test_go_suite" name="test_identity_or_bound_changes_are_rejected_before_effect[source]" time="0.012" /><testcase classname="tests.projects.test_go_suite" name="test_identity_or_bound_changes_are_rejected_before_effect[grant]" time="0.014" /><testcase classname="tests.projects.test_go_suite" name="test_identity_or_bound_changes_are_rejected_before_effect[profile]" time="0.015" /><testcase classname="tests.projects.test_go_suite" name="test_lost_create_return_revokes_preallocated_ids_without_any_observation[1]" time="0.025" /><testcase classname="tests.projects.test_go_suite" name="test_lost_create_return_revokes_preallocated_ids_without_any_observation[2]" time="0.027" /><testcase classname="tests.projects.test_go_suite" name="test_conflicting_grant_cleanup_preserves_foreign_binding[0]" time="0.020" /><testcase classname="tests.projects.test_go_suite" name="test_conflicting_grant_cleanup_preserves_foreign_binding[1]" time="0.028" /><testcase classname="tests.projects.test_go_suite" name="test_observer_failure_marks_started_scenario_failed_and_next_not_run" time="0.031" /><testcase classname="tests.projects.test_go_suite" name="test_source_disappearing_during_effect_preserves_failed_cleanup_result" time="0.028" /><testcase classname="tests.projects.test_go_suite" name="test_fixed_suite_cross_checks_two_real_native_scenarios_and_durable_journal[None]" time="30.502" /><testcase classname="tests.projects.test_go_suite" name="test_fixed_suite_cross_checks_two_real_native_scenarios_and_durable_journal[call_id]" time="4.136"><failure message="AssertionError: assert ['not_run', 'not_run'] == ['failed', 'not_run']&#10;  &#10;  At index 0 diff: 'not_run' != 'failed'&#10;  Use -v to get more diff">tmp_path = PosixPath('/tmp/pytest-of-chow/pytest-43/test_fixed_suite_cross_checks_1')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7c810b61fd40&gt;
+report_change = 'call_id'
+
+    @pytest.mark.skipif(sys.platform != "linux", reason="Linux namespaces required")
+    @pytest.mark.parametrize("report_change", [None, "call_id", "origin", "tools"])
+    def test_fixed_suite_cross_checks_two_real_native_scenarios_and_durable_journal(
+        tmp_path, monkeypatch, report_change
+    ):
+        from karajan.isolation.go_probe import observe_go_tools
+        from karajan.projects.go_suite import FixedGoSuite
+    
+        artifact = Path(
+            os.environ.get(
+                "KARAJAN_OPENCODE_LINUX_BINARY",
+                str(
+                    Path(__file__).resolve().parents[2]
+                    / "runtimes/opencode/node_modules/opencode-linux-x64/bin/opencode"
+                ),
+            )
+        )
+        if not artifact.is_file():
+            if os.environ.get("KARAJAN_REQUIRE_OPENCODE_ISOLATION") == "1":
+                pytest.fail("Prepared fixed Linux OpenCode artifact is required")
+            pytest.skip("Prepared fixed Linux OpenCode artifact is unavailable")
+        journal, calls = GoCallJournal(tmp_path / "journal.sqlite"), [[], []]
+    
+        def factory():
+            def receive(request):
+                # Both grants must be durable before the first native request.
+                assert journal.snapshot("grant-edit")["binding"]["max_requests"] == 6
+                assert journal.snapshot("grant-denied_read")["binding"]["max_requests"] == 6
+                denied = journal.snapshot("grant-edit")["state"] == "revoked"
+                scenario_calls = calls[1 if denied else 0]
+                scenario_calls.append(request)
+                return fixture_response(len(scenario_calls), denied)
+    
+            return httpx.Client(transport=httpx.MockTransport(receive), trust_env=False)
+    
+        suite = FixedGoSuite(artifact, tmp_path, journal, client_factory=factory)
+        start = execution_start(suite)
+        if report_change:
+    
+            def altered(*args, **kwargs):
+                report = observe_go_tools(*args, **kwargs)
+                assert report["status"] == "passed", report
+                if report_change == "call_id":
+                    report["requests"][0]["journal_call_id"] = "other-real-call"
+                elif report_change == "origin":
+                    report["observation_origin"] = "official_go"
+                else:
+                    report["tools"] = []
+                return report
+    
+            monkeypatch.setattr("karajan.projects.go_suite.observe_go_tools", altered)
+        result = suite.observe(start, credential())
+        if report_change:
+            assert result["status"] == "failed", result
+&gt;           assert [item["status"] for item in result["scenarios"]] == ["failed", "not_run"]
+E           AssertionError: assert ['not_run', 'not_run'] == ['failed', 'not_run']
+E             
+E             At index 0 diff: 'not_run' != 'failed'
+E             Use -v to get more diff
+
+tests/projects/test_go_suite.py:373: AssertionError</failure></testcase><testcase classname="tests.projects.test_go_suite" name="test_fixed_suite_cross_checks_two_real_native_scenarios_and_durable_journal[origin]" time="16.330" /><testcase classname="tests.projects.test_go_suite" name="test_fixed_suite_cross_checks_two_real_native_scenarios_and_durable_journal[tools]" time="16.297" /><testcase classname="tests.isolation.test_go_probe_task_grant_rejection" name="test_task_grant_rejected_before_runtime_files_or_send_authority_are_touched[task-False-edit]" time="0.009" /><testcase classname="tests.isolation.test_go_probe_task_grant_rejection" name="test_task_grant_rejected_before_runtime_files_or_send_authority_are_touched[task-False-denied_read]" time="0.007" /><testcase classname="tests.isolation.test_go_probe_task_grant_rejection" name="test_task_grant_rejected_before_runtime_files_or_send_authority_are_touched[task-True-edit]" time="0.007" /><testcase classname="tests.isolation.test_go_probe_task_grant_rejection" name="test_task_grant_rejected_before_runtime_files_or_send_authority_are_touched[task-True-denied_read]" time="0.007" /><testcase classname="tests.isolation.test_go_probe_task_grant_rejection" name="test_task_grant_rejected_before_runtime_files_or_send_authority_are_touched[qualification_v2-False-edit]" time="0.008" /><testcase classname="tests.isolation.test_go_probe_task_grant_rejection" name="test_task_grant_rejected_before_runtime_files_or_send_authority_are_touched[qualification_v2-False-denied_read]" time="0.008" /><testcase classname="tests.isolation.test_go_probe_task_grant_rejection" name="test_task_grant_rejected_before_runtime_files_or_send_authority_are_touched[qualification_v2-True-edit]" time="0.007" /><testcase classname="tests.isolation.test_go_probe_task_grant_rejection" name="test_task_grant_rejected_before_runtime_files_or_send_authority_are_touched[qualification_v2-True-denied_read]" time="0.007" /></testsuite></testsuites>

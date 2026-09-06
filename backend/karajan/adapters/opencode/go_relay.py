@@ -23,12 +23,13 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 from uuid import uuid4
 
 import httpx
+from pydantic import ValidationError
 
-from .go_journal import GoCallJournal, GoJournalError
+from .go_journal import GoCallJournal, GoJournalError, GoQualificationLimits
 
 if TYPE_CHECKING:
     from .go_context import GoRequestAccounting
@@ -352,6 +353,61 @@ class GoRelayContext:
         )
 
 
+@dataclass(frozen=True)
+class GoQualificationContext:
+    """Fixed controller probe accounting, distinct from approved Task authority.
+
+    The producer must resolve the spec, scenario and limits from its durable
+    qualification start. This object cannot authorize a Task or qualify a Profile.
+    """
+
+    accounting: GoRequestAccounting = field(repr=False)
+    source_sha256: str
+    probe_spec_digest: str
+    scenario: Literal["edit", "denied_read"]
+    approved_input_tokens: int
+    reserved_output_tokens: int
+    operating_context_tokens: int
+    fixed_margin: int
+    ratio_margin_basis_points: int
+
+    def __post_init__(self) -> None:
+        if (
+            type(self.probe_spec_digest) is not str
+            or re.fullmatch(r"[0-9a-f]{64}", self.probe_spec_digest) is None
+            or self.scenario not in ("edit", "denied_read")
+        ):
+            raise ValueError("QUALIFICATION_CONTEXT_INVALID")
+        self.limits()
+
+    def limits(self) -> dict[str, Any]:
+        """Detached, strict context shape used in the immutable grant binding."""
+        try:
+            return GoQualificationLimits.model_validate(
+                {
+                    "source_sha256": self.source_sha256,
+                    "approved_input_tokens": self.approved_input_tokens,
+                    "reserved_output_tokens": self.reserved_output_tokens,
+                    "operating_context_tokens": self.operating_context_tokens,
+                    "fixed_margin": self.fixed_margin,
+                    "ratio_margin_basis_points": self.ratio_margin_basis_points,
+                }
+            ).model_dump()
+        except ValidationError:
+            raise ValueError("QUALIFICATION_CONTEXT_INVALID") from None
+
+    def measure(self, payload: dict[str, Any]) -> dict[str, Any]:
+        from karajan.routing.compiler import digest
+
+        from .go_context import GoContextError
+
+        if digest(self.accounting.source()) != self.source_sha256:
+            raise GoContextError("CONTEXT_SOURCE_CHANGED")
+        limits = self.limits()
+        del limits["source_sha256"]
+        return self.accounting.measure(payload, **limits)
+
+
 class GoRelay:
     """One local diagnostic, at most six validated upstream send attempts.
 
@@ -367,7 +423,7 @@ class GoRelay:
         *,
         client_factory: Callable[[], httpx.Client] | None = None,
         authorization: GoRelayAuthorization | None = None,
-        context: GoRelayContext | None = None,
+        context: GoRelayContext | GoQualificationContext | None = None,
     ) -> None:
         if (
             not secret
@@ -589,19 +645,34 @@ class GoRelay:
                 self._receipts.append(copy.deepcopy(receipt))
             if receipt["denied_canary_in_request"]:
                 raise _Rejected("DENIED_CANARY_IN_REQUEST", 403)
-            task_grant = self._authorization is not None and "subject" in (
-                self._authorization.binding
+            binding = self._authorization.binding if self._authorization is not None else {}
+            task_grant = "subject" in binding
+            qualification_v2 = (
+                not task_grant
+                and binding.get("schema_version") == "karajan.go-qualification-grant.v2"
             )
             if task_grant and self._context is None:
                 raise _Rejected("TASK_CONTEXT_ACCOUNTING_REQUIRED", 403)
+            if qualification_v2 and self._context is None:
+                raise _Rejected("QUALIFICATION_CONTEXT_ACCOUNTING_REQUIRED", 403)
+            if "schema_version" in binding and not qualification_v2:
+                raise _Rejected("GO_JOURNAL_INPUT_INVALID", 403)
             if self._context is not None:
                 from .go_context import GoContextError
 
-                if (
-                    not task_grant
-                    or self._authorization is None
-                    or self._context.execution_policy_digest
-                    != self._authorization.binding["execution_policy_digest"]
+                if isinstance(self._context, GoQualificationContext):
+                    if (
+                        not qualification_v2
+                        or self._context.probe_spec_digest != binding.get("probe_spec_digest")
+                        or self._context.scenario != binding.get("scenario")
+                        or self._context.limits() != binding.get("context")
+                    ):
+                        raise _Rejected("QUALIFICATION_CONTEXT_BINDING_MISMATCH", 403)
+                elif not (
+                    isinstance(self._context, GoRelayContext)
+                    and task_grant
+                    and self._context.execution_policy_digest
+                    == binding.get("execution_policy_digest")
                 ):
                     raise _Rejected("TASK_CONTEXT_POLICY_MISMATCH", 403)
                 try:

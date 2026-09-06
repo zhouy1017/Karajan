@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="3" time="0.173" timestamp="2026-09-06T19:11:05.514266+08:00" hostname="ProArt-Zhou"><testcase classname="tests.execution.test_capture_fence" name="test_missing_capture_ledger_is_not_recreated[host]" time="0.015"><failure message="AssertionError: assert not True&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-732/test_missing_capture_ledger_is0/host/runnerhost.sqlite3').exists&#10; +      where WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-732/test_missing_capture_ledger_is0/host/runnerhost.sqlite3') = &lt;karajan.execution.host.RunnerHost object at 0x00000225181381D0&gt;.database">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-732/test_missing_capture_ledger_is0')
+directory = 'host'
+
+    @pytest.mark.parametrize("directory", ["host", "host # percent% \u6d4b\u8bd5"])
+    def test_missing_capture_ledger_is_not_recreated(tmp_path, directory):
+        host = RunnerHost(tmp_path / directory)
+        retained = host.database.with_name("retained-ledger.sqlite3")
+        original = host.database.read_bytes()
+        host.database.rename(retained)
+        with pytest.raises(sqlite3.Error):
+            with host.current_fence_guard("missing", fence=1, authorization_ref="approved"):
+                pytest.fail("A missing ledger authorized capture")
+        assert retained.read_bytes() == original
+&gt;       assert not host.database.exists()
+E       AssertionError: assert not True
+E        +  where True = exists()
+E        +    where exists = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-732/test_missing_capture_ledger_is0/host/runnerhost.sqlite3').exists
+E        +      where WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-732/test_missing_capture_ledger_is0/host/runnerhost.sqlite3') = &lt;karajan.execution.host.RunnerHost object at 0x00000225181381D0&gt;.database
+
+tests\execution\test_capture_fence.py:79: AssertionError</failure></testcase><testcase classname="tests.execution.test_capture_fence" name="test_missing_capture_ledger_is_not_recreated[host # percent% \u6d4b\u8bd5]" time="0.011"><failure message="AssertionError: assert not True&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-732/test_missing_capture_ledger_is1/host # percent% 测试/runnerhost.sqlite3').exists&#10; +      where WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-732/test_missing_capture_ledger_is1/host # percent% 测试/runnerhost.sqlite3') = &lt;karajan.execution.host.RunnerHost object at 0x00000225184A2780&gt;.database">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-732/test_missing_capture_ledger_is1')
+directory = 'host # percent% 测试'
+
+    @pytest.mark.parametrize("directory", ["host", "host # percent% \u6d4b\u8bd5"])
+    def test_missing_capture_ledger_is_not_recreated(tmp_path, directory):
+        host = RunnerHost(tmp_path / directory)
+        retained = host.database.with_name("retained-ledger.sqlite3")
+        original = host.database.read_bytes()
+        host.database.rename(retained)
+        with pytest.raises(sqlite3.Error):
+            with host.current_fence_guard("missing", fence=1, authorization_ref="approved"):
+                pytest.fail("A missing ledger authorized capture")
+        assert retained.read_bytes() == original
+&gt;       assert not host.database.exists()
+E       AssertionError: assert not True
+E        +  where True = exists()
+E        +    where exists = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-732/test_missing_capture_ledger_is1/host # percent% 测试/runnerhost.sqlite3').exists
+E        +      where WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-732/test_missing_capture_ledger_is1/host # percent% 测试/runnerhost.sqlite3') = &lt;karajan.execution.host.RunnerHost object at 0x00000225184A2780&gt;.database
+
+tests\execution\test_capture_fence.py:79: AssertionError</failure></testcase><testcase classname="tests.execution.test_capture_fence" name="test_capture_opens_an_existing_ledger_with_uri_reserved_characters" time="0.013" /></testsuite></testsuites>

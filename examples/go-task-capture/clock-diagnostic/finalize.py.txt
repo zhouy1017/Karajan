@@ -1,0 +1,27 @@
+import hashlib
+import json
+from pathlib import Path
+
+folder = Path(__file__).parent
+path = folder / 'report.json'
+report = json.loads(path.read_text())
+report['replay'] = {
+    'result': '2 passed in 8.88s',
+    'native_launched': False,
+    'observer': 'explicit no-effects sentinel; stable clock control proves it is reached',
+    'production_changed': False,
+    'original_tests_changed': False,
+}
+report['sha256'] = {
+    str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in (
+        Path('backend/karajan/projects/go_suite.py'),
+        Path('tests/projects/test_go_suite.py'),
+        folder / 'test_clock_boundary.py',
+        folder / 'final.xml',
+        folder / 'README.md',
+        Path('.cache/capture-suite-final-wsl.xml'),
+        Path('.cache/capture-suite-call-id-diagnostic.xml'),
+    )
+}
+path.write_text(json.dumps(report, indent=2) + '\n')
+print(json.dumps(report['replay']))

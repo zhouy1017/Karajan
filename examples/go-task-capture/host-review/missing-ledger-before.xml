@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.165" timestamp="2026-09-06T19:06:16.547059+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.host-capture-review.test_host_capture_independent" name="test_missing_ledger_guard_does_not_create_a_replacement_database" time="0.018"><failure message="AssertionError: a read-only guard created a new empty ledger&#10;assert not True&#10; +  where True = exists()&#10; +    where exists = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-730/test_missing_ledger_guard_does0/host/runnerhost.sqlite3').exists&#10; +      where WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-730/test_missing_ledger_guard_does0/host/runnerhost.sqlite3') = &lt;karajan.execution.host.RunnerHost object at 0x000002901D402570&gt;.database">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-730/test_missing_ledger_guard_does0')
+
+    def test_missing_ledger_guard_does_not_create_a_replacement_database(tmp_path):
+        host = RunnerHost(tmp_path / "host")
+        original = host.database.with_name("retained-ledger.sqlite3")
+        host.database.rename(original)
+        with pytest.raises((sqlite3.Error, OSError, KeyError)):
+            with guard(host):
+                pytest.fail("missing ledger authorized capture")
+        assert original.is_file()
+&gt;       assert not host.database.exists(), "a read-only guard created a new empty ledger"
+E       AssertionError: a read-only guard created a new empty ledger
+E       assert not True
+E        +  where True = exists()
+E        +    where exists = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-730/test_missing_ledger_guard_does0/host/runnerhost.sqlite3').exists
+E        +      where WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-730/test_missing_ledger_guard_does0/host/runnerhost.sqlite3') = &lt;karajan.execution.host.RunnerHost object at 0x000002901D402570&gt;.database
+
+.cache\host-capture-review\test_host_capture_independent.py:210: AssertionError</failure></testcase></testsuite></testsuites>

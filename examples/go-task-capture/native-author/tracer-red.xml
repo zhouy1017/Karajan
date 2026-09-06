@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="0.587" timestamp="2026-09-06T18:54:58.023986+08:00" hostname="ProArt-Zhou"><testcase classname="" name="tests.isolation.test_opencode_projection_capture" time="0.000"><error message="collection failure">ImportError while importing test module '/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-capture/tests/isolation/test_opencode_projection_capture.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/isolation/test_opencode_projection_capture.py:9: in &lt;module&gt;
+    from karajan.isolation.opencode_runtime import IsolatedOpenCode, StoppedProjection
+E   ImportError: cannot import name 'StoppedProjection' from 'karajan.isolation.opencode_runtime' (/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-capture/backend/karajan/isolation/opencode_runtime.py)</error></testcase></testsuite></testsuites>

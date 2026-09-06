@@ -1,0 +1,28 @@
+{
+  "scope": "RunnerHost.current_fence_guard",
+  "base": "153482593380fdb5a8a5e16940f600c06acfd2ca",
+  "platform": "Windows",
+  "reviewer_role": "independent",
+  "product_modified_by_reviewer": false,
+  "provider_calls": 0,
+  "findings": [{
+    "id": "HOST-CAPTURE-001",
+    "priority": 2,
+    "status": "closed",
+    "summary": "Read-only current-fence guard creates an empty replacement if its ledger disappears.",
+    "before_source": "host-before.py.txt",
+    "before_source_sha256": "dff2612c876e079d89225e6f5010d8ecedaa585a8d153fdb92c01c073491f6b1",
+    "before_test": "missing-ledger-before.xml",
+    "before_test_sha256": "03692e9485fb93c95457906293dd9a28dc26b1b2404897df24a3f1cdb19b6825",
+    "after_source_sha256": "d59de810fc5113b8e2f0d350a8446d0838244965083ce7cb19da7222b1edc184",
+    "after_test": "after.xml",
+    "independent_final_result": {"passed": 15, "skipped": 0, "seconds": 3.23}
+  }],
+  "independent_test": {
+    "path": "test_host_capture_independent.py",
+    "sha256": "2056ecc774ac73c92e5596b20520e154e87b025349ebe0597db2ff52f0161f29",
+    "cases": 15,
+    "initial_control_cases_passed": 14,
+    "missing_ledger_case_failed": 1
+  }
+}

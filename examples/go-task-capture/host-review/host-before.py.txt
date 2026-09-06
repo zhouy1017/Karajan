@@ -158,9 +158,8 @@ class RunnerHost:
             )
 
     @contextmanager
-    def _connect(self, *, existing_only: bool = False) -> Iterator[sqlite3.Connection]:
-        database = self.database.as_uri() + "?mode=rw" if existing_only else str(self.database)
-        connection = sqlite3.connect(database, timeout=10, uri=existing_only)
+    def _connect(self) -> Iterator[sqlite3.Connection]:
+        connection = sqlite3.connect(self.database, timeout=10)
         connection.row_factory = sqlite3.Row
         try:
             with connection:
@@ -238,7 +237,7 @@ class RunnerHost:
         _identifier.validate_python(attempt_id, strict=True)
         _identifier.validate_python(authorization_ref, strict=True)
         _positive_integer.validate_python(fence, strict=True)
-        with self._connect(existing_only=True) as connection:
+        with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             connection.execute("PRAGMA query_only=ON")
             row = connection.execute(

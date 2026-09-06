@@ -1,0 +1,220 @@
+"""Independent projection freeze: real Git/CAS/files, synthetic controller author identity."""
+
+import hashlib
+import os
+import subprocess
+import sys
+from copy import deepcopy
+from pathlib import Path
+
+import pytest
+from karajan.candidates import CandidateError, CandidateStore
+from test_baseline_materialization import registered
+
+__all__ = ["registered"]
+
+
+def capture_input(baseline, files):
+    projection = [
+        {"path": path, "sha256": hashlib.sha256(files[path]).hexdigest(), "writable": writable}
+        for path, writable in [("bin/run", True), ("docs/untouched.md", False)]
+    ]
+    contents = {"bin/run": b"#!/bin/sh\nexit 7\n", "docs/untouched.md": files["docs/untouched.md"]}
+    request = {
+        "series_id": "independent-run/worker",
+        "baseline_id": baseline["id"],
+        "input_sha256": "c" * 64,
+        "allowed_paths": ["bin/run"],
+        "task_class": "T1",
+        "authors": [
+            {
+                "attempt_id": "independent-writer",
+                "fence": 3,
+                "profile_id": "fixture-python",
+                "profile_revision": 1,
+                "model_family": "no-model",
+                "context_id": "independent-context",
+                "provenance_ref": "fixture:controller-author",
+            }
+        ],
+        "writer": {
+            "attempt_id": "independent-writer",
+            "fence": 3,
+            "stopped": True,
+            "observation_ref": "fixture:stop-only-not-native-evidence",
+        },
+        "policy": {
+            "id": "independent-policy",
+            "revision": 1,
+            "checks": [
+                {
+                    "id": "content-check",
+                    "revision": 1,
+                    "argv": [
+                        sys.executable,
+                        "-c",
+                        "from pathlib import Path; "
+                        "assert Path('bin/run').read_bytes().endswith(b'exit 7\\n'); "
+                        "print('verified')",
+                    ],
+                    "environment_sha256": "d" * 64,
+                }
+            ],
+            "review": {
+                "revision": 1,
+                "environment_sha256": "e" * 64,
+                "approved_reviewers": [],
+            },
+        },
+    }
+    return projection, contents, request
+
+
+def current(candidate):
+    return {
+        key: candidate[key]
+        for key in ("repository_identity", "base_sha", "input_sha256", "policy_sha256")
+    }
+
+
+def test_complete_baseline_and_executable_mode_survive_exact_projection_after_source_disappears(
+    registered, tmp_path
+):
+    store, baseline, files = registered
+    projection, contents, request = capture_input(baseline, files)
+    source, moved = tmp_path / "trusted", tmp_path / "source-unavailable"
+    assert source.resolve().parent == moved.resolve().parent == tmp_path.resolve()
+    source.rename(moved)
+    result = store.freeze_projection(projection, contents, request)
+    restored = tmp_path / "restored"
+    reopened = CandidateStore(store.directory)
+    reopened.materialize(result["id"], restored)
+    assert {
+        p.relative_to(restored).as_posix(): p.read_bytes()
+        for p in restored.rglob("*")
+        if p.is_file()
+    } == files | contents
+    assert result["changed_paths"] == ["bin/run"]
+    assert {row["path"]: row["mode"] for row in result["manifest"]} == {
+        row["path"]: row["mode"] for row in baseline["manifest"]
+    }
+    if os.name != "nt":
+        assert (restored / "bin/run").stat().st_mode & 0o777 == 0o755
+        assert (restored / "src/task.py").stat().st_mode & 0o777 == 0o644
+    assert reopened.freeze_projection(projection, contents, request) == result
+
+
+def test_baseline_read_is_detached_and_does_not_supply_mutable_external_baseline_json(registered):
+    store, baseline, files = registered
+    exposed = store.get_baseline(baseline["id"])
+    exposed["manifest"][0]["artifact"]["sha256"] = "0" * 64
+    exposed["manifest"].clear()
+    assert store.get_baseline(baseline["id"]) == baseline
+    projection, contents, request = capture_input(baseline, files)
+    request["baseline_id"] = exposed
+    with pytest.raises(CandidateError, match="FREEZE_INPUT_INVALID"):
+        store.freeze_projection(projection, contents, request)
+
+
+@pytest.mark.parametrize(
+    "fault", ["readonly", "missing", "extra", "hash", "directory", "outside", "case-alias"]
+)
+def test_invalid_projection_cannot_commit_an_earlier_candidate_revision(registered, fault):
+    store, baseline, files = registered
+    projection, contents, request = capture_input(baseline, files)
+    bad_projection, bad_contents, bad_request = deepcopy((projection, contents, request))
+    if fault == "readonly":
+        bad_contents["docs/untouched.md"] = b"not approved"
+    elif fault == "missing":
+        del bad_contents["docs/untouched.md"]
+    elif fault == "extra":
+        bad_contents["data/bytes.bin"] = b"not projected"
+    elif fault == "hash":
+        bad_projection[0]["sha256"] = "0" * 64
+    elif fault == "directory":
+        bad_request["allowed_paths"] = ["bin"]
+    elif fault == "outside":
+        bad_projection[0]["path"] = "../bin/run"
+        bad_contents["../bin/run"] = bad_contents.pop("bin/run")
+        bad_request["allowed_paths"] = ["../bin/run"]
+    else:
+        alias = {**bad_projection[0], "path": "BIN/run"}
+        bad_projection.append(alias)
+        bad_contents["BIN/run"] = bad_contents["bin/run"]
+        bad_request["allowed_paths"].append("BIN/run")
+    with pytest.raises(CandidateError):
+        store.freeze_projection(bad_projection, bad_contents, bad_request)
+    successful = store.freeze_projection(projection, contents, request)
+    assert successful["revision"] == 1
+    assert successful["changed_paths"] == ["bin/run"]
+
+
+@pytest.mark.parametrize("fault", ["changed", "hardlink"])
+def test_unprojected_baseline_artifacts_are_still_verified_before_commit(
+    registered, tmp_path, fault
+):
+    store, baseline, files = registered
+    original = next(row for row in baseline["manifest"] if row["path"] == "data/bytes.bin")
+    artifact = Path(original["artifact"]["path"])
+    retained = artifact.read_bytes()
+    link = tmp_path / "extra-artifact-link"
+    if fault == "changed":
+        artifact.write_bytes(b"corrupt unprojected bytes")
+    else:
+        os.link(artifact, link)
+    projection, contents, request = capture_input(baseline, files)
+    try:
+        with pytest.raises(CandidateError, match="ARTIFACT_UNAVAILABLE"):
+            store.freeze_projection(projection, contents, request)
+    finally:
+        if fault == "changed":
+            artifact.write_bytes(retained)
+        else:
+            link.unlink()
+    accepted = store.freeze_projection(projection, contents, request)
+    assert accepted["revision"] == 1
+    assert next(row for row in accepted["manifest"] if row["path"] == "data/bytes.bin") == original
+
+
+def test_actual_local_check_does_not_satisfy_missing_independent_reviewer(registered, tmp_path):
+    store, baseline, files = registered
+    projection, contents, request = capture_input(baseline, files)
+    candidate = store.freeze_projection(projection, contents, request)
+    directory = tmp_path / "validation-copy"
+    store.materialize(candidate["id"], directory)
+    check = request["policy"]["checks"][0]
+    executed = subprocess.run(check["argv"], cwd=directory, capture_output=True, timeout=5)
+    assert executed.returncode == 0 and executed.stdout.splitlines() == [b"verified"]
+    evidence = store.record_check(
+        {
+            "evidence_key": "independent-local-check",
+            "candidate_id": candidate["id"],
+            "policy_sha256": candidate["policy_sha256"],
+            "input_sha256": candidate["input_sha256"],
+            "environment_sha256": check["environment_sha256"],
+            "observation_ref": "fixture:actual-local-process",
+            "provenance": "fixture",
+            "check_id": check["id"],
+            "check_revision": check["revision"],
+            "executor_ref": "fixture:python-subprocess",
+            "exit_code": executed.returncode,
+            "outcome": "completed",
+        },
+        log=executed.stdout + executed.stderr,
+    )
+    assert evidence["status"] == "passed"
+    gate = CandidateStore(store.directory).gate(candidate["id"], current=current(candidate))
+    assert gate["local_gate_passed"] is False
+    assert gate["reasons"] == ["REVIEW_EVIDENCE_MISSING"]
+
+
+def test_later_overlay_does_not_mutate_old_candidate_and_invalidates_old_gate(registered, tmp_path):
+    store, baseline, files = registered
+    projection, contents, request = capture_input(baseline, files)
+    first = store.freeze_projection(projection, contents, request)
+    contents["bin/run"] = b"#!/bin/sh\nexit 9\n"
+    second = store.freeze_projection(projection, contents, request)
+    assert second["revision"] == 2 and first["revision"] == 1
+    store.materialize(first["id"], tmp_path / "old-candidate")
+    assert (tmp_path / "old-candidate/bin/run").read_bytes() == b"#!/bin/sh\nexit 7\n"
+    assert "CANDIDATE_SUPERSEDED" in store.gate(first["id"], current=current(first))["reasons"]

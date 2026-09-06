@@ -1,0 +1,47 @@
+{
+  "schema_version": "karajan.capture-fence.author-evidence.v1",
+  "base": "1534825",
+  "sources": {
+    "backend/karajan/execution/host.py": "dff2612c876e079d89225e6f5010d8ecedaa585a8d153fdb92c01c073491f6b1",
+    "tests/execution/test_capture_fence.py": "7ab8d74f9ad2d74be9ec035c88e1e8d2b62080576af8ac1ff615c2543968d3dc"
+  },
+  "line_endings": {
+    "backend/karajan/execution/host.py": "LF",
+    "tests/execution/test_capture_fence.py": "LF"
+  },
+  "new_cases": 18,
+  "result": {
+    "windows": {
+      "passed": 112,
+      "skipped": 1,
+      "seconds": 96.73
+    },
+    "wsl": {
+      "passed": 18,
+      "skipped": 0,
+      "seconds": 11.24
+    }
+  },
+  "static": {
+    "ruff": "passed",
+    "format": "passed",
+    "mypy_host": "passed"
+  },
+  "history": {
+    "initial_red": 1,
+    "initial_green": 1,
+    "later_boundaries": 17,
+    "additional_case": "real elapsed start TTL does not revoke current capture fence"
+  },
+  "reports": {
+    "author-final.xml": "476e4fa6a9c20bc01e8c62d1591c6750b09dfab9ac737e5953039e3824976344",
+    "current-writer-green.xml": "60a0d0855356b958275a15790e7efddfefb8fe578b5aee91aecd2a9437d4a3f3",
+    "current-writer-red.xml": "9837d97d93c1044f1cb0ca23fcb135c20bb06e1143600b6c09e29217d3a1d3e6",
+    "README.md": "b59c982addd1490dc2d720d5edb4cc2bab9e26b560682125f78d2e2877ab043b",
+    "windows-final.xml": "f24989c8737bdddb9ce49e94a692903a2817cf779379fb72ef19b5c73ed482b3",
+    "wsl-final.xml": "475f6c01855519995284e749562ae46bd97f660b7602ebb8cf4d7def7f50174e"
+  },
+  "provider_calls": 0,
+  "credential_reads": 0,
+  "independent_review": false
+}
