@@ -67,6 +67,50 @@ class Freeze(Contract):
     policy: Policy
 
 
+class CandidateIdentity(Contract):
+    id: Identifier
+    series_id: Identifier
+    revision: Annotated[int, Field(gt=0)]
+    repository_identity: Identifier
+    base_sha: Annotated[str, Field(pattern=r"^[0-9a-f]{40}$")]
+    tree_sha: Annotated[str, Field(pattern=r"^[0-9a-f]{40}$")]
+    content_sha256: Digest
+    manifest_sha256: Digest
+    input_sha256: Digest
+    policy_sha256: Digest
+    baseline_id: Digest
+    request_sha256: Digest
+
+
+class ReviewerSource(Contract):
+    """Retained controller provenance; this record does not confer qualification."""
+
+    reviewer: Reviewer
+    qualification_source_digest: Digest
+    authentication_source_digest: Digest
+
+
+class ReviewerBinding(Contract):
+    schema_version: Literal["karajan.reviewer-binding.v1"]
+    revision: Annotated[int, Field(gt=0)]
+    source_candidate: CandidateIdentity
+    run_id: Identifier
+    operation_id: Identifier
+    reviewer_task_id: Identifier
+    capture_digest: Digest
+    approval_digest: Digest
+    plan_digest: Digest
+    execution_policy_digest: Digest
+    reviewer_task_digest: Digest
+    rulebook_digest: Digest
+    reviewer_sources: Annotated[list[ReviewerSource], Field(min_length=1, max_length=64)]
+
+
+class ReviewRebindCommand(Contract):
+    command_key: Identifier
+    binding: ReviewerBinding
+
+
 class CurrentContext(Contract):
     repository_identity: Identifier
     base_sha: Annotated[str, Field(pattern=r"^[0-9a-f]{40}$")]
