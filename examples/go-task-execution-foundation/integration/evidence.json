@@ -1,0 +1,73 @@
+{
+  "schema": "karajan.local-integration-evidence.v1",
+  "issue": "https://github.com/zhouy1017/Karajan/issues/89",
+  "date": "2026-09-06",
+  "executor": "Codex root",
+  "levels": [
+    "C",
+    "P"
+  ],
+  "tested_implementation_commit": "3a066b0f1e7026ac2310e91f59b86ac544210248",
+  "management_integration_commit": "858bd5a18c1ff9c6f4afd153247c89bb13879756",
+  "foundation_commit": "3c9eadcf5c7b47e4c80863865397f5a6d9fedecc",
+  "copilot_dependency_commit": "cd457975075ea9657baccdf6544ca0c0d86aa2c0",
+  "relay_sha256": "5fd1260de2221d9f0a67a59258007f29c1f782f3c0b5e460795f6e6e4db0c0be",
+  "reports": [
+    {
+      "platform": "windows",
+      "report": "examples/go-task-execution-foundation/integration/copilot-integration-windows.xml",
+      "sha256": "82fa73b337259d3fe3bc80860fabf938ce663455822559cc840a0f9d7fff22c5",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "20",
+          "time": "4.908",
+          "timestamp": "2026-09-06T21:06:12.267802+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    },
+    {
+      "platform": "linux",
+      "report": "examples/go-task-execution-foundation/integration/copilot-integration-linux.xml",
+      "sha256": "d47bbd083d8ac291067cce251f389ef7cdced9e0584796ef3a4360c666c32717",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "33",
+          "time": "67.078",
+          "timestamp": "2026-09-06T21:06:16.846153+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    }
+  ],
+  "commands": {
+    "windows": "python -m pytest tests/adapters/opencode/test_go_send_guard.py tests/adapters/opencode/test_go_relay_nullable_names.py -q",
+    "linux": "python -m pytest tests/isolation/test_go_task.py tests/runs/test_go_task_binding_source.py tests/adapters/opencode/test_go_send_guard.py -q -o \"pythonpath=backend tests/projects tests/runs tests/web tests/isolation tests/adapters/opencode\""
+  },
+  "input": "Temporary approved Run/Workspace/Capacity fixtures, fixed OpenCode 1.18.29 ELF and offline tokenizer; synthetic qualification and local HTTP upstream.",
+  "expected": "20 Windows and 33 Linux tests pass; actual native read/edit and send withdrawal preserve original identity and unknown accounting.",
+  "actual": {
+    "windows_passed": 20,
+    "linux_passed": 33,
+    "official_api_calls": 0
+  },
+  "review": {
+    "foundation": "Independent intent, Host and binding reviews retained in sibling directories; binding finding repaired and rechecked.",
+    "dependency_open_finding": "COPILOT-RECEIPT-001: upstream protocol receipt publication may still lag a fully received success response.",
+    "delegation": "https://github.com/zhouy1017/Karajan/pull/88#issuecomment-5559326259"
+  },
+  "limitations": [
+    "Current PR CI is a separate pending remote gate.",
+    "No official qualification rerun on changed relay source.",
+    "Fixed facade/child/Collector integration belongs to issue 90.",
+    "Passing regression does not dismiss the deterministic open dependency review finding."
+  ]
+}

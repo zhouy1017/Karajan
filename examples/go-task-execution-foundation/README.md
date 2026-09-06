@@ -23,6 +23,13 @@ fixture 均在各测试/报告中明确，不将其升级为真实部署资格�
 第一批来源下的标准检查为 Ruff 与 Windows/Linux 两种 mypy 平台检查通过。
 后续与 Copilot 基准修复整合后的验证另加记录，不覆写已有来源或原始报告。
 
+2026-09-06 的[组合验证](integration/evidence.json)绑定本地合成提交
+`3a066b0f1e7026ac2310e91f59b86ac544210248`：Windows 20 项、Linux 33 项通过，
+包含实际 namespace 的 Task read/edit；随后合入 dev 的管理规范未改这些产品文件。
+Copilot 的依赖提交 `cd45797` 仍有独立审查复现的成功响应 receipt 发布时序问题，
+已在 [PR #88](https://github.com/zhouy1017/Karajan/pull/88#issuecomment-5559326259)
+交回 Copilot。上述回归通过不消除这个发现；本片当前 CI 和依赖验收仍单独等待。
+
 `publication-map.json` 将原 `.cache` 证据路径映射到公开路径，保留字节与 SHA-256。
 各作者/独立审查 freeze 或 review 记录描述其实际测试的源码；历史 XML 包含预期红灯、
 测试夹具错误及复验，不将失败报告改写为通过。Host 初次测试使用 Windows venv 启动器
