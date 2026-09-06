@@ -1,0 +1,6 @@
+# Preserve hashes of original reports, source input and publication records.
+* -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+author/* -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+inputs/* -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+review/* -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+publication/* -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol

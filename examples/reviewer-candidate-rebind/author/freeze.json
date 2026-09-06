@@ -1,0 +1,108 @@
+{
+  "base": "624ad8b8490003f155baf7842ba91b9975b9526a",
+  "evidence": {
+    "README.md": {
+      "sha256": "e6ed5a64dd3df240e68f578b3e2c64b7cd529f268767bc0e0adb7a6c2ad961f7",
+      "size": 6168
+    },
+    "boundaries.xml": {
+      "sha256": "40f94170540ad93d285d145837166707f6df666ca40bcbec68cf4b69df8b0923",
+      "size": 5997
+    },
+    "faults.xml": {
+      "sha256": "218f5a36fa65e4b39b61c3ce9a7a4f6cdf9d83cebad59fa4bbc7ce330eb6bba9",
+      "size": 682
+    },
+    "final-windows.xml": {
+      "sha256": "375c48eaa6a9b7d886ead35ba2d315accb9987c1dd26291bb55921301eb25cfb",
+      "size": 26728
+    },
+    "final-wsl.xml": {
+      "sha256": "f512f41ab49e7b2f5bfb686abe5e22d2e90191d3f1bea36e69c01fb46ffca336",
+      "size": 25911
+    },
+    "first-green.xml": {
+      "sha256": "9063964976dff5f5baa1d9b84f6d44c59de6e838095cca078709792a48d5ce15",
+      "size": 400
+    },
+    "first-red.xml": {
+      "sha256": "7a70ce62fe8f5952a7e18cc0579fdfdf7861d993fd64fb85e870eb57565dd233",
+      "size": 1638
+    },
+    "format.txt": {
+      "sha256": "55b5a2cb0bdd55641f1b6dad60805a4c29520e41d507781e75aa8ec8d6ed9a10",
+      "size": 27
+    },
+    "freeze.py": {
+      "sha256": "8754226f108b34cc24847f193a7d2db9be2362cfb3739020ca77dabcf34543bf",
+      "size": 1781
+    },
+    "mypy-linux.txt": {
+      "sha256": "281a094c39385b4d7b53e5db635f52158036861433c2a4975b9039e77a627a24",
+      "size": 44
+    },
+    "mypy-windows.txt": {
+      "sha256": "281a094c39385b4d7b53e5db635f52158036861433c2a4975b9039e77a627a24",
+      "size": 44
+    },
+    "ruff.txt": {
+      "sha256": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0",
+      "size": 20
+    }
+  },
+  "owned": {
+    "backend/karajan/candidates/_review_binding.py": {
+      "sha256": "ea6da0ecbf0d3683dd033a5991c740d79138d16e1723b5752bed88c339bf1283",
+      "size": 9758
+    },
+    "backend/karajan/candidates/models.py": {
+      "sha256": "e5a94a8042d33c46fdd3af58c3bbd8e616895e2b35ee127e19c2757e64c43fb9",
+      "size": 4301
+    },
+    "backend/karajan/candidates/store.py": {
+      "sha256": "e2833cf7d039dc36c4a03467d66b4ac6eed21886a406b38402c707db26a38eeb",
+      "size": 38742
+    },
+    "tests/candidates/test_review_rebind.py": {
+      "sha256": "ae76b86abb4e7eac5c086a560b59a6c4b7096f06218dcd3f4eb2c8e3311d7693",
+      "size": 17232
+    }
+  },
+  "results": {
+    "new_public_tests": 42,
+    "provider_calls": 0,
+    "qualified_reviewer": false,
+    "windows": {
+      "passed": 164,
+      "skipped": 3
+    },
+    "wsl": {
+      "passed": 167,
+      "skipped": 0
+    }
+  },
+  "schema_version": "karajan.author-freeze.v1",
+  "scope": "Candidate same-content reviewer policy rebind only; #95 remains incomplete",
+  "support": {
+    "backend/karajan/candidates/_capture_lookup.py": {
+      "sha256": "ea524d6973801a7583648357252070ff28657f2454730a4c063240daab3cd608",
+      "size": 4432
+    },
+    "backend/karajan/isolation/_opencode_projection.py": {
+      "sha256": "cac01b05d8aae1ab1916b30d6f50500585fdce3dfd07fe956ffb002243274c57",
+      "size": 2393
+    },
+    "tests/candidates/test_baseline_materialization.py": {
+      "sha256": "3c1f8c272377942319995bceac8daaa5c8008bd62fcc6a6477e35f4e6c10bfdc",
+      "size": 9462
+    },
+    "tests/candidates/test_projected_capture.py": {
+      "sha256": "a5928c04b76d32cbfe513a0affe1c8a1e9ad5f5b0ee511dbf45f9a65b794d11b",
+      "size": 5734
+    },
+    "tests/candidates/test_validation.py": {
+      "sha256": "e38d83470be4056206805ea0ce6527c391fa5bfca3d9f0dadf98b9ca567c0f2b",
+      "size": 26633
+    }
+  }
+}
