@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="11" failures="0" errors="0" time="1.8352072">
+    <testsuite name="examples/v2-approval-workbench/standards/independent.test.tsx" timestamp="2026-09-06T03:52:30.938Z" hostname="ProArt-Zhou" tests="11" failures="0" errors="0" skipped="0" time="1.8352072">
+        <testcase classname="examples/v2-approval-workbench/standards/independent.test.tsx" name="permits reviewing a genuine persisted decimal-string zero written as 0e0" time="0.1456262">
+        </testcase>
+        <testcase classname="examples/v2-approval-workbench/standards/independent.test.tsx" name="shows plan limits separately from the larger original ceiling and keeps ordered stage identities" time="0.0620129">
+        </testcase>
+        <testcase classname="examples/v2-approval-workbench/standards/independent.test.tsx" name="sends exactly the reviewed v2 identity and does not copy displayed authorization into the command" time="0.1958121">
+        </testcase>
+        <testcase classname="examples/v2-approval-workbench/standards/independent.test.tsx" name="a conflict followed by a failed read revokes approval until the plan is freshly reviewed" time="0.3660143">
+        </testcase>
+        <testcase classname="examples/v2-approval-workbench/standards/independent.test.tsx" name="an uncertain retry preserves the exact body and idempotency key" time="0.2181375">
+        </testcase>
+        <testcase classname="examples/v2-approval-workbench/standards/independent.test.tsx" name="late detail from an old project cannot overwrite the newly reviewed project" time="0.1424797">
+        </testcase>
+        <testcase classname="examples/v2-approval-workbench/standards/independent.test.tsx" name="late failed approval from an old login view cannot create an error in the replacement view" time="0.2426243">
+        </testcase>
+        <testcase classname="examples/v2-approval-workbench/standards/independent.test.tsx" name="switching Run and returning never retains the earlier review checkbox" time="0.2844464">
+        </testcase>
+        <testcase classname="examples/v2-approval-workbench/standards/independent.test.tsx" name="incomplete authority is non-actionable: missing-routing-digest" time="0.0253764">
+        </testcase>
+        <testcase classname="examples/v2-approval-workbench/standards/independent.test.tsx" name="incomplete authority is non-actionable: unknown-version" time="0.0756709">
+        </testcase>
+        <testcase classname="examples/v2-approval-workbench/standards/independent.test.tsx" name="incomplete authority is non-actionable: foreign-policy-owner" time="0.0752106">
+        </testcase>
+    </testsuite>
+</testsuites>

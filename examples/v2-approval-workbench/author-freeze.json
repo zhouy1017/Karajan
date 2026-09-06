@@ -1,0 +1,108 @@
+{
+  "status": "frozen_for_independent_review",
+  "branch": "codex/m3-v2-approval-workbench",
+  "base_commit": "8329a1e028d53c6da5598f620c37aa8a2c62f0f2",
+  "source_sha256": {
+    "frontend/src/ProjectRuns.tsx": "ef49cb9feda8b84e5fe02bc08885ac77b2dc867ac3bf0d04c945df24699a2849",
+    "frontend/src/RoutingAuthorization.tsx": "2136f41abb5ee40df4549bf1913cba4a70551d55a78ad4756f91666a6942ce49",
+    "frontend/src/styles.css": "296e7bbdb8ee0bc47d925ec6decd710ac75568e49d345cc73e707443af1c02e8",
+    "frontend/src/ProjectRuns.test.tsx": "e526df82fa980cefb9c5f715a0b766ef16dbc820575ac4672c7bdc9a78731eae",
+    "frontend/src/ProjectRuns.v2.test.tsx": "5fefbe4f84f5e02e8c92ccb15331863db1d73a549e7280e693769c2df0d2f818",
+    "tests/web/test_v2_approval_workbench.py": "90519bea1b940fa66ad41814f5fe4d2302d6918b34a956ec293dcc19ecc68aa8",
+    "docs/implementation/m3-v2-approval-workbench.md": "800dc6df77a4f03b11bb324f2ac77bb987a490f255c7c0b9b13c1de5b120fdf6"
+  },
+  "checks": [
+    {
+      "cwd": "frontend",
+      "command": "npm test -- --reporter=default --reporter=junit --outputFile=.cache/v2-approval-final.junit.xml",
+      "exit_code": 0,
+      "result": "152 passed in 11.75s",
+      "evidence": "author-frontend.final.junit.xml"
+    },
+    {
+      "cwd": ".",
+      "command": "C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m pytest tests/web -q --junitxml=.cache/v2-approval-web-final.junit.xml",
+      "exit_code": 0,
+      "result": "65 passed, 2 dependency deprecation warnings in 14.27s",
+      "evidence": "author-web.final.junit.xml"
+    },
+    {
+      "cwd": "frontend",
+      "command": "npm run typecheck",
+      "exit_code": 0
+    },
+    {
+      "cwd": "frontend",
+      "command": "npm run format:check",
+      "exit_code": 0
+    },
+    {
+      "cwd": "frontend",
+      "command": "npm run build",
+      "exit_code": 0
+    },
+    {
+      "cwd": ".",
+      "command": "C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m ruff check .",
+      "exit_code": 0
+    }
+  ],
+  "import_check": "karajan.runs.planning resolved to this isolated worktree's backend/karajan/runs/planning.py; shared Python environment only",
+  "red_evidence": [
+    {
+      "file": "author-scope.before.junit.xml",
+      "finding": "The legacy page omitted the complete v2 scope and offered only a legacy confirmation"
+    },
+    {
+      "file": "author-stale.before.junit.xml",
+      "finding": "A 409 followed by a failed read retained the previously checked, enabled v2 confirmation"
+    }
+  ],
+  "verification_scope": {
+    "new_frontend_interaction_cases": 15,
+    "new_authenticated_http_cases": 6,
+    "other_cases": "Passed directly; no additional red-history claim",
+    "backend_product_changes": false,
+    "new_run_form_changed": false,
+    "trusted_builder_or_actual_dispatch": false,
+    "live_model_or_cash_calls": false,
+    "credential_access": false,
+    "commit_or_push": false
+  },
+  "initial_source_sha256": {
+    "frontend/src/ProjectRuns.tsx": "ef49cb9feda8b84e5fe02bc08885ac77b2dc867ac3bf0d04c945df24699a2849",
+    "frontend/src/RoutingAuthorization.tsx": "4842ce659223a77fe45ea77557242dce88a67bafe603bd314e9af3467a297baa",
+    "frontend/src/styles.css": "296e7bbdb8ee0bc47d925ec6decd710ac75568e49d345cc73e707443af1c02e8",
+    "frontend/src/ProjectRuns.test.tsx": "e526df82fa980cefb9c5f715a0b766ef16dbc820575ac4672c7bdc9a78731eae",
+    "frontend/src/ProjectRuns.v2.test.tsx": "d10dcaf713d1d667dfe3a3aeb23daa90ae1e30f7e06e9dd2aa1faae7d59962a5",
+    "tests/web/test_v2_approval_workbench.py": "90519bea1b940fa66ad41814f5fe4d2302d6918b34a956ec293dcc19ecc68aa8",
+    "docs/implementation/m3-v2-approval-workbench.md": "800dc6df77a4f03b11bb324f2ac77bb987a490f255c7c0b9b13c1de5b120fdf6"
+  },
+  "review_fix": {
+    "finding": "V2-UI-STANDARDS-001",
+    "change": "Preserve authenticated domain decimal strings, including 0e0, without Number conversion",
+    "before_evidence": "Independent Standards original input and JUnit, retained by reviewer",
+    "checks": [
+      {
+        "command": "npm test -- --reporter=default --reporter=junit --outputFile=.cache/v2-approval-review-fix.junit.xml",
+        "cwd": "frontend",
+        "exit_code": 0,
+        "result": "153 passed in 11.13s",
+        "evidence": "author-frontend.review-fix.junit.xml"
+      },
+      {
+        "command": "npm run typecheck",
+        "exit_code": 0
+      },
+      {
+        "command": "npm run format:check",
+        "exit_code": 0
+      },
+      {
+        "command": "npm run build",
+        "exit_code": 0
+      }
+    ],
+    "backend_unchanged": true
+  }
+}

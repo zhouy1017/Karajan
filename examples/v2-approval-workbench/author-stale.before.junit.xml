@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="2" failures="1" errors="0" time="0.2597687">
+    <testsuite name="src/ProjectRuns.v2.test.tsx" timestamp="2026-09-06T03:26:27.029Z" hostname="ProArt-Zhou" tests="2" failures="1" errors="0" skipped="1" time="0.2597687">
+        <testcase classname="src/ProjectRuns.v2.test.tsx" name="shows every v2 authorization dimension before explicitly approving its exact frozen revision" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/ProjectRuns.v2.test.tsx" name="revokes the displayed confirmation when a stale approval cannot reload its current plan" time="0.2584755">
+            <failure message="expected &lt;button&gt;&lt;/button&gt; to be null" type="AssertionError">
+AssertionError: expected &lt;button&gt;&lt;/button&gt; to be null
+
+- Expected:
+null
+
++ Received:
+&lt;button&gt;
+  确认 v2 授权
+&lt;/button&gt;
+
+ ❯ src/ProjectRuns.v2.test.tsx:141:62
+            </failure>
+        </testcase>
+    </testsuite>
+</testsuites>

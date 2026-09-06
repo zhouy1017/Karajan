@@ -10,11 +10,11 @@
 
 PRD、8 个 M0 Issues、20 个 M1–M4 实现任务和独立 CI 任务已发布。M0 契约、执行恢复、预算和运行探针已分批实现，本地项目工作台已可登记仓库与预览、保存配置；真实账户资格尚未通过。后续任务见 [完整任务清单](docs/planning/v1-backlog.md) 与 [需求覆盖审计](docs/implementation/requirement-coverage.md)；GitHub 实际编号见 [发布记录](docs/planning/v1/github-publication.json)。
 
-本轮不进行现金 API 调用，相关真实验收保持 `not_run`；本地进程、假 provider 和协议回放继续推进。开发验证方式见 [测试与合并质量门](docs/implementation/testing-gates.md)。
+用户已授权 OpenCode Go 使用本地凭据进行实际验证，额度由 provider 限制；[Go 实测 PR #48](https://github.com/zhouy1017/Karajan/pull/48) 保存工具执行与权限拒绝证据。其他通道的现金 API 调用仍暂停；本地进程、假 provider 和协议回放继续推进。开发验证方式见 [测试与合并质量门](docs/implementation/testing-gates.md)。
 
 ## 本地工作台
 
-[启动说明与实际验证](docs/implementation/m1-local-workbench.md) 包含依赖安装、构建和本机运行方式。服务启动后使用本地文件中的一次性访问码登录；项目状态、配置预览和版本化保存使用实际 SQLite。[需求与计划页面](docs/implementation/m1-run-workbench.md) 可保存需求、审阅并确认既有计划、决定指定 Commander 交接。当前尚不能从页面派发真实模型任务。
+[启动说明与实际验证](docs/implementation/m1-local-workbench.md) 包含依赖安装、构建和本机运行方式。服务启动后使用本地文件中的一次性访问码登录；项目状态、配置预览和版本化保存使用实际 SQLite。[需求与计划页面](docs/implementation/m1-run-workbench.md) 可保存需求、审阅并确认既有计划、决定指定 Commander 交接。[v2 授权审阅](docs/implementation/m3-v2-approval-workbench.md) 展示已有计划的完整服务、工具、资源与分发阶段范围，并确认精确版本；计划变化后必须重新审阅。当前尚不能从页面派发真实模型任务。
 
 [交付协调协议](docs/implementation/m1-delivery.md) 已提供本地可运行验证：固定候选推送、同一 PR 身份恢复、当前提交 CI 与暂停/取消。示例使用本地 Git 和明确的 PR 替身，生产交付仍等待当前候选权威、真实凭据与执行资格接线。
 

@@ -1,0 +1,100 @@
+{
+  "schema_version": "karajan.independent-spec-review.v1",
+  "reviewed_at": "2026-09-06T04:41:28.479845+00:00",
+  "scope": "v2 approval workbench display and confirmation, synthetic fixtures only",
+  "base_commit": "8329a1e028d53c6da5598f620c37aa8a2c62f0f2",
+  "source_hash_file": "final.source.json",
+  "source_hashes_verified": true,
+  "source_hash_count": 10,
+  "findings": [],
+  "unresolved_findings": [],
+  "total_final_checks": 26,
+  "results": [
+    {
+      "kind": "http",
+      "junit": "final.http.junit.xml",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "started_at": "2026-09-06T12:39:29.172684+08:00",
+      "test_cases": [
+        "test_authentic_http_exposes_whole_frozen_v2_and_exact_idempotent_approval",
+        "test_changed_confirmation_digest_cannot_approve_and_preserves_run[plan_digest]",
+        "test_changed_confirmation_digest_cannot_approve_and_preserves_run[authorization_digest]",
+        "test_changed_confirmation_digest_cannot_approve_and_preserves_run[configuration_digest]",
+        "test_changed_confirmation_digest_cannot_approve_and_preserves_run[routing_digest]",
+        "test_incomplete_or_legacy_confirmation_cannot_approve_v2[missing-routing]",
+        "test_incomplete_or_legacy_confirmation_cannot_approve_v2[legacy-v1-body]",
+        "test_approval_captured_before_new_plan_is_rejected_then_exact_new_plan_can_be_confirmed",
+        "test_approval_captured_before_explicit_commander_handoff_is_rejected",
+        "test_new_current_configuration_does_not_replace_run_frozen_scope",
+        "test_v2_approval_requires_real_session_csrf_boundary",
+        "test_default_create_http_remains_v1_without_fabricated_v2_authority"
+      ]
+    },
+    {
+      "kind": "ui",
+      "junit": "final.ui.junit.xml",
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "started_at": "2026-09-06T04:39:42.266Z",
+      "test_cases": [
+        "renders real HTTP v2 scope and sends only its exact frozen approval after explicit review",
+        "does not offer confirmation when routing-digest material is absent or contradictory",
+        "does not offer confirmation when task-tools material is absent or contradictory",
+        "does not offer confirmation when tool-permissions material is absent or contradictory",
+        "does not offer confirmation when policy-project material is absent or contradictory",
+        "does not offer confirmation when binding-activation material is absent or contradictory",
+        "does not offer confirmation when unknown-schema material is absent or contradictory",
+        "does not offer the old plan after a newer Commander term is displayed",
+        "invalidates checked approval after HTTP 409 even if reloaded plan bytes are unchanged",
+        "invalidates checked approval after HTTP 422 even if reloaded plan bytes are unchanged",
+        "removes confirmation if a stale response is followed by a failed current-plan read",
+        "requires a fresh review when the same Run is reopened",
+        "clears the prior owner-session review when the CSRF session changes",
+        "keeps the real legacy v1 plan on its original approval protocol"
+      ]
+    }
+  ],
+  "transports": {
+    "http": "Authenticated FastAPI ASGI routes in process via TestClient, with real SQLite persistence; no listening server",
+    "ui": "React components with jsdom, Testing Library and fetch test doubles; no browser/network end-to-end claim"
+  },
+  "fixture_input": "inputs/valid-view.json",
+  "fixture_input_source": "Actual read in final HTTP replay, copied before final UI replay",
+  "fixture_provenance": true,
+  "provider_calls": false,
+  "credentials_read": false,
+  "dispatch_enabled": false,
+  "browser_state_modified": false,
+  "standards_finding_attribution": "Standards owns the 0e0 decimal-string rejection finding; final Spec replay includes its fix but does not count it as a Spec finding",
+  "historical_results": "pre-publication.* retain earlier cache-path runs and prior source hash; not counted in final 26 checks",
+  "format_checks": "final.checks.json",
+  "warnings": [
+    "Starlette TestClient httpx deprecation",
+    "AnyIO BlockingPortal alias deprecation"
+  ],
+  "limitations": [
+    "No live provider qualification",
+    "No live budget or scheduling evidence",
+    "Browser evidence maintained by root separately"
+  ],
+  "artifact_sha256": {
+    "final.checks.json": "df4a283326e60180e005caaa119e579ecbcf9287df15469e0250a3ac0f4fdac6",
+    "final.http.junit.xml": "c841331e6a8723ad3e6db62b156822960dd91802a65570245f83f53ce811664d",
+    "final.source.json": "d9a5a93998d89a0051ab9b39d42888e1774da4b908a69594f7137584ef3278bc",
+    "final.ui.junit.xml": "ad340f761009ec8e6267fa58376c78394e1173f8d02e7aa26e93bf8e959516e4",
+    "inputs/valid-view.json": "5d7223b1c735c8d045201ccbda9eb80dfe55137ae9a131093bb1ba37352f99e1",
+    "pre-publication.http.junit.xml": "67c37d377dcb88c08925ab61657a86432c19ae7549bc18f96470726ec911ee95",
+    "pre-publication.source.json": "d4637978dd0b70ade71c6b6d24c47f5d2435a7b1c281d01fc25e567bb5d3d883",
+    "pre-publication.ui.junit.xml": "65b06e03bf14c19529f775243d13d19ed9af27c7169cc9f1f72aba113e9bb408",
+    "README.md": "6801b8412769307873e0553a9adb65b5917f768dc42df8fb7cbb352c803ea3b5",
+    "seed.py": "a8e2afab4abc448917832f9a154b82906be4e51112fd48724b7576c567f35c22",
+    "test_http.py": "ca518eec5f5df3172588d1e7919450ca631c95e1929852301ebb709f6f207efe",
+    "vitest.config.mts": "91013de5b6e82e0897b4d34de1eff87d320cda3a586395f8289924c439334f2b",
+    "workbench.test.ts": "39b03f939b4a4f5747dc68b1f5f2eee22e0d8116b0cc842fb596fd71034435e9"
+  }
+}

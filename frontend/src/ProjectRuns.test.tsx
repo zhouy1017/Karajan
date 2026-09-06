@@ -29,6 +29,7 @@ it("keeps a Commander handoff pending until the user decides and submits only th
   };
   const run = {
     id: "run-1",
+    schema_version: "karajan.run-planning.v1",
     requirement: { goal: "增加问候语", acceptance: ["显示问候语"] },
     commander: { term: 1, principal: "lead" },
     state: "planning",
@@ -110,6 +111,7 @@ it.each(["profile", "budget"])(
   async (missing) => {
     const run = {
       id: "run-1",
+      schema_version: "karajan.run-planning.v1",
       requirement: { goal: "交接待核对", acceptance: [] },
       commander: { term: 1, principal: "lead" },
       state: "planning",
@@ -185,6 +187,7 @@ it("shows a persisted requirement and approves the exact displayed plan without 
   const actions: { path: string; options?: RequestInit }[] = [];
   const run = {
     id: "run-1",
+    schema_version: "karajan.run-planning.v1",
     requirement: { goal: "增加问候语", acceptance: ["页面显示问候语"] },
     commander: { term: 1, principal: "lead" },
     active_plan_revision: null,

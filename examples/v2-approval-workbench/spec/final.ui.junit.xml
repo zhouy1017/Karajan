@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="14" failures="0" errors="0" time="1.9317178">
+    <testsuite name="examples/v2-approval-workbench/spec/workbench.test.ts" timestamp="2026-09-06T04:39:42.266Z" hostname="ProArt-Zhou" tests="14" failures="0" errors="0" skipped="0" time="1.9317178">
+        <testcase classname="examples/v2-approval-workbench/spec/workbench.test.ts" name="renders real HTTP v2 scope and sends only its exact frozen approval after explicit review" time="0.3329504">
+        </testcase>
+        <testcase classname="examples/v2-approval-workbench/spec/workbench.test.ts" name="does not offer confirmation when routing-digest material is absent or contradictory" time="0.090981">
+        </testcase>
+        <testcase classname="examples/v2-approval-workbench/spec/workbench.test.ts" name="does not offer confirmation when task-tools material is absent or contradictory" time="0.0640246">
+        </testcase>
+        <testcase classname="examples/v2-approval-workbench/spec/workbench.test.ts" name="does not offer confirmation when tool-permissions material is absent or contradictory" time="0.0736788">
+        </testcase>
+        <testcase classname="examples/v2-approval-workbench/spec/workbench.test.ts" name="does not offer confirmation when policy-project material is absent or contradictory" time="0.0756675">
+        </testcase>
+        <testcase classname="examples/v2-approval-workbench/spec/workbench.test.ts" name="does not offer confirmation when binding-activation material is absent or contradictory" time="0.0777341">
+        </testcase>
+        <testcase classname="examples/v2-approval-workbench/spec/workbench.test.ts" name="does not offer confirmation when unknown-schema material is absent or contradictory" time="0.0773444">
+        </testcase>
+        <testcase classname="examples/v2-approval-workbench/spec/workbench.test.ts" name="does not offer the old plan after a newer Commander term is displayed" time="0.0786886">
+        </testcase>
+        <testcase classname="examples/v2-approval-workbench/spec/workbench.test.ts" name="invalidates checked approval after HTTP 409 even if reloaded plan bytes are unchanged" time="0.1897583">
+        </testcase>
+        <testcase classname="examples/v2-approval-workbench/spec/workbench.test.ts" name="invalidates checked approval after HTTP 422 even if reloaded plan bytes are unchanged" time="0.1714165">
+        </testcase>
+        <testcase classname="examples/v2-approval-workbench/spec/workbench.test.ts" name="removes confirmation if a stale response is followed by a failed current-plan read" time="0.1835773">
+        </testcase>
+        <testcase classname="examples/v2-approval-workbench/spec/workbench.test.ts" name="requires a fresh review when the same Run is reopened" time="0.1870343">
+        </testcase>
+        <testcase classname="examples/v2-approval-workbench/spec/workbench.test.ts" name="clears the prior owner-session review when the CSRF session changes" time="0.1880251">
+        </testcase>
+        <testcase classname="examples/v2-approval-workbench/spec/workbench.test.ts" name="keeps the real legacy v1 plan on its original approval protocol" time="0.1398445">
+        </testcase>
+    </testsuite>
+</testsuites>

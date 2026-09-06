@@ -1,0 +1,1212 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="11" failures="2" errors="0" time="2.8723804">
+    <testsuite name=".cache/v2-ui-standards/independent.test.tsx" timestamp="2026-09-06T03:44:06.276Z" hostname="ProArt-Zhou" tests="11" failures="2" errors="0" skipped="0" time="2.8723804">
+        <testcase classname=".cache/v2-ui-standards/independent.test.tsx" name="permits reviewing a genuine persisted decimal-string zero written as 0e0" time="1.1141201">
+            <failure message="Unable to find role=&quot;heading&quot; and name &quot;完整执行授权（v2）&quot;
+
+Ignored nodes: comments, script, style
+[36m&lt;body&gt;[39m
+  [36m&lt;div&gt;[39m
+    [36m&lt;section[39m
+      [33mclass[39m=[32m&quot;project-form&quot;[39m
+    [36m&gt;[39m
+      [36m&lt;h2&gt;[39m
+        [0mSYNTHETIC v2 审批独立验收[0m
+        [0m · 需求与计划[0m
+      [36m&lt;/h2&gt;[39m
+      [36m&lt;button[39m
+        [33mclass[39m=[32m&quot;secondary&quot;[39m
+      [36m&gt;[39m
+        [0m新建需求[0m
+      [36m&lt;/button&gt;[39m
+      [36m&lt;p[39m
+        [33mclass[39m=[32m&quot;field-help&quot;[39m
+      [36m&gt;[39m
+        [0m查看已保存需求和当前方案。真实模型执行尚未启用。[0m
+      [36m&lt;/p&gt;[39m
+      [36m&lt;div[39m
+        [33mclass[39m=[32m&quot;form-actions&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;button[39m
+          [33mclass[39m=[32m&quot;secondary&quot;[39m
+        [36m&gt;[39m
+          [0mSYNTHETIC v2 完整授权审批示例[0m
+        [36m&lt;/button&gt;[39m
+      [36m&lt;/div&gt;[39m
+      [36m&lt;article[39m
+        [33mclass[39m=[32m&quot;run-detail&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;h3&gt;[39m
+          [0mSYNTHETIC v2 完整授权审批示例[0m
+        [36m&lt;/h3&gt;[39m
+        [36m&lt;ul&gt;[39m
+          [36m&lt;li&gt;[39m
+            [0m仅验证页面与持久批准，不执行工具[0m
+          [36m&lt;/li&gt;[39m
+        [36m&lt;/ul&gt;[39m
+        [36m&lt;p[39m
+          [33mclass[39m=[32m&quot;field-help&quot;[39m
+        [36m&gt;[39m
+          [0m主 Commander · [0m
+          [0msynthetic-lead[0m
+          [0m · 第[0m
+          [0m [0m
+          [0m1[0m
+          [0m 任[0m
+        [36m&lt;/p&gt;[39m
+        [36m&lt;h3&gt;[39m
+          [0m计划第 [0m
+          [0m2[0m
+          [0m 版[0m
+        [36m&lt;/h3&gt;[39m
+        [36m&lt;p&gt;[39m
+          [0m合成审批样例：固定当前权限，保留独立审查与用户合并决定。[0m
+        [36m&lt;/p&gt;[39m
+        [36m&lt;p[39m
+          [33mclass[39m=[32m&quot;notice error&quot;[39m
+          [33mrole[39m=[32m&quot;alert&quot;[39m
+        [36m&gt;[39m
+          [0mv2 授权材料不完整或固定版本不一致，暂不能确认。请重新读取计划。[0m
+        [36m&lt;/p&gt;[39m
+      [36m&lt;/article&gt;[39m
+    [36m&lt;/section&gt;[39m
+  [36m&lt;/div&gt;[39m
+[36m&lt;/body&gt;[39m
+
+Ignored nodes: comments, script, style
+[36m&lt;body&gt;[39m
+  [36m&lt;div&gt;[39m
+    [36m&lt;section[39m
+      [33mclass[39m=[32m&quot;project-form&quot;[39m
+    [36m&gt;[39m
+      [36m&lt;h2&gt;[39m
+        [0mSYNTHETIC v2 审批独立验收[0m
+        [0m · 需求与计划[0m
+      [36m&lt;/h2&gt;[39m
+      [36m&lt;button[39m
+        [33mclass[39m=[32m&quot;secondary&quot;[39m
+      [36m&gt;[39m
+        [0m新建需求[0m
+      [36m&lt;/button&gt;[39m
+      [36m&lt;p[39m
+        [33mclass[39m=[32m&quot;field-help&quot;[39m
+      [36m&gt;[39m
+        [0m查看已保存需求和当前方案。真实模型执行尚未启用。[0m
+      [36m&lt;/p&gt;[39m
+      [36m&lt;div[39m
+        [33mclass[39m=[32m&quot;form-actions&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;button[39m
+          [33mclass[39m=[32m&quot;secondary&quot;[39m
+        [36m&gt;[39m
+          [0mSYNTHETIC v2 完整授权审批示例[0m
+        [36m&lt;/button&gt;[39m
+      [36m&lt;/div&gt;[39m
+      [36m&lt;article[39m
+        [33mclass[39m=[32m&quot;run-detail&quot;[39m
+      [36m&gt;[39m
+        [36m&lt;h3&gt;[39m
+          [0mSYNTHETIC v2 完整授权审批示例[0m
+        [36m&lt;/h3&gt;[39m
+        [36m&lt;ul&gt;[39m
+          [36m&lt;li&gt;[39m
+            [0m仅验证页面与持久批准，不执行工具[0m
+          [36m&lt;/li&gt;[39m
+        [36m&lt;/ul&gt;[39m
+        [36m&lt;p[39m
+          [33mclass[39m=[32m&quot;field-help&quot;[39m
+        [36m&gt;[39m
+          [0m主 Commander · [0m
+          [0msynthetic-lead[0m
+          [0m · 第[0m
+          [0m [0m
+          [0m1[0m
+          [0m 任[0m
+        [36m&lt;/p&gt;[39m
+        [36m&lt;h3&gt;[39m
+          [0m计划第 [0m
+          [0m2[0m
+          [0m 版[0m
+        [36m&lt;/h3&gt;[39m
+        [36m&lt;p&gt;[39m
+          [0m合成审批样例：固定当前权限，保留独立审查与用户合并决定。[0m
+        [36m&lt;/p&gt;[39m
+        [36m&lt;p[39m
+          [33mclass[39m=[32m&quot;notice error&quot;[39m
+          [33mrole[39m=[32m&quot;alert&quot;[39m
+        [36m&gt;[39m
+          [0mv2 授权材料不完整或固定版本不一致，暂不能确认。请重新读取计划。[0m
+        [36m&lt;/p&gt;[39m
+      [36m&lt;/article&gt;[39m
+    [36m&lt;/section&gt;[39m
+  [36m&lt;/div&gt;[39m
+[36m&lt;/body&gt;[39m" type="TestingLibraryElementError">
+TestingLibraryElementError: Unable to find role=&quot;heading&quot; and name &quot;完整执行授权（v2）&quot;
+
+Ignored nodes: comments, script, style
+&lt;body&gt;
+  &lt;div&gt;
+    &lt;section
+      class=&quot;project-form&quot;
+    &gt;
+      &lt;h2&gt;
+        SYNTHETIC v2 审批独立验收
+         · 需求与计划
+      &lt;/h2&gt;
+      &lt;button
+        class=&quot;secondary&quot;
+      &gt;
+        新建需求
+      &lt;/button&gt;
+      &lt;p
+        class=&quot;field-help&quot;
+      &gt;
+        查看已保存需求和当前方案。真实模型执行尚未启用。
+      &lt;/p&gt;
+      &lt;div
+        class=&quot;form-actions&quot;
+      &gt;
+        &lt;button
+          class=&quot;secondary&quot;
+        &gt;
+          SYNTHETIC v2 完整授权审批示例
+        &lt;/button&gt;
+      &lt;/div&gt;
+      &lt;article
+        class=&quot;run-detail&quot;
+      &gt;
+        &lt;h3&gt;
+          SYNTHETIC v2 完整授权审批示例
+        &lt;/h3&gt;
+        &lt;ul&gt;
+          &lt;li&gt;
+            仅验证页面与持久批准，不执行工具
+          &lt;/li&gt;
+        &lt;/ul&gt;
+        &lt;p
+          class=&quot;field-help&quot;
+        &gt;
+          主 Commander · 
+          synthetic-lead
+           · 第
+           
+          1
+           任
+        &lt;/p&gt;
+        &lt;h3&gt;
+          计划第 
+          2
+           版
+        &lt;/h3&gt;
+        &lt;p&gt;
+          合成审批样例：固定当前权限，保留独立审查与用户合并决定。
+        &lt;/p&gt;
+        &lt;p
+          class=&quot;notice error&quot;
+          role=&quot;alert&quot;
+        &gt;
+          v2 授权材料不完整或固定版本不一致，暂不能确认。请重新读取计划。
+        &lt;/p&gt;
+      &lt;/article&gt;
+    &lt;/section&gt;
+  &lt;/div&gt;
+&lt;/body&gt;
+
+Ignored nodes: comments, script, style
+&lt;body&gt;
+  &lt;div&gt;
+    &lt;section
+      class=&quot;project-form&quot;
+    &gt;
+      &lt;h2&gt;
+        SYNTHETIC v2 审批独立验收
+         · 需求与计划
+      &lt;/h2&gt;
+      &lt;button
+        class=&quot;secondary&quot;
+      &gt;
+        新建需求
+      &lt;/button&gt;
+      &lt;p
+        class=&quot;field-help&quot;
+      &gt;
+        查看已保存需求和当前方案。真实模型执行尚未启用。
+      &lt;/p&gt;
+      &lt;div
+        class=&quot;form-actions&quot;
+      &gt;
+        &lt;button
+          class=&quot;secondary&quot;
+        &gt;
+          SYNTHETIC v2 完整授权审批示例
+        &lt;/button&gt;
+      &lt;/div&gt;
+      &lt;article
+        class=&quot;run-detail&quot;
+      &gt;
+        &lt;h3&gt;
+          SYNTHETIC v2 完整授权审批示例
+        &lt;/h3&gt;
+        &lt;ul&gt;
+          &lt;li&gt;
+            仅验证页面与持久批准，不执行工具
+          &lt;/li&gt;
+        &lt;/ul&gt;
+        &lt;p
+          class=&quot;field-help&quot;
+        &gt;
+          主 Commander · 
+          synthetic-lead
+           · 第
+           
+          1
+           任
+        &lt;/p&gt;
+        &lt;h3&gt;
+          计划第 
+          2
+           版
+        &lt;/h3&gt;
+        &lt;p&gt;
+          合成审批样例：固定当前权限，保留独立审查与用户合并决定。
+        &lt;/p&gt;
+        &lt;p
+          class=&quot;notice error&quot;
+          role=&quot;alert&quot;
+        &gt;
+          v2 授权材料不完整或固定版本不一致，暂不能确认。请重新读取计划。
+        &lt;/p&gt;
+      &lt;/article&gt;
+    &lt;/section&gt;
+  &lt;/div&gt;
+&lt;/body&gt;
+ ❯ waitForWrapper frontend/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ frontend/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ .cache/v2-ui-standards/independent.test.tsx:49:16
+            </failure>
+        </testcase>
+        <testcase classname=".cache/v2-ui-standards/independent.test.tsx" name="shows plan limits separately from the larger original ceiling and keeps ordered stage identities" time="0.0839835">
+            <failure message="Found multiple elements with the text: /输入上界 4096 token；任务时长 20 秒/
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m&lt;p&gt;[39m
+  [0m输入上界 [0m
+  [0m4096[0m
+  [0m token；任务时长 [0m
+  [0m20[0m
+  [0m 秒。[0m
+[36m&lt;/p&gt;[39m
+
+Ignored nodes: comments, script, style
+[36m&lt;p&gt;[39m
+  [0m输入上界 [0m
+  [0m4096[0m
+  [0m token；任务时长 [0m
+  [0m20[0m
+  [0m 秒。[0m
+[36m&lt;/p&gt;[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m&lt;section[39m
+  [33maria-label[39m=[32m&quot;完整执行授权（v2）&quot;[39m
+  [33mclass[39m=[32m&quot;preview-result routing-authorization&quot;[39m
+[36m&gt;[39m
+  [36m&lt;h4&gt;[39m
+    [0m完整执行授权（v2）[0m
+  [36m&lt;/h4&gt;[39m
+  [36m&lt;p[39m
+    [33mclass[39m=[32m&quot;field-help&quot;[39m
+  [36m&gt;[39m
+    [0m这次确认保存固定版本的授权。实际派发尚未接入，来源与能力仍需验证。[0m
+  [36m&lt;/p&gt;[39m
+  [36m&lt;h4&gt;[39m
+    [0m修改与交付范围[0m
+  [36m&lt;/h4&gt;[39m
+  [36m&lt;p&gt;[39m
+    [0m允许读取：[0m
+    [0msrc、tests[0m
+  [36m&lt;/p&gt;[39m
+  [36m&lt;p&gt;[39m
+    [0m允许修改：[0m
+    [0msrc[0m
+  [36m&lt;/p&gt;[39m
+  [36m&lt;p&gt;[39m
+    [0m必需检查：[0m
+    [0mtests、独立审查[0m
+  [36m&lt;/p&gt;[39m
+  [36m&lt;p&gt;[39m
+    [0m交付：[0m
+    [0m向 main 创建 PR；合并由你决定[0m
+  [36m&lt;/p&gt;[39m
+  [36m&lt;h4&gt;[39m
+    [0m允许的服务与模型[0m
+  [36m&lt;/h4&gt;[39m
+  [36m&lt;ul&gt;[39m
+    [36m&lt;li&gt;[39m
+      [36m&lt;div&gt;[39m
+        [36m&lt;strong&gt;[39m
+          [0mfixture-profile（版本 1）[0m
+        [36m&lt;/strong&gt;[39m
+        [36m&lt;p&gt;[39m
+          [0m模型：[0m
+          [0mfixture-model[0m
+          [0m；执行器：[0m
+          [0mfixture-runtime 1[0m
+        [36m&lt;/p&gt;[39m
+        [36m&lt;p&gt;[39m
+          [0m通道：[0m
+          [0mfixture-channel[0m
+          [0m；账户：[0m
+          [0mfixture-account[0m
+          [0m；计费：[0m
+          [0m订阅[0m
+        [36m&lt;/p&gt;[39m
+      [36m&lt;/div&gt;[39m
+    [36m&lt;/li&gt;[39m
+  [36m&lt;/ul&gt;[39m
+  [36m&lt;ul&gt;[39m
+    [36m&lt;li&gt;[39m
+      [36m&lt;div&gt;[39m
+        [36m&lt;strong&gt;[39m
+          [0mfixture-channel[0m
+          [0m · [0m
+          [0mfixture-provider[0m
+        [36m&lt;/strong&gt;[39m
+        [36m&lt;p&gt;[39m
+          [0m订阅[0m
+          [0m；账户：[0m
+          [0mfixture-account[0m
+          [0m；数据去向：[0m
+          [0msynthetic-local-fixture[0m
+        [36m&lt;/p&gt;[39m
+      [36m&lt;/div&gt;[39m
+    [36m&lt;/li&gt;[39m
+  [36m&lt;/ul&gt;[39m
+  [36m&lt;p&gt;[39m
+    [0m允许的数据去向：[0m
+    [0msynthetic-local-fixture[0m
+  [36m&lt;/p&gt;[39m
+  [36m&lt;h4&gt;[39m
+    [0m工具与执行要求[0m
+  [36m&lt;/h4&gt;[39m
+  [36m&lt;ul&gt;[39m
+    [36m&lt;li&gt;[39m
+      [0mfixture-tools[0m
+      [0m：[0m
+      [0mfixture-tools[0m
+    [36m&lt;/li&gt;[39m
+  [36m&lt;/ul&gt;[39m
+  [36m&lt;p&gt;[39m
+    [0m必需能力：[0m
+    [0mcontrolled_tools[0m
+  [36m&lt;/p&gt;[39m
+  [36m&lt;p&gt;[39m
+    [0m最低隔离要求：工具沙箱（tool_sandboxed）；尚未验证执行器资格。[0m
+  [36m&lt;/p&gt;[39m
+  [36m&lt;h4&gt;[39m
+    [0m本次批准的资源上限[0m
+  [36m&lt;/h4&gt;[39m
+  [36m&lt;p&gt;[39m
+    [0m原币限额：[0m
+    [0mCNY 0，USD 0[0m
+  [36m&lt;/p&gt;[39m
+  [36m&lt;p&gt;[39m
+    [0m单次尝试最多 [0m
+    [0m25[0m
+    [0m 秒；质量修复最多[0m
+    [0m [0m
+    [0m2[0m
+    [0m 轮。[0m
+  [36m&lt;/p&gt;[39m
+  [36m&lt;p[39m
+    [33mclass[39m=[32m&quot;field-help&quot;[39m
+  [36m&gt;[39m
+    [0m预算引用：[0m
+    [0mrun[0m
+    [0m。这些是本次允许使用的上限，服务配额与余额仍需另行核验。[0m
+  [36m&lt;/p&gt;[39m
+  [36m&lt;p&gt;[39m
+    [0m所引用的运行预算上限：[0m
+    [0mCNY 0，USD 0[0m
+    [0m；[0m
+    [0m8[0m
+    [0m 次尝试、[0m
+    [0m300[0m
+    [0m [0m
+    [0m秒。上方原币限额是本次批准的范围。[0m
+  [36m&lt;/p&gt;[39m
+  [36m&lt;h4&gt;[39m
+    [0m允许的分发阶段[0m
+  [36m&lt;/h4&gt;[39m
+  [36m&lt;ul&gt;[39m
+    [36m&lt;li&gt;[39m
+      [36m&lt;div&gt;[39m
+        [36m&lt;strong&gt;[39m
+          [0mbounded-worker[0m
+        [36m&lt;/strong&gt;[39m
+        [36m&lt;p&gt;[39m
+          [0m普通阶段：[0m
+          [0m允许[0m
+        [36m&lt;/p&gt;[39m
+        [36m&lt;p&gt;[39m
+          [0m配置组 [0m
+          [0mstandard_qualified[0m
+          [0m：[0m
+          [0mfixture-profile（版本 1）[0m
+        [36m&lt;/p&gt;[39m
+        [36m&lt;p&gt;[39m
+          [0m质量升级第 [0m
+          [0m1[0m
+          [0m 组（序号 [0m
+          [0m0[0m
+          [0m）·[0m
+          [0m [0m
+          [0mcritical_qualified[0m
+          [0m：[0m
+          [0mfixture-profile（版本 1）[0m
+        [36m&lt;/p&gt;[39m
+      [36m&lt;/div&gt;[39m
+    [36m&lt;/li&gt;[39m
+    [36m&lt;li&gt;[39m
+      [36m&lt;div&gt;[39m
+        [36m&lt;strong&gt;[39m
+          [0mmechanical-worker[0m
+        [36m&lt;/strong&gt;[39m
+        [36m&lt;p&gt;[39m
+          [0m普通阶段：[0m
+          [0m不允许[0m
+        [36m&lt;/p&gt;[39m
+        [36m&lt;p&gt;[39m
+          [0m质量升级：未授权[0m
+        [36m&lt;/p&gt;[39m
+      [36m&lt;/div&gt;[39m
+    [36m&lt;/li&gt;[39m
+    [36m&lt;li&gt;[39m
+      [36m&lt;div&gt;[39m
+        [36m&lt;strong&gt;[39m
+          [0mstandard-review[0m
+        [36m&lt;/strong&gt;[39m
+        [36m&lt;p&gt;[39m
+          [0m普通阶段：[0m
+          [0m允许[0m
+        [36m&lt;/p&gt;[39m
+        [36m&lt;p&gt;[39m
+          [0m配置组 [0m
+          [0mreview_standard_qualified[0m
+          [0m：[0m
+          [0mfixture-profile（版本 1）[0m
+        [36m&lt;/p&gt;[39m
+        [36m&lt;p&gt;[39m
+          [0m质量升级：未授权[0m
+        [36m&lt;/p&gt;[39m
+      [36m&lt;/div&gt;[39m
+    [36m&lt;/li&gt;[39m
+  [36m&lt;/ul&gt;[39m
+  [36m&lt;h4&gt;[39m
+    [0m各任务的固定要求[0m
+  [36m&lt;/h4&gt;[39m
+  [36m&lt;div[39m
+    [33mclass[39m=[32m&quot;project-grid&quot;[39m
+  [36m&gt;[39m
+    [36m&lt;article[39m
+      [33mclass[39m=[32m&quot;project-card&quot;[39m
+    [36m&gt;[39m
+      [36m&lt;h4&gt;[39m
+        [0mimplement[0m
+        [0m · 任务版本 [0m
+        [0m1[0m
+      [36m&lt;/h4&gt;[39m
+      [36m&lt;p&gt;[39m
+        [0m实现[0m
+        [0m ·[0m
+        [0m [0m
+        [0m无 Commander 职责[0m
+        [0m [0m
+        [0m· [0m
+        [0mT2[0m
+        [0m ·[0m
+        [0m [0m
+        [0m一般风险[0m
+      [36m&lt;/p&gt;[39m
+      [36m&lt;p&gt;[39m
+        [0m必需任务[0m
+        [0m ·[0m
+        [0m [0m
+        [0m已就绪[0m
+      [36m&lt;/p&gt;[39m
+      [36m&lt;p&gt;[39m
+        [0m任务路径：[0m
+        [0msrc/report.py[0m
+      [36m&lt;/p&gt;[39m
+      [36m&lt;p&gt;[39m
+        [0m领域：[0m
+        [0mcode、synthetic-report[0m
+      [36m&lt;/p&gt;[39m
+      [36m&lt;p&gt;[39m
+        [0m额外能力：[0m
+        [0mcontrolled_tools[0m
+      [36m&lt;/p&gt;[39m
+      [36m&lt;p&gt;[39m
+        [0m任务工具：[0m
+        [0mfixture-tools[0m
+      [36m&lt;/p&gt;[39m
+      [36m&lt;p&gt;[39m
+        [0m输入上界 [0m
+        [0m4096[0m
+        [0m token；任务时长 [0m
+        [0m20[0m
+        [0m 秒。[0m
+      [36m&lt;/p&gt;[39m
+      [36m&lt;p&gt;[39m
+        [0m前置任务：[0m
+        [0m无[0m
+      [36m&lt;/p&gt;[39m
+      [36m&lt;ul&gt;[39m
+        [36m&lt;li&gt;[39m
+          [0m合成报告符合明确需求[0m
+        [36m&lt;/li&gt;[39m
+      [36m&lt;/ul&gt;[39m
+    [36m&lt;/article&gt;[39m
+    [36m&lt;article[39m
+      [33mclass[39m=[32m&quot;project-card&quot;[39m
+    [36m&gt;[39m
+      [36m&lt;h4&gt;[39m
+        [0mreview[0m
+        [0m · 任务版本 [0m
+        [0m1[0m
+      [36m&lt;/h4&gt;[39m
+      [36m&lt;p&gt;[39m
+        [0m审查[0m
+        [0m ·[0m
+        [0m [0m
+        [0m无 Commander 职责[0m
+        [0m [0m
+        [0m· [0m
+        [0mT2[0m
+        [0m ·[0m
+        [0m [0m
+        [0m一般风险[0m
+      [36m&lt;/p&gt;[39m
+      [36m&lt;p&gt;[39m
+        [0m必需任务[0m
+        [0m ·[0m
+        [0m [0m
+        [0m已就绪[0m
+      [36m&lt;/p&gt;[39m
+      [36m&lt;p&gt;[39m
+        [0m任务路径：[0m
+        [0msrc/report.py[0m
+      [36m&lt;/p&gt;[39m
+      [36m&lt;p&gt;[39m
+        [0m领域：[0m
+        [0mcode、synthetic-report[0m
+      [36m&lt;/p&gt;[39m
+      [36m&lt;p&gt;[39m
+        [0m额外能力：[0m
+        [0mcontrolled_tools[0m
+      [36m&lt;/p&gt;[39m
+      [36m&lt;p&gt;[39m
+        [0m任务工具：[0m
+        [0mfixture-tools[0m
+      [36m&lt;/p&gt;[39m
+      [36m&lt;p&gt;[39m
+        [0m输入上界 [0m
+        [0m4096[0m
+        [0m token；任务时长 [0m
+        [0m20[0m
+        [0m 秒。[0m
+      [36m&lt;/p&gt;[39m
+      [36m&lt;p&gt;[39m
+        [0m前置任务：[0m
+        [0mimplement[0m
+      [36m&lt;/p&gt;[39m
+      [36m&lt;ul&gt;[39m
+        [36m&lt;li&gt;[39m
+          [0m独立审查通过[0m
+        [36m&lt;/li&gt;[39m
+      [36m&lt;/ul&gt;[39m
+    [36m&lt;/article&gt;[39m
+  [36m&lt;/div&gt;[39m
+  [36m&lt;p&gt;[39m
+    [0m上下文按已批准的输入上界记账，另预留输出 [0m
+    [0m1024[0m
+    [0m [0m
+    [0mtoken；总上下文上限 [0m
+    [0m8192[0m
+    [0m [0m
+    [0mtoken。实际输入尚需执行前测量。[0m
+  [36m&lt;/p&gt;[39m
+  [36m&lt;p&gt;[39m
+    [0m风险映射：[0m
+    [0mcritical → T3，standard → T1[0m
+  [36m&lt;/p&gt;[39m
+  [36m&lt;p&gt;[39m
+    [0m路径风险下限：[0m
+    [0msrc/auth → T3[0m
+  [36m&lt;/p&gt;[39m
+  [36m&lt;details&gt;[39m
+    [36m&lt;summary&gt;[39m
+      [0m核对固定版本与授权摘要[0m
+    [36m&lt;/summary&gt;[39m
+    [36m&lt;p&gt;[39m
+      [0m执行政策：[0m
+      [0msynthetic-ui-policy[0m
+      [0m（版本 [0m
+      [0m1[0m
+      [0m）；登记人：[0m
+      [0mowner[0m
+      [0m；项目：[0m
+      [0mfe8b1970-2dfe-4c34-9dc8-70ccf56d4c7e[0m
+    [36m&lt;/p&gt;[39m
+    [36m&lt;p&gt;[39m
+      [0m工具政策：[0m
+      [0msynthetic-ui-tools（版本 1）[0m
+    [36m&lt;/p&gt;[39m
+    [36m&lt;p&gt;[39m
+      [0m风险政策：[0m
+      [0msynthetic-ui-risk（版本 1）[0m
+    [36m&lt;/p&gt;[39m
+    [36m&lt;p&gt;[39m
+      [0m上下文政策：[0m
+      [0msynthetic-ui-context（版本 1）[0m
+    [36m&lt;/p&gt;[39m
+    [36m&lt;p&gt;[39m
+      [0m政策正文摘要：[0m
+      [36m&lt;code&gt;[39m
+        [0mfa94f06891a7613b7231a56584550a44cacd7ad00984493363951eb230b09ba1[0m
+      [36m&lt;/code&gt;[39m
+    [36m&lt;/p&gt;[39m
+    [36m&lt;p&gt;[39m
+      [0mRulebook：[0m
+      [0mpersonal-code-delivery[0m
+      [0m（版本 [0m
+      [0m1[0m
+      [0m）[0m
+    [36m&lt;/p&gt;[39m
+    [36m&lt;p&gt;[39m
+      [0mRulebook 正文摘要：[0m
+      [36m&lt;code&gt;[39m
+        [0m037022d8cb9f5520179e242681908c0e5fbf3583ce933fe9681af7f2b022e789[0m
+      [36m&lt;/code&gt;[39m
+    [36m&lt;/p&gt;[39m
+    [36m&lt;p&gt;[39m
+      [0m计划摘要：[0m
+      [36m&lt;code&gt;[39m
+        [0m413225fafbf81355995e6c58084828d96bcf5124a3cd43e4733fd0aca4d80339[0m
+      [36m&lt;/code&gt;[39m
+    [36m&lt;/p&gt;[39m
+    [36m&lt;p&gt;[39m
+      [0m配置摘要：[0m
+      [36m&lt;code&gt;[39m
+        [0mbd53d2bb88b31cd992a48c901fc7b08a46d828c6a583f4fe606c4b7e54182f81[0m
+      [36m&lt;/code&gt;[39m
+    [36m&lt;/p&gt;[39m
+    [36m&lt;p&gt;[39m
+      [0m授权摘要：[0m
+      [36m&lt;code&gt;[39m
+        [0m83598c78e24dce60cca6b29c4e88d61bf050681950673e49ed5b6913ddca01e8[0m
+      [36m&lt;/code&gt;[39m
+    [36m&lt;/p&gt;[39m
+    [36m&lt;p&gt;[39m
+      [0m路由授权摘要：[0m
+      [36m&lt;code&gt;[39m
+        [0mb5446c40be7a90946915d3a8bbfcc98833e129c7a7b43ace078560ef9ae7480a[0m
+      [36m&lt;/code&gt;[39m
+    [36m&lt;/p&gt;[39m
+  [36m&lt;/details&gt;[39m
+  [36m&lt;div[39m
+    [33mclass[39m=[32m&quot;approval-confirmation&quot;[39m
+  [36m&gt;[39m
+    [36m&lt;label&gt;[39m
+      [36m&lt;input[39m
+        [33mtype[39m=[32m&quot;checkbox&quot;[39m
+      [36m/&gt;[39m
+      [0m我已审阅以上完整授权范围（v2）[0m
+    [36m&lt;/label&gt;[39m
+    [36m&lt;button[39m
+      [33mdisabled[39m=[32m&quot;&quot;[39m
+    [36m&gt;[39m
+      [0m确认 v2 授权[0m
+    [36m&lt;/button&gt;[39m
+  [36m&lt;/div&gt;[39m
+[36m&lt;/section&gt;[39m" type="TestingLibraryElementError">
+TestingLibraryElementError: Found multiple elements with the text: /输入上界 4096 token；任务时长 20 秒/
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+&lt;p&gt;
+  输入上界 
+  4096
+   token；任务时长 
+  20
+   秒。
+&lt;/p&gt;
+
+Ignored nodes: comments, script, style
+&lt;p&gt;
+  输入上界 
+  4096
+   token；任务时长 
+  20
+   秒。
+&lt;/p&gt;
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+&lt;section
+  aria-label=&quot;完整执行授权（v2）&quot;
+  class=&quot;preview-result routing-authorization&quot;
+&gt;
+  &lt;h4&gt;
+    完整执行授权（v2）
+  &lt;/h4&gt;
+  &lt;p
+    class=&quot;field-help&quot;
+  &gt;
+    这次确认保存固定版本的授权。实际派发尚未接入，来源与能力仍需验证。
+  &lt;/p&gt;
+  &lt;h4&gt;
+    修改与交付范围
+  &lt;/h4&gt;
+  &lt;p&gt;
+    允许读取：
+    src、tests
+  &lt;/p&gt;
+  &lt;p&gt;
+    允许修改：
+    src
+  &lt;/p&gt;
+  &lt;p&gt;
+    必需检查：
+    tests、独立审查
+  &lt;/p&gt;
+  &lt;p&gt;
+    交付：
+    向 main 创建 PR；合并由你决定
+  &lt;/p&gt;
+  &lt;h4&gt;
+    允许的服务与模型
+  &lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;
+      &lt;div&gt;
+        &lt;strong&gt;
+          fixture-profile（版本 1）
+        &lt;/strong&gt;
+        &lt;p&gt;
+          模型：
+          fixture-model
+          ；执行器：
+          fixture-runtime 1
+        &lt;/p&gt;
+        &lt;p&gt;
+          通道：
+          fixture-channel
+          ；账户：
+          fixture-account
+          ；计费：
+          订阅
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;ul&gt;
+    &lt;li&gt;
+      &lt;div&gt;
+        &lt;strong&gt;
+          fixture-channel
+           · 
+          fixture-provider
+        &lt;/strong&gt;
+        &lt;p&gt;
+          订阅
+          ；账户：
+          fixture-account
+          ；数据去向：
+          synthetic-local-fixture
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;p&gt;
+    允许的数据去向：
+    synthetic-local-fixture
+  &lt;/p&gt;
+  &lt;h4&gt;
+    工具与执行要求
+  &lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;
+      fixture-tools
+      ：
+      fixture-tools
+    &lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;p&gt;
+    必需能力：
+    controlled_tools
+  &lt;/p&gt;
+  &lt;p&gt;
+    最低隔离要求：工具沙箱（tool_sandboxed）；尚未验证执行器资格。
+  &lt;/p&gt;
+  &lt;h4&gt;
+    本次批准的资源上限
+  &lt;/h4&gt;
+  &lt;p&gt;
+    原币限额：
+    CNY 0，USD 0
+  &lt;/p&gt;
+  &lt;p&gt;
+    单次尝试最多 
+    25
+     秒；质量修复最多
+     
+    2
+     轮。
+  &lt;/p&gt;
+  &lt;p
+    class=&quot;field-help&quot;
+  &gt;
+    预算引用：
+    run
+    。这些是本次允许使用的上限，服务配额与余额仍需另行核验。
+  &lt;/p&gt;
+  &lt;p&gt;
+    所引用的运行预算上限：
+    CNY 0，USD 0
+    ；
+    8
+     次尝试、
+    300
+     
+    秒。上方原币限额是本次批准的范围。
+  &lt;/p&gt;
+  &lt;h4&gt;
+    允许的分发阶段
+  &lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;
+      &lt;div&gt;
+        &lt;strong&gt;
+          bounded-worker
+        &lt;/strong&gt;
+        &lt;p&gt;
+          普通阶段：
+          允许
+        &lt;/p&gt;
+        &lt;p&gt;
+          配置组 
+          standard_qualified
+          ：
+          fixture-profile（版本 1）
+        &lt;/p&gt;
+        &lt;p&gt;
+          质量升级第 
+          1
+           组（序号 
+          0
+          ）·
+           
+          critical_qualified
+          ：
+          fixture-profile（版本 1）
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/li&gt;
+    &lt;li&gt;
+      &lt;div&gt;
+        &lt;strong&gt;
+          mechanical-worker
+        &lt;/strong&gt;
+        &lt;p&gt;
+          普通阶段：
+          不允许
+        &lt;/p&gt;
+        &lt;p&gt;
+          质量升级：未授权
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/li&gt;
+    &lt;li&gt;
+      &lt;div&gt;
+        &lt;strong&gt;
+          standard-review
+        &lt;/strong&gt;
+        &lt;p&gt;
+          普通阶段：
+          允许
+        &lt;/p&gt;
+        &lt;p&gt;
+          配置组 
+          review_standard_qualified
+          ：
+          fixture-profile（版本 1）
+        &lt;/p&gt;
+        &lt;p&gt;
+          质量升级：未授权
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;h4&gt;
+    各任务的固定要求
+  &lt;/h4&gt;
+  &lt;div
+    class=&quot;project-grid&quot;
+  &gt;
+    &lt;article
+      class=&quot;project-card&quot;
+    &gt;
+      &lt;h4&gt;
+        implement
+         · 任务版本 
+        1
+      &lt;/h4&gt;
+      &lt;p&gt;
+        实现
+         ·
+         
+        无 Commander 职责
+         
+        · 
+        T2
+         ·
+         
+        一般风险
+      &lt;/p&gt;
+      &lt;p&gt;
+        必需任务
+         ·
+         
+        已就绪
+      &lt;/p&gt;
+      &lt;p&gt;
+        任务路径：
+        src/report.py
+      &lt;/p&gt;
+      &lt;p&gt;
+        领域：
+        code、synthetic-report
+      &lt;/p&gt;
+      &lt;p&gt;
+        额外能力：
+        controlled_tools
+      &lt;/p&gt;
+      &lt;p&gt;
+        任务工具：
+        fixture-tools
+      &lt;/p&gt;
+      &lt;p&gt;
+        输入上界 
+        4096
+         token；任务时长 
+        20
+         秒。
+      &lt;/p&gt;
+      &lt;p&gt;
+        前置任务：
+        无
+      &lt;/p&gt;
+      &lt;ul&gt;
+        &lt;li&gt;
+          合成报告符合明确需求
+        &lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/article&gt;
+    &lt;article
+      class=&quot;project-card&quot;
+    &gt;
+      &lt;h4&gt;
+        review
+         · 任务版本 
+        1
+      &lt;/h4&gt;
+      &lt;p&gt;
+        审查
+         ·
+         
+        无 Commander 职责
+         
+        · 
+        T2
+         ·
+         
+        一般风险
+      &lt;/p&gt;
+      &lt;p&gt;
+        必需任务
+         ·
+         
+        已就绪
+      &lt;/p&gt;
+      &lt;p&gt;
+        任务路径：
+        src/report.py
+      &lt;/p&gt;
+      &lt;p&gt;
+        领域：
+        code、synthetic-report
+      &lt;/p&gt;
+      &lt;p&gt;
+        额外能力：
+        controlled_tools
+      &lt;/p&gt;
+      &lt;p&gt;
+        任务工具：
+        fixture-tools
+      &lt;/p&gt;
+      &lt;p&gt;
+        输入上界 
+        4096
+         token；任务时长 
+        20
+         秒。
+      &lt;/p&gt;
+      &lt;p&gt;
+        前置任务：
+        implement
+      &lt;/p&gt;
+      &lt;ul&gt;
+        &lt;li&gt;
+          独立审查通过
+        &lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/article&gt;
+  &lt;/div&gt;
+  &lt;p&gt;
+    上下文按已批准的输入上界记账，另预留输出 
+    1024
+     
+    token；总上下文上限 
+    8192
+     
+    token。实际输入尚需执行前测量。
+  &lt;/p&gt;
+  &lt;p&gt;
+    风险映射：
+    critical → T3，standard → T1
+  &lt;/p&gt;
+  &lt;p&gt;
+    路径风险下限：
+    src/auth → T3
+  &lt;/p&gt;
+  &lt;details&gt;
+    &lt;summary&gt;
+      核对固定版本与授权摘要
+    &lt;/summary&gt;
+    &lt;p&gt;
+      执行政策：
+      synthetic-ui-policy
+      （版本 
+      1
+      ）；登记人：
+      owner
+      ；项目：
+      fe8b1970-2dfe-4c34-9dc8-70ccf56d4c7e
+    &lt;/p&gt;
+    &lt;p&gt;
+      工具政策：
+      synthetic-ui-tools（版本 1）
+    &lt;/p&gt;
+    &lt;p&gt;
+      风险政策：
+      synthetic-ui-risk（版本 1）
+    &lt;/p&gt;
+    &lt;p&gt;
+      上下文政策：
+      synthetic-ui-context（版本 1）
+    &lt;/p&gt;
+    &lt;p&gt;
+      政策正文摘要：
+      &lt;code&gt;
+        fa94f06891a7613b7231a56584550a44cacd7ad00984493363951eb230b09ba1
+      &lt;/code&gt;
+    &lt;/p&gt;
+    &lt;p&gt;
+      Rulebook：
+      personal-code-delivery
+      （版本 
+      1
+      ）
+    &lt;/p&gt;
+    &lt;p&gt;
+      Rulebook 正文摘要：
+      &lt;code&gt;
+        037022d8cb9f5520179e242681908c0e5fbf3583ce933fe9681af7f2b022e789
+      &lt;/code&gt;
+    &lt;/p&gt;
+    &lt;p&gt;
+      计划摘要：
+      &lt;code&gt;
+        413225fafbf81355995e6c58084828d96bcf5124a3cd43e4733fd0aca4d80339
+      &lt;/code&gt;
+    &lt;/p&gt;
+    &lt;p&gt;
+      配置摘要：
+      &lt;code&gt;
+        bd53d2bb88b31cd992a48c901fc7b08a46d828c6a583f4fe606c4b7e54182f81
+      &lt;/code&gt;
+    &lt;/p&gt;
+    &lt;p&gt;
+      授权摘要：
+      &lt;code&gt;
+        83598c78e24dce60cca6b29c4e88d61bf050681950673e49ed5b6913ddca01e8
+      &lt;/code&gt;
+    &lt;/p&gt;
+    &lt;p&gt;
+      路由授权摘要：
+      &lt;code&gt;
+        b5446c40be7a90946915d3a8bbfcc98833e129c7a7b43ace078560ef9ae7480a
+      &lt;/code&gt;
+    &lt;/p&gt;
+  &lt;/details&gt;
+  &lt;div
+    class=&quot;approval-confirmation&quot;
+  &gt;
+    &lt;label&gt;
+      &lt;input
+        type=&quot;checkbox&quot;
+      /&gt;
+      我已审阅以上完整授权范围（v2）
+    &lt;/label&gt;
+    &lt;button
+      disabled=&quot;&quot;
+    &gt;
+      确认 v2 授权
+    &lt;/button&gt;
+  &lt;/div&gt;
+&lt;/section&gt;
+ ❯ Object.getElementError frontend/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError frontend/node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError frontend/node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ frontend/node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ frontend/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ .cache/v2-ui-standards/independent.test.tsx:64:24
+            </failure>
+        </testcase>
+        <testcase classname=".cache/v2-ui-standards/independent.test.tsx" name="sends exactly the reviewed v2 identity and does not copy displayed authorization into the command" time="0.1759691">
+        </testcase>
+        <testcase classname=".cache/v2-ui-standards/independent.test.tsx" name="a conflict followed by a failed read revokes approval until the plan is freshly reviewed" time="0.3722801">
+        </testcase>
+        <testcase classname=".cache/v2-ui-standards/independent.test.tsx" name="an uncertain retry preserves the exact body and idempotency key" time="0.225988">
+        </testcase>
+        <testcase classname=".cache/v2-ui-standards/independent.test.tsx" name="late detail from an old project cannot overwrite the newly reviewed project" time="0.1457588">
+        </testcase>
+        <testcase classname=".cache/v2-ui-standards/independent.test.tsx" name="late failed approval from an old login view cannot create an error in the replacement view" time="0.2423853">
+        </testcase>
+        <testcase classname=".cache/v2-ui-standards/independent.test.tsx" name="switching Run and returning never retains the earlier review checkbox" time="0.2920158">
+        </testcase>
+        <testcase classname=".cache/v2-ui-standards/independent.test.tsx" name="incomplete authority is non-actionable: missing-routing-digest" time="0.0776939">
+        </testcase>
+        <testcase classname=".cache/v2-ui-standards/independent.test.tsx" name="incomplete authority is non-actionable: unknown-version" time="0.0632267">
+        </testcase>
+        <testcase classname=".cache/v2-ui-standards/independent.test.tsx" name="incomplete authority is non-actionable: foreign-policy-owner" time="0.0772827">
+        </testcase>
+    </testsuite>
+</testsuites>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { NewRunForm } from "./NewRunForm";
+import { readRoutingScope, RoutingAuthorization } from "./RoutingAuthorization";
 
 export type RunProject = {
   id: string;
@@ -9,6 +10,8 @@ export type RunProject = {
   configuration: { status: string; digest?: string | null };
 };
 type Plan = {
+  routing_digest?: string;
+  routing_binding?: unknown;
   term: number;
   plan_revision: number;
   plan_digest: string;
@@ -39,6 +42,7 @@ type Plan = {
   };
 };
 type Run = {
+  schema_version?: string;
   id: string;
   requirement: { goal: string; acceptance: string[] };
   commander: { term: number; principal: string };
@@ -81,6 +85,18 @@ export function ProjectRuns({
   project: RunProject;
   csrf: string;
 }) {
+  return (
+    <RunWorkbench key={`${csrf}:${project.id}`} project={project} csrf={csrf} />
+  );
+}
+
+function RunWorkbench({
+  project,
+  csrf,
+}: {
+  project: RunProject;
+  csrf: string;
+}) {
   const [runs, setRuns] = useState<Run[]>([]);
   const [loadingRuns, setLoadingRuns] = useState(true);
   const [selected, setSelected] = useState<Run | null>(null);
@@ -88,10 +104,16 @@ export function ProjectRuns({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+  const [reviewEpoch, setReviewEpoch] = useState(0);
   const command = useRef<{ identity: string; key: string } | null>(null);
+  const reading = useRef(0);
+  const sending = useRef(false);
+  const lifetime = useRef({ active: true });
 
   useEffect(() => {
     let active = true;
+    const session = { active: true };
+    lifetime.current = session;
     setSelected(null);
     setLoadingRuns(true);
     setRuns([]);
@@ -111,26 +133,63 @@ export function ProjectRuns({
       });
     return () => {
       active = false;
+      session.active = false;
+      reading.current += 1;
     };
   }, [project.id]);
 
   async function openRun(id: string) {
+    const generation = ++reading.current;
+    const session = lifetime.current;
+    const current = () => session.active && reading.current === generation;
+    // A read invalidates the previous decision even if the replacement read fails.
+    setSelected(null);
+    setReviewEpoch(generation);
     setBusy(true);
     setError("");
     setNotice("");
     try {
       const response = await fetch(`/v1/runs/${encodeURIComponent(id)}`);
       if (!response.ok) throw new Error("无法读取当前计划，请重试。");
-      setSelected(await response.json());
+      const result = await response.json();
+      if (!current()) return false;
+      if (
+        result.id !== id ||
+        (result.project_id !== undefined && result.project_id !== project.id)
+      )
+        throw new Error("计划与当前项目不一致，请重新打开需求。");
+      setSelected(result);
+      return true;
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "无法读取计划。");
+      if (current())
+        setError(cause instanceof Error ? cause.message : "无法读取计划。");
+      return false;
     } finally {
-      setBusy(false);
+      if (current()) setBusy(false);
     }
   }
 
   async function approvePlan(plan: Plan) {
+    if (!selected) return;
+    const versionTwo = selected.schema_version === "karajan.run-planning.v2";
+    const scope = versionTwo
+      ? readRoutingScope(selected, plan, project.id)
+      : null;
+    if (
+      versionTwo
+        ? !scope
+        : selected.schema_version !== "karajan.run-planning.v1" ||
+          plan.routing_binding !== undefined ||
+          plan.routing_digest !== undefined
+    )
+      return;
     const payload = {
+      ...(scope
+        ? {
+            schema_version: "karajan.approve-plan.v2",
+            routing_digest: scope.digest,
+          }
+        : {}),
       term: plan.term,
       plan_revision: plan.plan_revision,
       plan_digest: plan.plan_digest,
@@ -140,7 +199,9 @@ export function ProjectRuns({
     await decide(
       "plan-approval",
       payload,
-      "计划已确认；执行仍需满足运行资格。",
+      versionTwo
+        ? "v2 授权已确认；尚未启用实际派发。"
+        : "计划已确认；执行仍需满足运行资格。",
     );
   }
 
@@ -163,7 +224,10 @@ export function ProjectRuns({
   }
 
   async function decide(action: string, payload: object, success: string) {
-    if (!selected) return;
+    if (!selected || sending.current) return;
+    sending.current = true;
+    const session = lifetime.current;
+    const generation = reading.current;
     setBusy(true);
     setError("");
     setNotice("");
@@ -181,27 +245,60 @@ export function ProjectRuns({
           "Idempotency-Key": command.current.key,
         },
       });
+      if (!session.active || reading.current !== generation) return;
       if (response.status === 409) {
-        await openRun(selected.id);
+        const reason = await response.json().catch(() => ({}));
+        const refreshed = await openRun(selected.id);
         command.current = null;
+        if (!refreshed)
+          throw new Error(
+            "方案已有变化，当前版本尚未读取成功；暂不能确认，请重新打开需求。",
+          );
+        if (reason.reason_code === "RUN_PROTOCOL_VERSION_MISMATCH")
+          throw new Error(
+            "授权协议与计划不匹配，已重新读取。请核对当前版本后再决定。",
+          );
         throw new Error("方案已有变化，已重新读取。请审阅当前版本后再决定。");
       }
+      if (response.status === 422) {
+        await openRun(selected.id);
+        command.current = null;
+        throw new Error(
+          "授权请求未被接受，请核对重新读取的版本与范围后再决定。",
+        );
+      }
       if (!response.ok) throw new Error("尚未确认批准结果，可重试同一操作。");
-      await openRun(selected.id);
+      const refreshed = await openRun(selected.id);
       command.current = null;
-      setNotice(success);
+      if (session.active)
+        setNotice(
+          refreshed
+            ? success
+            : "决定已保存，但当前计划尚未读取成功。请重新打开需求。",
+        );
     } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : "尚未确认批准结果，可重试同一操作。",
-      );
+      if (session.active)
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : "尚未确认批准结果，可重试同一操作。",
+        );
     } finally {
-      setBusy(false);
+      sending.current = false;
+      if (session.active) setBusy(false);
     }
   }
 
   const plan = selected?.plans.at(-1);
+  const versionTwo = selected?.schema_version === "karajan.run-planning.v2";
+  const versionOne =
+    selected?.schema_version === "karajan.run-planning.v1" &&
+    plan?.routing_binding === undefined &&
+    plan?.routing_digest === undefined;
+  const routingScope =
+    selected && plan && versionTwo
+      ? readRoutingScope(selected, plan, project.id)
+      : null;
   const budget =
     selected?.configuration_snapshot?.configuration.resources.budgets.find(
       (item) => item.id === plan?.plan.authorization.budget_ref,
@@ -358,77 +455,112 @@ export function ProjectRuns({
                 </p>
               )}
               <p>{plan.plan.summary}</p>
-              <section className="preview-result">
-                <h4>本次授权范围</h4>
-                <p>允许读取：{plan.plan.authorization.read_paths.join("、")}</p>
-                <p>
-                  允许修改：
-                  {plan.plan.authorization.write_paths.join("、") || "无"}
-                </p>
-                <p>
-                  允许的模型配置：
-                  {plan.plan.authorization.profile_refs
-                    .map((ref) => `${ref.id}（版本 ${ref.revision}）`)
-                    .join("、")}
-                </p>
-                <p>
-                  必需检查：
-                  {plan.plan.authorization.checks
-                    .map((check) =>
-                      check === "independent_review" ? "独立审查" : check,
-                    )
-                    .join("、")}
-                </p>
-                <p>
-                  交付：
-                  {plan.plan.authorization.delivery === "pull_request"
-                    ? `向 ${plan.plan.authorization.target_branch} 创建 PR；合并由你决定`
-                    : "暂不交付 PR"}
-                </p>
-                {budget ? (
-                  <p>
-                    预算上限：
-                    {Object.entries(budget.currency_limits)
-                      .map(
-                        ([currency, value]) =>
-                          `${currency} ${value ?? "未确定"}`,
-                      )
-                      .join("，")}
-                    ；{budget.max_total_attempts} 次尝试、
-                    {budget.max_duration_seconds} 秒。
-                  </p>
+              {versionTwo ? (
+                routingScope ? (
+                  <RoutingAuthorization
+                    key={`${selected.id}:${plan.plan_digest}:${plan.routing_digest}:${reviewEpoch}`}
+                    scope={routingScope}
+                    busy={busy}
+                    canApprove={
+                      selected.active_plan_revision !== plan.plan_revision &&
+                      plan.term === selected.commander.term &&
+                      !!budget
+                    }
+                    onApprove={() => void approvePlan(plan)}
+                  />
                 ) : (
-                  <p>尚未取得这份计划的固定预算，暂不能确认。</p>
-                )}
-              </section>
-              <div className="project-grid">
-                {plan.plan.tasks.map((task) => (
-                  <article key={task.id} className="project-card">
-                    <h4>{task.id}</h4>
-                    <span>
-                      {task.role === "worker"
-                        ? "实现"
-                        : task.role === "reviewer"
-                          ? "审查"
-                          : "规划"}{" "}
-                      · {task.complexity}
-                      {task.risk === "critical" ? " · 高风险" : ""}
-                    </span>
+                  <p role="alert" className="notice error">
+                    v2
+                    授权材料不完整或固定版本不一致，暂不能确认。请重新读取计划。
+                  </p>
+                )
+              ) : !versionOne ? (
+                <p role="alert" className="notice error">
+                  无法识别这份计划的授权协议，暂不能确认。
+                </p>
+              ) : (
+                <p className="field-help">授权协议 v1 · 原有计划范围</p>
+              )}
+              {!versionTwo && (
+                <>
+                  <section className="preview-result">
+                    <h4>本次授权范围</h4>
                     <p>
-                      {task.required ? "必需任务" : "可选任务"}
-                      {task.readiness === "T0" ? " · 仍待澄清，不能执行" : ""}
+                      允许读取：{plan.plan.authorization.read_paths.join("、")}
                     </p>
-                    <p>前置任务：{task.depends_on.join("、") || "无"}</p>
-                    <p>{task.paths.join("、")}</p>
-                    <ul>
-                      {task.acceptance.map((item, index) => (
-                        <li key={index}>{item}</li>
-                      ))}
-                    </ul>
-                  </article>
-                ))}
-              </div>
-              {selected.active_plan_revision !== plan.plan_revision &&
+                    <p>
+                      允许修改：
+                      {plan.plan.authorization.write_paths.join("、") || "无"}
+                    </p>
+                    <p>
+                      允许的模型配置：
+                      {plan.plan.authorization.profile_refs
+                        .map((ref) => `${ref.id}（版本 ${ref.revision}）`)
+                        .join("、")}
+                    </p>
+                    <p>
+                      必需检查：
+                      {plan.plan.authorization.checks
+                        .map((check) =>
+                          check === "independent_review" ? "独立审查" : check,
+                        )
+                        .join("、")}
+                    </p>
+                    <p>
+                      交付：
+                      {plan.plan.authorization.delivery === "pull_request"
+                        ? `向 ${plan.plan.authorization.target_branch} 创建 PR；合并由你决定`
+                        : "暂不交付 PR"}
+                    </p>
+                    {budget ? (
+                      <p>
+                        预算上限：
+                        {Object.entries(budget.currency_limits)
+                          .map(
+                            ([currency, value]) =>
+                              `${currency} ${value ?? "未确定"}`,
+                          )
+                          .join("，")}
+                        ；{budget.max_total_attempts} 次尝试、
+                        {budget.max_duration_seconds} 秒。
+                      </p>
+                    ) : (
+                      <p>尚未取得这份计划的固定预算，暂不能确认。</p>
+                    )}
+                  </section>
+                  <div className="project-grid">
+                    {plan.plan.tasks.map((task) => (
+                      <article key={task.id} className="project-card">
+                        <h4>{task.id}</h4>
+                        <span>
+                          {task.role === "worker"
+                            ? "实现"
+                            : task.role === "reviewer"
+                              ? "审查"
+                              : "规划"}{" "}
+                          · {task.complexity}
+                          {task.risk === "critical" ? " · 高风险" : ""}
+                        </span>
+                        <p>
+                          {task.required ? "必需任务" : "可选任务"}
+                          {task.readiness === "T0"
+                            ? " · 仍待澄清，不能执行"
+                            : ""}
+                        </p>
+                        <p>前置任务：{task.depends_on.join("、") || "无"}</p>
+                        <p>{task.paths.join("、")}</p>
+                        <ul>
+                          {task.acceptance.map((item, index) => (
+                            <li key={index}>{item}</li>
+                          ))}
+                        </ul>
+                      </article>
+                    ))}
+                  </div>
+                </>
+              )}
+              {versionOne &&
+                selected.active_plan_revision !== plan.plan_revision &&
                 plan.term === selected.commander.term &&
                 budget && (
                   <button
@@ -443,6 +575,11 @@ export function ProjectRuns({
             <p className="muted">需求已保存，尚未收到 Commander 的计划。</p>
           )}
         </article>
+      )}
+      {busy && !selected && (
+        <p role="status" className="muted">
+          正在读取当前计划…
+        </p>
       )}
       {notice && (
         <p role="status" className="notice success">

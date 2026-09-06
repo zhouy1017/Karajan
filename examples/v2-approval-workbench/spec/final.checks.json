@@ -1,0 +1,40 @@
+[
+  {
+    "command": [
+      "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+      "-m",
+      "ruff",
+      "check",
+      "examples\\v2-approval-workbench\\spec"
+    ],
+    "exit_code": 0,
+    "stdout": "All checks passed!\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+      "-m",
+      "ruff",
+      "format",
+      "--check",
+      "examples\\v2-approval-workbench\\spec"
+    ],
+    "exit_code": 0,
+    "stdout": "3 files already formatted\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "node",
+      "frontend/node_modules/prettier/bin/prettier.cjs",
+      "--check",
+      "examples\\v2-approval-workbench\\spec\\workbench.test.ts",
+      "examples\\v2-approval-workbench\\spec\\vitest.config.mts",
+      "examples\\v2-approval-workbench\\spec\\README.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+    "stderr": ""
+  }
+]

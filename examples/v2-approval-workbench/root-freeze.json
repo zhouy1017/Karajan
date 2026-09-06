@@ -1,0 +1,194 @@
+{
+  "schema_version": "karajan.v2-ui-staged-freeze.v1",
+  "captured_at": "2026-09-06T04:44:06.664741+00:00",
+  "base_commit": "8329a1e028d53c6da5598f620c37aa8a2c62f0f2",
+  "branch": "codex/m3-v2-approval-workbench",
+  "bindings": {
+    "README.md": {
+      "sha256": "d31343f1d6cbcc4fb3c97898757b86f48abdb4607dadd1ee00b3f1e64a698e71",
+      "size": 5796
+    },
+    "docs/implementation/m3-v2-approval-workbench.md": {
+      "sha256": "800dc6df77a4f03b11bb324f2ac77bb987a490f255c7c0b9b13c1de5b120fdf6",
+      "size": 4408
+    },
+    "examples/v2-approval-workbench/.gitattributes": {
+      "sha256": "23d4abd827a2da55eb093f3a682ec89e64ece71a5013ea3b92be3583bb7503dc",
+      "size": 164
+    },
+    "examples/v2-approval-workbench/README.md": {
+      "sha256": "afe8f21c432826de174e59f0a4f6ab35b347bb397a97fbc6ba7abd6a363a1704",
+      "size": 2247
+    },
+    "examples/v2-approval-workbench/author-freeze.json": {
+      "sha256": "4275d4744ec04d2496de07afcec6c9f2aaeb6bd236fb8697c43d94d2f00fe34a",
+      "size": 4669
+    },
+    "examples/v2-approval-workbench/author-frontend.final.junit.xml": {
+      "sha256": "ad2ed126b80a62dcd1cf283dde876f613b46ae62e4af9ce64f8088a9a4c75968",
+      "size": 27769
+    },
+    "examples/v2-approval-workbench/author-frontend.review-fix.junit.xml": {
+      "sha256": "0b03c94ad0f2a4d5cca6bb4bb24794b2dd2070a5f3c46009a7b76aea99454835",
+      "size": 27949
+    },
+    "examples/v2-approval-workbench/author-scope.before.junit.xml": {
+      "sha256": "8dc38a844271624494ad634fd60b107dbee367c028bd130cfc21877c80824f14",
+      "size": 15503
+    },
+    "examples/v2-approval-workbench/author-stale.before.junit.xml": {
+      "sha256": "2a3e7c9eabb502ee3e011abce87e1b2589b44648b46a78e16f561baec4e63ed6",
+      "size": 1046
+    },
+    "examples/v2-approval-workbench/author-web.final.junit.xml": {
+      "sha256": "df92bd6e70b2a24a893e476d2505b7a77ef5d01c7138d68de467bb73d2b462f0",
+      "size": 17024
+    },
+    "examples/v2-approval-workbench/root-browser-initial.json": {
+      "sha256": "bd173e98794676452b6779f68454265539c17e685c1c0349542523835bbee6ef",
+      "size": 3857
+    },
+    "examples/v2-approval-workbench/root-browser-quantity.json": {
+      "sha256": "b9b2da0a39875157b4f5823ef9c8bac8c26d93aed01dfa1fcf150861b78fbc1f",
+      "size": 2739
+    },
+    "examples/v2-approval-workbench/spec/README.md": {
+      "sha256": "6801b8412769307873e0553a9adb65b5917f768dc42df8fb7cbb352c803ea3b5",
+      "size": 3856
+    },
+    "examples/v2-approval-workbench/spec/final.checks.json": {
+      "sha256": "df4a283326e60180e005caaa119e579ecbcf9287df15469e0250a3ac0f4fdac6",
+      "size": 1041
+    },
+    "examples/v2-approval-workbench/spec/final.http.junit.xml": {
+      "sha256": "c841331e6a8723ad3e6db62b156822960dd91802a65570245f83f53ce811664d",
+      "size": 2229
+    },
+    "examples/v2-approval-workbench/spec/final.source.json": {
+      "sha256": "d9a5a93998d89a0051ab9b39d42888e1774da4b908a69594f7137584ef3278bc",
+      "size": 1080
+    },
+    "examples/v2-approval-workbench/spec/final.ui.junit.xml": {
+      "sha256": "ad340f761009ec8e6267fa58376c78394e1173f8d02e7aa26e93bf8e959516e4",
+      "size": 3269
+    },
+    "examples/v2-approval-workbench/spec/inputs/valid-view.json": {
+      "sha256": "5d7223b1c735c8d045201ccbda9eb80dfe55137ae9a131093bb1ba37352f99e1",
+      "size": 51647
+    },
+    "examples/v2-approval-workbench/spec/pre-publication.http.junit.xml": {
+      "sha256": "67c37d377dcb88c08925ab61657a86432c19ae7549bc18f96470726ec911ee95",
+      "size": 2013
+    },
+    "examples/v2-approval-workbench/spec/pre-publication.source.json": {
+      "sha256": "d4637978dd0b70ade71c6b6d24c47f5d2435a7b1c281d01fc25e567bb5d3d883",
+      "size": 1080
+    },
+    "examples/v2-approval-workbench/spec/pre-publication.ui.junit.xml": {
+      "sha256": "65b06e03bf14c19529f775243d13d19ed9af27c7169cc9f1f72aba113e9bb408",
+      "size": 2998
+    },
+    "examples/v2-approval-workbench/spec/review.json": {
+      "sha256": "7eb9056dd88ef56d53d81b53453e4ab47d792b0768873349af3ca2564225c860",
+      "size": 5739
+    },
+    "examples/v2-approval-workbench/spec/seed.py": {
+      "sha256": "a8e2afab4abc448917832f9a154b82906be4e51112fd48724b7576c567f35c22",
+      "size": 12363
+    },
+    "examples/v2-approval-workbench/spec/test_http.py": {
+      "sha256": "ca518eec5f5df3172588d1e7919450ca631c95e1929852301ebb709f6f207efe",
+      "size": 8475
+    },
+    "examples/v2-approval-workbench/spec/vitest.config.mts": {
+      "sha256": "91013de5b6e82e0897b4d34de1eff87d320cda3a586395f8289924c439334f2b",
+      "size": 464
+    },
+    "examples/v2-approval-workbench/spec/workbench.test.ts": {
+      "sha256": "39b03f939b4a4f5747dc68b1f5f2eee22e0d8116b0cc842fb596fd71034435e9",
+      "size": 9597
+    },
+    "examples/v2-approval-workbench/standards/README.md": {
+      "sha256": "d9551094a1006380ec4b057ac29336ea9d6f2ef240f8b1837ab676955fb75a12",
+      "size": 3055
+    },
+    "examples/v2-approval-workbench/standards/independent.test.tsx": {
+      "sha256": "4a4a240fb327a59c1c15047eedd8ce6925ab6954439008a522c2b88fa7bd60c1",
+      "size": 10655
+    },
+    "examples/v2-approval-workbench/standards/quantity-before.junit.xml": {
+      "sha256": "86812b52b4b1c5c64771bb355baed45ce3c1a6743c15bf1836dd6b0a4b7c42e1",
+      "size": 11216
+    },
+    "examples/v2-approval-workbench/standards/quantity-view.json": {
+      "sha256": "a74509ca1c9c9c087a194dd9dc25b46d83aeb84c5c28d386d3b88c12ba3c3d02",
+      "size": 38184
+    },
+    "examples/v2-approval-workbench/standards/review-final.json": {
+      "sha256": "d9de952b016c5697859f1723ee6c98523164746607c683fba4b554350506c61b",
+      "size": 4375
+    },
+    "examples/v2-approval-workbench/standards/standards-before.junit.xml": {
+      "sha256": "c3bcb4f9c55f03b192ea0a873145fcd582b2a71ae5a2548ac5584b57df3b1851",
+      "size": 33254
+    },
+    "examples/v2-approval-workbench/standards/standards-final.junit.xml": {
+      "sha256": "62e9dc1aa25e666488921f2bc1efa6042d698b5bb96e054d83f58e72301b8206",
+      "size": 2710
+    },
+    "examples/v2-approval-workbench/standards/standards-initial.json": {
+      "sha256": "d69bd0381893b1d65ba7c100ae61d02c80992270d796aae21c66fd184abe49e5",
+      "size": 2605
+    },
+    "examples/v2-approval-workbench/standards/valid-view.json": {
+      "sha256": "e93b43b65e7837d575cc9030f4f59f66812f6461773195d558787d672d6a0bab",
+      "size": 30285
+    },
+    "examples/v2-approval-workbench/standards/vitest.config.mjs": {
+      "sha256": "9a90a6f5ec7a35a7ec1923aef5ed3c1dff392a6aa437b9067744cdb4b764e5fc",
+      "size": 877
+    },
+    "frontend/src/ProjectRuns.test.tsx": {
+      "sha256": "e526df82fa980cefb9c5f715a0b766ef16dbc820575ac4672c7bdc9a78731eae",
+      "size": 9630
+    },
+    "frontend/src/ProjectRuns.tsx": {
+      "sha256": "ef49cb9feda8b84e5fe02bc08885ac77b2dc867ac3bf0d04c945df24699a2849",
+      "size": 20678
+    },
+    "frontend/src/ProjectRuns.v2.test.tsx": {
+      "sha256": "5fefbe4f84f5e02e8c92ccb15331863db1d73a549e7280e693769c2df0d2f818",
+      "size": 19579
+    },
+    "frontend/src/RoutingAuthorization.tsx": {
+      "sha256": "2136f41abb5ee40df4549bf1913cba4a70551d55a78ad4756f91666a6942ce49",
+      "size": 22275
+    },
+    "frontend/src/styles.css": {
+      "sha256": "296e7bbdb8ee0bc47d925ec6decd710ac75568e49d345cc73e707443af1c02e8",
+      "size": 6833
+    },
+    "tests/web/test_v2_approval_workbench.py": {
+      "sha256": "90519bea1b940fa66ad41814f5fe4d2302d6918b34a956ec293dcc19ecc68aa8",
+      "size": 9550
+    }
+  },
+  "source_and_index_identical": true,
+  "author_and_final_spec_sources_match": true,
+  "verification": {
+    "author_frontend_passed": 153,
+    "author_web_passed": 65,
+    "independent_spec_http_passed": 12,
+    "independent_spec_component_passed": 14,
+    "independent_standards_component_passed": 11,
+    "remaining_review_findings": 0,
+    "root_ruff": "passed",
+    "root_mypy_sources": 92,
+    "browser": [
+      "root-browser-initial.json",
+      "root-browser-quantity.json"
+    ]
+  },
+  "scope": "Existing v2 plan review and exact approval; v1 create/approve retained. No runtime qualification or actual dispatch.",
+  "ci": "not_run_for_this_uncommitted_slice"
+}
