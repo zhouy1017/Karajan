@@ -1,0 +1,83 @@
+"""Deterministic replay of retained clock facts through the public fixed suite.
+
+Uses the real frozen source descriptor and SQLite journal. The observer is an
+explicit no-effects sentinel, allowing the test to distinguish a start rejection
+from an observer failure without launching native OpenCode or contacting a provider.
+"""
+
+import json
+import os
+import sys
+from pathlib import Path
+
+import pytest
+from karajan.adapters.opencode.go_journal import GoCallJournal
+from karajan.projects.go_suite import FixedGoSuite
+from test_go_suite import credential, execution_start
+
+pytestmark = pytest.mark.skipif(
+    sys.platform != "linux", reason="Fixed source descriptor uses Linux"
+)
+
+
+class ObserverReached(Exception):
+    pass
+
+
+@pytest.mark.parametrize("rollback", [True, False], ids=["retained-rollback", "stable-control"])
+def test_post_grant_start_check_distinguishes_rollback_from_observer_failure(
+    tmp_path, monkeypatch, rollback
+):
+    facts = json.loads(Path(__file__).with_name("report.json").read_text())
+    artifact = Path(os.environ.get("KARAJAN_OPENCODE_LINUX_BINARY", facts["runtime_artifact"]))
+    if not artifact.is_file():
+        if os.environ.get("KARAJAN_REQUIRE_OPENCODE_ISOLATION") == "1":
+            pytest.fail("Prepared fixed native artifact required for source hashing")
+        pytest.skip("Prepared fixed native artifact unavailable for source hashing")
+    started = facts["original"]["derived_started_at"]
+    created = facts["original"]["grants"][0]["created_at"]
+    next_validation = created + 0.01 if rollback else started + 0.02
+    validations = iter((started + 0.01, next_validation))
+    journal = GoCallJournal(tmp_path / "journal.sqlite", clock=lambda: next_validation)
+    observer_calls = []
+
+    def observer(*args, **kwargs):
+        observer_calls.append(True)
+        raise ObserverReached()
+
+    monkeypatch.setattr("karajan.projects.go_suite.observe_go_tools", observer)
+    suite = FixedGoSuite(
+        artifact,
+        tmp_path,
+        journal,
+        client_factory=lambda: None,
+        clock=lambda: next(validations),
+    )
+    start = execution_start(suite)
+    start["started_at"] = started
+    start["expires_at"] = started + 420
+    start["authentication_source"]["registered_at"] = started - 1
+    for scenario in start["scenarios"]:
+        scenario["grant_binding"]["expires_at"] = start["expires_at"]
+
+    result = suite.observe(start, credential())
+
+    assert result["status"] == "failed"
+    assert result["reason_codes"] == ["FIXED_SUITE_EXECUTION_FAILED"]
+    assert result["error_type"] == ("ValueError" if rollback else "ObserverReached")
+    assert [row["status"] for row in result["scenarios"]] == [
+        "not_run" if rollback else "failed",
+        "not_run",
+    ]
+    assert observer_calls == ([] if rollback else [True])
+    assert result["grant_cleanup"] == [
+        {"grant_id": "grant-edit", "state": "revoked"},
+        {"grant_id": "grant-denied_read", "state": "revoked"},
+    ]
+    for name in ("grant-edit", "grant-denied_read"):
+        saved = journal.snapshot(name)
+        assert saved["state"] == "revoked"
+        assert saved["request_count"] == 0
+    assert all(
+        not list(directory.iterdir()) for directory in tmp_path.glob("s*") if directory.is_dir()
+    )

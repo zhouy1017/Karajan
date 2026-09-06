@@ -65,6 +65,7 @@ def go_runtime_source(runtime: Path) -> dict[str, Any]:
         Path(__file__).with_name("_opencode_namespace.py"),
         Path(__file__).with_name("_opencode_inner.py"),
         Path(__file__).with_name("_opencode_projection.py"),
+        Path(__file__).with_name("_opencode_capture.py"),
         Path(__file__).with_name("_namespace.py"),
         Path(__file__).parents[1] / "adapters/opencode/go_relay.py",
         Path(__file__).parents[1] / "adapters/opencode/go_journal.py",
@@ -106,9 +107,13 @@ def observe_go_tools(
     if scenario not in PROMPTS:
         raise ValueError("FIXED_SCENARIO_REQUIRED")
     initial = authorization.journal.snapshot(authorization.grant_id)
-    if "subject" in initial["binding"] or "qualification_id" not in initial["binding"]:
-        # A Task grant does not authorize this fixed qualification producer,
-        # even if the caller presents a fabricated qualification-shaped binding.
+    if (
+        "subject" in initial["binding"]
+        or "schema_version" in initial["binding"]
+        or "qualification_id" not in initial["binding"]
+    ):
+        # Task and versioned qualification grants do not authorize this legacy
+        # producer, even when presented as a fabricated legacy-shaped binding.
         raise ValueError("QUALIFICATION_GRANT_REQUIRED")
     if (
         initial["state"] != "active"

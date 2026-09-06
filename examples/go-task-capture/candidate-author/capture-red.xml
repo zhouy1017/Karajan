@@ -1,0 +1,633 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="15" skipped="0" tests="15" time="10.705" timestamp="2026-09-06T18:55:14.294666+08:00" hostname="ProArt-Zhou"><testcase classname="tests.candidates.test_projected_capture" name="test_projected_change_restores_full_baseline_and_waits_for_validation" time="0.734"><failure message="AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'">registered = (&lt;karajan.candidates.store.CandidateStore object at 0x000002713D8DBFB0&gt;, {'repository_identity': 'baseline-fixture', '... 'docs/untouched.md': b'Preserve this unprojected file.\n', 'data/bytes.bin': b'\x00\xff\x80\r\n', '.empty': b'', ...})
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-716/test_projected_change_restores0')
+
+    def test_projected_change_restores_full_baseline_and_waits_for_validation(registered, tmp_path):
+        store, baseline, files = registered
+        projection, contents, request = inputs(baseline, files)
+        (tmp_path / "trusted").rename(tmp_path / "old-source")
+&gt;       result = store.freeze_projection(projection, contents, request)
+                 ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'
+
+tests\candidates\test_projected_capture.py:42: AttributeError</failure></testcase><testcase classname="tests.candidates.test_projected_capture" name="test_invalid_projection_never_commits_candidate[readonly]" time="0.724"><failure message="AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'">registered = (&lt;karajan.candidates.store.CandidateStore object at 0x000002713D89C470&gt;, {'repository_identity': 'baseline-fixture', '... 'docs/untouched.md': b'Preserve this unprojected file.\n', 'data/bytes.bin': b'\x00\xff\x80\r\n', '.empty': b'', ...})
+fault = 'readonly'
+
+    @pytest.mark.parametrize("fault", [
+        "readonly", "missing", "extra", "new", "baseline_hash", "outside", "write_scope",
+        "empty", "wrong_content_type", "large", "not_stopped", "wrong_fence", "invalid_policy",
+    ])
+    def test_invalid_projection_never_commits_candidate(registered, fault):
+        store, baseline, files = registered
+        projection, contents, request = inputs(baseline, files)
+        expected = "PROJECTION_"
+        if fault == "readonly":
+            contents["docs/untouched.md"] = b"unauthorized"
+        elif fault == "missing":
+            contents.pop("src/task.py")
+        elif fault == "extra":
+            contents["other.py"] = b"unauthorized"
+        elif fault == "new":
+            projection[0]["path"] = "new.py"
+            contents["new.py"] = contents.pop("src/task.py")
+        elif fault == "baseline_hash":
+            projection[0]["sha256"] = "0" * 64
+        elif fault == "outside":
+            projection[0]["path"] = "../outside.py"
+        elif fault == "write_scope":
+            request["allowed_paths"] = ["docs/untouched.md"]
+        elif fault == "empty":
+            projection.clear()
+        elif fault == "wrong_content_type":
+            contents["src/task.py"] = "not bytes"
+        elif fault == "large":
+            contents["src/task.py"] = b"x" * (8 * 1024 * 1024 + 1)
+            expected = "SNAPSHOT_LIMIT_EXCEEDED"
+        elif fault == "not_stopped":
+            request["writer"]["stopped"] = False
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "wrong_fence":
+            request["writer"]["fence"] = 2
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "invalid_policy":
+            request["policy"]["checks"] = []
+            expected = "FREEZE_INPUT_INVALID"
+        with pytest.raises(CandidateError, match=expected):
+&gt;           store.freeze_projection(projection, contents, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'
+
+tests\candidates\test_projected_capture.py:100: AttributeError</failure></testcase><testcase classname="tests.candidates.test_projected_capture" name="test_invalid_projection_never_commits_candidate[missing]" time="0.673"><failure message="AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'">registered = (&lt;karajan.candidates.store.CandidateStore object at 0x000002713ACF93A0&gt;, {'repository_identity': 'baseline-fixture', '... 'docs/untouched.md': b'Preserve this unprojected file.\n', 'data/bytes.bin': b'\x00\xff\x80\r\n', '.empty': b'', ...})
+fault = 'missing'
+
+    @pytest.mark.parametrize("fault", [
+        "readonly", "missing", "extra", "new", "baseline_hash", "outside", "write_scope",
+        "empty", "wrong_content_type", "large", "not_stopped", "wrong_fence", "invalid_policy",
+    ])
+    def test_invalid_projection_never_commits_candidate(registered, fault):
+        store, baseline, files = registered
+        projection, contents, request = inputs(baseline, files)
+        expected = "PROJECTION_"
+        if fault == "readonly":
+            contents["docs/untouched.md"] = b"unauthorized"
+        elif fault == "missing":
+            contents.pop("src/task.py")
+        elif fault == "extra":
+            contents["other.py"] = b"unauthorized"
+        elif fault == "new":
+            projection[0]["path"] = "new.py"
+            contents["new.py"] = contents.pop("src/task.py")
+        elif fault == "baseline_hash":
+            projection[0]["sha256"] = "0" * 64
+        elif fault == "outside":
+            projection[0]["path"] = "../outside.py"
+        elif fault == "write_scope":
+            request["allowed_paths"] = ["docs/untouched.md"]
+        elif fault == "empty":
+            projection.clear()
+        elif fault == "wrong_content_type":
+            contents["src/task.py"] = "not bytes"
+        elif fault == "large":
+            contents["src/task.py"] = b"x" * (8 * 1024 * 1024 + 1)
+            expected = "SNAPSHOT_LIMIT_EXCEEDED"
+        elif fault == "not_stopped":
+            request["writer"]["stopped"] = False
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "wrong_fence":
+            request["writer"]["fence"] = 2
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "invalid_policy":
+            request["policy"]["checks"] = []
+            expected = "FREEZE_INPUT_INVALID"
+        with pytest.raises(CandidateError, match=expected):
+&gt;           store.freeze_projection(projection, contents, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'
+
+tests\candidates\test_projected_capture.py:100: AttributeError</failure></testcase><testcase classname="tests.candidates.test_projected_capture" name="test_invalid_projection_never_commits_candidate[extra]" time="0.681"><failure message="AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'">registered = (&lt;karajan.candidates.store.CandidateStore object at 0x000002713D82E630&gt;, {'repository_identity': 'baseline-fixture', '... 'docs/untouched.md': b'Preserve this unprojected file.\n', 'data/bytes.bin': b'\x00\xff\x80\r\n', '.empty': b'', ...})
+fault = 'extra'
+
+    @pytest.mark.parametrize("fault", [
+        "readonly", "missing", "extra", "new", "baseline_hash", "outside", "write_scope",
+        "empty", "wrong_content_type", "large", "not_stopped", "wrong_fence", "invalid_policy",
+    ])
+    def test_invalid_projection_never_commits_candidate(registered, fault):
+        store, baseline, files = registered
+        projection, contents, request = inputs(baseline, files)
+        expected = "PROJECTION_"
+        if fault == "readonly":
+            contents["docs/untouched.md"] = b"unauthorized"
+        elif fault == "missing":
+            contents.pop("src/task.py")
+        elif fault == "extra":
+            contents["other.py"] = b"unauthorized"
+        elif fault == "new":
+            projection[0]["path"] = "new.py"
+            contents["new.py"] = contents.pop("src/task.py")
+        elif fault == "baseline_hash":
+            projection[0]["sha256"] = "0" * 64
+        elif fault == "outside":
+            projection[0]["path"] = "../outside.py"
+        elif fault == "write_scope":
+            request["allowed_paths"] = ["docs/untouched.md"]
+        elif fault == "empty":
+            projection.clear()
+        elif fault == "wrong_content_type":
+            contents["src/task.py"] = "not bytes"
+        elif fault == "large":
+            contents["src/task.py"] = b"x" * (8 * 1024 * 1024 + 1)
+            expected = "SNAPSHOT_LIMIT_EXCEEDED"
+        elif fault == "not_stopped":
+            request["writer"]["stopped"] = False
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "wrong_fence":
+            request["writer"]["fence"] = 2
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "invalid_policy":
+            request["policy"]["checks"] = []
+            expected = "FREEZE_INPUT_INVALID"
+        with pytest.raises(CandidateError, match=expected):
+&gt;           store.freeze_projection(projection, contents, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'
+
+tests\candidates\test_projected_capture.py:100: AttributeError</failure></testcase><testcase classname="tests.candidates.test_projected_capture" name="test_invalid_projection_never_commits_candidate[new]" time="0.698"><failure message="AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'">registered = (&lt;karajan.candidates.store.CandidateStore object at 0x000002713D610470&gt;, {'repository_identity': 'baseline-fixture', '... 'docs/untouched.md': b'Preserve this unprojected file.\n', 'data/bytes.bin': b'\x00\xff\x80\r\n', '.empty': b'', ...})
+fault = 'new'
+
+    @pytest.mark.parametrize("fault", [
+        "readonly", "missing", "extra", "new", "baseline_hash", "outside", "write_scope",
+        "empty", "wrong_content_type", "large", "not_stopped", "wrong_fence", "invalid_policy",
+    ])
+    def test_invalid_projection_never_commits_candidate(registered, fault):
+        store, baseline, files = registered
+        projection, contents, request = inputs(baseline, files)
+        expected = "PROJECTION_"
+        if fault == "readonly":
+            contents["docs/untouched.md"] = b"unauthorized"
+        elif fault == "missing":
+            contents.pop("src/task.py")
+        elif fault == "extra":
+            contents["other.py"] = b"unauthorized"
+        elif fault == "new":
+            projection[0]["path"] = "new.py"
+            contents["new.py"] = contents.pop("src/task.py")
+        elif fault == "baseline_hash":
+            projection[0]["sha256"] = "0" * 64
+        elif fault == "outside":
+            projection[0]["path"] = "../outside.py"
+        elif fault == "write_scope":
+            request["allowed_paths"] = ["docs/untouched.md"]
+        elif fault == "empty":
+            projection.clear()
+        elif fault == "wrong_content_type":
+            contents["src/task.py"] = "not bytes"
+        elif fault == "large":
+            contents["src/task.py"] = b"x" * (8 * 1024 * 1024 + 1)
+            expected = "SNAPSHOT_LIMIT_EXCEEDED"
+        elif fault == "not_stopped":
+            request["writer"]["stopped"] = False
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "wrong_fence":
+            request["writer"]["fence"] = 2
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "invalid_policy":
+            request["policy"]["checks"] = []
+            expected = "FREEZE_INPUT_INVALID"
+        with pytest.raises(CandidateError, match=expected):
+&gt;           store.freeze_projection(projection, contents, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'
+
+tests\candidates\test_projected_capture.py:100: AttributeError</failure></testcase><testcase classname="tests.candidates.test_projected_capture" name="test_invalid_projection_never_commits_candidate[baseline_hash]" time="0.702"><failure message="AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'">registered = (&lt;karajan.candidates.store.CandidateStore object at 0x000002713D8D97C0&gt;, {'repository_identity': 'baseline-fixture', '... 'docs/untouched.md': b'Preserve this unprojected file.\n', 'data/bytes.bin': b'\x00\xff\x80\r\n', '.empty': b'', ...})
+fault = 'baseline_hash'
+
+    @pytest.mark.parametrize("fault", [
+        "readonly", "missing", "extra", "new", "baseline_hash", "outside", "write_scope",
+        "empty", "wrong_content_type", "large", "not_stopped", "wrong_fence", "invalid_policy",
+    ])
+    def test_invalid_projection_never_commits_candidate(registered, fault):
+        store, baseline, files = registered
+        projection, contents, request = inputs(baseline, files)
+        expected = "PROJECTION_"
+        if fault == "readonly":
+            contents["docs/untouched.md"] = b"unauthorized"
+        elif fault == "missing":
+            contents.pop("src/task.py")
+        elif fault == "extra":
+            contents["other.py"] = b"unauthorized"
+        elif fault == "new":
+            projection[0]["path"] = "new.py"
+            contents["new.py"] = contents.pop("src/task.py")
+        elif fault == "baseline_hash":
+            projection[0]["sha256"] = "0" * 64
+        elif fault == "outside":
+            projection[0]["path"] = "../outside.py"
+        elif fault == "write_scope":
+            request["allowed_paths"] = ["docs/untouched.md"]
+        elif fault == "empty":
+            projection.clear()
+        elif fault == "wrong_content_type":
+            contents["src/task.py"] = "not bytes"
+        elif fault == "large":
+            contents["src/task.py"] = b"x" * (8 * 1024 * 1024 + 1)
+            expected = "SNAPSHOT_LIMIT_EXCEEDED"
+        elif fault == "not_stopped":
+            request["writer"]["stopped"] = False
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "wrong_fence":
+            request["writer"]["fence"] = 2
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "invalid_policy":
+            request["policy"]["checks"] = []
+            expected = "FREEZE_INPUT_INVALID"
+        with pytest.raises(CandidateError, match=expected):
+&gt;           store.freeze_projection(projection, contents, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'
+
+tests\candidates\test_projected_capture.py:100: AttributeError</failure></testcase><testcase classname="tests.candidates.test_projected_capture" name="test_invalid_projection_never_commits_candidate[outside]" time="0.766"><failure message="AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'">registered = (&lt;karajan.candidates.store.CandidateStore object at 0x000002713D92C350&gt;, {'repository_identity': 'baseline-fixture', '... 'docs/untouched.md': b'Preserve this unprojected file.\n', 'data/bytes.bin': b'\x00\xff\x80\r\n', '.empty': b'', ...})
+fault = 'outside'
+
+    @pytest.mark.parametrize("fault", [
+        "readonly", "missing", "extra", "new", "baseline_hash", "outside", "write_scope",
+        "empty", "wrong_content_type", "large", "not_stopped", "wrong_fence", "invalid_policy",
+    ])
+    def test_invalid_projection_never_commits_candidate(registered, fault):
+        store, baseline, files = registered
+        projection, contents, request = inputs(baseline, files)
+        expected = "PROJECTION_"
+        if fault == "readonly":
+            contents["docs/untouched.md"] = b"unauthorized"
+        elif fault == "missing":
+            contents.pop("src/task.py")
+        elif fault == "extra":
+            contents["other.py"] = b"unauthorized"
+        elif fault == "new":
+            projection[0]["path"] = "new.py"
+            contents["new.py"] = contents.pop("src/task.py")
+        elif fault == "baseline_hash":
+            projection[0]["sha256"] = "0" * 64
+        elif fault == "outside":
+            projection[0]["path"] = "../outside.py"
+        elif fault == "write_scope":
+            request["allowed_paths"] = ["docs/untouched.md"]
+        elif fault == "empty":
+            projection.clear()
+        elif fault == "wrong_content_type":
+            contents["src/task.py"] = "not bytes"
+        elif fault == "large":
+            contents["src/task.py"] = b"x" * (8 * 1024 * 1024 + 1)
+            expected = "SNAPSHOT_LIMIT_EXCEEDED"
+        elif fault == "not_stopped":
+            request["writer"]["stopped"] = False
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "wrong_fence":
+            request["writer"]["fence"] = 2
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "invalid_policy":
+            request["policy"]["checks"] = []
+            expected = "FREEZE_INPUT_INVALID"
+        with pytest.raises(CandidateError, match=expected):
+&gt;           store.freeze_projection(projection, contents, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'
+
+tests\candidates\test_projected_capture.py:100: AttributeError</failure></testcase><testcase classname="tests.candidates.test_projected_capture" name="test_invalid_projection_never_commits_candidate[write_scope]" time="0.691"><failure message="AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'">registered = (&lt;karajan.candidates.store.CandidateStore object at 0x000002713D948C80&gt;, {'repository_identity': 'baseline-fixture', '... 'docs/untouched.md': b'Preserve this unprojected file.\n', 'data/bytes.bin': b'\x00\xff\x80\r\n', '.empty': b'', ...})
+fault = 'write_scope'
+
+    @pytest.mark.parametrize("fault", [
+        "readonly", "missing", "extra", "new", "baseline_hash", "outside", "write_scope",
+        "empty", "wrong_content_type", "large", "not_stopped", "wrong_fence", "invalid_policy",
+    ])
+    def test_invalid_projection_never_commits_candidate(registered, fault):
+        store, baseline, files = registered
+        projection, contents, request = inputs(baseline, files)
+        expected = "PROJECTION_"
+        if fault == "readonly":
+            contents["docs/untouched.md"] = b"unauthorized"
+        elif fault == "missing":
+            contents.pop("src/task.py")
+        elif fault == "extra":
+            contents["other.py"] = b"unauthorized"
+        elif fault == "new":
+            projection[0]["path"] = "new.py"
+            contents["new.py"] = contents.pop("src/task.py")
+        elif fault == "baseline_hash":
+            projection[0]["sha256"] = "0" * 64
+        elif fault == "outside":
+            projection[0]["path"] = "../outside.py"
+        elif fault == "write_scope":
+            request["allowed_paths"] = ["docs/untouched.md"]
+        elif fault == "empty":
+            projection.clear()
+        elif fault == "wrong_content_type":
+            contents["src/task.py"] = "not bytes"
+        elif fault == "large":
+            contents["src/task.py"] = b"x" * (8 * 1024 * 1024 + 1)
+            expected = "SNAPSHOT_LIMIT_EXCEEDED"
+        elif fault == "not_stopped":
+            request["writer"]["stopped"] = False
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "wrong_fence":
+            request["writer"]["fence"] = 2
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "invalid_policy":
+            request["policy"]["checks"] = []
+            expected = "FREEZE_INPUT_INVALID"
+        with pytest.raises(CandidateError, match=expected):
+&gt;           store.freeze_projection(projection, contents, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'
+
+tests\candidates\test_projected_capture.py:100: AttributeError</failure></testcase><testcase classname="tests.candidates.test_projected_capture" name="test_invalid_projection_never_commits_candidate[empty]" time="0.704"><failure message="AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'">registered = (&lt;karajan.candidates.store.CandidateStore object at 0x000002713D5F9EB0&gt;, {'repository_identity': 'baseline-fixture', '... 'docs/untouched.md': b'Preserve this unprojected file.\n', 'data/bytes.bin': b'\x00\xff\x80\r\n', '.empty': b'', ...})
+fault = 'empty'
+
+    @pytest.mark.parametrize("fault", [
+        "readonly", "missing", "extra", "new", "baseline_hash", "outside", "write_scope",
+        "empty", "wrong_content_type", "large", "not_stopped", "wrong_fence", "invalid_policy",
+    ])
+    def test_invalid_projection_never_commits_candidate(registered, fault):
+        store, baseline, files = registered
+        projection, contents, request = inputs(baseline, files)
+        expected = "PROJECTION_"
+        if fault == "readonly":
+            contents["docs/untouched.md"] = b"unauthorized"
+        elif fault == "missing":
+            contents.pop("src/task.py")
+        elif fault == "extra":
+            contents["other.py"] = b"unauthorized"
+        elif fault == "new":
+            projection[0]["path"] = "new.py"
+            contents["new.py"] = contents.pop("src/task.py")
+        elif fault == "baseline_hash":
+            projection[0]["sha256"] = "0" * 64
+        elif fault == "outside":
+            projection[0]["path"] = "../outside.py"
+        elif fault == "write_scope":
+            request["allowed_paths"] = ["docs/untouched.md"]
+        elif fault == "empty":
+            projection.clear()
+        elif fault == "wrong_content_type":
+            contents["src/task.py"] = "not bytes"
+        elif fault == "large":
+            contents["src/task.py"] = b"x" * (8 * 1024 * 1024 + 1)
+            expected = "SNAPSHOT_LIMIT_EXCEEDED"
+        elif fault == "not_stopped":
+            request["writer"]["stopped"] = False
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "wrong_fence":
+            request["writer"]["fence"] = 2
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "invalid_policy":
+            request["policy"]["checks"] = []
+            expected = "FREEZE_INPUT_INVALID"
+        with pytest.raises(CandidateError, match=expected):
+&gt;           store.freeze_projection(projection, contents, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'
+
+tests\candidates\test_projected_capture.py:100: AttributeError</failure></testcase><testcase classname="tests.candidates.test_projected_capture" name="test_invalid_projection_never_commits_candidate[wrong_content_type]" time="0.709"><failure message="AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'">registered = (&lt;karajan.candidates.store.CandidateStore object at 0x000002713D94AAB0&gt;, {'repository_identity': 'baseline-fixture', '... 'docs/untouched.md': b'Preserve this unprojected file.\n', 'data/bytes.bin': b'\x00\xff\x80\r\n', '.empty': b'', ...})
+fault = 'wrong_content_type'
+
+    @pytest.mark.parametrize("fault", [
+        "readonly", "missing", "extra", "new", "baseline_hash", "outside", "write_scope",
+        "empty", "wrong_content_type", "large", "not_stopped", "wrong_fence", "invalid_policy",
+    ])
+    def test_invalid_projection_never_commits_candidate(registered, fault):
+        store, baseline, files = registered
+        projection, contents, request = inputs(baseline, files)
+        expected = "PROJECTION_"
+        if fault == "readonly":
+            contents["docs/untouched.md"] = b"unauthorized"
+        elif fault == "missing":
+            contents.pop("src/task.py")
+        elif fault == "extra":
+            contents["other.py"] = b"unauthorized"
+        elif fault == "new":
+            projection[0]["path"] = "new.py"
+            contents["new.py"] = contents.pop("src/task.py")
+        elif fault == "baseline_hash":
+            projection[0]["sha256"] = "0" * 64
+        elif fault == "outside":
+            projection[0]["path"] = "../outside.py"
+        elif fault == "write_scope":
+            request["allowed_paths"] = ["docs/untouched.md"]
+        elif fault == "empty":
+            projection.clear()
+        elif fault == "wrong_content_type":
+            contents["src/task.py"] = "not bytes"
+        elif fault == "large":
+            contents["src/task.py"] = b"x" * (8 * 1024 * 1024 + 1)
+            expected = "SNAPSHOT_LIMIT_EXCEEDED"
+        elif fault == "not_stopped":
+            request["writer"]["stopped"] = False
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "wrong_fence":
+            request["writer"]["fence"] = 2
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "invalid_policy":
+            request["policy"]["checks"] = []
+            expected = "FREEZE_INPUT_INVALID"
+        with pytest.raises(CandidateError, match=expected):
+&gt;           store.freeze_projection(projection, contents, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'
+
+tests\candidates\test_projected_capture.py:100: AttributeError</failure></testcase><testcase classname="tests.candidates.test_projected_capture" name="test_invalid_projection_never_commits_candidate[large]" time="0.667"><failure message="AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'">registered = (&lt;karajan.candidates.store.CandidateStore object at 0x000002713D948DA0&gt;, {'repository_identity': 'baseline-fixture', '... 'docs/untouched.md': b'Preserve this unprojected file.\n', 'data/bytes.bin': b'\x00\xff\x80\r\n', '.empty': b'', ...})
+fault = 'large'
+
+    @pytest.mark.parametrize("fault", [
+        "readonly", "missing", "extra", "new", "baseline_hash", "outside", "write_scope",
+        "empty", "wrong_content_type", "large", "not_stopped", "wrong_fence", "invalid_policy",
+    ])
+    def test_invalid_projection_never_commits_candidate(registered, fault):
+        store, baseline, files = registered
+        projection, contents, request = inputs(baseline, files)
+        expected = "PROJECTION_"
+        if fault == "readonly":
+            contents["docs/untouched.md"] = b"unauthorized"
+        elif fault == "missing":
+            contents.pop("src/task.py")
+        elif fault == "extra":
+            contents["other.py"] = b"unauthorized"
+        elif fault == "new":
+            projection[0]["path"] = "new.py"
+            contents["new.py"] = contents.pop("src/task.py")
+        elif fault == "baseline_hash":
+            projection[0]["sha256"] = "0" * 64
+        elif fault == "outside":
+            projection[0]["path"] = "../outside.py"
+        elif fault == "write_scope":
+            request["allowed_paths"] = ["docs/untouched.md"]
+        elif fault == "empty":
+            projection.clear()
+        elif fault == "wrong_content_type":
+            contents["src/task.py"] = "not bytes"
+        elif fault == "large":
+            contents["src/task.py"] = b"x" * (8 * 1024 * 1024 + 1)
+            expected = "SNAPSHOT_LIMIT_EXCEEDED"
+        elif fault == "not_stopped":
+            request["writer"]["stopped"] = False
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "wrong_fence":
+            request["writer"]["fence"] = 2
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "invalid_policy":
+            request["policy"]["checks"] = []
+            expected = "FREEZE_INPUT_INVALID"
+        with pytest.raises(CandidateError, match=expected):
+&gt;           store.freeze_projection(projection, contents, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'
+
+tests\candidates\test_projected_capture.py:100: AttributeError</failure></testcase><testcase classname="tests.candidates.test_projected_capture" name="test_invalid_projection_never_commits_candidate[not_stopped]" time="0.704"><failure message="AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'">registered = (&lt;karajan.candidates.store.CandidateStore object at 0x000002713AC29370&gt;, {'repository_identity': 'baseline-fixture', '... 'docs/untouched.md': b'Preserve this unprojected file.\n', 'data/bytes.bin': b'\x00\xff\x80\r\n', '.empty': b'', ...})
+fault = 'not_stopped'
+
+    @pytest.mark.parametrize("fault", [
+        "readonly", "missing", "extra", "new", "baseline_hash", "outside", "write_scope",
+        "empty", "wrong_content_type", "large", "not_stopped", "wrong_fence", "invalid_policy",
+    ])
+    def test_invalid_projection_never_commits_candidate(registered, fault):
+        store, baseline, files = registered
+        projection, contents, request = inputs(baseline, files)
+        expected = "PROJECTION_"
+        if fault == "readonly":
+            contents["docs/untouched.md"] = b"unauthorized"
+        elif fault == "missing":
+            contents.pop("src/task.py")
+        elif fault == "extra":
+            contents["other.py"] = b"unauthorized"
+        elif fault == "new":
+            projection[0]["path"] = "new.py"
+            contents["new.py"] = contents.pop("src/task.py")
+        elif fault == "baseline_hash":
+            projection[0]["sha256"] = "0" * 64
+        elif fault == "outside":
+            projection[0]["path"] = "../outside.py"
+        elif fault == "write_scope":
+            request["allowed_paths"] = ["docs/untouched.md"]
+        elif fault == "empty":
+            projection.clear()
+        elif fault == "wrong_content_type":
+            contents["src/task.py"] = "not bytes"
+        elif fault == "large":
+            contents["src/task.py"] = b"x" * (8 * 1024 * 1024 + 1)
+            expected = "SNAPSHOT_LIMIT_EXCEEDED"
+        elif fault == "not_stopped":
+            request["writer"]["stopped"] = False
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "wrong_fence":
+            request["writer"]["fence"] = 2
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "invalid_policy":
+            request["policy"]["checks"] = []
+            expected = "FREEZE_INPUT_INVALID"
+        with pytest.raises(CandidateError, match=expected):
+&gt;           store.freeze_projection(projection, contents, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'
+
+tests\candidates\test_projected_capture.py:100: AttributeError</failure></testcase><testcase classname="tests.candidates.test_projected_capture" name="test_invalid_projection_never_commits_candidate[wrong_fence]" time="0.694"><failure message="AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'">registered = (&lt;karajan.candidates.store.CandidateStore object at 0x000002713D94B020&gt;, {'repository_identity': 'baseline-fixture', '... 'docs/untouched.md': b'Preserve this unprojected file.\n', 'data/bytes.bin': b'\x00\xff\x80\r\n', '.empty': b'', ...})
+fault = 'wrong_fence'
+
+    @pytest.mark.parametrize("fault", [
+        "readonly", "missing", "extra", "new", "baseline_hash", "outside", "write_scope",
+        "empty", "wrong_content_type", "large", "not_stopped", "wrong_fence", "invalid_policy",
+    ])
+    def test_invalid_projection_never_commits_candidate(registered, fault):
+        store, baseline, files = registered
+        projection, contents, request = inputs(baseline, files)
+        expected = "PROJECTION_"
+        if fault == "readonly":
+            contents["docs/untouched.md"] = b"unauthorized"
+        elif fault == "missing":
+            contents.pop("src/task.py")
+        elif fault == "extra":
+            contents["other.py"] = b"unauthorized"
+        elif fault == "new":
+            projection[0]["path"] = "new.py"
+            contents["new.py"] = contents.pop("src/task.py")
+        elif fault == "baseline_hash":
+            projection[0]["sha256"] = "0" * 64
+        elif fault == "outside":
+            projection[0]["path"] = "../outside.py"
+        elif fault == "write_scope":
+            request["allowed_paths"] = ["docs/untouched.md"]
+        elif fault == "empty":
+            projection.clear()
+        elif fault == "wrong_content_type":
+            contents["src/task.py"] = "not bytes"
+        elif fault == "large":
+            contents["src/task.py"] = b"x" * (8 * 1024 * 1024 + 1)
+            expected = "SNAPSHOT_LIMIT_EXCEEDED"
+        elif fault == "not_stopped":
+            request["writer"]["stopped"] = False
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "wrong_fence":
+            request["writer"]["fence"] = 2
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "invalid_policy":
+            request["policy"]["checks"] = []
+            expected = "FREEZE_INPUT_INVALID"
+        with pytest.raises(CandidateError, match=expected):
+&gt;           store.freeze_projection(projection, contents, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'
+
+tests\candidates\test_projected_capture.py:100: AttributeError</failure></testcase><testcase classname="tests.candidates.test_projected_capture" name="test_invalid_projection_never_commits_candidate[invalid_policy]" time="0.664"><failure message="AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'">registered = (&lt;karajan.candidates.store.CandidateStore object at 0x000002713D5CBE90&gt;, {'repository_identity': 'baseline-fixture', '... 'docs/untouched.md': b'Preserve this unprojected file.\n', 'data/bytes.bin': b'\x00\xff\x80\r\n', '.empty': b'', ...})
+fault = 'invalid_policy'
+
+    @pytest.mark.parametrize("fault", [
+        "readonly", "missing", "extra", "new", "baseline_hash", "outside", "write_scope",
+        "empty", "wrong_content_type", "large", "not_stopped", "wrong_fence", "invalid_policy",
+    ])
+    def test_invalid_projection_never_commits_candidate(registered, fault):
+        store, baseline, files = registered
+        projection, contents, request = inputs(baseline, files)
+        expected = "PROJECTION_"
+        if fault == "readonly":
+            contents["docs/untouched.md"] = b"unauthorized"
+        elif fault == "missing":
+            contents.pop("src/task.py")
+        elif fault == "extra":
+            contents["other.py"] = b"unauthorized"
+        elif fault == "new":
+            projection[0]["path"] = "new.py"
+            contents["new.py"] = contents.pop("src/task.py")
+        elif fault == "baseline_hash":
+            projection[0]["sha256"] = "0" * 64
+        elif fault == "outside":
+            projection[0]["path"] = "../outside.py"
+        elif fault == "write_scope":
+            request["allowed_paths"] = ["docs/untouched.md"]
+        elif fault == "empty":
+            projection.clear()
+        elif fault == "wrong_content_type":
+            contents["src/task.py"] = "not bytes"
+        elif fault == "large":
+            contents["src/task.py"] = b"x" * (8 * 1024 * 1024 + 1)
+            expected = "SNAPSHOT_LIMIT_EXCEEDED"
+        elif fault == "not_stopped":
+            request["writer"]["stopped"] = False
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "wrong_fence":
+            request["writer"]["fence"] = 2
+            expected = "WRITER_STOP_NOT_CONFIRMED"
+        elif fault == "invalid_policy":
+            request["policy"]["checks"] = []
+            expected = "FREEZE_INPUT_INVALID"
+        with pytest.raises(CandidateError, match=expected):
+&gt;           store.freeze_projection(projection, contents, request)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'
+
+tests\candidates\test_projected_capture.py:100: AttributeError</failure></testcase><testcase classname="tests.candidates.test_projected_capture" name="test_capture_uses_detached_inputs_and_changed_bytes_create_new_revision" time="0.680"><failure message="AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'">registered = (&lt;karajan.candidates.store.CandidateStore object at 0x000002713D949670&gt;, {'repository_identity': 'baseline-fixture', '... 'docs/untouched.md': b'Preserve this unprojected file.\n', 'data/bytes.bin': b'\x00\xff\x80\r\n', '.empty': b'', ...})
+
+    def test_capture_uses_detached_inputs_and_changed_bytes_create_new_revision(registered):
+        store, baseline, files = registered
+        projection, contents, request = inputs(baseline, files)
+        before = copy.deepcopy((projection, contents, request))
+&gt;       first = store.freeze_projection(projection, contents, request)
+                ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'CandidateStore' object has no attribute 'freeze_projection'
+
+tests\candidates\test_projected_capture.py:109: AttributeError</failure></testcase></testsuite></testsuites>

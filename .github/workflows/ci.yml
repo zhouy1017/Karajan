@@ -144,6 +144,12 @@ jobs:
           -o "pythonpath=backend tests/capacity tests/routing tests/runs tests/projects tests/web"
           examples/go-task-startup
 
+      - name: Check stopped projection and writer capture independent cases
+        run: >-
+          uv run --frozen --extra dev pytest
+          -o "pythonpath=backend tests/candidates tests/execution"
+          examples/go-task-capture
+
   frontend-quality:
     name: frontend-quality
     runs-on: ubuntu-24.04

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="12.432" timestamp="2026-09-06T19:00:47.922427+08:00" hostname="ProArt-Zhou"><testcase classname="tests.isolation.test_opencode_projection_capture" name="test_native_edit_capture_freezes_full_baseline_and_requires_real_validation" time="11.297"><failure message="NameError: name 'capture' is not defined">registered = (&lt;karajan.candidates.store.CandidateStore object at 0x767c8fcb11f0&gt;, {'repository_identity': 'baseline-fixture', 'base... 'docs/untouched.md': b'Preserve this unprojected file.\n', 'data/bytes.bin': b'\x00\xff\x80\r\n', '.empty': b'', ...})
+tmp_path = PosixPath('/tmp/karajan-capture-edit/test_native_edit_capture_freez0')
+
+    def test_native_edit_capture_freezes_full_baseline_and_requires_real_validation(
+        registered, tmp_path
+    ):
+        store, baseline, files = registered
+        projection, expected, freeze = inputs(baseline, files)
+        requests = []
+    
+        def receive(request):
+            requests.append(json.loads(request.content))
+            response = native_response(len(requests), old_string="print('base')")
+            return httpx.Response(
+                200,
+                headers={"content-type": "text/event-stream"},
+                content=response.content.replace(
+                    b"/workspace/fixture.py", b"/workspace/src/task.py"
+                ).replace(b"return min(high, max(low, value))", b"print('changed')"),
+            )
+    
+        relay = GoRelay(
+            SECRET,
+            CANARY,
+            client_factory=lambda: httpx.Client(transport=httpx.MockTransport(receive), trust_env=False),
+        )
+        address = tmp_path / "provider.sock"
+        relay.start(unix_socket=address)
+        runtime = None
+        try:
+            runtime = IsolatedOpenCode(
+                runtime_artifact(), tmp_path / "native", address, relay.capability, projection=projection
+            )
+            for row in projection:
+                path = runtime.workspace / row["path"]
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(files[row["path"]])
+            inode = (runtime.workspace / "src/task.py").stat().st_ino
+            runtime.start()
+            session = runtime.request("POST", "/session", {"title": "Capture", "agent": "probe"})
+            runtime.request(
+                "POST",
+                f"/session/{session['id']}/prompt_async",
+                {
+                    "agent": "probe",
+                    "model": {"providerID": "opencode-go", "modelID": "glm-5.3-flash"},
+                    "parts": [{"type": "text", "text": "Update the requested print call."}],
+                },
+            )
+            deadline = time.monotonic() + 30
+            while time.monotonic() &lt; deadline:
+                messages = runtime.request("GET", f"/session/{session['id']}/message")
+                states = [
+                    part["state"]
+                    for message in messages
+                    for part in message["parts"]
+                    if part["type"] == "tool"
+                ]
+                if len(requests) == 3 and [s["status"] for s in states] == ["completed", "completed"]:
+                    break
+                time.sleep(0.1)
+            assert len(requests) == 3
+            assert [s["status"] for s in states] == ["completed", "completed"]
+    
+            captured = runtime.capture_projection()
+    
+            assert (runtime.workspace / "src/task.py").stat().st_ino == inode
+            assert dict(captured.files) == expected
+            assert captured.stop_evidence["local_stop"] == "confirmed"
+            result = store.freeze_projection(
+                [asdict(row) for row in captured.projection], dict(captured.files), freeze
+            )
+            restored = tmp_path / "restored"
+            store.materialize(result["id"], restored)
+            assert {
+                path.relative_to(restored).as_posix(): path.read_bytes()
+                for path in restored.rglob("*")
+                if path.is_file()
+            } == files | expected
+            assert (restored / "bin/run").stat().st_mode &amp; 0o777 == 0o755
+            assert result["changed_paths"] == ["src/task.py"]
+            gate = store.gate(
+                result["id"],
+                current={
+                    key: result[key]
+                    for key in ("repository_identity", "base_sha", "input_sha256", "policy_sha256")
+                },
+            )
+            assert gate["reasons"] == ["CHECK_EVIDENCE_MISSING:tests", "REVIEW_EVIDENCE_MISSING"]
+            assert gate["local_gate_passed"] is False
+        finally:
+            if runtime is not None:
+                runtime.close()
+            relay.close()
+&gt;       assert capture.stop_evidence["namespace_init_stopped"] is True
+               ^^^^^^^
+E       NameError: name 'capture' is not defined
+
+tests/isolation/test_opencode_projection_capture.py:159: NameError</failure></testcase></testsuite></testsuites>

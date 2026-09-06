@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="11.001" timestamp="2026-09-06T19:02:11.936888+08:00" hostname="ProArt-Zhou"><testcase classname="tests.isolation.test_opencode_projection_capture" name="test_readonly_rewrite_is_rejected_even_if_bytes_and_mtime_are_restored" time="9.885"><failure message="Failed: DID NOT RAISE ValueError">native = &lt;function native.&lt;locals&gt;.create at 0x7463775dfec0&gt;
+
+    def test_readonly_rewrite_is_rejected_even_if_bytes_and_mtime_are_restored(native):
+        runtime = native([descriptor("guide.txt", b"approved", False)])
+        path = runtime.workspace / "guide.txt"
+        path.write_bytes(b"approved")
+        runtime.start()
+        runtime.close()
+        before = path.stat()
+        path.write_bytes(b"tampered")
+        path.write_bytes(b"approved")
+        os.utime(path, ns=(before.st_atime_ns, before.st_mtime_ns))
+&gt;       with pytest.raises(ValueError, match="PROJECTION_CAPTURE_READONLY_CHANGED"):
+E       Failed: DID NOT RAISE ValueError
+
+tests/isolation/test_opencode_projection_capture.py:182: Failed</failure></testcase></testsuite></testsuites>

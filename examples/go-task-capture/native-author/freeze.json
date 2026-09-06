@@ -1,0 +1,93 @@
+{
+  "base": "1534825",
+  "kind": "author_evidence",
+  "source_sha256": {
+    "backend/karajan/isolation/opencode_runtime.py": "72b2705c8abdd5e1f976c774c2f521bab01d5345c6b95e0d70dd89e9f7e3b55d",
+    "backend/karajan/isolation/_opencode_capture.py": "9cb7c45bbf073c39efcf0d0591bb287ab4891a9ee0cecf0adbc5cea1b0383907",
+    "tests/isolation/test_opencode_projection_capture.py": "493774b64f3c60b484b0e0a75749a19c6a558c9dfa7344d1ebd01b7a4f36249e"
+  },
+  "consumption_context_sha256": {
+    "backend/karajan/candidates/store.py": "9096bc2904d34ec01ab3adb22da45f151b94bfda90fd3e942890ba93675243ca",
+    "tests/candidates/test_projected_capture.py": "a5928c04b76d32cbfe513a0affe1c8a1e9ad5f5b0ee511dbf45f9a65b794d11b",
+    "tests/candidates/test_baseline_materialization.py": "3c1f8c272377942319995bceac8daaa5c8008bd62fcc6a6477e35f4e6c10bfdc",
+    "tests/isolation/test_opencode_go_composition.py": "889763b49f1e8752e44321b118659889005569d3d7dd8ead5471f65ee498e2db",
+    "backend/karajan/isolation/_opencode_projection.py": "cac01b05d8aae1ab1916b30d6f50500585fdce3dfd07fe956ffb002243274c57",
+    "backend/karajan/isolation/_opencode_namespace.py": "6e981c2f8d0de875380ad342f168a0e8bddb46ae9e607202121ebd26b8d35019",
+    "backend/karajan/isolation/_opencode_inner.py": "3fed107dda1ba908fbc098f37f5d26b22c82b7402a79f2c9612d208dfa01b3e3"
+  },
+  "evidence_sha256": {
+    ".cache/projection-capture/README.md": "18e7bfd3926b218718e6454f37ad15a3277a2e78273a8f9c599d93b32531db09",
+    ".cache/projection-capture/tracer-red.xml": "fc2e3fadfeca607b3ae87395d6c21e891d07839c3d67452306ce65f11084bd53",
+    ".cache/projection-capture/tracer-green.xml": "16e6a8c40df9ad7756f4fdd5cabdcbb0b43cd15374f1504f19be69753fd0bcce",
+    ".cache/projection-capture/readonly-red.xml": "b2a8a8392688f3e7a00d6ef81cfc3dbd8d904982be84d634eab436971fea7d07",
+    ".cache/projection-capture/native-edit.xml": "9dc7631162fcba41417c5e1bc66da7c0534eb966ef5fd312263fa114d14a861e",
+    ".cache/projection-capture/final.xml": "659b43547bf862053ef72332bf2b2e6e713e7661795f40b3d2bd715f25298acb",
+    ".cache/projection-capture/windows.xml": "44b80ede58a842d1c2f4965995742b61bfecf4d29d37a77fc1c04a8a995f0cd5",
+    ".cache/projection-capture/regression.xml": "3776f29e8347024d9735731ec00147bb029884f66cbfc10c0210870942d0de85"
+  },
+  "junit": {
+    "tracer-red": {
+      "tests": "1",
+      "errors": "1",
+      "failures": "0",
+      "skipped": "0",
+      "time": "0.587"
+    },
+    "tracer-green": {
+      "tests": "1",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "time": "10.954"
+    },
+    "readonly-red": {
+      "tests": "1",
+      "errors": "0",
+      "failures": "1",
+      "skipped": "0",
+      "time": "11.001"
+    },
+    "native-edit": {
+      "tests": "1",
+      "errors": "0",
+      "failures": "1",
+      "skipped": "0",
+      "time": "12.432"
+    },
+    "final": {
+      "tests": "16",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "time": "153.680"
+    },
+    "windows": {
+      "tests": "16",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "16",
+      "time": "0.202"
+    },
+    "regression": {
+      "tests": "30",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "time": "171.633"
+    }
+  },
+  "checks": {
+    "ruff_check": "All checks passed",
+    "ruff_format_check": "3 files already formatted",
+    "mypy_windows": "Success: no issues found in 2 source files",
+    "mypy_linux": "Success: no issues found in 2 source files"
+  },
+  "limits": [
+    "Synthetic HTTP upstream; no actual provider or credential",
+    "Actual fixed native ELF, namespace and read/edit tools exercised",
+    "Synthetic Candidate Actor/Writer binding; no approved Run capture claim",
+    "Unknown OS wait/poll receipt test is fault injection after actual pidfd kill",
+    "Local confirmed stop never attests remote inference stop",
+    "No project Git mutation or CI failure repair"
+  ]
+}

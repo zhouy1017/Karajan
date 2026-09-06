@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="55" time="4.316" timestamp="2026-09-06T18:59:13.411756+08:00" hostname="ProArt-Zhou"><testcase classname="tests.adapters.opencode.test_go_qualification_grants" name="test_new_qualification_requires_its_bound_measurement_before_a_send_slot" time="0.447" /><testcase classname="tests.adapters.opencode.test_go_qualification_grants" name="test_every_bound_context_value_is_required_exactly_before_consumption[source_sha256]" time="0.008" /><testcase classname="tests.adapters.opencode.test_go_qualification_grants" name="test_every_bound_context_value_is_required_exactly_before_consumption[approved_input_tokens]" time="0.008" /><testcase classname="tests.adapters.opencode.test_go_qualification_grants" name="test_every_bound_context_value_is_required_exactly_before_consumption[reserved_output_tokens]" time="0.007" /><testcase classname="tests.adapters.opencode.test_go_qualification_grants" name="test_every_bound_context_value_is_required_exactly_before_consumption[operating_context_tokens]" time="0.008" /><testcase classname="tests.adapters.opencode.test_go_qualification_grants" name="test_every_bound_context_value_is_required_exactly_before_consumption[fixed_margin]" time="0.008" /><testcase classname="tests.adapters.opencode.test_go_qualification_grants" name="test_every_bound_context_value_is_required_exactly_before_consumption[ratio_margin_basis_points]" time="0.008" /><testcase classname="tests.adapters.opencode.test_go_qualification_grants" name="test_unrecognized_or_mixed_qualification_grants_cannot_be_created[unknown-version]" time="0.005" /><testcase classname="tests.adapters.opencode.test_go_qualification_grants" name="test_unrecognized_or_mixed_qualification_grants_cannot_be_created[missing-version]" time="0.004" /><testcase classname="tests.adapters.opencode.test_go_qualification_grants" name="test_unrecognized_or_mixed_qualification_grants_cannot_be_created[subject]" time="0.004" /><testcase classname="tests.adapters.opencode.test_go_qualification_grants" name="test_unrecognized_or_mixed_qualification_grants_cannot_be_created[scenario]" time="0.004" /><testcase classname="tests.adapters.opencode.test_go_qualification_grants" name="test_unrecognized_or_mixed_qualification_grants_cannot_be_created[raw]" time="0.004" /><testcase classname="tests.adapters.opencode.test_go_qualification_grants" name="test_unrecognized_or_mixed_qualification_grants_cannot_be_created[limits]" time="0.004" /><testcase classname="tests.adapters.opencode.test_go_qualification_grants" name="test_unknown_send_and_replay_keep_original_measurement_and_no_new_permission" time="0.011" /><testcase classname="tests.adapters.opencode.test_go_qualification_grants" name="test_same_grant_cannot_be_reinterpreted_for_other_fixed_inputs[probe_spec_digest-dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd]" time="0.008" /><testcase classname="tests.adapters.opencode.test_go_qualification_grants" name="test_same_grant_cannot_be_reinterpreted_for_other_fixed_inputs[scenario-denied_read]" time="0.008" /><testcase classname="tests.adapters.opencode.test_go_qualification_grants" name="test_concurrent_new_qualification_calls_share_six_durable_slots" time="0.180" /><testcase classname="tests.adapters.opencode.test_go_qualification_grants" name="test_new_qualification_restrictions_do_not_erase_unknown_history[revoked]" time="0.013" /><testcase classname="tests.adapters.opencode.test_go_qualification_grants" name="test_new_qualification_restrictions_do_not_erase_unknown_history[expired]" time="0.012" /><testcase classname="tests.adapters.opencode.test_go_qualification_grants" name="test_legacy_shape_key_order_and_unmetered_history_remain_unchanged" time="0.026" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_qualification_context_is_durable_before_the_first_upstream_bytes" time="0.512" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_wrong_context_or_subject_never_reaches_upstream_or_spends_a_slot[missing]" time="0.074" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_wrong_context_or_subject_never_reaches_upstream_or_spends_a_slot[task-context]" time="0.077" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_wrong_context_or_subject_never_reaches_upstream_or_spends_a_slot[legacy-grant]" time="0.076" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_wrong_context_or_subject_never_reaches_upstream_or_spends_a_slot[task-grant]" time="0.077" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_wrong_context_or_subject_never_reaches_upstream_or_spends_a_slot[spec]" time="0.076" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_wrong_context_or_subject_never_reaches_upstream_or_spends_a_slot[scenario]" time="0.077" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_wrong_context_or_subject_never_reaches_upstream_or_spends_a_slot[source_sha256]" time="0.077" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_wrong_context_or_subject_never_reaches_upstream_or_spends_a_slot[approved_input_tokens]" time="0.076" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_wrong_context_or_subject_never_reaches_upstream_or_spends_a_slot[reserved_output_tokens]" time="0.077" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_wrong_context_or_subject_never_reaches_upstream_or_spends_a_slot[operating_context_tokens]" time="0.076" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_wrong_context_or_subject_never_reaches_upstream_or_spends_a_slot[fixed_margin]" time="0.074" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_wrong_context_or_subject_never_reaches_upstream_or_spends_a_slot[ratio_margin_basis_points]" time="0.077" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_wrong_context_or_subject_never_reaches_upstream_or_spends_a_slot[unknown-version]" time="0.077" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_context_matching_fabricated_binding_cannot_change_a_persisted_grant[probe_spec_digest-dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd]" time="0.076" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_context_matching_fabricated_binding_cannot_change_a_persisted_grant[scenario-denied_read]" time="0.076" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_bound_but_unmeasurable_request_is_rejected_before_a_durable_send[source]" time="0.076" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_bound_but_unmeasurable_request_is_rejected_before_a_durable_send[input]" time="0.077" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_bound_but_unmeasurable_request_is_rejected_before_a_durable_send[output]" time="0.078" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_bound_but_unmeasurable_request_is_rejected_before_a_durable_send[window]" time="0.076" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_bound_but_unmeasurable_request_is_rejected_before_a_durable_send[history]" time="0.075" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_failed_qualification_response_withdraws_remaining_sends_and_keeps_history[missing-usage]" time="0.075"><failure message="AssertionError: assert 'send_unknown' == 'response_received'&#10;  &#10;  - response_received&#10;  + send_unknown">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-722/test_failed_qualification_resp0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000001FAAC4FDBB0&gt;
+failure = 'missing-usage'
+
+    @pytest.mark.parametrize("failure", ["missing-usage", "input-usage", "output-usage", "transport"])
+    def test_failed_qualification_response_withdraws_remaining_sends_and_keeps_history(tmp_path, accounting, failure):
+        bound = qualification_binding(accounting)
+    
+        def receive(request):
+            if failure == "transport":
+                raise httpx.ReadTimeout("synthetic lost response")
+            if failure == "missing-usage":
+                return answer()
+            return metered_answer({
+                "prompt_tokens": 5000 if failure == "input-usage" else 20,
+                "completion_tokens": 257 if failure == "output-usage" else 2,
+            })
+    
+        with exchange(tmp_path, bound, context_for(accounting, bound), receive=receive) as (relay, journal, upstream):
+            assert post(relay).status_code == 502
+            saved = journal.snapshot("qualification")
+            assert saved["state"] == "revoked"
+            assert saved["request_count"] == 1
+            call = saved["calls"][0]
+&gt;           assert call["state"] == ("send_unknown" if failure == "transport" else "response_received")
+E           AssertionError: assert 'send_unknown' == 'response_received'
+E             
+E             - response_received
+E             + send_unknown
+
+tests\adapters\opencode\test_go_qualification_relay.py:189: AssertionError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_failed_qualification_response_withdraws_remaining_sends_and_keeps_history[input-usage]" time="0.075"><failure message="AssertionError: assert 'send_unknown' == 'response_received'&#10;  &#10;  - response_received&#10;  + send_unknown">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-722/test_failed_qualification_resp1')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000001FAAC4FDBB0&gt;
+failure = 'input-usage'
+
+    @pytest.mark.parametrize("failure", ["missing-usage", "input-usage", "output-usage", "transport"])
+    def test_failed_qualification_response_withdraws_remaining_sends_and_keeps_history(tmp_path, accounting, failure):
+        bound = qualification_binding(accounting)
+    
+        def receive(request):
+            if failure == "transport":
+                raise httpx.ReadTimeout("synthetic lost response")
+            if failure == "missing-usage":
+                return answer()
+            return metered_answer({
+                "prompt_tokens": 5000 if failure == "input-usage" else 20,
+                "completion_tokens": 257 if failure == "output-usage" else 2,
+            })
+    
+        with exchange(tmp_path, bound, context_for(accounting, bound), receive=receive) as (relay, journal, upstream):
+            assert post(relay).status_code == 502
+            saved = journal.snapshot("qualification")
+            assert saved["state"] == "revoked"
+            assert saved["request_count"] == 1
+            call = saved["calls"][0]
+&gt;           assert call["state"] == ("send_unknown" if failure == "transport" else "response_received")
+E           AssertionError: assert 'send_unknown' == 'response_received'
+E             
+E             - response_received
+E             + send_unknown
+
+tests\adapters\opencode\test_go_qualification_relay.py:189: AssertionError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_failed_qualification_response_withdraws_remaining_sends_and_keeps_history[output-usage]" time="0.071"><failure message="AssertionError: assert 'send_unknown' == 'response_received'&#10;  &#10;  - response_received&#10;  + send_unknown">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-722/test_failed_qualification_resp2')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000001FAAC4FDBB0&gt;
+failure = 'output-usage'
+
+    @pytest.mark.parametrize("failure", ["missing-usage", "input-usage", "output-usage", "transport"])
+    def test_failed_qualification_response_withdraws_remaining_sends_and_keeps_history(tmp_path, accounting, failure):
+        bound = qualification_binding(accounting)
+    
+        def receive(request):
+            if failure == "transport":
+                raise httpx.ReadTimeout("synthetic lost response")
+            if failure == "missing-usage":
+                return answer()
+            return metered_answer({
+                "prompt_tokens": 5000 if failure == "input-usage" else 20,
+                "completion_tokens": 257 if failure == "output-usage" else 2,
+            })
+    
+        with exchange(tmp_path, bound, context_for(accounting, bound), receive=receive) as (relay, journal, upstream):
+            assert post(relay).status_code == 502
+            saved = journal.snapshot("qualification")
+            assert saved["state"] == "revoked"
+            assert saved["request_count"] == 1
+            call = saved["calls"][0]
+&gt;           assert call["state"] == ("send_unknown" if failure == "transport" else "response_received")
+E           AssertionError: assert 'send_unknown' == 'response_received'
+E             
+E             - response_received
+E             + send_unknown
+
+tests\adapters\opencode\test_go_qualification_relay.py:189: AssertionError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_failed_qualification_response_withdraws_remaining_sends_and_keeps_history[transport]" time="0.071"><failure message="TypeError: 'NoneType' object is not subscriptable">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-722/test_failed_qualification_resp3')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000001FAAC4FDBB0&gt;
+failure = 'transport'
+
+    @pytest.mark.parametrize("failure", ["missing-usage", "input-usage", "output-usage", "transport"])
+    def test_failed_qualification_response_withdraws_remaining_sends_and_keeps_history(tmp_path, accounting, failure):
+        bound = qualification_binding(accounting)
+    
+        def receive(request):
+            if failure == "transport":
+                raise httpx.ReadTimeout("synthetic lost response")
+            if failure == "missing-usage":
+                return answer()
+            return metered_answer({
+                "prompt_tokens": 5000 if failure == "input-usage" else 20,
+                "completion_tokens": 257 if failure == "output-usage" else 2,
+            })
+    
+        with exchange(tmp_path, bound, context_for(accounting, bound), receive=receive) as (relay, journal, upstream):
+            assert post(relay).status_code == 502
+            saved = journal.snapshot("qualification")
+            assert saved["state"] == "revoked"
+            assert saved["request_count"] == 1
+            call = saved["calls"][0]
+            assert call["state"] == ("send_unknown" if failure == "transport" else "response_received")
+&gt;           assert call["outcome"]["protocol_passed"] is False
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: 'NoneType' object is not subscriptable
+
+tests\adapters\opencode\test_go_qualification_relay.py:190: TypeError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_bad_capability_never_withdraws_another_grants_authority" time="0.072" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_context_export_is_detached_and_contains_only_fixed_limits" time="0.001" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_invalid_qualification_context_construction_has_a_fixed_error[values0]" time="0.001" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_invalid_qualification_context_construction_has_a_fixed_error[values1]" time="0.000" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_invalid_qualification_context_construction_has_a_fixed_error[values2]" time="0.001" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_invalid_qualification_context_construction_has_a_fixed_error[values3]" time="0.001" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_invalid_qualification_context_construction_has_a_fixed_error[values4]" time="0.001" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_invalid_qualification_context_construction_has_a_fixed_error[values5]" time="0.000" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_invalid_qualification_context_construction_has_a_fixed_error[values6]" time="0.000" /><testcase classname="tests.adapters.opencode.test_go_qualification_relay" name="test_invalid_qualification_context_construction_has_a_fixed_error[values7]" time="0.001" /></testsuite></testsuites>

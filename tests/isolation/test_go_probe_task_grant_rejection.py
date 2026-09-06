@@ -1,4 +1,4 @@
-"""A real Task grant cannot enter the fixed qualification observer."""
+"""Task and metered v2 grants cannot enter the legacy fixed observer."""
 
 from pathlib import Path
 
@@ -10,8 +10,9 @@ from karajan.isolation.go_probe import observe_go_tools
 
 @pytest.mark.parametrize("scenario", ["edit", "denied_read"])
 @pytest.mark.parametrize("present_as_qualification", [False, True])
+@pytest.mark.parametrize("grant_kind", ["task", "qualification_v2"])
 def test_task_grant_rejected_before_runtime_files_or_send_authority_are_touched(
-    tmp_path: Path, scenario: str, present_as_qualification: bool
+    tmp_path: Path, scenario: str, present_as_qualification: bool, grant_kind: str
 ) -> None:
     journal = GoCallJournal(tmp_path / "journal.sqlite3", clock=lambda: 1000.0)
     binding = {
@@ -35,6 +36,31 @@ def test_task_grant_rejected_before_runtime_files_or_send_authority_are_touched(
         "expires_at": 2000.0,
         "max_requests": 6,
     }
+    if grant_kind == "qualification_v2":
+        for key in (
+            "subject",
+            "approval_digest",
+            "execution_policy_digest",
+            "workspace_digest",
+            "authentication_source_digest",
+        ):
+            binding.pop(key)
+        binding.update(
+            {
+                "qualification_id": "qualification-v2",
+                "schema_version": "karajan.go-qualification-grant.v2",
+                "probe_spec_digest": "a" * 64,
+                "scenario": scenario,
+                "context": {
+                    "source_sha256": "b" * 64,
+                    "approved_input_tokens": 8192,
+                    "reserved_output_tokens": 4096,
+                    "operating_context_tokens": 16384,
+                    "fixed_margin": 100,
+                    "ratio_margin_basis_points": 1000,
+                },
+            }
+        )
     grant = journal.create_grant(binding, grant_id="task-grant")
     before = journal.snapshot("task-grant")
     presented = dict(binding)
@@ -45,8 +71,12 @@ def test_task_grant_rejected_before_runtime_files_or_send_authority_are_touched(
             "execution_policy_digest",
             "workspace_digest",
             "authentication_source_digest",
+            "schema_version",
+            "probe_spec_digest",
+            "scenario",
+            "context",
         ):
-            presented.pop(key)
+            presented.pop(key, None)
         presented["qualification_id"] = "unrelated-qualification"
     authorization = GoRelayAuthorization(journal, "task-grant", presented, grant["capability"])
     directory = tmp_path / "uncreated-runtime-directory"

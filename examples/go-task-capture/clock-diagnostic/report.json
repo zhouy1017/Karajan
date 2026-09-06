@@ -1,0 +1,67 @@
+{
+  "mode": "read_only_original_inspection_and_deterministic_public_boundary_replay",
+  "runtime_artifact": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+  "original": {
+    "retained_path": "/tmp/pytest-of-chow/pytest-43/test_fixed_suite_cross_checks_1",
+    "original_present": true,
+    "journal_sha256": "69b4c4b169b63f7468c5ac57a4bd2dc3e2ab21832469d0a497d62be4feaa17ae",
+    "grants": [
+      {
+        "grant_id": "grant-edit",
+        "created_at": 1788693178.8967345,
+        "revoked_at": 1788693179.9207728,
+        "expires_at": 1788693600.3810837,
+        "request_count": 0,
+        "runtime_source_matches_current": true
+      },
+      {
+        "grant_id": "grant-denied_read",
+        "created_at": 1788693178.8995337,
+        "revoked_at": 1788693179.9246933,
+        "expires_at": 1788693600.3810837,
+        "request_count": 0,
+        "runtime_source_matches_current": true
+      }
+    ],
+    "derived_started_at": 1788693180.3810837,
+    "derivation": "unchanged execution_start sets expires_at = started_at + 420",
+    "minimum_observed_clock_rollback_seconds": 1.484349250793457,
+    "suite_directories": {
+      "s1e6ac6f5d0e753f9": []
+    },
+    "failure_case_seconds": 4.136,
+    "actual_statuses": [
+      "not_run",
+      "not_run"
+    ],
+    "expected_statuses": [
+      "failed",
+      "not_run"
+    ],
+    "native_launched": false,
+    "observer_reached": false
+  },
+  "conclusion": "Retained facts show a wall-clock rollback before the scenario start guard. The conservative rejection is expected; no production time-rule change is required.",
+  "limits": [
+    "The exact second suite-clock sample was not persisted; it is not invented here.",
+    "The deterministic replay uses a timestamp between recorded grant creation and the derived start, not a claimed recording of the original sample.",
+    "No native process or upstream provider is used by the replay.",
+    "Original Journal bytes, capabilities, credential values and raw native files are not exported."
+  ],
+  "replay": {
+    "result": "2 passed in 8.95s",
+    "native_launched": false,
+    "observer": "explicit no-effects sentinel; stable clock control proves it is reached",
+    "production_changed": false,
+    "original_tests_changed": false
+  },
+  "sha256": {
+    "backend\\karajan\\projects\\go_suite.py": "942b23a8f04ec459f1fa130c10cfb3f5301e50e9dbde1b92c7309662675a1c5b",
+    "tests\\projects\\test_go_suite.py": "df4d6a905b89c503bf78a7d480b3208f06cc814f6611db3db77fd1ccc487539b",
+    "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-task-capture\\.cache\\capture-suite-clock-diagnostic\\test_clock_boundary.py": "d7108da1416b99e3c081e6d0815b18c5eebe8dbdf2d24153a836db21c738fbfb",
+    "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-task-capture\\.cache\\capture-suite-clock-diagnostic\\final.xml": "e46a5bb8e9faf94b6df475a5164ffa9ab0ba7a05d54d8401aa0bef54f1a00150",
+    "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-task-capture\\.cache\\capture-suite-clock-diagnostic\\README.md": "ec3fd0d9378669eca4300b1d93c14c13305cc18c13915ec257b3cdf0fdccddd6",
+    ".cache\\capture-suite-final-wsl.xml": "9b7ef05e8ab4988c089650cf523bf790b59e645fc32339106eb87dd0c9efdc8e",
+    ".cache\\capture-suite-call-id-diagnostic.xml": "de97e219d51657df246bf9b4bc033f99b16778483f7a74ab4508abf11c8cb974"
+  }
+}

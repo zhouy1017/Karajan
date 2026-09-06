@@ -1,0 +1,27 @@
+{
+  "base": "153482593380fdb5a8a5e16940f600c06acfd2ca",
+  "status": "author_frozen",
+  "platform": "Windows",
+  "upstream_origin": "http_fixture",
+  "provider_calls": 0,
+  "qualification_granted": false,
+  "files": {
+    "backend/karajan/adapters/opencode/go_journal.py": "006ea225cd1ddbb5373a806a8286f11a7e58062f130612cc797fdb6155772eeb",
+    "backend/karajan/adapters/opencode/go_relay.py": "2f8f32de73d95d0c2298f1e10f7cb8bee667cd6e4c394cabaa3e81a881d7ac16",
+    "tests/adapters/opencode/test_go_qualification_grants.py": "84be018469e6362467586ac21a525e2995e0849bb4ba58514751a12e08def444",
+    "tests/adapters/opencode/test_go_qualification_relay.py": "adfec038df367eb16e14085debe934f4771ac90921e092a4b34fa7b4fd6734a0"
+  },
+  "unchanged_accounting": "ab351b634e38351bed631db97734d1e519fc7e4577b0fb094f2651fa112d0428",
+  "checks": {
+    "new_public_cases": {"passed": 55, "skipped": 0, "evidence": "qualification-after-synchronization.xml"},
+    "regression": {"passed": 231, "skipped": 0, "seconds": 19.62, "evidence": "final-regression.xml"},
+    "ruff_check": "passed",
+    "ruff_format_check": "passed",
+    "mypy_two_source_files": "passed"
+  },
+  "limitations": [
+    "No live provider, Linux runtime or Profile qualification was performed.",
+    "Fixed suite-v2 spec and observation production remain separate integration work.",
+    "This internal port binds limits and send permissions; it does not validate a complete Run or TaskWorkspace."
+  ]
+}
