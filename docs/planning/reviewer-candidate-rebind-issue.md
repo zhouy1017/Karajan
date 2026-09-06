@@ -36,9 +36,12 @@ manifest/模式、作者、Writer 停止事实、允许路径、任务等级和�
 真实 S、结果和 Review Evidence。#94 仍负责可信 subject 切换、全部 Checks 重跑及累计预算。
 本票不把手写 binding 当真实资格，不实现 HTTP 入口，不改原 capture 指针，也不宣布父票完成。
 
-## 当前实现进度
+## 当前实现进度（2026-09-07）
 
-本地存储原语已实现并完成 42 项新增公共测试。Windows Candidate 回归 164 passed / 3 POSIX skips，
-WSL 167 passed；独立复跑核心 7 项通过。当前尚无合入 dev 的完成项，提交/PR/CI 状态另行核对。
-实现位于独立 `codex/m3-reviewer-candidate-rebind`，基线 624ad8b；固定源码和原始结果保存于
-`.cache/review-rebind-author`。本票 C/P 均为真实本地 stores/files，授权和资格数据是显式 fixture；S 不适用本存储原语。
+已完成：尚无本票实现已进入 dev 的完成项。[草稿 PR #98](https://github.com/zhouy1017/Karajan/pull/98) 已发布存储原语及本地 C/P 证据；实现 `58eafc337b7a2350c9e983d550e14ce50b2dc5e9`，首发候选 `bd4982dc9c4be5b5913871994537631b711609d7`。
+
+本地验证：42 项新增公共测试通过；Windows Candidate 回归 164 passed / 3 POSIX skips，WSL 167 passed；独立代码审查与 Linux 复跑核心 7 项通过。15 份原始复制件、6 个生成文件和 9 个仓库输入的 Git blob 摘要已核对；[证据索引](https://github.com/zhouy1017/Karajan/blob/bd4982dc9c4be5b5913871994537631b711609d7/examples/reviewer-candidate-rebind/README.md)保留原始失败和复跑输入。授权/资格是明确 fixture；S 不适用于本存储原语。
+
+剩余工作：当前 PR 必需 CI、合并与本票原范围最终验收。#95 的当前资格编译/路由/Review/S 和 #94 的 subject 切换、全部 Checks 重跑、预算保持仍属于对应父票，不因本地原语完成而通过。原验收清单保留，当前 status:in-progress；未使用 Closes。
+
+阻塞：基础 Task #90 / PR #92 与共享 relay PR #88 的 CI 修复尚未完成；指定 Spark 当前无额度，替换模型选择等待 owner。不会自动合并。

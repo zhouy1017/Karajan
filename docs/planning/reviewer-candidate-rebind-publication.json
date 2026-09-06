@@ -5,5 +5,16 @@
   "blocked_by_verified": [
     90
   ],
-  "snapshot": "reviewer-candidate-rebind-issue.md"
+  "snapshot": "reviewer-candidate-rebind-issue.md",
+  "pull_request": {
+    "baseRefName": "dev",
+    "headRefOid": "bd4982dc9c4be5b5913871994537631b711609d7",
+    "isDraft": true,
+    "number": 98,
+    "state": "OPEN",
+    "url": "https://github.com/zhouy1017/Karajan/pull/98"
+  },
+  "implementation_commit": "58eafc337b7a2350c9e983d550e14ce50b2dc5e9",
+  "remote_issue_body_verified": true,
+  "merged": false
 }
