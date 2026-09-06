@@ -1,8 +1,8 @@
 """Fixed OpenCode mount setup; never changes the existing canary launcher."""
 
 import hashlib
+import json
 import os
-import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -10,13 +10,16 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ._namespace import READ_ONLY_ROOTS, drop_capabilities, mount
+    from ._opencode_projection import projection_files, verify_projected_file
 else:
     from _namespace import READ_ONLY_ROOTS, drop_capabilities, mount
+    from _opencode_projection import projection_files, verify_projected_file
 
 
 def main(directory: Path, runtime: Path, upstream: Path, control_fd: int) -> None:
     if sys.platform != "linux":
         raise ValueError("LINUX_NAMESPACES_REQUIRED")
+    projection = projection_files(json.loads((directory / "projection.json").read_text()))
     root = directory / "root"
     root.mkdir(mode=0o700)
     for name in ("workspace", "tmp", "proc", "dev", "control", "opt", "bridge"):
@@ -28,11 +31,19 @@ def main(directory: Path, runtime: Path, upstream: Path, control_fd: int) -> Non
         (root / name).symlink_to(target, target_is_directory=True)
     for name in ("null", "zero", "urandom"):
         (root / "dev" / name).touch()
-    for name in ("opt/opencode", "bridge/inference.sock", "workspace/fixture.py"):
+    for name in ("opt/opencode", "bridge/inference.sock"):
         (root / name).touch()
+    for row in projection:
+        target = root / "workspace" / row["path"]
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.touch()
     (root / "control/inner.py").write_bytes(
         Path(__file__).with_name("_opencode_inner.py").read_bytes()
     )
+    (root / "control/_opencode_projection.py").write_bytes(
+        Path(__file__).with_name("_opencode_projection.py").read_bytes()
+    )
+    (root / "control/projection.json").write_text(json.dumps(projection))
     mount("--bind", str(root), str(root))
     for source in READ_ONLY_ROOTS:
         if Path(source).is_dir():
@@ -50,11 +61,13 @@ def main(directory: Path, runtime: Path, upstream: Path, control_fd: int) -> Non
             "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650"
         ):
             raise ValueError("RUNTIME_ARTIFACT_MISMATCH")
-    fixture = directory / "workspace/fixture.py"
-    identity = fixture.lstat()
-    if not stat.S_ISREG(identity.st_mode) or identity.st_nlink != 1:
-        raise ValueError("FIXTURE_MUST_BE_PRIVATE_REGULAR_FILE")
-    mount("--bind", str(fixture), str(root / "workspace/fixture.py"))
+    for row in projection:
+        source = verify_projected_file(directory / "workspace", row)
+        target = root / "workspace" / row["path"]
+        mount("--bind", str(source), str(target))
+        verify_projected_file(root / "workspace", row)
+        if not row["writable"]:
+            mount("-o", "remount,bind,ro", str(target))
     mount("-t", "tmpfs", "-o", "size=128m,mode=1777,nosuid,nodev", "tmpfs", str(root / "tmp"))
     mount("-t", "proc", "-o", "nosuid,nodev,noexec", "proc", str(root / "proc"))
     for name in ("null", "zero", "urandom"):
