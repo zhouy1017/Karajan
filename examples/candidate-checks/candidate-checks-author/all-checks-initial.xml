@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="1.592" timestamp="2026-09-06T23:35:12.493883+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_candidate_checks" name="test_all_approved_check_ids_are_compiled_from_new_public_policy" time="0.507"><failure message="karajan.storage.ExistingStoreError: EXISTING_STORE_UNAVAILABLE">projected = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x000001A9FFB4D700&gt;, 'project_id': 'd859502e-62d7-4c...C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-891/test_all_approved_check_ids_ar0/fixture/repository'), ...}
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-891/test_all_approved_check_ids_ar0')
+
+    def test_all_approved_check_ids_are_compiled_from_new_public_policy(projected, tmp_path):
+        from candidate_checks_case import approved_check_candidate
+        from karajan.orchestration.candidate_checks import ApprovedCandidateChecks
+    
+        reference = {"id": "checks-python", "revision": 1}
+        environment = {
+            **reference, "runtime_kind": "python312-stdlib", "platform": "linux_x64",
+            "source_sha256": "e" * 64, "filesystem": "candidate_copy", "network": "none",
+            "env": {}, "max_log_bytes": 65536,
+        }
+        definitions = [
+            {"id": "content-contract", "revision": 1, "argv": ["python", "-c", "print('first')"], "environment_ref": reference, "timeout_seconds": 20},
+            {"id": "syntax-contract", "revision": 1, "argv": ["python", "-m", "compileall", "src"], "environment_ref": reference, "timeout_seconds": 20},
+        ]
+&gt;       case = approved_check_candidate(projected, tmp_path / "two-checks", environment=environment, checks=definitions)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\runs\test_candidate_checks.py:179: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\runs\candidate_checks_case.py:70: in approved_check_candidate
+    _, _, seed, _ = approved_task(projected, directory / "seed")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\runs\test_projected_go_routing.py:121: in approved_task
+    planner = RunPlanner(
+backend\karajan\runs\planning.py:106: in __init__
+    with self._transaction() as db:
+         ^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend\karajan\runs\planning.py:123: in _transaction
+    db = open_database(self.database, existing_only=self.existing_only, isolation_level=None)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-891/test_all_approved_check_ids_ar0/two-checks/seed/approved-runs.sqlite')
+existing_only = False, isolation_level = None
+
+    def open_database(
+        path: Path,
+        *,
+        existing_only: bool,
+        isolation_level: Literal["DEFERRED", "EXCLUSIVE", "IMMEDIATE"] | None = "DEFERRED",
+    ) -&gt; sqlite3.Connection:
+        try:
+            target = path.resolve().as_uri() + "?mode=rw" if existing_only else path
+            return sqlite3.connect(
+                target, uri=existing_only, timeout=10, isolation_level=isolation_level
+            )
+        except (OSError, sqlite3.Error):
+&gt;           raise ExistingStoreError("EXISTING_STORE_UNAVAILABLE") from None
+E           karajan.storage.ExistingStoreError: EXISTING_STORE_UNAVAILABLE
+
+backend\karajan\storage.py:25: ExistingStoreError</failure></testcase></testsuite></testsuites>

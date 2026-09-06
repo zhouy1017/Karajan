@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="2.564" timestamp="2026-09-06T23:31:05.605554+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_candidate_checks" name="test_cancel_prepared_checks_keeps_capture_and_does_not_require_current_source" time="1.457"><failure message="AttributeError: 'ApprovedCandidateChecks' object has no attribute 'cancel'">check_case = (&lt;karajan.orchestration.go_execution_intent.GoExecutionIntents object at 0x00000259B1F0A6F0&gt;, ('4ee383a8-07c0-4eb1-ab1...d522aa9706', 'revision': 1, 'content_sha256': 'a6639e06bfaa51ff2b8f608aceb0d9e3135ee4485d36f5647c6136d4b1f4f54c', ...})
+
+    def test_cancel_prepared_checks_keeps_capture_and_does_not_require_current_source(check_case):
+        from karajan.orchestration.candidate_checks import ApprovedCandidateChecks
+    
+        intents, args, candidates, captured = check_case
+        writer = ApprovedCandidateChecks(
+            intents.admissions, candidates, runner=SourceFixture(),
+            controller_source=lambda: {"schema_version": "synthetic.check-controller.v1"},
+        )
+        writer.advance(*args, principal="owner")
+        history = ApprovedCandidateChecks(intents.admissions, candidates)
+&gt;       cancelled = history.cancel(*args, principal="owner")
+                    ^^^^^^^^^^^^^^
+E       AttributeError: 'ApprovedCandidateChecks' object has no attribute 'cancel'
+
+tests\runs\test_candidate_checks.py:156: AttributeError</failure></testcase></testsuite></testsuites>

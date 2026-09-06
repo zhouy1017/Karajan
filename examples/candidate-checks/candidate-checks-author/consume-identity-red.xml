@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="2.855" timestamp="2026-09-06T23:43:32.718773+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_candidate_checks" name="test_fixed_host_child_starts_once_and_reopen_never_restarts_it" time="1.814"><failure message="AttributeError: 'ApprovedCandidateChecks' object has no attribute 'consume_check'">projected = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x00000188A6B81100&gt;, 'project_id': '3c5462a4-5c97-4d...C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-903/test_fixed_host_child_starts_o0/fixture/repository'), ...}
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-903/test_fixed_host_child_starts_o0')
+
+    def test_fixed_host_child_starts_once_and_reopen_never_restarts_it(projected, tmp_path):
+        from candidate_checks_case import approved_check_candidate
+        from karajan.orchestration.candidate_checks import ApprovedCandidateChecks, CheckLaunchSpec
+    
+        ref = {"id": "checks-python", "revision": 1}
+        environment = {**ref, "runtime_kind": "python312-stdlib", "platform": "linux_x64", "source_sha256": "e" * 64,
+                       "filesystem": "candidate_copy", "network": "none", "env": {}, "max_log_bytes": 65536}
+        case = approved_check_candidate(projected, tmp_path / "host-case", environment=environment, checks=[
+            {"id": "local-check", "revision": 1, "argv": ["python", "-c", "print('ok')"], "environment_ref": ref, "timeout_seconds": 20}
+        ])
+        marker = tmp_path / "host-child-started"
+        host = RunnerHost(tmp_path / "actual-check-host")
+        source = lambda: {"schema_version": "synthetic.check-controller.v1"}
+        service = ApprovedCandidateChecks(case.admissions, case.candidates, runner=SourceFixture(), host=host, controller_source=source,
+            launch_compiler=lambda execution: CheckLaunchSpec(ProcessSpec(
+                (sys._base_executable, "-c", "from pathlib import Path; Path(" + repr(str(marker)) + ").open('x').write('once')"), tmp_path
+            ), "b" * 64))
+        for _ in range(4):
+            state = service.advance(*case.args, principal="owner")
+        row = state["checks"]["runs"][0]
+        until = time.monotonic() + 8
+        while not marker.exists() and time.monotonic() &lt; until:
+            time.sleep(0.05)
+        assert marker.read_text() == "once"
+        reopened = ApprovedCandidateChecks(case.admissions, case.candidates, runner=SourceFixture(), host=host)
+        for _ in range(2):
+            recovered = reopened.reconcile(*case.args, principal="owner")
+        assert recovered["checks"]["runs"][0]["attempt_id"] == row["attempt_id"]
+        assert marker.read_text() == "once"
+        with pytest.raises(LaunchDenied, match="RUNNER_IDENTITY_NOT_CURRENT"):
+&gt;           service.consume_check(*case.args, row["check_run_id"], principal="owner", runner_identity=ProcessIdentity(123, "not-the-child"))
+            ^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'ApprovedCandidateChecks' object has no attribute 'consume_check'
+
+tests\runs\test_candidate_checks.py:247: AttributeError</failure></testcase></testsuite></testsuites>

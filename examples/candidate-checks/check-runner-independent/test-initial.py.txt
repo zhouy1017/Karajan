@@ -1,0 +1,168 @@
+"""Independent #94 boundaries: real Linux processes, synthetic candidate/approval only."""
+
+import hashlib
+import json
+import os
+import sys
+import time
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
+
+import pytest
+from karajan.isolation.check_runner import FixedCheckRunner, PythonCheckEnvironment
+from test_check_runner import allowed_start, candidate
+
+pytestmark = pytest.mark.skipif(sys.platform != "linux", reason="Real Linux Check environment")
+
+
+@pytest.fixture(scope="module")
+def environment(tmp_path_factory):
+    return PythonCheckEnvironment.provision(tmp_path_factory.mktemp("independent-image") / "image")
+
+
+def test_private_host_paths_are_inaccessible_through_proc_roots_and_inherited_fds(
+    environment, tmp_path
+):
+    private = tmp_path / "private-controller-canary"
+    private.write_bytes(b"SYNTHETIC_PRIVATE_CONTROL_VALUE")
+    script = f"""import os, pathlib
+target = {str(private)!r}
+for prefix in ('', '/proc/self/root', '/proc/1/root'):
+    try: data = pathlib.Path(prefix + target).read_bytes()
+    except OSError: continue
+    raise AssertionError('private host path readable')
+fds = list(pathlib.Path('/proc/self/fd').iterdir())
+assert len(fds) <= 4, fds
+assert not pathlib.Path('/proc/2/root' + target).exists()
+assert pathlib.Path('untouched.bin').read_bytes() == bytes([0,255,1])
+print('PROVEN_INSIDE_NAMESPACE')
+"""
+    runner, execution, _ = candidate(tmp_path, script, environment)
+    observed = runner.run(execution, start_guard=allowed_start, cancelled=lambda: False)
+    assert (observed.outcome, observed.exit_code, observed.local_stop) == (
+        "completed",
+        0,
+        "confirmed",
+    ), runner.read_log(execution, observed)
+    assert b"PROVEN_INSIDE_NAMESPACE" in runner.read_log(execution, observed)
+    assert private.read_bytes() == b"SYNTHETIC_PRIVATE_CONTROL_VALUE"
+
+
+def test_namespace_exit_stops_an_orphan_with_a_separate_session(environment, tmp_path):
+    script = """import os, time
+read, write = os.pipe()
+pid = os.fork()
+if pid == 0:
+    os.close(read)
+    os.setsid()
+    os.write(write, b'ready')
+    os.close(write)
+    time.sleep(2)
+    print('ORPHAN_SURVIVED', flush=True)
+    os._exit(0)
+os.close(write)
+assert os.read(read, 5) == b'ready'
+os.close(read)
+print('LEADER_FINISHED', flush=True)
+os._exit(0)
+"""
+    runner, execution, _ = candidate(tmp_path, script, environment)
+    observed = runner.run(execution, start_guard=allowed_start, cancelled=lambda: False)
+    log = runner.read_log(execution, observed)
+    assert (observed.outcome, observed.exit_code, observed.local_stop, observed.log_complete) == (
+        "completed",
+        0,
+        "confirmed",
+        True,
+    ), observed
+    assert b"LEADER_FINISHED" in log and b"ORPHAN_SURVIVED" not in log
+
+
+def test_actual_source_changes_inside_guard_are_rejected_and_never_retried(environment, tmp_path):
+    runner, execution, _ = candidate(tmp_path, "print('SHOULD_NOT_RUN')", environment)
+    asset = environment.root / "usr/lib/python3.12/keyword.py"
+    original = asset.read_bytes()
+
+    @contextmanager
+    def source_changes_after_claim():
+        asset.write_bytes(original + b"\n# synthetic source revision\n")
+        try:
+            yield
+        finally:
+            asset.write_bytes(original)
+
+    observed = runner.run(
+        execution, start_guard=source_changes_after_claim, cancelled=lambda: False
+    )
+    assert observed.outcome == "unknown" and observed.local_stop == "not_started"
+    assert observed.reason_codes == ("CHECK_ENVIRONMENT_SOURCE_CHANGED",)
+    assert not list(runner.directory.glob("*/spawn-intent.json"))
+    assert b"SHOULD_NOT_RUN" not in runner.read_log(execution, observed)
+    reopened = FixedCheckRunner(runner.directory, runner.candidates, environments={})
+    assert (
+        reopened.run(
+            execution, start_guard=lambda: pytest.fail("no new start"), cancelled=lambda: False
+        )
+        == observed
+    )
+
+
+def test_missing_or_hardlinked_logs_cannot_recover_a_passed_complete_result(environment, tmp_path):
+    runner, execution, _ = candidate(tmp_path, "print('fixed-log-value')", environment)
+    observed = runner.run(execution, start_guard=allowed_start, cancelled=lambda: False)
+    assert observed.exit_code == 0 and observed.log_complete
+    log = next(runner.directory.glob("*/output.log"))
+    original = log.read_bytes()
+    log.unlink()
+    reopened = FixedCheckRunner(runner.directory, runner.candidates, environments={})
+    missing = reopened.inspect(execution)
+    assert missing.outcome == "unknown" and not missing.log_complete
+    assert reopened.read_log(execution, observed) is None
+    log.write_bytes(original)
+    link = log.with_name("synthetic-hardlink")
+    os.link(log, link)
+    linked = reopened.inspect(execution)
+    assert linked.outcome == "unknown" and not linked.log_complete
+    link.unlink()
+    assert reopened.inspect(execution) == observed
+    assert hashlib.sha256(reopened.read_log(execution, observed)).hexdigest() == observed.log_sha256
+    assert (
+        reopened.run(
+            execution,
+            start_guard=lambda: pytest.fail("read-only recovery"),
+            cancelled=lambda: False,
+        )
+        == observed
+    )
+
+
+def test_external_cancel_stops_live_execution_and_replay_cannot_restore_it(environment, tmp_path):
+    runner, execution, _ = candidate(
+        tmp_path,
+        "import time; print('CHECK_ENTERED',flush=True); time.sleep(20)",
+        environment,
+    )
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(
+            runner.run, execution, start_guard=allowed_start, cancelled=lambda: False
+        )
+        until = time.monotonic() + 8
+        init = []
+        while not init and not future.done() and time.monotonic() < until:
+            init = list(runner.directory.glob("*/namespace-init.json"))
+            time.sleep(0.02)
+        assert init, "fixed namespace never registered"
+        init_record = json.loads(init[0].read_bytes())
+        assert isinstance(init_record["pid"], int) and init_record["pid"] > 0
+        other = FixedCheckRunner(runner.directory, runner.candidates, environments={})
+        other.cancel(execution)
+        observed = future.result(timeout=8)
+    assert observed.outcome != "completed" and observed.local_stop == "confirmed", observed
+    assert (
+        other.run(
+            execution,
+            start_guard=lambda: pytest.fail("cancel cannot rearm"),
+            cancelled=lambda: False,
+        )
+        == observed
+    )

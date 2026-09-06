@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="2.737" timestamp="2026-09-06T23:51:08.465044+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_candidate_checks" name="test_nonzero_check_does_not_omit_other_approved_checks_and_review_stays_missing" time="1.678"><failure message="Failed: The approved check did not reach its one-shot Host start">projected = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x0000021CECFD1DF0&gt;, 'project_id': '45277cbd-d1aa-4e...C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-906/test_nonzero_check_does_not_om0/fixture/repository'), ...}
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-906/test_nonzero_check_does_not_om0')
+
+    def test_nonzero_check_does_not_omit_other_approved_checks_and_review_stays_missing(projected, tmp_path):
+        case, service, runner, host = check_workflow(projected, tmp_path, exits=(7, 0))
+        run_next_boundary_check(case, service, host)
+        service.advance(*case.args, principal="owner")
+&gt;       run_next_boundary_check(case, service, host)
+
+tests\runs\test_candidate_checks.py:338: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+case = ApprovedCheckCase(admissions=&lt;karajan.orchestration.admission.ApprovedTaskAdmission object at 0x0000021CED0C7F20&gt;, can...eeeeeeeeeeeeeeeeeeeeeeeeeeeeee', 'filesystem': 'candidate_copy', 'network': 'none', 'env': {}, 'max_log_bytes': 65536})
+service = &lt;karajan.orchestration.candidate_checks.ApprovedCandidateChecks object at 0x0000021CEC7A2B70&gt;
+host = &lt;test_candidate_checks.CheckHostIdentityBoundary object at 0x0000021CED05ABA0&gt;
+
+    def run_next_boundary_check(case, service, host):
+        for _ in range(5):
+            state = service.advance(*case.args, principal="owner")
+            row = next(row for row in state["checks"]["runs"] if row["phase"] != "recorded")
+            if row["phase"] == "host_started":
+                return service.consume_check(*case.args, row["check_run_id"], principal="owner", runner_identity=host.identity)
+&gt;       pytest.fail("The approved check did not reach its one-shot Host start")
+E       Failed: The approved check did not reach its one-shot Host start
+
+tests\runs\test_candidate_checks.py:331: Failed</failure></testcase></testsuite></testsuites>

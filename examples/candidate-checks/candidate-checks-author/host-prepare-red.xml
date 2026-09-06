@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="2.421" timestamp="2026-09-06T23:37:11.916417+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_candidate_checks" name="test_check_prepares_real_host_without_spawning_and_keeps_local_identity" time="1.410"><failure message="AssertionError: assert 'claimed' == 'host_prepared'&#10;  &#10;  - host_prepared&#10;  + claimed">check_case = (&lt;karajan.orchestration.go_execution_intent.GoExecutionIntents object at 0x000001AFCFE28710&gt;, ('9854a005-2685-46f0-b9f...eac9186eee', 'revision': 1, 'content_sha256': '86981e8aca1848c9a54bfd2016168e04eec1f8982b36b3f6b8949b627f3be8d9', ...})
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-897/test_check_prepares_real_host_0')
+
+    def test_check_prepares_real_host_without_spawning_and_keeps_local_identity(check_case, tmp_path):
+        from karajan.orchestration.candidate_checks import ApprovedCandidateChecks, CheckLaunchSpec
+    
+        intents, args, candidates, _ = check_case
+        host = RunnerHost(tmp_path / "check-host")
+        checks = ApprovedCandidateChecks(
+            intents.admissions, candidates, host=host, runner=SourceFixture(),
+            controller_source=lambda: {"schema_version": "synthetic.check-controller.v1"},
+            launch_compiler=lambda execution: CheckLaunchSpec(
+                ProcessSpec((sys._base_executable, "-c", "pass"), tmp_path), "b" * 64
+            ),
+        )
+        checks.advance(*args, principal="owner")
+        checks.advance(*args, principal="owner")
+        prepared = checks.advance(*args, principal="owner")
+        row = prepared["checks"]["runs"][0]
+&gt;       assert row["phase"] == "host_prepared"
+E       AssertionError: assert 'claimed' == 'host_prepared'
+E         
+E         - host_prepared
+E         + claimed
+
+tests\runs\test_candidate_checks.py:205: AssertionError</failure></testcase></testsuite></testsuites>

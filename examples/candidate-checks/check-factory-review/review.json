@@ -1,0 +1,28 @@
+{
+  "reviewer": "capacity_facts",
+  "scope": "fixed factory/settings/entry negative boundary, full peer runner/facade pending",
+  "findings": [],
+  "windows": {
+    "passed": 5,
+    "seconds": 4.23
+  },
+  "source_before": {
+    "backend/karajan/orchestration/check_services_factory.py": "a442b41e3cabc95bd6481a27837f7a8f32a329adc8a5364b29fb47912dcbefaa",
+    "backend/karajan/orchestration/_candidate_check_runner.py": "b9a0ba28e410d56472193e07b5098e0877bb586efe775bf3573f4593f0207f44",
+    "tests/runs/test_check_services_factory.py": "fd6844edc5ebb37eea6bcbd7febf9ce3cbe744e04963e0486426b4a96882f004"
+  },
+  "source_after": {
+    "backend/karajan/orchestration/check_services_factory.py": "a442b41e3cabc95bd6481a27837f7a8f32a329adc8a5364b29fb47912dcbefaa",
+    "backend/karajan/orchestration/_candidate_check_runner.py": "873ca29851ab5151b7d459f651fc5af8091bee8d3996074feac3facd8c0fed17",
+    "tests/runs/test_check_services_factory.py": "fd6844edc5ebb37eea6bcbd7febf9ce3cbe744e04963e0486426b4a96882f004"
+  },
+  "unchanged": false,
+  "evidence": {
+    "README.md": "d9411fa60ad66d6a30a1d61d2c0c9c26d6925eb9e6f498a9a2e038e8db0ba350",
+    "sources-before.json": "664a3ca3cfc8da0a636c60ad4de422c8e0aa2d2c186c5c558ed4049d0e171ce3",
+    "test-initial.py.txt": "c786d83095ae3c225d53e618d8ba89cb697e45e3d9e7156b9b6e8a70b0a3742e",
+    "test_independent_factory.py": "46606b0e72e16ee7ca4945e8627d78b5e38f56dd003ebf976926ba475562e66f",
+    "windows-final.xml": "8cb56928e58323eb06a2ee9f372b99e82da1f6ec56570fd5d1cb63dcaeb17ea4",
+    "windows-initial.xml": "5f12f3571de935fba76b70953dac9462e8445d07d19d5c618fe8422b767bfe11"
+  }
+}

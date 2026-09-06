@@ -1,0 +1,103 @@
+"""Independent fixed Check deployment boundary; no Check/native/provider effect."""
+
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+from karajan.orchestration import _candidate_check_runner, check_services_factory
+from karajan.orchestration.check_services_factory import (
+    _read_bootstrap,
+    open_check_services,
+    write_check_bootstrap,
+)
+from karajan.runs import RunError
+from test_check_services_factory import (
+    case as case,
+    check_deployment as check_deployment,
+    go_deployment as go_deployment,
+    prepared as prepared,
+    private_fixture_directories as private_fixture_directories,
+    projected as projected,
+    ready as ready,
+    reservation as reservation,
+    settings as settings,
+)
+
+
+def test_fixed_isolated_entry_ignores_cwd_and_pythonpath_modules(tmp_path):
+    marker = tmp_path / "poison-imported"
+    package = tmp_path / "karajan"
+    package.mkdir()
+    (package / "__init__.py").write_text(
+        f"from pathlib import Path\nPath({str(marker)!r}).write_text('poison')\n",
+        encoding="utf-8",
+    )
+    result = subprocess.run(
+        [sys.executable, "-I", str(Path(_candidate_check_runner.__file__).resolve()),
+         "run", "operation", "check", "owner"],
+        cwd=tmp_path,
+        env=os.environ | {"PYTHONPATH": str(tmp_path)},
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    assert result.returncode == 1
+    assert result.stdout.strip() == "CHECK_RUNNER_FAILED"
+    assert not result.stderr and not marker.exists()
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["karajan"]
+
+
+def test_hardlinked_bootstrap_is_rejected_without_changing_bytes(settings):
+    path = write_check_bootstrap(settings)
+    before = path.read_bytes()
+    os.link(path, path.with_suffix(".retained"))
+    with pytest.raises(RunError, match="CHECK_DEPLOYMENT_PATH_INVALID"):
+        _read_bootstrap(settings.control_directory)
+    assert path.read_bytes() == before
+
+
+def test_history_factory_never_opens_current_environment_or_source(check_deployment, monkeypatch):
+    settings, _, args = check_deployment
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("Historical open touched current Check execution dependencies")
+
+    monkeypatch.setattr("karajan.isolation.check_runner.PythonCheckEnvironment", forbidden)
+    monkeypatch.setattr(check_services_factory, "check_controller_source", forbidden)
+    paths = list(settings.state_directory.glob("*.sqlite"))
+    before = {path: path.read_bytes() for path in paths}
+    service = open_check_services(settings, run_id=args[0], operation_id=args[1], principal="owner")
+    assert service.get(*args, principal="owner") is None
+    assert {path: path.read_bytes() for path in paths} == before
+    assert not settings.python_executable.exists()
+    assert all(not row.directory.exists() for row in settings.environment_sources)
+
+
+def test_wrong_owner_fails_before_execution_material(check_deployment, monkeypatch):
+    settings, _, args = check_deployment
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("Unowned Check operation opened execution material")
+
+    monkeypatch.setattr("karajan.isolation.check_runner.PythonCheckEnvironment", forbidden)
+    monkeypatch.setattr(check_services_factory, "check_controller_source", forbidden)
+    before = {path: path.read_bytes() for path in settings.state_directory.glob("*.sqlite")}
+    with pytest.raises(RunError, match="USER_DECISION_REQUIRED"):
+        open_check_services(
+            settings, run_id=args[0], operation_id=args[1], principal="other-owner",
+            for_execution=True,
+        )
+    assert {path: path.read_bytes() for path in before} == before
+
+
+def test_history_open_does_not_recreate_missing_optional_host_ledger(check_deployment):
+    settings, _, args = check_deployment
+    database = settings.host_directory / "runnerhost.sqlite3"
+    before = database.read_bytes()
+    retained = database.with_suffix(".retained")
+    database.rename(retained)
+    service = open_check_services(settings, run_id=args[0], operation_id=args[1], principal="owner")
+    assert service.get(*args, principal="owner") is None
+    assert not database.exists() and retained.read_bytes() == before

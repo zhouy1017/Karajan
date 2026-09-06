@@ -1,0 +1,44 @@
+{
+  "reviewer": "capacity_facts",
+  "author": "ui_spec_finalize",
+  "scope": "Shared RunExecutionBudget and public Writer/Check effect admission, late collection history",
+  "findings": [],
+  "source_before": {
+    "backend/karajan/orchestration/execution_budget.py": "dcbc042da90c931cf2f39a7d69f99420f391dde47e31dddd98bcd1f0c4fbdb8c",
+    "backend/karajan/orchestration/go_execution_intent.py": "eb64051c6a51815c64017d23447b1ce1ba98300b8c2840409e1c85bfc964ef30",
+    "backend/karajan/orchestration/go_task_execution.py": "bd7f64485c116b83955d557b95bcf21cc0bb1731fd6a09006bf73c454692390c",
+    "backend/karajan/orchestration/candidate_checks.py": "346014ca0410b90acecc3139a87a2b45f81b93d5839e56040bcc00a0958b4d5b",
+    "backend/karajan/orchestration/admission.py": "ab0cb33e9025d5ea9df08fc3c4ff002c62bf495354f27812a36e72cbe14c7623",
+    "backend/karajan/orchestration/go_task_collector.py": "a9d3149f33ae026ae4e4dbc5e74a5daed9aaebac75066005da57d84c07f699bc"
+  },
+  "source_after": {
+    "backend/karajan/orchestration/admission.py": "ab0cb33e9025d5ea9df08fc3c4ff002c62bf495354f27812a36e72cbe14c7623",
+    "backend/karajan/orchestration/candidate_checks.py": "346014ca0410b90acecc3139a87a2b45f81b93d5839e56040bcc00a0958b4d5b",
+    "backend/karajan/orchestration/execution_budget.py": "dcbc042da90c931cf2f39a7d69f99420f391dde47e31dddd98bcd1f0c4fbdb8c",
+    "backend/karajan/orchestration/go_execution_intent.py": "eb64051c6a51815c64017d23447b1ce1ba98300b8c2840409e1c85bfc964ef30",
+    "backend/karajan/orchestration/go_task_collector.py": "a9d3149f33ae026ae4e4dbc5e74a5daed9aaebac75066005da57d84c07f699bc",
+    "backend/karajan/orchestration/go_task_execution.py": "bd7f64485c116b83955d557b95bcf21cc0bb1731fd6a09006bf73c454692390c"
+  },
+  "sources_unchanged": true,
+  "windows": {
+    "passed": 10,
+    "seconds": 13.7
+  },
+  "linux": {
+    "passed": 10,
+    "seconds": 8.74
+  },
+  "evidence_level": "C: real stores with explicit qualification, planning, child identity and native producer fixtures",
+  "provider_calls": 0,
+  "native_runtime_execution": "not_run",
+  "deadline_scope": "controller effect admission, not end-to-end provider acceptance hard bound",
+  "evidence": {
+    "linux-final.xml": "a9cb2e0f9fa4464213e611a0c06b347819c3ceb3aec111fc9762e4c8b8aa297e",
+    "plan.md": "bf00ff96e86b00a080758ad71edc34f2f024cd2a92b2ee7253a8554dd540f27e",
+    "README.md": "435cf921d97a038b08b94c4ad3a0a6f3cc38fbe081a640540573c02d0bedd2ce",
+    "source-before.json": "0f9b13a332f8b745d34d1f11f139f57cf54dcc2fe36813b1b83003f8de3abbda",
+    "test_effect_budget.py": "c4d5ed3827d4a34efdd77095cc64ff319c5f32490b5c33b40d6c169e3cfb6666",
+    "test-first.py.txt": "c4d5ed3827d4a34efdd77095cc64ff319c5f32490b5c33b40d6c169e3cfb6666",
+    "windows-first.xml": "11c103a8e8b6c010fe1caf6b6c777a293f062a46b9600cb9fe84b45bd3137a8c"
+  }
+}

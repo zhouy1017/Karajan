@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="24" time="4.130" timestamp="2026-09-06T23:37:03.994993+08:00" hostname="ProArt-Zhou"><testcase classname="tests.execution.test_check_manifest" name="test_check_manifest_roundtrips_and_prepares_without_model_identity" time="0.020" /><testcase classname="tests.execution.test_check_manifest" name="test_real_check_child_uses_environment_fence_and_replays_original_launch" time="0.370" /><testcase classname="tests.execution.test_check_manifest" name="test_original_model_json_shape_stays_exactly_compatible[commander]" time="0.000" /><testcase classname="tests.execution.test_check_manifest" name="test_original_model_json_shape_stays_exactly_compatible[worker]" time="0.000" /><testcase classname="tests.execution.test_check_manifest" name="test_original_model_json_shape_stays_exactly_compatible[reviewer]" time="0.000" /><testcase classname="tests.execution.test_check_manifest" name="test_wrong_or_mixed_check_protocols_fail_both_parsers[change0]" time="0.000" /><testcase classname="tests.execution.test_check_manifest" name="test_wrong_or_mixed_check_protocols_fail_both_parsers[change1]" time="0.000" /><testcase classname="tests.execution.test_check_manifest" name="test_wrong_or_mixed_check_protocols_fail_both_parsers[change2]" time="0.000" /><testcase classname="tests.execution.test_check_manifest" name="test_wrong_or_mixed_check_protocols_fail_both_parsers[change3]" time="0.000" /><testcase classname="tests.execution.test_check_manifest" name="test_wrong_or_mixed_check_protocols_fail_both_parsers[change4]" time="0.000" /><testcase classname="tests.execution.test_check_manifest" name="test_wrong_or_mixed_check_protocols_fail_both_parsers[change5]" time="0.000" /><testcase classname="tests.execution.test_check_manifest" name="test_wrong_or_mixed_check_protocols_fail_both_parsers[change6]" time="0.000" /><testcase classname="tests.execution.test_check_manifest" name="test_wrong_or_mixed_check_protocols_fail_both_parsers[change7]" time="0.000" /><testcase classname="tests.execution.test_check_manifest" name="test_wrong_or_mixed_check_protocols_fail_both_parsers[change8]" time="0.000" /><testcase classname="tests.execution.test_check_manifest" name="test_missing_discriminator_or_check_schema_cannot_fall_back_to_model" time="0.000" /><testcase classname="tests.execution.test_check_manifest" name="test_changed_model_objects_cannot_bypass_persisted_protocol_validation" time="0.012"><failure message="Failed: DID NOT RAISE ValidationError">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-896/test_changed_model_objects_can0')
+
+    def test_changed_model_objects_cannot_bypass_persisted_protocol_validation(tmp_path):
+        host = RunnerHost(tmp_path / "host")
+        changed = check_manifest().model_copy(update={"environment_revision": "2"})
+        before = host.database.read_bytes()
+        with pytest.raises(ValidationError):
+            host.prepare(changed, "check-start", ProcessSpec((sys.executable, "-c", "pass"), tmp_path))
+        assert host.database.read_bytes() == before
+&gt;       with pytest.raises(ValidationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests\execution\test_check_manifest.py:196: Failed</failure></testcase><testcase classname="tests.execution.test_check_manifest" name="test_environment_or_execution_change_cannot_reuse_start_or_cancel_binding[environment_revision]" time="0.018" /><testcase classname="tests.execution.test_check_manifest" name="test_environment_or_execution_change_cannot_reuse_start_or_cancel_binding[execution_sha256]" time="0.017" /><testcase classname="tests.execution.test_check_manifest" name="test_check_launch_requires_current_original_activation[paused]" time="0.017" /><testcase classname="tests.execution.test_check_manifest" name="test_check_launch_requires_current_original_activation[fence]" time="0.018" /><testcase classname="tests.execution.test_check_manifest" name="test_check_launch_requires_current_original_activation[expired]" time="0.018" /><testcase classname="tests.execution.test_check_manifest" name="test_check_launch_requires_current_original_activation[budget]" time="0.017" /><testcase classname="tests.execution.test_check_manifest" name="test_lost_start_receipt_is_not_relaunched_and_exact_cancel_stays_historical" time="3.038"><failure message="AttributeError: 'RunnerHost' object has no attribute 'accept_result'. Did you mean: 'receive_result'?">prepared_check = (&lt;karajan.execution.host.RunnerHost object at 0x000001AF752B7020&gt;, CheckAttemptManifest(schema_version='karajan.check-...th('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-896/test_lost_start_receipt_is_not0/execution-count.txt'))
+
+    def test_lost_start_receipt_is_not_relaunched_and_exact_cancel_stays_historical(prepared_check):
+        host, attempt, spec, output = prepared_check
+        accepted = activation(attempt)
+        binding = {"prepared_id": "check-start", "manifest": attempt.model_dump(),
+                   "process_spec": spec.document()}
+        with pytest.raises(ProbeCrash, match="after_accept"):
+            host.start("check-start", accepted, crash_at="after_accept")
+        reopened = RunnerHost(host.directory, existing_only=True)
+        replay = reopened.start("check-start", accepted)
+        assert replay.state == "unknown" and replay.supervisor is None
+        assert not output.exists()
+        reopened.set_control(attempt.id, fence=2, authorization_ref="withdrawn", dispatch_enabled=False)
+        assert reopened.cancel(attempt.id, "cancel", expected_binding=deepcopy(binding)).snapshot.business_status == "cancelled"
+&gt;       assert not reopened.accept_result(attempt.id, 1, "late", {"passed": True}).accepted
+                   ^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'RunnerHost' object has no attribute 'accept_result'. Did you mean: 'receive_result'?
+
+tests\execution\test_check_manifest.py:261: AttributeError</failure></testcase><testcase classname="tests.execution.test_check_manifest" name="test_running_check_observes_control_withdrawal_and_rejects_late_result" time="0.405"><failure message="AttributeError: 'RunnerHost' object has no attribute 'accept_result'. Did you mean: 'receive_result'?">check_runner = (&lt;karajan.execution.host.RunnerHost object at 0x000001AF752B7B00&gt;, CheckAttemptManifest(schema_version='karajan.check-...sPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-896/test_running_check_observes_co0/observation.json'))
+
+    def test_running_check_observes_control_withdrawal_and_rejects_late_result(check_runner):
+        host, attempt, _, _, output = check_runner
+        wait_json(output)
+        host.set_control(attempt.id, fence=1, authorization_ref=attempt.authorization_ref,
+                         dispatch_enabled=False)
+        initialization = host.initialize_control_once(
+            attempt.id, prepared_id="check-start", fence=1,
+            authorization_ref=attempt.authorization_ref,
+        )
+        assert initialization["dispatch_enabled"] is False
+        output.with_suffix(".continue").touch()
+        assert wait_json(output.with_suffix(".after")) == "CAPTURE_FENCE_NOT_CURRENT"
+        host.cancel(attempt.id, "withdrawn-check")
+&gt;       assert not host.accept_result(attempt.id, 1, "late", {"passed": True}).accepted
+                   ^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'RunnerHost' object has no attribute 'accept_result'. Did you mean: 'receive_result'?
+
+tests\execution\test_check_manifest.py:279: AttributeError</failure></testcase></testsuite></testsuites>

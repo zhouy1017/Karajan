@@ -75,3 +75,6 @@ examples/go-task-execution/**/*.json -text whitespace=cr-at-eol
 examples/go-task-execution/**/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
 examples/go-task-execution/**/*.txt -text whitespace=cr-at-eol
 examples/go-task-execution/**/*.md -text whitespace=cr-at-eol
+
+# Preserve Check observations, original inputs and independent review byte hashes.
+examples/candidate-checks/** -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
