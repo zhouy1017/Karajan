@@ -6,6 +6,7 @@ must revalidate all business guards and the current Host runner before effects.
 """
 
 import json
+import math
 import re
 import sqlite3
 from collections.abc import Callable, Iterator
@@ -24,6 +25,7 @@ from karajan.runs import RunError
 from karajan.runs.planning import encoded, identifier
 
 from .admission import ApprovedTaskAdmission
+from .execution_budget import claim_process, current_process
 from .workspace import _approved_task
 
 
@@ -294,6 +296,14 @@ class GoExecutionIntents:
                 with self.admissions.routing.planner.activation_guard(run_id) as run:
                     _, task = _approved_task(run, operation, principal)
                     intent = self._prepare(run, operation, task)
+                    claim_process(
+                        db,
+                        run,
+                        operation,
+                        attempt_id=intent["attempt_id"],
+                        scope="writer",
+                        now=self.admissions.routing.planner.clock(),
+                    )
                 operation["execution"] = {
                     "schema_version": "karajan.go-task-execution-intent.v1",
                     "intent": intent,
@@ -667,7 +677,7 @@ class GoExecutionIntents:
         runner: ProcessIdentity,
         capture_digest: str,
     ) -> Iterator[dict[str, Any]]:
-        with self.effect_claim_guard(
+        with self._capture_claim_guard(
             run_id, operation_id, principal=principal, runner=runner
         ) as op:
             collection = op["execution"].get("collection")
@@ -839,7 +849,7 @@ class GoExecutionIntents:
 
     @contextmanager
     def _guard(
-        self, run_id: str, operation_id: str, principal: str
+        self, run_id: str, operation_id: str, principal: str, *, new_effect: bool = False
     ) -> Iterator[tuple[dict[str, Any], dict[str, Any]]]:
         self._owner(run_id, operation_id, principal)
         with _connection(self.admissions.database, readonly=False) as db:
@@ -848,14 +858,49 @@ class GoExecutionIntents:
             execution = self._execution(operation)
             if operation["cancel_requested"]:
                 raise RunError("TASK_EXECUTION_CANCEL_REQUESTED")
+            if new_effect:
+                # The operation transaction serializes all Run budget claims.
+                # Do not retain a Run lock: the caller next acquires its original
+                # routing Run/Project guards and must validate the same approval.
+                planner = self.admissions.routing.planner
+                with _connection(planner.database, readonly=True) as run_db:
+                    run = planner._get(run_db, run_id)
+                    _approved_task(run, operation, principal)
+                    checked_at = planner.clock()
+                    deadline = current_process(
+                        db,
+                        run,
+                        operation,
+                        attempt_id=execution["intent"]["attempt_id"],
+                        now=checked_at,
+                    )
+                    operation["execution_budget_gate"] = {
+                        "checked_at": checked_at,
+                        "deadline": deadline,
+                    }
             yield operation, execution
+
+    def assert_effect_deadline(self, operation: dict[str, Any]) -> None:
+        """Internal final comparison of the guard's nonpersistent budget facts.
+
+        This gate bounds controller effect admission. Runtime/transport setup
+        after the callback remains subject to its own deadlines and stop facts.
+        """
+        gate = operation.get("execution_budget_gate")
+        if not isinstance(gate, dict) or set(gate) != {"checked_at", "deadline"}:
+            raise RunError("RUN_EXECUTION_CLAIM_REQUIRED")
+        now = self.admissions.routing.planner.clock()
+        if type(now) not in (int, float) or not math.isfinite(now) or now < gate["checked_at"]:
+            raise RunError("RUN_EXECUTION_CLOCK_REGRESSED")
+        if now >= gate["deadline"]:
+            raise RunError("RUN_DURATION_LIMIT")
 
     @contextmanager
     def activation_guard(
         self, run_id: str, operation_id: str, *, principal: str
     ) -> Iterator[dict[str, Any]]:
         """Hold the prepared operation before the original Capacity activation."""
-        with self._guard(run_id, operation_id, principal) as (op, execution):
+        with self._guard(run_id, operation_id, principal, new_effect=True) as (op, execution):
             if execution["phase"] != "prepared" or execution["capacity_activation"] is not None:
                 raise RunError("TASK_EXECUTION_PREPARED_REQUIRED")
             yield op
@@ -865,7 +910,7 @@ class GoExecutionIntents:
         self, run_id: str, operation_id: str, *, principal: str
     ) -> Iterator[dict[str, Any]]:
         """Serialize cancellation with Host.prepare and one-time control setup."""
-        with self._guard(run_id, operation_id, principal) as (op, execution):
+        with self._guard(run_id, operation_id, principal, new_effect=True) as (op, execution):
             if (
                 execution["phase"] != "activated"
                 or self._launch(execution) is None
@@ -883,7 +928,10 @@ class GoExecutionIntents:
         This is not fresh capacity or Host authority and must not surround a wait
         for child registration. It does not permit replaying a native start.
         """
-        with self._guard(run_id, operation_id, principal) as (operation, execution):
+        with self._guard(run_id, operation_id, principal, new_effect=True) as (
+            operation,
+            execution,
+        ):
             activation = execution["capacity_activation"]
             if (
                 execution["phase"] != "start_unknown"
@@ -899,14 +947,31 @@ class GoExecutionIntents:
     def effect_claim_guard(
         self, run_id: str, operation_id: str, *, principal: str, runner: ProcessIdentity
     ) -> Iterator[dict[str, Any]]:
-        """Hold operation before Run/Project/Capacity/Host, without ledger writes."""
+        """Revalidate shared budget before a new native start or provider send."""
+        _runner(runner)
+        with self._guard(run_id, operation_id, principal, new_effect=True) as (
+            operation,
+            execution,
+        ):
+            self._current_claim(execution, runner)
+            yield operation
+
+    @staticmethod
+    def _current_claim(execution: dict[str, Any], runner: ProcessIdentity) -> None:
+        if execution["phase"] != "effect_claimed" or execution["effect_claim"] != {
+            "intent_digest": execution["intent_digest"],
+            "runner": asdict(runner),
+        }:
+            raise RunError("TASK_EXECUTION_CLAIM_NOT_CURRENT")
+
+    @contextmanager
+    def _capture_claim_guard(
+        self, run_id: str, operation_id: str, *, principal: str, runner: ProcessIdentity
+    ) -> Iterator[dict[str, Any]]:
+        """Original writer identity for stopped capture, not new effect budget."""
         _runner(runner)
         with self._guard(run_id, operation_id, principal) as (operation, execution):
-            if execution["phase"] != "effect_claimed" or execution["effect_claim"] != {
-                "intent_digest": execution["intent_digest"],
-                "runner": asdict(runner),
-            }:
-                raise RunError("TASK_EXECUTION_CLAIM_NOT_CURRENT")
+            self._current_claim(execution, runner)
             yield operation
 
     def cancel_intent(self, run_id: str, operation_id: str, *, principal: str) -> dict[str, Any]:

@@ -6,10 +6,9 @@ import sys
 import time
 from pathlib import Path
 
-from karajan.contracts.probe import AttemptManifest
-
 from ._platform import ProcessGroup, process_identity
 from .host import RunnerHost
+from .manifest import parse_host_manifest_json
 
 
 def supervise(database: Path, start_key: str) -> None:
@@ -32,7 +31,7 @@ def supervise(database: Path, start_key: str) -> None:
             current = connection.execute(
                 "SELECT cancelled, activation FROM executions WHERE start_key=?", (start_key,)
             ).fetchone()
-            manifest = AttemptManifest.model_validate_json(row["manifest"])
+            manifest = parse_host_manifest_json(row["manifest"])
             control = connection.execute(
                 "SELECT * FROM controls WHERE attempt_id=?", (manifest.id,)
             ).fetchone()
