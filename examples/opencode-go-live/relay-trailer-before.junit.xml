@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.316" timestamp="2026-09-06T11:04:23.198547+08:00" hostname="ProArt-Zhou"><testcase classname="tests.adapters.opencode.test_go_relay" name="test_go_cost_trailer_after_done_keeps_native_bytes_and_usage" time="0.100"><failure message="assert 502 == 200&#10; +  where 502 = &lt;Response [502 Bad Gateway]&gt;.status_code">def test_go_cost_trailer_after_done_keeps_native_bytes_and_usage() -&gt; None:
+        # Observed shape: finish+usage, DONE, {choices: [], cost: str}.
+        # The cost below is synthetic; the live observation retained only its type.
+        cost = "0.000014382"
+        trailer = stream({"choices": [], "cost": cost}, done=False)
+        body = stream(event(usage={"prompt_tokens": 21, "completion_tokens": 9})) + trailer
+        with running(lambda _: answer(body)) as (relay, _):
+            response = post(relay)
+            relay.close()
+&gt;           assert response.status_code == 200
+E           assert 502 == 200
+E            +  where 502 = &lt;Response [502 Bad Gateway]&gt;.status_code
+
+tests\adapters\opencode\test_go_relay.py:606: AssertionError</failure></testcase></testsuite></testsuites>

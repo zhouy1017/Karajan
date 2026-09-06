@@ -1,0 +1,28 @@
+{
+  "status": 200,
+  "done_seen": true,
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 16,
+    "completion_tokens": 39,
+    "total_tokens": 55,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 36
+    }
+  },
+  "post_done": [
+    {
+      "keys": [
+        "choices",
+        "cost"
+      ],
+      "choices": [],
+      "cost_type": "str",
+      "cost": null
+    }
+  ],
+  "cost_unit": "provider_metering_unspecified_not_cash_balance"
+}

@@ -25,3 +25,5 @@ Windows 独立运行全部 Web 与路由测试 **137 passed / 11.60 秒**；WSL2
 真实浏览器加载已发布 v2 的固定例子，重复得到相同候选和三份输入摘要；T1 空组显示阻塞，T0 不产生候选，critical 风险将 T1 提升至 T3。任务或规则草稿变化后旧结果立即撤下；刷新后仍是原保存规则。前后项目/发布、Run 和容量快照完全一致。长规则摘要在实际窄屏观察中曾溢出，修复后完整换行。文件导入与过期响应由交互测试验证，不描述为浏览器实测。
 
 实际记录见 [证据目录](../../examples/routing-workbench/README.md)。当前报告只证明固定快照模拟，不代表真实来源资格、旧 Run 显式采用或统一 F03/F05 准入通过；真实现金 API 调用数仍为零。GitHub 检查在提交后按实际结果记录。
+
+[PR #45](https://github.com/zhouy1017/Karajan/pull/45) 的提交 `07da55e80f5a2c92cf6b3b5612e5e5a706d0cc72` 已通过 [PR CI](https://github.com/zhouy1017/Karajan/actions/runs/34005302046) 与 [push CI](https://github.com/zhouy1017/Karajan/actions/runs/34005286666)，Windows、Linux、前端和必需汇总门均成功。提交前报告中的待运行状态保留为历史。

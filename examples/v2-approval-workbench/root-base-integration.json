@@ -1,0 +1,30 @@
+{
+  "schema_version": "karajan.v2-ui-base-integration.v1",
+  "captured_at": "2026-09-06T04:47:36.585589+00:00",
+  "implementation_commit": "3636299be9cb06229d159e93f92ec698cd12b111",
+  "merged_base": "5ad31ff487ecc492d4904e1c9942091a2cd4c497",
+  "conflict": {
+    "path": "README.md",
+    "resolution": "Preserve the dated fixed Go authorization, provider limit ownership, Go evidence link, other-channel pause, and diagnostic versus qualification distinction. The v2 workbench link is retained."
+  },
+  "all_author_source_hashes_unchanged": true,
+  "checks": {
+    "backend_mypy": {
+      "passed_sources": 96
+    },
+    "ruff": "passed",
+    "frontend_typecheck": "passed",
+    "frontend_format": "passed",
+    "integration": {
+      "command": "python -m pytest tests/web tests/capacity examples/opencode-go-live/spec/test_public_probe.py examples/opencode-go-live/standards/independent_cases.py -q",
+      "passed": 179,
+      "seconds": 16.72,
+      "report": "root-base-integration.junit.xml",
+      "report_sha256": "85347311e8e98c807f496a5e6b3b00ca416ca425f0b8993ee88c7390e2240ebc"
+    }
+  },
+  "limits": [
+    "No live model or credential use during the base merge checks.",
+    "UI source is unchanged from the final independently reviewed and browser-tested snapshot. This run exercises the combined Web, Capacity and Go offline boundaries; remote CI follows publication."
+  ]
+}

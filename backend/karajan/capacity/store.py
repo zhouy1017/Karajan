@@ -15,6 +15,7 @@ from pydantic import BaseModel, ValidationError
 
 from karajan.resources.broker import money, units
 
+from .facts import CapacityFacts, capture_routing_facts
 from .models import (
     AdmissionRef,
     AdmissionRequest,
@@ -845,6 +846,21 @@ class CapacityStore:
             if units(request["demand"][pool_id]) > quantity:
                 reasons.append("QUOTA_INSUFFICIENT:" + pool_id)
         return reasons, observations, available
+
+    def routing_facts(self, *, account_ids: tuple[str, ...] | None = None) -> CapacityFacts:
+        """Capture source-bound capacity facts without expiring or reserving any work.
+
+        Selection is by complete account, so callers cannot omit a tighter pool or
+        another Run's hold. The returned fragment never grants execution authority.
+        """
+        db = sqlite3.connect(self.path.resolve().as_uri() + "?mode=ro", uri=True, timeout=10)
+        db.row_factory = sqlite3.Row
+        try:
+            db.execute("PRAGMA query_only=ON")
+            db.execute("BEGIN")
+            return capture_routing_facts(self, db, account_ids=account_ids)
+        finally:
+            db.close()
 
     def resource_view(self) -> dict[str, Any]:
         """One read snapshot for owners; never reserves, expires, or activates an Attempt."""

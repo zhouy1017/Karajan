@@ -10,7 +10,7 @@
 
 PRD、8 个 M0 Issues、20 个 M1–M4 实现任务和独立 CI 任务已发布。M0 契约、执行恢复、预算和运行探针已分批实现，本地项目工作台已可登记仓库与预览、保存配置；真实账户资格尚未通过。后续任务见 [完整任务清单](docs/planning/v1-backlog.md) 与 [需求覆盖审计](docs/implementation/requirement-coverage.md)；GitHub 实际编号见 [发布记录](docs/planning/v1/github-publication.json)。
 
-用户已授权 OpenCode Go 使用本地凭据进行实际验证，额度由 provider 限制；[Go 实测 PR #48](https://github.com/zhouy1017/Karajan/pull/48) 保存工具执行与权限拒绝证据。其他通道的现金 API 调用仍暂停；本地进程、假 provider 和协议回放继续推进。开发验证方式见 [测试与合并质量门](docs/implementation/testing-gates.md)。
+用户已于 2026-09-06 授权固定 OpenCode Go 通道的实际测试，额度由 provider 限制；[Go 实测 PR #48](https://github.com/zhouy1017/Karajan/pull/48) 保存工具执行与权限拒绝证据。其他通道的现金调用仍暂停。离线与真实证据逐项区分，诊断成功不自动启用执行配置。开发验证方式见 [测试与合并质量门](docs/implementation/testing-gates.md)。
 
 ## 本地工作台
 
@@ -20,7 +20,9 @@ PRD、8 个 M0 Issues、20 个 M1–M4 实现任务和独立 CI 任务已发布�
 
 [DeepSeek 离线接入](docs/implementation/m2-deepseek-offline.md) 包含纯协议适配、固定 OpenCode 工具循环、现有预算账本准入与可重跑故障样例。测试全部使用本地假服务，真实 API 资格保持 `not_run`。
 
-[共享配额池](docs/implementation/m3-shared-capacity.md) 已提供跨 Run/模型的多窗口准入、当前 Commander 保护量、消费核销与未知额度规则。[资源工作台](docs/implementation/m3-resource-workbench.md) 可查看已有账户的共享窗口并保存 Commander 保护量，显示报告来源与未知状态。统一调度接线与真实来源观察仍在推进。
+[OpenCode Go 实际诊断](docs/implementation/m2-opencode-go-live.md) 提供显式实测入口，验证固定官方 Go 模型、原生读写工具与权限拒绝。真实密钥由本地中继持有，GitHub CI 只运行无密钥回归；诊断与完整来源资格分别记录。
+
+[共享配额池](docs/implementation/m3-shared-capacity.md) 已提供跨 Run/模型的多窗口准入、当前 Commander 保护量、消费核销与未知额度规则。[资源工作台](docs/implementation/m3-resource-workbench.md) 可查看已有账户的共享窗口并保存 Commander 保护量，显示报告来源与未知状态。[容量事实导出](docs/implementation/m3-capacity-facts.md) 从同一账本只读捕获来源、覆盖与多 Run 占用，供统一路由组装器使用。实际调度接线与真实来源观察仍在推进。
 
 [Rulebook 路由](docs/implementation/m3-rulebook-routing.md) 已提供严格编译、固定快照模拟和候选解释，涵盖资格、原授权范围、多池压力、Commander 保护及原币预算。[规则版本发布](docs/implementation/m3-rulebook-publication.md) 提供矩阵编辑、服务器预览和不可变版本，旧 Run 保留固定规则并服从当前资格撤销。[模拟工作台](docs/implementation/m3-routing-workbench.md) 可用明确的离线快照演练当前编辑，查看候选顺序和淘汰原因。可信事实组装、旧 Run 显式采用和实际统一派发仍待接入；模拟或发布不会启用执行配置。
 

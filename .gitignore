@@ -14,6 +14,8 @@ web/dist/
 .env
 .env.*
 !.env.example
+/opencodego.key
+/opencodego.key.txt
 .karajan/
 coverage.xml
 .coverage

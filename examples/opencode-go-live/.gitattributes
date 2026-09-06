@@ -1,0 +1,3 @@
+*.json -text
+*.xml -text
+*.md -text

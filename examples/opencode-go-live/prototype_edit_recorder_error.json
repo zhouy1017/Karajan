@@ -1,0 +1,179 @@
+{
+  "observed_at": "2026-09-06T02:29:17.816865+00:00",
+  "provider": "opencode-go",
+  "requested_model": "glm-5.3-flash",
+  "scope": "live-opencode-runtime-through-credential-relay",
+  "runtime_direct_provider_connection": false,
+  "real_credential_loaded_by": "trusted relay only",
+  "real_credential_passed_to_runtime": false,
+  "profile_enabled": false,
+  "full_qualification": "not_run",
+  "workspace_os_isolation": "not_run",
+  "provider_remote_cancel": "not_run",
+  "permission": {
+    "*": "deny",
+    "read": {
+      "*": "deny",
+      "fixture.py": "allow"
+    },
+    "edit": {
+      "*": "deny",
+      "fixture.py": "allow"
+    }
+  },
+  "before_file_sha256": "5ce9939a494a0ebeb2ed030c5f45258d0e22be107290c2b887b632418ef73363",
+  "runtime_version": "1.18.29",
+  "configuration_accepted": true,
+  "effective_model": "opencode-go/glm-5.3-flash",
+  "effective_enabled_providers": [
+    "opencode-go"
+  ],
+  "workspace_root_matches": true,
+  "assistant_messages": [
+    {
+      "modelID": "glm-5.3-flash",
+      "providerID": "opencode-go",
+      "finish": "tool-calls",
+      "tokens": {
+        "total": 3282,
+        "input": 3237,
+        "output": 45,
+        "reasoning": 0,
+        "cache": {
+          "read": 0,
+          "write": 0
+        }
+      },
+      "error_type": null
+    },
+    {
+      "modelID": "glm-5.3-flash",
+      "providerID": "opencode-go",
+      "finish": "tool-calls",
+      "tokens": {
+        "total": 3565,
+        "input": 3370,
+        "output": 195,
+        "reasoning": 0,
+        "cache": {
+          "read": 0,
+          "write": 0
+        }
+      },
+      "error_type": null
+    },
+    {
+      "modelID": "glm-5.3-flash",
+      "providerID": "opencode-go",
+      "finish": "stop",
+      "tokens": {
+        "total": 3633,
+        "input": 3573,
+        "output": 60,
+        "reasoning": 0,
+        "cache": {
+          "read": 0,
+          "write": 0
+        }
+      },
+      "error_type": null
+    }
+  ],
+  "tool_results": [
+    {
+      "tool": "read",
+      "status": "completed",
+      "path": "fixture.py"
+    },
+    {
+      "tool": "edit",
+      "status": "completed",
+      "path": "fixture.py"
+    }
+  ],
+  "session_error_names": [],
+  "after_file_sha256": "1738403352bac024c8a423907c9d960dbd80ee9e3173ad0245f027b656aa0c65",
+  "safe_expression_shape": true,
+  "function_cases_passed": [
+    true,
+    true,
+    true,
+    true
+  ],
+  "process_cleanup": {
+    "scope": "server_process_only",
+    "status": "exited",
+    "forced_kill": false,
+    "errors": [],
+    "exit_code": 1
+  },
+  "provider_requests": [
+    {
+      "sequence": 1,
+      "requested_model": "glm-5.3-flash",
+      "session_header_present": true,
+      "native_user_agent": "opencode/1.18.29 ai-sdk/provider-utils/4.0.23 runtime/bun/1.3.14",
+      "tool_results_in_request": 0,
+      "fixture_content_in_tool_result": false,
+      "requested_stream": true,
+      "tool_names": [
+        "read"
+      ],
+      "reported_models": [
+        "glm-5.3-flash"
+      ],
+      "upstream_status": 200,
+      "relay_completed": true,
+      "usage": {
+        "prompt_tokens": 3237,
+        "completion_tokens": 45,
+        "total_tokens": 3282,
+        "prompt_tokens_details": {}
+      }
+    },
+    {
+      "sequence": 2,
+      "requested_model": "glm-5.3-flash",
+      "session_header_present": true,
+      "native_user_agent": "opencode/1.18.29 ai-sdk/provider-utils/4.0.23 runtime/bun/1.3.14",
+      "tool_results_in_request": 1,
+      "fixture_content_in_tool_result": true,
+      "requested_stream": true,
+      "tool_names": [
+        "edit"
+      ],
+      "reported_models": [
+        "glm-5.3-flash"
+      ],
+      "upstream_status": 200,
+      "relay_completed": true,
+      "usage": {
+        "prompt_tokens": 3370,
+        "completion_tokens": 195,
+        "total_tokens": 3565,
+        "prompt_tokens_details": {}
+      }
+    },
+    {
+      "sequence": 3,
+      "requested_model": "glm-5.3-flash",
+      "session_header_present": true,
+      "native_user_agent": "opencode/1.18.29 ai-sdk/provider-utils/4.0.23 runtime/bun/1.3.14",
+      "tool_results_in_request": 2,
+      "fixture_content_in_tool_result": true,
+      "requested_stream": true,
+      "tool_names": [],
+      "reported_models": [
+        "glm-5.3-flash"
+      ],
+      "upstream_status": 200,
+      "relay_completed": true
+    }
+  ],
+  "actual_provider_request_count": 3,
+  "credential_leak_files": [],
+  "evidence_stage": "historical_prototype",
+  "collection_status": "partial_failure",
+  "collection_error": "TypeError: SSE recorder iterated tool_calls:null; native tool and file checks completed",
+  "final_usage_receipt_complete": false
+}
