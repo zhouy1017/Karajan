@@ -1,0 +1,2 @@
+data: {"id": "review-only", "created": 1, "model": "deepseek-v4-flash", "object": "chat.completion.chunk", "choices": [{"index": 0, "delta": {"tool_calls": [{"index": 0, "id": "read-1", "type": "function", "function": {"name": "read", "arguments": "{\"file"}}]}, "finish_reason": null}], "usage": null}
+

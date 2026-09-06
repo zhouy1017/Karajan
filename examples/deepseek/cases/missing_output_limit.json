@@ -1,0 +1,5 @@
+{
+  "schema_version": "karajan.deepseek.offline.v1",
+  "scenario": "missing_output_limit",
+  "model": "deepseek-v4-flash"
+}

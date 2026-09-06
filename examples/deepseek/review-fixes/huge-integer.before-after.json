@@ -1,0 +1,12 @@
+{
+  "input_sha256": "04b13706548b983703bae5ced51d91cfeedeb0d3a0487f07df131ed3433af232",
+  "before": {
+    "exception_type": "OverflowError",
+    "message": "int too large to convert to float",
+    "evidence": "recorded from public prepare_request invocation in initial independent review"
+  },
+  "after": {
+    "exception_type": "ProtocolError",
+    "reason": "REQUEST_INVALID"
+  }
+}

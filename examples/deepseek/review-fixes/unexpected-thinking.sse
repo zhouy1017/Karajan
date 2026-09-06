@@ -1,0 +1,4 @@
+data: {"id": "review-only", "created": 1, "model": "deepseek-v4-flash", "object": "chat.completion.chunk", "choices": [{"index": 0, "delta": {"role": "assistant", "reasoning_content": "synthetic forbidden thinking", "content": "answer"}, "finish_reason": "stop"}], "usage": {"prompt_tokens": 3, "completion_tokens": 2, "total_tokens": 5}}
+
+data: [DONE]
+

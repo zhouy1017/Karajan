@@ -1,0 +1,52 @@
+{
+  "input_sha256": "8bf76233591faadf061c4cc6cf8b07c807e71fd632e2357ead2e1d64e3e80ace",
+  "before": {
+    "status": "unknown",
+    "reason_codes": [
+      "STREAM_INCOMPLETE"
+    ],
+    "request_id": "review-only",
+    "model": "deepseek-v4-flash",
+    "content": "",
+    "tool_calls": [
+      {
+        "id": "read-1",
+        "type": "function",
+        "function": {
+          "name": "read",
+          "arguments": "{\"file"
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "total_tokens": null,
+      "prompt_cache_hit_tokens": null,
+      "prompt_cache_miss_tokens": null,
+      "reasoning_tokens": null
+    },
+    "usage_status": "unknown",
+    "actual_charge": null
+  },
+  "after": {
+    "status": "unknown",
+    "reason_codes": [
+      "STREAM_INCOMPLETE"
+    ],
+    "request_id": "review-only",
+    "model": "deepseek-v4-flash",
+    "content": "",
+    "tool_calls": [],
+    "usage": {
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "total_tokens": null,
+      "prompt_cache_hit_tokens": null,
+      "prompt_cache_miss_tokens": null,
+      "reasoning_tokens": null
+    },
+    "usage_status": "unknown",
+    "actual_charge": null
+  }
+}
