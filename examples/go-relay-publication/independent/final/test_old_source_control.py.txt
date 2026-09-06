@@ -1,0 +1,22 @@
+"""Expected red: execute the unchanged final author case on exact cd45797 source."""
+
+import importlib.machinery
+import importlib.util
+import sys
+from pathlib import Path
+
+import test_go_relay_nullable_names as author
+
+
+def test_current_author_held_write_case_rejects_cd45797(tmp_path, monkeypatch):
+    name = "karajan.adapters.opencode._independent_cd45797"
+    path = Path(__file__).with_name("relay-cd45797.py.txt")
+    loader = importlib.machinery.SourceFileLoader(name, str(path))
+    spec = importlib.util.spec_from_loader(name, loader)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    loader.exec_module(module)
+    monkeypatch.setattr(author, "GoRelay", module.GoRelay)
+    # Public construction binding only: do not modify the author test or receipt,
+    # Journal, socket behavior, assertions, or historical implementation.
+    author.test_receipt_protocol_state_publishes_before_body_is_observable(tmp_path, monkeypatch)
