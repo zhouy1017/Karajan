@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="9" time="4.241" timestamp="2026-09-06T20:29:06.706439+08:00" hostname="ProArt-Zhou"><testcase classname="tests.adapters.opencode.test_go_send_guard" name="test_guard_rejection_spends_no_journal_slot_and_sends_no_request" time="0.499" /><testcase classname="tests.adapters.opencode.test_go_send_guard" name="test_business_guard_covers_actual_send_but_releases_before_response_body" time="0.090" /><testcase classname="tests.adapters.opencode.test_go_send_guard" name="test_guard_and_network_entry_do_not_hold_relay_condition" time="0.078" /><testcase classname="tests.adapters.opencode.test_go_send_guard" name="test_cancel_persists_then_closes_while_handler_waits_for_business_guard" time="2.086" /><testcase classname="tests.adapters.opencode.test_go_send_guard" name="test_guard_lifecycle_errors_are_redacted_and_never_refund_a_send[factory]" time="0.074" /><testcase classname="tests.adapters.opencode.test_go_send_guard" name="test_guard_lifecycle_errors_are_redacted_and_never_refund_a_send[exit]" time="0.078" /><testcase classname="tests.adapters.opencode.test_go_send_guard" name="test_transport_failure_after_send_is_unknown_on_reopen_and_cannot_be_suppressed[headers]" time="0.078"><failure message="TypeError: 'NoneType' object is not subscriptable">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-770/test_transport_failure_after_s0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000001A6DDD6DF10&gt;
+phase = 'headers'
+
+    @pytest.mark.parametrize("phase", ["headers", "body"])
+    def test_transport_failure_after_send_is_unknown_on_reopen_and_cannot_be_suppressed(
+        tmp_path, accounting, phase
+    ):
+        @contextmanager
+        def attempts_to_suppress():
+            try:
+                yield
+            except httpx.ReadError:
+                return
+    
+        class LostBody(httpx.SyncByteStream):
+            def __iter__(self):
+                raise httpx.ReadError("synthetic response lost after headers")
+                yield
+    
+        def receive(request):
+            if phase == "headers":
+                raise httpx.ReadError("synthetic response lost before headers")
+            return httpx.Response(
+                200, headers={"content-type": "text/event-stream"}, stream=LostBody()
+            )
+    
+        with guarded_relay(tmp_path, accounting, attempts_to_suppress, receive) as (
+            relay,
+            journal,
+            upstream,
+        ):
+            assert post(relay).status_code == 502
+            reopened = GoCallJournal(journal.path, clock=lambda: 1001.0)
+            snapshot = reopened.snapshot("task")
+            assert snapshot["request_count"] == len(upstream) == 1
+            assert snapshot["calls"][0]["state"] == "send_unknown"
+&gt;           assert snapshot["calls"][0]["outcome"]["reason_codes"] == ["RELAY_TRANSPORT_ERROR"]
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: 'NoneType' object is not subscriptable
+
+tests\adapters\opencode\test_go_send_guard.py:239: TypeError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_send_guard" name="test_transport_failure_after_send_is_unknown_on_reopen_and_cannot_be_suppressed[body]" time="0.077"><failure message="TypeError: 'NoneType' object is not subscriptable">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-770/test_transport_failure_after_s1')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000001A6DDD6DF10&gt;
+phase = 'body'
+
+    @pytest.mark.parametrize("phase", ["headers", "body"])
+    def test_transport_failure_after_send_is_unknown_on_reopen_and_cannot_be_suppressed(
+        tmp_path, accounting, phase
+    ):
+        @contextmanager
+        def attempts_to_suppress():
+            try:
+                yield
+            except httpx.ReadError:
+                return
+    
+        class LostBody(httpx.SyncByteStream):
+            def __iter__(self):
+                raise httpx.ReadError("synthetic response lost after headers")
+                yield
+    
+        def receive(request):
+            if phase == "headers":
+                raise httpx.ReadError("synthetic response lost before headers")
+            return httpx.Response(
+                200, headers={"content-type": "text/event-stream"}, stream=LostBody()
+            )
+    
+        with guarded_relay(tmp_path, accounting, attempts_to_suppress, receive) as (
+            relay,
+            journal,
+            upstream,
+        ):
+            assert post(relay).status_code == 502
+            reopened = GoCallJournal(journal.path, clock=lambda: 1001.0)
+            snapshot = reopened.snapshot("task")
+            assert snapshot["request_count"] == len(upstream) == 1
+            assert snapshot["calls"][0]["state"] == "send_unknown"
+&gt;           assert snapshot["calls"][0]["outcome"]["reason_codes"] == ["RELAY_TRANSPORT_ERROR"]
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: 'NoneType' object is not subscriptable
+
+tests\adapters\opencode\test_go_send_guard.py:239: TypeError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_send_guard" name="test_lost_committed_begin_reply_never_sends_or_spends_a_second_slot" time="0.103" /></testsuite></testsuites>

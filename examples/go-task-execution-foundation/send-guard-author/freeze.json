@@ -1,0 +1,44 @@
+{
+  "schema_version": "karajan.author-evidence.v1",
+  "base": "f2d639559e738dfbb951163c6e8d83b460d758fb",
+  "sources": {
+    "backend/karajan/adapters/opencode/go_relay.py": "56fc35a5f91e142f8527e47b7bbab42b8c5503d7e80b8ff4c7c34c97a97073c2",
+    "tests/adapters/opencode/test_go_send_guard.py": "c4430c0c3d0f2e6d4c55f2d272fa4d69a169891c7ff0700f9cdc12d247af4f7f"
+  },
+  "results": {
+    "format": "passed",
+    "mypy": "passed",
+    "windows_regression": {
+      "skipped": 0,
+      "passed": 196
+    },
+    "linux_final": {
+      "skipped": 0,
+      "passed": 9
+    },
+    "windows_final": {
+      "skipped": 0,
+      "passed": 9
+    },
+    "ruff": "passed"
+  },
+  "artifacts": {
+    "red-entry.xml": "ee5de32be77c63f2b56b36ee9a06de0c3cf162486504304e057d7a58f7f57f39",
+    "red-entry-provisioned.xml": "814b8c42dc4df41b8b52b36f4b2a5a6b383035225e62cce274c2698e8457aec1",
+    "green-entry.xml": "b68c49c8acb716a4217a31a9e70fcf9ed13df508d7e09efd1d4935824cd2157a",
+    "public-boundaries.xml": "935bc35b6af6aa168df1488d400c9ae447644b71bd4a1a7eab1963484bdc4baf",
+    "public-boundaries-corrected.xml": "bb1e7583f46c7efc5616bb76863634c544ab994040c0afd29c7a7f99bc44404f",
+    "regression.xml": "e662d7c9ee8b1bbfb147363458a9d4e05ea634c9f396525e2b5e4eeac370e3d9",
+    "final-windows.xml": "96d65b9c8451868f55ad7c0e4a3055e5abd025b00ba181dda766dbf34b83fed1",
+    "final-linux.xml": "500d23cd699c6647c07f3e7a939909e1df07ae2c1e32857f0e838b6f263e6907",
+    "README.md": "e1749e0442d3dbbadb40923b3820d9eb9baf40c9440dc364c8bb6b3005f723da",
+    "static.txt": "f238f2c6fd81e9d08bbc88161da9db44c59e7a520273c52029424c796e741bbb"
+  },
+  "limitations": [
+    "Author validation, not independent review.",
+    "Synthetic upstream and controller authority; no provider, key or native namespace test.",
+    "Earlier regression preceded only nonsemantic finalization; final product was rerun in Windows and Linux.",
+    "Tests later changed only module documentation; see README.",
+    "PR88 CI failures delegated to Copilot were not modified."
+  ]
+}

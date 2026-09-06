@@ -1,0 +1,423 @@
+"""A trusted native Task producer; the controller owns approval and acceptance.
+
+Inputs are internal immutable values rebuilt from an approved Workspace. The
+mandatory callbacks hold current business authority at the real namespace and
+each provider-send boundary. Neither this producer nor a stopped capture grants
+Candidate acceptance, validation success, Profile qualification or a cash cap.
+"""
+
+import hashlib
+import json
+import re
+import secrets
+import time
+from collections.abc import Callable
+from contextlib import AbstractContextManager
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+import httpx
+
+from karajan.adapters.opencode.go_context import GoRequestAccounting
+from karajan.adapters.opencode.go_relay import GoRelay, GoRelayAuthorization, GoRelayContext
+from karajan.projects.credential_sources import ResolvedCredential
+
+from ._opencode_inner import configuration
+from ._opencode_projection import projection_files
+from .go_probe import source_digest
+from .go_projected_probe import _validate_runtime, projected_runtime_source
+from .opencode_runtime import IsolatedOpenCode, StoppedProjection
+
+
+def _sha(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def _digest(value: object) -> bool:
+    return type(value) is str and re.fullmatch(r"[0-9a-f]{64}", value) is not None
+
+
+@dataclass(frozen=True)
+class GoTaskFile:
+    path: str
+    sha256: str
+    writable: bool
+    content: bytes = field(repr=False)
+
+    def __post_init__(self) -> None:
+        if (
+            type(self.content) is not bytes
+            or not _digest(self.sha256)
+            or _sha(self.content) != self.sha256
+            or type(self.writable) is not bool
+        ):
+            raise ValueError("TASK_FILE_INPUT_INVALID")
+        projection_files([self.projection()])
+
+    def projection(self) -> dict[str, Any]:
+        return {"path": self.path, "sha256": self.sha256, "writable": self.writable}
+
+
+@dataclass(frozen=True)
+class GoTaskInput:
+    """An internal input, not evidence that a caller received Run approval."""
+
+    workspace_digest: str
+    native_source_sha256: str
+    runner_source_digest: str
+    prompt: str = field(repr=False)
+    files: tuple[GoTaskFile, ...] = field(repr=False)
+    timeout_seconds: int
+
+    def __post_init__(self) -> None:
+        if (
+            not all(
+                _digest(v)
+                for v in (
+                    self.workspace_digest,
+                    self.native_source_sha256,
+                    self.runner_source_digest,
+                )
+            )
+            or type(self.prompt) is not str
+            or not 0 < len(self.prompt) <= 8192
+            or not self.prompt.strip()
+            or type(self.files) is not tuple
+            or not self.files
+            or not all(type(row) is GoTaskFile for row in self.files)
+            or type(self.timeout_seconds) is not int
+            or not 1 <= self.timeout_seconds <= 86400
+        ):
+            raise ValueError("TASK_INPUT_INVALID")
+        projection_files([row.projection() for row in self.files])
+        if not any(row.writable for row in self.files):
+            raise ValueError("TASK_WRITABLE_PROJECTION_REQUIRED")
+        if (
+            any(len(row.content) > 8 * 1024 * 1024 for row in self.files)
+            or sum(len(row.content) for row in self.files) > 64 * 1024 * 1024
+        ):
+            raise ValueError("TASK_PROJECTION_SIZE_LIMIT")
+
+    def descriptor(self) -> dict[str, Any]:
+        return {
+            "schema_version": "karajan.go-native-task-input.v1",
+            "workspace_digest": self.workspace_digest,
+            "native_source_sha256": self.native_source_sha256,
+            "runner_source_digest": self.runner_source_digest,
+            "prompt_sha256": _sha(self.prompt.encode()),
+            "prompt_characters": len(self.prompt),
+            "files": [row.projection() | {"size": len(row.content)} for row in self.files],
+            "timeout_seconds": self.timeout_seconds,
+        }
+
+
+@dataclass(frozen=True)
+class GoTaskResult:
+    capture: StoppedProjection | None = field(repr=False)
+    _report_json: str = field(repr=False)
+
+    @property
+    def report(self) -> dict[str, Any]:
+        return dict(json.loads(self._report_json))
+
+
+def native_task_source(runtime: Path, accounting: GoRequestAccounting) -> dict[str, Any]:
+    """Bind this producer to the complete currently qualified native mechanism.
+
+    Root adds its fixed runner entry-point/source envelope and binds that complete
+    digest into the Task grant. This producer checks the enclosed native digest;
+    mandatory controller callbacks recheck the outer source and current approval.
+    """
+    mechanism = projected_runtime_source(runtime, accounting)
+    return {
+        "schema_version": "karajan.go-native-task-source.v1",
+        "qualified_mechanism_descriptor": mechanism,
+        "qualified_mechanism_digest": source_digest(mechanism),
+        "producer_source_sha256": _sha(Path(__file__).read_bytes()),
+        "input_schema": "karajan.go-native-task-input.v1",
+        "maximum_prompt_characters": 8192,
+        "max_requests": 6,
+        "candidate_acceptance": "controller_required",
+    }
+
+
+def execute_go_task(
+    runtime: Path,
+    directory: Path,
+    task: GoTaskInput,
+    credential: ResolvedCredential,
+    authorization: GoRelayAuthorization,
+    context: GoRelayContext,
+    *,
+    start_native: Callable[[IsolatedOpenCode], dict[str, Any]],
+    send_guard: Callable[[], AbstractContextManager[None]],
+    client_factory: Callable[[], httpx.Client] | None = None,
+) -> GoTaskResult:
+    """Execute once under current controller gates; never recreate a lost grant.
+
+    Preflight failures create no directory/namespace or send. Once execution is
+    owned, cleanup revokes only the exact authenticated grant before stopping.
+    An unavailable stop produces no StoppedProjection; unknown send state remains
+    counted. Raw model responses, prompts and credential material are not returned.
+    """
+    if not callable(start_native) or not callable(send_guard):
+        raise ValueError("TASK_CONTROLLER_GUARDS_REQUIRED")
+    if type(task) is not GoTaskInput or type(context) is not GoRelayContext:
+        raise ValueError("TASK_INPUT_OR_CONTEXT_REQUIRED")
+    current = authorization.journal.authenticate_grant(
+        authorization.grant_id, capability=authorization.capability, binding=authorization.binding
+    )
+    binding = current["binding"]
+    if binding.get("subject", {}).get("kind") != "task_attempt":
+        raise ValueError("TASK_GRANT_REQUIRED")
+    source = native_task_source(runtime, context.accounting)
+    qualified_context = source["qualified_mechanism_descriptor"]["probe_spec"]["context"]
+    if (
+        task.native_source_sha256 != source_digest(source)
+        or task.runner_source_digest != binding["runtime_digest"]
+        or task.workspace_digest != binding["workspace_digest"]
+        or context.execution_policy_digest != binding["execution_policy_digest"]
+        or context.source_sha256 != source_digest(context.accounting.source())
+        or context.approved_input_tokens > qualified_context["approved_input_tokens"]
+        or context.reserved_output_tokens != qualified_context["reserved_output_tokens"]
+        or context.operating_context_tokens > qualified_context["operating_context_tokens"]
+        or context.approved_input_tokens + context.reserved_output_tokens
+        > context.operating_context_tokens
+        or context.fixed_margin < qualified_context["fixed_margin"]
+        or context.ratio_margin_basis_points < qualified_context["ratio_margin_basis_points"]
+        or not isinstance(credential, ResolvedCredential)
+        or credential.project_id != binding["subject"]["project_id"]
+        or credential.generation != binding["auth_generation"]
+    ):
+        raise ValueError("TASK_EXECUTION_BINDING_MISMATCH")
+    if current["state"] != "active" or current["request_count"] != 0:
+        raise ValueError("TASK_FRESH_GRANT_REQUIRED")
+    if directory.exists() or directory.is_symlink():
+        raise ValueError("NEW_CONTROLLER_DIRECTORY_REQUIRED")
+    # Detach the authenticated binding before giving it to a concurrent relay.
+    owned = GoRelayAuthorization(
+        authorization.journal, authorization.grant_id, binding, authorization.capability
+    )
+    secret = credential.reveal()
+    canary = "KARAJAN_TASK_NO_EGRESS_" + secrets.token_hex(24)
+    relay = GoRelay(
+        secret,
+        canary,
+        authorization=owned,
+        context=context,
+        send_guard=send_guard,
+        client_factory=client_factory,
+    )
+    native: IsolatedOpenCode | None = None
+    capture: StoppedProjection | None = None
+    reasons: list[str] = []
+    descriptor = task.descriptor()
+    report: dict[str, Any] = {
+        "schema_version": "karajan.go-native-task-observation.v1",
+        "scope": "native_task_execution",
+        "subject": binding["subject"],
+        "attempt_id": binding["attempt_id"],
+        "fence": binding["fence"],
+        "grant_id": owned.grant_id,
+        "grant_binding": binding,
+        "input": descriptor,
+        "input_digest": source_digest(descriptor),
+        "native_source": source,
+        "native_source_sha256": source_digest(source),
+        "runner_source_digest": task.runner_source_digest,
+        "observation_origin": "http_fixture" if client_factory else "official_go",
+        "candidate_validation": "not_run",
+        "dispatch_eligible": False,
+        "provider_remote_stop": "unknown",
+        "real_credential_passed_to_runtime": False,
+    }
+    deadline = time.monotonic() + task.timeout_seconds
+    try:
+        directory.mkdir(mode=0o700)
+        relay.start(unix_socket=directory / "inference.sock")
+        projection = [row.projection() for row in task.files]
+        native = IsolatedOpenCode(
+            runtime,
+            directory / "native",
+            directory / "inference.sock",
+            relay.capability,
+            projection=projection,
+        )
+        for row in task.files:
+            target = native.workspace / row.path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(row.content)
+        observed = start_native(native)
+        if observed != native.snapshot() or observed.get("state") != "running":
+            raise ValueError("TASK_NATIVE_START_NOT_OBSERVED")
+        _validate_runtime(observed)
+        report["runtime"] = observed
+        expected = configuration("<local-capability>", projection=projection)
+        actual = native.request("GET", "/config")
+        if any(actual.get(key) != expected[key] for key in ("model", "permission")):
+            raise ValueError("TASK_NATIVE_CONFIGURATION_MISMATCH")
+        if time.monotonic() >= deadline:
+            raise ValueError("TASK_EXECUTION_TIMEOUT")
+        session = native.request("POST", "/session", {"title": "Approved Task", "agent": "probe"})
+        native.request(
+            "POST",
+            f"/session/{session['id']}/prompt_async",
+            {
+                "agent": "probe",
+                "model": {"providerID": "opencode-go", "modelID": "glm-5.3-flash"},
+                "parts": [{"type": "text", "text": task.prompt}],
+            },
+        )
+        messages: list[dict[str, Any]] = []
+        while time.monotonic() < deadline:
+            messages = native.request("GET", f"/session/{session['id']}/message")
+            if any(row["reason_codes"] for row in relay.receipts):
+                reasons.append("TASK_RELAY_REJECTED")
+                break
+            if any(
+                m["info"].get("role") == "assistant"
+                and (
+                    m["info"].get("error")
+                    or (
+                        m["info"].get("time", {}).get("completed")
+                        and m["info"].get("finish") not in {None, "tool-calls", "unknown"}
+                    )
+                )
+                for m in messages
+            ):
+                break
+            time.sleep(0.1)
+        else:
+            reasons.append("TASK_EXECUTION_TIMEOUT")
+        if any(
+            value in json.dumps(messages)
+            for value in (secret, canary, relay.capability, owned.capability)
+        ):
+            reasons.append("TASK_SENSITIVE_NATIVE_OUTPUT")
+        report.update(_message_facts(messages, task))
+        assistants = report["assistants"]
+        if (
+            not assistants
+            or not assistants[-1]["completed"]
+            or not assistants[-1]["stopped"]
+            or any(row["error"] or not row["model_matches"] for row in assistants)
+        ):
+            reasons.append("TASK_NATIVE_EXECUTION_INCOMPLETE")
+        if any(
+            row["status"] != "completed" or not row["within_projection"] for row in report["tools"]
+        ):
+            reasons.append("TASK_NATIVE_TOOL_INCOMPLETE")
+    except Exception as error:
+        report["error_type"] = type(error).__name__
+        reasons.append("TASK_EXECUTION_FAILED")
+    finally:
+        try:
+            if owned.journal.snapshot(owned.grant_id)["binding"] != binding:
+                raise ValueError("TASK_GRANT_CLEANUP_BINDING_MISMATCH")
+            owned.journal.revoke_grant(owned.grant_id)
+        except Exception:
+            reasons.append("TASK_GRANT_REVOCATION_FAILED")
+        if native is not None:
+            try:
+                capture = native.capture_projection()
+                report["native_cleanup"] = capture.stop_evidence
+            except Exception:
+                reasons.append("TASK_STOPPED_CAPTURE_UNAVAILABLE")
+                try:
+                    report["native_cleanup"] = native.close()
+                except Exception:
+                    report["native_cleanup"] = {"local_stop": "unknown"}
+        else:
+            report["native_cleanup"] = {"local_stop": "not_started"}
+        try:
+            report["relay_cleanup"] = relay.close()
+        except Exception:
+            report["relay_cleanup"] = {"status": "unknown"}
+    report["requests"] = relay.receipts
+    try:
+        report["journal"] = owned.journal.snapshot(owned.grant_id)
+    except Exception:
+        report["journal"] = {}
+        reasons.append("TASK_JOURNAL_UNAVAILABLE")
+    _validate_final(report, capture, reasons)
+    report["reason_codes"] = list(dict.fromkeys(reasons))
+    unknown = (
+        report["native_cleanup"].get("local_stop") == "unknown"
+        or report["relay_cleanup"].get("status") != "closed"
+        or any(call["state"] == "send_unknown" for call in report["journal"].get("calls", []))
+        or "TASK_JOURNAL_UNAVAILABLE" in reasons
+    )
+    report["status"] = "unknown" if unknown else "failed" if reasons else "completed"
+    encoded = json.dumps(report, sort_keys=True, separators=(",", ":"), allow_nan=False)
+    if any(value in encoded for value in (secret, canary, relay.capability, owned.capability)):
+        raise ValueError("TASK_SENSITIVE_REPORT_SUPPRESSED")
+    return GoTaskResult(capture, encoded)
+
+
+def _message_facts(messages: list[dict[str, Any]], task: GoTaskInput) -> dict[str, Any]:
+    assistants, tools = [], []
+    projected = {row.path: row.writable for row in task.files}
+    for message in messages:
+        info = message["info"]
+        if info.get("role") == "assistant":
+            assistants.append(
+                {
+                    "model_matches": info.get("modelID") == "glm-5.3-flash"
+                    and info.get("providerID") == "opencode-go",
+                    "completed": bool(info.get("time", {}).get("completed")),
+                    "stopped": info.get("finish") == "stop",
+                    "error": bool(info.get("error")),
+                }
+            )
+        for part in message.get("parts", []):
+            if part.get("type") != "tool":
+                continue
+            state = part.get("state", {})
+            path = state.get("input", {}).get("filePath")
+            path = path.removeprefix("/workspace/") if isinstance(path, str) else None
+            tool = part.get("tool")
+            allowed = path in projected and (tool == "read" or tool == "edit" and projected[path])
+            tools.append(
+                {
+                    "tool": tool if tool in {"read", "edit"} else "other",
+                    "path": path if path in projected else "outside_projection",
+                    "within_projection": allowed,
+                    "status": state.get("status")
+                    if state.get("status") in {"completed", "error"}
+                    else "incomplete",
+                }
+            )
+    return {"assistants": assistants, "tools": tools}
+
+
+def _validate_final(
+    report: dict[str, Any], capture: StoppedProjection | None, reasons: list[str]
+) -> None:
+    journal, requests = report["journal"], report["requests"]
+    calls = journal.get("calls", [])
+    if (
+        not calls
+        or len(calls) != len(requests)
+        or any(
+            call["state"] != "response_received"
+            or not (call.get("outcome") or {}).get("protocol_passed")
+            for call in calls
+        )
+        or any(not row["protocol_passed"] or row["reason_codes"] for row in requests)
+    ):
+        reasons.append("TASK_PROVIDER_PROTOCOL_INCOMPLETE")
+    if len(calls) == len(requests) and any(
+        call["call_id"] != receipt.get("journal_call_id")
+        or not call.get("request_context")
+        or call.get("request_context") != receipt.get("request_context")
+        for call, receipt in zip(calls, requests, strict=True)
+    ):
+        reasons.append("TASK_REQUEST_EVIDENCE_MISMATCH")
+    if (
+        capture is None
+        or report["native_cleanup"].get("local_stop") != "confirmed"
+        or report["relay_cleanup"].get("status") != "closed"
+        or journal.get("state") != "revoked"
+    ):
+        reasons.append("TASK_LOCAL_CLEANUP_INCOMPLETE")

@@ -1,0 +1,31 @@
+{
+  "windows": "7 passed, 15 skipped",
+  "files": [
+    {
+      "sha256": "43fd65a93550e1903692d12dad2349437e60aab8e88a1c0d60d90397143e1cbf",
+      "path": "backend/karajan/isolation/go_task.py"
+    },
+    {
+      "sha256": "c66c1e79e9f2051c43fe4286137023fbf685f14c7536490e3ffa207d3a08395d",
+      "path": "tests/isolation/test_go_task.py"
+    },
+    {
+      "sha256": "526c4071dab4c37aa58ab309354c3ecae01aac69f8be553a86a409f88d85d252",
+      "path": ".cache/native-task-first.xml"
+    },
+    {
+      "sha256": "084256daf0309e6e2c01151e7338c72a08522841d43f8108b682b1dffc1d4719",
+      "path": ".cache/native-task-input-final.xml"
+    },
+    {
+      "sha256": "badc9a1f38a7f7dc4be0900beae5813bb08f4762e4c9ef9116712bbb8b972bdb",
+      "path": ".cache/native-task-final.xml"
+    },
+    {
+      "sha256": "5a083c79168c310de95c95a63cbc271f2f2c2b5c010bd1aa37359328864dacfa",
+      "path": ".cache/native-task-windows.xml"
+    }
+  ],
+  "scope": "Author evidence, explicit controller doubles; no provider",
+  "linux_final": "22 passed, 58.22 seconds"
+}

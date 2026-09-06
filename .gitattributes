@@ -57,3 +57,9 @@ examples/go-projected-qualification/**/*.json -text whitespace=cr-at-eol
 examples/go-projected-qualification/**/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
 examples/go-projected-qualification/**/*.txt -text whitespace=cr-at-eol
 examples/go-projected-qualification/**/*.md -text whitespace=cr-at-eol
+
+# Historical task execution reports keep their recorded bytes and hashes.
+examples/go-task-execution-foundation/**/*.json -text whitespace=cr-at-eol
+examples/go-task-execution-foundation/**/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+examples/go-task-execution-foundation/**/*.txt -text whitespace=cr-at-eol
+examples/go-task-execution-foundation/**/*.md -text whitespace=cr-at-eol

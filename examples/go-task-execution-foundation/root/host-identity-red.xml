@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="4" time="24.295" timestamp="2026-09-06T20:32:34.629598+08:00" hostname="ProArt-Zhou"><testcase classname="tests.execution.test_runner_identity" name="test_direct_command_child_gets_its_persisted_pid_and_birth_but_controller_does_not" time="8.053"><failure message="AssertionError: Missing child observation: observed.json&#10;assert False&#10; +  where False = exists()&#10; +    where exists = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-774/test_direct_command_child_gets0/observed.json').exists">runner = (&lt;karajan.execution.host.RunnerHost object at 0x00000180F248F260&gt;, WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-774/test_direct_command_child_gets0/observed.json'))
+
+    def test_direct_command_child_gets_its_persisted_pid_and_birth_but_controller_does_not(runner):
+        host, output = runner
+&gt;       identity = wait_file(output)
+                   ^^^^^^^^^^^^^^^^^
+
+tests\execution\test_runner_identity.py:63: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-774/test_direct_command_child_gets0/observed.json')
+
+    def wait_file(path):
+        deadline = time.monotonic() + 8
+        while not path.exists() and time.monotonic() &lt; deadline:
+            time.sleep(0.02)
+&gt;       assert path.exists(), f"Missing child observation: {path.name}"
+E       AssertionError: Missing child observation: observed.json
+E       assert False
+E        +  where False = exists()
+E        +    where exists = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-774/test_direct_command_child_gets0/observed.json').exists
+
+tests\execution\test_runner_identity.py:19: AssertionError</failure></testcase><testcase classname="tests.execution.test_runner_identity" name="test_child_rechecks_current_control_and_exact_birth_on_every_guard[control]" time="8.027"><failure message="AssertionError: Missing child observation: observed.json&#10;assert False&#10; +  where False = exists()&#10; +    where exists = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-774/test_child_rechecks_current_co0/observed.json').exists">runner = (&lt;karajan.execution.host.RunnerHost object at 0x00000180F243F4A0&gt;, WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-774/test_child_rechecks_current_co0/observed.json'))
+change = 'control'
+
+    @pytest.mark.parametrize("change", ["control", "birth"])
+    def test_child_rechecks_current_control_and_exact_birth_on_every_guard(runner, change):
+        host, output = runner
+&gt;       wait_file(output)
+
+tests\execution\test_runner_identity.py:83: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-774/test_child_rechecks_current_co0/observed.json')
+
+    def wait_file(path):
+        deadline = time.monotonic() + 8
+        while not path.exists() and time.monotonic() &lt; deadline:
+            time.sleep(0.02)
+&gt;       assert path.exists(), f"Missing child observation: {path.name}"
+E       AssertionError: Missing child observation: observed.json
+E       assert False
+E        +  where False = exists()
+E        +    where exists = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-774/test_child_rechecks_current_co0/observed.json').exists
+
+tests\execution\test_runner_identity.py:19: AssertionError</failure></testcase><testcase classname="tests.execution.test_runner_identity" name="test_child_rechecks_current_control_and_exact_birth_on_every_guard[birth]" time="8.027"><failure message="AssertionError: Missing child observation: observed.json&#10;assert False&#10; +  where False = exists()&#10; +    where exists = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-774/test_child_rechecks_current_co1/observed.json').exists">runner = (&lt;karajan.execution.host.RunnerHost object at 0x00000180F248DA60&gt;, WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-774/test_child_rechecks_current_co1/observed.json'))
+change = 'birth'
+
+    @pytest.mark.parametrize("change", ["control", "birth"])
+    def test_child_rechecks_current_control_and_exact_birth_on_every_guard(runner, change):
+        host, output = runner
+&gt;       wait_file(output)
+
+tests\execution\test_runner_identity.py:83: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-774/test_child_rechecks_current_co1/observed.json')
+
+    def wait_file(path):
+        deadline = time.monotonic() + 8
+        while not path.exists() and time.monotonic() &lt; deadline:
+            time.sleep(0.02)
+&gt;       assert path.exists(), f"Missing child observation: {path.name}"
+E       AssertionError: Missing child observation: observed.json
+E       assert False
+E        +  where False = exists()
+E        +    where exists = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-774/test_child_rechecks_current_co1/observed.json').exists
+
+tests\execution\test_runner_identity.py:19: AssertionError</failure></testcase><testcase classname="tests.execution.test_runner_identity" name="test_prepared_only_and_missing_ledger_never_register_a_runner" time="0.012"><failure message="AttributeError: 'RunnerHost' object has no attribute 'wait_for_runner_registration'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-774/test_prepared_only_and_missing0')
+
+    def test_prepared_only_and_missing_ledger_never_register_a_runner(tmp_path):
+        host = RunnerHost(tmp_path / "host # percent%")
+        host.prepare(manifest(), "prepared", ProcessSpec((sys.executable, "-c", "pass"), tmp_path))
+        before = host.database.read_bytes()
+        with pytest.raises(LaunchDenied, match="RUNNER_REGISTRATION_UNPROVEN"):
+&gt;           host.wait_for_runner_registration(manifest().id, timeout_seconds=0.02)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'RunnerHost' object has no attribute 'wait_for_runner_registration'
+
+tests\execution\test_runner_identity.py:105: AttributeError</failure></testcase></testsuite></testsuites>

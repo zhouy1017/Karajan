@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="2.155" timestamp="2026-09-06T20:43:54.704698+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_go_task_input" name="test_input_comes_from_approved_text_and_cas_after_original_repository_disappears" time="1.095"><failure message="AssertionError: assert ['Report is repeatable'] == ['feature beh...as requested']&#10;  &#10;  At index 0 diff: 'Report is repeatable' != 'feature behaves as requested'&#10;  Use -v to get more diff">workspace_case = ({'schema_version': 'karajan.approved-task-workspace.v1', 'run_id': 'efff8d09-53b2-49f1-8413-06d51669ec12', 'operation...mission object at 0x000001997A9ED9A0&gt;, &lt;karajan.orchestration.routing.ApprovedRunRouting object at 0x000001997A9EDA90&gt;)
+
+    def test_input_comes_from_approved_text_and_cas_after_original_repository_disappears(workspace_case):
+        workspace, candidates, repository, _, _ = workspace_case
+        repository.rename(repository.with_name("repository-unavailable"))
+        task = compile_input(workspace, CandidateStore(candidates.directory))
+        assert task.workspace_digest == workspace["digest"]
+        assert task.native_source_sha256 == "b" * 64
+        assert task.runner_source_digest == "c" * 64
+        assert task.timeout_seconds == 20
+        assert {row.path: row.content for row in task.files} == {
+            "src/report.py": b"print('approved task')\n",
+            "src/reference.txt": b"Reference contract\n",
+            "tests/test_report.py": b"assert True\n",
+        }
+        assert [row.path for row in task.files if row.writable] == ["src/report.py"]
+        prompt = json.loads(task.prompt)
+        assert prompt["requirement"] == workspace["source_binding"]["requirement"]
+        assert prompt["task"]["id"] == "implement"
+&gt;       assert prompt["task"]["acceptance"] == ["feature behaves as requested"]
+E       AssertionError: assert ['Report is repeatable'] == ['feature beh...as requested']
+E         
+E         At index 0 diff: 'Report is repeatable' != 'feature behaves as requested'
+E         Use -v to get more diff
+
+tests\runs\test_go_task_input.py:63: AssertionError</failure></testcase></testsuite></testsuites>
