@@ -170,6 +170,7 @@ def _stream_facts(raw: bytes, secret: str) -> dict[str, Any]:
     finish: str | None = None
     usage: dict[str, Any] = {}
     names: dict[int, str] = {}
+    null_name_fragments = 0
     channels: dict[tuple[str | int, ...], list[str]] = {}
     for event in normalized.split("\n\n"):
         data = []
@@ -241,6 +242,11 @@ def _stream_facts(raw: bytes, secret: str) -> dict[str, Any]:
                     ):
                         raise _Rejected("INVALID_TOOL_CALLS")
                     name = function.get("name", "")
+                    if name is None:
+                        # The response schema permits null on a continuation.
+                        # It contributes no name; the final allowlist still applies.
+                        null_name_fragments += 1
+                        name = ""
                     if not isinstance(name, str) or len(name) > 32:
                         raise _Rejected("INVALID_TOOL_NAME")
                     names[index] = names.get(index, "") + name
@@ -273,6 +279,7 @@ def _stream_facts(raw: bytes, secret: str) -> dict[str, Any]:
     return {
         "reported_models": [_MODEL],
         "tool_names": sorted(set(names.values())),
+        **({"tool_name_null_fragments": null_name_fragments} if null_name_fragments else {}),
         "usage": usage,
         "finish_reason": finish,
         "stream_terminated": True,

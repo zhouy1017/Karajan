@@ -149,6 +149,12 @@ jobs:
           -o "pythonpath=backend tests/candidates tests/execution"
           examples/go-task-capture
 
+      - name: Check projected qualification and approved task scope independently
+        run: >-
+          uv run --frozen --extra dev pytest
+          -o "pythonpath=backend tests/projects tests/runs tests/web"
+          examples/go-projected-qualification
+
   frontend-quality:
     name: frontend-quality
     runs-on: ubuntu-24.04

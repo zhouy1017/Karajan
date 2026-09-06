@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.393" timestamp="2026-09-06T19:32:29.020780+08:00" hostname="ProArt-Zhou"><testcase classname="tests.projects.test_go_projected_suite" name="test_projected_revision_requires_explicit_accounting_before_any_effect" time="0.009"><failure message="TypeError: FixedGoSuite.__init__() got an unexpected keyword argument 'suite_ref'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-738/test_projected_revision_requir0')
+
+    def test_projected_revision_requires_explicit_accounting_before_any_effect(tmp_path):
+        with pytest.raises(ValueError, match="^PROJECTED_GO_ACCOUNTING_REQUIRED$"):
+&gt;           FixedGoSuite(
+                Path("unused-runtime"), tmp_path, GoCallJournal(tmp_path / "calls.sqlite"),
+                suite_ref=V2_REF,
+            )
+E           TypeError: FixedGoSuite.__init__() got an unexpected keyword argument 'suite_ref'
+
+tests\projects\test_go_projected_suite.py:14: TypeError</failure></testcase></testsuite></testsuites>

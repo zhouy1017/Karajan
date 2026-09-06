@@ -1,10 +1,12 @@
 """Controller-produced, persistent qualification observations with explicit scope.
 
 Fixed local and native Go suites produce observations here. Go uses controller
-registered credential generations and never accepts an uploaded report. Fixed
-file observations cannot qualify arbitrary Task paths or enable a runtime.
+registered credential generations and never accepts an uploaded report. The
+versioned projected suite can qualify a bounded Worker executor; concrete Task
+paths, current authorization and effect admission are still separate checks.
 """
 
+import copy
 import hashlib
 import json
 import math
@@ -32,6 +34,7 @@ if TYPE_CHECKING:
     from .go_suite import FixedGoSuite
 
 LOCAL_SUITE = {"id": "fixed-local-fixture-qualification", "revision": 1}
+PROJECTED_GO_SUITE = {"id": "opencode-go-native-read-edit-linux", "revision": 2}
 
 
 def _source_scope(binding: dict[str, Any]) -> tuple[str, dict[str, Any]]:
@@ -226,7 +229,7 @@ class ProfileQualificationStore:
                 return self._record(db, previous["id"])
             if self.go_suite is None or self.credentials is None:
                 raise QualificationError("RUNTIME_QUALIFICATION_SOURCE_UNCONFIGURED")
-            source = self.go_suite.source()
+            source = copy.deepcopy(self.go_suite.source())
             if source["suite_ref"] != suite_ref:
                 raise QualificationError("QUALIFICATION_SUITE_UNSUPPORTED")
             scope = self._go_scope(source)
@@ -274,6 +277,13 @@ class ProfileQualificationStore:
                         },
                     }
                 )
+                if suite_ref == PROJECTED_GO_SUITE:
+                    start["scenarios"][-1]["grant_binding"].update(
+                        schema_version="karajan.go-qualification-grant.v2",
+                        probe_spec_digest=digest(source["probe_spec"]),
+                        scenario=scenario,
+                        context=copy.deepcopy(source["probe_spec"]["context"]),
+                    )
             binding = {
                 "qualification_scope": scope,
                 "suite_ref": suite_ref,
@@ -355,6 +365,20 @@ class ProfileQualificationStore:
             except Exception:
                 record["status"] = "failed"
                 record["reason_codes"].append("QUALIFICATION_SOURCE_CHANGED")
+            if suite_ref == PROJECTED_GO_SUITE:
+                record["limitations"] = [
+                    "Only controlled existing-file projection for T1 Workers is covered.",
+                    "New files, Commander, Reviewer, T2/T3 and cash bounds are unqualified.",
+                    "The observed small input is not a measured maximum model context window.",
+                    "Current Task paths, authorization, quota and effect gates remain required.",
+                    "Provider remote stop remains unknown.",
+                ]
+                if not self._projected_observation_passed(start, observation):
+                    record["status"] = "failed"
+                    record["reason_codes"].append("PROJECTED_EXECUTOR_EVIDENCE_INCOMPLETE")
+                if record["status"] == "passed" and scope == "projected_native_tools":
+                    record["runtime_tools_status"] = "passed"
+                    record["live_qualified"] = True
             db.execute(
                 "INSERT INTO profile_qualification_records VALUES (?,?,?)",
                 (observation_id, encoded(record), digest(record)),
@@ -363,11 +387,70 @@ class ProfileQualificationStore:
 
     @staticmethod
     def _go_scope(source: dict[str, Any]) -> str:
-        if source["observation_origin"] == "official_go":
-            return "fixed_native_tools"
-        if source["observation_origin"] == "http_fixture":
-            return "fixed_native_tools_fixture"
-        raise QualificationError("QUALIFICATION_SOURCE_UNSUPPORTED")
+        projected = source.get("suite_ref") == PROJECTED_GO_SUITE
+        if not projected and source.get("suite_ref") != {
+            "id": "opencode-go-native-read-edit-linux",
+            "revision": 1,
+        }:
+            raise QualificationError("QUALIFICATION_SOURCE_UNSUPPORTED")
+        if projected:
+            from karajan.adapters.opencode.go_journal import GoQualificationLimits
+
+            try:
+                if source["schema_version"] != "karajan.fixed-go-suite-source.v2":
+                    raise ValueError
+                GoQualificationLimits.model_validate(source["probe_spec"]["context"])
+            except (KeyError, TypeError, ValueError):
+                raise QualificationError("QUALIFICATION_SOURCE_UNSUPPORTED") from None
+        prefix = "projected_native_tools" if projected else "fixed_native_tools"
+        origin = source.get("observation_origin")
+        if origin not in {"official_go", "http_fixture"}:
+            raise QualificationError("QUALIFICATION_SOURCE_UNSUPPORTED")
+        scope = prefix + ("_fixture" if origin == "http_fixture" else "")
+        if projected and source.get("qualification_scope") != scope:
+            raise QualificationError("QUALIFICATION_SOURCE_UNSUPPORTED")
+        return scope
+
+    @staticmethod
+    def _projected_observation_passed(start: dict[str, Any], observation: dict[str, Any]) -> bool:
+        """Check the configured Suite's validated envelope, not caller reports.
+
+        The Suite owns the native/Collector/Journal correlation. These checks
+        bind its complete result to this persisted execution and source.
+        """
+        try:
+            validation = observation["validation"]
+            return bool(
+                observation["schema_version"] == "karajan.fixed-go-suite-observation.v2"
+                and observation["qualification_id"] == start["qualification_id"]
+                and observation["suite_ref"] == start["suite_ref"] == PROJECTED_GO_SUITE
+                and observation["source"] == start["source"]
+                and observation["observation_origin"] == start["source"]["observation_origin"]
+                and observation["qualification_scope"] == start["source"]["qualification_scope"]
+                and observation["status"] == "passed"
+                and observation["reason_codes"] == []
+                and all(
+                    validation[key] == "passed"
+                    for key in ("projected_native_tools", "candidate_capture", "context_accounting")
+                )
+                and validation["runtime_tools"] == "not_run"
+                and validation["budget"] == "unknown"
+                and validation["dispatch"] is False
+                and len(observation["scenarios"]) == 2
+                and all(
+                    result["status"] == "passed"
+                    and result["reason_codes"] == []
+                    and all(
+                        result[key] == expected[key]
+                        for key in ("scenario", "attempt_id", "fence", "grant_id")
+                    )
+                    for result, expected in zip(
+                        observation["scenarios"], start["scenarios"], strict=True
+                    )
+                )
+            )
+        except (KeyError, TypeError, ValueError):
+            return False
 
     def _checked_start(self, db: sqlite3.Connection, row: sqlite3.Row) -> dict[str, Any]:
         binding: dict[str, Any] = json.loads(row["binding"])
@@ -701,17 +784,29 @@ class ProfileQualificationStore:
         runtime_read = scope != "local_fixture"
         if runtime_read:
             if (
-                scope not in {"runtime_tools", "fixed_native_tools", "fixed_native_tools_fixture"}
+                scope
+                not in {
+                    "runtime_tools",
+                    "fixed_native_tools",
+                    "fixed_native_tools_fixture",
+                    "projected_native_tools",
+                    "projected_native_tools_fixture",
+                }
                 or self.go_suite is None
                 or self.credentials is None
             ):
                 raise QualificationError("RUNTIME_TOOLS_NOT_QUALIFIED")
-            wanted_scope = "fixed_native_tools" if scope == "runtime_tools" else scope
             try:
                 current_source = self.go_suite.source()
             except Exception:
                 raise QualificationError("QUALIFICATION_RUNTIME_MISMATCH") from None
-            if self._go_scope(current_source) != wanted_scope:
+            source_scope = self._go_scope(current_source)
+            wanted_scope = source_scope if scope == "runtime_tools" else scope
+            if (
+                source_scope != wanted_scope
+                or scope == "runtime_tools"
+                and source_scope.endswith("_fixture")
+            ):
                 raise QualificationError("RUNTIME_TOOLS_NOT_QUALIFIED")
             wanted_suite = current_source["suite_ref"]
         else:
@@ -833,6 +928,8 @@ class ProfileQualificationStore:
                 raise QualificationError("AUTHENTICATION_SOURCE_MISMATCH")
         except Exception:
             raise QualificationError("AUTHENTICATION_SOURCE_MISMATCH") from None
+        if start["suite_ref"] == PROJECTED_GO_SUITE:
+            return self._projected_facts(frozen, record, start)
         # ProfileFacts cannot express path constraints yet. A fixed fixture
         # observation must never satisfy a general Run's read/edit requirements.
         if requested_scope == "runtime_tools":
@@ -874,3 +971,79 @@ class ProfileQualificationStore:
                 for operation in ("read", "edit", "denied_read")
             ],
         }
+
+    def _projected_facts(
+        self, frozen: dict[str, Any], record: dict[str, Any], start: dict[str, Any]
+    ) -> dict[str, Any]:
+        from karajan.routing.models import ProfileFacts
+
+        if not self._projected_observation_passed(start, record["observation"]):
+            raise QualificationError("PROJECTED_EXECUTOR_EVIDENCE_INCOMPLETE")
+        fixture = record["qualification_scope"].endswith("_fixture")
+        profile = frozen["profile"]
+        context = copy.deepcopy(start["source"]["probe_spec"]["context"])
+        evidence_ref = "projected-go-qualification:" + record["id"]
+        capabilities = (
+            ["projected_fixture_read", "projected_fixture_edit", "projected_fixture_capture"]
+            if fixture
+            else ["bounded_code_edit", "controlled_tools", "candidate_capture"]
+        )
+        result = {
+            "facts": ProfileFacts.model_validate(
+                {
+                    "profile": {"id": frozen["id"], "revision": frozen["revision"]},
+                    "profile_digest": digest(profile),
+                    "runtime_version": profile["binding"]["runtime_version"],
+                    "roles": [] if fixture else ["worker"],
+                    "tools": ["projected_fixture_read", "projected_fixture_edit"]
+                    if fixture
+                    else ["read", "edit"],
+                    "context_tokens": None if fixture else context["operating_context_tokens"],
+                    "data_destination": "http_fixture" if fixture else "opencode-go",
+                    "budget_enforcement": "unknown",
+                    "provenance": record["provenance"],
+                    "evidence_ref": evidence_ref,
+                    "observed_at": record["observed_at"],
+                    "valid_until": record["valid_until"],
+                }
+            ).model_dump(),
+            "qualification_scope": record["qualification_scope"],
+            "runtime_tools_status": "not_run" if fixture else "passed",
+            "dispatch_eligible": False,
+            "observation": record,
+            "capability_evidence": [
+                {
+                    "capability": capability,
+                    "status": "passed",
+                    "profile_digest": digest(profile),
+                    "runtime_version": profile["binding"]["runtime_version"],
+                    "evidence_ref": evidence_ref,
+                    "provenance": record["provenance"],
+                }
+                for capability in capabilities
+            ],
+        }
+        if not fixture:
+            result["executor_scope"] = {
+                "schema_version": "karajan.go-projected-executor-scope.v1",
+                "suite_ref": PROJECTED_GO_SUITE.copy(),
+                "projection": "existing_regular_files",
+                "new_files_supported": False,
+                "tools": ["read", "edit"],
+                "supported_roles": ["worker"],
+                "task_classes": ["T1"],
+                "context": context,
+                "max_requests": 6,
+                "candidate_capture": True,
+            }
+            result["context_evidence"] = {
+                "provider_declared": {"context_tokens": 1000000, "max_output_tokens": 131072},
+                "adapter_limits": {
+                    "operating_context_tokens": context["operating_context_tokens"],
+                    "reserved_output_tokens": context["reserved_output_tokens"],
+                    "output_policy": "fixed_native_limit",
+                },
+                "observed": "bounded_small_input_accepted",
+                "maximum_context_observed": False,
+            }
+        return result

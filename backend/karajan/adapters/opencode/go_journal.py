@@ -430,26 +430,47 @@ class GoCallJournal:
         _validated(_GrantRef, {"grant_id": grant_id})
         with self._reader() as db:
             row = self._grant(db, grant_id)
-            value = json.loads(row["binding"])
-            expired = db.execute(
-                "SELECT 1 FROM go_expired_grants WHERE grant_id=?", (grant_id,)
-            ).fetchone()
-            calls = [
-                json.loads(item["receipt"])
-                for item in db.execute("SELECT receipt FROM go_calls WHERE grant_id=?", (grant_id,))
-            ]
-            return {
-                "grant_id": grant_id,
-                "binding": value,
-                "created_at": row["created_at"],
-                "revoked_at": row["revoked_at"],
-                "state": (
-                    "revoked"
-                    if row["revoked_at"] is not None
-                    else "expired"
-                    if expired is not None or value["expires_at"] <= self._now()
-                    else "active"
-                ),
-                "request_count": len(calls),
-                "calls": sorted(calls, key=lambda call: call["sequence"]),
-            }
+            return self._snapshot(db, row)
+
+    def authenticate_grant(
+        self, grant_id: str, *, capability: str, binding: object
+    ) -> dict[str, Any]:
+        """Authenticate controller identity and return only current read-only facts.
+
+        This allocates no send slot and makes no promise about future validity.
+        Expired, revoked and unknown-send history remains visible and unchanged;
+        the caller must inspect state/count before starting its bounded observer.
+        Only begin_call can commit and authorize a new send.
+        """
+        _validated(_GrantRef, {"grant_id": grant_id})
+        value = _binding(binding)
+        with self._reader() as db:
+            row = self._grant(db, grant_id)
+            self._authenticate(row, value, capability)
+            return self._snapshot(db, row)
+
+    def _snapshot(self, db: sqlite3.Connection, row: sqlite3.Row) -> dict[str, Any]:
+        grant_id = row["id"]
+        value = json.loads(row["binding"])
+        expired = db.execute(
+            "SELECT 1 FROM go_expired_grants WHERE grant_id=?", (grant_id,)
+        ).fetchone()
+        calls = [
+            json.loads(item["receipt"])
+            for item in db.execute("SELECT receipt FROM go_calls WHERE grant_id=?", (grant_id,))
+        ]
+        return {
+            "grant_id": grant_id,
+            "binding": value,
+            "created_at": row["created_at"],
+            "revoked_at": row["revoked_at"],
+            "state": (
+                "revoked"
+                if row["revoked_at"] is not None
+                else "expired"
+                if expired is not None or value["expires_at"] <= self._now()
+                else "active"
+            ),
+            "request_count": len(calls),
+            "calls": sorted(calls, key=lambda call: call["sequence"]),
+        }

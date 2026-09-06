@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="8.864" timestamp="2026-09-06T19:47:48.731274+08:00" hostname="ProArt-Zhou"><testcase classname="tests.projects.test_go_projected_suite" name="test_projected_suite_correlates_real_native_wire_and_complete_candidate[fixture_cases]" time="6.049"><failure message="AssertionError: assert ['not_run', 'not_run'] == ['failed', 'not_run']&#10;  &#10;  At index 0 diff: 'not_run' != 'failed'&#10;  Use -v to get more diff">accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x786f03f37770&gt;
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x786f03f34710&gt;
+tmp_path = PosixPath('/tmp/karajan-projected-suite-cases-before/test_projected_suite_correlate0')
+change = 'fixture_cases'
+
+    @pytest.mark.skipif(
+        sys.platform != "linux", reason="Actual Linux native tools and Collector required"
+    )
+    @pytest.mark.parametrize("change", [None, "retention", "measurement", "manifest", "fixture_cases"])
+    def test_projected_suite_correlates_real_native_wire_and_complete_candidate(
+        accounting, monkeypatch, tmp_path, change
+    ):
+        import karajan.isolation.go_projected_probe as producer
+        from test_opencode_go_composition import runtime_artifact
+    
+        with tempfile.TemporaryDirectory(prefix="kgqs-") as name:
+            root = Path(name)
+            journal = GoCallJournal(root / "calls.sqlite")
+            sent = {"edit": [], "denied_read": []}
+            suite = FixedGoSuite(
+                runtime_artifact(),
+                root,
+                journal,
+                suite_ref=V2_REF,
+                accounting=accounting,
+                client_factory=projected_factory(journal, sent),
+            )
+            start = projected_start(suite)
+            source = suite.source()
+            assert source["schema_version"] == "karajan.fixed-go-suite-source.v2"
+            assert source["qualification_scope"] == "projected_native_tools_fixture"
+            assert source["probe_spec"] == source["runtime_source"]["probe_spec"]
+            if change:
+                original = producer.observe_go_projected_tools
+    
+                def altered(*args, **kwargs):
+                    report = original(*args, **kwargs)
+                    assert report["status"] == "passed", report["reason_codes"]
+                    if change == "retention":
+                        report["retention"]["calls"][-1]["request_digest"] = "e" * 64
+                    elif change == "measurement":
+                        report["requests"][0]["request_context"]["source_sha256"] = "e" * 64
+                    elif change == "fixture_cases":
+                        report["fixture_cases"] = [False] * 4
+                    else:
+                        report["capture"]["candidate_manifest"].pop(0)
+                    return report
+    
+                monkeypatch.setattr(producer, "observe_go_projected_tools", altered)
+            result = suite.observe(start, credential())
+            (tmp_path / "suite-report.json").write_text(json.dumps(result, indent=2))
+            if change:
+                assert result["status"] == "failed", result
+&gt;               assert [r["status"] for r in result["scenarios"]] == ["failed", "not_run"]
+E               AssertionError: assert ['not_run', 'not_run'] == ['failed', 'not_run']
+E                 
+E                 At index 0 diff: 'not_run' != 'failed'
+E                 Use -v to get more diff
+
+tests/projects/test_go_projected_suite.py:199: AssertionError</failure></testcase></testsuite></testsuites>

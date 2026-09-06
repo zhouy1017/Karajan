@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.493" timestamp="2026-09-06T19:35:04.347155+08:00" hostname="ProArt-Zhou"><testcase classname="tests.projects.test_projected_qualification_store" name="test_only_v2_official_complete_observation_yields_bounded_worker_executor_facts" time="0.321"><failure message="AssertionError: assert 'not_run' == 'passed'&#10;  &#10;  - passed&#10;  + not_run">projected = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x000002485278D3D0&gt;, 'project_id': '9f131546-6397-48...C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-743/test_only_v2_official_complete0/fixture/repository'), ...}
+
+    def test_only_v2_official_complete_observation_yields_bounded_worker_executor_facts(projected):
+        result = qualify(projected)
+&gt;       assert result["runtime_tools_status"] == "passed"
+E       AssertionError: assert 'not_run' == 'passed'
+E         
+E         - passed
+E         + not_run
+
+tests\projects\test_projected_qualification_store.py:188: AssertionError</failure></testcase></testsuite></testsuites>
