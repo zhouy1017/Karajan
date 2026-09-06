@@ -1,0 +1,11 @@
+{
+  "tests": 23,
+  "passed": 23,
+  "skipped": 0,
+  "seconds": 13.06,
+  "report": "author-linux.xml",
+  "source_freeze_sha256": "2dc129228f9618c89d18086e30223f96f633393ffaa757346c8086cb9d59c90d",
+  "source_hashes_unchanged": true,
+  "warning": "pytest cache write denied on existing Windows cache; test execution and JUnit completed",
+  "command": "wsl.exe --cd /mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-runner -e /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest tests/runs/test_go_execution_intent.py -o \"pythonpath=backend tests/runs tests/projects\" -q --junitxml=.cache/go-execution-intent-evidence/author-linux.xml"
+}

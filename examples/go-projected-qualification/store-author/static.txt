@@ -1,0 +1,6 @@
+python -m ruff check backend/karajan/projects/qualification.py tests/projects/test_projected_qualification_store.py tests/projects/test_projected_qualification_native.py tests/runs/test_projected_go_routing.py
+All checks passed!
+python -m ruff format --check backend/karajan/projects/qualification.py tests/projects/test_projected_qualification_store.py tests/projects/test_projected_qualification_native.py tests/runs/test_projected_go_routing.py
+4 files already formatted
+python -m mypy backend/karajan/projects/qualification.py
+Success: no issues found in 1 source file

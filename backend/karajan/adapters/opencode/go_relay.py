@@ -18,7 +18,8 @@ import stat
 import sys
 import threading
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import AbstractContextManager, ExitStack, contextmanager
 from dataclasses import dataclass, field
 from decimal import Decimal
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -170,6 +171,7 @@ def _stream_facts(raw: bytes, secret: str) -> dict[str, Any]:
     finish: str | None = None
     usage: dict[str, Any] = {}
     names: dict[int, str] = {}
+    null_name_fragments = 0
     channels: dict[tuple[str | int, ...], list[str]] = {}
     for event in normalized.split("\n\n"):
         data = []
@@ -241,6 +243,11 @@ def _stream_facts(raw: bytes, secret: str) -> dict[str, Any]:
                     ):
                         raise _Rejected("INVALID_TOOL_CALLS")
                     name = function.get("name", "")
+                    if name is None:
+                        # The response schema permits null on a continuation.
+                        # It contributes no name; the final allowlist still applies.
+                        null_name_fragments += 1
+                        name = ""
                     if not isinstance(name, str) or len(name) > 32:
                         raise _Rejected("INVALID_TOOL_NAME")
                     names[index] = names.get(index, "") + name
@@ -273,6 +280,7 @@ def _stream_facts(raw: bytes, secret: str) -> dict[str, Any]:
     return {
         "reported_models": [_MODEL],
         "tool_names": sorted(set(names.values())),
+        **({"tool_name_null_fragments": null_name_fragments} if null_name_fragments else {}),
         "usage": usage,
         "finish_reason": finish,
         "stream_terminated": True,
@@ -414,6 +422,9 @@ class GoRelay:
     ``client_factory`` is a code-only seam for an HTTP fixture, never a CLI
     endpoint option. Receipt lists are detached snapshots, including while a
     request is pending. ``close`` reports unknown if an active handler remains.
+    Task consumers require a controller-owned ``send_guard``; this low-level
+    port leaves it optional for existing diagnostics. The guard must release
+    its operation locks before cancellation waits for this relay to close.
     """
 
     def __init__(
@@ -424,6 +435,7 @@ class GoRelay:
         client_factory: Callable[[], httpx.Client] | None = None,
         authorization: GoRelayAuthorization | None = None,
         context: GoRelayContext | GoQualificationContext | None = None,
+        send_guard: Callable[[], AbstractContextManager[None]] | None = None,
     ) -> None:
         if (
             not secret
@@ -448,6 +460,7 @@ class GoRelay:
         self._unix_socket: Path | None = None
         self._socket_identity: tuple[int, int] | None = None
         self._context = context
+        self._send_guard = send_guard
         self._authorization = (
             GoRelayAuthorization(
                 authorization.journal,
@@ -475,6 +488,14 @@ class GoRelay:
     def receipts(self) -> list[dict[str, Any]]:
         with self._condition:
             return copy.deepcopy(self._receipts)
+
+    def _persist_receipt(self, receipt: dict[str, Any]) -> None:
+        sequence = receipt.get("sequence")
+        if type(sequence) is not int:
+            return
+        with self._condition:
+            if 1 <= sequence <= len(self._receipts):
+                self._receipts[sequence - 1] = copy.deepcopy(receipt)
 
     def start(self, *, unix_socket: Path | None = None) -> None:
         with self._condition:
@@ -679,53 +700,59 @@ class GoRelay:
                     receipt["request_context"] = self._context.measure(payload)
                 except GoContextError as error:
                     raise _Rejected(error.code, 422) from None
-            client = self._client_factory()
-            with self._condition:
-                if self._closing:
-                    raise _Rejected("RELAY_CLOSING", 503)
-                self._clients.add(client)
-                if self._authorization is not None:
-                    auth = self._authorization
-                    call_id = str(uuid4())
-                    try:
-                        grant = auth.journal.begin_call(
-                            auth.grant_id,
-                            call_id,
-                            capability=auth.capability,
-                            binding=auth.binding,
-                            **(
-                                {"request_context": receipt["request_context"]}
-                                if "request_context" in receipt
-                                else {}
-                            ),
+            with ExitStack() as responses:
+                # Business locks precede the relay condition and journal. Keep
+                # them through the actual send, not through response streaming.
+                with self._guard_send():
+                    client = self._client_factory()
+                    with self._condition:
+                        if self._closing:
+                            raise _Rejected("RELAY_CLOSING", 503)
+                        self._clients.add(client)
+                        if self._authorization is not None:
+                            auth = self._authorization
+                            call_id = str(uuid4())
+                            try:
+                                grant = auth.journal.begin_call(
+                                    auth.grant_id,
+                                    call_id,
+                                    capability=auth.capability,
+                                    binding=auth.binding,
+                                    **(
+                                        {"request_context": receipt["request_context"]}
+                                        if "request_context" in receipt
+                                        else {}
+                                    ),
+                                )
+                            except GoJournalError as error:
+                                self._recover_context_call(receipt, call_id)
+                                reason = str(error)
+                                raise _Rejected(
+                                    reason, 429 if reason == "REQUEST_LIMIT_REACHED" else 403
+                                ) from None
+                            except Exception:
+                                self._recover_context_call(receipt, call_id)
+                                raise
+                            if not grant["send_allowed"]:
+                                raise _Rejected("CALL_SEND_NOT_AUTHORIZED", 409)
+                            receipt["journal_call_id"] = call_id
+                        receipt["upstream_send_attempted"] = True
+                        self._receipts[receipt["sequence"] - 1] = copy.deepcopy(receipt)
+                    response = responses.enter_context(
+                        client.stream(
+                            "POST",
+                            _UPSTREAM,
+                            headers={
+                                "Authorization": f"Bearer {self._secret}",
+                                "User-Agent": "opencode/1.18.29 Karajan/0.1",
+                                "x-opencode-session": session,
+                                "Accept": "text/event-stream",
+                                "Accept-Encoding": "identity",
+                            },
+                            json=payload,
+                            follow_redirects=False,
                         )
-                    except GoJournalError as error:
-                        self._recover_context_call(receipt, call_id)
-                        reason = str(error)
-                        raise _Rejected(
-                            reason, 429 if reason == "REQUEST_LIMIT_REACHED" else 403
-                        ) from None
-                    except Exception:
-                        self._recover_context_call(receipt, call_id)
-                        raise
-                    if not grant["send_allowed"]:
-                        raise _Rejected("CALL_SEND_NOT_AUTHORIZED", 409)
-                    receipt["journal_call_id"] = call_id
-                receipt["upstream_send_attempted"] = True
-                self._receipts[receipt["sequence"] - 1] = copy.deepcopy(receipt)
-            with client.stream(
-                "POST",
-                _UPSTREAM,
-                headers={
-                    "Authorization": f"Bearer {self._secret}",
-                    "User-Agent": "opencode/1.18.29 Karajan/0.1",
-                    "x-opencode-session": session,
-                    "Accept": "text/event-stream",
-                    "Accept-Encoding": "identity",
-                },
-                json=payload,
-                follow_redirects=False,
-            ) as response:
+                    )
                 receipt["upstream_status"] = response.status_code
                 if response.status_code != 200:
                     raise _Rejected("UPSTREAM_HTTP_ERROR")
@@ -763,16 +790,19 @@ class GoRelay:
                 handler.wfile.write(content)
                 receipt["protocol_passed"] = True
                 receipt["relay_completed"] = True
+                self._persist_receipt(receipt)
                 handler.close_connection = True
         except _Rejected as error:
             if receipt is not None:
                 receipt["reason_codes"] = [error.reason]
                 self._withdraw_context_sends(receipt)
+                self._persist_receipt(receipt)
             self._error(handler, error.status, error.reason)
         except Exception:
             if receipt is not None:
                 receipt["reason_codes"] = ["RELAY_TRANSPORT_ERROR"]
                 self._withdraw_context_sends(receipt)
+                self._persist_receipt(receipt)
             self._error(handler, 502, "RELAY_TRANSPORT_ERROR")
         finally:
             if client is not None:
@@ -788,7 +818,32 @@ class GoRelay:
                 if receipt is not None and "journal_call_id" in receipt:
                     self._complete_journal(receipt)
                 if receipt is not None and "sequence" in receipt:
-                    self._receipts[receipt["sequence"] - 1] = receipt
+                    self._receipts[receipt["sequence"] - 1] = copy.deepcopy(receipt)
+
+    @contextmanager
+    def _guard_send(self) -> Iterator[None]:
+        """Sanitize controller failures; a guard cannot suppress a send failure."""
+        if self._send_guard is None:
+            yield
+            return
+        try:
+            guard = self._send_guard()
+            guard.__enter__()
+        except Exception:
+            raise _Rejected("TASK_SEND_GUARD_REJECTED", 403) from None
+        try:
+            yield
+        except BaseException:
+            try:
+                guard.__exit__(*sys.exc_info())
+            except Exception:
+                raise _Rejected("TASK_SEND_GUARD_REJECTED", 403) from None
+            raise
+        else:
+            try:
+                guard.__exit__(None, None, None)
+            except Exception:
+                raise _Rejected("TASK_SEND_GUARD_REJECTED", 403) from None
 
     def _recover_context_call(self, receipt: dict[str, Any], call_id: str) -> None:
         """Read a lost begin result; this never retries begin or grants a send."""

@@ -1,0 +1,11 @@
+{
+  "before_relay_sha256": "2f8f32de73d95d0c2298f1e10f7cb8bee667cd6e4c394cabaa3e81a881d7ac16",
+  "backend/karajan/adapters/opencode/go_relay.py": "84d41f43bfad83dae55d985bb3fa1a6fd46a767f5df1cae36999fac3c3496a73",
+  "tests/adapters/opencode/test_go_relay_nullable_names.py": "9d346f3950886e8963d5a32ac100405f3e2962d479c822948bf62c2d79152afb",
+  ".cache/projected-tool-name-diagnostic/test_name_fragments.py.txt": "74a73163fb7298717c549814d242f74356906a726499ba40600cac5b59d19cdc",
+  ".cache/projected-tool-name-diagnostic/matrix.xml": "d074469f6fef683fb343d4118944ceb6ee878bef8d463252315d42d986c4590d",
+  ".cache/projected-tool-name-diagnostic/before.xml": "b1949f83087c6782e30cfbd2d2fbb5eefa6d8cd7ee918cf9c317a894c7bc8aeb",
+  ".cache/projected-tool-name-diagnostic/after.xml": "ca43b897fbff5c4f14a469c7dcf3188ec418913f125408806c2609606f18309b",
+  ".cache/projected-tool-name-diagnostic/accounted.xml": "bc3810b602f3e09d88255749d74fce347559d1c9f2c6f815a86544393bc7f845",
+  ".cache/projected-tool-name-diagnostic/README.md": "9c80a04a01a3ea9c3f04e9d1efe6dfd0b59c7c3566d6cd59447df8d1d34fb0f4"
+}

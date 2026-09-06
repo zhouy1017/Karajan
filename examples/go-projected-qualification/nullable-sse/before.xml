@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="7" skipped="0" tests="11" time="1.046" timestamp="2026-09-06T19:58:57.939012+08:00" hostname="ProArt-Zhou"><testcase classname="tests.adapters.opencode.test_go_relay_nullable_names" name="test_null_is_no_new_name_fragment_but_records_content_free_count[names0]" time="0.106"><failure message="assert 502 == 200&#10; +  where 502 = &lt;Response [502 Bad Gateway]&gt;.status_code">names = ['read', None]
+
+    @pytest.mark.parametrize("names", [["read", None], [None, "re", None, "ad"], ["edit", None]])
+    def test_null_is_no_new_name_fragment_but_records_content_free_count(names):
+        raw = response([{"name": name, "arguments": ""} for name in names])
+        with running(lambda request: answer(raw)) as (relay, upstream):
+            result = post(relay)
+&gt;           assert result.status_code == 200
+E           assert 502 == 200
+E            +  where 502 = &lt;Response [502 Bad Gateway]&gt;.status_code
+
+tests\adapters\opencode\test_go_relay_nullable_names.py:26: AssertionError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_relay_nullable_names" name="test_null_is_no_new_name_fragment_but_records_content_free_count[names1]" time="0.064"><failure message="assert 502 == 200&#10; +  where 502 = &lt;Response [502 Bad Gateway]&gt;.status_code">names = [None, 're', None, 'ad']
+
+    @pytest.mark.parametrize("names", [["read", None], [None, "re", None, "ad"], ["edit", None]])
+    def test_null_is_no_new_name_fragment_but_records_content_free_count(names):
+        raw = response([{"name": name, "arguments": ""} for name in names])
+        with running(lambda request: answer(raw)) as (relay, upstream):
+            result = post(relay)
+&gt;           assert result.status_code == 200
+E           assert 502 == 200
+E            +  where 502 = &lt;Response [502 Bad Gateway]&gt;.status_code
+
+tests\adapters\opencode\test_go_relay_nullable_names.py:26: AssertionError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_relay_nullable_names" name="test_null_is_no_new_name_fragment_but_records_content_free_count[names2]" time="0.075"><failure message="assert 502 == 200&#10; +  where 502 = &lt;Response [502 Bad Gateway]&gt;.status_code">names = ['edit', None]
+
+    @pytest.mark.parametrize("names", [["read", None], [None, "re", None, "ad"], ["edit", None]])
+    def test_null_is_no_new_name_fragment_but_records_content_free_count(names):
+        raw = response([{"name": name, "arguments": ""} for name in names])
+        with running(lambda request: answer(raw)) as (relay, upstream):
+            result = post(relay)
+&gt;           assert result.status_code == 200
+E           assert 502 == 200
+E            +  where 502 = &lt;Response [502 Bad Gateway]&gt;.status_code
+
+tests\adapters\opencode\test_go_relay_nullable_names.py:26: AssertionError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_relay_nullable_names" name="test_absent_name_keeps_legacy_receipt_shape" time="0.060" /><testcase classname="tests.adapters.opencode.test_go_relay_nullable_names" name="test_nullable_names_never_expand_final_allowlist_or_accept_other_types[names0-UNAPPROVED_TOOL]" time="0.062"><failure message="AssertionError: assert ['INVALID_TOOL_NAME'] == ['UNAPPROVED_TOOL']&#10;  &#10;  At index 0 diff: 'INVALID_TOOL_NAME' != 'UNAPPROVED_TOOL'&#10;  Use -v to get more diff">names = [None, None], reason = 'UNAPPROVED_TOOL'
+
+    @pytest.mark.parametrize(("names", "reason"), [
+        ([None, None], "UNAPPROVED_TOOL"),
+        (["rea", None], "UNAPPROVED_TOOL"),
+        (["shell", None], "UNAPPROVED_TOOL"),
+        (["read", "read", None], "UNAPPROVED_TOOL"),
+        (["read", False], "INVALID_TOOL_NAME"),
+        (["read", 0], "INVALID_TOOL_NAME"),
+        (["read", ["read"]], "INVALID_TOOL_NAME"),
+    ])
+    def test_nullable_names_never_expand_final_allowlist_or_accept_other_types(names, reason):
+        raw = response([{"name": name} for name in names])
+        with running(lambda request: answer(raw)) as (relay, _upstream):
+            assert post(relay).status_code == 502
+            assert relay.receipts[0]["protocol_passed"] is False
+&gt;           assert relay.receipts[0]["reason_codes"] == [reason]
+E           AssertionError: assert ['INVALID_TOOL_NAME'] == ['UNAPPROVED_TOOL']
+E             
+E             At index 0 diff: 'INVALID_TOOL_NAME' != 'UNAPPROVED_TOOL'
+E             Use -v to get more diff
+
+tests\adapters\opencode\test_go_relay_nullable_names.py:55: AssertionError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_relay_nullable_names" name="test_nullable_names_never_expand_final_allowlist_or_accept_other_types[names1-UNAPPROVED_TOOL]" time="0.072"><failure message="AssertionError: assert ['INVALID_TOOL_NAME'] == ['UNAPPROVED_TOOL']&#10;  &#10;  At index 0 diff: 'INVALID_TOOL_NAME' != 'UNAPPROVED_TOOL'&#10;  Use -v to get more diff">names = ['rea', None], reason = 'UNAPPROVED_TOOL'
+
+    @pytest.mark.parametrize(("names", "reason"), [
+        ([None, None], "UNAPPROVED_TOOL"),
+        (["rea", None], "UNAPPROVED_TOOL"),
+        (["shell", None], "UNAPPROVED_TOOL"),
+        (["read", "read", None], "UNAPPROVED_TOOL"),
+        (["read", False], "INVALID_TOOL_NAME"),
+        (["read", 0], "INVALID_TOOL_NAME"),
+        (["read", ["read"]], "INVALID_TOOL_NAME"),
+    ])
+    def test_nullable_names_never_expand_final_allowlist_or_accept_other_types(names, reason):
+        raw = response([{"name": name} for name in names])
+        with running(lambda request: answer(raw)) as (relay, _upstream):
+            assert post(relay).status_code == 502
+            assert relay.receipts[0]["protocol_passed"] is False
+&gt;           assert relay.receipts[0]["reason_codes"] == [reason]
+E           AssertionError: assert ['INVALID_TOOL_NAME'] == ['UNAPPROVED_TOOL']
+E             
+E             At index 0 diff: 'INVALID_TOOL_NAME' != 'UNAPPROVED_TOOL'
+E             Use -v to get more diff
+
+tests\adapters\opencode\test_go_relay_nullable_names.py:55: AssertionError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_relay_nullable_names" name="test_nullable_names_never_expand_final_allowlist_or_accept_other_types[names2-UNAPPROVED_TOOL]" time="0.059"><failure message="AssertionError: assert ['INVALID_TOOL_NAME'] == ['UNAPPROVED_TOOL']&#10;  &#10;  At index 0 diff: 'INVALID_TOOL_NAME' != 'UNAPPROVED_TOOL'&#10;  Use -v to get more diff">names = ['shell', None], reason = 'UNAPPROVED_TOOL'
+
+    @pytest.mark.parametrize(("names", "reason"), [
+        ([None, None], "UNAPPROVED_TOOL"),
+        (["rea", None], "UNAPPROVED_TOOL"),
+        (["shell", None], "UNAPPROVED_TOOL"),
+        (["read", "read", None], "UNAPPROVED_TOOL"),
+        (["read", False], "INVALID_TOOL_NAME"),
+        (["read", 0], "INVALID_TOOL_NAME"),
+        (["read", ["read"]], "INVALID_TOOL_NAME"),
+    ])
+    def test_nullable_names_never_expand_final_allowlist_or_accept_other_types(names, reason):
+        raw = response([{"name": name} for name in names])
+        with running(lambda request: answer(raw)) as (relay, _upstream):
+            assert post(relay).status_code == 502
+            assert relay.receipts[0]["protocol_passed"] is False
+&gt;           assert relay.receipts[0]["reason_codes"] == [reason]
+E           AssertionError: assert ['INVALID_TOOL_NAME'] == ['UNAPPROVED_TOOL']
+E             
+E             At index 0 diff: 'INVALID_TOOL_NAME' != 'UNAPPROVED_TOOL'
+E             Use -v to get more diff
+
+tests\adapters\opencode\test_go_relay_nullable_names.py:55: AssertionError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_relay_nullable_names" name="test_nullable_names_never_expand_final_allowlist_or_accept_other_types[names3-UNAPPROVED_TOOL]" time="0.074"><failure message="AssertionError: assert ['INVALID_TOOL_NAME'] == ['UNAPPROVED_TOOL']&#10;  &#10;  At index 0 diff: 'INVALID_TOOL_NAME' != 'UNAPPROVED_TOOL'&#10;  Use -v to get more diff">names = ['read', 'read', None], reason = 'UNAPPROVED_TOOL'
+
+    @pytest.mark.parametrize(("names", "reason"), [
+        ([None, None], "UNAPPROVED_TOOL"),
+        (["rea", None], "UNAPPROVED_TOOL"),
+        (["shell", None], "UNAPPROVED_TOOL"),
+        (["read", "read", None], "UNAPPROVED_TOOL"),
+        (["read", False], "INVALID_TOOL_NAME"),
+        (["read", 0], "INVALID_TOOL_NAME"),
+        (["read", ["read"]], "INVALID_TOOL_NAME"),
+    ])
+    def test_nullable_names_never_expand_final_allowlist_or_accept_other_types(names, reason):
+        raw = response([{"name": name} for name in names])
+        with running(lambda request: answer(raw)) as (relay, _upstream):
+            assert post(relay).status_code == 502
+            assert relay.receipts[0]["protocol_passed"] is False
+&gt;           assert relay.receipts[0]["reason_codes"] == [reason]
+E           AssertionError: assert ['INVALID_TOOL_NAME'] == ['UNAPPROVED_TOOL']
+E             
+E             At index 0 diff: 'INVALID_TOOL_NAME' != 'UNAPPROVED_TOOL'
+E             Use -v to get more diff
+
+tests\adapters\opencode\test_go_relay_nullable_names.py:55: AssertionError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_relay_nullable_names" name="test_nullable_names_never_expand_final_allowlist_or_accept_other_types[names4-INVALID_TOOL_NAME]" time="0.073" /><testcase classname="tests.adapters.opencode.test_go_relay_nullable_names" name="test_nullable_names_never_expand_final_allowlist_or_accept_other_types[names5-INVALID_TOOL_NAME]" time="0.062" /><testcase classname="tests.adapters.opencode.test_go_relay_nullable_names" name="test_nullable_names_never_expand_final_allowlist_or_accept_other_types[names6-INVALID_TOOL_NAME]" time="0.061" /></testsuite></testsuites>

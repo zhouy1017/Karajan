@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="4" time="1.390" timestamp="2026-09-06T19:37:15.365595+08:00" hostname="ProArt-Zhou"><testcase classname="tests.projects.test_projected_qualification_store" name="test_unsupported_source_is_rejected_before_any_producer_effect[schema]" time="0.324" /><testcase classname="tests.projects.test_projected_qualification_store" name="test_unsupported_source_is_rejected_before_any_producer_effect[context]" time="0.273" /><testcase classname="tests.projects.test_projected_qualification_store" name="test_unsupported_source_is_rejected_before_any_producer_effect[scope]" time="0.319"><failure message="Failed: DID NOT RAISE QualificationError">projected = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x0000028B072DF140&gt;, 'project_id': '6f96f525-fea0-4e...C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-746/test_unsupported_source_is_rej2/fixture/repository'), ...}
+change = 'scope'
+
+    @pytest.mark.parametrize("change", ["schema", "context", "scope", "suite"])
+    def test_unsupported_source_is_rejected_before_any_producer_effect(projected, change):
+        source = projected["suite"].source_value
+        if change == "schema":
+            source["schema_version"] = "karajan.fixed-go-suite-source.v1"
+        elif change == "context":
+            source["probe_spec"]["context"]["reserved_output_tokens"] = 200000
+        elif change == "scope":
+            source["qualification_scope"] = "fixed_native_tools"
+        else:
+            source["suite_ref"]["revision"] = 3
+&gt;       with pytest.raises(QualificationError, match="QUALIFICATION_SOURCE_UNSUPPORTED"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE QualificationError
+
+tests\projects\test_projected_qualification_store.py:238: Failed</failure></testcase><testcase classname="tests.projects.test_projected_qualification_store" name="test_unsupported_source_is_rejected_before_any_producer_effect[suite]" time="0.280"><failure message="AssertionError: assert {'suite_ref':...revision': 2}} == {'suite_ref':...revision': 3}}&#10;  &#10;  Differing items:&#10;  {'suite_ref': {'id': 'opencode-go-native-read-edit-linux', 'revision': 2}} != {'suite_ref': {'id': 'opencode-go-native-read-edit-linux', 'revision': 3}}&#10;  Use -v to get more diff">projected = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x0000028B07412900&gt;, 'project_id': 'de449bf9-91c0-40...C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-746/test_unsupported_source_is_rej3/fixture/repository'), ...}
+change = 'suite'
+
+    @pytest.mark.parametrize("change", ["schema", "context", "scope", "suite"])
+    def test_unsupported_source_is_rejected_before_any_producer_effect(projected, change):
+        source = projected["suite"].source_value
+        if change == "schema":
+            source["schema_version"] = "karajan.fixed-go-suite-source.v1"
+        elif change == "context":
+            source["probe_spec"]["context"]["reserved_output_tokens"] = 200000
+        elif change == "scope":
+            source["qualification_scope"] = "fixed_native_tools"
+        else:
+            source["suite_ref"]["revision"] = 3
+        with pytest.raises(QualificationError, match="QUALIFICATION_SOURCE_UNSUPPORTED"):
+&gt;           qualify(projected)
+
+tests\projects\test_projected_qualification_store.py:239: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\projects\test_projected_qualification_store.py:138: in qualify
+    return projected["store"].qualify_runtime_tools(
+backend\karajan\projects\qualification.py:236: in qualify_runtime_tools
+    self.go_suite.validate_profile(bound)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;test_projected_qualification_store.SyntheticSuite object at 0x0000028B07412810&gt;
+binding = {'registration': {'id': 'fixture-profile', 'revision': 1, 'profile': {'id': 'fixture-profile', 'revision': 1, 'binding...sers\\Chooo\\AppData\\Local\\Temp\\pytest-of-Chooo\\pytest-746\\test_unsupported_source_is_rej3\\fixture\\repository'}}
+
+    def validate_profile(self, binding):
+&gt;       assert binding["registration"]["profile"]["binding"]["native_settings"] == {
+            "suite_ref": self.source_value["suite_ref"]
+        }
+E       AssertionError: assert {'suite_ref':...revision': 2}} == {'suite_ref':...revision': 3}}
+E         
+E         Differing items:
+E         {'suite_ref': {'id': 'opencode-go-native-read-edit-linux', 'revision': 2}} != {'suite_ref': {'id': 'opencode-go-native-read-edit-linux', 'revision': 3}}
+E         Use -v to get more diff
+
+tests\projects\test_projected_qualification_store.py:51: AssertionError</failure></testcase></testsuite></testsuites>

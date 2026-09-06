@@ -19,6 +19,8 @@ from karajan.routing.models import AccountState, PoolState, TaskClassification
 from karajan.runs import RunError, RunPlanner
 from karajan.runs.planning import encoded, identifier
 
+from .go_scope import resolve_go_execution
+
 if TYPE_CHECKING:
     from karajan.projects.demand import AttemptEstimateStore
 
@@ -334,6 +336,14 @@ class ApprovedRunRouting:
             # Raw configured 'passed' evidence is a declaration, not a
             # controller-produced qualification observation.
             observation = qualified["qualification"]
+            execution_context, scope_issues = resolve_go_execution(
+                registration, observation, task_snapshot, execution, selection["effective_class"]
+            )
+            if execution_context is not None:
+                qualified["execution_context"] = execution_context
+            if scope_issues:
+                registration["enabled"] = False
+                qualified["reason_codes"].extend(scope_issues)
             registration["capability_evidence"] = (
                 observation["capability_evidence"] if observation else []
             )

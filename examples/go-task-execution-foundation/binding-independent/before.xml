@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="4" time="4.593" timestamp="2026-09-06T20:50:58.626189+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.go-task-binding-review.test_binding_contract" name="test_original_operation_compiles_historical_task_identity" time="0.868" /><testcase classname=".cache.go-task-binding-review.test_binding_contract" name="test_cross_record_or_unknown_version_is_not_a_compilable_original_operation[operation_id]" time="0.839"><failure message="Failed: DID NOT RAISE RunError">activated = {'activation_allowed': False, 'assessment': {'activation_allowed': False, 'admission_expectations': [{'estimate_sha256...905030b5b1356092b34191', 'dispatch_enabled': False, ...}, 'cancel_requested': False, 'cancellation_receipt': None, ...}
+change = 'operation_id'
+
+    @pytest.mark.parametrize("change", ["operation_id", "context_id", "execution_schema"])
+    def test_cross_record_or_unknown_version_is_not_a_compilable_original_operation(activated, change):
+        operation = deepcopy(activated)
+        if change == "operation_id":
+            operation["id"] = "another-operation"
+        elif change == "context_id":
+            operation["planned_context_id"] = "another-context"
+        else:
+            operation["execution"]["schema_version"] = "karajan.go-task-execution-intent.v99"
+&gt;       with pytest.raises(RunError, match="TASK_EXECUTION_BINDING_MISMATCH"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE RunError
+
+.cache\go-task-binding-review\test_binding_contract.py:29: Failed</failure></testcase><testcase classname=".cache.go-task-binding-review.test_binding_contract" name="test_cross_record_or_unknown_version_is_not_a_compilable_original_operation[context_id]" time="0.883"><failure message="Failed: DID NOT RAISE RunError">activated = {'activation_allowed': False, 'assessment': {'activation_allowed': False, 'admission_expectations': [{'estimate_sha256...070eddb5c30bfebd16a19c', 'dispatch_enabled': False, ...}, 'cancel_requested': False, 'cancellation_receipt': None, ...}
+change = 'context_id'
+
+    @pytest.mark.parametrize("change", ["operation_id", "context_id", "execution_schema"])
+    def test_cross_record_or_unknown_version_is_not_a_compilable_original_operation(activated, change):
+        operation = deepcopy(activated)
+        if change == "operation_id":
+            operation["id"] = "another-operation"
+        elif change == "context_id":
+            operation["planned_context_id"] = "another-context"
+        else:
+            operation["execution"]["schema_version"] = "karajan.go-task-execution-intent.v99"
+&gt;       with pytest.raises(RunError, match="TASK_EXECUTION_BINDING_MISMATCH"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE RunError
+
+.cache\go-task-binding-review\test_binding_contract.py:29: Failed</failure></testcase><testcase classname=".cache.go-task-binding-review.test_binding_contract" name="test_cross_record_or_unknown_version_is_not_a_compilable_original_operation[execution_schema]" time="0.945"><failure message="Failed: DID NOT RAISE RunError">activated = {'activation_allowed': False, 'assessment': {'activation_allowed': False, 'admission_expectations': [{'estimate_sha256...3f9425109b20c741d9a456', 'dispatch_enabled': False, ...}, 'cancel_requested': False, 'cancellation_receipt': None, ...}
+change = 'execution_schema'
+
+    @pytest.mark.parametrize("change", ["operation_id", "context_id", "execution_schema"])
+    def test_cross_record_or_unknown_version_is_not_a_compilable_original_operation(activated, change):
+        operation = deepcopy(activated)
+        if change == "operation_id":
+            operation["id"] = "another-operation"
+        elif change == "context_id":
+            operation["planned_context_id"] = "another-context"
+        else:
+            operation["execution"]["schema_version"] = "karajan.go-task-execution-intent.v99"
+&gt;       with pytest.raises(RunError, match="TASK_EXECUTION_BINDING_MISMATCH"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE RunError
+
+.cache\go-task-binding-review\test_binding_contract.py:29: Failed</failure></testcase></testsuite></testsuites>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="36.233" timestamp="2026-09-06T19:49:09.887567+08:00" hostname="ProArt-Zhou"><testcase classname="tests.projects.test_go_projected_suite" name="test_projected_suite_correlates_real_native_wire_and_complete_candidate[fixture_cases]" time="32.600"><failure message="AssertionError: {'schema_version': 'karajan.fixed-go-suite-observation.v2', 'suite_ref': {'id': 'opencode-go-native-read-edit-linux', ...evision': 2}, 'observation_origin': 'http_fixture', 'qualification_scope': 'projected_native_tools_fixture', ...}, ...}&#10;assert 'passed' == 'failed'&#10;  &#10;  - failed&#10;  + passed">accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x78469345e210&gt;
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x78469345e480&gt;
+tmp_path = PosixPath('/tmp/karajan-projected-suite-cases-red/test_projected_suite_correlate0')
+change = 'fixture_cases'
+
+    @pytest.mark.skipif(
+        sys.platform != "linux", reason="Actual Linux native tools and Collector required"
+    )
+    @pytest.mark.parametrize("change", [None, "retention", "measurement", "manifest", "fixture_cases"])
+    def test_projected_suite_correlates_real_native_wire_and_complete_candidate(
+        accounting, monkeypatch, tmp_path, change
+    ):
+        import karajan.isolation.go_projected_probe as producer
+        from test_opencode_go_composition import runtime_artifact
+    
+        with tempfile.TemporaryDirectory(prefix="kgqs-") as name:
+            root = Path(name)
+            journal = GoCallJournal(root / "calls.sqlite")
+            sent = {"edit": [], "denied_read": []}
+            clock_observations = []
+    
+            def observed_clock():
+                now = time.time()
+                clock_observations.append(now)
+                return now
+    
+            suite = FixedGoSuite(
+                runtime_artifact(),
+                root,
+                journal,
+                suite_ref=V2_REF,
+                accounting=accounting,
+                client_factory=projected_factory(journal, sent),
+                clock=observed_clock,
+            )
+            start = projected_start(suite)
+            source = suite.source()
+            assert source["schema_version"] == "karajan.fixed-go-suite-source.v2"
+            assert source["qualification_scope"] == "projected_native_tools_fixture"
+            assert source["probe_spec"] == source["runtime_source"]["probe_spec"]
+            if change:
+                original = producer.observe_go_projected_tools
+    
+                def altered(*args, **kwargs):
+                    report = original(*args, **kwargs)
+                    assert report["status"] == "passed", report["reason_codes"]
+                    if change == "retention":
+                        report["retention"]["calls"][-1]["request_digest"] = "e" * 64
+                    elif change == "measurement":
+                        report["requests"][0]["request_context"]["source_sha256"] = "e" * 64
+                    elif change == "fixture_cases":
+                        report["fixture_cases"] = [False] * 4
+                    else:
+                        report["capture"]["candidate_manifest"].pop(0)
+                    return report
+    
+                monkeypatch.setattr(producer, "observe_go_projected_tools", altered)
+            result = suite.observe(start, credential())
+            (tmp_path / "suite-report.json").write_text(json.dumps(result, indent=2))
+            (tmp_path / "clock.json").write_text(json.dumps({
+                "started_at": start["started_at"], "observations": clock_observations,
+            }))
+            if change:
+&gt;               assert result["status"] == "failed", result
+E               AssertionError: {'schema_version': 'karajan.fixed-go-suite-observation.v2', 'suite_ref': {'id': 'opencode-go-native-read-edit-linux', ...evision': 2}, 'observation_origin': 'http_fixture', 'qualification_scope': 'projected_native_tools_fixture', ...}, ...}
+E               assert 'passed' == 'failed'
+E                 
+E                 - failed
+E                 + passed
+
+tests/projects/test_go_projected_suite.py:210: AssertionError</failure></testcase></testsuite></testsuites>

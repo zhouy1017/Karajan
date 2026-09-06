@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="8" skipped="0" tests="8" time="0.244" timestamp="2026-09-06T19:37:51.420974+08:00" hostname="ProArt-Zhou"><testcase classname="tests.adapters.opencode.test_go_grant_authentication" name="test_authentication_is_detached_read_only_history[active]" time="0.012"><failure message="AttributeError: 'GoCallJournal' object has no attribute 'authenticate_grant'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-748/test_authentication_is_detache0')
+state = 'active'
+
+    @pytest.mark.parametrize("state", ["active", "expired", "revoked", "unknown"])
+    def test_authentication_is_detached_read_only_history(tmp_path, state):
+        now = [1000.0]
+        journal = GoCallJournal(tmp_path / "calls #%.sqlite", clock=lambda: now[0])
+        grant = journal.create_grant(binding(), grant_id="own")
+        if state == "expired":
+            now[0] = 2000.0
+        elif state == "revoked":
+            journal.revoke_grant("own")
+        elif state == "unknown":
+            journal.begin_call("own", "lost", capability=grant["capability"], binding=binding())
+        before, raw = journal.snapshot("own"), journal.path.read_bytes()
+&gt;       observed = journal.authenticate_grant("own", capability=grant["capability"], binding=binding())
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'GoCallJournal' object has no attribute 'authenticate_grant'
+
+tests\adapters\opencode\test_go_grant_authentication.py:22: AttributeError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_grant_authentication" name="test_authentication_is_detached_read_only_history[expired]" time="0.008"><failure message="AttributeError: 'GoCallJournal' object has no attribute 'authenticate_grant'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-748/test_authentication_is_detache1')
+state = 'expired'
+
+    @pytest.mark.parametrize("state", ["active", "expired", "revoked", "unknown"])
+    def test_authentication_is_detached_read_only_history(tmp_path, state):
+        now = [1000.0]
+        journal = GoCallJournal(tmp_path / "calls #%.sqlite", clock=lambda: now[0])
+        grant = journal.create_grant(binding(), grant_id="own")
+        if state == "expired":
+            now[0] = 2000.0
+        elif state == "revoked":
+            journal.revoke_grant("own")
+        elif state == "unknown":
+            journal.begin_call("own", "lost", capability=grant["capability"], binding=binding())
+        before, raw = journal.snapshot("own"), journal.path.read_bytes()
+&gt;       observed = journal.authenticate_grant("own", capability=grant["capability"], binding=binding())
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'GoCallJournal' object has no attribute 'authenticate_grant'
+
+tests\adapters\opencode\test_go_grant_authentication.py:22: AttributeError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_grant_authentication" name="test_authentication_is_detached_read_only_history[revoked]" time="0.010"><failure message="AttributeError: 'GoCallJournal' object has no attribute 'authenticate_grant'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-748/test_authentication_is_detache2')
+state = 'revoked'
+
+    @pytest.mark.parametrize("state", ["active", "expired", "revoked", "unknown"])
+    def test_authentication_is_detached_read_only_history(tmp_path, state):
+        now = [1000.0]
+        journal = GoCallJournal(tmp_path / "calls #%.sqlite", clock=lambda: now[0])
+        grant = journal.create_grant(binding(), grant_id="own")
+        if state == "expired":
+            now[0] = 2000.0
+        elif state == "revoked":
+            journal.revoke_grant("own")
+        elif state == "unknown":
+            journal.begin_call("own", "lost", capability=grant["capability"], binding=binding())
+        before, raw = journal.snapshot("own"), journal.path.read_bytes()
+&gt;       observed = journal.authenticate_grant("own", capability=grant["capability"], binding=binding())
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'GoCallJournal' object has no attribute 'authenticate_grant'
+
+tests\adapters\opencode\test_go_grant_authentication.py:22: AttributeError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_grant_authentication" name="test_authentication_is_detached_read_only_history[unknown]" time="0.009"><failure message="AttributeError: 'GoCallJournal' object has no attribute 'authenticate_grant'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-748/test_authentication_is_detache3')
+state = 'unknown'
+
+    @pytest.mark.parametrize("state", ["active", "expired", "revoked", "unknown"])
+    def test_authentication_is_detached_read_only_history(tmp_path, state):
+        now = [1000.0]
+        journal = GoCallJournal(tmp_path / "calls #%.sqlite", clock=lambda: now[0])
+        grant = journal.create_grant(binding(), grant_id="own")
+        if state == "expired":
+            now[0] = 2000.0
+        elif state == "revoked":
+            journal.revoke_grant("own")
+        elif state == "unknown":
+            journal.begin_call("own", "lost", capability=grant["capability"], binding=binding())
+        before, raw = journal.snapshot("own"), journal.path.read_bytes()
+&gt;       observed = journal.authenticate_grant("own", capability=grant["capability"], binding=binding())
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'GoCallJournal' object has no attribute 'authenticate_grant'
+
+tests\adapters\opencode\test_go_grant_authentication.py:22: AttributeError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_grant_authentication" name="test_failed_authentication_has_no_effect[cap-INVALID_CAPABILITY]" time="0.007"><failure message="AttributeError: 'GoCallJournal' object has no attribute 'authenticate_grant'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-748/test_failed_authentication_has0')
+change = 'cap', code = 'INVALID_CAPABILITY'
+
+    @pytest.mark.parametrize("change,code", [("cap", "INVALID_CAPABILITY"), ("binding", "GRANT_BINDING_MISMATCH"), ("missing", "GRANT_NOT_FOUND")])
+    def test_failed_authentication_has_no_effect(tmp_path, change, code):
+        journal = GoCallJournal(tmp_path / "calls.sqlite", clock=lambda: 1000.0)
+        grant = journal.create_grant(binding(), grant_id="own")
+        raw = journal.path.read_bytes()
+        with pytest.raises(GoJournalError, match="^" + code + "$"):
+&gt;           journal.authenticate_grant(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+                "missing" if change == "missing" else "own",
+                capability="x" * 43 if change == "cap" else grant["capability"],
+                binding=binding(fence=2) if change == "binding" else binding(),
+            )
+E           AttributeError: 'GoCallJournal' object has no attribute 'authenticate_grant'
+
+tests\adapters\opencode\test_go_grant_authentication.py:39: AttributeError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_grant_authentication" name="test_failed_authentication_has_no_effect[binding-GRANT_BINDING_MISMATCH]" time="0.007"><failure message="AttributeError: 'GoCallJournal' object has no attribute 'authenticate_grant'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-748/test_failed_authentication_has1')
+change = 'binding', code = 'GRANT_BINDING_MISMATCH'
+
+    @pytest.mark.parametrize("change,code", [("cap", "INVALID_CAPABILITY"), ("binding", "GRANT_BINDING_MISMATCH"), ("missing", "GRANT_NOT_FOUND")])
+    def test_failed_authentication_has_no_effect(tmp_path, change, code):
+        journal = GoCallJournal(tmp_path / "calls.sqlite", clock=lambda: 1000.0)
+        grant = journal.create_grant(binding(), grant_id="own")
+        raw = journal.path.read_bytes()
+        with pytest.raises(GoJournalError, match="^" + code + "$"):
+&gt;           journal.authenticate_grant(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+                "missing" if change == "missing" else "own",
+                capability="x" * 43 if change == "cap" else grant["capability"],
+                binding=binding(fence=2) if change == "binding" else binding(),
+            )
+E           AttributeError: 'GoCallJournal' object has no attribute 'authenticate_grant'
+
+tests\adapters\opencode\test_go_grant_authentication.py:39: AttributeError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_grant_authentication" name="test_failed_authentication_has_no_effect[missing-GRANT_NOT_FOUND]" time="0.006"><failure message="AttributeError: 'GoCallJournal' object has no attribute 'authenticate_grant'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-748/test_failed_authentication_has2')
+change = 'missing', code = 'GRANT_NOT_FOUND'
+
+    @pytest.mark.parametrize("change,code", [("cap", "INVALID_CAPABILITY"), ("binding", "GRANT_BINDING_MISMATCH"), ("missing", "GRANT_NOT_FOUND")])
+    def test_failed_authentication_has_no_effect(tmp_path, change, code):
+        journal = GoCallJournal(tmp_path / "calls.sqlite", clock=lambda: 1000.0)
+        grant = journal.create_grant(binding(), grant_id="own")
+        raw = journal.path.read_bytes()
+        with pytest.raises(GoJournalError, match="^" + code + "$"):
+&gt;           journal.authenticate_grant(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+                "missing" if change == "missing" else "own",
+                capability="x" * 43 if change == "cap" else grant["capability"],
+                binding=binding(fence=2) if change == "binding" else binding(),
+            )
+E           AttributeError: 'GoCallJournal' object has no attribute 'authenticate_grant'
+
+tests\adapters\opencode\test_go_grant_authentication.py:39: AttributeError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_grant_authentication" name="test_missing_ledger_is_not_created_by_authentication" time="0.006"><failure message="AttributeError: 'GoCallJournal' object has no attribute 'authenticate_grant'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-748/test_missing_ledger_is_not_cre0')
+
+    def test_missing_ledger_is_not_created_by_authentication(tmp_path):
+        journal = GoCallJournal(tmp_path / "calls.sqlite", clock=lambda: 1000.0)
+        grant = journal.create_grant(binding(), grant_id="own")
+        journal.path.rename(tmp_path / "saved.sqlite")
+        with pytest.raises(sqlite3.OperationalError):
+&gt;           journal.authenticate_grant("own", capability=grant["capability"], binding=binding())
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'GoCallJournal' object has no attribute 'authenticate_grant'
+
+tests\adapters\opencode\test_go_grant_authentication.py:53: AttributeError</failure></testcase></testsuite></testsuites>

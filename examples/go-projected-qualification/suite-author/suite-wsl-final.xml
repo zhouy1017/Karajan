@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="26" time="105.912" timestamp="2026-09-06T19:50:53.257674+08:00" hostname="ProArt-Zhou"><testcase classname="tests.projects.test_go_projected_suite" name="test_projected_revision_requires_explicit_accounting_before_any_effect" time="0.007" /><testcase classname="tests.projects.test_go_projected_suite" name="test_unrecognized_revision_never_falls_back_to_legacy[True]" time="0.006" /><testcase classname="tests.projects.test_go_projected_suite" name="test_unrecognized_revision_never_falls_back_to_legacy[0]" time="0.005" /><testcase classname="tests.projects.test_go_projected_suite" name="test_unrecognized_revision_never_falls_back_to_legacy[3]" time="0.005" /><testcase classname="tests.projects.test_go_projected_suite" name="test_unrecognized_revision_never_falls_back_to_legacy[2]" time="0.005" /><testcase classname="tests.projects.test_go_projected_suite" name="test_accounting_does_not_silently_upgrade_an_unversioned_suite" time="0.611" /><testcase classname="tests.projects.test_go_projected_suite" name="test_profile_must_explicitly_bind_the_selected_revision" time="0.008" /><testcase classname="tests.projects.test_go_projected_suite" name="test_exact_persisted_projected_start_precedes_grants_and_namespace[spec]" time="2.209" /><testcase classname="tests.projects.test_go_projected_suite" name="test_exact_persisted_projected_start_precedes_grants_and_namespace[limits]" time="2.133" /><testcase classname="tests.projects.test_go_projected_suite" name="test_exact_persisted_projected_start_precedes_grants_and_namespace[scenario]" time="2.150" /><testcase classname="tests.projects.test_go_projected_suite" name="test_exact_persisted_projected_start_precedes_grants_and_namespace[legacy]" time="2.214" /><testcase classname="tests.projects.test_go_projected_suite" name="test_exact_persisted_projected_start_precedes_grants_and_namespace[profile]" time="1.142" /><testcase classname="tests.projects.test_go_projected_suite" name="test_exact_persisted_projected_start_precedes_grants_and_namespace[credential]" time="2.265" /><testcase classname="tests.projects.test_go_projected_suite" name="test_projected_suite_correlates_real_native_wire_and_complete_candidate[None]" time="32.772" /><testcase classname="tests.projects.test_go_projected_suite" name="test_projected_suite_correlates_real_native_wire_and_complete_candidate[retention]" time="17.678" /><testcase classname="tests.projects.test_go_projected_suite" name="test_projected_suite_correlates_real_native_wire_and_complete_candidate[measurement]" time="3.246"><failure message="ValueError: FIXED_GO_START_BINDING_MISMATCH">accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x755882456750&gt;
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7558812202f0&gt;
+tmp_path = PosixPath('/tmp/karajan-projected-suite-final/test_projected_suite_correlate2')
+change = 'measurement'
+
+    @pytest.mark.skipif(
+        sys.platform != "linux", reason="Actual Linux native tools and Collector required"
+    )
+    @pytest.mark.parametrize("change", [None, "retention", "measurement", "manifest", "fixture_cases"])
+    def test_projected_suite_correlates_real_native_wire_and_complete_candidate(
+        accounting, monkeypatch, tmp_path, change
+    ):
+        import karajan.isolation.go_projected_probe as producer
+        from test_opencode_go_composition import runtime_artifact
+    
+        with tempfile.TemporaryDirectory(prefix="kgqs-") as name:
+            root = Path(name)
+            journal = GoCallJournal(root / "calls.sqlite")
+            sent = {"edit": [], "denied_read": []}
+            clock_observations = []
+    
+            def observed_clock():
+                now = time.time()
+                clock_observations.append(now)
+                return now
+    
+            suite = FixedGoSuite(
+                runtime_artifact(),
+                root,
+                journal,
+                suite_ref=V2_REF,
+                accounting=accounting,
+                client_factory=projected_factory(journal, sent),
+                clock=observed_clock,
+            )
+            start = projected_start(suite)
+            source = suite.source()
+            assert source["schema_version"] == "karajan.fixed-go-suite-source.v2"
+            assert source["qualification_scope"] == "projected_native_tools_fixture"
+            assert source["probe_spec"] == source["runtime_source"]["probe_spec"]
+            if change:
+                original = producer.observe_go_projected_tools
+    
+                def altered(*args, **kwargs):
+                    report = original(*args, **kwargs)
+                    assert report["status"] == "passed", report["reason_codes"]
+                    if change == "retention":
+                        report["retention"]["calls"][-1]["request_digest"] = "e" * 64
+                    elif change == "measurement":
+                        report["requests"][0]["request_context"]["source_sha256"] = "e" * 64
+                    elif change == "fixture_cases":
+                        report["fixture_cases"] = [False] * 4
+                    else:
+                        report["capture"]["candidate_manifest"].pop(0)
+                    return report
+    
+                monkeypatch.setattr(producer, "observe_go_projected_tools", altered)
+&gt;           result = suite.observe(start, credential())
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/projects/test_go_projected_suite.py:204: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/karajan/projects/go_suite.py:204: in observe
+    self._validate_start(start, credential)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;karajan.projects.go_suite.FixedGoSuite object at 0x755881221460&gt;
+start = {'qualification_id': 'qualification-one', 'project_id': 'project-one', 'suite_ref': {'id': 'opencode-go-native-read-ed..._path': 'subscription_only', 'approved_data_destination': True}, 'repository': {'root': 'unused-by-fixed-suite'}}, ...}
+credential = ResolvedCredential(&lt;redacted&gt;)
+
+    def _validate_start(self, start: dict[str, Any], credential: ResolvedCredential) -&gt; None:
+        self.validate_profile(start.get("profile_binding", {}))
+        try:
+            profile = start["profile_binding"]["registration"]["profile"]
+            authentication = start["authentication_source"]
+            started, expires, now = start["started_at"], start["expires_at"], self.clock()
+            valid = (
+                start["suite_ref"] == self._suite_ref
+                and start["source"] == self.source()
+                and start["profile_digest"] == source_digest(profile)
+                and isinstance(credential, ResolvedCredential)
+                and credential.project_id == start["project_id"] == authentication["project_id"]
+                and credential.auth_ref == profile["auth_ref"] == authentication["auth_ref"]
+                and credential.generation
+                == start["auth_generation"]
+                == authentication["generation"]
+                and credential.source_id
+                == start["credential_source_id"]
+                == authentication["source"]["id"]
+                and authentication["source"]["kind"] == "controller_local_key_file"
+                and authentication["schema_version"] == "karajan.credential-generation.v1"
+                and all(
+                    type(value) in (int, float) and math.isfinite(value)
+                    for value in (started, expires, now)
+                )
+                and 0 &lt; started &lt;= now &lt; expires &lt;= started + 420
+                and [item["scenario"] for item in start["scenarios"]] == ["edit", "denied_read"]
+            )
+            ids = [start["qualification_id"], start["project_id"]]
+            attempts, grants = [], []
+            for scenario in start["scenarios"]:
+                attempts.append(scenario["attempt_id"])
+                grants.append(scenario["grant_id"])
+                ids.extend((scenario["attempt_id"], scenario["grant_id"]))
+                valid = valid and type(scenario["fence"]) is int and 0 &lt; scenario["fence"] &lt; 2**63
+                expected = {
+                    "qualification_id": start["qualification_id"],
+                    "attempt_id": scenario["attempt_id"],
+                    "fence": scenario["fence"],
+                    "profile_digest": start["profile_digest"],
+                    "runtime_digest": start["source"]["runtime_digest"],
+                    "channel": profile["binding"]["channel_id"],
+                    "model": "glm-5.3-flash",
+                    "auth_generation": start["auth_generation"],
+                    "expires_at": expires,
+                    "max_requests": 6,
+                }
+                if self._suite_ref == V2_SUITE_REF:
+                    expected.update(
+                        schema_version="karajan.go-qualification-grant.v2",
+                        probe_spec_digest=source_digest(start["source"]["probe_spec"]),
+                        scenario=scenario["scenario"],
+                        context=start["source"]["probe_spec"]["context"],
+                    )
+                valid = valid and scenario["grant_binding"] == expected
+            valid = (
+                valid
+                and len(set(attempts)) == len(set(grants)) == 2
+                and all(
+                    isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9_.:-]{1,160}", value)
+                    for value in ids
+                )
+            )
+        except (KeyError, TypeError, AttributeError):
+            valid = False
+        if not valid:
+&gt;           raise ValueError("FIXED_GO_START_BINDING_MISMATCH")
+E           ValueError: FIXED_GO_START_BINDING_MISMATCH
+
+backend/karajan/projects/go_suite.py:194: ValueError</failure></testcase><testcase classname="tests.projects.test_go_projected_suite" name="test_projected_suite_correlates_real_native_wire_and_complete_candidate[manifest]" time="17.757" /><testcase classname="tests.projects.test_go_projected_suite" name="test_projected_suite_correlates_real_native_wire_and_complete_candidate[fixture_cases]" time="17.910" /><testcase classname="tests.adapters.opencode.test_go_grant_authentication" name="test_authentication_is_detached_read_only_history[active]" time="0.009" /><testcase classname="tests.adapters.opencode.test_go_grant_authentication" name="test_authentication_is_detached_read_only_history[expired]" time="0.008" /><testcase classname="tests.adapters.opencode.test_go_grant_authentication" name="test_authentication_is_detached_read_only_history[revoked]" time="0.010" /><testcase classname="tests.adapters.opencode.test_go_grant_authentication" name="test_authentication_is_detached_read_only_history[unknown]" time="0.011" /><testcase classname="tests.adapters.opencode.test_go_grant_authentication" name="test_failed_authentication_has_no_effect[cap-INVALID_CAPABILITY]" time="0.008" /><testcase classname="tests.adapters.opencode.test_go_grant_authentication" name="test_failed_authentication_has_no_effect[binding-GRANT_BINDING_MISMATCH]" time="0.008" /><testcase classname="tests.adapters.opencode.test_go_grant_authentication" name="test_failed_authentication_has_no_effect[missing-GRANT_NOT_FOUND]" time="0.007" /><testcase classname="tests.adapters.opencode.test_go_grant_authentication" name="test_missing_ledger_is_not_created_by_authentication" time="0.007" /></testsuite></testsuites>

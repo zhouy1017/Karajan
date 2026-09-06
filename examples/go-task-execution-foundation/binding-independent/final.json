@@ -1,0 +1,21 @@
+{
+  "finding": "GO-TASK-BINDING-001",
+  "status": "closed",
+  "source": "backend/karajan/orchestration/go_task_binding.py",
+  "source_sha256": "92e3421922bc8ab6d9710a9da285fc24ad9b2822ed1f0e074c90419e9973af57",
+  "original_test_sha256": "bf96265838520fdf4cac7f08a8b82c97ee705c8b1c0189561eb2e99beba1d08e",
+  "published_test_sha256": "bf96265838520fdf4cac7f08a8b82c97ee705c8b1c0189561eb2e99beba1d08e",
+  "published_test_byte_identical": true,
+  "original_retest": {
+    "passed": 4,
+    "failed": 0,
+    "seconds": 4.53,
+    "report": "after.xml"
+  },
+  "published_retest": {
+    "passed": 4,
+    "failed": 0,
+    "seconds": 4.5,
+    "report": "published.xml"
+  }
+}

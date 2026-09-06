@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="1.263" timestamp="2026-09-06T20:29:07.497947+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_go_execution_intent" name="test_prepare_fixes_original_identity_without_activation_or_new_effect" time="0.910"><failure message="ModuleNotFoundError: No module named 'karajan.orchestration.go_execution_intent'">ready = (&lt;karajan.orchestration.admission.ApprovedTaskAdmission object at 0x0000018C1A879A90&gt;, &lt;karajan.orchestration.routing....6e5-62e8-4489-96d0-d4046b72c185', 'operation_id': '3ae4b8f2-c4ef-4ec9-92c5-0f350678b0d3', 'task_id': 'implement', ...})
+projected = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x0000018C1A5CFBC0&gt;, 'project_id': '934d17eb-d522-46...C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-769/test_prepare_fixes_original_id0/fixture/repository'), ...}
+
+    def test_prepare_fixes_original_identity_without_activation_or_new_effect(ready, projected):
+&gt;       from karajan.orchestration.go_execution_intent import GoExecutionIntents, GoExecutionSource
+E       ModuleNotFoundError: No module named 'karajan.orchestration.go_execution_intent'
+
+tests\runs\test_go_execution_intent.py:45: ModuleNotFoundError</failure></testcase></testsuite></testsuites>

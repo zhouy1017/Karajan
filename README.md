@@ -38,6 +38,10 @@ PRD、8 个 M0 Issues、20 个 M1–M4 实现任务和独立 CI 任务已发布�
 
 [启动前复查](docs/implementation/m3-task-startup-guards.md) 固定原 Profile 和批准材料，在已提交的容量激活意图之后再次持锁检查最新容量，避免重复扣算自己的预留。受信执行入口和完整资格接线仍在继续。
 
+[Go 投影资格 v2](docs/implementation/m3-go-projected-qualification.md) 通过固定场景验证已有文件、完整请求计量和停止后的候选采集。批准 Run 的路由消费明确的 Worker/T1/read/edit 与上下文范围，超出范围时不能预约；真实 Task 启动、检查、Reviewer 和交付继续接线。进度见 [切片 #87](https://github.com/zhouy1017/Karajan/issues/87)。
+
+[Go Task 执行基础接口](docs/implementation/m3-go-task-execution-foundation.md) 增加原预约内的持久执行意图、直属 runner 身份核验、批准快照输入编译和每次发送前的门禁。真实原生 producer 已通过本地 HTTP fixture 的读写与撤回验证；完整批准 Task 的启动入口、候选回写和取消收尾继续接线。进度见 [切片 #89](https://github.com/zhouy1017/Karajan/issues/89)。
+
 ## 完整架构设计
 
 从 [Karajan 完整架构设计 v1](docs/architecture/README.md) 开始阅读。它是当前设计入口，覆盖：

@@ -1,0 +1,521 @@
+{
+  "binding": {
+    "controller_sha256": "f5aab9aa346a84858aa9e0b6baf47fbf6576194b2643a91e523f92bb647f1886",
+    "execution_start": {
+      "auth_generation": "31e8e939-1571-4068-a40e-5befc4800a61",
+      "authentication_source": {
+        "auth_ref": "secret:go",
+        "generation": "31e8e939-1571-4068-a40e-5befc4800a61",
+        "previous_generation": null,
+        "project_id": "fab3d5af-16a1-4c8c-af7c-a5a77f782693",
+        "registered_at": 1788695604.9611156,
+        "schema_version": "karajan.credential-generation.v1",
+        "source": {
+          "id": "go",
+          "kind": "controller_local_key_file"
+        }
+      },
+      "credential_source_id": "go",
+      "expires_at": 1788696026.005196,
+      "profile_binding": {
+        "account": {
+          "id": "fixture-account",
+          "provider_id": "opencode-go",
+          "secret_ref": "secret:go"
+        },
+        "channel": {
+          "account_id": "fixture-account",
+          "approved_data_destination": true,
+          "billing_path": "subscription_only",
+          "id": "fixture-channel"
+        },
+        "registration": {
+          "capability_evidence": [
+            {
+              "capability": "bounded_code_edit",
+              "evidence_ref": "fixture:bounded_code_edit",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "bounded_implementation",
+              "evidence_ref": "fixture:bounded_implementation",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "candidate_capture",
+              "evidence_ref": "fixture:candidate_capture",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "code_review",
+              "evidence_ref": "fixture:code_review",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "controlled_tools",
+              "evidence_ref": "fixture:controlled_tools",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "critical_code_review",
+              "evidence_ref": "fixture:critical_code_review",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "critical_implementation",
+              "evidence_ref": "fixture:critical_implementation",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "design_reasoning",
+              "evidence_ref": "fixture:design_reasoning",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "structured_findings",
+              "evidence_ref": "fixture:structured_findings",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "structured_plan_output",
+              "evidence_ref": "fixture:structured_plan_output",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            }
+          ],
+          "enabled": true,
+          "id": "fixture-profile",
+          "max_class": "T3",
+          "model_family": "fixture-family",
+          "profile": {
+            "admission_granularity": "attempt",
+            "auth_ref": "secret:go",
+            "binding": {
+              "account_id": "fixture-account",
+              "auth_mode": "api_key",
+              "billing_path": "subscription_only",
+              "channel_id": "fixture-channel",
+              "model_id": "glm-5.3-flash",
+              "native_settings": {
+                "suite_ref": {
+                  "id": "opencode-go-native-read-edit-linux",
+                  "revision": 1
+                }
+              },
+              "runtime_kind": "opencode-go-isolated",
+              "runtime_version": "1.18.29"
+            },
+            "id": "fixture-profile",
+            "required_permissions": [
+              "read",
+              "edit"
+            ],
+            "revision": 1,
+            "usage_coverage": "unknown"
+          },
+          "quota_pool_refs": [
+            "service-fixture"
+          ],
+          "required_isolation": "tool_sandboxed",
+          "revision": 1
+        },
+        "repository": {
+          "base_ref": "main",
+          "base_sha": "5fd306c91bb2aeab035f5156193a5ce5ee78ea07",
+          "identity_sha256": "7aae201e2257fb73840129c9c9a89362e70569c47fc8075b772a0812cd3fff93",
+          "root": "/tmp/pytest-of-chow/pytest-48/test_fixed_native_suite_is_per0/fixture/repository"
+        }
+      },
+      "profile_digest": "0a97c83d559d4fdf6eb64645f89d43e641d39ad249bfb8dda87dfa1073c98833",
+      "project_id": "fab3d5af-16a1-4c8c-af7c-a5a77f782693",
+      "qualification_id": "3197ee17-dadd-47e3-8af3-adc4af232387",
+      "scenarios": [
+        {
+          "attempt_id": "96f570c2-340e-4cd2-876c-7b6157d13c9e",
+          "fence": 1,
+          "grant_binding": {
+            "attempt_id": "96f570c2-340e-4cd2-876c-7b6157d13c9e",
+            "auth_generation": "31e8e939-1571-4068-a40e-5befc4800a61",
+            "channel": "fixture-channel",
+            "expires_at": 1788696026.005196,
+            "fence": 1,
+            "max_requests": 6,
+            "model": "glm-5.3-flash",
+            "profile_digest": "0a97c83d559d4fdf6eb64645f89d43e641d39ad249bfb8dda87dfa1073c98833",
+            "qualification_id": "3197ee17-dadd-47e3-8af3-adc4af232387",
+            "runtime_digest": "1a550e5615f7e32809e29888ecab72ba7a7eef1ffdfffb0d4fe32eeb74d4f9b4"
+          },
+          "grant_id": "85cc946e-a309-423b-bf4c-6dc82992f60a",
+          "scenario": "edit"
+        },
+        {
+          "attempt_id": "caefce82-dd1c-4e78-bc02-4954ab767efe",
+          "fence": 1,
+          "grant_binding": {
+            "attempt_id": "caefce82-dd1c-4e78-bc02-4954ab767efe",
+            "auth_generation": "31e8e939-1571-4068-a40e-5befc4800a61",
+            "channel": "fixture-channel",
+            "expires_at": 1788696026.005196,
+            "fence": 1,
+            "max_requests": 6,
+            "model": "glm-5.3-flash",
+            "profile_digest": "0a97c83d559d4fdf6eb64645f89d43e641d39ad249bfb8dda87dfa1073c98833",
+            "qualification_id": "3197ee17-dadd-47e3-8af3-adc4af232387",
+            "runtime_digest": "1a550e5615f7e32809e29888ecab72ba7a7eef1ffdfffb0d4fe32eeb74d4f9b4"
+          },
+          "grant_id": "5cfbdc84-5982-4a01-a1f2-706516a3354a",
+          "scenario": "denied_read"
+        }
+      ],
+      "source": {
+        "journal": {
+          "path": "/tmp/pytest-of-chow/pytest-48/test_fixed_native_suite_is_per0/calls.sqlite"
+        },
+        "observation_origin": "http_fixture",
+        "producer_sha256": "807bc108876d05d2c1875a739e2b8c66226071e065377255ef936594af578aa6",
+        "qualification_scope": "fixed_native_tools_fixture",
+        "runtime_digest": "1a550e5615f7e32809e29888ecab72ba7a7eef1ffdfffb0d4fe32eeb74d4f9b4",
+        "runtime_source": {
+          "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+          "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+          "execution_path": "linux-unshare-chroot-opencode-go-fixed-tools-v1",
+          "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+          "machine": "x86_64",
+          "native_settings_digest": "e0a8d0daa8172f93abee79ac1b1640ca1663702933c11918c3477476de098a69",
+          "runtime_version": "1.18.29",
+          "schema_version": "karajan.fixed-go-runtime-source.v1",
+          "source_sha256": {
+            "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+            "_opencode_capture.py": "9cb7c45bbf073c39efcf0d0591bb287ab4891a9ee0cecf0adbc5cea1b0383907",
+            "_opencode_inner.py": "3fed107dda1ba908fbc098f37f5d26b22c82b7402a79f2c9612d208dfa01b3e3",
+            "_opencode_namespace.py": "6e981c2f8d0de875380ad342f168a0e8bddb46ae9e607202121ebd26b8d35019",
+            "_opencode_projection.py": "cac01b05d8aae1ab1916b30d6f50500585fdce3dfd07fe956ffb002243274c57",
+            "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b",
+            "go_journal.py": "dbc3d31c63b8b2e0269a0cd4e3034352cc877ca7d845c0892d3a2b159c93290e",
+            "go_probe.py": "f9fe86a085db0e9d863a79087f67356c3715048735eddde5917cbf4b141d4743",
+            "go_relay.py": "2f8f32de73d95d0c2298f1e10f7cb8bee667cd6e4c394cabaa3e81a881d7ac16",
+            "opencode_runtime.py": "72b2705c8abdd5e1f976c774c2f521bab01d5345c6b95e0d70dd89e9f7e3b55d"
+          },
+          "system_executable_sha256": {
+            "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+            "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+            "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118",
+            "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c"
+          }
+        },
+        "schema_version": "karajan.fixed-go-suite-source.v1",
+        "suite_ref": {
+          "id": "opencode-go-native-read-edit-linux",
+          "revision": 1
+        },
+        "work_root": {
+          "path": "/tmp/kgq-xjzrnvj4"
+        }
+      },
+      "started_at": 1788695606.005196,
+      "suite_ref": {
+        "id": "opencode-go-native-read-edit-linux",
+        "revision": 1
+      }
+    },
+    "profile_binding": {
+      "account": {
+        "id": "fixture-account",
+        "provider_id": "opencode-go",
+        "secret_ref": "secret:go"
+      },
+      "channel": {
+        "account_id": "fixture-account",
+        "approved_data_destination": true,
+        "billing_path": "subscription_only",
+        "id": "fixture-channel"
+      },
+      "registration": {
+        "capability_evidence": [
+          {
+            "capability": "bounded_code_edit",
+            "evidence_ref": "fixture:bounded_code_edit",
+            "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+            "provenance": "fixture",
+            "runtime_version": "1",
+            "status": "passed"
+          },
+          {
+            "capability": "bounded_implementation",
+            "evidence_ref": "fixture:bounded_implementation",
+            "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+            "provenance": "fixture",
+            "runtime_version": "1",
+            "status": "passed"
+          },
+          {
+            "capability": "candidate_capture",
+            "evidence_ref": "fixture:candidate_capture",
+            "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+            "provenance": "fixture",
+            "runtime_version": "1",
+            "status": "passed"
+          },
+          {
+            "capability": "code_review",
+            "evidence_ref": "fixture:code_review",
+            "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+            "provenance": "fixture",
+            "runtime_version": "1",
+            "status": "passed"
+          },
+          {
+            "capability": "controlled_tools",
+            "evidence_ref": "fixture:controlled_tools",
+            "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+            "provenance": "fixture",
+            "runtime_version": "1",
+            "status": "passed"
+          },
+          {
+            "capability": "critical_code_review",
+            "evidence_ref": "fixture:critical_code_review",
+            "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+            "provenance": "fixture",
+            "runtime_version": "1",
+            "status": "passed"
+          },
+          {
+            "capability": "critical_implementation",
+            "evidence_ref": "fixture:critical_implementation",
+            "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+            "provenance": "fixture",
+            "runtime_version": "1",
+            "status": "passed"
+          },
+          {
+            "capability": "design_reasoning",
+            "evidence_ref": "fixture:design_reasoning",
+            "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+            "provenance": "fixture",
+            "runtime_version": "1",
+            "status": "passed"
+          },
+          {
+            "capability": "structured_findings",
+            "evidence_ref": "fixture:structured_findings",
+            "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+            "provenance": "fixture",
+            "runtime_version": "1",
+            "status": "passed"
+          },
+          {
+            "capability": "structured_plan_output",
+            "evidence_ref": "fixture:structured_plan_output",
+            "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+            "provenance": "fixture",
+            "runtime_version": "1",
+            "status": "passed"
+          }
+        ],
+        "enabled": true,
+        "id": "fixture-profile",
+        "max_class": "T3",
+        "model_family": "fixture-family",
+        "profile": {
+          "admission_granularity": "attempt",
+          "auth_ref": "secret:go",
+          "binding": {
+            "account_id": "fixture-account",
+            "auth_mode": "api_key",
+            "billing_path": "subscription_only",
+            "channel_id": "fixture-channel",
+            "model_id": "glm-5.3-flash",
+            "native_settings": {
+              "suite_ref": {
+                "id": "opencode-go-native-read-edit-linux",
+                "revision": 1
+              }
+            },
+            "runtime_kind": "opencode-go-isolated",
+            "runtime_version": "1.18.29"
+          },
+          "id": "fixture-profile",
+          "required_permissions": [
+            "read",
+            "edit"
+          ],
+          "revision": 1,
+          "usage_coverage": "unknown"
+        },
+        "quota_pool_refs": [
+          "service-fixture"
+        ],
+        "required_isolation": "tool_sandboxed",
+        "revision": 1
+      },
+      "repository": {
+        "base_ref": "main",
+        "base_sha": "5fd306c91bb2aeab035f5156193a5ce5ee78ea07",
+        "identity_sha256": "7aae201e2257fb73840129c9c9a89362e70569c47fc8075b772a0812cd3fff93",
+        "root": "/tmp/pytest-of-chow/pytest-48/test_fixed_native_suite_is_per0/fixture/repository"
+      }
+    },
+    "qualification_scope": "fixed_native_tools_fixture",
+    "suite_ref": {
+      "id": "opencode-go-native-read-edit-linux",
+      "revision": 1
+    }
+  },
+  "dispatch_eligible": false,
+  "id": "3197ee17-dadd-47e3-8af3-adc4af232387",
+  "limitations": [
+    "Only the fixed file is covered; arbitrary Task paths are unqualified.",
+    "No Commander, Reviewer, context, candidate capture, or cash bound qualified.",
+    "Provider remote stop remains unknown; local grant cleanup is not a billing cap."
+  ],
+  "live_qualified": false,
+  "observation": {
+    "billing_limit_qualification": "not_run",
+    "dispatch_eligible": false,
+    "error_type": "ValueError",
+    "grant_cleanup": [
+      {
+        "grant_id": "85cc946e-a309-423b-bf4c-6dc82992f60a",
+        "state": "revoked"
+      },
+      {
+        "grant_id": "5cfbdc84-5982-4a01-a1f2-706516a3354a",
+        "state": "revoked"
+      }
+    ],
+    "observation_origin": "http_fixture",
+    "provider_remote_stop": "unknown",
+    "qualification_id": "3197ee17-dadd-47e3-8af3-adc4af232387",
+    "qualification_scope": "fixed_native_tools_fixture",
+    "reason_codes": [
+      "FIXED_SUITE_EXECUTION_FAILED"
+    ],
+    "runtime_tools_status": "not_run",
+    "scenarios": [
+      {
+        "attempt_id": "96f570c2-340e-4cd2-876c-7b6157d13c9e",
+        "fence": 1,
+        "grant_id": "85cc946e-a309-423b-bf4c-6dc82992f60a",
+        "reason_codes": [
+          "PRIOR_STAGE_INCOMPLETE"
+        ],
+        "scenario": "edit",
+        "status": "not_run"
+      },
+      {
+        "attempt_id": "caefce82-dd1c-4e78-bc02-4954ab767efe",
+        "fence": 1,
+        "grant_id": "5cfbdc84-5982-4a01-a1f2-706516a3354a",
+        "reason_codes": [
+          "PRIOR_STAGE_INCOMPLETE"
+        ],
+        "scenario": "denied_read",
+        "status": "not_run"
+      }
+    ],
+    "schema_version": "karajan.fixed-go-suite-observation.v1",
+    "source": {
+      "journal": {
+        "path": "/tmp/pytest-of-chow/pytest-48/test_fixed_native_suite_is_per0/calls.sqlite"
+      },
+      "observation_origin": "http_fixture",
+      "producer_sha256": "807bc108876d05d2c1875a739e2b8c66226071e065377255ef936594af578aa6",
+      "qualification_scope": "fixed_native_tools_fixture",
+      "runtime_digest": "1a550e5615f7e32809e29888ecab72ba7a7eef1ffdfffb0d4fe32eeb74d4f9b4",
+      "runtime_source": {
+        "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+        "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+        "execution_path": "linux-unshare-chroot-opencode-go-fixed-tools-v1",
+        "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+        "machine": "x86_64",
+        "native_settings_digest": "e0a8d0daa8172f93abee79ac1b1640ca1663702933c11918c3477476de098a69",
+        "runtime_version": "1.18.29",
+        "schema_version": "karajan.fixed-go-runtime-source.v1",
+        "source_sha256": {
+          "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+          "_opencode_capture.py": "9cb7c45bbf073c39efcf0d0591bb287ab4891a9ee0cecf0adbc5cea1b0383907",
+          "_opencode_inner.py": "3fed107dda1ba908fbc098f37f5d26b22c82b7402a79f2c9612d208dfa01b3e3",
+          "_opencode_namespace.py": "6e981c2f8d0de875380ad342f168a0e8bddb46ae9e607202121ebd26b8d35019",
+          "_opencode_projection.py": "cac01b05d8aae1ab1916b30d6f50500585fdce3dfd07fe956ffb002243274c57",
+          "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b",
+          "go_journal.py": "dbc3d31c63b8b2e0269a0cd4e3034352cc877ca7d845c0892d3a2b159c93290e",
+          "go_probe.py": "f9fe86a085db0e9d863a79087f67356c3715048735eddde5917cbf4b141d4743",
+          "go_relay.py": "2f8f32de73d95d0c2298f1e10f7cb8bee667cd6e4c394cabaa3e81a881d7ac16",
+          "opencode_runtime.py": "72b2705c8abdd5e1f976c774c2f521bab01d5345c6b95e0d70dd89e9f7e3b55d"
+        },
+        "system_executable_sha256": {
+          "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+          "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+          "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118",
+          "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c"
+        }
+      },
+      "schema_version": "karajan.fixed-go-suite-source.v1",
+      "suite_ref": {
+        "id": "opencode-go-native-read-edit-linux",
+        "revision": 1
+      },
+      "work_root": {
+        "path": "/tmp/kgq-xjzrnvj4"
+      }
+    },
+    "status": "failed",
+    "suite_ref": {
+      "id": "opencode-go-native-read-edit-linux",
+      "revision": 1
+    },
+    "validation": {
+      "budget": "unknown",
+      "context_capacity": "unknown",
+      "dispatch": false,
+      "fixed_native_tools": "failed",
+      "runtime_tools": "not_run"
+    }
+  },
+  "observed_at": 1788695606.5049953,
+  "principal": "owner",
+  "project_id": "fab3d5af-16a1-4c8c-af7c-a5a77f782693",
+  "provenance": "fixture",
+  "qualification_scope": "fixed_native_tools_fixture",
+  "reason_codes": [
+    "FIXED_SUITE_EXECUTION_FAILED"
+  ],
+  "runtime_tools_status": "not_run",
+  "schema_version": "karajan.profile-qualification.v1",
+  "status": "failed",
+  "suite_ref": {
+    "id": "opencode-go-native-read-edit-linux",
+    "revision": 1
+  },
+  "valid_until": 1788699206.5049953
+}

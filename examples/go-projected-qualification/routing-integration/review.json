@@ -1,0 +1,26 @@
+{
+  "base": "6133e942",
+  "cases": 10,
+  "findings": [],
+  "model_calls": 0,
+  "synthetic_ports": [
+    "SyntheticSuite",
+    "ScriptedAdmissionReader",
+    "catalog declarations",
+    "Capacity observations"
+  ],
+  "products_changed": false,
+  "sources": {
+    "backend/karajan/orchestration/go_scope.py": "1a8c4426b7890faea92086a950b3402dc97927f39b9f0a1e61f7cb95f880692d",
+    "backend/karajan/orchestration/routing.py": "053eebe346dae6663218b590f2ba0116497321d0dc6a33d14af8967be81f786e",
+    "backend/karajan/projects/qualification.py": "f5aab9aa346a84858aa9e0b6baf47fbf6576194b2643a91e523f92bb647f1886",
+    "tests/runs/test_projected_go_routing.py": "e325c9b391b31c5f0c4a1005db20026a72d7d5af144c43b8792d7854ccee81af",
+    "tests/projects/test_projected_qualification_store.py": "e486a77add6ee5620b1a33f677da0951c5cebeb157f74ea26f44b07c78a9f403"
+  },
+  "results": {
+    "initial": "history/fixture-configuration-failure.xml",
+    "first_positive": "history/first-positive.xml",
+    "boundaries": "boundaries.xml",
+    "after_formatting": "../store-author/windows-final.xml"
+  }
+}
