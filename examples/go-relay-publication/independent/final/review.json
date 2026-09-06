@@ -1,0 +1,66 @@
+{
+  "before_after_source_match": true,
+  "candidate": "final Spark uncommitted two-file correction",
+  "evidence_sha256": {
+    "README.md": "9f04f62d953b6906dee9181a415b75455b14178f10a8b39f8398d9c0116347e9",
+    "completion-lag-observed.json": "0b0977da9873a59f533f79d6a9dc751cf00745946855c4bafab3553a3abf5a93",
+    "final-windows.xml": "bb48c792ac3c982c8436b4e16a01e9aece90c3ff315329d7b9545d7bc8d29f12",
+    "nullable-final.py.txt": "20dcd95bf02c88cd785c0ee5b579b3f158fae53bd57ee243e17ad5860ca66cf1",
+    "old-source-control.xml": "f110507b9ec02b44d6df36791e9799ae85610870eaaa127625b38b739c50c7e7",
+    "publication-observed.json": "fcc0d6c7d39dc8d3433cf6e14239ea44d2dc8bb8796e0b7b2eb4bb00293e571d",
+    "relay-cd45797.py.txt": "7ad54713e1c13a3ee993538a45fca269b8fb18894888c960d88c28d7d6e5122c",
+    "relay-final.py.txt": "3f52c0a3b4288035c4c85e08a50a37e7e840461083bb7d6e7efdfce7ba906c4a",
+    "test_final_publication.py": "be4a64a791c6e5dd82019647b448d62f6f60d069da58d079bc3bc685241f6cb3",
+    "test_old_source_control.py": "877620442b31b48e6398237c12b64ab063f4ce3acc3c9125be385f812d3636f8",
+    "write-reset-observed.json": "5a25d35f75bce5d19ec376c1c3cbe1b3533032fcfaf7d049dbdcecd4a472b362"
+  },
+  "head": "c63c7e36b17c2f8d8b041984e5bd3422bd72ffd6",
+  "initial_history": "../review.json",
+  "limits": [
+    "Real loopback HTTP/TCP reset/SQLite; upstream synthetic.",
+    "No provider/key/native/OpenCode/GitHub call.",
+    "Root owns separate WSL/static and CI checks.",
+    "Merged send_guard compatibility inspected, not executed."
+  ],
+  "results": {
+    "historical_negative_control": {
+      "assertion": "receipt[protocol_passed] is True, observed False",
+      "expected_failed": 1,
+      "seconds": 0.41,
+      "source_sha256": "7ad54713e1c13a3ee993538a45fca269b8fb18894888c960d88c28d7d6e5122c",
+      "unexpected_failed": 0
+    },
+    "windows": {
+      "failed": 0,
+      "groups": {
+        "author_context": 13,
+        "author_nullable": 13,
+        "independent": 3
+      },
+      "passed": 29,
+      "seconds": 3.53,
+      "skipped": 0
+    }
+  },
+  "reviewer": "independent ui_spec_finalize",
+  "source_sha256": {
+    "backend/karajan/adapters/opencode/go_relay.py": "3f52c0a3b4288035c4c85e08a50a37e7e840461083bb7d6e7efdfce7ba906c4a",
+    "tests/adapters/opencode/test_go_relay_nullable_names.py": "20dcd95bf02c88cd785c0ee5b579b3f158fae53bd57ee243e17ad5860ca66cf1"
+  },
+  "spec": {
+    "open": 0,
+    "resolved": [
+      {
+        "basis": [
+          "Corrected public server-completion barrier and checked held-write watchdog.",
+          "Actual socket/SQLite completion-lag is preserved and properly finalized.",
+          "Unchanged author held-write regression rejects exact cd45797 historical source."
+        ],
+        "id": "SPARK-RECEIPT-001"
+      }
+    ]
+  },
+  "standards": {
+    "open": 0
+  }
+}

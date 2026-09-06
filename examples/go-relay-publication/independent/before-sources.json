@@ -1,0 +1,8 @@
+{
+  "head": "c63c7e36b17c2f8d8b041984e5bd3422bd72ffd6",
+  "comparison": "git diff HEAD -- backend/karajan/adapters/opencode/go_relay.py tests/adapters/opencode/test_go_relay_nullable_names.py",
+  "source_sha256": {
+    "tests/adapters/opencode/test_go_relay_nullable_names.py": "164d263f6198e436740bead3fc1dee248e425a518af37279194972c5f7e07516",
+    "backend/karajan/adapters/opencode/go_relay.py": "3f52c0a3b4288035c4c85e08a50a37e7e840461083bb7d6e7efdfce7ba906c4a"
+  }
+}
