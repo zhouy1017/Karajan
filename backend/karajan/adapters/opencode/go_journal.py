@@ -1,4 +1,4 @@
-"""Durable send intents for the fixed Go qualification relay.
+"""Durable send intents for fixed Go qualifications and controller-bound Tasks.
 
 This is an internal controller/relay port, not model qualification, cash budgeting
 or proof of remote cancellation. The controller supplies grant identity; only the
@@ -20,7 +20,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Annotated, Any, Literal, Self
 
-from karajan.contracts.probe import Contract
+from karajan.contracts.probe import Contract, Identifier
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
 _Identifier = Annotated[str, Field(pattern=r"^[A-Za-z0-9_.:-]{1,160}$")]
@@ -31,6 +31,10 @@ _Reason = Literal[
     "ACTIVE_HANDLER_REMAINS",
     "CHOICE_AFTER_FINISH",
     "CLIENT_CLOSE_FAILED",
+    "CONTEXT_PROVIDER_USAGE_MISSING",
+    "CONTEXT_PROVIDER_INPUT_EXCEEDED",
+    "CONTEXT_PROVIDER_OUTPUT_EXCEEDED",
+    "CONTEXT_REVOCATION_FAILED",
     "DATA_AFTER_TERMINATOR",
     "DENIED_CANARY_IN_REQUEST",
     "DUPLICATE_JSON_KEY",
@@ -80,8 +84,7 @@ class GoJournalError(ValueError):
     """Stable failure without echoing caller input."""
 
 
-class _GrantBinding(Contract):
-    qualification_id: _Identifier
+class _CommonGrantBinding(Contract):
     attempt_id: _Identifier
     fence: _Positive
     profile_digest: _Digest
@@ -91,6 +94,25 @@ class _GrantBinding(Contract):
     auth_generation: _Identifier
     expires_at: Annotated[float, Field(gt=0, allow_inf_nan=False)]
     max_requests: Annotated[int, Field(ge=1, le=6)]
+
+
+class _GrantBinding(_CommonGrantBinding):
+    qualification_id: _Identifier
+
+
+class _TaskSubject(Contract):
+    kind: Literal["task_attempt"]
+    project_id: Identifier
+    run_id: Identifier
+    task_id: Identifier
+
+
+class _TaskGrantBinding(_CommonGrantBinding):
+    subject: _TaskSubject
+    approval_digest: _Digest
+    execution_policy_digest: _Digest
+    workspace_digest: _Digest
+    authentication_source_digest: _Digest
 
 
 class _GrantRef(Contract):
@@ -148,6 +170,16 @@ def _validated(model: type[BaseModel], value: object) -> dict[str, Any]:
 
 def _encoded(value: object) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
+
+
+def _binding(value: object) -> dict[str, Any]:
+    if isinstance(value, dict) and "subject" in value:
+        return _validated(_TaskGrantBinding, value)
+    legacy = _validated(_GrantBinding, value)
+    # Preserve the legacy public shape and key order, including canonical JSON
+    # used to authenticate grants already persisted by earlier versions.
+    qualification_id = legacy.pop("qualification_id")
+    return {"qualification_id": qualification_id, **legacy}
 
 
 class GoCallJournal:
@@ -228,9 +260,11 @@ class GoCallJournal:
 
         Repeating creation returns no capability and cannot reset request count.
         Controllers must not mint a replacement grant after a lost create return.
+        Task digests bind trusted controller material; the journal does not prove
+        current approval, workspace isolation or capability qualification itself.
         """
         _validated(_GrantRef, {"grant_id": grant_id})
-        value = _validated(_GrantBinding, binding)
+        value = _binding(binding)
         encoded = _encoded(value)
         with self._transaction() as db:
             old = db.execute("SELECT * FROM go_grants WHERE id=?", (grant_id,)).fetchone()
@@ -260,7 +294,13 @@ class GoCallJournal:
         return {"grant_id": grant_id, "revoked_at": revoked_at}
 
     def begin_call(
-        self, grant_id: str, call_id: str, *, capability: str, binding: object
+        self,
+        grant_id: str,
+        call_id: str,
+        *,
+        capability: str,
+        binding: object,
+        request_context: object | None = None,
     ) -> dict[str, Any]:
         """Commit an unknown send, then grant send permission once, only in this return.
 
@@ -271,13 +311,20 @@ class GoCallJournal:
         expiry cannot be undone by a later clock rollback or process restart.
         """
         _validated(_CallRef, {"grant_id": grant_id, "call_id": call_id})
-        value = _validated(_GrantBinding, binding)
+        value = _binding(binding)
+        context = None
+        if request_context is not None:
+            from .go_context import ContextMeasurement
+
+            context = _validated(ContextMeasurement, request_context)
         receipt = None
         with self._transaction() as db:
             grant = self._grant(db, grant_id)
             self._authenticate(grant, value, capability)
             old = self._call(db, grant_id, call_id)
             if old is not None:
+                if old.get("request_context") != context:
+                    raise GoJournalError("CALL_CONTEXT_CONFLICT")
                 return {"send_allowed": False, "receipt": old}
             now = self._now()
             if grant["revoked_at"] is not None:
@@ -302,6 +349,8 @@ class GoCallJournal:
                     "completed_at": None,
                     "outcome": None,
                 }
+                if context is not None:
+                    receipt["request_context"] = context
                 db.execute(
                     "INSERT INTO go_calls VALUES (?, ?, ?)", (grant_id, call_id, _encoded(receipt))
                 )
@@ -325,7 +374,7 @@ class GoCallJournal:
         A completed observation is immutable; identical completion is a replay.
         """
         _validated(_CallRef, {"grant_id": grant_id, "call_id": call_id})
-        bound = _validated(_GrantBinding, binding)
+        bound = _binding(binding)
         value = _validated(_Outcome, outcome)
         value.setdefault("upstream_status", None)
         with self._transaction() as db:

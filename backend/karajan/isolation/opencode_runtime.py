@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from ._opencode_inner import register_session, validate_request
+from ._opencode_projection import projection_files, verify_projected_file
 
 RUNTIME_SHA256 = "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650"
 MAX_FRAME = 1024 * 1024
@@ -75,6 +76,7 @@ class IsolatedOpenCode:
         capability: str,
         *,
         model_id: str = "glm-5.3-flash",
+        projection: list[dict[str, Any]] | None = None,
     ) -> None:
         if sys.platform != "linux":
             raise ValueError("LINUX_NAMESPACES_REQUIRED")
@@ -82,6 +84,7 @@ class IsolatedOpenCode:
             raise ValueError("FIXED_MODEL_REQUIRED")
         if not capability or len(capability) > 256 or not capability.isprintable():
             raise ValueError("LOCAL_CAPABILITY_INVALID")
+        self._projection = projection_files(projection) if projection is not None else None
         self.runtime = runtime.resolve(strict=True)
         _verify_runtime(self.runtime)
         self.upstream_socket = upstream_socket.resolve(strict=True)
@@ -122,14 +125,23 @@ class IsolatedOpenCode:
         inner: socket.socket | None = None
         try:
             _verify_runtime(self.runtime)
-            fixture = self.workspace / "fixture.py"
-            if self.workspace.is_symlink():
-                raise ValueError("FIXTURE_MUST_BE_PRIVATE_REGULAR_FILE")
-            if not fixture.exists() and not fixture.is_symlink():
-                fixture.touch(mode=0o600, exist_ok=False)
-            identity = fixture.lstat()
-            if not stat.S_ISREG(identity.st_mode) or identity.st_nlink != 1:
-                raise ValueError("FIXTURE_MUST_BE_PRIVATE_REGULAR_FILE")
+            projection = self._projection
+            if projection is None:
+                fixture = self.workspace / "fixture.py"
+                if self.workspace.is_symlink():
+                    raise ValueError("FIXTURE_MUST_BE_PRIVATE_REGULAR_FILE")
+                if not fixture.exists() and not fixture.is_symlink():
+                    fixture.touch(mode=0o600, exist_ok=False)
+                identity = fixture.lstat()
+                if not stat.S_ISREG(identity.st_mode) or identity.st_nlink != 1:
+                    raise ValueError("FIXTURE_MUST_BE_PRIVATE_REGULAR_FILE")
+                with fixture.open("rb") as stream:
+                    content_digest = hashlib.file_digest(stream, "sha256").hexdigest()
+                projection = [{"path": "fixture.py", "sha256": content_digest, "writable": True}]
+            for row in projection:
+                verify_projected_file(self.workspace, row)
+            with (self.directory / "projection.json").open("x", encoding="utf-8") as stream:
+                json.dump(projection, stream, allow_nan=False)
             outer, inner = socket.socketpair()
             outer.settimeout(30)
             command = [

@@ -1,0 +1,118 @@
+{
+  "baseline": "8a3d4ea",
+  "kind": "author_evidence_not_independent_review",
+  "recorded_at": "2026-09-06T08:04:30.058302+00:00",
+  "source": {
+    "backend/karajan/projects/credential_sources.py": {
+      "sha256": "2a5f7e849c3a5fc012c04622c7ecdaa9a7aee749ea8acce24952b5ba4ad85c85",
+      "crlf_count": 0
+    },
+    "tests/projects/test_credential_sources.py": {
+      "sha256": "43f79524e2f7de9bead84a249db903977a68173e08ee7169f0febc9824601cd2",
+      "crlf_count": 0
+    }
+  },
+  "evidence": {
+    "boundaries.xml": {
+      "sha256": "9e183b472b1bf9d7e13ba15581cec2f50d79f130890ece251972794dbf98b01a",
+      "tests": 22,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": "5.921"
+    },
+    "expanded-after.xml": {
+      "sha256": "a8a75ae657f9548bed2812faf00c818a2ce42ae23ea51a5e5622ba3418e8acd7",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": "2.462"
+    },
+    "expanded-before.xml": {
+      "sha256": "4d775e87f9c70cb791ad90998be88d7c01ce23f652e5daa8572b015d1afa3cc2",
+      "tests": 9,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": "2.633"
+    },
+    "first-green.xml": {
+      "sha256": "ade6dede4c660cb369278499713e044d7dcc54ceb2543fdcce55f772c644ac66",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": "0.378"
+    },
+    "linux-final.xml": {
+      "sha256": "5d3f72e6a767f369819223dd9af914b691d2bb41f28d5325ec1be60ce4c333aa",
+      "tests": 22,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": "21.654"
+    },
+    "linux-frozen.xml": {
+      "sha256": "6cdab766030d0ebd9220f10159c50c34880771d76951289ca14a97d2bb19ebb3",
+      "tests": 22,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": "16.364"
+    },
+    "linux.xml": {
+      "sha256": "572db3b08f08ee4cf0bbd628f25fa8fae2dfc40d6abbc98c2e58dd7f0ff27eb4",
+      "tests": 22,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": "17.218"
+    },
+    "red.xml": {
+      "sha256": "58a3302dd56260ce46bbfaa3a1ab114283fd7ec31fb05162a1e892aac61f3f8e",
+      "tests": 1,
+      "failures": 0,
+      "errors": 1,
+      "skipped": 0,
+      "time_seconds": "0.205"
+    },
+    "windows-final.xml": {
+      "sha256": "a9ff3684616c2cc3f032b7fe4c2b74e1c06ff8ed7be18c20e99b140e3fcd1996",
+      "tests": 22,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": "6.336"
+    },
+    "windows-frozen.xml": {
+      "sha256": "a7aedf6cf65e732c32f8af12e1b5624fa6e02b35fd3754dedccde0f27ecd3dbf",
+      "tests": 22,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": "5.455"
+    }
+  },
+  "other_evidence": {
+    "README.md": "dd92eb8f6bb175633e024d4ac28f20dc8451416a69c96626f365290e185b1f91",
+    "mypy-win32.txt": "8e63ae22e8213e327a5e9cbd584067681681bd8ef7f25c869877887ccdcfc4ff",
+    "mypy-linux-target.txt": "8e63ae22e8213e327a5e9cbd584067681681bd8ef7f25c869877887ccdcfc4ff",
+    "ruff.txt": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0"
+  },
+  "validation": {
+    "windows": "22 passed",
+    "wsl2": "22 passed",
+    "mypy": "Windows interpreter, win32 and linux targets both passed",
+    "ruff": "passed"
+  },
+  "limits": [
+    "No provider calls, real credential reads, or product Git commit",
+    "Synthetic fixture Git histories only",
+    "Private HMAC state is separate from the public project DB",
+    "Controller-managed parent paths and host OS remain trusted",
+    "Public DB transaction does not lock external file material",
+    "Returned Python strings are not revocable or reliably zeroized",
+    "Same-command private orphans are rejected without implicit rotation"
+  ]
+}

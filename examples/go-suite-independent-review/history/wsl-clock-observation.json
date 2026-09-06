@@ -1,0 +1,12 @@
+{
+  "scope": "local WSL clock observation only; no provider effects",
+  "seconds": 30,
+  "clock_anomalies": [
+    {
+      "previous_wall": 1788683964.3040302,
+      "wall": 1788683961.8273075,
+      "wall_delta": -2.4767227172851562,
+      "monotonic_delta": 0.020303784011048265
+    }
+  ]
+}

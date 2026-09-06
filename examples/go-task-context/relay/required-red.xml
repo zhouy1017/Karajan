@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.399" timestamp="2026-09-06T17:48:56.330296+08:00" hostname="ProArt-Zhou"><testcase classname="tests.adapters.opencode.test_go_relay_context" name="test_task_grant_without_approved_context_accounting_cannot_send" time="0.117"><failure message="assert 200 == 403&#10; +  where 200 = &lt;Response [200 OK]&gt;.status_code">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-663/test_task_grant_without_approv0')
+
+    def test_task_grant_without_approved_context_accounting_cannot_send(tmp_path):
+        journal = GoCallJournal(tmp_path / "calls.sqlite", clock=lambda: 1000.0)
+        binding = task_binding()
+        grant = journal.create_grant(binding, grant_id="task")
+        upstream = []
+    
+        def receive(request):
+            upstream.append(request)
+            return answer()
+    
+        relay = GoRelay(
+            SECRET,
+            CANARY,
+            authorization=GoRelayAuthorization(journal, "task", binding, grant["capability"]),
+            client_factory=lambda: httpx.Client(transport=httpx.MockTransport(receive), trust_env=False),
+        )
+        relay.start()
+        try:
+            response = post(relay)
+&gt;           assert response.status_code == 403
+E           assert 200 == 403
+E            +  where 200 = &lt;Response [200 OK]&gt;.status_code
+
+tests\adapters\opencode\test_go_relay_context.py:29: AssertionError</failure></testcase></testsuite></testsuites>

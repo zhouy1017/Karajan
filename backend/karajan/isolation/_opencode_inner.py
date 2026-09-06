@@ -14,7 +14,12 @@ import time
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING or __package__:
+    from ._opencode_projection import projection_files
+else:
+    from _opencode_projection import projection_files
 
 
 def validate_request(method: str, route: str, body: object, sessions: set[str]) -> None:
@@ -119,11 +124,18 @@ def send(control: socket.socket, value: dict[str, Any]) -> None:
     control.sendall(struct.pack("!I", len(payload)) + payload)
 
 
-def configuration(capability: str) -> dict[str, Any]:
+def configuration(
+    capability: str, projection: list[dict[str, Any]] | None = None
+) -> dict[str, Any]:
+    rows: list[dict[str, Any]] = (
+        projection_files(projection)
+        if projection is not None
+        else [{"path": "fixture.py", "writable": True}]
+    )
     permissions = {
         "*": "deny",
-        "read": {"*": "deny", "workspace/fixture.py": "allow"},
-        "edit": {"*": "deny", "workspace/fixture.py": "allow"},
+        "read": {"*": "deny", **{"workspace/" + r["path"]: "allow" for r in rows}},
+        "edit": {"*": "deny", **{"workspace/" + r["path"]: "allow" for r in rows if r["writable"]}},
     }
     return {
         "model": "opencode-go/glm-5.3-flash",
@@ -286,7 +298,11 @@ def main(control_fd: int) -> None:
         "PATH": "/usr/bin:/bin",
         "LANG": "C.UTF-8",
         "HOME": str(home),
-        "OPENCODE_CONFIG_CONTENT": json.dumps(configuration(startup["capability"])),
+        "OPENCODE_CONFIG_CONTENT": json.dumps(
+            configuration(
+                startup["capability"], json.loads(Path("/control/projection.json").read_text())
+            )
+        ),
         "OPENCODE_SERVER_PASSWORD": password,
         "OPENCODE_SERVER_USERNAME": "probe",
         "TMPDIR": "/tmp",

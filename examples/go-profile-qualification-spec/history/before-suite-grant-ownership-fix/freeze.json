@@ -1,0 +1,25 @@
+{
+  "scope": "Independent Spec: persistent runtime qualification entry",
+  "result": "passed",
+  "tests": 5,
+  "failures": 0,
+  "elapsed_seconds": 189.61,
+  "observation_origin": "http_fixture",
+  "real_provider_calls": 0,
+  "fixture_http_requests": 30,
+  "source_sha256": {
+    "backend/karajan/projects/qualification.py": "a726c01baedec7f60ec6f13e7fda0b41d9ef8d52c6d6b6a39b0b5f733bbc68e3",
+    "backend/karajan/projects/go_suite.py": "c7e7dedc3ef3db0ab7a1ab1e05689be320f546bf6daabe8515f0aaa86e13475b",
+    "backend/karajan/projects/credential_sources.py": "2a5f7e849c3a5fc012c04622c7ecdaa9a7aee749ea8acce24952b5ba4ad85c85",
+    "tests/projects/test_runtime_qualification_store.py": "44a972fb93db1d99a5115562b96af19c926e5cf3b377404b0877c34d3a1d0b53"
+  },
+  "evidence_sha256": {
+    "test_public_persistence.py": "5c9fc57b333d7df3065d60bc45b2f5afc3f3fe9f0b739fe932c7533229c78148",
+    "first.junit.xml": "c18b28029da2d7146a2628d7cc43283f104c3550d8e3a2a4a5d81c301e1003b1",
+    "fixed-history-and-narrow-facts.json": "1e0540b06dde0b3f8841481785ec5994916054a906f12d336a9e93b42fcc46a0",
+    "latest-unknown.json": "111cc57f8f5c7cae4bcff686fa558e52650e59b59d2831bff060406cf0300c9e",
+    "changed-profile.json": "7eb8903e43feff8dd15916a6edbc2e951161ae47e7e20c95df26142e63f9b837",
+    "changed-credential_revoke.json": "04753d4909edce5c33199b3dbdc8d9732dffadbb88ca28b658ba68b73514450e",
+    "changed-credential_rotation.json": "7f6e35ff00f4aad287ff6446e763d8ada3dc2add11c2bd838356a48ffd828bcd"
+  }
+}

@@ -686,7 +686,7 @@ class ProjectRegistry:
         """Fix explicit routing constraints under the project owner's authority."""
         from karajan.routing.compiler import RoutingError
 
-        from .execution_policy import validate_policy
+        from .execution_policy import policy_components, validate_policy
 
         project_id = identifier(project_id)
         identity = hashlib.sha256(
@@ -715,17 +715,15 @@ class ProjectRegistry:
             ).fetchone()[0]
             if document["revision"] != (latest or 0) + 1:
                 raise ProjectError("EXECUTION_POLICY_REVISION_CONFLICT")
+            components = policy_components(document)
             for old in db.execute(
                 "SELECT record FROM execution_policies WHERE project_id=?", (project_id,)
             ):
-                previous = json.loads(old["record"])
-                for kind in ("risk_policy", "tool_policy", "context_policy"):
-                    left, right = previous[kind], document[kind]
-                    if (left["id"], left["revision"]) == (
-                        right["id"],
-                        right["revision"],
-                    ) and left != right:
-                        raise ProjectError("EXECUTION_POLICY_COMPONENT_REVISION_CONFLICT")
+                previous = policy_components(json.loads(old["record"]))
+                if any(
+                    previous[key] != components[key] for key in previous.keys() & components.keys()
+                ):
+                    raise ProjectError("EXECUTION_POLICY_COMPONENT_REVISION_CONFLICT")
             result = {
                 **document,
                 "project_id": project_id,

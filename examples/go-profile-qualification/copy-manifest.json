@@ -1,0 +1,325 @@
+{
+  "kind": "byte-preserving evidence publication",
+  "copied_files": 53,
+  "all_sha256_match": true,
+  "files": [
+    {
+      "source": ".cache/go-profile-standards/final.xml",
+      "published": "examples/go-profile-standards/final.xml",
+      "sha256": "fe5d43a029f79dde9a2f5ebb3e67d1440a00753c03672e776c656774f464345a",
+      "bytes": 906
+    },
+    {
+      "source": ".cache/go-profile-standards/review.json",
+      "published": "examples/go-profile-standards/review.json",
+      "sha256": "e2ebf6bf0cb82488d787e71d33e613e6b1900a93042252ca9195178f689e9dd1",
+      "bytes": 1812
+    },
+    {
+      "source": ".cache/go-profile-standards/review.md",
+      "published": "examples/go-profile-standards/review.md",
+      "sha256": "93808d796bd89c38c7954337cf6e18177f675dc795d12b98588caf7d3dc264ca",
+      "bytes": 2936
+    },
+    {
+      "source": ".cache/go-profile-standards/test_store_failure_boundaries.py",
+      "published": "examples/go-profile-standards/test_store_failure_boundaries.py",
+      "sha256": "272d533ead446d9175ab1939476c2dabedb42d4f6fa1a22978a5195bc23d218c",
+      "bytes": 4981
+    },
+    {
+      "source": ".cache/credential-source-evidence/README.md",
+      "published": "examples/go-profile-qualification/credential-source-evidence/README.md",
+      "sha256": "dd92eb8f6bb175633e024d4ac28f20dc8451416a69c96626f365290e185b1f91",
+      "bytes": 6600
+    },
+    {
+      "source": ".cache/credential-source-evidence/freeze.json",
+      "published": "examples/go-profile-qualification/credential-source-evidence/freeze.json",
+      "sha256": "5f75d81bb129d4383e96b609c2fbb475d342ff03d6b2b27f106a79f9a4f22c52",
+      "bytes": 3895
+    },
+    {
+      "source": ".cache/credential-source-evidence/windows-frozen.xml",
+      "published": "examples/go-profile-qualification/credential-source-evidence/windows-frozen.xml",
+      "sha256": "a7aedf6cf65e732c32f8af12e1b5624fa6e02b35fd3754dedccde0f27ecd3dbf",
+      "bytes": 7912
+    },
+    {
+      "source": ".cache/credential-source-evidence/linux-frozen.xml",
+      "published": "examples/go-profile-qualification/credential-source-evidence/linux-frozen.xml",
+      "sha256": "6cdab766030d0ebd9220f10159c50c34880771d76951289ca14a97d2bb19ebb3",
+      "bytes": 7913
+    },
+    {
+      "source": ".cache/credential-source-evidence/red.xml",
+      "published": "examples/go-profile-qualification/credential-source-evidence/red.xml",
+      "sha256": "58a3302dd56260ce46bbfaa3a1ab114283fd7ec31fb05162a1e892aac61f3f8e",
+      "bytes": 1068
+    },
+    {
+      "source": ".cache/credential-source-evidence/boundaries.xml",
+      "published": "examples/go-profile-qualification/credential-source-evidence/boundaries.xml",
+      "sha256": "9e183b472b1bf9d7e13ba15581cec2f50d79f130890ece251972794dbf98b01a",
+      "bytes": 7912
+    },
+    {
+      "source": ".cache/credential-source-evidence/expanded-before.xml",
+      "published": "examples/go-profile-qualification/credential-source-evidence/expanded-before.xml",
+      "sha256": "4d775e87f9c70cb791ad90998be88d7c01ce23f652e5daa8572b015d1afa3cc2",
+      "bytes": 3105
+    },
+    {
+      "source": ".cache/credential-source-evidence/expanded-after.xml",
+      "published": "examples/go-profile-qualification/credential-source-evidence/expanded-after.xml",
+      "sha256": "a8a75ae657f9548bed2812faf00c818a2ce42ae23ea51a5e5622ba3418e8acd7",
+      "bytes": 1674
+    },
+    {
+      "source": ".cache/credential-source-evidence/first-green.xml",
+      "published": "examples/go-profile-qualification/credential-source-evidence/first-green.xml",
+      "sha256": "ade6dede4c660cb369278499713e044d7dcc54ceb2543fdcce55f772c644ac66",
+      "bytes": 408
+    },
+    {
+      "source": ".cache/credential-source-evidence/linux.xml",
+      "published": "examples/go-profile-qualification/credential-source-evidence/linux.xml",
+      "sha256": "572db3b08f08ee4cf0bbd628f25fa8fae2dfc40d6abbc98c2e58dd7f0ff27eb4",
+      "bytes": 11629
+    },
+    {
+      "source": ".cache/credential-source-evidence/linux-final.xml",
+      "published": "examples/go-profile-qualification/credential-source-evidence/linux-final.xml",
+      "sha256": "5d3f72e6a767f369819223dd9af914b691d2bb41f28d5325ec1be60ce4c333aa",
+      "bytes": 7913
+    },
+    {
+      "source": ".cache/credential-source-evidence/windows-final.xml",
+      "published": "examples/go-profile-qualification/credential-source-evidence/windows-final.xml",
+      "sha256": "a9ff3684616c2cc3f032b7fe4c2b74e1c06ff8ed7be18c20e99b140e3fcd1996",
+      "bytes": 7912
+    },
+    {
+      "source": ".cache/credential-source-evidence/mypy-win32.txt",
+      "published": "examples/go-profile-qualification/credential-source-evidence/mypy-win32.txt",
+      "sha256": "8e63ae22e8213e327a5e9cbd584067681681bd8ef7f25c869877887ccdcfc4ff",
+      "bytes": 43
+    },
+    {
+      "source": ".cache/credential-source-evidence/mypy-linux-target.txt",
+      "published": "examples/go-profile-qualification/credential-source-evidence/mypy-linux-target.txt",
+      "sha256": "8e63ae22e8213e327a5e9cbd584067681681bd8ef7f25c869877887ccdcfc4ff",
+      "bytes": 43
+    },
+    {
+      "source": ".cache/credential-source-evidence/ruff.txt",
+      "published": "examples/go-profile-qualification/credential-source-evidence/ruff.txt",
+      "sha256": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0",
+      "bytes": 20
+    },
+    {
+      "source": ".cache/go-suite-freeze.json",
+      "published": "examples/go-profile-qualification/go-suite-freeze.json",
+      "sha256": "001e1db5cc2d803e3aa0d7eb7848b5642f502800a1ba04721ea7d3eab3e64b54",
+      "bytes": 2727
+    },
+    {
+      "source": ".cache/go-suite-final.xml",
+      "published": "examples/go-profile-qualification/go-suite-final.xml",
+      "sha256": "f4b2304dc5e0bc747529604576d7763ab3a4ac15b91b9c0a55e62311a69f30af",
+      "bytes": 2566
+    },
+    {
+      "source": ".cache/go-suite-red.xml",
+      "published": "examples/go-profile-qualification/go-suite-red.xml",
+      "sha256": "697b307d04d44564f3aa6262909efe1de5d0a50a20f022d12ec9b36da2de0ad2",
+      "bytes": 6091
+    },
+    {
+      "source": ".cache/go-suite-windows.xml",
+      "published": "examples/go-profile-qualification/go-suite-windows.xml",
+      "sha256": "2fd30223b91429d5a4e6c7e1a5e8aceb2db51b57da52ff5ef95f0096d25f82fa",
+      "bytes": 4393
+    },
+    {
+      "source": ".cache/go-profile-projects-wsl.xml",
+      "published": "examples/go-profile-qualification/go-profile-projects-wsl.xml",
+      "sha256": "14a3929ed584ba2b51c32f1bdfc8099202e8a7ee7d724c8cc04402325403ff1e",
+      "bytes": 35985
+    },
+    {
+      "source": ".cache/go-profile-projects-windows.xml",
+      "published": "examples/go-profile-qualification/go-profile-projects-windows.xml",
+      "sha256": "296bad452f38540fbffa5eae88738fe2dc5ca46c9fb06be4c3c388e208d3080e",
+      "bytes": 38399
+    },
+    {
+      "source": ".cache/go-profile-routing-web-windows.xml",
+      "published": "examples/go-profile-qualification/go-profile-routing-web-windows.xml",
+      "sha256": "e3b46eb91acb319874a6ec5e2fbea55ce97b06203406566c709b339514f5421b",
+      "bytes": 30174
+    },
+    {
+      "source": ".cache/go-profile-qualification-spec/changed-credential_revoke.json",
+      "published": "examples/go-profile-qualification-spec/changed-credential_revoke.json",
+      "sha256": "39142b4d40697936d9e561b970b48b237e2f1773fd9cb05374ca95eb0e11b8d4",
+      "bytes": 44035
+    },
+    {
+      "source": ".cache/go-profile-qualification-spec/changed-credential_rotation.json",
+      "published": "examples/go-profile-qualification-spec/changed-credential_rotation.json",
+      "sha256": "23394f8ba22cf198775a832ae38262ba6e0e77a3f0629d22391de7d1cbe194ac",
+      "bytes": 44029
+    },
+    {
+      "source": ".cache/go-profile-qualification-spec/changed-profile.json",
+      "published": "examples/go-profile-qualification-spec/changed-profile.json",
+      "sha256": "d62d74001b35b1a2c4343ca427e13deac8bfc2a3d1d4eaa479da20469dad6f90",
+      "bytes": 44036
+    },
+    {
+      "source": ".cache/go-profile-qualification-spec/final.junit.xml",
+      "published": "examples/go-profile-qualification-spec/final.junit.xml",
+      "sha256": "c27ab8956dbdcd6db743c6b585ab2f2662d58ec4ad6fe25727dd95d4b8233efd",
+      "bytes": 1143
+    },
+    {
+      "source": ".cache/go-profile-qualification-spec/first.junit.xml",
+      "published": "examples/go-profile-qualification-spec/first.junit.xml",
+      "sha256": "c18b28029da2d7146a2628d7cc43283f104c3550d8e3a2a4a5d81c301e1003b1",
+      "bytes": 1143
+    },
+    {
+      "source": ".cache/go-profile-qualification-spec/fixed-history-and-narrow-facts.json",
+      "published": "examples/go-profile-qualification-spec/fixed-history-and-narrow-facts.json",
+      "sha256": "a39b78147e77e0490d88c92610d5bbf14da4d403219fbbab9fc60bf136f3bf71",
+      "bytes": 96392
+    },
+    {
+      "source": ".cache/go-profile-qualification-spec/freeze.json",
+      "published": "examples/go-profile-qualification-spec/freeze.json",
+      "sha256": "db4acdad9c10fbb8f05d400605e28360667ab37b50bf475ab53ffbd41b59df56",
+      "bytes": 1576
+    },
+    {
+      "source": ".cache/go-profile-qualification-spec/latest-unknown.json",
+      "published": "examples/go-profile-qualification-spec/latest-unknown.json",
+      "sha256": "e2ccbfd01fa3e10a55b3b350259dcdce8a89ce4fafb6f9d1dcd3530a749f8db8",
+      "bytes": 67649
+    },
+    {
+      "source": ".cache/go-profile-qualification-spec/plan.md",
+      "published": "examples/go-profile-qualification-spec/plan.md",
+      "sha256": "11ff0c8bddfa2e11ad58ebbfa6609c1f3c9f1319890858de0d3151fec064a9a4",
+      "bytes": 2764
+    },
+    {
+      "source": ".cache/go-profile-qualification-spec/report.md",
+      "published": "examples/go-profile-qualification-spec/report.md",
+      "sha256": "a8a9e872bcc0c5b325c941c9c672bf7da2b984325b6bdcd0f09ec0376f74db00",
+      "bytes": 3222
+    },
+    {
+      "source": ".cache/go-profile-qualification-spec/test_public_persistence.py",
+      "published": "examples/go-profile-qualification-spec/test_public_persistence.py",
+      "sha256": "5c9fc57b333d7df3065d60bc45b2f5afc3f3fe9f0b739fe932c7533229c78148",
+      "bytes": 9928
+    },
+    {
+      "source": ".cache/go-profile-qualification-spec/history/before-suite-grant-ownership-fix/changed-credential_revoke.json",
+      "published": "examples/go-profile-qualification-spec/history/before-suite-grant-ownership-fix/changed-credential_revoke.json",
+      "sha256": "04753d4909edce5c33199b3dbdc8d9732dffadbb88ca28b658ba68b73514450e",
+      "bytes": 44034
+    },
+    {
+      "source": ".cache/go-profile-qualification-spec/history/before-suite-grant-ownership-fix/changed-credential_rotation.json",
+      "published": "examples/go-profile-qualification-spec/history/before-suite-grant-ownership-fix/changed-credential_rotation.json",
+      "sha256": "7f6e35ff00f4aad287ff6446e763d8ada3dc2add11c2bd838356a48ffd828bcd",
+      "bytes": 44030
+    },
+    {
+      "source": ".cache/go-profile-qualification-spec/history/before-suite-grant-ownership-fix/changed-profile.json",
+      "published": "examples/go-profile-qualification-spec/history/before-suite-grant-ownership-fix/changed-profile.json",
+      "sha256": "7eb8903e43feff8dd15916a6edbc2e951161ae47e7e20c95df26142e63f9b837",
+      "bytes": 44029
+    },
+    {
+      "source": ".cache/go-profile-qualification-spec/history/before-suite-grant-ownership-fix/first.junit.xml",
+      "published": "examples/go-profile-qualification-spec/history/before-suite-grant-ownership-fix/first.junit.xml",
+      "sha256": "c18b28029da2d7146a2628d7cc43283f104c3550d8e3a2a4a5d81c301e1003b1",
+      "bytes": 1143
+    },
+    {
+      "source": ".cache/go-profile-qualification-spec/history/before-suite-grant-ownership-fix/fixed-history-and-narrow-facts.json",
+      "published": "examples/go-profile-qualification-spec/history/before-suite-grant-ownership-fix/fixed-history-and-narrow-facts.json",
+      "sha256": "1e0540b06dde0b3f8841481785ec5994916054a906f12d336a9e93b42fcc46a0",
+      "bytes": 96395
+    },
+    {
+      "source": ".cache/go-profile-qualification-spec/history/before-suite-grant-ownership-fix/freeze.json",
+      "published": "examples/go-profile-qualification-spec/history/before-suite-grant-ownership-fix/freeze.json",
+      "sha256": "7bbcdc9d031205555020c1fba6768839a5da8d4739709ed9eebb58ba43879c27",
+      "bytes": 1518
+    },
+    {
+      "source": ".cache/go-profile-qualification-spec/history/before-suite-grant-ownership-fix/latest-unknown.json",
+      "published": "examples/go-profile-qualification-spec/history/before-suite-grant-ownership-fix/latest-unknown.json",
+      "sha256": "111cc57f8f5c7cae4bcff686fa558e52650e59b59d2831bff060406cf0300c9e",
+      "bytes": 67660
+    },
+    {
+      "source": ".cache/go-profile-qualification-spec/history/before-suite-grant-ownership-fix/plan.md",
+      "published": "examples/go-profile-qualification-spec/history/before-suite-grant-ownership-fix/plan.md",
+      "sha256": "11ff0c8bddfa2e11ad58ebbfa6609c1f3c9f1319890858de0d3151fec064a9a4",
+      "bytes": 2764
+    },
+    {
+      "source": ".cache/go-profile-qualification-spec/history/before-suite-grant-ownership-fix/report.md",
+      "published": "examples/go-profile-qualification-spec/history/before-suite-grant-ownership-fix/report.md",
+      "sha256": "ab2d71906e3700dd81481e55b29c2cd277b3d1363844ef73cfdb1701caba330a",
+      "bytes": 2826
+    },
+    {
+      "source": ".cache/go-profile-qualification-spec/history/before-suite-grant-ownership-fix/test_public_persistence.py",
+      "published": "examples/go-profile-qualification-spec/history/before-suite-grant-ownership-fix/test_public_persistence.py.txt",
+      "sha256": "5c9fc57b333d7df3065d60bc45b2f5afc3f3fe9f0b739fe932c7533229c78148",
+      "bytes": 9928
+    },
+    {
+      "source": ".cache/go-profile-cli-spec/after.junit.xml",
+      "published": "examples/go-profile-cli-spec/after.junit.xml",
+      "sha256": "56275dfc985f3a00cb2b48a57b7cfa03f1dcd6dc01cb3727566b550cb4b6a6c6",
+      "bytes": 1118
+    },
+    {
+      "source": ".cache/go-profile-cli-spec/before.junit.xml",
+      "published": "examples/go-profile-cli-spec/before.junit.xml",
+      "sha256": "5f7d1f93536f5c730cd6eac5845f137fb4f0eced27b2c7733e1b18f1052f9aab",
+      "bytes": 3180
+    },
+    {
+      "source": ".cache/go-profile-cli-spec/report.md",
+      "published": "examples/go-profile-cli-spec/report.md",
+      "sha256": "bd7a4aff766cc9b383bc8b73fa83d64be974eec46fd86166a76458381701a42d",
+      "bytes": 2829
+    },
+    {
+      "source": ".cache/go-profile-cli-spec/review.json",
+      "published": "examples/go-profile-cli-spec/review.json",
+      "sha256": "c025c86a09fc22a7f679b86b9db2a56f0d3814ac6c14fa8053081c46ac4fa374",
+      "bytes": 859
+    },
+    {
+      "source": ".cache/go-profile-cli-spec/run_live.before.py.txt",
+      "published": "examples/go-profile-cli-spec/run_live.before.py.txt",
+      "sha256": "e2ce878fed807b2aa7dd28db8c910899426e844f1a7adbf28eba38191df58519",
+      "bytes": 7227
+    },
+    {
+      "source": ".cache/go-profile-cli-spec/test_live_entry.py",
+      "published": "examples/go-profile-cli-spec/test_live_entry.py",
+      "sha256": "a8f592a8a6c3e67b4ec8045b7af837fc90afffa9019d3298a890b45704321af0",
+      "bytes": 4434
+    }
+  ]
+}

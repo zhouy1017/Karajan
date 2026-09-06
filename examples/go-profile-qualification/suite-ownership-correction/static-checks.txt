@@ -1,0 +1,21 @@
+Static verification recaptured for publication; no model execution.
+
+$ C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m ruff check backend/karajan/projects/go_suite.py tests/projects/test_go_suite.py
+All checks passed!
+
+exit_code=0
+
+$ C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m ruff format --check backend/karajan/projects/go_suite.py tests/projects/test_go_suite.py
+2 files already formatted
+
+exit_code=0
+
+$ C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m mypy backend/karajan/projects/go_suite.py --follow-imports=silent
+Success: no issues found in 1 source file
+
+exit_code=0
+
+$ C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m mypy --platform linux backend/karajan/projects/go_suite.py --follow-imports=silent
+Success: no issues found in 1 source file
+
+exit_code=0

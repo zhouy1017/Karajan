@@ -40,3 +40,14 @@ examples/run-routing-authorization/*.xml -text whitespace=-blank-at-eol,-blank-a
 examples/opencode-go-isolated*/**/*.json -text whitespace=cr-at-eol
 examples/opencode-go-isolated*/**/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
 examples/opencode-go-isolated*/**/*.txt -text whitespace=cr-at-eol
+# Qualification and credential review transcripts retain their recorded bytes.
+examples/go-profile*/**/*.json -text whitespace=cr-at-eol
+examples/go-profile*/**/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+examples/go-profile*/**/*.txt -text whitespace=cr-at-eol
+examples/go-suite-independent-review/**/*.json -text whitespace=cr-at-eol
+examples/go-suite-independent-review/**/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+examples/go-suite-independent-review/**/*.txt -text whitespace=cr-at-eol
+examples/go-task-context/**/*.json -text whitespace=cr-at-eol
+examples/go-task-context/**/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+examples/go-task-context/policy-review/*.txt -text whitespace=cr-at-eol
+examples/go-task-context/policy-review/test_policy_review.py -text whitespace=cr-at-eol

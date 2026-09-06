@@ -283,7 +283,7 @@ def test_receipt_only_accepts_the_defined_recovery_kinds_and_strict_payloads(led
     store, _ = ledger
     before = store.snapshot()
     with pytest.raises(CapacityError, match="^COMMAND_RECEIPT_KIND_UNSUPPORTED$"):
-        store.command_receipt("activate", {"admission_id": "unknown"}, command_key="unknown")
+        store.command_receipt("start", {"admission_id": "unknown"}, command_key="unknown")
     with pytest.raises(CapacityError, match="^CAPACITY_INPUT_INVALID$"):
         store.command_receipt("reconcile", {"admission_id": "unknown"}, command_key="unknown")
     assert store.snapshot() == before

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="5" time="1.882" timestamp="2026-09-06T18:05:55.331102+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.go-context-review.test_independent_context_relay" name="test_durable_unknown_after_lost_journal_response_withdraws_remaining_grant_sends[begin]" time="0.528"><failure message="AssertionError: {'grant_id': 'task', 'binding': {'approval_digest': 'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'...ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', ...}, 'created_at': 1000.0, 'revoked_at': None, ...}&#10;assert 'active' == 'revoked'&#10;  &#10;  - revoked&#10;  + active">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-review/tmp/test_durable_unknown_after_los0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x0000020F56B1BF20&gt;
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000020F56B1AB10&gt;
+phase = 'begin'
+
+    @pytest.mark.parametrize("phase", ["begin", "complete"])
+    def test_durable_unknown_after_lost_journal_response_withdraws_remaining_grant_sends(
+        tmp_path, accounting, monkeypatch, phase
+    ):
+        with metered(tmp_path, accounting) as (relay, journal, sent):
+            original = journal.begin_call
+    
+            def lose_begin(*args, **kwargs):
+                original(*args, **kwargs)
+                raise RuntimeError("synthetic begin committed but response lost")
+    
+            def fail_completion(*args, **kwargs):
+                raise RuntimeError("synthetic completion unavailable before commit")
+    
+            with monkeypatch.context() as inject:
+                if phase == "begin":
+                    inject.setattr(journal, "begin_call", lose_begin)
+                else:
+                    inject.setattr(journal, "complete_call", fail_completion)
+                response = post(relay)
+                assert response.status_code == (502 if phase == "begin" else 200)
+                # A closed relay waits for the handler finalizer; reopen using the same durable grant.
+                assert relay.close()["status"] == "closed"
+            record = GoCallJournal(journal.path, clock=lambda: 1001.0).snapshot("task")
+            assert record["request_count"] == 1
+            assert record["calls"][0]["state"] == "send_unknown"
+            assert record["calls"][0]["request_context"]["measurement_confidence"] == "local_estimate"
+            assert len(sent) == (0 if phase == "begin" else 1)
+&gt;           assert record["state"] == "revoked", record
+E           AssertionError: {'grant_id': 'task', 'binding': {'approval_digest': 'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'...ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', ...}, 'created_at': 1000.0, 'revoked_at': None, ...}
+E           assert 'active' == 'revoked'
+E             
+E             - revoked
+E             + active
+
+.cache\go-context-review\test_independent_context_relay.py:94: AssertionError</failure></testcase><testcase classname=".cache.go-context-review.test_independent_context_relay" name="test_durable_unknown_after_lost_journal_response_withdraws_remaining_grant_sends[complete]" time="0.071"><failure message="AssertionError: {'grant_id': 'task', 'binding': {'approval_digest': 'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'...ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', ...}, 'created_at': 1000.0, 'revoked_at': None, ...}&#10;assert 'active' == 'revoked'&#10;  &#10;  - revoked&#10;  + active">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-review/tmp/test_durable_unknown_after_los1')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x0000020F56B1BF20&gt;
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000020F26327CB0&gt;
+phase = 'complete'
+
+    @pytest.mark.parametrize("phase", ["begin", "complete"])
+    def test_durable_unknown_after_lost_journal_response_withdraws_remaining_grant_sends(
+        tmp_path, accounting, monkeypatch, phase
+    ):
+        with metered(tmp_path, accounting) as (relay, journal, sent):
+            original = journal.begin_call
+    
+            def lose_begin(*args, **kwargs):
+                original(*args, **kwargs)
+                raise RuntimeError("synthetic begin committed but response lost")
+    
+            def fail_completion(*args, **kwargs):
+                raise RuntimeError("synthetic completion unavailable before commit")
+    
+            with monkeypatch.context() as inject:
+                if phase == "begin":
+                    inject.setattr(journal, "begin_call", lose_begin)
+                else:
+                    inject.setattr(journal, "complete_call", fail_completion)
+                response = post(relay)
+                assert response.status_code == (502 if phase == "begin" else 200)
+                # A closed relay waits for the handler finalizer; reopen using the same durable grant.
+                assert relay.close()["status"] == "closed"
+            record = GoCallJournal(journal.path, clock=lambda: 1001.0).snapshot("task")
+            assert record["request_count"] == 1
+            assert record["calls"][0]["state"] == "send_unknown"
+            assert record["calls"][0]["request_context"]["measurement_confidence"] == "local_estimate"
+            assert len(sent) == (0 if phase == "begin" else 1)
+&gt;           assert record["state"] == "revoked", record
+E           AssertionError: {'grant_id': 'task', 'binding': {'approval_digest': 'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'...ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', ...}, 'created_at': 1000.0, 'revoked_at': None, ...}
+E           assert 'active' == 'revoked'
+E             
+E             - revoked
+E             + active
+
+.cache\go-context-review\test_independent_context_relay.py:94: AssertionError</failure></testcase><testcase classname=".cache.go-context-review.test_independent_context_relay" name="test_later_usage_frame_cannot_erase_a_provider_reported_input_exceedance" time="0.070"><failure message="AssertionError: data: {&quot;model&quot;: &quot;glm-5.3-flash&quot;, &quot;choices&quot;: [{&quot;index&quot;: 0, &quot;delta&quot;: {&quot;tool_calls&quot;: null}, &quot;finish_reason&quot;: &quot;stop&quot;}], &quot;usage&quot;: {&quot;prompt_tokens&quot;: 5000, &quot;completion_tokens&quot;: 2}}&#10;  &#10;  data: {&quot;model&quot;: &quot;glm-5.3-flash&quot;, &quot;choices&quot;: [], &quot;usage&quot;: {&quot;prompt_tokens&quot;: 20, &quot;completion_tokens&quot;: 2}}&#10;  &#10;  data: [DONE]&#10;  &#10;  &#10;assert 200 == 502&#10; +  where 200 = &lt;Response [200 OK]&gt;.status_code">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-review/tmp/test_later_usage_frame_cannot_0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x0000020F56B1BF20&gt;
+
+    def test_later_usage_frame_cannot_erase_a_provider_reported_input_exceedance(tmp_path, accounting):
+        def decreasing_usage(request, journal):
+            return answer(
+                stream(
+                    event(usage={"prompt_tokens": 5000, "completion_tokens": 2}),
+                    event(choices=[], usage={"prompt_tokens": 20, "completion_tokens": 2}),
+                )
+            )
+    
+        with metered(tmp_path, accounting, decreasing_usage) as (relay, journal, sent):
+            response = post(relay)
+&gt;           assert response.status_code == 502, response.text
+E           AssertionError: data: {"model": "glm-5.3-flash", "choices": [{"index": 0, "delta": {"tool_calls": null}, "finish_reason": "stop"}], "usage": {"prompt_tokens": 5000, "completion_tokens": 2}}
+E             
+E             data: {"model": "glm-5.3-flash", "choices": [], "usage": {"prompt_tokens": 20, "completion_tokens": 2}}
+E             
+E             data: [DONE]
+E             
+E             
+E           assert 200 == 502
+E            +  where 200 = &lt;Response [200 OK]&gt;.status_code
+
+.cache\go-context-review\test_independent_context_relay.py:108: AssertionError</failure></testcase><testcase classname=".cache.go-context-review.test_independent_context_relay" name="test_wrong_exact_binding_does_not_revoke_another_grants_remaining_authority" time="0.074" /><testcase classname=".cache.go-context-review.test_independent_context_relay" name="test_complete_tool_history_measurement_matches_durable_sent_request_without_content_leak" time="0.076" /></testsuite></testsuites>

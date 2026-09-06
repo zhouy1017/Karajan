@@ -23,12 +23,15 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 import httpx
 
 from .go_journal import GoCallJournal, GoJournalError
+
+if TYPE_CHECKING:
+    from .go_context import GoRequestAccounting
 
 _UPSTREAM = "https://opencode.ai/zen/go/v1/chat/completions"
 _MODEL = "glm-5.3-flash"
@@ -201,7 +204,15 @@ def _stream_facts(raw: bytes, secret: str) -> dict[str, Any]:
                 raise _Rejected("MODEL_MISMATCH")
             model_seen = True
         if chunk.get("usage") is not None:
-            usage.update(_usage(chunk["usage"]))
+            # Keep the highest reported cumulative count. A later usage-only
+            # frame must never erase an already observed limit exceedance.
+            for key, value in _usage(chunk["usage"]).items():
+                if isinstance(value, dict):
+                    details = usage.setdefault(key, {})
+                    for child, count in value.items():
+                        details[child] = max(details.get(child, 0), count)
+                else:
+                    usage[key] = max(usage.get(key, 0), value)
         choices = chunk.get("choices", [])
         if not isinstance(choices, list) or len(choices) > 1:
             raise _Rejected("INVALID_CHOICES")
@@ -284,6 +295,63 @@ class GoRelayAuthorization:
     capability: str = field(repr=False)
 
 
+@dataclass(frozen=True)
+class GoRelayContext:
+    """Controller-resolved limits from a fixed approved policy and task.
+
+    The execution consumer must resolve these from its approved workspace, never
+    accept this object from a native request. This port grants no Run authority.
+    """
+
+    accounting: GoRequestAccounting = field(repr=False)
+    source_sha256: str
+    execution_policy_digest: str
+    approved_input_tokens: int
+    reserved_output_tokens: int
+    operating_context_tokens: int
+    fixed_margin: int
+    ratio_margin_basis_points: int
+
+    def __post_init__(self) -> None:
+        if any(
+            type(value) is not str or re.fullmatch(r"[0-9a-f]{64}", value) is None
+            for value in (self.source_sha256, self.execution_policy_digest)
+        ):
+            raise ValueError("CONTEXT_POLICY_INVALID")
+        if (
+            any(
+                type(value) is not int or value <= 0
+                for value in (
+                    self.approved_input_tokens,
+                    self.reserved_output_tokens,
+                    self.operating_context_tokens,
+                )
+            )
+            or any(
+                type(value) is not int or value < 0
+                for value in (self.fixed_margin, self.ratio_margin_basis_points)
+            )
+            or self.ratio_margin_basis_points > 10000
+        ):
+            raise ValueError("CONTEXT_POLICY_INVALID")
+
+    def measure(self, payload: dict[str, Any]) -> dict[str, Any]:
+        from karajan.routing.compiler import digest
+
+        from .go_context import GoContextError
+
+        if digest(self.accounting.source()) != self.source_sha256:
+            raise GoContextError("CONTEXT_SOURCE_CHANGED")
+        return self.accounting.measure(
+            payload,
+            approved_input_tokens=self.approved_input_tokens,
+            reserved_output_tokens=self.reserved_output_tokens,
+            operating_context_tokens=self.operating_context_tokens,
+            fixed_margin=self.fixed_margin,
+            ratio_margin_basis_points=self.ratio_margin_basis_points,
+        )
+
+
 class GoRelay:
     """One local diagnostic, at most six validated upstream send attempts.
 
@@ -299,6 +367,7 @@ class GoRelay:
         *,
         client_factory: Callable[[], httpx.Client] | None = None,
         authorization: GoRelayAuthorization | None = None,
+        context: GoRelayContext | None = None,
     ) -> None:
         if (
             not secret
@@ -322,6 +391,7 @@ class GoRelay:
         self._thread: threading.Thread | None = None
         self._unix_socket: Path | None = None
         self._socket_identity: tuple[int, int] | None = None
+        self._context = context
         self._authorization = (
             GoRelayAuthorization(
                 authorization.journal,
@@ -519,6 +589,25 @@ class GoRelay:
                 self._receipts.append(copy.deepcopy(receipt))
             if receipt["denied_canary_in_request"]:
                 raise _Rejected("DENIED_CANARY_IN_REQUEST", 403)
+            task_grant = self._authorization is not None and "subject" in (
+                self._authorization.binding
+            )
+            if task_grant and self._context is None:
+                raise _Rejected("TASK_CONTEXT_ACCOUNTING_REQUIRED", 403)
+            if self._context is not None:
+                from .go_context import GoContextError
+
+                if (
+                    not task_grant
+                    or self._authorization is None
+                    or self._context.execution_policy_digest
+                    != self._authorization.binding["execution_policy_digest"]
+                ):
+                    raise _Rejected("TASK_CONTEXT_POLICY_MISMATCH", 403)
+                try:
+                    receipt["request_context"] = self._context.measure(payload)
+                except GoContextError as error:
+                    raise _Rejected(error.code, 422) from None
             client = self._client_factory()
             with self._condition:
                 if self._closing:
@@ -529,13 +618,25 @@ class GoRelay:
                     call_id = str(uuid4())
                     try:
                         grant = auth.journal.begin_call(
-                            auth.grant_id, call_id, capability=auth.capability, binding=auth.binding
+                            auth.grant_id,
+                            call_id,
+                            capability=auth.capability,
+                            binding=auth.binding,
+                            **(
+                                {"request_context": receipt["request_context"]}
+                                if "request_context" in receipt
+                                else {}
+                            ),
                         )
                     except GoJournalError as error:
+                        self._recover_context_call(receipt, call_id)
                         reason = str(error)
                         raise _Rejected(
                             reason, 429 if reason == "REQUEST_LIMIT_REACHED" else 403
                         ) from None
+                    except Exception:
+                        self._recover_context_call(receipt, call_id)
+                        raise
                     if not grant["send_allowed"]:
                         raise _Rejected("CALL_SEND_NOT_AUTHORIZED", 409)
                     receipt["journal_call_id"] = call_id
@@ -573,6 +674,16 @@ class GoRelay:
                     content.extend(chunk)
                 receipt["upstream_response_complete"] = True
                 receipt.update(_stream_facts(bytes(content), self._secret))
+                if "request_context" in receipt:
+                    measured = receipt["request_context"]
+                    prompt = receipt["usage"].get("prompt_tokens")
+                    completion = receipt["usage"].get("completion_tokens")
+                    if type(prompt) is not int or type(completion) is not int:
+                        raise _Rejected("CONTEXT_PROVIDER_USAGE_MISSING")
+                    if prompt > measured["accounted_input_tokens"]:
+                        raise _Rejected("CONTEXT_PROVIDER_INPUT_EXCEEDED")
+                    if completion > measured["requested_output_tokens"]:
+                        raise _Rejected("CONTEXT_PROVIDER_OUTPUT_EXCEEDED")
                 handler.send_response(200)
                 handler.send_header("Content-Type", "text/event-stream")
                 handler.send_header("Content-Length", str(len(content)))
@@ -585,10 +696,12 @@ class GoRelay:
         except _Rejected as error:
             if receipt is not None:
                 receipt["reason_codes"] = [error.reason]
+                self._withdraw_context_sends(receipt)
             self._error(handler, error.status, error.reason)
         except Exception:
             if receipt is not None:
                 receipt["reason_codes"] = ["RELAY_TRANSPORT_ERROR"]
+                self._withdraw_context_sends(receipt)
             self._error(handler, 502, "RELAY_TRANSPORT_ERROR")
         finally:
             if client is not None:
@@ -605,6 +718,39 @@ class GoRelay:
                     self._complete_journal(receipt)
                 if receipt is not None and "sequence" in receipt:
                     self._receipts[receipt["sequence"] - 1] = receipt
+
+    def _recover_context_call(self, receipt: dict[str, Any], call_id: str) -> None:
+        """Read a lost begin result; this never retries begin or grants a send."""
+        if "request_context" not in receipt:
+            return
+        assert self._authorization is not None
+        auth = self._authorization
+        try:
+            recorded = auth.journal.snapshot(auth.grant_id)
+            if recorded["binding"] != auth.binding:
+                return
+            if any(
+                call["call_id"] == call_id
+                and call.get("request_context") == receipt["request_context"]
+                for call in recorded["calls"]
+            ):
+                receipt["journal_call_id"] = call_id
+        except Exception:
+            # If persistence is unavailable, close this transport. The
+            # controller must reconcile the existing grant before any recovery.
+            self._closing = True
+
+    def _withdraw_context_sends(self, receipt: dict[str, Any]) -> None:
+        # A durable call proves this relay authenticated the exact grant before
+        # sending. Do not revoke unrelated grants on a pre-authentication error.
+        if "request_context" not in receipt or "journal_call_id" not in receipt:
+            return
+        self._closing = True
+        assert self._authorization is not None
+        try:
+            self._authorization.journal.revoke_grant(self._authorization.grant_id)
+        except Exception:
+            receipt["reason_codes"].append("CONTEXT_REVOCATION_FAILED")
 
     def _complete_journal(self, receipt: dict[str, Any]) -> None:
         auth = self._authorization
@@ -633,6 +779,7 @@ class GoRelay:
             # recorded. No retry, refund or remote-stop claim follows this error.
             receipt["protocol_passed"] = False
             receipt["reason_codes"].append("JOURNAL_COMPLETION_FAILED")
+            self._withdraw_context_sends(receipt)
 
     def close(self) -> dict[str, Any]:
         errors: list[str] = []

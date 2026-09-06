@@ -1,0 +1,39 @@
+import copy
+import json
+import sys
+from pathlib import Path
+
+from karajan.routing import evaluate_route
+from tests.routing.test_cash_and_sort import add_candidate, cash_sample
+from tests.routing.test_routing import sample
+
+path = Path('.cache/reserved-profile/legacy-results.json')
+cases = {}
+cases['default'] = sample()
+cases['cash'] = cash_sample()
+cases['held'] = sample()
+cases['held'][2]['accounts'][0]['active_attempts'] = 2
+cases['held'][2]['pools'][0]['reported_remaining'] = '0'
+cases['profile_missing'] = sample()
+cases['profile_missing'][1]['resources']['profiles'][0]['profile'] = None
+cases['multi'] = sample()
+add_candidate(*cases['multi'], 'other')
+cases['unknown'] = sample()
+cases['unknown'][2]['estimates'][0]['confidence'] = 'unknown'
+cases['unknown'][2]['pools'][0]['reported_remaining'] = None
+cases['bad_binding'] = sample()
+cases['bad_binding'][2]['pools'][0]['account_id'] = 'other'
+cases['bad_binding'][2]['estimates'][0]['demand'][0]['amount'] = '0'
+cases['quality_gate'] = sample()
+cases['quality_gate'][0]['stage'] = 'quality'
+cases['stale'] = sample()
+cases['stale'][2]['pools'][0]['observed_at'] = 800.0
+before = copy.deepcopy(cases)
+results = {name: evaluate_route(*case) for name, case in cases.items()}
+assert cases == before
+if sys.argv[1] == 'capture':
+    path.write_text(json.dumps(results, ensure_ascii=False, sort_keys=True), encoding='utf-8')
+else:
+    expected = json.loads(path.read_text(encoding='utf-8'))
+    assert results == expected
+print(f'{len(results)} complete legacy reports: {sys.argv[1]}')

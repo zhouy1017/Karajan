@@ -1,0 +1,28 @@
+import os, subprocess, sys, time
+from pathlib import Path
+
+root = Path(".cache/go-suite-independent-review")
+started = time.monotonic()
+for index in range(1, 4):
+    if time.monotonic() - started >= 300:
+        break
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            str(root / "test_go_suite_review.py"),
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "-p",
+            "trace_suite_exceptions",
+            "-o",
+            "junit_logging=all",
+            f"--basetemp={root}/trace-{index}-tmp",
+            f"--junitxml={root}/trace-{index}.xml",
+        ],
+        env=os.environ.copy(),
+    )
+    if result.returncode:
+        raise SystemExit(result.returncode)

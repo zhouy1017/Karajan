@@ -1,0 +1,188 @@
+"""Explicit, isolated evidence harness for the controller's public Go qualification API."""
+
+import argparse
+import hashlib
+import json
+import subprocess
+from pathlib import Path
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--live", action="store_true")
+    parser.add_argument("--runtime", type=Path)
+    parser.add_argument("--credential-file", type=Path)
+    parser.add_argument("--directory", type=Path)
+    args = parser.parse_args()
+    if not args.live:
+        print(json.dumps({"status": "not_run", "reason": "EXPLICIT_LIVE_REQUIRED"}))
+        return 0
+    if any(value is None for value in (args.runtime, args.credential_file, args.directory)):
+        parser.error("runtime, credential-file and directory are required for --live")
+    from karajan.adapters.opencode.go_journal import GoCallJournal
+    from karajan.isolation.go_probe import go_runtime_source
+    from karajan.projects import ProjectRegistry
+    from karajan.projects.credential_sources import CredentialSourceStore, LocalKeyFile
+    from karajan.projects.go_suite import FixedGoSuite
+    from karajan.projects.qualification import ProfileQualificationStore
+
+    runtime_source = go_runtime_source(args.runtime)
+    root = args.directory.absolute()
+    if root.exists() or root.is_symlink():
+        raise ValueError("NEW_DIAGNOSTIC_DIRECTORY_REQUIRED")
+    # Check operator path arguments for accidental literal credential inclusion
+    # before they can become public project/source metadata. Do not print values.
+    raw = args.credential_file.read_bytes()
+    if not 16 <= len(raw) <= 4096:
+        raise ValueError("CREDENTIAL_INPUT_INVALID")
+    secret = raw.decode("ascii").strip()
+    resolved_root = root.resolve()
+    if any(
+        secret in value
+        for value in (
+            str(root),
+            str(resolved_root),
+            str(args.runtime),
+            runtime_source["binary_path"],
+        )
+    ):
+        raise ValueError("SENSITIVE_SOURCE_PATH")
+    # Freeze the physical parent selected by operator configuration before its
+    # repository path can become public metadata. Parent ownership remains a
+    # controller deployment assumption; this is not a hostile-filesystem lock.
+    root = resolved_root
+    root.mkdir(mode=0o700)
+    repository = root / "repository"
+    repository.mkdir()
+    (repository / "original.txt").write_text("Isolated qualification fixture only.\n")
+    for command in (
+        ["init", "--initial-branch=main", str(repository)],
+        ["-C", str(repository), "add", "original.txt"],
+        [
+            "-C",
+            str(repository),
+            "-c",
+            "user.name=Qualification",
+            "-c",
+            "user.email=qualification@example.invalid",
+            "commit",
+            "-qm",
+            "fixture",
+        ],
+    ):
+        subprocess.run(["git", *command], check=True, capture_output=True)
+    projects = ProjectRegistry(root / "projects.sqlite", [root])
+    project = projects.create(
+        {
+            "name": "Fixed Go public qualification",
+            "repository_path": str(repository),
+            "base_ref": "main",
+            "target_branch": "main",
+            "allowed_target_branches": ["main"],
+        },
+        command_key="create",
+        principal="owner",
+    )
+    source_root = next(
+        parent
+        for parent in Path(__file__).resolve().parents
+        if (parent / "examples/projects/offline-configuration.json").is_file()
+        and (parent / "backend/karajan/projects/qualification.py").is_file()
+    )
+    config = json.loads((source_root / "examples/projects/offline-configuration.json").read_text())
+    registration = config["resources"]["profiles"][0]
+    profile = registration["profile"]
+    suite_ref = {"id": "opencode-go-native-read-edit-linux", "revision": 1}
+    profile["binding"].update(
+        runtime_kind="opencode-go-isolated",
+        runtime_version="1.18.29",
+        model_id="glm-5.3-flash",
+        auth_mode="api_key",
+        native_settings={"suite_ref": suite_ref},
+    )
+    profile["auth_ref"] = "secret:go-public-diagnostic"
+    profile["required_permissions"] = ["read", "edit"]
+    registration["model_family"] = "zai-glm-owner-declaration"
+    registration["capability_evidence"] = []
+    config["resources"]["accounts"][0].update(
+        provider_id="opencode-go", secret_ref=profile["auth_ref"]
+    )
+    preview = projects.preview_configuration(
+        project["id"], config, principal="owner", command_key="preview"
+    )
+    projects.apply_configuration(
+        project["id"],
+        preview["preview_id"],
+        expected_revision=1,
+        principal="owner",
+        command_key="apply",
+    )
+    credentials = CredentialSourceStore(
+        projects,
+        sources={
+            (project["id"], profile["auth_ref"]): LocalKeyFile("opencode-go", args.credential_file)
+        },
+        private_directory=root / "credential-private",
+    )
+    generation = credentials.register(
+        project["id"], profile["auth_ref"], principal="owner", command_key="credential"
+    )
+    work = root / "suite"
+    work.mkdir(mode=0o700)
+    journal = GoCallJournal(root / "calls.sqlite")
+    suite = FixedGoSuite(args.runtime, work, journal)
+    store = ProfileQualificationStore(projects, credentials=credentials, go_suite=suite)
+    ref = {"id": profile["id"], "revision": profile["revision"]}
+    arguments = dict(
+        principal="owner", command_key="qualify", suite_ref=suite_ref, validity_seconds=3600
+    )
+    record = store.qualify_runtime_tools(project["id"], ref, **arguments)
+    reopened = ProfileQualificationStore(projects, credentials=credentials, go_suite=suite)
+    replay = reopened.qualify_runtime_tools(project["id"], ref, **arguments)
+    with reopened.routing_facts_guard(project["id"], [registration], principal="owner") as guard:
+        route_view = guard
+    result = {
+        "schema_version": "karajan.public-go-qualification-evidence.v1",
+        "status": record["status"],
+        "record": record,
+        "start": reopened.get_command_start(project["id"], "qualify", principal="owner"),
+        "authentication_source": generation,
+        "replay_equal": replay == record,
+        "journal_after_replay": [
+            journal.snapshot(s["grant_id"])
+            for s in record["binding"]["execution_start"]["scenarios"]
+        ],
+        "routing_guard": route_view,
+        "configuration": config,
+        "harness_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "provider_remote_stop": "unknown",
+        "dispatch_eligible": False,
+    }
+    if record["status"] == "passed":
+        result["fixed_facts"] = reopened.facts_for_profile(
+            project["id"], registration, principal="owner", scope="fixed_native_tools"
+        )
+    encoded = json.dumps(result, indent=2, ensure_ascii=False)
+    if secret in encoded:
+        raise ValueError("SENSITIVE_REPORT_SUPPRESSED")
+    (root / "report.json").write_text(encoded + "\n", encoding="utf-8")
+    print(
+        json.dumps(
+            {
+                "status": record["status"],
+                "report": "report.json",
+                "request_counts": [g["request_count"] for g in result["journal_after_replay"]],
+                "replay_equal": result["replay_equal"],
+                "routing_reasons": route_view["profiles"][0]["reason_codes"],
+            }
+        )
+    )
+    return 0 if record["status"] == "passed" else 1
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except Exception as error:
+        print(json.dumps({"status": "failed", "error_type": type(error).__name__}))
+        raise SystemExit(1) from None

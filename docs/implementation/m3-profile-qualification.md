@@ -2,7 +2,7 @@
 
 `ProfileQualificationStore` 将资格观察保存到现有 `ProjectRegistry.database`。它为批准 Run 的可信输入组装提供直接消费接口；求解器仍不能将用户填写的 `passed`、旧离线探针或诊断报告当成已运行资格。
 
-当前唯一生产流程是 `qualify_local_fixture`：读取项目当前批准的精确 Profile，在项目允许的 fixture 根目录下新建独立目录，运行本仓库固定脚本的 write、check、review 三个子进程，核对实际文件和结构化输出，再写入不可变结果。它不读密钥、不访问服务、不运行仓库代码，也不是 OS 工具沙箱。
+`qualify_local_fixture` 读取项目当前批准的精确 Profile，在项目允许的 fixture 根目录下新建独立目录，运行本仓库固定脚本的 write、check、review 三个子进程，核对实际文件和结构化输出，再写入不可变结果。它不读密钥、不访问服务、不运行仓库代码，也不是 OS 工具沙箱。本页描述这一范围；新增的 [`qualify_runtime_tools` 固定 Go 入口](m3-go-profile-qualification.md) 使用单独的凭据来源、suite 和 scope，同样不能自动满足任意 Task 的执行要求。
 
 ## 接口
 
@@ -49,11 +49,11 @@ with store.routing_facts_guard(
 | runtime_tools_status / live_qualified | `not_run` / `false` |
 | dispatch_eligible / activation_allowed | `false`；观察本身不能启动执行 |
 
-所有 `runtime_tools` 读取返回 `RUNTIME_TOOLS_NOT_QUALIFIED`；不能将本地 fixture 通过或现有 OpenCode Go 诊断通过升级为真实自主工具资格。未知来源没有通用导入 `passed` JSON 的接口。后续 imported observation 必须由对应受信执行路径的生产器和验收协议生成，不能复用当前固定脚本假装已测其他 runtime。
+本地 fixture 的 `runtime_tools` 读取仍返回 `RUNTIME_TOOLS_NOT_QUALIFIED`。固定 Go 入口产生的有效官方观察会进一步指出 `TASK_PERMISSION_SCOPE_NOT_QUALIFIED`，因为其文件范围尚不能表达为任意 Task 的权限材料。不存在通用导入 `passed` JSON 的接口；`imported_observation` 必须由对应受信执行路径生成，不能复用当前固定脚本或现有诊断报告授予真实自主工具资格。
 
 ## 持久和失效行为
 
-运行进程前先写 start。相同 owner/command_key 的完成请求返回原记录，不重新测试；参数不同返回 `IDEMPOTENCY_CONFLICT`。已写 start 但结果未知时返回 `QUALIFICATION_IN_PROGRESS_OR_UNKNOWN`，不会自动重放。如果同一 Profile 的后来观察失败或未完成，读取不会退回更早的通过结果。
+运行进程前先写 start。相同 owner/command_key 的完成请求返回原记录，不重新测试；参数不同返回 `IDEMPOTENCY_CONFLICT`。已写 start 但结果未知时返回 `QUALIFICATION_IN_PROGRESS_OR_UNKNOWN`，不会自动重放。最新记录按同一项目、精确 Profile、scope 和 suite 选择；匹配的后来观察失败或未完成时，读取不会退回更早的通过结果。`get_command_start` 允许在丢失响应后用原请求编号找回 start。
 
 观察时间由控制器生成，有效期必须为明确的 1–86400 秒；到期或时钟回退拒绝读取。撤销保留原记录，重启不会恢复它；当前批准集合、登记或账户/通道变化同样拒绝旧事实。资格运行期间配置改变会留下失败结果，而不是新身份的通过证据。
 

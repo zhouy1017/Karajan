@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="2" time="0.203" timestamp="2026-09-06T18:27:24.002274+08:00" hostname="ProArt-Zhou"><testcase classname="tests.capacity.test_pre_effect_guard" name="test_lost_activation_response_is_history_even_when_clock_is_unavailable" time="0.033" /><testcase classname="tests.capacity.test_pre_effect_guard" name="test_exactly_one_slot_and_one_demand_are_not_charged_again_for_the_same_admission" time="0.033"><failure message="AttributeError: 'CapacityStore' object has no attribute 'pre_effect_guard'">ledger = (&lt;karajan.capacity.store.CapacityStore object at 0x0000029C59E471D0&gt;, [1001.0])
+
+    def test_exactly_one_slot_and_one_demand_are_not_charged_again_for_the_same_admission(ledger):
+        store, clock = ledger
+        policy = store.snapshot()["policies"][-1]["policy"]
+        policy.update(max_active_attempts=1, lead_reserved_slots=0, lead_reserve={})
+        store.activate_policy(policy, expected_revision=1, command_key="only-one-slot")
+        clock[0] = 1001.0
+        for pool in ("short", "weekly"):
+            observation(store, pool, "3", at=clock[0])
+        value = bound_request(store)
+        admission_id = store.admit(value, command_key="reserve")["admission_id"]
+        original = store.activate(admission_id, command_key="activate")
+        before = store.snapshot()
+    
+&gt;       with store.pre_effect_guard(admission_id, expected_request=value) as current:
+             ^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'CapacityStore' object has no attribute 'pre_effect_guard'
+
+tests\capacity\test_pre_effect_guard.py:50: AttributeError</failure></testcase></testsuite></testsuites>

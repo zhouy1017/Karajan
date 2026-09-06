@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.212" timestamp="2026-09-06T18:25:42.231552+08:00" hostname="ProArt-Zhou"><testcase classname="tests.capacity.test_pre_effect_guard" name="test_lost_activation_response_is_history_even_when_clock_is_unavailable" time="0.030"><failure message="karajan.capacity.store.CapacityError: COMMAND_RECEIPT_KIND_UNSUPPORTED">ledger = (&lt;karajan.capacity.store.CapacityStore object at 0x000002A9EEEBD5E0&gt;, [1000.0])
+
+    def test_lost_activation_response_is_history_even_when_clock_is_unavailable(ledger):
+        store, _ = ledger
+        value = bound_request(store)
+        admission_id = store.admit(value, command_key="reserve")["admission_id"]
+        original = store.activate(admission_id, command_key="lost-activation-response")
+        before = store.snapshot()
+    
+        def forbidden_clock():
+            raise AssertionError("Historical receipt must not consult the clock")
+    
+        reopened = CapacityStore(store.path, clock=forbidden_clock)
+&gt;       receipt = reopened.command_receipt(
+            "activate", {"admission_id": admission_id}, command_key="lost-activation-response"
+        )
+
+tests\capacity\test_pre_effect_guard.py:21: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.capacity.store.CapacityStore object at 0x000002A9EE257770&gt;
+kind = 'activate'
+payload = {'admission_id': '5a711995-0aa3-4ae7-a887-d955c3b7f7bb'}
+command_key = 'lost-activation-response'
+
+    def command_receipt(
+        self, kind: str, payload: object, *, command_key: str
+    ) -&gt; dict[str, Any] | None:
+        """Read a historical command result without admission or expiration effects."""
+        if kind == "admit":
+            value = _admission_payload(payload)
+        elif kind == "reconcile":
+            value = validate(Reconciliation, payload)
+        elif kind == "cancel_unactivated":
+            value = validate(_UnactivatedCancellation, payload)
+        else:
+&gt;           raise CapacityError("COMMAND_RECEIPT_KIND_UNSUPPORTED")
+E           karajan.capacity.store.CapacityError: COMMAND_RECEIPT_KIND_UNSUPPORTED
+
+backend\karajan\capacity\store.py:167: CapacityError</failure></testcase></testsuite></testsuites>

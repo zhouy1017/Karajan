@@ -159,6 +159,8 @@ class CapacityStore:
         """Read a historical command result without admission or expiration effects."""
         if kind == "admit":
             value = _admission_payload(payload)
+        elif kind == "activate":
+            value = validate(AdmissionRef, payload)
         elif kind == "reconcile":
             value = validate(Reconciliation, payload)
         elif kind == "cancel_unactivated":
@@ -523,6 +525,81 @@ class CapacityStore:
             return result
 
         return self._command("activate", value, command_key, apply)
+
+    @contextmanager
+    def pre_effect_guard(
+        self, admission_id: str, *, expected_request: dict[str, Any]
+    ) -> Iterator[dict[str, Any]]:
+        """Hold a fresh capacity check across the caller's bounded effect boundary.
+
+        Activation must already have committed. This neither replays that intent
+        nor starts anything, and its receipt is valid only inside this context.
+        It serializes Capacity API writes, not wall time or remote provider state.
+        """
+        identity = validate(AdmissionRef, {"admission_id": admission_id})["admission_id"]
+        expected = _admission_payload(expected_request)
+        if expected.get("expected_capacity") is None:
+            raise CapacityError("CAPACITY_BINDING_REQUIRED")
+        with self._transaction() as db:
+            db.execute("PRAGMA query_only=ON")
+            item = self._reservation(db, identity)
+            if item["request"] != expected:
+                raise CapacityError("ADMISSION_REQUEST_MISMATCH")
+            if item["state"] != "active":
+                raise CapacityError("ADMISSION_NOT_ACTIVE")
+            now = self._now()
+            if item["expires_at"] <= now:
+                raise CapacityError("RESERVATION_EXPIRED")
+            policy = db.execute(
+                "SELECT revision,data FROM policies WHERE account_id=? "
+                "ORDER BY revision DESC LIMIT 1",
+                (item["account_id"],),
+            ).fetchone()
+            if policy is None:
+                raise CapacityError("CAPACITY_POLICY_REQUIRED")
+            profile = db.execute(
+                "SELECT data FROM profiles WHERE id=? AND revision=?",
+                (expected["profile_id"], expected["profile_revision"]),
+            ).fetchone()
+            if profile is None:
+                raise CapacityError("PROFILE_UNKNOWN")
+            # Match _held's effective occupancy without writing expired states.
+            # Active/unknown remain held even after expiry; only this admission
+            # is excluded, and _evaluate still includes all recorded usage.
+            held = [
+                other
+                for row in db.execute(
+                    "SELECT data FROM reservations WHERE account_id=?", (item["account_id"],)
+                )
+                if (other := json.loads(row[0]))["id"] != identity
+                and other["state"] in ("reserved", "active", "unknown")
+                and not (other["state"] == "reserved" and other["expires_at"] <= now)
+            ]
+            reasons, observations, availability = self._evaluate(
+                db,
+                expected,
+                json.loads(profile[0]),
+                json.loads(policy["data"]),
+                held,
+                now,
+                policy_revision=policy["revision"],
+            )
+            if reasons:
+                raise CapacityError(reasons[0])
+            yield {
+                "decision": "capacity_revalidated",
+                "reason_codes": [],
+                "state": "active",
+                "checked_at": now,
+                "policy_revision": policy["revision"],
+                "admission_id": identity,
+                "expires_at": item["expires_at"],
+                "request": expected,
+                "observations": observations,
+                "available_before": availability,
+                "activation_allowed": False,
+                "live_qualification": "not_run",
+            }
 
     def cancel_unactivated(
         self, admission_id: str, *, evidence_ref: str, command_key: str

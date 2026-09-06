@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="4" time="1.780" timestamp="2026-09-06T18:26:16.179775+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_reserved_execution_guard" name="test_original_assessment_is_loaded_and_original_profile_rechecked_without_new_reservation" time="0.334"><failure message="AttributeError: 'ApprovedRunRouting' object has no attribute 'reserved_execution_guard'">prepared = (&lt;karajan.orchestration.admission.ApprovedTaskAdmission object at 0x0000027D724426F0&gt;, &lt;karajan.orchestration.routing....rsion': 'karajan.run-planning.v2', 'id': '605b51df-b10d-4dd2-aee2-2b907a1b82a7', 'revision': 1, 'owner': 'owner', ...})
+
+    def test_original_assessment_is_loaded_and_original_profile_rechecked_without_new_reservation(
+        prepared,
+    ):
+        routing, run, operation = reserve(prepared)
+        before = routing.capacity.snapshot()
+&gt;       with routing.reserved_execution_guard(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            run["id"], operation["assessment"]["id"], principal="owner"
+        ) as current:
+E       AttributeError: 'ApprovedRunRouting' object has no attribute 'reserved_execution_guard'
+
+tests\runs\test_reserved_execution_guard.py:26: AttributeError</failure></testcase><testcase classname="tests.runs.test_reserved_execution_guard" name="test_different_owner_cannot_recheck_an_assessment" time="0.312"><failure message="AttributeError: 'ApprovedRunRouting' object has no attribute 'reserved_execution_guard'">prepared = (&lt;karajan.orchestration.admission.ApprovedTaskAdmission object at 0x0000027D7246F830&gt;, &lt;karajan.orchestration.routing....rsion': 'karajan.run-planning.v2', 'id': '92573700-5924-4285-a7fa-331967c3fc34', 'revision': 1, 'owner': 'owner', ...})
+
+    def test_different_owner_cannot_recheck_an_assessment(prepared):
+        routing, run, operation = reserve(prepared)
+        with pytest.raises(RunError, match="RUN_NOT_FOUND"):
+&gt;           with routing.reserved_execution_guard(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                run["id"], operation["assessment"]["id"], principal="other"
+            ):
+E           AttributeError: 'ApprovedRunRouting' object has no attribute 'reserved_execution_guard'
+
+tests\runs\test_reserved_execution_guard.py:45: AttributeError</failure></testcase><testcase classname="tests.runs.test_reserved_execution_guard" name="test_fresh_execution_recheck_keeps_run_and_project_locked_until_the_consumer_finishes[run]" time="0.317"><failure message="AttributeError: 'ApprovedRunRouting' object has no attribute 'reserved_execution_guard'">prepared = (&lt;karajan.orchestration.admission.ApprovedTaskAdmission object at 0x0000027D7247FAD0&gt;, &lt;karajan.orchestration.routing....rsion': 'karajan.run-planning.v2', 'id': '17845972-096e-49ca-963e-953dcd236072', 'revision': 1, 'owner': 'owner', ...})
+store = 'run'
+
+    @pytest.mark.parametrize("store", ["run", "project"])
+    def test_fresh_execution_recheck_keeps_run_and_project_locked_until_the_consumer_finishes(
+        prepared, store
+    ):
+        routing, run, operation = reserve(prepared)
+        started = Event()
+    
+        def read():
+            started.set()
+            if store == "run":
+                return routing.planner.get(run["id"], principal="owner")
+            return routing.planner.projects.get_configuration(run["project_id"])
+    
+        with ThreadPoolExecutor(max_workers=1) as pool:
+&gt;           with routing.reserved_execution_guard(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                run["id"], operation["assessment"]["id"], principal="owner"
+            ) as current:
+E           AttributeError: 'ApprovedRunRouting' object has no attribute 'reserved_execution_guard'
+
+tests\runs\test_reserved_execution_guard.py:65: AttributeError</failure></testcase><testcase classname="tests.runs.test_reserved_execution_guard" name="test_fresh_execution_recheck_keeps_run_and_project_locked_until_the_consumer_finishes[project]" time="0.338"><failure message="AttributeError: 'ApprovedRunRouting' object has no attribute 'reserved_execution_guard'">prepared = (&lt;karajan.orchestration.admission.ApprovedTaskAdmission object at 0x0000027D7247E930&gt;, &lt;karajan.orchestration.routing....rsion': 'karajan.run-planning.v2', 'id': 'aed81a07-c70d-45c2-9654-6f5f23a45e13', 'revision': 1, 'owner': 'owner', ...})
+store = 'project'
+
+    @pytest.mark.parametrize("store", ["run", "project"])
+    def test_fresh_execution_recheck_keeps_run_and_project_locked_until_the_consumer_finishes(
+        prepared, store
+    ):
+        routing, run, operation = reserve(prepared)
+        started = Event()
+    
+        def read():
+            started.set()
+            if store == "run":
+                return routing.planner.get(run["id"], principal="owner")
+            return routing.planner.projects.get_configuration(run["project_id"])
+    
+        with ThreadPoolExecutor(max_workers=1) as pool:
+&gt;           with routing.reserved_execution_guard(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                run["id"], operation["assessment"]["id"], principal="owner"
+            ) as current:
+E           AttributeError: 'ApprovedRunRouting' object has no attribute 'reserved_execution_guard'
+
+tests\runs\test_reserved_execution_guard.py:65: AttributeError</failure></testcase></testsuite></testsuites>

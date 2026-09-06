@@ -420,6 +420,83 @@ class CandidateStore:
 
     def materialize(self, candidate_id: str, destination: Path) -> dict[str, Any]:
         candidate = self.get(candidate_id)
+        target = self._materialize(candidate["manifest"], destination)
+        return {
+            "candidate_id": candidate_id,
+            "content_sha256": candidate["content_sha256"],
+            "directory": str(target),
+        }
+
+    def materialize_baseline(self, baseline_id: str, destination: Path) -> dict[str, Any]:
+        """Restore a registered baseline without consulting the source repository."""
+        if not isinstance(baseline_id, str):
+            raise CandidateError("BASELINE_INVALID")
+        with self._connection() as connection:
+            row = connection.execute(
+                "SELECT data FROM baselines WHERE id=?", (baseline_id,)
+            ).fetchone()
+        if row is None:
+            raise CandidateError("BASELINE_NOT_FOUND")
+        try:
+            baseline = json.loads(row[0])
+            identity = {
+                "repository_identity": baseline["repository_identity"],
+                "base_sha": baseline["base_sha"],
+                "tree_sha": baseline["tree_sha"],
+                "manifest_sha256": manifest_digest(baseline["manifest"]),
+            }
+            if baseline["id"] != baseline_id or digest(identity) != baseline_id:
+                raise CandidateError("BASELINE_INVALID")
+        except (KeyError, TypeError, ValueError, AttributeError):
+            raise CandidateError("BASELINE_INVALID") from None
+        target = self._materialize(baseline["manifest"], destination)
+        return {"baseline_id": baseline_id, **identity, "directory": str(target)}
+
+    @staticmethod
+    def _reject_links(path: Path, code: str) -> None:
+        for component in (path, *path.parents):
+            try:
+                info = component.lstat()
+            except FileNotFoundError:
+                continue
+            if (
+                stat.S_ISLNK(info.st_mode)
+                or getattr(info, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT
+            ):
+                raise CandidateError(code)
+
+    def _materialization_content(self, reference: dict[str, Any]) -> bytes:
+        """Read once from a regular, unshared artifact and verify those exact bytes."""
+        try:
+            sha = reference["sha256"]
+            if (
+                not isinstance(sha, str)
+                or len(sha) != 64
+                or any(char not in "0123456789abcdef" for char in sha)
+            ):
+                raise CandidateError("ARTIFACT_UNAVAILABLE")
+            artifact = self.objects / sha
+            self._reject_links(artifact, "ARTIFACT_UNAVAILABLE")
+            before = artifact.lstat()
+            if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1:
+                raise CandidateError("ARTIFACT_UNAVAILABLE")
+            with artifact.open("rb") as stream:
+                opened = os.fstat(stream.fileno())
+                if (opened.st_dev, opened.st_ino) != (before.st_dev, before.st_ino):
+                    raise CandidateError("ARTIFACT_UNAVAILABLE")
+                content = stream.read(MAX_FILE_BYTES + 1)
+            if (
+                len(content) > MAX_FILE_BYTES
+                or len(content) != reference["size"]
+                or hashlib.sha256(content).hexdigest() != sha
+            ):
+                raise CandidateError("ARTIFACT_UNAVAILABLE")
+            return content
+        except (OSError, KeyError, TypeError):
+            raise CandidateError("ARTIFACT_UNAVAILABLE") from None
+
+    def _materialize(self, manifest: list[dict[str, Any]], destination: Path) -> Path:
+        self._reject_links(Path(destination).absolute(), "DESTINATION_LINK_UNSUPPORTED")
         target = Path(destination).resolve()
         if (
             target == self.directory
@@ -429,21 +506,29 @@ class CandidateStore:
             raise CandidateError("CONTROL_STORAGE_OVERLAP")
         if target.exists():
             raise CandidateError("DESTINATION_EXISTS")
-        if not all(self._available(entry["artifact"]) for entry in candidate["manifest"]):
-            raise CandidateError("ARTIFACT_UNAVAILABLE")
+        prepared = []
+        total_bytes = 0
+        if len(manifest) > MAX_ENTRIES:
+            raise CandidateError("SNAPSHOT_LIMIT_EXCEEDED")
+        for entry in manifest:
+            relative_path(entry["path"])
+            if entry["mode"] not in {"100644", "100755"}:
+                raise CandidateError("BASELINE_FILE_TYPE_UNSUPPORTED")
+            content = self._materialization_content(entry["artifact"])
+            total_bytes += len(content)
+            if total_bytes > MAX_SNAPSHOT_BYTES:
+                raise CandidateError("SNAPSHOT_LIMIT_EXCEEDED")
+            prepared.append((entry, content))
         target.mkdir(parents=True, exist_ok=False)
-        for entry in candidate["manifest"]:
+        for entry, content in prepared:
             output = target / entry["path"]
             output.parent.mkdir(parents=True, exist_ok=True)
+            self._reject_links(output.parent, "DESTINATION_LINK_UNSUPPORTED")
             with output.open("xb") as stream:
-                stream.write((self.objects / entry["artifact"]["sha256"]).read_bytes())
+                stream.write(content)
             if os.name != "nt":
                 output.chmod(0o755 if entry["mode"] == "100755" else 0o644)
-        return {
-            "candidate_id": candidate_id,
-            "content_sha256": candidate["content_sha256"],
-            "directory": str(target),
-        }
+        return target
 
     def gate(self, candidate_id: str, *, current: dict[str, Any]) -> dict[str, Any]:
         canonical(current)

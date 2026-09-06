@@ -3,10 +3,11 @@
 from typing import Any
 
 from karajan.contracts.credentials import contains_credential
+from karajan.projects.models import ProfileRef
 
 from .compiler import RoutingError, compile_rulebook, digest, parse, reference
 from .models import CapacitySnapshot, PolicySnapshot, TaskSnapshot
-from .quotas import check_quota
+from .quotas import check_quota, check_reserved_inputs
 from .ranking import check_cash, rank
 from .selection import CLASSES, select_compiled_rule, validate_classification
 
@@ -207,6 +208,33 @@ def evaluate_route(
     policy_snapshot: dict[str, Any],
     capacity_snapshot: dict[str, Any],
 ) -> dict[str, Any]:
+    return _evaluate(task_snapshot, policy_snapshot, capacity_snapshot)
+
+
+def evaluate_reserved_profile(
+    task_snapshot: dict[str, Any],
+    policy_snapshot: dict[str, Any],
+    capacity_snapshot: dict[str, Any],
+    profile_ref: dict[str, Any],
+) -> dict[str, Any]:
+    """Recheck one fixed Profile without authorizing activation or reserving again.
+
+    This pure input check does not prove that a reservation exists. The controller
+    must bind these snapshots and the exact Profile to its held admission, then use
+    Capacity activation/pre-effect checks for current quota availability. Cash,
+    authorization, qualification and complete bound demand are still checked here.
+    """
+    ref = parse(ProfileRef, profile_ref, "RESERVED_PROFILE_REFERENCE_INVALID")
+    return _evaluate(task_snapshot, policy_snapshot, capacity_snapshot, reserved_profile=ref)
+
+
+def _evaluate(
+    task_snapshot: dict[str, Any],
+    policy_snapshot: dict[str, Any],
+    capacity_snapshot: dict[str, Any],
+    *,
+    reserved_profile: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     task = parse(TaskSnapshot, task_snapshot, "TASK_SNAPSHOT_INVALID")
     policy = parse(PolicySnapshot, policy_snapshot, "POLICY_SNAPSHOT_INVALID")
     capacity = parse(CapacitySnapshot, capacity_snapshot, "CAPACITY_SNAPSHOT_INVALID")
@@ -240,6 +268,12 @@ def evaluate_route(
         "scope": "simulation_only",
         "cash_sort": {"mode": "not_evaluated"},
     }
+    if reserved_profile is not None:
+        report.update(
+            requested_profile=reserved_profile,
+            scope="reserved_profile_validation",
+            quota_revalidation_required=True,
+        )
     selection = select_compiled_rule(task, compiled, policy["risk_policy"])
     for field in ("reason_codes", "effective_class", "rule_id", "matching_rules"):
         report[field] = selection[field]
@@ -286,7 +320,11 @@ def evaluate_route(
     refs = {
         reference(ref) for group in groups for ref in compiled["document"]["profile_groups"][group]
     }
-    for key in sorted(refs):
+    if reserved_profile is not None and reference(reserved_profile) not in refs:
+        report["reason_codes"] = ["RESERVED_PROFILE_NOT_STAGE_CANDIDATE"]
+        return report
+    candidate_refs = refs if reserved_profile is None else {reference(reserved_profile)}
+    for key in sorted(candidate_refs):
         candidate = _profile_checks(
             {"id": key[0], "revision": key[1]}, task, policy, capacity, rule, effective
         )
@@ -297,12 +335,18 @@ def evaluate_route(
             for group in groups
         ):
             candidate["reason_codes"].append("GROUP_PROFILE_NOT_APPROVED")
-        check_quota(candidate, task, policy, capacity, rule)
+        if reserved_profile is None:
+            check_quota(candidate, task, policy, capacity, rule)
+        else:
+            check_reserved_inputs(candidate, task, policy, capacity, rule)
         check_cash(candidate, task, policy, capacity)
         candidate["reason_codes"] = sorted(set(candidate["reason_codes"]))
         candidate["eligible"] = not candidate["reason_codes"]
         report["candidates"].append(candidate)
-    eligible, report["cash_sort"] = rank(report["candidates"], rule, policy, capacity)
+    if reserved_profile is None:
+        eligible, report["cash_sort"] = rank(report["candidates"], rule, policy, capacity)
+    else:
+        eligible = [candidate for candidate in report["candidates"] if candidate["eligible"]]
     if eligible:
         report["selected_profile"] = eligible[0]["profile"]
     else:

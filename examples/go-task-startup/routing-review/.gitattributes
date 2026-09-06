@@ -1,0 +1,3 @@
+* text eol=lf
+*.xml -text whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+history/** -text whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol

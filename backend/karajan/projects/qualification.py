@@ -1,8 +1,8 @@
 """Controller-produced, persistent qualification observations with explicit scope.
 
-The only producer currently implemented runs the fixed local fixture. Imported
-reports, including offline-contract and Go diagnostic reports, cannot enable a
-runtime. This module never reads credentials or executes caller-provided code.
+Fixed local and native Go suites produce observations here. Go uses controller
+registered credential generations and never accepts an uploaded report. Fixed
+file observations cannot qualify arbitrary Task paths or enable a runtime.
 """
 
 import hashlib
@@ -19,13 +19,29 @@ import uuid
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic import ValidationError
 
 from .models import ProfileRef, RegisteredProfile
 from .publication import digest, effective_catalog
 from .registry import ProjectRegistry, encoded, identifier
+
+if TYPE_CHECKING:
+    from .credential_sources import CredentialSourceStore
+    from .go_suite import FixedGoSuite
+
+LOCAL_SUITE = {"id": "fixed-local-fixture-qualification", "revision": 1}
+
+
+def _source_scope(binding: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    if "qualification_scope" in binding and "suite_ref" in binding:
+        return binding["qualification_scope"], binding["suite_ref"]
+    # Existing fixed-fixture starts predate explicit scopes. Recognize only that
+    # exact producer; an unknown legacy source is never guessed to be a fixture.
+    if binding.get("runtime", {}).get("producer") == "fixed-local-fixture-qualification.v1":
+        return "local_fixture", LOCAL_SUITE.copy()
+    return "unknown", {}
 
 
 class QualificationError(ValueError):
@@ -77,10 +93,19 @@ class ProfileQualificationStore:
     """
 
     def __init__(
-        self, projects: ProjectRegistry, *, clock: Callable[[], float] = time.time
+        self,
+        projects: ProjectRegistry,
+        *,
+        clock: Callable[[], float] = time.time,
+        credentials: "CredentialSourceStore | None" = None,
+        go_suite: "FixedGoSuite | None" = None,
     ) -> None:
         self.projects = projects
         self.clock = clock
+        if credentials is not None and credentials.projects is not projects:
+            raise QualificationError("CREDENTIAL_PROJECT_STORE_MISMATCH")
+        self.credentials = credentials
+        self.go_suite = go_suite
         with projects._transaction() as db:
             db.execute(
                 "CREATE TABLE IF NOT EXISTS profile_qualification_starts ("
@@ -97,6 +122,11 @@ class ProfileQualificationStore:
                 "CREATE TABLE IF NOT EXISTS profile_qualification_revocations ("
                 "id TEXT PRIMARY KEY REFERENCES profile_qualification_starts(id), "
                 "record TEXT NOT NULL)"
+            )
+            db.execute(
+                "CREATE TABLE IF NOT EXISTS profile_qualification_start_seals ("
+                "id TEXT PRIMARY KEY REFERENCES profile_qualification_starts(id), "
+                "digest TEXT NOT NULL)"
             )
 
     def _now(self) -> float:
@@ -157,6 +187,198 @@ class ProfileQualificationStore:
             "repository": project["repository"],
         }
 
+    def qualify_runtime_tools(
+        self,
+        project_id: str,
+        profile_ref: dict[str, Any],
+        *,
+        principal: str,
+        command_key: str,
+        suite_ref: dict[str, Any],
+        validity_seconds: int,
+    ) -> dict[str, Any]:
+        """Run the controller's fixed native suite; never import a passed report.
+
+        IDs and source identity commit before credential resolution or execution.
+        An interrupted command stays unknown and requires a new explicit command
+        to run a new qualification. Replaying it cannot replenish call grants.
+        """
+        identifier(command_key)
+        if type(validity_seconds) is not int or not 1 <= validity_seconds <= 86400:
+            raise QualificationError("QUALIFICATION_VALIDITY_INVALID")
+        try:
+            profile_ref = ProfileRef.model_validate(profile_ref).model_dump()
+            suite_ref = ProfileRef.model_validate(suite_ref).model_dump()
+        except ValidationError:
+            raise QualificationError("QUALIFICATION_REFERENCE_INVALID") from None
+        request_digest = digest(
+            ["qualify_runtime_tools", project_id, profile_ref, suite_ref, validity_seconds]
+        )
+        with self._owned(project_id, principal) as db:
+            previous = db.execute(
+                "SELECT * FROM profile_qualification_starts WHERE principal=? AND command_key=?",
+                (principal, command_key),
+            ).fetchone()
+            if previous is not None:
+                if previous["request_digest"] != request_digest:
+                    raise QualificationError("IDEMPOTENCY_CONFLICT")
+                self._checked_start(db, previous)
+                return self._record(db, previous["id"])
+            if self.go_suite is None or self.credentials is None:
+                raise QualificationError("RUNTIME_QUALIFICATION_SOURCE_UNCONFIGURED")
+            source = self.go_suite.source()
+            if source["suite_ref"] != suite_ref:
+                raise QualificationError("QUALIFICATION_SUITE_UNSUPPORTED")
+            scope = self._go_scope(source)
+            bound = self._binding(db, project_id, profile_ref)
+            self.go_suite.validate_profile(bound)
+            authentication = self.credentials.current_locked(
+                db, project_id, bound["registration"]["profile"]["auth_ref"], principal=principal
+            )
+            now = self._now()
+            observation_id = str(uuid.uuid4())
+            profile = bound["registration"]["profile"]
+            start: dict[str, Any] = {
+                "qualification_id": observation_id,
+                "project_id": project_id,
+                "suite_ref": suite_ref,
+                "profile_binding": bound,
+                "profile_digest": digest(profile),
+                "auth_generation": authentication["generation"],
+                "credential_source_id": authentication["source"]["id"],
+                "authentication_source": authentication,
+                "source": source,
+                "started_at": now,
+                "expires_at": now + 420,
+                "scenarios": [],
+            }
+            for scenario in ("edit", "denied_read"):
+                attempt_id, grant_id = str(uuid.uuid4()), str(uuid.uuid4())
+                start["scenarios"].append(
+                    {
+                        "scenario": scenario,
+                        "attempt_id": attempt_id,
+                        "fence": 1,
+                        "grant_id": grant_id,
+                        "grant_binding": {
+                            "qualification_id": observation_id,
+                            "attempt_id": attempt_id,
+                            "fence": 1,
+                            "profile_digest": digest(profile),
+                            "runtime_digest": source["runtime_digest"],
+                            "channel": profile["binding"]["channel_id"],
+                            "model": profile["binding"]["model_id"],
+                            "auth_generation": authentication["generation"],
+                            "expires_at": start["expires_at"],
+                            "max_requests": 6,
+                        },
+                    }
+                )
+            binding = {
+                "qualification_scope": scope,
+                "suite_ref": suite_ref,
+                "profile_binding": bound,
+                "execution_start": start,
+                "controller_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            }
+            db.execute(
+                "INSERT INTO profile_qualification_starts VALUES (?,?,?,?,?,?)",
+                (
+                    observation_id,
+                    project_id,
+                    principal,
+                    command_key,
+                    request_digest,
+                    encoded(binding),
+                ),
+            )
+            db.execute(
+                "INSERT INTO profile_qualification_start_seals VALUES (?,?)",
+                (observation_id, digest(binding)),
+            )
+        try:
+            credential = self.credentials.resolve_exact(
+                project_id, profile["auth_ref"], authentication["generation"], principal=principal
+            )
+            observation = self.go_suite.observe(start, credential)
+        except Exception:
+            # Exception strings can carry file paths, provider text, or secrets.
+            observation = {
+                "status": "failed",
+                "reason_codes": ["QUALIFICATION_EXECUTION_INCOMPLETE"],
+                "scenarios": [],
+            }
+        now = self._now()
+        record: dict[str, Any] = {
+            "schema_version": "karajan.profile-qualification.v1",
+            "id": observation_id,
+            "project_id": project_id,
+            "principal": principal,
+            "status": observation.get("status", "failed"),
+            "qualification_scope": scope,
+            "suite_ref": suite_ref,
+            "provenance": "fixture" if scope.endswith("_fixture") else "imported_observation",
+            "runtime_tools_status": "not_run",
+            "live_qualified": False,
+            "dispatch_eligible": False,
+            "binding": binding,
+            "observed_at": now,
+            "valid_until": now + validity_seconds,
+            "observation": observation,
+            "reason_codes": list(observation.get("reason_codes", [])),
+            "limitations": [
+                "Only the fixed file is covered; arbitrary Task paths are unqualified.",
+                "No Commander, Reviewer, context, candidate capture, or cash bound qualified.",
+                "Provider remote stop remains unknown; local grant cleanup is not a billing cap.",
+            ],
+        }
+        with self._owned(project_id, principal) as db:
+            try:
+                if self._binding(db, project_id, profile_ref) != bound:
+                    raise QualificationError("PROFILE_IDENTITY_MISMATCH")
+                if self.go_suite.source() != source:
+                    raise QualificationError("QUALIFICATION_RUNTIME_MISMATCH")
+                if (
+                    binding["controller_sha256"]
+                    != hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+                ):
+                    raise QualificationError("QUALIFICATION_RUNTIME_MISMATCH")
+                if (
+                    self.credentials.current_locked(
+                        db, project_id, profile["auth_ref"], principal=principal
+                    )
+                    != authentication
+                ):
+                    raise QualificationError("AUTHENTICATION_SOURCE_MISMATCH")
+                if now < start["started_at"]:
+                    raise QualificationError("QUALIFICATION_CLOCK_INVALID")
+            except Exception:
+                record["status"] = "failed"
+                record["reason_codes"].append("QUALIFICATION_SOURCE_CHANGED")
+            db.execute(
+                "INSERT INTO profile_qualification_records VALUES (?,?,?)",
+                (observation_id, encoded(record), digest(record)),
+            )
+        return record
+
+    @staticmethod
+    def _go_scope(source: dict[str, Any]) -> str:
+        if source["observation_origin"] == "official_go":
+            return "fixed_native_tools"
+        if source["observation_origin"] == "http_fixture":
+            return "fixed_native_tools_fixture"
+        raise QualificationError("QUALIFICATION_SOURCE_UNSUPPORTED")
+
+    def _checked_start(self, db: sqlite3.Connection, row: sqlite3.Row) -> dict[str, Any]:
+        binding: dict[str, Any] = json.loads(row["binding"])
+        if "execution_start" in binding:
+            seal = db.execute(
+                "SELECT digest FROM profile_qualification_start_seals WHERE id=?", (row["id"],)
+            ).fetchone()
+            if seal is None or seal["digest"] != digest(binding):
+                raise QualificationError("QUALIFICATION_START_CHANGED")
+        return binding
+
     def qualify_local_fixture(
         self,
         project_id: str,
@@ -208,7 +430,14 @@ class ProfileQualificationStore:
                     principal,
                     command_key,
                     request_digest,
-                    encoded({"profile_binding": bound, "runtime": runtime}),
+                    encoded(
+                        {
+                            "profile_binding": bound,
+                            "runtime": runtime,
+                            "qualification_scope": "local_fixture",
+                            "suite_ref": LOCAL_SUITE,
+                        }
+                    ),
                 ),
             )
         observation = self._observe(root, observation_id, runtime)
@@ -332,6 +561,49 @@ class ProfileQualificationStore:
             ).fetchone()
             return {"record": record, "revocation": json.loads(row["record"]) if row else None}
 
+    def get_start(self, project_id: str, observation_id: str, *, principal: str) -> dict[str, Any]:
+        """Read the durable intent even when execution has no completed receipt."""
+        identifier(observation_id)
+        with self._owned(project_id, principal) as db:
+            row = db.execute(
+                "SELECT * FROM profile_qualification_starts WHERE id=?", (observation_id,)
+            ).fetchone()
+            if row is None:
+                raise QualificationError("QUALIFICATION_START_NOT_FOUND")
+            if row["project_id"] != project_id:
+                raise QualificationError("QUALIFICATION_PROJECT_MISMATCH")
+            return self._start_view(db, row)
+
+    def get_command_start(
+        self, project_id: str, command_key: str, *, principal: str
+    ) -> dict[str, Any]:
+        """Recover a lost reply using the caller's original command identity."""
+        identifier(command_key)
+        with self._owned(project_id, principal) as db:
+            row = db.execute(
+                "SELECT * FROM profile_qualification_starts WHERE project_id=? "
+                "AND principal=? AND command_key=?",
+                (project_id, principal, command_key),
+            ).fetchone()
+            if row is None:
+                raise QualificationError("QUALIFICATION_START_NOT_FOUND")
+            return self._start_view(db, row)
+
+    def _start_view(self, db: sqlite3.Connection, row: sqlite3.Row) -> dict[str, Any]:
+        binding = self._checked_start(db, row)
+        scope, suite = _source_scope(binding)
+        return {
+            "id": row["id"],
+            "project_id": row["project_id"],
+            "qualification_scope": scope,
+            "suite_ref": suite,
+            "binding": binding,
+            "completed": db.execute(
+                "SELECT 1 FROM profile_qualification_records WHERE id=?", (row["id"],)
+            ).fetchone()
+            is not None,
+        }
+
     def revoke(
         self, project_id: str, observation_id: str, *, principal: str, reason: str
     ) -> dict[str, Any]:
@@ -426,9 +698,25 @@ class ProfileQualificationStore:
     ) -> dict[str, Any]:
         from karajan.routing.models import ProfileFacts
 
-        if scope != "local_fixture":
-            raise QualificationError("RUNTIME_TOOLS_NOT_QUALIFIED")
-        if fixture_root is None:
+        runtime_read = scope != "local_fixture"
+        if runtime_read:
+            if (
+                scope not in {"runtime_tools", "fixed_native_tools", "fixed_native_tools_fixture"}
+                or self.go_suite is None
+                or self.credentials is None
+            ):
+                raise QualificationError("RUNTIME_TOOLS_NOT_QUALIFIED")
+            wanted_scope = "fixed_native_tools" if scope == "runtime_tools" else scope
+            try:
+                current_source = self.go_suite.source()
+            except Exception:
+                raise QualificationError("QUALIFICATION_RUNTIME_MISMATCH") from None
+            if self._go_scope(current_source) != wanted_scope:
+                raise QualificationError("RUNTIME_TOOLS_NOT_QUALIFIED")
+            wanted_suite = current_source["suite_ref"]
+        else:
+            wanted_scope, wanted_suite = "local_fixture", LOCAL_SUITE
+        if not runtime_read and fixture_root is None:
             raise QualificationError("FIXTURE_ROOT_REQUIRED")
         try:
             frozen = RegisteredProfile.model_validate(frozen_registration).model_dump()
@@ -441,8 +729,7 @@ class ProfileQualificationStore:
         if not frozen["enabled"]:
             raise QualificationError("PROFILE_DISABLED")
         starts = db.execute(
-            "SELECT id,binding FROM profile_qualification_starts WHERE project_id=? "
-            "ORDER BY rowid DESC",
+            "SELECT * FROM profile_qualification_starts WHERE project_id=? ORDER BY rowid DESC",
             (project_id,),
         ).fetchall()
         latest = next(
@@ -450,7 +737,9 @@ class ProfileQualificationStore:
                 row
                 for row in starts
                 if (
-                    json.loads(row["binding"])["profile_binding"]["registration"]["id"] == ref["id"]
+                    _source_scope(json.loads(row["binding"])) == (wanted_scope, wanted_suite)
+                    and json.loads(row["binding"])["profile_binding"]["registration"]["id"]
+                    == ref["id"]
                     and json.loads(row["binding"])["profile_binding"]["registration"]["revision"]
                     == ref["revision"]
                 )
@@ -459,6 +748,7 @@ class ProfileQualificationStore:
         )
         if latest is None:
             raise QualificationError("PROFILE_FACTS_MISSING")
+        start_binding = self._checked_start(db, latest)
         record = self._record(db, latest["id"])
         if db.execute(
             "SELECT 1 FROM profile_qualification_revocations WHERE id=?", (record["id"],)
@@ -470,6 +760,11 @@ class ProfileQualificationStore:
             raise QualificationError("QUALIFICATION_NOT_PASSED")
         if not record["observed_at"] <= self._now() < record["valid_until"]:
             raise QualificationError("QUALIFICATION_EXPIRED")
+        if runtime_read:
+            return self._go_facts(
+                db, project_id, frozen, record, start_binding, current_source, scope
+            )
+        assert fixture_root is not None
         if record["binding"]["runtime"] != _runtime(_safe_root(fixture_root)):
             raise QualificationError("QUALIFICATION_RUNTIME_MISMATCH")
         profile = frozen["profile"]
@@ -506,5 +801,76 @@ class ProfileQualificationStore:
                     "provenance": "fixture",
                 }
                 for operation in ("write", "check", "review")
+            ],
+        }
+
+    def _go_facts(
+        self,
+        db: sqlite3.Connection,
+        project_id: str,
+        frozen: dict[str, Any],
+        record: dict[str, Any],
+        start_binding: dict[str, Any],
+        current_source: dict[str, Any],
+        requested_scope: str,
+    ) -> dict[str, Any]:
+        from karajan.routing.models import ProfileFacts
+
+        if (
+            record["binding"] != start_binding
+            or start_binding["controller_sha256"]
+            != hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+            or start_binding["execution_start"]["source"] != current_source
+        ):
+            raise QualificationError("QUALIFICATION_RUNTIME_MISMATCH")
+        start = start_binding["execution_start"]
+        assert self.credentials is not None
+        try:
+            authentication = self.credentials.current_locked(
+                db, project_id, frozen["profile"]["auth_ref"], principal=record["principal"]
+            )
+            if authentication != start["authentication_source"]:
+                raise QualificationError("AUTHENTICATION_SOURCE_MISMATCH")
+        except Exception:
+            raise QualificationError("AUTHENTICATION_SOURCE_MISMATCH") from None
+        # ProfileFacts cannot express path constraints yet. A fixed fixture
+        # observation must never satisfy a general Run's read/edit requirements.
+        if requested_scope == "runtime_tools":
+            raise QualificationError("TASK_PERMISSION_SCOPE_NOT_QUALIFIED")
+        profile = frozen["profile"]
+        fixture = record["qualification_scope"] == "fixed_native_tools_fixture"
+        evidence_ref = "fixed-go-qualification:" + record["id"]
+        facts = ProfileFacts.model_validate(
+            {
+                "profile": {"id": frozen["id"], "revision": frozen["revision"]},
+                "profile_digest": digest(profile),
+                "runtime_version": profile["binding"]["runtime_version"],
+                "roles": [] if fixture else ["worker"],
+                "tools": ["fixed_go_fixture_read", "fixed_go_fixture_edit"],
+                "context_tokens": None,
+                "data_destination": "http_fixture" if fixture else "opencode-go",
+                "budget_enforcement": "unknown",
+                "provenance": record["provenance"],
+                "evidence_ref": evidence_ref,
+                "observed_at": record["observed_at"],
+                "valid_until": record["valid_until"],
+            }
+        ).model_dump()
+        return {
+            "facts": facts,
+            "qualification_scope": record["qualification_scope"],
+            "runtime_tools_status": "not_run",
+            "dispatch_eligible": False,
+            "observation": record,
+            "capability_evidence": [
+                {
+                    "capability": "fixed_go_fixture_" + operation,
+                    "status": "passed",
+                    "profile_digest": digest(profile),
+                    "runtime_version": profile["binding"]["runtime_version"],
+                    "evidence_ref": evidence_ref,
+                    "provenance": record["provenance"],
+                }
+                for operation in ("read", "edit", "denied_read")
             ],
         }

@@ -1,0 +1,37 @@
+{
+  "schema_version": "karajan.go-task-startup.independent-review.publication.v1",
+  "base": "405ce11",
+  "reviewer": "ui_spec_finalize",
+  "scope": "routing-review",
+  "sources": {
+    "backend/karajan/orchestration/routing.py": "5740524381cc2e0d170aa341b2c56b3b7ff2ec720bd5fc37eba6a6f192896222",
+    "backend/karajan/routing/evaluator.py": "6061dad8118d0166c289e099132447709692171c10ba244e06c654f8ff938a32",
+    "backend/karajan/routing/__init__.py": "2eb81abedbcee0b3cc495d3594c68b4311dded46f89daa46bfdc324de34c1928",
+    "backend/karajan/routing/quotas.py": "1f076247aef141cb2f0725f14c14801f9239034c7ad12b1458876c31af4d9a05"
+  },
+  "result": {
+    "tests": 10,
+    "passed": 10,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 3.48
+  },
+  "findings": [],
+  "test_changes_for_publication": false,
+  "historical_paths": "Original report paths refer to their original development directories; this artifacts map is relative to the published review directory.",
+  "artifacts": {
+    ".gitattributes": "117a5aa041d142364b3afd44b2c37c51c0417062cbc37e51c85723577360dc37",
+    "final.xml": "03193936bb6d509b4c8979ccc2bfc8927fbf59d385f5de12153d6a4fa0f0532e",
+    "history/design-notes.md": "121999d2042ce2a9f254e93c3fc49ab73c7669270462e808cbcade33af156b6e",
+    "history/initial-test.py.txt": "5fffc49093796249c8dda20119a4519df757e9cc48bab3fac2ee74103b402d01",
+    "history/initial.xml": "12e470b18ca2b2641b6c116bf216a39f4b6b5a45bbfcb9d6fe6b522967d5c8c2",
+    "history/pre-publication-final.xml": "2cdaa75a301d51d1b879562b361bb5f3e36c0e291fb95d1b3c7554d5e3549c37",
+    "history/review-original.json": "241ae7bb2e8a4d6ef31a76c5ed5ff2de701bc3b0a073f39debc0cc175888e322",
+    "history/review-original.md": "bd1e9f7bab11faef4cdd57975384b6bbdc925e10281f4c21ffa066d60adfadc0",
+    "README.md": "6069db98d663be7dc9f492d7dd4f8364926b09d1bf3acb14fdefdca45ed60253",
+    "test_reserved_routing_public.py": "2fb866935432fc6e899cdc830486ec134b33596f823e3879905486e82127a459"
+  },
+  "provider_calls": 0,
+  "product_changes_by_reviewer": false
+}

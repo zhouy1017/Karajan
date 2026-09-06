@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="4" time="1.776" timestamp="2026-09-06T17:57:40.023072+08:00" hostname="ProArt-Zhou"><testcase classname="tests.adapters.opencode.test_go_relay_context" name="test_failed_context_observation_revokes_remaining_sends[missing]" time="0.524"><failure message="assert 200 == 502&#10; +  where 200 = &lt;Response [200 OK]&gt;.status_code&#10; +    where &lt;Response [200 OK]&gt; = post(&lt;karajan.adapters.opencode.go_relay.GoRelay object at 0x000001D9D6FC2060&gt;)">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-676/test_failed_context_observatio0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000001D9FF3E4050&gt;
+violation = 'missing'
+
+    @pytest.mark.parametrize("violation", ["missing", "input", "output", "transport"])
+    def test_failed_context_observation_revokes_remaining_sends(tmp_path, accounting, violation):
+        journal = GoCallJournal(tmp_path / "calls.sqlite", clock=lambda: 1000.0)
+        binding = task_binding()
+        grant = journal.create_grant(binding, grant_id="task")
+        upstream = []
+    
+        def receive(request):
+            upstream.append(request)
+            if violation == "transport":
+                raise httpx.ReadTimeout("synthetic lost response")
+            if violation == "missing":
+                return answer()
+            return metered_answer({
+                "prompt_tokens": 5000 if violation == "input" else 20,
+                "completion_tokens": 4097 if violation == "output" else 2,
+            })
+    
+        context = GoRelayContext(
+            accounting, digest(accounting.source()), binding["execution_policy_digest"],
+            4000, 4096, 8192, 100, 1000,
+        )
+        relay = GoRelay(
+            SECRET, CANARY, context=context,
+            authorization=GoRelayAuthorization(journal, "task", binding, grant["capability"]),
+            client_factory=lambda: httpx.Client(transport=httpx.MockTransport(receive), trust_env=False),
+        )
+        relay.start()
+        try:
+&gt;           assert post(relay).status_code == 502
+E           assert 200 == 502
+E            +  where 200 = &lt;Response [200 OK]&gt;.status_code
+E            +    where &lt;Response [200 OK]&gt; = post(&lt;karajan.adapters.opencode.go_relay.GoRelay object at 0x000001D9D6FC2060&gt;)
+
+tests\adapters\opencode\test_go_relay_context.py:227: AssertionError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_relay_context" name="test_failed_context_observation_revokes_remaining_sends[input]" time="0.069"><failure message="assert 200 == 502&#10; +  where 200 = &lt;Response [200 OK]&gt;.status_code&#10; +    where &lt;Response [200 OK]&gt; = post(&lt;karajan.adapters.opencode.go_relay.GoRelay object at 0x000001D9D73C1DC0&gt;)">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-676/test_failed_context_observatio1')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000001D9FF3E4050&gt;
+violation = 'input'
+
+    @pytest.mark.parametrize("violation", ["missing", "input", "output", "transport"])
+    def test_failed_context_observation_revokes_remaining_sends(tmp_path, accounting, violation):
+        journal = GoCallJournal(tmp_path / "calls.sqlite", clock=lambda: 1000.0)
+        binding = task_binding()
+        grant = journal.create_grant(binding, grant_id="task")
+        upstream = []
+    
+        def receive(request):
+            upstream.append(request)
+            if violation == "transport":
+                raise httpx.ReadTimeout("synthetic lost response")
+            if violation == "missing":
+                return answer()
+            return metered_answer({
+                "prompt_tokens": 5000 if violation == "input" else 20,
+                "completion_tokens": 4097 if violation == "output" else 2,
+            })
+    
+        context = GoRelayContext(
+            accounting, digest(accounting.source()), binding["execution_policy_digest"],
+            4000, 4096, 8192, 100, 1000,
+        )
+        relay = GoRelay(
+            SECRET, CANARY, context=context,
+            authorization=GoRelayAuthorization(journal, "task", binding, grant["capability"]),
+            client_factory=lambda: httpx.Client(transport=httpx.MockTransport(receive), trust_env=False),
+        )
+        relay.start()
+        try:
+&gt;           assert post(relay).status_code == 502
+E           assert 200 == 502
+E            +  where 200 = &lt;Response [200 OK]&gt;.status_code
+E            +    where &lt;Response [200 OK]&gt; = post(&lt;karajan.adapters.opencode.go_relay.GoRelay object at 0x000001D9D73C1DC0&gt;)
+
+tests\adapters\opencode\test_go_relay_context.py:227: AssertionError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_relay_context" name="test_failed_context_observation_revokes_remaining_sends[output]" time="0.073"><failure message="assert 200 == 502&#10; +  where 200 = &lt;Response [200 OK]&gt;.status_code&#10; +    where &lt;Response [200 OK]&gt; = post(&lt;karajan.adapters.opencode.go_relay.GoRelay object at 0x000001D9D74AA450&gt;)">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-676/test_failed_context_observatio2')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000001D9FF3E4050&gt;
+violation = 'output'
+
+    @pytest.mark.parametrize("violation", ["missing", "input", "output", "transport"])
+    def test_failed_context_observation_revokes_remaining_sends(tmp_path, accounting, violation):
+        journal = GoCallJournal(tmp_path / "calls.sqlite", clock=lambda: 1000.0)
+        binding = task_binding()
+        grant = journal.create_grant(binding, grant_id="task")
+        upstream = []
+    
+        def receive(request):
+            upstream.append(request)
+            if violation == "transport":
+                raise httpx.ReadTimeout("synthetic lost response")
+            if violation == "missing":
+                return answer()
+            return metered_answer({
+                "prompt_tokens": 5000 if violation == "input" else 20,
+                "completion_tokens": 4097 if violation == "output" else 2,
+            })
+    
+        context = GoRelayContext(
+            accounting, digest(accounting.source()), binding["execution_policy_digest"],
+            4000, 4096, 8192, 100, 1000,
+        )
+        relay = GoRelay(
+            SECRET, CANARY, context=context,
+            authorization=GoRelayAuthorization(journal, "task", binding, grant["capability"]),
+            client_factory=lambda: httpx.Client(transport=httpx.MockTransport(receive), trust_env=False),
+        )
+        relay.start()
+        try:
+&gt;           assert post(relay).status_code == 502
+E           assert 200 == 502
+E            +  where 200 = &lt;Response [200 OK]&gt;.status_code
+E            +    where &lt;Response [200 OK]&gt; = post(&lt;karajan.adapters.opencode.go_relay.GoRelay object at 0x000001D9D74AA450&gt;)
+
+tests\adapters\opencode\test_go_relay_context.py:227: AssertionError</failure></testcase><testcase classname="tests.adapters.opencode.test_go_relay_context" name="test_failed_context_observation_revokes_remaining_sends[transport]" time="0.071"><failure message="AssertionError: assert 'active' == 'revoked'&#10;  &#10;  - revoked&#10;  + active">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-676/test_failed_context_observatio3')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000001D9FF3E4050&gt;
+violation = 'transport'
+
+    @pytest.mark.parametrize("violation", ["missing", "input", "output", "transport"])
+    def test_failed_context_observation_revokes_remaining_sends(tmp_path, accounting, violation):
+        journal = GoCallJournal(tmp_path / "calls.sqlite", clock=lambda: 1000.0)
+        binding = task_binding()
+        grant = journal.create_grant(binding, grant_id="task")
+        upstream = []
+    
+        def receive(request):
+            upstream.append(request)
+            if violation == "transport":
+                raise httpx.ReadTimeout("synthetic lost response")
+            if violation == "missing":
+                return answer()
+            return metered_answer({
+                "prompt_tokens": 5000 if violation == "input" else 20,
+                "completion_tokens": 4097 if violation == "output" else 2,
+            })
+    
+        context = GoRelayContext(
+            accounting, digest(accounting.source()), binding["execution_policy_digest"],
+            4000, 4096, 8192, 100, 1000,
+        )
+        relay = GoRelay(
+            SECRET, CANARY, context=context,
+            authorization=GoRelayAuthorization(journal, "task", binding, grant["capability"]),
+            client_factory=lambda: httpx.Client(transport=httpx.MockTransport(receive), trust_env=False),
+        )
+        relay.start()
+        try:
+            assert post(relay).status_code == 502
+            assert len(upstream) == 1
+&gt;           assert journal.snapshot("task")["state"] == "revoked"
+E           AssertionError: assert 'active' == 'revoked'
+E             
+E             - revoked
+E             + active
+
+tests\adapters\opencode\test_go_relay_context.py:229: AssertionError</failure></testcase></testsuite></testsuites>

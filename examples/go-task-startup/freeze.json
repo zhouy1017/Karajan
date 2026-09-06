@@ -1,0 +1,24 @@
+{
+  "base_commit": "405ce11c3af5485b1c29546240fb8d9f1b641b8c",
+  "source_sha256": {
+    "backend/karajan/capacity/store.py": "2825bc579a5f7406f180176bf118c44b1b854511b79dc32232c18d540153b143",
+    "backend/karajan/orchestration/routing.py": "5740524381cc2e0d170aa341b2c56b3b7ff2ec720bd5fc37eba6a6f192896222",
+    "backend/karajan/routing/evaluator.py": "6061dad8118d0166c289e099132447709692171c10ba244e06c654f8ff938a32",
+    "backend/karajan/routing/quotas.py": "1f076247aef141cb2f0725f14c14801f9239034c7ad12b1458876c31af4d9a05",
+    "backend/karajan/routing/__init__.py": "2eb81abedbcee0b3cc495d3594c68b4311dded46f89daa46bfdc324de34c1928",
+    "tests/capacity/test_command_receipts.py": "d40ba0d6ebd75a58c741cdc6ab7f30ba84091b3cb63af4a878032e346e574369",
+    "tests/capacity/test_pre_effect_guard.py": "b54de43485f4d287747f19af822629ad233590bb717bd2bc1b203dc00a4d1bb9",
+    "tests/routing/test_reserved_profile.py": "2261e4ba5dbe1bbe6c9f90fe9d3d63d22e27421841c363933cd27d34e5bc2d09",
+    "tests/runs/test_reserved_execution_guard.py": "82395473573214ff7922398876493d9cb325507b1218489ec12cd294a1ef478c",
+    ".github/workflows/ci.yml": "a250edcafbc0b6f2cb10b803a04f7c9fd39be4f0f6bc52a936c24b26bc5f300f"
+  },
+  "provider_calls": 0,
+  "native_processes_started_by_this_slice": 0,
+  "windows": "393 passed, 0 skipped",
+  "wsl": "393 passed, 0 skipped",
+  "independent": "31 capacity cases and 10 routing cases passed",
+  "static": "Ruff whole repo and mypy 113 backend modules, both linux/win32 passed",
+  "remote_ci": "pending new commit; not inferred from local results",
+  "red_evidence_note": "Root first green attempt had an incorrect expected owner error code in one test; corrected test to existing USER_DECISION_REQUIRED without changing product owner behavior.",
+  "qualification": "not granted; real trusted runner, Task scope and Collector integration outstanding"
+}

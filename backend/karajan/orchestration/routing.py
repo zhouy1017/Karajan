@@ -148,6 +148,74 @@ class ApprovedRunRouting:
             receipt["digest"] = digest(receipt)
             yield receipt
 
+    @contextmanager
+    def reserved_execution_guard(
+        self, run_id: str, assessment_id: str, *, principal: str
+    ) -> Iterator[dict[str, Any]]:
+        """Revalidate a stored selected route without treating its hold as new demand.
+
+        This is an internal consumer port, not proof of a reservation or a start
+        permission. The consumer must also hold its operation/Workspace state,
+        activate the matching original Capacity request, and enter the fresh
+        Capacity pre-effect guard at the real execution boundary.
+        """
+        original = self.get(run_id, assessment_id, principal=principal)
+        if original["state"] != "selected" or not original["route"]["selected_profile"]:
+            raise RunError("RESERVED_ROUTE_REQUIRED")
+        selected = original["route"]["selected_profile"]
+        # The immutable assessment is read before taking the long-lived guard.
+        # No nested public Run read occurs while activation_guard holds its DB.
+        with self.planner.activation_guard(run_id) as run, ExitStack() as holds:
+            self.planner._owner(run, principal)
+            receipt: dict[str, Any] = {
+                "schema_version": "karajan.approved-routing-assessment.v1",
+                "id": str(uuid.uuid4()),
+                "run_id": run_id,
+                "task_id": original["task_id"],
+                "planned_attempt_id": original["planned_attempt_id"],
+                "planned_context_id": original["planned_context_id"],
+                "scope": "reserved_execution_revalidation",
+                "original_assessment_digest": original["digest"],
+                "state": "blocked",
+                "activation_allowed": False,
+                "dispatch_enabled": False,
+                "reason_codes": [],
+                "route": None,
+                "sources": {},
+                "admission_expectations": [],
+            }
+            self._build(
+                receipt, run, original["task_id"], principal, holds, reserved_profile=selected
+            )
+            if receipt["state"] == "selected":
+                # Preserve the complete approved task, identity, estimate and
+                # qualified source. A replacement source requires a new Attempt.
+                current_source, old_source = receipt["sources"], original["sources"]
+                changed = any(
+                    current_source[key] != old_source[key]
+                    for key in ("approval", "execution_policy_digest", "routing_digest")
+                )
+                changed |= (
+                    receipt["route"]["snapshots"]["task"] != original["route"]["snapshots"]["task"]
+                )
+                for collection in ("profiles", "estimates"):
+                    before = next(
+                        (row for row in old_source[collection] if row["profile"] == selected),
+                        None,
+                    )
+                    current = next(
+                        (row for row in current_source[collection] if row["profile"] == selected),
+                        None,
+                    )
+                    changed |= before is None or current != before
+                if changed:
+                    receipt["state"] = "blocked"
+                    receipt["reason_codes"] = ["RESERVED_EXECUTION_INPUT_CHANGED"]
+                    receipt["route"]["selected_profile"] = None
+                    receipt["route"]["reason_codes"] = ["RESERVED_EXECUTION_INPUT_CHANGED"]
+            receipt["digest"] = digest(receipt)
+            yield receipt
+
     def _build(
         self,
         receipt: dict[str, Any],
@@ -155,6 +223,8 @@ class ApprovedRunRouting:
         task_id: str,
         principal: str,
         holds: ExitStack,
+        *,
+        reserved_profile: dict[str, Any] | None = None,
     ) -> None:
         if run["schema_version"] != "karajan.run-planning.v2":
             receipt["reason_codes"] = ["APPROVED_ROUTING_V2_REQUIRED"]
@@ -323,7 +393,12 @@ class ApprovedRunRouting:
             "risk_policy": execution["risk_policy"],
             "constraints": execution["constraints"],
         }
-        route = evaluate_route(task_snapshot, policy, snapshot)
+        if reserved_profile is None:
+            route = evaluate_route(task_snapshot, policy, snapshot)
+        else:
+            from karajan.routing import evaluate_reserved_profile
+
+            route = evaluate_reserved_profile(task_snapshot, policy, snapshot, reserved_profile)
         receipt["route"] = route
         receipt["reason_codes"] = route["reason_codes"]
         receipt["state"] = "selected" if route["selected_profile"] else "blocked"

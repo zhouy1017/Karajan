@@ -12,9 +12,23 @@
 
 同一事件类型和 PR/分支只保留最新一次运行；较旧运行可以被取消。不同 PR、push 与合并组不会因为相同分支名共用并发组。被取消的运行不算通过，合并需要当前提交对应的成功检查。
 
+## CI 失败的修复分工
+
+按用户于 2026-09-06 确定的工作方式，后续 CI 失败由协调者在对应 GitHub PR 中
+`@copilot` 请求修复。评论应给出失败提交、运行/job 链接、关键错误、期望行为及需要重跑的
+检查；协调者继续推进独立开发，避免同时修改 Copilot 正在修复的文件。修复不得通过删除
+必需检查、忽略退出码或放宽验收条件消除红灯。收到修复后仍核对差异及新提交的实际 CI，
+发出评论不等于修复已完成；合并继续由用户决定。此分工不改变本地开发中的调试责任。
+
 ## Python 必需检查
 
-`python-quality` 在 `ubuntu-24.04` 和 `windows-2022` 上分别运行，均使用 Python 3.12。矩阵关闭 fail-fast，让一个系统失败时另一个仍能完成诊断；两者都必须成功。每个矩阵任务最多运行 20 分钟。
+Go Task 计量切片在两个 Python job 中增加固定 tokenizer 准备步骤：仅从固定官方 revision 下载三个公开数据文件，校验长度与 SHA-256 后发布到本地目录。`KARAJAN_REQUIRE_GO_TOKENIZER=1` 使缺少制品成为失败；`HF_HUB_OFFLINE` 和 `TRANSFORMERS_OFFLINE` 在测试阶段禁止库自动下载。准备脚本本身有本地故障测试，原生请求组合在 Linux namespace 中实际执行，未向真实 provider 发送请求。[实现范围](m3-go-task-context.md) 与 [独立检查](../../examples/go-task-context/README.md) 单列。
+
+`examples/go-task-context` 的独立审查用例也是 Python 必需步骤；原有门、凭据隔离与 Windows/Linux 矩阵保持原要求。
+
+`examples/go-task-startup` 增加 41 项独立启动前复查用例，使用真实临时存储，覆盖固定原 Profile、授权来源变化、历史激活与最新容量边界。测试不启动模型，也不能替代受信 runner 的真实进程启动验收。[范围与锁顺序](m3-task-startup-guards.md) 单列，新增步骤仍由原 `quality-gate` 汇总。
+
+`python-quality` 在 `ubuntu-24.04` 和 `windows-2022` 上分别运行，均使用 Python 3.12。矩阵关闭 fail-fast，让一个系统失败时另一个仍能完成诊断；两者都必须成功。本切片将每个矩阵任务的运行上限调整为 30 分钟，以容纳新增的真实本机隔离回归；这不改变任何检查的成功条件。
 
 在仓库根目录依次执行：
 
@@ -30,6 +44,15 @@ uv run --frozen --extra dev pytest tests
 `pyproject.toml` 的 `dev` extra 必须声明 pytest、ruff、mypy，具体依赖解析由提交的 `uv.lock` 固定。锁文件缺失或过期应失败，不在 CI 自动重写。`--frozen` 只使用现有锁文件，不检查它是否匹配项目配置，所以先执行 `uv lock --check`。[uv 锁定与同步语义](https://docs.astral.sh/uv/concepts/projects/sync/)
 
 lint 覆盖仓库 Python 文件，类型检查覆盖 `backend/karajan`，pytest 收集 `tests` 下的测试，包括 `tests/contract`。缺少测试、测试收集错误、断言失败或检查进程非零退出都不能用成功占位替代。平台相关用例可以在不支持的系统明确 skip，但这不是该平台对应能力通过的证据；两端均适用的必需契约必须实际运行。
+
+本切片还将下列四个发布目录加入 Python 必需检查，沿用 `pythonpath=backend tests/projects tests/isolation`：
+
+- `examples/go-profile-qualification-spec`：持久资格入口的独立公共行为验收。
+- `examples/go-profile-standards`：持久化失败、重放与权限边界。
+- `examples/go-suite-independent-review`：固定 suite 的来源、调用与授权归属边界。
+- `examples/go-profile-cli-spec`：显式实测入口的参数、来源和敏感输出边界。
+
+这些目录使用合成凭据、HTTP fixture、临时仓库及真实本机进程，不进行官方 Go 调用。Linux 继续要求固定 artifact 和 namespace 检查实际执行，Windows 的 Linux 专用项明确 skip。既有后端、前端、已批准路由、任务准入及隔离链路门均保留；增加超时时间不能把失败、未知或跳过的必需检查变成成功。本段描述本切片的门禁接线，不表示尚未提交的新 PR 已通过 CI。
 
 每条外部检查命令独占一步，保留原退出码，不使用 `continue-on-error`、`|| true`、`--if-present` 或忽略失败的包装。某一步失败导致后续步骤未运行时，整个矩阵任务仍为失败，汇总门不会将这些步骤当作成功。
 
@@ -57,7 +80,9 @@ workflow 权限限定为 `contents: read`；checkout 不持久保存 Git 凭据�
 
 CI 绿色只表示这些离线契约和本地行为检查通过。它不能证明官方订阅身份、真实模型/参数接受情况、收费上界完整性、远端取消，或用户机器上的 WSL2/容器隔离已合格。Linux/Windows hosted runner 测试也不能替代目标部署的资格记录。用户已授权固定 OpenCode Go 通道的真实测试，其实测单独保存；其他通道的现金调用仍暂停，未执行资格保持 `not_run`。[资格记录与验收范围](../architecture/05-build-and-validation.md)
 
-真实资格以后可以采用独立的手动流程：绑定具体提交、Profile/runtime revision、目标环境、官方认证引用、测试范围和预算；只在已具备相应授权时运行。它不在公共 PR CI 中注入账号，不通过“缺账号则 skip 并整体 passed”制造资格。没有执行就记录 `not_run`，能力不支持记录 `unsupported`，违反契约记录 `failed`；只有对应真实用例执行成功才记录 `passed`。本次仅规定接口边界，没有创建或运行真实资格 workflow。
+固定 Go 已有独立于公共 PR CI 的[受控持久资格入口](m3-go-profile-qualification.md)，并于 2026-09-06 完成一次真实公共入口验证：两场景共 5 次 HTTP 200，同命令重放相等且无新增请求，默认任务 guard 仍返回 `TASK_PERMISSION_SCOPE_NOT_QUALIFIED`。实测绑定具体源码、Profile/runtime revision、目标环境、官方认证引用及固定范围，记录见[实测证据](../../examples/go-profile-qualification/README.md)。这是固定 scope 的观察，不授予任意 Task 权限或可信 Collector 能力，也不替代本次新提交的 CI。
+
+后续真实资格继续使用明确授权的独立流程，不在公共 PR CI 中注入账号，不通过“缺账号则 skip 并整体 passed”制造资格。没有执行就记录 `not_run`，能力不支持记录 `unsupported`，违反契约记录 `failed`；只有对应真实用例执行成功才记录 `passed`。本切片没有创建自动执行真实资格的 GitHub workflow。
 
 ## 固定版本与官方依据
 

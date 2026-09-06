@@ -1,0 +1,218 @@
+"""Independent fixed-suite behavior; real native runtime, synthetic upstream only.
+
+Credential and start DTO helpers are explicit controller fixtures, not persisted
+qualification authority. This review excludes the reviewer's credential/journal
+implementations. The root qualification-store persistence chain has its own review.
+"""
+
+import copy
+import json
+import os
+import sys
+import tempfile
+import time
+from dataclasses import replace
+from pathlib import Path
+
+import httpx
+import pytest
+from karajan.adapters.opencode.go_journal import GoCallJournal, GoJournalError
+from karajan.projects.go_suite import FixedGoSuite
+from test_go_suite import credential, execution_start, fixture_response
+
+pytestmark = pytest.mark.skipif(sys.platform != "linux", reason="Real Linux native source")
+
+
+@pytest.fixture
+def case():
+    artifact = Path(os.environ["KARAJAN_OPENCODE_LINUX_BINARY"])
+    # Source/identity tests do not exercise host wall-clock adjustment. The
+    # suite and issued start share this explicit monotonic-relative test clock;
+    # the real durable journal retains its ordinary time.time expiry checks.
+    wall_origin, monotonic_origin = time.time(), time.monotonic()
+
+    def stable_clock():
+        return wall_origin + time.monotonic() - monotonic_origin
+
+    with tempfile.TemporaryDirectory(prefix="karajan-suite-review-", dir="/tmp") as directory:
+        root = Path(directory)
+        journal = GoCallJournal(root / "journal.sqlite")
+
+        def unexpected(_):
+            pytest.fail("An identity/failure test reached upstream")
+
+        suite = FixedGoSuite(
+            artifact,
+            root,
+            journal,
+            client_factory=lambda: httpx.Client(transport=httpx.MockTransport(unexpected)),
+            clock=stable_clock,
+        )
+        start = execution_start(suite)
+        start["started_at"] = stable_clock()
+        start["expires_at"] = start["started_at"] + 420
+        start["authentication_source"]["registered_at"] = start["started_at"] - 1
+        for scenario in start["scenarios"]:
+            scenario["grant_binding"]["expires_at"] = start["expires_at"]
+        yield suite, journal, start
+
+
+@pytest.mark.parametrize("field", ["project_id", "auth_ref", "generation", "source_id"])
+def test_all_credential_identity_axes_reject_before_grants_or_native(case, field):
+    suite, journal, start = case
+    mismatched = replace(credential(), **{field: "other-identity"})
+    with pytest.raises(ValueError, match="^FIXED_GO_START_BINDING_MISMATCH$"):
+        suite.observe(start, mismatched)
+    for item in start["scenarios"]:
+        with pytest.raises(GoJournalError, match="^GRANT_NOT_FOUND$"):
+            journal.snapshot(item["grant_id"])
+
+
+def test_conflicting_existing_grant_is_not_revoked_by_another_start(case):
+    suite, journal, start = case
+    scenario = start["scenarios"][0]
+    foreign_binding = {
+        **scenario["grant_binding"],
+        "qualification_id": "other-existing-qualification",
+        "attempt_id": "other-existing-attempt",
+    }
+    journal.create_grant(foreign_binding, grant_id=scenario["grant_id"])
+    result = suite.observe(start, credential())
+    assert result["status"] == "failed"
+    actual = journal.snapshot(scenario["grant_id"])
+    assert actual["binding"] == foreign_binding
+    assert actual["request_count"] == 0
+    assert actual["state"] == "active", result["grant_cleanup"]
+
+
+def test_lost_matching_capabilities_are_revoked_without_revealing_or_sending(case, monkeypatch):
+    suite, journal, start = case
+    for scenario in start["scenarios"]:
+        journal.create_grant(scenario["grant_binding"], grant_id=scenario["grant_id"])
+
+    def forbidden_reveal(_):
+        pytest.fail("Lost grant capability was incorrectly replaced with a new send authority")
+
+    monkeypatch.setattr(type(credential()), "reveal", forbidden_reveal)
+    result = suite.observe(start, credential())
+    assert result["status"] == "failed"
+    assert [item["status"] for item in result["scenarios"]] == ["not_run", "not_run"]
+    reopened = GoCallJournal(journal.path)
+    for scenario in start["scenarios"]:
+        grant = reopened.snapshot(scenario["grant_id"])
+        assert grant["state"] == "revoked"
+        assert grant["request_count"] == 0
+    with pytest.raises(ValueError, match="^NEW_CONTROLLER_DIRECTORY_REQUIRED$"):
+        suite.observe(start, credential())
+
+
+def test_observed_wall_clock_rollback_rejects_before_native_and_revokes_own_grants(case):
+    suite, journal, start = case
+    # Replay the actual 2.476722717-second local WSL regression at the suite's
+    # next validation boundary, after the initial validation has succeeded.
+    rollback = 2.4767227172851562
+    observed_now = iter((start["started_at"] + 0.01, start["started_at"] + 0.01 - rollback))
+    suite.clock = lambda: next(observed_now)
+    result = suite.observe(start, credential())
+    assert result["status"] == "failed"
+    assert result["reason_codes"] == ["FIXED_SUITE_EXECUTION_FAILED"]
+    assert result["error_type"] == "ValueError"
+    assert [item["status"] for item in result["scenarios"]] == ["not_run", "not_run"]
+    assert suite.source() == start["source"]
+    reopened = GoCallJournal(journal.path)
+    for scenario in start["scenarios"]:
+        grant = reopened.snapshot(scenario["grant_id"])
+        assert grant["state"] == "revoked"
+        assert grant["request_count"] == 0
+
+
+@pytest.mark.parametrize("change", ["caller_start", "controller_source", "source_unavailable"])
+def test_real_native_run_keeps_issued_start_and_rechecks_source_before_second_stage(case, change):
+    suite, journal, start = case
+    frozen = copy.deepcopy(start)
+    calls = [[], []]
+
+    def factory():
+        def receive(request):
+            current = [journal.snapshot(item["grant_id"]) for item in frozen["scenarios"]]
+            assert [item["binding"] for item in current] == [
+                item["grant_binding"] for item in frozen["scenarios"]
+            ]
+            denied = current[0]["state"] == "revoked"
+            scenario_calls = calls[1 if denied else 0]
+            scenario_calls.append(request)
+            if sum(map(len, calls)) == 1:
+                if change == "caller_start":
+                    start["scenarios"][1]["grant_binding"]["auth_generation"] = "caller-mutated"
+                    start["source"]["observation_origin"] = "official_go"
+                elif change == "controller_source":
+                    suite.work_root = suite.work_root / "changed-controller-source"
+                else:
+                    suite.runtime = suite.work_root / "missing-controller-runtime"
+            return fixture_response(len(scenario_calls), denied)
+
+        return httpx.Client(transport=httpx.MockTransport(receive), trust_env=False)
+
+    suite.client_factory = factory
+    result = suite.observe(start, credential())
+    assert result["source"] == frozen["source"]
+    assert result["qualification_scope"] == "fixed_native_tools_fixture"
+    assert result["runtime_tools_status"] == "not_run"
+    assert result["dispatch_eligible"] is False
+    assert result["provider_remote_stop"] == "unknown"
+    assert result["validation"]["budget"] == "unknown"
+    assert result["validation"]["context_capacity"] == "unknown"
+    assert credential().reveal() not in json.dumps(result)
+    if change == "caller_start":
+        assert result["status"] == "passed", result
+        assert [len(items) for items in calls] == [3, 2]
+    else:
+        assert result["status"] == "failed", result
+        assert (
+            "SUITE_SOURCE_CHANGED" if change == "controller_source" else "SUITE_SOURCE_UNAVAILABLE"
+        ) in result["reason_codes"]
+        assert [item["status"] for item in result["scenarios"]] == ["passed", "not_run"], (
+            json.dumps(result, indent=2)
+        )
+        assert [len(items) for items in calls] == [3, 0]
+    observed = result["scenarios"][0]["observation"]
+    assert observed["native_cleanup"]["local_stop"] == "confirmed"
+    assert observed["native_cleanup"]["namespace_init_stopped"] is True
+    assert observed["relay_cleanup"]["status"] == "closed"
+    for item in frozen["scenarios"]:
+        actual = journal.snapshot(item["grant_id"])
+        assert actual["state"] == "revoked"
+        assert actual["binding"] == item["grant_binding"]
+
+
+def test_real_native_receipt_numbers_cannot_disagree_with_durable_journal(case, monkeypatch):
+    from karajan.isolation.go_probe import observe_go_tools
+
+    suite, journal, start = case
+    count = 0
+
+    def receive(_):
+        nonlocal count
+        count += 1
+        return fixture_response(count, False)
+
+    suite.client_factory = lambda: httpx.Client(
+        transport=httpx.MockTransport(receive), trust_env=False
+    )
+
+    def changed_report(*args, **kwargs):
+        report = observe_go_tools(*args, **kwargs)
+        assert report["status"] == "passed", report
+        report["requests"][0]["response_bytes"] += 1
+        return report
+
+    monkeypatch.setattr("karajan.projects.go_suite.observe_go_tools", changed_report)
+    result = suite.observe(start, credential())
+    assert result["status"] == "failed", result
+    assert result["scenarios"][0]["reason_codes"] == ["JOURNAL_CALL_CORRELATION_FAILED"]
+    assert result["scenarios"][1]["status"] == "not_run"
+    assert count == 3
+    assert result["dispatch_eligible"] is False
+    reopened = GoCallJournal(journal.path)
+    for scenario in start["scenarios"]:
+        assert reopened.snapshot(scenario["grant_id"])["state"] == "revoked"

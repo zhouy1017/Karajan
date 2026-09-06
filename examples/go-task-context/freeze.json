@@ -1,0 +1,36 @@
+{
+  "schema_version": "karajan.go-task-context.freeze.v1",
+  "base_commit": "2996407a38a84d81ccb864964672134d321b8a73",
+  "provider_calls": 0,
+  "source_sha256": {
+    "backend/karajan/adapters/opencode/go_context.py": "ab351b634e38351bed631db97734d1e519fc7e4577b0fb094f2651fa112d0428",
+    "backend/karajan/adapters/opencode/go_relay.py": "2d90f224f0b33e04adc693c33ac58ffd3904296b596c5c23c155a65cab7c992a",
+    "backend/karajan/adapters/opencode/go_journal.py": "a63f3f4d314f2a64bdd9a4f8e7dd43b2c24d5bc9388a9404976e6200a05bbfdd",
+    "backend/karajan/projects/execution_policy.py": "e683da5cea3c62ac803f035a8c16cf26c60a4ad7fbfdbcc239e16061c1900b8f",
+    "backend/karajan/projects/registry.py": "8915ac500d896ee4896766ff6746de96df983828b0aa60b75c9935fbb5993c7b",
+    "backend/karajan/runs/routing_authorization.py": "5d49803ad9b5b9453a5869c1eb34bf20c3ac16ecd5e2bfb494d0e0191c3313a3",
+    ".github/scripts/provision_go_tokenizer.py": "afd80f999c5c32f570986eca36e3fe5c110b75a1283211f0b185f6d85483aff9",
+    ".github/workflows/ci.yml": "3ef10f76dff6c364905fedd6e3090b34b159d192d2c2ac49e4f799a269afc738",
+    "pyproject.toml": "742b5d13e58434979181dda15aeed9401e7e2c84fcbaddf432ab796869d12202",
+    "uv.lock": "4566e887f05b7295b4e2573a187f899c1d643eb1dac36669ff721be37e9a7c09",
+    "tests/adapters/opencode/test_go_context.py": "78746cd03d26499dbc0ef30e7274504fb14d65987307cb8457dfe03c6451f715",
+    "tests/adapters/opencode/test_go_relay_context.py": "b40f026fe62d2c262219db78b1d47848d7e7820d4ac16870baafef7707d1efea",
+    "tests/projects/test_execution_policy_v2.py": "00559611319d7b82e757c8aa2e0f52cc41d989d2b773b0b641713a74fcd580dd",
+    "tests/isolation/test_opencode_task_context.py": "3667a2e0b7b5f74059e7b3a87ea91b1fd7b5d977c2a0e91888974ad926fde79f",
+    "tests/tools/test_go_tokenizer_provision.py": "060f5497a6542f162b91f3d6e250e5e38c260f4160770e1f27acd9561ff09f7d"
+  },
+  "validation": {
+    "context_windows": "223 passed / 0 skipped, windows-final.xml",
+    "context_wsl": "223 passed / 0 skipped, wsl-final.xml",
+    "native_wsl": "2 passed / 0 skipped, native/final.xml",
+    "policy_windows": "266 passed / 0 skipped, policy/windows-final.xml",
+    "policy_wsl": "36 passed / 0 skipped, policy/wsl-final.xml",
+    "independent_windows": "19 passed / 0 skipped, independent-final.xml",
+    "ruff": "whole repository passed",
+    "mypy": "113 backend modules passed for win32 and linux",
+    "uv_lock": "offline --check passed",
+    "provision_https": "Windows public HTTPS download of all 3 fixed files verified; no provider/credentials",
+    "remote_ci": "pending new commit; not inferred from local tests"
+  },
+  "qualification": "not granted: approved Run execution/Collector/Reviewer integration remains outstanding"
+}

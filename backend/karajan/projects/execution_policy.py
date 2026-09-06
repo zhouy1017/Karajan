@@ -1,8 +1,8 @@
 """Explicit owner-fixed execution constraints; these records are not qualifications."""
 
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import ValidationError
+from pydantic import Field, ValidationError
 
 from karajan.contracts.probe import Contract
 from karajan.routing.compiler import RoutingError, digest, parse
@@ -20,8 +20,53 @@ class ContextPolicy(ProfileRef):
     reserved_output_tokens: Count
 
 
-class ExecutionPolicy(Contract):
-    schema_version: Literal["karajan.execution-policy.v1"]
+class ContextMeasurement(Contract):
+    method: Literal["reference_tokenizer_estimate"]
+    source_sha256: Digest
+    fixed_margin: Count
+    ratio_margin_basis_points: Annotated[Count, Field(le=10_000)]
+
+
+class MeasuredContextPolicy(ContextPolicy):
+    measurement: ContextMeasurement
+
+
+Argument = Annotated[str, Field(max_length=8192, pattern=r"^[^\x00]*$")]
+EnvironmentName = Annotated[
+    str, Field(min_length=1, max_length=128, pattern=r"^[A-Za-z_][A-Za-z0-9_]*$")
+]
+
+
+class ValidationCheck(ProfileRef):
+    argv: Annotated[list[Argument], Field(min_length=1, max_length=128)]
+    environment_ref: ProfileRef
+    timeout_seconds: Positive
+
+
+class ValidationEnvironment(ProfileRef):
+    runtime_kind: Identifier
+    platform: Literal["linux_x64", "windows_x64"]
+    source_sha256: Digest
+    filesystem: Literal["candidate_copy"]
+    network: Literal["none"]
+    env: Annotated[dict[EnvironmentName, Argument], Field(max_length=128)]
+    max_log_bytes: Positive
+
+
+class ValidationReview(ProfileRef):
+    id: Literal["independent_review"]
+    environment_ref: ProfileRef
+    context_policy: Literal["candidate_and_acceptance_only"]
+    independence_policy: Literal["existing_candidate_independence_v1"]
+
+
+class ValidationPolicy(ProfileRef):
+    checks: Annotated[list[ValidationCheck], Field(min_length=1, max_length=100)]
+    environments: Annotated[list[ValidationEnvironment], Field(min_length=1, max_length=100)]
+    review: ValidationReview
+
+
+class _ExecutionConstraints(Contract):
     id: Identifier
     revision: Positive
     configuration_digest: Digest
@@ -33,8 +78,24 @@ class ExecutionPolicy(Contract):
     max_context_tokens: Positive
 
 
+class ExecutionPolicy(_ExecutionConstraints):
+    schema_version: Literal["karajan.execution-policy.v1"]
+
+
+class ExecutionPolicyV2(_ExecutionConstraints):
+    schema_version: Literal["karajan.execution-policy.v2"]
+    context_policy: MeasuredContextPolicy
+    validation: ValidationPolicy
+
+
 def validate_policy(request: dict[str, Any], configuration: dict[str, Any]) -> dict[str, Any]:
-    policy = parse(ExecutionPolicy, request, "EXECUTION_POLICY_INVALID")
+    model = (
+        ExecutionPolicyV2
+        if isinstance(request, dict)
+        and request.get("schema_version") == "karajan.execution-policy.v2"
+        else ExecutionPolicy
+    )
+    policy = parse(model, request, "EXECUTION_POLICY_INVALID")
     if policy["configuration_digest"] != digest(configuration):
         raise RoutingError("EXECUTION_POLICY_CONFIGURATION_CHANGED")
     hard = policy["constraints"]
@@ -68,4 +129,40 @@ def validate_policy(request: dict[str, Any], configuration: dict[str, Any]) -> d
             path_parts(floor["prefix"])
     except (ValueError, ValidationError):
         raise RoutingError("EXECUTION_POLICY_RISK_PATH_INVALID") from None
+    if policy["schema_version"] == "karajan.execution-policy.v2":
+        _validate_validation(policy["validation"])
     return policy
+
+
+def _validate_validation(validation: dict[str, Any]) -> None:
+    checks = validation["checks"]
+    environments = validation["environments"]
+    names = [row["id"] for row in checks]
+    environment_names = [row["id"] for row in environments]
+    references = {(row["id"], row["revision"]) for row in environments}
+    consumers = [*checks, validation["review"]]
+    if (
+        len(set(names)) != len(names)
+        or "independent_review" in names
+        or len(set(environment_names)) != len(environment_names)
+        or any(not check["argv"][0].strip() for check in checks)
+        or any(
+            (row["environment_ref"]["id"], row["environment_ref"]["revision"]) not in references
+            for row in consumers
+        )
+        or any(
+            len({name.casefold() for name in row["env"]}) != len(row["env"]) for row in environments
+        )
+    ):
+        raise RoutingError("EXECUTION_POLICY_VALIDATION_INVALID")
+
+
+def policy_components(policy: dict[str, Any]) -> dict[tuple[str, str, int], dict[str, Any]]:
+    """Versioned component identities share the existing project policy ledger."""
+    rows = [(kind, policy[kind]) for kind in ("risk_policy", "tool_policy", "context_policy")]
+    if policy["schema_version"] == "karajan.execution-policy.v2":
+        validation = policy["validation"]
+        rows += [("validation", validation), ("validation.review", validation["review"])]
+        rows += [("validation.check", row) for row in validation["checks"]]
+        rows += [("validation.environment", row) for row in validation["environments"]]
+    return {(kind, row["id"], row["revision"]): row for kind, row in rows}

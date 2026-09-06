@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="5" time="1.544" timestamp="2026-09-06T17:10:51.599111+08:00" hostname="ProArt-Zhou"><testcase classname="tests.projects.test_credential_windows_owners" name="test_only_current_user_or_trusted_host_owners_can_hold_private_state[S-1-5-32-544-True]" time="0.205"><failure message="karajan.projects.credential_sources.CredentialSourceError: CREDENTIAL_PRIVATE_PERMISSIONS_INVALID">tests\projects\test_credential_windows_owners.py:66: in test_only_current_user_or_trusted_host_owners_can_hold_private_state
+    record = register(case)
+             ^^^^^^^^^^^^^^
+tests\projects\test_credential_sources.py:82: in register
+    return service(case).register(
+           ^^^^^^^^^^^^^
+tests\projects\test_credential_sources.py:73: in service
+    return CredentialSourceStore(
+backend\karajan\projects\credential_sources.py:248: in __init__
+    _private(self._directory, directory=True)
+backend\karajan\projects\credential_sources.py:199: in _private
+    _windows_private(path, directory=directory)
+backend\karajan\projects\credential_sources.py:169: in _windows_private
+    raise CredentialSourceError("CREDENTIAL_PRIVATE_PERMISSIONS_INVALID")
+E   karajan.projects.credential_sources.CredentialSourceError: CREDENTIAL_PRIVATE_PERMISSIONS_INVALID</failure></testcase><testcase classname="tests.projects.test_credential_windows_owners" name="test_only_current_user_or_trusted_host_owners_can_hold_private_state[S-1-5-18-True]" time="0.207"><failure message="karajan.projects.credential_sources.CredentialSourceError: CREDENTIAL_PRIVATE_PERMISSIONS_INVALID">tests\projects\test_credential_windows_owners.py:66: in test_only_current_user_or_trusted_host_owners_can_hold_private_state
+    record = register(case)
+             ^^^^^^^^^^^^^^
+tests\projects\test_credential_sources.py:82: in register
+    return service(case).register(
+           ^^^^^^^^^^^^^
+tests\projects\test_credential_sources.py:73: in service
+    return CredentialSourceStore(
+backend\karajan\projects\credential_sources.py:248: in __init__
+    _private(self._directory, directory=True)
+backend\karajan\projects\credential_sources.py:199: in _private
+    _windows_private(path, directory=directory)
+backend\karajan\projects\credential_sources.py:169: in _windows_private
+    raise CredentialSourceError("CREDENTIAL_PRIVATE_PERMISSIONS_INVALID")
+E   karajan.projects.credential_sources.CredentialSourceError: CREDENTIAL_PRIVATE_PERMISSIONS_INVALID</failure></testcase><testcase classname="tests.projects.test_credential_windows_owners" name="test_only_current_user_or_trusted_host_owners_can_hold_private_state[S-1-5-32-545-False]" time="0.202" /><testcase classname="tests.projects.test_credential_windows_owners" name="test_only_current_user_or_trusted_host_owners_can_hold_private_state[S-1-1-0-False]" time="0.211" /><testcase classname="tests.projects.test_credential_windows_owners" name="test_native_default_owner_and_private_registration_are_compatible" time="0.532" /></testsuite></testsuites>

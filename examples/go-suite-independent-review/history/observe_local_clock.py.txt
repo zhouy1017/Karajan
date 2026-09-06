@@ -1,0 +1,16 @@
+import json,time
+from pathlib import Path
+samples=[]
+end=time.monotonic()+30
+previous_wall=time.time()
+previous_mono=time.monotonic()
+while time.monotonic()<end:
+    time.sleep(0.02)
+    wall=time.time(); mono=time.monotonic()
+    wall_delta=wall-previous_wall; mono_delta=mono-previous_mono
+    if wall_delta<0 or abs(wall_delta-mono_delta)>0.1:
+        samples.append({'previous_wall':previous_wall,'wall':wall,'wall_delta':wall_delta,'monotonic_delta':mono_delta})
+    previous_wall=wall; previous_mono=mono
+record={'scope':'local WSL clock observation only; no provider effects','seconds':30,'clock_anomalies':samples}
+Path('.cache/go-suite-independent-review/wsl-clock-observation.json').write_text(json.dumps(record,indent=2)+'\n')
+print(json.dumps(record))

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="6" time="15.854" timestamp="2026-09-06T16:11:40.554741+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_all_credential_identity_axes_reject_before_grants_or_native[project_id]" time="1.985" /><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_all_credential_identity_axes_reject_before_grants_or_native[auth_ref]" time="1.988" /><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_all_credential_identity_axes_reject_before_grants_or_native[generation]" time="1.979" /><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_all_credential_identity_axes_reject_before_grants_or_native[source_id]" time="1.975" /><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_conflicting_existing_grant_is_not_revoked_by_another_start" time="2.953"><failure message="AssertionError: [{'grant_id': 'grant-edit', 'state': 'revoked'}, {'grant_id': 'grant-denied_read', 'state': 'not_created'}]&#10;assert 'revoked' == 'active'&#10;  &#10;  - active&#10;  + revoked">case = (&lt;karajan.projects.go_suite.FixedGoSuite object at 0x7456798c95b0&gt;, &lt;karajan.adapters.opencode.go_journal.GoCallJourna...path': 'subscription_only', 'approved_data_destination': True}, 'repository': {'root': 'unused-by-fixed-suite'}}, ...})
+
+    def test_conflicting_existing_grant_is_not_revoked_by_another_start(case):
+        suite, journal, start = case
+        scenario = start["scenarios"][0]
+        foreign_binding = {
+            **scenario["grant_binding"],
+            "qualification_id": "other-existing-qualification",
+            "attempt_id": "other-existing-attempt",
+        }
+        journal.create_grant(foreign_binding, grant_id=scenario["grant_id"])
+        result = suite.observe(start, credential())
+        assert result["status"] == "failed"
+        actual = journal.snapshot(scenario["grant_id"])
+        assert actual["binding"] == foreign_binding
+        assert actual["request_count"] == 0
+&gt;       assert actual["state"] == "active", result["grant_cleanup"]
+E       AssertionError: [{'grant_id': 'grant-edit', 'state': 'revoked'}, {'grant_id': 'grant-denied_read', 'state': 'not_created'}]
+E       assert 'revoked' == 'active'
+E         
+E         - active
+E         + revoked
+
+.cache/go-suite-independent-review/test_go_suite_review.py:67: AssertionError</failure></testcase><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_lost_matching_capabilities_are_revoked_without_revealing_or_sending" time="3.902" /></testsuite></testsuites>
