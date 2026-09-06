@@ -1,0 +1,6 @@
+python -m ruff check backend/karajan/execution/host.py tests/execution/test_capture_fence.py
+All checks passed!
+python -m ruff format --check backend/karajan/execution/host.py tests/execution/test_capture_fence.py
+2 files already formatted
+python -m mypy backend/karajan/execution/host.py
+Success: no issues found in 1 source file

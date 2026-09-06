@@ -10,6 +10,7 @@ import os
 import sqlite3
 import stat
 import subprocess
+import tempfile
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
@@ -429,6 +430,19 @@ class CandidateStore:
 
     def materialize_baseline(self, baseline_id: str, destination: Path) -> dict[str, Any]:
         """Restore a registered baseline without consulting the source repository."""
+        baseline = self.get_baseline(baseline_id)
+        target = self._materialize(baseline["manifest"], destination)
+        return {
+            "baseline_id": baseline_id,
+            "repository_identity": baseline["repository_identity"],
+            "base_sha": baseline["base_sha"],
+            "tree_sha": baseline["tree_sha"],
+            "manifest_sha256": manifest_digest(baseline["manifest"]),
+            "directory": str(target),
+        }
+
+    def get_baseline(self, baseline_id: str) -> dict[str, Any]:
+        """Read a detached baseline and verify its persisted content identity."""
         if not isinstance(baseline_id, str):
             raise CandidateError("BASELINE_INVALID")
         with self._connection() as connection:
@@ -449,8 +463,46 @@ class CandidateStore:
                 raise CandidateError("BASELINE_INVALID")
         except (KeyError, TypeError, ValueError, AttributeError):
             raise CandidateError("BASELINE_INVALID") from None
-        target = self._materialize(baseline["manifest"], destination)
-        return {"baseline_id": baseline_id, **identity, "directory": str(target)}
+        return dict(baseline)
+
+    def freeze_projection(
+        self,
+        projection: list[dict[str, Any]],
+        contents: dict[str, bytes],
+        request: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Merge trusted stopped file bytes with the complete registered baseline.
+
+        This is a controller port, like freeze: it grants no Run or writer
+        authority. Its caller must observe actual stop and hold its current
+        fence guard through this call. No model report or mutable native path
+        is accepted as the source of the changed bytes.
+        """
+        from ._projection import prepare_projection
+
+        try:
+            spec = Freeze.model_validate(request)
+        except ValidationError:
+            raise CandidateError("FREEZE_INPUT_INVALID") from None
+        if not spec.writer.stopped or not any(
+            author.attempt_id == spec.writer.attempt_id and author.fence == spec.writer.fence
+            for author in spec.authors
+        ):
+            raise CandidateError("WRITER_STOP_NOT_CONFIRMED")
+        baseline = self.get_baseline(spec.baseline_id)
+        prepared = prepare_projection(projection, contents, baseline, spec.allowed_paths)
+        # A fresh controller-only sibling avoids the native workspace and the
+        # CandidateStore's own database/artifacts. The ordinary freeze path
+        # retains its content identities, replay and validation semantics.
+        self._reject_links(self.directory.parent, "DESTINATION_LINK_UNSUPPORTED")
+        with tempfile.TemporaryDirectory(
+            prefix="karajan-projection-", dir=self.directory.parent
+        ) as directory:
+            target = Path(directory) / "workspace"
+            self._materialize(baseline["manifest"], target)
+            for path, content in prepared.items():
+                (target / path).write_bytes(content)
+            return self.freeze(target, spec.model_dump())
 
     @staticmethod
     def _reject_links(path: Path, code: str) -> None:

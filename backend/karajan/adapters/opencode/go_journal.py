@@ -100,6 +100,24 @@ class _GrantBinding(_CommonGrantBinding):
     qualification_id: _Identifier
 
 
+class GoQualificationLimits(Contract):
+    """Content-free fixed probe limits; these do not authorize any Task."""
+
+    source_sha256: _Digest
+    approved_input_tokens: Annotated[int, Field(gt=0, le=1_000_000)]
+    reserved_output_tokens: Annotated[int, Field(gt=0, le=131_072)]
+    operating_context_tokens: Annotated[int, Field(gt=0, le=1_000_000)]
+    fixed_margin: Annotated[int, Field(ge=0, le=1_000_000)]
+    ratio_margin_basis_points: Annotated[int, Field(ge=0, le=10_000)]
+
+
+class _QualificationGrantV2(_GrantBinding):
+    schema_version: Literal["karajan.go-qualification-grant.v2"]
+    probe_spec_digest: _Digest
+    scenario: Literal["edit", "denied_read"]
+    context: GoQualificationLimits
+
+
 class _TaskSubject(Contract):
     kind: Literal["task_attempt"]
     project_id: Identifier
@@ -175,6 +193,8 @@ def _encoded(value: object) -> str:
 def _binding(value: object) -> dict[str, Any]:
     if isinstance(value, dict) and "subject" in value:
         return _validated(_TaskGrantBinding, value)
+    if isinstance(value, dict) and "schema_version" in value:
+        return _validated(_QualificationGrantV2, value)
     legacy = _validated(_GrantBinding, value)
     # Preserve the legacy public shape and key order, including canonical JSON
     # used to authenticate grants already persisted by earlier versions.
@@ -326,6 +346,11 @@ class GoCallJournal:
                 if old.get("request_context") != context:
                     raise GoJournalError("CALL_CONTEXT_CONFLICT")
                 return {"send_allowed": False, "receipt": old}
+            if value.get("schema_version") == "karajan.go-qualification-grant.v2":
+                if context is None:
+                    raise GoJournalError("QUALIFICATION_CONTEXT_REQUIRED")
+                if any(context[key] != expected for key, expected in value["context"].items()):
+                    raise GoJournalError("QUALIFICATION_CONTEXT_MISMATCH")
             now = self._now()
             if grant["revoked_at"] is not None:
                 raise GoJournalError("GRANT_REVOKED")

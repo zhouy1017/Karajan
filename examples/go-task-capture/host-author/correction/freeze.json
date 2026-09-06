@@ -1,0 +1,50 @@
+{
+  "schema_version": "karajan.capture-fence.author-correction.v1",
+  "base": "1534825",
+  "issue": "HOST-CAPTURE-001",
+  "sources": {
+    "backend/karajan/execution/host.py": "d59de810fc5113b8e2f0d350a8446d0838244965083ce7cb19da7222b1edc184",
+    "tests/execution/test_capture_fence.py": "a3f3874791e3a160f0e3c6a48c267a6ad29c07a89df18a9edf6b1d62c9ba6138"
+  },
+  "prior_freeze": "../freeze.json",
+  "prior_host_sha256": "dff2612c876e079d89225e6f5010d8ecedaa585a8d153fdb92c01c073491f6b1",
+  "independent_red": "../../host-capture-review/missing-ledger-before.xml",
+  "results": {
+    "author-red.xml": {
+      "tests": 3,
+      "failures": 2,
+      "skipped": 0,
+      "seconds": 0.173,
+      "sha256": "ba14b133021e54dd247cf990d6cd23fa0c00fe643761c893dea7439f630d11c9"
+    },
+    "ledger-green.xml": {
+      "tests": 4,
+      "failures": 0,
+      "skipped": 0,
+      "seconds": 0.156,
+      "sha256": "1d25d5e5fabc35af2fbb871dc7e9cb11806c5ef5ac87a9b945a00418023d9539"
+    },
+    "windows-final.xml": {
+      "tests": 65,
+      "failures": 0,
+      "skipped": 0,
+      "seconds": 16.523,
+      "sha256": "7af8aa2406aaa1f44e1cb86a6adb8a2d4cecc229d86e2f6ef58ff418374cd604"
+    },
+    "wsl-final.xml": {
+      "tests": 21,
+      "failures": 0,
+      "skipped": 0,
+      "seconds": 8.529,
+      "sha256": "bc8f7e281170978ecf853b8218993743346fad11ce7ef56c1020ebb275cac65f"
+    }
+  },
+  "static": {
+    "format": "passed",
+    "mypy_host": "passed",
+    "ruff": "passed"
+  },
+  "provider_calls": 0,
+  "credential_reads": 0,
+  "independent_review": false
+}

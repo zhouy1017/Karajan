@@ -14,6 +14,8 @@ import time
 from pathlib import Path
 from typing import Any
 
+from ._opencode_capture import ProjectionPins
+from ._opencode_capture import StoppedProjection as StoppedProjection
 from ._opencode_inner import register_session, validate_request
 from ._opencode_projection import projection_files, verify_projected_file
 
@@ -67,6 +69,8 @@ class IsolatedOpenCode:
     _request_lock: threading.RLock
     _lifecycle_lock: threading.RLock
     _close_lock: threading.RLock
+    _projection: list[dict[str, Any]] | None
+    _started_successfully: bool
 
     def __init__(
         self,
@@ -96,6 +100,7 @@ class IsolatedOpenCode:
         self.directory.mkdir(mode=0o700)
         self.workspace = self.directory / "workspace"
         self.workspace.mkdir(mode=0o700)
+        self._owned_workspace = self.workspace
         self.capability = capability
         self.model_id = model_id
         self._process: subprocess.Popen[bytes] | None = None
@@ -113,6 +118,11 @@ class IsolatedOpenCode:
         self._init_pidfd: int | None = None
         self._init_identity: dict[str, Any] | None = None
         self._observed: dict[int, dict[str, Any]] = {}
+        self._capture_pins: ProjectionPins | None = None
+        self._started_successfully = False
+        self._started_namespace: str | None = None
+        self._captured: StoppedProjection | None = None
+        self._capture_failure: str | None = None
 
     def start(self) -> dict[str, Any]:
         if sys.platform != "linux":
@@ -140,6 +150,10 @@ class IsolatedOpenCode:
                 projection = [{"path": "fixture.py", "sha256": content_digest, "writable": True}]
             for row in projection:
                 verify_projected_file(self.workspace, row)
+            if self._projection is not None:
+                if self.workspace != self._owned_workspace:
+                    raise ValueError("PROJECTION_CAPTURE_IDENTITY_CHANGED")
+                self._capture_pins = ProjectionPins(self._owned_workspace, projection)
             with (self.directory / "projection.json").open("x", encoding="utf-8") as stream:
                 json.dump(projection, stream, allow_nan=False)
             outer, inner = socket.socketpair()
@@ -191,6 +205,8 @@ class IsolatedOpenCode:
                 self._init_pidfd = os.pidfd_open(self._init_identity["pid"])
                 if _birth(self._init_identity["pid"]) != self._init_identity["birth"]:
                     raise OSError("NAMESPACE_INIT_IDENTITY_CHANGED")
+                self._started_namespace = os.readlink(f"/proc/{self._init_identity['pid']}/ns/pid")
+                self._started_successfully = True
             return self.snapshot()
         except BaseException:
             if inner is not None:
@@ -198,6 +214,8 @@ class IsolatedOpenCode:
             if outer is not None:
                 outer.close()
             self.close()
+            if self._capture_pins is not None:
+                self._capture_pins.close()
             raise
 
     def _send(self, value: dict[str, Any], control: socket.socket) -> None:
@@ -275,6 +293,47 @@ class IsolatedOpenCode:
     def close(self) -> dict[str, Any]:
         with self._close_lock:
             return self._close()
+
+    def capture_projection(self) -> StoppedProjection:
+        """Stop our successful explicit projection, then capture its pinned bytes.
+
+        No caller-supplied stop receipt or workspace is accepted. This does not
+        attest a Run, Attempt or fence: a trusted consumer must check that authority.
+        A successful immutable snapshot is retained without rereading host files.
+        """
+        with self._close_lock:
+            if self._captured is not None:
+                return self._captured
+            if self._capture_failure is not None:
+                raise ValueError(self._capture_failure)
+            if self._projection is None:
+                raise ValueError("EXPLICIT_PROJECTION_REQUIRED")
+            if not self._started_successfully or self._capture_pins is None:
+                raise ValueError("PROJECTION_CAPTURE_NOT_STARTED")
+            pins = self._capture_pins
+            try:
+                stopped = self._close()
+                init = self._init_identity
+                if (
+                    stopped["local_stop"] != "confirmed"
+                    or init is None
+                    or self._process is None
+                    or self._process.poll() is None
+                    or _birth(init["pid"]) == init["birth"]
+                    or self._started_namespace is None
+                    or _namespace_processes(self._started_namespace)
+                    or any(_birth(item["pid"]) == item["birth"] for item in self._observed.values())
+                ):
+                    raise ValueError("PROJECTION_CAPTURE_STOP_UNCONFIRMED")
+                self._captured = pins.capture(RUNTIME_SHA256, stopped)
+                return self._captured
+            except (OSError, ValueError) as error:
+                self._capture_failure = (
+                    str(error) if isinstance(error, ValueError) else "PROJECTION_CAPTURE_IO_FAILED"
+                )
+                raise ValueError(self._capture_failure) from None
+            finally:
+                pins.close()
 
     def _close(self) -> dict[str, Any]:
         if sys.platform != "linux":

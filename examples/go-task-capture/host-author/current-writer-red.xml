@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.409" timestamp="2026-09-06T18:55:06.244422+08:00" hostname="ProArt-Zhou"><testcase classname="tests.execution.test_capture_fence" name="test_capture_can_hold_current_identity_while_the_trusted_writer_is_still_running" time="0.249"><failure message="AttributeError: 'RunnerHost' object has no attribute 'current_fence_guard'">writer = (&lt;karajan.execution.host.RunnerHost object at 0x0000029B240F7C20&gt;, AttemptManifest(id='attempt-local-1', fence=1, role...1', fence=1, authorization_ref='authorization-test-1', budget_ref='budget-fixture-only', expires_at=1788692166.381279))
+
+    def test_capture_can_hold_current_identity_while_the_trusted_writer_is_still_running(writer):
+        host, attempt, activation = writer
+        before = host.inspect(attempt.id)
+&gt;       with host.current_fence_guard(
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+            attempt.id, fence=attempt.fence, authorization_ref=attempt.authorization_ref
+        ) as current:
+E       AttributeError: 'RunnerHost' object has no attribute 'current_fence_guard'
+
+tests\execution\test_capture_fence.py:37: AttributeError</failure></testcase></testsuite></testsuites>
