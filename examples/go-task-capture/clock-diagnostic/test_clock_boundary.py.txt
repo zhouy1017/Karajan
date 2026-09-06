@@ -15,7 +15,9 @@ from karajan.adapters.opencode.go_journal import GoCallJournal
 from karajan.projects.go_suite import FixedGoSuite
 from test_go_suite import credential, execution_start
 
-pytestmark = pytest.mark.skipif(sys.platform != "linux", reason="Fixed source descriptor uses Linux")
+pytestmark = pytest.mark.skipif(
+    sys.platform != "linux", reason="Fixed source descriptor uses Linux"
+)
 
 
 class ObserverReached(Exception):

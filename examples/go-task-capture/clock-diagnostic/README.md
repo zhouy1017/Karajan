@@ -32,7 +32,8 @@ grant creation and the derived start, the public suite returns the original two
 `not_run` statuses, never enters the observer, and revokes both unused grants.
 With a stable clock, it reaches the sentinel and marks the first scenario `failed`.
 This distinguishes a time guard rejection from an observer/assertion failure.
-Both cases passed in **8.88 seconds**. No native process or provider was started.
+Both final portable cases passed in **8.95 seconds** (the initial replay passed in
+8.88 seconds). No native process or provider was started.
 
 Files intended for publication are this README, `report.json`,
 `test_clock_boundary.py` and `final.xml`. The report contains only allowlisted
