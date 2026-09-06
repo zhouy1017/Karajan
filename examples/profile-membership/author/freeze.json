@@ -1,0 +1,139 @@
+{
+  "base": "3d47194147edf153a0a48a183b34ff7222d674d4",
+  "commands": [
+    "PYTHONPATH=backend python -m pytest tests/routing -q",
+    "python -m ruff check backend/karajan/routing/evaluator.py backend/karajan/routing/__init__.py tests/routing/test_profile_membership.py",
+    "python -m ruff format --check backend/karajan/routing/evaluator.py backend/karajan/routing/__init__.py tests/routing/test_profile_membership.py",
+    "PYTHONPATH=backend python -m mypy backend/karajan/routing"
+  ],
+  "current_head_ci": "pending",
+  "evidence": {
+    "README.md": {
+      "bytes": 5574,
+      "sha256": "0b60d3a7e33fa32f6e3632b2eadd033c4b49e211b72c21e56152e30c7e7eb9ac"
+    },
+    "boundaries.xml": {
+      "bytes": 5433,
+      "sha256": "fb44913eb1c94b6ee2818079caab28eff819b83afc07cb8ed240b420791a4961"
+    },
+    "evaluator-before.py.txt": {
+      "bytes": 15076,
+      "sha256": "6061dad8118d0166c289e099132447709692171c10ba244e06c654f8ff938a32"
+    },
+    "final-complete-windows.xml": {
+      "bytes": 24545,
+      "sha256": "6f76194808672261f2598ee48c550c0fcb71e29c76256c6c07abf31083d8d230"
+    },
+    "final-linux.xml": {
+      "bytes": 24545,
+      "sha256": "47e841805d0831a5bb4c7da42215640c2af645f58deade772ece71a77e1cfc34"
+    },
+    "final-windows.xml": {
+      "bytes": 24391,
+      "sha256": "34c0103c175f4b206af0e523f554aef6efd3eff23221ae024ed20c64e8395676"
+    },
+    "first-green.xml": {
+      "bytes": 396,
+      "sha256": "d85ccda6eaf7535ed20b70705cb01b67abfd7cf8055613ba24a0e3bce2a5b765"
+    },
+    "first-red.xml": {
+      "bytes": 1207,
+      "sha256": "dd0fa4ded4efa0842ec9ff35245e7c2a6638cb262896b693b71b91d869ce92dc"
+    },
+    "first-routing-regression.xml": {
+      "bytes": 19355,
+      "sha256": "ff6e5c5a8a6ef9e466ff3ef1bf6f1ea9c712f64e5ddb0cab8a05f08d655d2f5d"
+    },
+    "legacy-comparison.json": {
+      "bytes": 36,
+      "sha256": "576b874489d3f74fa4ea3794f4bdf8d51669578df1a446e3f11e324ab0a94ee6"
+    },
+    "legacy-results-before.json": {
+      "bytes": 623902,
+      "sha256": "9456aebb558374412231284f0bec7a4b4d932124e69198e83b185438e7ae4307"
+    },
+    "membership-example.json": {
+      "bytes": 23625,
+      "sha256": "140e4d0f7892eabddecf3249297d5467d1b825267122def2ec0d9abfa1b45e1c"
+    },
+    "test-first.py.txt": {
+      "bytes": 1218,
+      "sha256": "296cc5108936b841ffaeaa244e8559f6bc6a39475e4f3561aaa54b799bb4acfa"
+    }
+  },
+  "implementation_commit": null,
+  "independent_review": "pending",
+  "issue": 99,
+  "legacy_complete_result_comparisons": 14,
+  "legacy_differences": 0,
+  "owned": {
+    "backend/karajan/routing/__init__.py": {
+      "bytes": 535,
+      "sha256": "55e8b3282ac94ca19ffb81e8628be3c784b87b93067c2462f02b4b8934058019"
+    },
+    "backend/karajan/routing/evaluator.py": {
+      "bytes": 18907,
+      "sha256": "002b2e16a91ffe11e9f3f11b74ca141ced721cf49b6e35f701901615c8325b3f"
+    },
+    "tests/routing/test_profile_membership.py": {
+      "bytes": 10182,
+      "sha256": "28d1477a758eb7302c624d44af3eed09ff50edc114cfc6e81ca6e58ae5dd6a0f"
+    }
+  },
+  "provider_calls": 0,
+  "qualification_granted": false,
+  "results": {
+    "boundaries.xml": {
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "32",
+      "time": "0.218"
+    },
+    "final-complete-windows.xml": {
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "156",
+      "time": "1.573"
+    },
+    "final-linux.xml": {
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "156",
+      "time": "5.513"
+    },
+    "first-green.xml": {
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "1",
+      "time": "0.138"
+    },
+    "first-red.xml": {
+      "errors": "1",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "1",
+      "time": "0.292"
+    }
+  },
+  "schema_version": "karajan.author-freeze.v1",
+  "scope": "C: pure supplied-facts profile membership, no selection or capacity; old route/reserved compatibility",
+  "static_checks": {
+    "diff_check": "passed",
+    "format": "passed",
+    "mypy": "9 routing source files passed",
+    "ruff": "passed"
+  },
+  "support": {
+    "backend/karajan/routing/__main__.py": "30607a3cdd15dd1d7e31731fa32262cdcf34f956c02929779836b9195fabc663",
+    "backend/karajan/routing/compiler.py": "11f1e504b04ac0fa596583e1210f456890b9c79622c3fb5f94e941c57b35daa8",
+    "backend/karajan/routing/fixture.py": "491ecf20a6b5efd1dc0cc9386a3513607b467eef3ffccfcc76d0b3afa2269bec",
+    "backend/karajan/routing/models.py": "b62e9e3c74b2053c336a656850f88f9cc8425dbab8553d4e86efa59314e919ef",
+    "backend/karajan/routing/quotas.py": "1f076247aef141cb2f0725f14c14801f9239034c7ad12b1458876c31af4d9a05",
+    "backend/karajan/routing/ranking.py": "c1b8dfe7464834af3d8ca0b852059b006ec857065ab663cb31fc7f5087c8a99a",
+    "backend/karajan/routing/selection.py": "dc85fa0954317be29ff831fcb1689266f6a8b6fb5a2511cdc82c0342eee2ae12"
+  }
+}

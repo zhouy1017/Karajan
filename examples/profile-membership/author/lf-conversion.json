@@ -1,0 +1,47 @@
+{
+  "schema_version": "karajan.line-ending-conversion.v1",
+  "scope": "Only three #99 owned source/test files, CRLF to LF; no semantic change",
+  "prior_freeze": ".cache/profile-membership-author/freeze.json",
+  "prior_freeze_sha256": "fca88e2b93c2ddf8ed0a298c6752d455ef47133ded6cc8b766b830b7a2635646",
+  "files": [
+    {
+      "path": "backend/karajan/routing/evaluator.py",
+      "original_archive": ".cache/profile-membership-author/history-crlf/evaluator.py.txt",
+      "before_sha256": "002b2e16a91ffe11e9f3f11b74ca141ced721cf49b6e35f701901615c8325b3f",
+      "after_sha256": "4a7b320ee0a8e9c8a40ab4dffaa524ac9130b2665a0e532065679b59353f1b59",
+      "before_bytes": 18907,
+      "after_bytes": 18473,
+      "before_crlf": 434,
+      "after_crlf": 0,
+      "ast_equal": true,
+      "changed": true
+    },
+    {
+      "path": "backend/karajan/routing/__init__.py",
+      "original_archive": ".cache/profile-membership-author/history-crlf/__init__.py.txt",
+      "before_sha256": "55e8b3282ac94ca19ffb81e8628be3c784b87b93067c2462f02b4b8934058019",
+      "after_sha256": "1a11ca32e11f0a542337b6facf58473644626199549a9465975aea7d3297650b",
+      "before_bytes": 535,
+      "after_bytes": 519,
+      "before_crlf": 16,
+      "after_crlf": 0,
+      "ast_equal": true,
+      "changed": true
+    },
+    {
+      "path": "tests/routing/test_profile_membership.py",
+      "original_archive": ".cache/profile-membership-author/history-crlf/test_profile_membership.py.txt",
+      "before_sha256": "28d1477a758eb7302c624d44af3eed09ff50edc114cfc6e81ca6e58ae5dd6a0f",
+      "after_sha256": "28d1477a758eb7302c624d44af3eed09ff50edc114cfc6e81ca6e58ae5dd6a0f",
+      "before_bytes": 10182,
+      "after_bytes": 10182,
+      "before_crlf": 0,
+      "after_crlf": 0,
+      "ast_equal": true,
+      "changed": false
+    }
+  ],
+  "prior_evidence_preserved": true,
+  "tests_repeated": false,
+  "next_verification": "Root independent routing 156 and 14 complete baseline comparisons on final LF source"
+}
