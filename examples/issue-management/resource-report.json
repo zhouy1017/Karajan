@@ -1,0 +1,396 @@
+{
+  "schema_version": "karajan.resource_probe.report.v1",
+  "case_id": "local-parent-slice-and-unknown-send",
+  "status": "passed",
+  "qualification_scope": "offline_local_fake",
+  "live_qualified": false,
+  "cash_api_enabled": false,
+  "observed_at": "2026-09-06T11:30:04.134439+00:00",
+  "os": "win32",
+  "python_version": "3.12.14",
+  "scenario": {
+    "schema_version": "karajan.resources.probe.v1",
+    "currency": "USD",
+    "account_limit": "10",
+    "contending_parent": "3",
+    "call_upper": "2",
+    "first_actual_charge": "2",
+    "late_actual_charge": "1"
+  },
+  "conditions": {
+    "one_admitted_one_rejected": true,
+    "only_one_first_request_received": true,
+    "parent_not_double_charged": true,
+    "actual_child_exit": true,
+    "unknown_retained": true,
+    "no_retransmission": true,
+    "duplicate_usage_coalesced": true,
+    "late_charge_recorded": true
+  },
+  "contending_snapshot": {
+    "schema_version": "karajan.resources.snapshot.v1",
+    "money_decimal_places": 6,
+    "qualification_scope": "offline_local_fake",
+    "live_qualified": false,
+    "cash_api_enabled": false,
+    "budgets": {
+      "USD": {
+        "limit": "10.000000",
+        "held": "3.000000",
+        "available": "7.000000"
+      }
+    },
+    "attempts": [
+      {
+        "id": "contending",
+        "state": "active",
+        "future": "1.000000",
+        "reserved": "3.000000",
+        "currency": "USD",
+        "authorization_id": "fixture-auth",
+        "fence": 1,
+        "authorization_expires_at": 1788694323.9874387,
+        "profile": {
+          "id": "local-fixture-profile-r1",
+          "model": "synthetic-model",
+          "endpoint": "http://127.0.0.1:62353/infer",
+          "price": {
+            "revision": "local-flat-price-r1",
+            "currency": "USD",
+            "fixed_charge": "2",
+            "input_byte_rate": "0",
+            "output_token_rate": "0",
+            "covers_all_charges": true,
+            "valid_until": 1788694323.9874387
+          },
+          "logical_id_evidence_ref": null,
+          "billing_path": "local_fake"
+        },
+        "profile_digest": "d60c45674cffbabca64cd05629b468d5797e2f02c43a9ee66dc1d6a9d8d9ee7e"
+      }
+    ],
+    "calls": [
+      {
+        "id": "f9e307d5-830a-438a-a527-0c60d7b613ef",
+        "state": "settled",
+        "upper": "2.000000",
+        "attempt_id": "contending",
+        "price_revision": "local-flat-price-r1",
+        "provider_request_id": "fake:f9e307d5-830a-438a-a527-0c60d7b613ef",
+        "logical_call_id": null,
+        "request_digest": "6bd16aef9e8b41a9544df068aff83acc1873a9f18e9e9f2d025cc6d10d61a73e",
+        "bound_exceeded": false,
+        "input_bytes": 9,
+        "max_output_tokens": 1,
+        "actual_charge": "2.000000"
+      }
+    ],
+    "receipts": [
+      {
+        "id": "35b330c4-7e19-4c30-a104-92ff181022a4",
+        "call_id": "f9e307d5-830a-438a-a527-0c60d7b613ef",
+        "attempt_id": "contending",
+        "reason_code": null
+      },
+      {
+        "id": "ca36af5b-245b-4e2d-8de6-ca83edd1c4c8",
+        "call_id": null,
+        "attempt_id": "contending",
+        "reason_code": "BUDGET_EXHAUSTED"
+      }
+    ],
+    "usage": [
+      {
+        "event_id": "fake-usage:f9e307d5-830a-438a-a527-0c60d7b613ef",
+        "call_id": "f9e307d5-830a-438a-a527-0c60d7b613ef",
+        "currency": "USD",
+        "actual_units": 2000000,
+        "provider_request_id": "fake:f9e307d5-830a-438a-a527-0c60d7b613ef"
+      }
+    ]
+  },
+  "unknown_before_reconciliation": {
+    "schema_version": "karajan.resources.snapshot.v1",
+    "money_decimal_places": 6,
+    "qualification_scope": "offline_local_fake",
+    "live_qualified": false,
+    "cash_api_enabled": false,
+    "budgets": {
+      "USD": {
+        "limit": "10.000000",
+        "held": "4.000000",
+        "available": "6.000000"
+      }
+    },
+    "attempts": [
+      {
+        "id": "contending",
+        "state": "finished",
+        "future": "0.000000",
+        "reserved": "3.000000",
+        "currency": "USD",
+        "authorization_id": "fixture-auth",
+        "fence": 1,
+        "authorization_expires_at": 1788694323.9874387,
+        "profile": {
+          "id": "local-fixture-profile-r1",
+          "model": "synthetic-model",
+          "endpoint": "http://127.0.0.1:62353/infer",
+          "price": {
+            "revision": "local-flat-price-r1",
+            "currency": "USD",
+            "fixed_charge": "2",
+            "input_byte_rate": "0",
+            "output_token_rate": "0",
+            "covers_all_charges": true,
+            "valid_until": 1788694323.9874387
+          },
+          "logical_id_evidence_ref": null,
+          "billing_path": "local_fake"
+        },
+        "profile_digest": "d60c45674cffbabca64cd05629b468d5797e2f02c43a9ee66dc1d6a9d8d9ee7e"
+      },
+      {
+        "id": "unknown",
+        "state": "finished",
+        "future": "0.000000",
+        "reserved": "4.000000",
+        "currency": "USD",
+        "authorization_id": "fixture-auth",
+        "fence": 1,
+        "authorization_expires_at": 1788694324.0114872,
+        "profile": {
+          "id": "local-fixture-profile-r1",
+          "model": "synthetic-model",
+          "endpoint": "http://127.0.0.1:62353/infer",
+          "price": {
+            "revision": "local-flat-price-r1",
+            "currency": "USD",
+            "fixed_charge": "2",
+            "input_byte_rate": "0",
+            "output_token_rate": "0",
+            "covers_all_charges": true,
+            "valid_until": 1788694323.9874387
+          },
+          "logical_id_evidence_ref": null,
+          "billing_path": "local_fake"
+        },
+        "profile_digest": "d60c45674cffbabca64cd05629b468d5797e2f02c43a9ee66dc1d6a9d8d9ee7e"
+      }
+    ],
+    "calls": [
+      {
+        "id": "f9e307d5-830a-438a-a527-0c60d7b613ef",
+        "state": "settled",
+        "upper": "2.000000",
+        "attempt_id": "contending",
+        "price_revision": "local-flat-price-r1",
+        "provider_request_id": "fake:f9e307d5-830a-438a-a527-0c60d7b613ef",
+        "logical_call_id": null,
+        "request_digest": "6bd16aef9e8b41a9544df068aff83acc1873a9f18e9e9f2d025cc6d10d61a73e",
+        "bound_exceeded": false,
+        "input_bytes": 9,
+        "max_output_tokens": 1,
+        "actual_charge": "2.000000"
+      },
+      {
+        "id": "591aa076-903b-4bb3-9be2-2dadaf1ac8cc",
+        "state": "send_unknown",
+        "upper": "2.000000",
+        "attempt_id": "unknown",
+        "price_revision": "local-flat-price-r1",
+        "provider_request_id": null,
+        "logical_call_id": null,
+        "request_digest": "a6da17f1cd4b039a5372d93683172086ea0b8092ddebd7937fdf42fade93c7a2",
+        "bound_exceeded": false,
+        "input_bytes": 24,
+        "max_output_tokens": 1,
+        "actual_charge": null
+      }
+    ],
+    "receipts": [
+      {
+        "id": "35b330c4-7e19-4c30-a104-92ff181022a4",
+        "call_id": "f9e307d5-830a-438a-a527-0c60d7b613ef",
+        "attempt_id": "contending",
+        "reason_code": null
+      },
+      {
+        "id": "ca36af5b-245b-4e2d-8de6-ca83edd1c4c8",
+        "call_id": null,
+        "attempt_id": "contending",
+        "reason_code": "BUDGET_EXHAUSTED"
+      },
+      {
+        "id": "39a63849-6dbc-4e12-822b-7d9b218e6628",
+        "call_id": "591aa076-903b-4bb3-9be2-2dadaf1ac8cc",
+        "attempt_id": "unknown",
+        "reason_code": "SEND_OUTCOME_UNKNOWN"
+      }
+    ],
+    "usage": [
+      {
+        "event_id": "fake-usage:f9e307d5-830a-438a-a527-0c60d7b613ef",
+        "call_id": "f9e307d5-830a-438a-a527-0c60d7b613ef",
+        "currency": "USD",
+        "actual_units": 2000000,
+        "provider_request_id": "fake:f9e307d5-830a-438a-a527-0c60d7b613ef"
+      }
+    ]
+  },
+  "final_snapshot": {
+    "schema_version": "karajan.resources.snapshot.v1",
+    "money_decimal_places": 6,
+    "qualification_scope": "offline_local_fake",
+    "live_qualified": false,
+    "cash_api_enabled": false,
+    "budgets": {
+      "USD": {
+        "limit": "10.000000",
+        "held": "3.000000",
+        "available": "7.000000"
+      }
+    },
+    "attempts": [
+      {
+        "id": "contending",
+        "state": "finished",
+        "future": "0.000000",
+        "reserved": "3.000000",
+        "currency": "USD",
+        "authorization_id": "fixture-auth",
+        "fence": 1,
+        "authorization_expires_at": 1788694323.9874387,
+        "profile": {
+          "id": "local-fixture-profile-r1",
+          "model": "synthetic-model",
+          "endpoint": "http://127.0.0.1:62353/infer",
+          "price": {
+            "revision": "local-flat-price-r1",
+            "currency": "USD",
+            "fixed_charge": "2",
+            "input_byte_rate": "0",
+            "output_token_rate": "0",
+            "covers_all_charges": true,
+            "valid_until": 1788694323.9874387
+          },
+          "logical_id_evidence_ref": null,
+          "billing_path": "local_fake"
+        },
+        "profile_digest": "d60c45674cffbabca64cd05629b468d5797e2f02c43a9ee66dc1d6a9d8d9ee7e"
+      },
+      {
+        "id": "unknown",
+        "state": "finished",
+        "future": "0.000000",
+        "reserved": "4.000000",
+        "currency": "USD",
+        "authorization_id": "fixture-auth",
+        "fence": 1,
+        "authorization_expires_at": 1788694324.0114872,
+        "profile": {
+          "id": "local-fixture-profile-r1",
+          "model": "synthetic-model",
+          "endpoint": "http://127.0.0.1:62353/infer",
+          "price": {
+            "revision": "local-flat-price-r1",
+            "currency": "USD",
+            "fixed_charge": "2",
+            "input_byte_rate": "0",
+            "output_token_rate": "0",
+            "covers_all_charges": true,
+            "valid_until": 1788694323.9874387
+          },
+          "logical_id_evidence_ref": null,
+          "billing_path": "local_fake"
+        },
+        "profile_digest": "d60c45674cffbabca64cd05629b468d5797e2f02c43a9ee66dc1d6a9d8d9ee7e"
+      }
+    ],
+    "calls": [
+      {
+        "id": "f9e307d5-830a-438a-a527-0c60d7b613ef",
+        "state": "settled",
+        "upper": "2.000000",
+        "attempt_id": "contending",
+        "price_revision": "local-flat-price-r1",
+        "provider_request_id": "fake:f9e307d5-830a-438a-a527-0c60d7b613ef",
+        "logical_call_id": null,
+        "request_digest": "6bd16aef9e8b41a9544df068aff83acc1873a9f18e9e9f2d025cc6d10d61a73e",
+        "bound_exceeded": false,
+        "input_bytes": 9,
+        "max_output_tokens": 1,
+        "actual_charge": "2.000000"
+      },
+      {
+        "id": "591aa076-903b-4bb3-9be2-2dadaf1ac8cc",
+        "state": "settled",
+        "upper": "2.000000",
+        "attempt_id": "unknown",
+        "price_revision": "local-flat-price-r1",
+        "provider_request_id": "fake:591aa076-903b-4bb3-9be2-2dadaf1ac8cc",
+        "logical_call_id": null,
+        "request_digest": "a6da17f1cd4b039a5372d93683172086ea0b8092ddebd7937fdf42fade93c7a2",
+        "bound_exceeded": false,
+        "input_bytes": 24,
+        "max_output_tokens": 1,
+        "actual_charge": "1.000000"
+      }
+    ],
+    "receipts": [
+      {
+        "id": "35b330c4-7e19-4c30-a104-92ff181022a4",
+        "call_id": "f9e307d5-830a-438a-a527-0c60d7b613ef",
+        "attempt_id": "contending",
+        "reason_code": null
+      },
+      {
+        "id": "ca36af5b-245b-4e2d-8de6-ca83edd1c4c8",
+        "call_id": null,
+        "attempt_id": "contending",
+        "reason_code": "BUDGET_EXHAUSTED"
+      },
+      {
+        "id": "39a63849-6dbc-4e12-822b-7d9b218e6628",
+        "call_id": "591aa076-903b-4bb3-9be2-2dadaf1ac8cc",
+        "attempt_id": "unknown",
+        "reason_code": "SEND_OUTCOME_UNKNOWN"
+      }
+    ],
+    "usage": [
+      {
+        "event_id": "fake-usage:f9e307d5-830a-438a-a527-0c60d7b613ef",
+        "call_id": "f9e307d5-830a-438a-a527-0c60d7b613ef",
+        "currency": "USD",
+        "actual_units": 2000000,
+        "provider_request_id": "fake:f9e307d5-830a-438a-a527-0c60d7b613ef"
+      },
+      {
+        "event_id": "late-fixture-usage",
+        "call_id": "591aa076-903b-4bb3-9be2-2dadaf1ac8cc",
+        "currency": "USD",
+        "actual_units": 1000000,
+        "provider_request_id": "fake:591aa076-903b-4bb3-9be2-2dadaf1ac8cc"
+      }
+    ]
+  },
+  "provider_records": [
+    {
+      "call_id": "f9e307d5-830a-438a-a527-0c60d7b613ef",
+      "model": "synthetic-model",
+      "prompt": "fixture 1",
+      "max_output_tokens": 1
+    },
+    {
+      "call_id": "591aa076-903b-4bb3-9be2-2dadaf1ac8cc",
+      "model": "synthetic-model",
+      "prompt": "fixture unknown response",
+      "max_output_tokens": 1
+    }
+  ],
+  "child_exit_code": 71,
+  "limitations": [
+    "One synthetic HTTP protocol, flat fake prices, no live service or model calls.",
+    "SQLite and process-exit evidence is for this OS; not full A19/A26 qualification."
+  ]
+}
