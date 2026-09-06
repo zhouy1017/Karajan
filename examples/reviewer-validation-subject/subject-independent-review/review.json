@@ -1,0 +1,116 @@
+{
+  "schema_version": "karajan.independent-subject-consumer-review.v1",
+  "baseline": "3d47194147edf153a0a48a183b34ff7222d674d4",
+  "reviewer": "capacity_facts",
+  "scope": [
+    "candidate_checks.py",
+    "candidate_subjects.py",
+    "_candidate_check_runner.py"
+  ],
+  "standards": {
+    "findings": []
+  },
+  "spec": {
+    "findings": []
+  },
+  "sources": {
+    "backend/karajan/orchestration/candidate_checks.py": {
+      "sha256": "f333cd61105837424e23a0ba32b2eed1597d379144ba0d91cd615bc79dd292c7",
+      "bytes": 48589
+    },
+    "backend/karajan/orchestration/candidate_subjects.py": {
+      "sha256": "23b3baa7320af7bb241625e0240e5d1d0b5d92b199b75d40c0a9b9d215a02791",
+      "bytes": 11213
+    },
+    "backend/karajan/orchestration/_candidate_check_runner.py": {
+      "sha256": "3394b4809cbf8344a15180d2198dd8231520355143660c4333c6416f20d3b0b4",
+      "bytes": 2894
+    },
+    "tests/runs/test_candidate_subjects.py": {
+      "sha256": "ab0b0dda69d9b6772fb646f49b35b377fd537ac1e04379a9e141e0763e2f33b9",
+      "bytes": 17883
+    },
+    "tests/runs/subject_check_fixture.py": {
+      "sha256": "2f2247c961552ae6dc67b336798b569740e3b68174549829f6be01428f325329",
+      "bytes": 3535
+    },
+    "tests/runs/test_candidate_subjects_native.py": {
+      "sha256": "594db840fe79aa08bb456c46fac6fd8d36b1982abe3b58dc5a2ce7dc9cdd13b6",
+      "bytes": 13500
+    }
+  },
+  "source_bytes_unchanged_after_tests": true,
+  "tests": {
+    "windows": {
+      "tests": 47,
+      "passed": 47,
+      "pytest_seconds": 78.0,
+      "junit_seconds": 77.423,
+      "composition": "5 independent + 16 new author + 26 existing Checks"
+    },
+    "linux": {
+      "tests": 5,
+      "passed": 5,
+      "pytest_seconds": 6.28,
+      "junit_seconds": 6.2
+    },
+    "first_run": {
+      "tests": 5,
+      "passed": 4,
+      "failed": 1,
+      "product_failure": false,
+      "reason": "Review input used non-Digest baseline_id; domain correctly rejected shape before receipt matching."
+    }
+  },
+  "test_source": {
+    "executed": {
+      "path": ".cache/subject-independent-review/test-final-executed.py.txt",
+      "sha256": "8d2f8d9fa84db42dd4bac5ee599cbb0eb48920b7a52785cf3d7de3b350a43efd"
+    },
+    "formatted": {
+      "path": ".cache/subject-independent-review/test_subject_boundaries.py",
+      "sha256": "9a923aa0c4e4420a451efc9b8da0303f22e01a1a30597bf442dd4586203870a0"
+    },
+    "ast_equal": true
+  },
+  "limits": [
+    "C uses explicit qualification and native-result doubles; real persistence/Git/CAS/Host ledger.",
+    "New namespace P not_run; no provider calls; S not claimed.",
+    "Reviewer producer and own membership/old Host implementations excluded from independent scope.",
+    "Current CI pending; original #94 and #95 are not declared complete."
+  ],
+  "artifacts": {
+    "linux-final.xml": {
+      "sha256": "c315cd5f007d19e271cc789f02afd6e10a6e63f59294c6b6b5c0f918dd51ae21",
+      "bytes": 1113
+    },
+    "README.md": {
+      "sha256": "64308b7578da2cc01ae4e567969b45ee2b4be97d88ae94c00d035f2e0eecb4a6",
+      "bytes": 3561
+    },
+    "source-before.json": {
+      "sha256": "0c9b372f3ff87c543a2fef677ba42256e92a0cba656be44d7fdbdd523a6e56ca",
+      "bytes": 1160
+    },
+    "test-final-executed.py.txt": {
+      "sha256": "8d2f8d9fa84db42dd4bac5ee599cbb0eb48920b7a52785cf3d7de3b350a43efd",
+      "bytes": 6965
+    },
+    "test-first.py.txt": {
+      "sha256": "89b11958d160484ccc09c51d17a306336986b398a923929d54700904d69ac5ef",
+      "bytes": 7018
+    },
+    "test_subject_boundaries.py": {
+      "sha256": "9a923aa0c4e4420a451efc9b8da0303f22e01a1a30597bf442dd4586203870a0",
+      "bytes": 6945
+    },
+    "windows-final.xml": {
+      "sha256": "939aac13b6d5957659e51cb3f6f44bf26e4deb56e8d13460d6502708c6b0b88a",
+      "bytes": 7374
+    },
+    "windows-first.xml": {
+      "sha256": "66c16fbdc55af0aa828a21cac7aae13a494006f55e5ac776efbbeac57e8c37e1",
+      "bytes": 2900
+    }
+  }
+}

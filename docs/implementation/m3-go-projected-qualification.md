@@ -44,4 +44,4 @@ revision 2 的两个固定场景分别验证：读取只读参考和已有代码
 
 首轮官方观察在第一次 HTTP 200 响应处被 `INVALID_TOOL_NAME` 拒绝，未发生工具修改，已确认本地停止并撤销剩余发送；第二场景未运行。原始响应没有保存，因此无法仅凭该错误码确定具体字段形态。独立本地复现另发现流式工具名 `null` 被错误拒绝：这类可空增量由 [OpenAI 官方生成类型](https://github.com/openai/openai-python/blob/main/src/openai/types/chat/chat_completion_chunk.py) 定义。兼容修复只把 `null` 作为无新增名称的片段；最终完整名称仍仅允许 read/edit，其他类型、超长或不完整调用继续拒绝。成功时可额外记录可空片段数量，不保留名称原文。
 
-实际执行次数、检查结果与来源摘要见 [本切片记录](../../examples/go-projected-qualification/README.md)。GitHub CI 运行无真实凭据的测试；CI 失败按 [既定约定](testing-gates.md) 在 GitHub 委派 Copilot。任何 PR 合并仍由项目所有者决定。
+实际执行次数、检查结果与来源摘要见 [本切片记录](../../examples/go-projected-qualification/README.md)。GitHub CI 运行无真实凭据的测试；CI 失败按当前[修复分工](testing-gates.md#ci-失败的修复分工)交给本地 `gpt-5.3-codex-spark`，额度不可用时保留未修复状态与交接材料。任何 PR 合并仍由项目所有者决定。

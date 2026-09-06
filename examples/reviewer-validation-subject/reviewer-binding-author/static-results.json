@@ -1,0 +1,65 @@
+[
+  {
+    "command": [
+      "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+      "-m",
+      "ruff",
+      "check",
+      "backend/karajan/orchestration/reviewer_binding.py",
+      "tests/runs/test_reviewer_binding.py"
+    ],
+    "exit_code": 0,
+    "stdout": "All checks passed!\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+      "-m",
+      "ruff",
+      "format",
+      "--check",
+      "backend/karajan/orchestration/reviewer_binding.py",
+      "tests/runs/test_reviewer_binding.py"
+    ],
+    "exit_code": 0,
+    "stdout": "2 files already formatted\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+      "-m",
+      "mypy",
+      "backend/karajan/orchestration/reviewer_binding.py",
+      "--platform",
+      "win32"
+    ],
+    "exit_code": 0,
+    "stdout": "Success: no issues found in 1 source file\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+      "-m",
+      "mypy",
+      "backend/karajan/orchestration/reviewer_binding.py",
+      "--platform",
+      "linux"
+    ],
+    "exit_code": 0,
+    "stdout": "Success: no issues found in 1 source file\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "warning: in the working copy of 'docs/planning/candidate-checks-issue.md', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'docs/planning/candidate-reviewer-issue.md', CRLF will be replaced by LF the next time Git touches it\n"
+  }
+]

@@ -1,0 +1,146 @@
+"""Independent #101 C faults: real ledgers/CAS, explicit authority/runtime doubles."""
+
+from contextlib import contextmanager
+from copy import deepcopy
+from pathlib import Path
+
+import pytest
+from karajan.orchestration import candidate_checks as consumer
+from karajan.orchestration.candidate_checks import ApprovedCandidateChecks
+from karajan.orchestration.go_execution_intent import GoExecutionIntents, _connection
+from karajan.runs import RunError
+from test_candidate_checks import check_workflow, run_next_boundary_check
+from test_candidate_subjects import synthetic_current, synthetic_transition
+from test_go_execution_intent import case, projected
+
+__all__ = ["case", "projected"]
+
+
+def test_lost_install_commit_recovers_one_complete_cycle_without_rebind(
+    projected, tmp_path, monkeypatch
+):
+    fixture, service, runner, _ = check_workflow(projected, tmp_path, exits=(0, 0))
+    original = service.advance(*fixture.args, principal="owner")
+    synthetic_transition(fixture)
+    service.subject_validator = synthetic_current
+    connection = consumer._connection
+    committed = []
+
+    @contextmanager
+    def lose_after_actual_commit(database, *, readonly):
+        pending = None
+        with connection(database, readonly=readonly) as db:
+            yield db
+            if Path(database) == fixture.admissions.database and not readonly:
+                operation = fixture.admissions._load(db, *fixture.args)
+                if operation["validation"]["subject"]["revision"] == 2 and not committed:
+                    pending = deepcopy(operation["validation"])
+        if pending is not None:
+            committed.append(pending)
+            raise OSError("Synthetic loss after actual install COMMIT")
+
+    monkeypatch.setattr(consumer, "_connection", lose_after_actual_commit)
+    with pytest.raises(OSError, match="actual install COMMIT"):
+        service.advance(*fixture.args, principal="owner")
+    monkeypatch.setattr(consumer, "_connection", connection)
+    history = ApprovedCandidateChecks(fixture.admissions, fixture.candidates)
+    recovered = history.get(*fixture.args, principal="owner")
+    assert recovered == committed[0]
+    assert history.reconcile(*fixture.args, principal="owner") == recovered
+    assert recovered["history"][0]["checks"] == original["checks"]
+    keys = [row["check_run_id"] for row in recovered["checks"]["runs"]]
+    assert len(keys) == 2
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("Consumer recovery cannot create another CAS rebind")
+
+    monkeypatch.setattr(fixture.candidates, "rebind_reviewers", forbidden)
+    advanced = service.advance(*fixture.args, principal="owner")
+    assert [row["check_run_id"] for row in advanced["checks"]["runs"]] == keys
+    assert advanced["subject"] == recovered["subject"]
+    assert len(advanced["history"]) == 1
+    assert runner.starts == 0
+
+
+def test_revocation_after_native_claim_cannot_use_old_membership_to_start(
+    projected, tmp_path
+):
+    fixture, service, runner, host = check_workflow(projected, tmp_path)
+    service.advance(*fixture.args, principal="owner")
+    synthetic_transition(fixture)
+    service.subject_validator = synthetic_current
+    service.advance(*fixture.args, principal="owner")
+    original_run = runner.run
+    claimed = []
+
+    def revoke_then_run(execution, *, start_guard, cancelled):
+        operation = GoExecutionIntents.read_operation(
+            fixture.admissions, *fixture.args, principal="owner"
+        )
+        claimed.append(operation["validation"]["checks"]["runs"][0]["native_claim"])
+
+        def revoked(*args, **kwargs):
+            raise RunError("SYNTHETIC_QUALIFICATION_REVOKED_AFTER_CLAIM")
+
+        service.subject_validator = revoked
+        return original_run(execution, start_guard=start_guard, cancelled=cancelled)
+
+    runner.run = revoke_then_run
+    with pytest.raises(RunError, match="^CANDIDATE_CHECK_EXECUTION_FAILED$"):
+        run_next_boundary_check(fixture, service, host)
+    current = service.get(*fixture.args, principal="owner")
+    row = current["checks"]["runs"][0]
+    assert len(claimed) == 1 and claimed[0] == row["native_claim"]
+    assert row["reason_codes"] == ["SYNTHETIC_QUALIFICATION_REVOKED_AFTER_CLAIM"]
+    assert row["phase"] == "reconciliation_required"
+    assert runner.starts == 0 and row.get("evidence") is None
+    history = ApprovedCandidateChecks(fixture.admissions, fixture.candidates)
+    assert history.get(*fixture.args, principal="owner") == current
+    assert history.reconcile(*fixture.args, principal="owner") == current
+
+
+@pytest.mark.parametrize("field", ["request_sha256", "baseline_id"])
+def test_ready_receipt_with_wrong_full_freeze_identity_never_installs(
+    projected, tmp_path, field
+):
+    fixture, service, runner, _ = check_workflow(projected, tmp_path)
+    original = service.advance(*fixture.args, principal="owner")
+    synthetic_transition(fixture)
+    service.subject_validator = synthetic_current
+    # Explicit corrupted persisted DTO, not a new public caller payload API.
+    with _connection(fixture.admissions.database, readonly=False) as db:
+        operation = fixture.admissions._load(db, *fixture.args)
+        receipt = operation["validation"]["subject_transition"]["receipt"]
+        receipt[field] = "f" * 64
+        fixture.admissions._save(db, operation)
+    with pytest.raises(RunError, match="^REVIEW_SUBJECT_RECEIPT_MISMATCH$"):
+        service.advance(*fixture.args, principal="owner")
+    current = service.get(*fixture.args, principal="owner")
+    assert current["subject"] == original["subject"]
+    assert current["checks"] == original["checks"]
+    assert not current.get("history") and runner.starts == 0
+
+
+def test_late_a_failure_after_b_and_c_only_changes_a_archive(projected, tmp_path):
+    fixture, service, runner, host = check_workflow(projected, tmp_path, exits=(9,))
+    first = run_next_boundary_check(fixture, service, host)
+    assert first["checks"]["runs"][0]["phase"] == "observed"
+    service.subject_validator = synthetic_current
+    synthetic_transition(fixture)
+    second = service.advance(*fixture.args, principal="owner")
+    synthetic_transition(fixture)
+    third = service.advance(*fixture.args, principal="owner")
+    recovered = service.reconcile(*fixture.args, principal="owner")
+    assert recovered["history"][0]["checks"]["runs"][0]["evidence"]["status"] == "failed"
+    assert recovered["history"][0]["checks"]["phase"] == "blocked"
+    assert recovered["history"][1] == third["history"][1]
+    assert recovered["checks"] == third["checks"]
+    assert recovered["subject"] == third["subject"]
+    assert recovered["subject"]["revision"] == 3
+    assert recovered["subject"]["source_candidate"] == first["subject"]["candidate"]
+    assert (
+        recovered["review_binding"]["binding"]["source_candidate"]
+        == second["subject"]["candidate"]
+    )
+    assert runner.starts == 1
+    assert not recovered["local_gate_passed"] and not recovered["delivery_eligible"]

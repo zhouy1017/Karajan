@@ -66,4 +66,4 @@ Ruff 与 backend mypy（112 个源文件）通过。新增测试由现有必需 
 不通过配置数值补齐未知能力。
 
 关联：[后续资格计划](../planning/go-runtime-qualification-next.md)、
-[任务准入](m3-task-admission.md)、[门禁与 Copilot 修复分工](testing-gates.md)。
+[任务准入](m3-task-admission.md)、[门禁与修复分工](testing-gates.md)。

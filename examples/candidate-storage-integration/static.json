@@ -1,0 +1,5 @@
+{
+  "ruff_exit": 0,
+  "mypy_windows_exit": 0,
+  "mypy_linux_exit": 0
+}

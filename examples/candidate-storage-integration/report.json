@@ -1,0 +1,72 @@
+{
+  "schema_version": "karajan.candidate-storage-integration.v1",
+  "head": "3d47194147edf153a0a48a183b34ff7222d674d4",
+  "scope": "Combined C/P Candidate storage only; no #94 Host execution evidence upgrade",
+  "windows": {
+    "passed": 53,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 49.09
+  },
+  "wsl": {
+    "passed": 53,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 7.5
+  },
+  "source_unchanged": true,
+  "original_methods_preserved": true,
+  "product_edits": false,
+  "host_executions": 0,
+  "provider_calls": 0,
+  "artifacts": {
+    "README.md": {
+      "sha256": "6718e068aab6985bff6dd9595b9a5247c07bbeaaeeb1a0322307b8df0ed3d02b",
+      "bytes": 2662
+    },
+    "source-before.json": {
+      "sha256": "9bff6dbcdc1e23bef100420df71d4333010286b16d0316187507f29d271ec9c6",
+      "bytes": 2317
+    },
+    "source-after.json": {
+      "sha256": "4c976553f3b0e43df1f0640ec2060fb66109aad4d0f4b53d281ef19bb2d829a9",
+      "bytes": 2126
+    },
+    "ports.json": {
+      "sha256": "5279ff74ab56542bfd9b094d21f58ec170eed83a17c1523834e69f8dd2fb9d97",
+      "bytes": 695
+    },
+    "windows.xml": {
+      "sha256": "772e57fc3965e4ee27b642780dc76ad0b5430119ece8a139acce32458510785e",
+      "bytes": 8081
+    },
+    "windows.txt": {
+      "sha256": "8e8b20e01ccc0ceb4a5bcd71a2d256f9eda4a7dc01124bd528ea9853b779137d",
+      "bytes": 102
+    },
+    "wsl.xml": {
+      "sha256": "5197340728bb3b3d5c6dd5c0a3381dfbef542b2ef509d29fb2bfcf3f23ace019",
+      "bytes": 8080
+    },
+    "wsl.txt": {
+      "sha256": "cc7ad319533374caafd26df78edf0737dcccd01ca1602fe955d198f9c4e1cefb",
+      "bytes": 101
+    },
+    "ruff.txt": {
+      "sha256": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0",
+      "bytes": 20
+    },
+    "mypy-windows.txt": {
+      "sha256": "90377c8fd97127580c93ac5740d596c9ebc9db94dafa6560ee11fe16b4460c62",
+      "bytes": 44
+    },
+    "mypy-linux.txt": {
+      "sha256": "90377c8fd97127580c93ac5740d596c9ebc9db94dafa6560ee11fe16b4460c62",
+      "bytes": 44
+    },
+    "static.json": {
+      "sha256": "7b28dcaa3c3ccd539279ef7c4f0eb004fa4e6cfa629dd1897ce8378b5dccad8e",
+      "bytes": 76
+    }
+  }
+}

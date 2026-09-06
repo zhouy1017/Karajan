@@ -34,10 +34,21 @@ required check: the batch gathers its results before becoming `blocked`.
 Inconclusive, unavailable, invalidated or cancelled execution prevents subsequent
 new effects.
 
-The future trusted same-content validation-policy/Candidate revision binding is
-owned by #95. No such rebind is implemented here. This remains an explicit
-dependency of #94's Reviewer integration acceptance criterion; a caller cannot
-substitute a new Candidate or alter the original capture to approximate it.
+The same-content policy/Candidate handoff is implemented by the #100 trusted
+binding producer, #96 CAS primitive and #101 subject consumer. The producer
+derives Reviewer membership from the approved plan and current sources; the
+consumer accepts only its durable operation transition and exact receipt. A CAS
+rebind record by itself is not authority. The original capture cannot be replaced
+by a caller Candidate. See the [versioned subject contract](candidate-validation-subject.md).
+
+`subject_transition` progresses through `prepared`, `rebind_claimed`, `ready`
+and `installed`. Pending transition fences old-cycle effects. Installation checks
+current sources and actual quiescence, archives the old cycle in `validation.history`,
+and compiles every original approved check with new Attempt/start/Evidence IDs.
+`validation.review_binding` retains the full installed transition while the next
+incoming intent is prepared. A→B→C preserves A as the capture anchor and B as the
+direct predecessor. An unclaimed prepared intent may be archived and replaced;
+claimed/ready work may only recover its exact receipt.
 
 ## Claims, current authority and process supervision
 
@@ -61,6 +72,9 @@ Its native claim is committed before calling the runner.
 At current effect admission, lock order is operation → Run → Project → Host.
 The exact original approval, task, registered ExecutionPolicy, repository,
 Candidate subject, environment/controller sources and shared budget are checked.
+For rebound subjects the configured producer also rechecks current Reviewer
+binding facts inside that same Project transaction. A missing producer or
+unsupported current role qualification cannot enable Check effects.
 The native Popen callback repeats current Host identity and the deadline after
 the Host guard is acquired. Long process waiting and log reads occur outside
 these business locks. No model Capacity admission, grant, provider credential or
@@ -126,6 +140,8 @@ is part of the runner's trusted capture format, not fabricated command output.
 | Observation persisted before Evidence claim | First Evidence submission may be claimed once | Re-run the check |
 | Evidence claim/commit reply | `lookup_evidence` with the full request and log identity | Re-submit uncertain Evidence or rewrite its artifacts |
 | Cancellation with late Evidence | Retain the exact committed historical record | Promote it to current authorization or release Worker usage |
+| Subject installation commit/reply | Read the same installed revision and Check IDs | Allocate another cycle or rebind Candidate |
+| Old child/observation/Evidence after a switch | Resolve the original cycle by Check ID and retain its evidence | Restart the old child or overwrite the new cycle |
 
 Absent facts remain `reconciliation_required` or `cancellation_pending`.
 Cleanup of one available resource proceeds even when another optional Host,
@@ -142,8 +158,20 @@ Host, namespace, CAS materialization and two owner-approved commands. Its
 planning/model author remains an explicit fixture; no real Commander, model
 qualification or provider call is claimed by these Checks tests.
 
-Author red/green, fixture corrections, historical source and final results are
-retained in `.cache/candidate-checks-author/` while the integration is reviewed.
-Independent shared-budget C evidence is separate in
-`.cache/shared-budget-independent/`. Final P, independent reviews and current
-head CI are required before claiming the corresponding gates complete.
+The original Check implementation evidence remains in
+[candidate-checks](../../examples/candidate-checks/README.md). The subsequent
+handoff implementation is fixed at `1fc97849697cfe89a79595cba07e9ec028c6d0b2`; its
+[publication index](../../examples/reviewer-validation-subject/README.md) retains
+16 consumer C cases, the 26 existing Checks regression cases, producer and
+independent reviews, and the two actual Linux namespace P cases. The latter run
+A's two approved checks and rerun both for B, then independently exercise a running
+A refusing a ready transition followed by concurrent advance/cancel. These are
+distinct evidence scopes, not additive counts of unique tests.
+
+The handoff P uses a separate fixed test child with explicit Reviewer qualification
+and planning/Writer doubles. Its source bytes are recorded in each execution;
+the production factory has no fixture flag. The normal factory with real current
+qualification storage rejects unsupported Reviewer authority before Host.prepare.
+Positive production Reviewer suite/credential configuration, actual read-only
+Reviewer execution and Review Evidence, real planning, S, and the current PR's
+G remain separate requirements. Passing local Checks does not complete them.

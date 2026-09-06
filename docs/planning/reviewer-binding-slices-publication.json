@@ -1,0 +1,38 @@
+{
+  "membership": {
+    "number": 99,
+    "url": "https://github.com/zhouy1017/Karajan/issues/99",
+    "title": "实现切片｜Rulebook 静态资格集合与路由共用检查",
+    "parent_verified": 95,
+    "blocked_by_verified": [],
+    "snapshot": "profile-membership-issue.md",
+    "pr": 102,
+    "pr_url": "https://github.com/zhouy1017/Karajan/pull/102",
+    "candidate_commit": "01aa1397c286eef252858946052bc8de137e4328",
+    "implementation_commit": "3a8cc5875b075285ab18796d1ab4bc36303192a1",
+    "local_C": "passed",
+    "remote_G": "pending"
+  },
+  "binding": {
+    "number": 100,
+    "url": "https://github.com/zhouy1017/Karajan/issues/100",
+    "title": "实现切片｜批准 Run 的可信 Reviewer 绑定与持久意图",
+    "parent_verified": 95,
+    "blocked_by_verified": [
+      96,
+      99
+    ],
+    "snapshot": "approved-reviewer-binding-issue.md"
+  },
+  "subject": {
+    "number": 101,
+    "url": "https://github.com/zhouy1017/Karajan/issues/101",
+    "title": "实现切片｜Candidate 验证版本切换与全部 Checks 重跑",
+    "parent_verified": 94,
+    "blocked_by_verified": [
+      96,
+      100
+    ],
+    "snapshot": "candidate-subject-transition-issue.md"
+  }
+}

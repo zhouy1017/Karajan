@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="2.960" timestamp="2026-09-07T00:57:09.598638+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_candidate_subjects" name="test_ready_subject_replaces_terminal_cycle_without_reusing_evidence" time="1.688"><failure message="ModuleNotFoundError: No module named 'karajan.orchestration.candidate_subjects'">projected = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x000001E7432C1C70&gt;, 'project_id': '56f1e29f-35e1-47...C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-928/test_ready_subject_replaces_te0/fixture/repository'), ...}
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-928/test_ready_subject_replaces_te0')
+
+    def test_ready_subject_replaces_terminal_cycle_without_reusing_evidence(projected, tmp_path):
+        case, service, runner, host = check_workflow(projected, tmp_path)
+        run_next_boundary_check(case, service, host)
+        before = service.advance(*case.args, principal="owner")
+        assert before["checks"]["phase"] == "checks_passed"
+&gt;       synthetic_transition(case)
+
+tests\runs\test_candidate_subjects.py:88: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+case = ApprovedCheckCase(admissions=&lt;karajan.orchestration.admission.ApprovedTaskAdmission object at 0x000001E74323F770&gt;, can...eeeeeeeeeeeeeeeeeeeeeeeeeeeeee', 'filesystem': 'candidate_copy', 'network': 'none', 'env': {}, 'max_log_bytes': 65536})
+ready = True
+
+    def synthetic_transition(case, *, ready=True):
+        """Controller producer test double; never a public binding/qualification API."""
+&gt;       from karajan.orchestration.candidate_subjects import (
+            candidate_identity,
+            current_subject,
+            mark_ready,
+            stage_transition,
+        )
+E       ModuleNotFoundError: No module named 'karajan.orchestration.candidate_subjects'
+
+tests\runs\test_candidate_subjects.py:17: ModuleNotFoundError</failure></testcase></testsuite></testsuites>

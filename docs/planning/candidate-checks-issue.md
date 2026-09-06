@@ -64,3 +64,23 @@ C/P 必须使用真实 stores、临时 Git/CAS、Host/隔离进程；规划/资�
 剩余工作：原验收清单保持不变。#95/#96 可信 Reviewer 绑定的新 Candidate revision 消费、原 capture 指针保留、全部 Checks 重跑及新 Review ID 集交接尚未实现；当前 PR 必需 CI、合并与原范围最终验收未完成。状态保持 status:in-progress，未使用 Closes。
 
 阻塞：基础 Task #90 / PR #92 及共享 relay PR #88 有已定位 CI 失败。指定 Spark 修复模型当前无额度，替换模型选择等待 owner；本草稿尚不可合并。真实整链另依赖 #93，不从本地 C/P 推断 S。
+
+<!-- reviewer-binding-integration-slices -->
+## 验证交接实现切片（2026-09-07）
+
+- [ ] [#101 实现切片｜Candidate 验证版本切换与全部 Checks 重跑](https://github.com/zhouy1017/Karajan/issues/101)
+
+已完成：本次新切片尚无已进入 dev 的完成项；已有本地结果与草稿 PR 按前文独立记录。
+
+剩余工作：子票覆盖原验收中的资格集合、可信绑定或新 subject 消费；原验收清单保持不变。绑定准备无需等待 Reviewer 模型执行，真实 Review 仍等待新 subject 全部 Checks。
+
+阻塞：当前生产角色资格只有 Go Worker，不能借用为 Reviewer；新资格和实际 Review/S 仍由 #95 跟踪。基础 Task/relay CI 修复及真实规划 #93 的原依赖保持。
+
+<!-- candidate-pr97-ci:start -->
+## 当前候选 CI（2026-09-07）
+
+候选 `45ff0651517333225666353076a23c9cad85833c` 的 [pull_request CI](https://github.com/zhouy1017/Karajan/actions/runs/34046471265) 未通过：Windows Python 与 frontend 成功，Ubuntu Python 失败，quality-gate 失败。Ubuntu 原始结果为 **2 failed / 2046 passed / 7 skipped**；两个失败均位于原有 `test_go_task_execution_native.py` 的 `none` / `cancel_after_send` 场景，[失败 job](https://github.com/zhouy1017/Karajan/actions/runs/34046471265/job/101522339717) 保留实际输出。pull_request workflow 检查 GitHub 的合并候选，不能把 head 字节直接等同于 merge checkout。
+
+这项观察仅确认失败位置与结果，不据同名用例断言不同 PR 必然同根因。G = failed；本地 C/P 结果和独立审查不替代此失败。指定本地 `gpt-5.3-codex-spark` 的修复仍因额度不可用而未完成，未派给 Copilot、未跳过或放宽检查。PR 保持 Draft，Issue 保持 Open；合并由 owner 决定。
+
+<!-- candidate-pr97-ci:end -->

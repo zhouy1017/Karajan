@@ -93,4 +93,8 @@ Tests use temporary Git repositories, real SQLite/RunnerHost processes, the
 pinned Linux OpenCode binary and local HTTP fixtures. No provider credential is
 needed. The published evidence records the exact source revision and each check;
 fixture observations are not official Go observations. CI remains required on
-both supported platforms; CI failures are delegated to Copilot on the affected PR.
+both supported platforms. CI failures follow the current
+[repair assignment](testing-gates.md#ci-失败的修复分工): local `gpt-5.3-codex-spark`,
+without new `@copilot` comments. If its quota is unavailable, retain the
+reproduction and handoff materials and report the issue as unfixed; do not
+substitute another model or weaken checks.
