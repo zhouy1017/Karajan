@@ -1,0 +1,103 @@
+{
+  "schema_version": "karajan.run-routing-domain-freeze.v1",
+  "at_utc": "2026-09-06T02:39:47.401514+00:00",
+  "base_commit": "07da55e80f5a2c92cf6b3b5612e5e5a706d0cc72",
+  "worktree": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\run-routing-authorization",
+  "scope": "Domain registration, v2 Run/task/routing grants, durable exact approval; legacy execution rejects v2.",
+  "review_state": "Spec and Standards each found one P2; both corrected and independently closed on original inputs.",
+  "source_sha256": {
+    "backend/karajan/projects/registry.py": "8500cf6be6d4d87f16bac1fdad671e0f3b2e06d46f5b45eeac7a946801c7a592",
+    "backend/karajan/projects/execution_policy.py": "097fd61ff89d9c51715cd8f3ea9d33fc87f15bce449b74441ef3af3a86adbd11",
+    "backend/karajan/runs/planning.py": "2a93ea0e0e75563ffe6e415ce9c2634973bde4f7cedce489528d03c6fa23d247",
+    "backend/karajan/runs/routing_authorization.py": "8dda7f82b7f280b9ca5b6b10459460d68e4bfc4ce8ed9fd9a9a925ad26d1f204",
+    "backend/karajan/orchestration/binding.py": "ccc0c0c88b99e6ae31db3a20a397cfc6d41edccdae7591c9bb5f89c90020fe05",
+    "tests/runs/test_routing_authorization.py": "748c8e56f60e291cdf27c3296be674ed9ada83f3871e7e5f7da5cf936ccbfc87",
+    "docs/implementation/m3-run-routing-authorization.md": "52287c45663645bc6ddcf38a432b18767f784701a98daa12e9087535ddf4eff2"
+  },
+  "test_reports": {
+    "author-final.junit.xml": {
+      "tests": "249",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "60.673"
+    },
+    "author-boundaries.before.junit.xml": {
+      "tests": "11",
+      "failures": "11",
+      "errors": "0",
+      "skipped": "0",
+      "time": "3.007"
+    },
+    "author-boundaries.after.junit.xml": {
+      "tests": "11",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "2.840"
+    },
+    "spec-final.junit.xml": {
+      "tests": "23",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "6.844"
+    },
+    "standards-boundaries.final.junit.xml": {
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "1.606"
+    }
+  },
+  "evidence_sha256": {
+    "examples/run-routing-authorization/author-boundaries.after.junit.xml": "23fbd7292d4b706e0411f995bd176640c77fd5ab0f27400c32e92c02cb8c9a8c",
+    "examples/run-routing-authorization/author-boundaries.before.junit.xml": "74332c6d715684710a1fa48babc168e718e097eff3b5d194fdeef22622808bc9",
+    "examples/run-routing-authorization/author-final.junit.xml": "f5a135a34c693082b3ceceaaf7d150e77571f1ebe84ebdabea9d1ed039d75fdf",
+    "examples/run-routing-authorization/spec-final.junit.xml": "eb7924b0decff97378598b7a2c1896b927d6924f50c539b9c7d4e635bcf93b55",
+    "examples/run-routing-authorization/spec-nonobject.before.junit.xml": "4888b1f9cb97be98795a7b118f139094d3744cba5b9983992629dc3df723781c",
+    "examples/run-routing-authorization/spec-nonobject.input.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "examples/run-routing-authorization/spec-observed.json": "671ab2622257ba476ad5a1d7125bd3e9b12fc6f465b4aa74b0d2bbfb673286cb",
+    "examples/run-routing-authorization/spec-review.json": "5b244f02e43524724714dbb2bb465ada918cfb4927498b17a1d7df22b40975a1",
+    "examples/run-routing-authorization/spec-review.md": "86f8780cf7ab8850504a8f434f2d71a58b799c0224feaab619f4540ca7193339",
+    "examples/run-routing-authorization/spec_cases.py": "262bbfe0fff27bfa70cbbabc629e906bf1a13bd661ca630705ea0257aa0e2ac6",
+    "examples/run-routing-authorization/standards-boundaries.after.junit.xml": "b799732ef75fe3599a912d160b076e52310f9a71f7d48df3c4d5993fcc7ead42",
+    "examples/run-routing-authorization/standards-boundaries.before.junit.xml": "3327e552df97f311574a57739b559c085c6e91265b28ed130f8adfa1f6e7cf67",
+    "examples/run-routing-authorization/standards-boundaries.final.junit.xml": "da58e85d1ea57b2b617675673a82fda937c777d29834aa8d77d1d0fa76bd64b3",
+    "examples/run-routing-authorization/standards-final.json": "44e5c4cf4749896bb3ab81382980fbd66adf90db15316f14bbc51db4772d24f5",
+    "examples/run-routing-authorization/standards-http.before.junit.xml": "b62897e72cbaa6ce8ebaee9041d2b9df326b7031dc67f815df457699077a7563",
+    "examples/run-routing-authorization/standards-initial.json": "b342215a4f62d3135c10468ff38da40a1050fd77f78052f558803f5d6adf4d2d",
+    "examples/run-routing-authorization/standards-review.md": "4da875fde71ddc34c1de9d2cc92d7d7ffaa02eca07609c7a4ec8fcc8872a61c2",
+    "examples/run-routing-authorization/standards_boundaries.py": "51bad1535f52e642147e877b3b338602157d6a3179eb0bb0dfe379857254b3e2"
+  },
+  "checks": {
+    "ruff": "ruff check . passed",
+    "mypy": "mypy backend/karajan passed: 92 source files"
+  },
+  "import_check": "karajan.runs.planning.__file__ resolves inside this worktree/backend; root .venv Python used with explicit worktree PYTHONPATH",
+  "history": [
+    "Public tracer initially failed because registration did not exist; subsequently passed. Tool/context fixture definitions were later made explicit, so these earlier tracer XML files do not claim byte-identical final fixture input.",
+    "Names-only tool/context policy was actually accepted before the definition requirement and rejected after.",
+    "Changing nested risk policy content without its revision was actually accepted before the component-identity guard and rejected after.",
+    "An approved v2 Run was actually queued through legacy fixture coordination before the protocol guard; after the guard the public command produces no Attempt/workspace/process.",
+    "Other added authorization and compatibility cases passed directly; no red history is claimed for them.",
+    "Spec original [] inputs failed in three public commands; the same independent cases pass after safe protocol discrimination.",
+    "Standards original revision=10**40 failed through public Registry/Run commands and authenticated HTTP; after shared strict Positive bounds these are domain errors and HTTP422.",
+    "Author independently expanded to []/null/string and 1e9+1/10**40; all11 boundary cases actually failed before and passed after."
+  ],
+  "previous_verification": {
+    "phase": "before review fixes",
+    "evidence_path": ".cache/run-routing-authorization-freeze.pre-review.json",
+    "sha256": "6b88f5390a0d5c76c5c715e0b0cafd0d8f06b19101ee0ae8c5f513e453a74050",
+    "orchestration_inclusive": "250 passed / 1 POSIX skip; not relabelled as execution on final corrected source."
+  },
+  "limitations": [
+    "Fixture planning admission is synthetic and grants no model capability.",
+    "No UI v2 flow, real provider qualification, trusted input assembly, resource admission or actual v2 execution is implemented by this slice.",
+    "Legacy v1 records and receipts are unchanged; no existing Run upgrade/adoption was implemented.",
+    "Windows regression skipped one existing POSIX symlink canary; no WSL execution is claimed for this author freeze.",
+    "Final author regression covers Run/Project/Web; final independent reviewer cases also cover HTTP and version boundaries. No repeated full Orchestration or WSL run is claimed after the review fixes.",
+    "These hashes identify the current uncommitted worktree bytes, not a Git index or remote CI result."
+  ]
+}

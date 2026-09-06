@@ -1,0 +1,227 @@
+{
+  "schema_version": "karajan.git-representations.v1",
+  "verified_at_utc": "2026-09-06T02:45:40.108435+00:00",
+  "branch": "codex/m3-run-routing-authorization",
+  "base_commit": "07da55e80f5a2c92cf6b3b5612e5e5a706d0cc72",
+  "author_freeze_sha256": "bcc8fc2f6cbd77c190e633d794b62c5830fc26b3b80c54d14f61855a4ff08f66",
+  "frozen_bindings_verified": 25,
+  "note": "The original test/review reports bind their reviewed working-tree bytes. All 25 frozen bindings and the staged original freeze manifest were verified against those bytes. Every staged entry below is byte-identical to its working-tree file: Python and Markdown are already LF; the local Git attributes preserve raw JSON/XML evidence. This verifies the staged representation and does not claim new test execution or remote CI results.",
+  "entries": [
+    {
+      "path": ".gitattributes",
+      "reviewed_worktree_sha256": "43f3c6d3da88b6ff1ca640e64992681d3e431290637660776418df1e0010015d",
+      "repository_sha256": "43f3c6d3da88b6ff1ca640e64992681d3e431290637660776418df1e0010015d",
+      "reviewed_worktree_bytes": 2425,
+      "repository_bytes": 2425,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "backend/karajan/orchestration/binding.py",
+      "reviewed_worktree_sha256": "ccc0c0c88b99e6ae31db3a20a397cfc6d41edccdae7591c9bb5f89c90020fe05",
+      "repository_sha256": "ccc0c0c88b99e6ae31db3a20a397cfc6d41edccdae7591c9bb5f89c90020fe05",
+      "reviewed_worktree_bytes": 8564,
+      "repository_bytes": 8564,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "backend/karajan/projects/execution_policy.py",
+      "reviewed_worktree_sha256": "097fd61ff89d9c51715cd8f3ea9d33fc87f15bce449b74441ef3af3a86adbd11",
+      "repository_sha256": "097fd61ff89d9c51715cd8f3ea9d33fc87f15bce449b74441ef3af3a86adbd11",
+      "reviewed_worktree_bytes": 3174,
+      "repository_bytes": 3174,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "backend/karajan/projects/registry.py",
+      "reviewed_worktree_sha256": "8500cf6be6d4d87f16bac1fdad671e0f3b2e06d46f5b45eeac7a946801c7a592",
+      "repository_sha256": "8500cf6be6d4d87f16bac1fdad671e0f3b2e06d46f5b45eeac7a946801c7a592",
+      "reviewed_worktree_bytes": 36377,
+      "repository_bytes": 36377,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "backend/karajan/runs/planning.py",
+      "reviewed_worktree_sha256": "2a93ea0e0e75563ffe6e415ce9c2634973bde4f7cedce489528d03c6fa23d247",
+      "repository_sha256": "2a93ea0e0e75563ffe6e415ce9c2634973bde4f7cedce489528d03c6fa23d247",
+      "reviewed_worktree_bytes": 27601,
+      "repository_bytes": 27601,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "backend/karajan/runs/routing_authorization.py",
+      "reviewed_worktree_sha256": "8dda7f82b7f280b9ca5b6b10459460d68e4bfc4ce8ed9fd9a9a925ad26d1f204",
+      "repository_sha256": "8dda7f82b7f280b9ca5b6b10459460d68e4bfc4ce8ed9fd9a9a925ad26d1f204",
+      "reviewed_worktree_bytes": 7936,
+      "repository_bytes": 7936,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "docs/implementation/m3-run-routing-authorization.md",
+      "reviewed_worktree_sha256": "52287c45663645bc6ddcf38a432b18767f784701a98daa12e9087535ddf4eff2",
+      "repository_sha256": "52287c45663645bc6ddcf38a432b18767f784701a98daa12e9087535ddf4eff2",
+      "reviewed_worktree_bytes": 6312,
+      "repository_bytes": 6312,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "examples/run-routing-authorization/author-boundaries.after.junit.xml",
+      "reviewed_worktree_sha256": "23fbd7292d4b706e0411f995bd176640c77fd5ab0f27400c32e92c02cb8c9a8c",
+      "repository_sha256": "23fbd7292d4b706e0411f995bd176640c77fd5ab0f27400c32e92c02cb8c9a8c",
+      "reviewed_worktree_bytes": 2045,
+      "repository_bytes": 2045,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "examples/run-routing-authorization/author-boundaries.before.junit.xml",
+      "reviewed_worktree_sha256": "74332c6d715684710a1fa48babc168e718e097eff3b5d194fdeef22622808bc9",
+      "repository_sha256": "74332c6d715684710a1fa48babc168e718e097eff3b5d194fdeef22622808bc9",
+      "reviewed_worktree_bytes": 23456,
+      "repository_bytes": 23456,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "examples/run-routing-authorization/author-final.junit.xml",
+      "reviewed_worktree_sha256": "f5a135a34c693082b3ceceaaf7d150e77571f1ebe84ebdabea9d1ed039d75fdf",
+      "repository_sha256": "f5a135a34c693082b3ceceaaf7d150e77571f1ebe84ebdabea9d1ed039d75fdf",
+      "reviewed_worktree_bytes": 46198,
+      "repository_bytes": 46198,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "examples/run-routing-authorization/author-freeze.json",
+      "reviewed_worktree_sha256": "bcc8fc2f6cbd77c190e633d794b62c5830fc26b3b80c54d14f61855a4ff08f66",
+      "repository_sha256": "bcc8fc2f6cbd77c190e633d794b62c5830fc26b3b80c54d14f61855a4ff08f66",
+      "reviewed_worktree_bytes": 7368,
+      "repository_bytes": 7368,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "examples/run-routing-authorization/spec-final.junit.xml",
+      "reviewed_worktree_sha256": "eb7924b0decff97378598b7a2c1896b927d6924f50c539b9c7d4e635bcf93b55",
+      "repository_sha256": "eb7924b0decff97378598b7a2c1896b927d6924f50c539b9c7d4e635bcf93b55",
+      "reviewed_worktree_bytes": 4105,
+      "repository_bytes": 4105,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "examples/run-routing-authorization/spec-nonobject.before.junit.xml",
+      "reviewed_worktree_sha256": "4888b1f9cb97be98795a7b118f139094d3744cba5b9983992629dc3df723781c",
+      "repository_sha256": "4888b1f9cb97be98795a7b118f139094d3744cba5b9983992629dc3df723781c",
+      "reviewed_worktree_bytes": 6152,
+      "repository_bytes": 6152,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "examples/run-routing-authorization/spec-nonobject.input.json",
+      "reviewed_worktree_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "repository_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reviewed_worktree_bytes": 2,
+      "repository_bytes": 2,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "examples/run-routing-authorization/spec-observed.json",
+      "reviewed_worktree_sha256": "671ab2622257ba476ad5a1d7125bd3e9b12fc6f465b4aa74b0d2bbfb673286cb",
+      "repository_sha256": "671ab2622257ba476ad5a1d7125bd3e9b12fc6f465b4aa74b0d2bbfb673286cb",
+      "reviewed_worktree_bytes": 8989,
+      "repository_bytes": 8989,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "examples/run-routing-authorization/spec-review.json",
+      "reviewed_worktree_sha256": "5b244f02e43524724714dbb2bb465ada918cfb4927498b17a1d7df22b40975a1",
+      "repository_sha256": "5b244f02e43524724714dbb2bb465ada918cfb4927498b17a1d7df22b40975a1",
+      "reviewed_worktree_bytes": 9009,
+      "repository_bytes": 9009,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "examples/run-routing-authorization/spec-review.md",
+      "reviewed_worktree_sha256": "86f8780cf7ab8850504a8f434f2d71a58b799c0224feaab619f4540ca7193339",
+      "repository_sha256": "86f8780cf7ab8850504a8f434f2d71a58b799c0224feaab619f4540ca7193339",
+      "reviewed_worktree_bytes": 2419,
+      "repository_bytes": 2419,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "examples/run-routing-authorization/spec_cases.py",
+      "reviewed_worktree_sha256": "262bbfe0fff27bfa70cbbabc629e906bf1a13bd661ca630705ea0257aa0e2ac6",
+      "repository_sha256": "262bbfe0fff27bfa70cbbabc629e906bf1a13bd661ca630705ea0257aa0e2ac6",
+      "reviewed_worktree_bytes": 24198,
+      "repository_bytes": 24198,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "examples/run-routing-authorization/standards-boundaries.after.junit.xml",
+      "reviewed_worktree_sha256": "b799732ef75fe3599a912d160b076e52310f9a71f7d48df3c4d5993fcc7ead42",
+      "repository_sha256": "b799732ef75fe3599a912d160b076e52310f9a71f7d48df3c4d5993fcc7ead42",
+      "reviewed_worktree_bytes": 1093,
+      "repository_bytes": 1093,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "examples/run-routing-authorization/standards-boundaries.before.junit.xml",
+      "reviewed_worktree_sha256": "3327e552df97f311574a57739b559c085c6e91265b28ed130f8adfa1f6e7cf67",
+      "repository_sha256": "3327e552df97f311574a57739b559c085c6e91265b28ed130f8adfa1f6e7cf67",
+      "reviewed_worktree_bytes": 6109,
+      "repository_bytes": 6109,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "examples/run-routing-authorization/standards-boundaries.final.junit.xml",
+      "reviewed_worktree_sha256": "da58e85d1ea57b2b617675673a82fda937c777d29834aa8d77d1d0fa76bd64b3",
+      "repository_sha256": "da58e85d1ea57b2b617675673a82fda937c777d29834aa8d77d1d0fa76bd64b3",
+      "reviewed_worktree_bytes": 1093,
+      "repository_bytes": 1093,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "examples/run-routing-authorization/standards-final.json",
+      "reviewed_worktree_sha256": "44e5c4cf4749896bb3ab81382980fbd66adf90db15316f14bbc51db4772d24f5",
+      "repository_sha256": "44e5c4cf4749896bb3ab81382980fbd66adf90db15316f14bbc51db4772d24f5",
+      "reviewed_worktree_bytes": 2720,
+      "repository_bytes": 2720,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "examples/run-routing-authorization/standards-http.before.junit.xml",
+      "reviewed_worktree_sha256": "b62897e72cbaa6ce8ebaee9041d2b9df326b7031dc67f815df457699077a7563",
+      "repository_sha256": "b62897e72cbaa6ce8ebaee9041d2b9df326b7031dc67f815df457699077a7563",
+      "reviewed_worktree_bytes": 2486,
+      "repository_bytes": 2486,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "examples/run-routing-authorization/standards-initial.json",
+      "reviewed_worktree_sha256": "b342215a4f62d3135c10468ff38da40a1050fd77f78052f558803f5d6adf4d2d",
+      "repository_sha256": "b342215a4f62d3135c10468ff38da40a1050fd77f78052f558803f5d6adf4d2d",
+      "reviewed_worktree_bytes": 2372,
+      "repository_bytes": 2372,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "examples/run-routing-authorization/standards-review.md",
+      "reviewed_worktree_sha256": "4da875fde71ddc34c1de9d2cc92d7d7ffaa02eca07609c7a4ec8fcc8872a61c2",
+      "repository_sha256": "4da875fde71ddc34c1de9d2cc92d7d7ffaa02eca07609c7a4ec8fcc8872a61c2",
+      "reviewed_worktree_bytes": 2729,
+      "repository_bytes": 2729,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "examples/run-routing-authorization/standards_boundaries.py",
+      "reviewed_worktree_sha256": "51bad1535f52e642147e877b3b338602157d6a3179eb0bb0dfe379857254b3e2",
+      "repository_sha256": "51bad1535f52e642147e877b3b338602157d6a3179eb0bb0dfe379857254b3e2",
+      "reviewed_worktree_bytes": 4151,
+      "repository_bytes": 4151,
+      "representation": "byte_identical"
+    },
+    {
+      "path": "tests/runs/test_routing_authorization.py",
+      "reviewed_worktree_sha256": "748c8e56f60e291cdf27c3296be674ed9ada83f3871e7e5f7da5cf936ccbfc87",
+      "repository_sha256": "748c8e56f60e291cdf27c3296be674ed9ada83f3871e7e5f7da5cf936ccbfc87",
+      "reviewed_worktree_bytes": 18783,
+      "repository_bytes": 18783,
+      "representation": "byte_identical"
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "schema_version": "karajan.run-routing-standards.final.v1",
+  "base_commit": "07da55e80f5a2c92cf6b3b5612e5e5a706d0cc72",
+  "review_axis": "Standards",
+  "finding_count": 1,
+  "unresolved_findings": 0,
+  "finding": {
+    "id": "POLICY_REFERENCE_REVISION_OUT_OF_RANGE",
+    "severity": "P2",
+    "status": "closed",
+    "before": "Registry and v2 create raised OverflowError; authenticated HTTP returned 500",
+    "after": "Strict 1..1e9 validation in both reference and Registry; domain rejection and HTTP422 reason_code"
+  },
+  "imports_from": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\run-routing-authorization\\backend",
+  "command": "python -m pytest examples/run-routing-authorization/standards_boundaries.py -q --junitxml=examples/run-routing-authorization/standards-boundaries.final.junit.xml",
+  "actual_result": "5 passed",
+  "sources": [
+    {
+      "path": "backend/karajan/runs/planning.py",
+      "sha256": "2a93ea0e0e75563ffe6e415ce9c2634973bde4f7cedce489528d03c6fa23d247"
+    },
+    {
+      "path": "backend/karajan/runs/routing_authorization.py",
+      "sha256": "8dda7f82b7f280b9ca5b6b10459460d68e4bfc4ce8ed9fd9a9a925ad26d1f204"
+    },
+    {
+      "path": "backend/karajan/projects/registry.py",
+      "sha256": "8500cf6be6d4d87f16bac1fdad671e0f3b2e06d46f5b45eeac7a946801c7a592"
+    },
+    {
+      "path": "backend/karajan/projects/execution_policy.py",
+      "sha256": "097fd61ff89d9c51715cd8f3ea9d33fc87f15bce449b74441ef3af3a86adbd11"
+    },
+    {
+      "path": "backend/karajan/orchestration/binding.py",
+      "sha256": "ccc0c0c88b99e6ae31db3a20a397cfc6d41edccdae7591c9bb5f89c90020fe05"
+    },
+    {
+      "path": "tests/runs/test_routing_authorization.py",
+      "sha256": "748c8e56f60e291cdf27c3296be674ed9ada83f3871e7e5f7da5cf936ccbfc87"
+    },
+    {
+      "path": "examples/run-routing-authorization/standards_boundaries.py",
+      "sha256": "51bad1535f52e642147e877b3b338602157d6a3179eb0bb0dfe379857254b3e2"
+    }
+  ],
+  "reports": [
+    {
+      "path": "standards-boundaries.before.junit.xml",
+      "sha256": "3327e552df97f311574a57739b559c085c6e91265b28ed130f8adfa1f6e7cf67"
+    },
+    {
+      "path": "standards-http.before.junit.xml",
+      "sha256": "b62897e72cbaa6ce8ebaee9041d2b9df326b7031dc67f815df457699077a7563"
+    },
+    {
+      "path": "standards-boundaries.after.junit.xml",
+      "sha256": "b799732ef75fe3599a912d160b076e52310f9a71f7d48df3c4d5993fcc7ead42"
+    },
+    {
+      "path": "standards-boundaries.final.junit.xml",
+      "sha256": "da58e85d1ea57b2b617675673a82fda937c777d29834aa8d77d1d0fa76bd64b3"
+    }
+  ],
+  "model_calls": 0,
+  "credential_operations": 0,
+  "qualification_claim": false
+}

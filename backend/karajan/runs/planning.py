@@ -24,6 +24,13 @@ from .models import (
     ProposeHandoff,
     SubmitPlan,
 )
+from .routing_authorization import (
+    ApprovePlanV2,
+    CreateRunV2,
+    SubmitPlanV2,
+    resolve_binding,
+    validate_authorization,
+)
 from .validation import plan_impact, validate_creation, validate_plan
 
 
@@ -107,8 +114,13 @@ class RunPlanner:
     def create(
         self, request: dict[str, Any], *, command_key: str, principal: str
     ) -> dict[str, Any]:
+        version_two = (
+            isinstance(request, dict) and request.get("schema_version") == "karajan.create-run.v2"
+        )
         try:
-            request = CreateRun.model_validate(request).model_dump()
+            request = (
+                (CreateRunV2 if version_two else CreateRun).model_validate(request).model_dump()
+            )
         except ValidationError:
             raise RunError("RUN_INPUT_INVALID") from None
         identity = digest(["create", request])
@@ -127,11 +139,37 @@ class RunPlanner:
             raise RunError("PROJECT_SNAPSHOT_CHANGED")
         if project["configuration"]["status"] != "offline_valid":
             raise RunError("CONFIGURATION_NOT_READY")
+        execution_policy = None
+        if version_two:
+            from karajan.projects import ProjectError
+
+            reference = request["execution_policy"]
+            try:
+                execution_policy = self.projects.get_execution_policy(
+                    request["project_id"],
+                    reference["id"],
+                    reference["revision"],
+                    principal=principal,
+                )
+            except ProjectError as rejected:
+                raise RunError(rejected.code) from None
+            if (
+                execution_policy["digest"] != reference["digest"]
+                or execution_policy["configuration_digest"] != request["configuration_digest"]
+            ):
+                raise RunError("EXECUTION_POLICY_BINDING_MISMATCH")
         leads = [item for item in request["participants"] if item["purpose"] == "lead"]
         if len(leads) != 1:
             raise RunError("ONE_COMMANDER_REQUIRED")
         try:
             validate_creation(request, project, exported["configuration"], principal)
+            if execution_policy is not None:
+                validate_authorization(
+                    request["authorization"],
+                    request["authorization"],
+                    execution_policy,
+                    exported["configuration"],
+                )
         except ValueError as rejected:
             raise RunError(str(rejected)) from None
         snapshot = {
@@ -162,6 +200,9 @@ class RunPlanner:
             "active_plan_revision": None,
             "latest_plan_revision": 0,
         }
+        if execution_policy is not None:
+            snapshot["schema_version"] = "karajan.run-planning.v2"
+            snapshot["execution_policy_snapshot"] = execution_policy
 
         def insert(db: sqlite3.Connection) -> dict[str, Any]:
             db.execute("INSERT INTO runs VALUES (?, ?)", (snapshot["id"], encoded(snapshot)))
@@ -380,10 +421,15 @@ class RunPlanner:
     def submit_plan(
         self, run_id: str, request: dict[str, Any], *, command_key: str, principal: str
     ) -> dict[str, Any]:
-        request = {"run_id": run_id, **parse(SubmitPlan, request)}
+        version_two = (
+            isinstance(request, dict) and request.get("schema_version") == "karajan.submit-plan.v2"
+        )
+        request = {"run_id": run_id, **parse(SubmitPlanV2 if version_two else SubmitPlan, request)}
 
         def apply(db: sqlite3.Connection) -> dict[str, Any]:
             run = self._get(db, run_id)
+            if version_two != (run["schema_version"] == "karajan.run-planning.v2"):
+                raise RunError("RUN_PROTOCOL_VERSION_MISMATCH")
             self._term(run, request["term"])
             if principal != run["commander"]["principal"]:
                 raise RunError("ONLY_CURRENT_COMMANDER_CAN_SUBMIT")
@@ -404,6 +450,7 @@ class RunPlanner:
             try:
                 validate_plan(request["plan"], run["authorization_ceiling"])
                 impact = plan_impact(request["plan"], run)
+                routing_binding = resolve_binding(run, request["plan"]) if version_two else None
             except ValueError as rejected:
                 raise RunError(str(rejected)) from None
             configuration = run["configuration_snapshot"]["digest"]
@@ -418,6 +465,16 @@ class RunPlanner:
                 "provenance": intent["receipt"]["provenance"],
                 "impact": impact,
             }
+            if routing_binding is not None:
+                result["routing_binding"] = routing_binding
+                result["routing_digest"] = digest(routing_binding)
+                result["authorization_digest"] = digest(
+                    [
+                        configuration,
+                        request["plan"]["authorization"],
+                        routing_binding,
+                    ]
+                )
             result["plan_digest"] = digest(result)
             run["plans"].append(result)
             run["latest_plan_revision"] = result["plan_revision"]
@@ -431,10 +488,18 @@ class RunPlanner:
     def approve_plan(
         self, run_id: str, request: dict[str, Any], *, command_key: str, principal: str
     ) -> dict[str, Any]:
-        request = {"run_id": run_id, **parse(ApprovePlan, request)}
+        version_two = (
+            isinstance(request, dict) and request.get("schema_version") == "karajan.approve-plan.v2"
+        )
+        request = {
+            "run_id": run_id,
+            **parse(ApprovePlanV2 if version_two else ApprovePlan, request),
+        }
 
         def apply(db: sqlite3.Connection) -> dict[str, Any]:
             run = self._get(db, run_id)
+            if version_two != (run["schema_version"] == "karajan.run-planning.v2"):
+                raise RunError("RUN_PROTOCOL_VERSION_MISMATCH")
             self._owner(run, principal)
             self._term(run, request["term"])
             if request["plan_revision"] != run["latest_plan_revision"] or not run["plans"]:
@@ -451,6 +516,8 @@ class RunPlanner:
                     )
                 )
                 or request["configuration_digest"] != run["configuration_snapshot"]["digest"]
+                or version_two
+                and request["routing_digest"] != plan["routing_digest"]
             ):
                 raise RunError("APPROVAL_BINDING_MISMATCH")
             if run["active_plan_revision"] == plan["plan_revision"]:
