@@ -1,0 +1,1208 @@
+{
+  "schema_version": "karajan.fixed-go-suite-observation.v2",
+  "suite_ref": {
+    "id": "opencode-go-native-read-edit-linux",
+    "revision": 2
+  },
+  "qualification_id": "qualification-one",
+  "source": {
+    "schema_version": "karajan.fixed-go-suite-source.v2",
+    "suite_ref": {
+      "id": "opencode-go-native-read-edit-linux",
+      "revision": 2
+    },
+    "observation_origin": "http_fixture",
+    "qualification_scope": "projected_native_tools_fixture",
+    "runtime_source": {
+      "schema_version": "karajan.fixed-go-runtime-source.v1",
+      "execution_path": "linux-unshare-chroot-opencode-go-projected-capture-v1",
+      "runtime_version": "1.18.29",
+      "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+      "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+      "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+      "machine": "x86_64",
+      "source_sha256": {
+        "go_probe.py": "f9fe86a085db0e9d863a79087f67356c3715048735eddde5917cbf4b141d4743",
+        "opencode_runtime.py": "72b2705c8abdd5e1f976c774c2f521bab01d5345c6b95e0d70dd89e9f7e3b55d",
+        "_opencode_namespace.py": "6e981c2f8d0de875380ad342f168a0e8bddb46ae9e607202121ebd26b8d35019",
+        "_opencode_inner.py": "3fed107dda1ba908fbc098f37f5d26b22c82b7402a79f2c9612d208dfa01b3e3",
+        "_opencode_projection.py": "cac01b05d8aae1ab1916b30d6f50500585fdce3dfd07fe956ffb002243274c57",
+        "_opencode_capture.py": "9cb7c45bbf073c39efcf0d0591bb287ab4891a9ee0cecf0adbc5cea1b0383907",
+        "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+        "go_relay.py": "2f8f32de73d95d0c2298f1e10f7cb8bee667cd6e4c394cabaa3e81a881d7ac16",
+        "go_journal.py": "dbc3d31c63b8b2e0269a0cd4e3034352cc877ca7d845c0892d3a2b159c93290e",
+        "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b",
+        "isolation/go_projected_probe.py": "85d13bf5ce4c86343d7831cb99ab48e37d01fded79416c622a95b031f26648ce",
+        "isolation/_go_projected_evidence.py": "e7a40071694572daaeeba50479acd333e6847540820c62926c606c913465eea4",
+        "candidates/store.py": "9096bc2904d34ec01ab3adb22da45f151b94bfda90fd3e942890ba93675243ca",
+        "candidates/models.py": "99e99e5cb8f3ae6d6b02f9f0047e8239e8bc8901670c217e88cc6a6d31180769",
+        "candidates/_projection.py": "73c8a2edf707937af6a53fae7e1e124ccc98d32e8f13159540ebe11767ab7ce9",
+        "adapters/opencode/go_context.py": "ab351b634e38351bed631db97734d1e519fc7e4577b0fb094f2651fa112d0428"
+      },
+      "system_executable_sha256": {
+        "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c",
+        "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+        "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+        "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118",
+        "git": "2a8c18fbf43da9f692d75474c72bea9dfd796c260b0f3dfe456376abc3bbd668"
+      },
+      "native_settings_digest": "57fc9102fe09cac98badb23eb75c63515c6dbede6b2dae26ce62e26c9304bebd",
+      "probe_spec": {
+        "schema_version": "karajan.go-projected-probe-spec.v1",
+        "id": "opencode-go-projected-read-edit-capture-linux",
+        "revision": 1,
+        "model": "glm-5.3-flash",
+        "scenarios": [
+          "edit",
+          "denied_read"
+        ],
+        "max_requests": 6,
+        "context": {
+          "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+          "approved_input_tokens": 12288,
+          "reserved_output_tokens": 4096,
+          "operating_context_tokens": 16384,
+          "fixed_margin": 2048,
+          "ratio_margin_basis_points": 2000
+        },
+        "projection": [
+          {
+            "path": "reference.md",
+            "sha256": "480a018a0f0a60cca5c7a700dd5a42974d7594df817c10aac0accda2f7a52721",
+            "writable": false
+          },
+          {
+            "path": "src/fixture.py",
+            "sha256": "5ce9939a494a0ebeb2ed030c5f45258d0e22be107290c2b887b632418ef73363",
+            "writable": true
+          }
+        ],
+        "prompt_sha256": {
+          "edit": "45464e198927e43152dfa6604f4e3c507e03b3f4cb2e9b201042ea5187e2028c",
+          "denied_read": "ef02373eef6d3ab82394cf3b102997168aaf65a8aaa34ad3aedba26a7ea0fd4e"
+        },
+        "baseline_manifest": [
+          {
+            "path": "assets/unchanged.bin",
+            "mode": "100644",
+            "sha256": "d88503a22420deec42284986229cead70cbcf40f2229d5f8e6b6985051255ae7",
+            "bytes": 22,
+            "blob_sha": "04a3937a4d7ade87e1b74c0c548c130927ca5fc3"
+          },
+          {
+            "path": "bin/unchanged",
+            "mode": "100755",
+            "sha256": "306c6ca7407560340797866e077e053627ad409277d1b9da58106fce4cf717cb",
+            "bytes": 17,
+            "blob_sha": "039e4d0069c5c26909f86c505b9de66182e6d1f3"
+          },
+          {
+            "path": "reference.md",
+            "mode": "100644",
+            "sha256": "480a018a0f0a60cca5c7a700dd5a42974d7594df817c10aac0accda2f7a52721",
+            "bytes": 75,
+            "blob_sha": "941c0fff066cdafba29a8db6088ce78cddea98b9"
+          },
+          {
+            "path": "src/fixture.py",
+            "mode": "100644",
+            "sha256": "5ce9939a494a0ebeb2ed030c5f45258d0e22be107290c2b887b632418ef73363",
+            "bytes": 67,
+            "blob_sha": "312a3b53f73c947281f541f7172bd91ddcfe4fa6"
+          }
+        ]
+      },
+      "probe_spec_digest": "1b851a74619d3097c8a8d16d24a6e1e4311f97da8df5910601c8c630f93a6b84",
+      "accounting_source": {
+        "schema_version": "karajan.go-context-source.v1",
+        "model": "glm-5.3-flash",
+        "channel": "opencode-go",
+        "measurement_method": "reference_tokenizer_estimate",
+        "libraries": {
+          "transformers": "5.16.1",
+          "tokenizers": "0.23.2",
+          "Jinja2": "3.1.6"
+        },
+        "artifacts": {
+          "tokenizer.json": {
+            "sha256": "19e773648cb4e65de8660ea6365e10acca112d42a854923df93db4a6f333a82d",
+            "bytes": 20217442,
+            "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/690b705278a3a58e538fcb37c2ca8b5f9511213c/tokenizer.json"
+          },
+          "tokenizer_config.json": {
+            "sha256": "98b1271574f41abf89427ae2dda030d94dc9478f0edc5a8bd240db213c6fd5fc",
+            "bytes": 761,
+            "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/690b705278a3a58e538fcb37c2ca8b5f9511213c/tokenizer_config.json"
+          },
+          "chat_template.jinja": {
+            "sha256": "0c4099f3382d6c92700dfb99725025360966fd73032f0ecf32377c0d9e6309c5",
+            "bytes": 10950,
+            "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/690b705278a3a58e538fcb37c2ca8b5f9511213c/chat_template.jinja"
+          }
+        },
+        "normalizer": {
+          "id": "openai-compatible-text-functions.v1",
+          "implementation_sha256": "ab351b634e38351bed631db97734d1e519fc7e4577b0fb094f2651fa112d0428",
+          "generation_prompt": true,
+          "add_special_tokens": false,
+          "default_reasoning_effort": "max",
+          "default_clear_thinking": false,
+          "tool_argument_normalization": "duplicate-rejecting-json-object",
+          "request_digest_encoding": "ordered-json-utf8-compact"
+        },
+        "declared_capacity": {
+          "basis": "provider_declared",
+          "context_tokens": 1000000,
+          "max_output_tokens": 131072,
+          "catalog_revision": "98383f3755693d8b173ec1a2ff8bd0ae851ef207",
+          "channel_record_url": "https://github.com/anomalyco/models.dev/blob/98383f3755693d8b173ec1a2ff8bd0ae851ef207/providers/opencode-go/models/glm-5.3-flash.toml",
+          "model_record_url": "https://github.com/anomalyco/models.dev/blob/98383f3755693d8b173ec1a2ff8bd0ae851ef207/models/zhipuai/glm-5.3-flash.toml",
+          "channel_record_sha256": "04995d39482667fe746b81bb5bd2ad08817ee0a11ad2de0d93a9d774f54c68f0",
+          "model_record_sha256": "541b4e2dc3b05cfae7e89766882eff3dc6e733b8309d9d11fe9037d5bd374b0a",
+          "model_documentation": "https://docs.z.ai/guides/vlm/glm-5.3-flash",
+          "channel_documentation": "https://opencode.ai/docs/go/"
+        },
+        "server_exact_accounting": false,
+        "qualification_granted": false
+      }
+    },
+    "runtime_digest": "316d83e7d10ab51f4ba524988d9177cece4ffc27ee24f50f693efc875dadec0b",
+    "work_root": {
+      "path": "/tmp/kgqs-6y4etpql"
+    },
+    "journal": {
+      "path": "/tmp/kgqs-6y4etpql/calls.sqlite"
+    },
+    "producer_sha256": "1a8bf5c17028a8cf3ae784814a1688f1a747c8c3a138f20f97642d53bc753588",
+    "probe_spec": {
+      "schema_version": "karajan.go-projected-probe-spec.v1",
+      "id": "opencode-go-projected-read-edit-capture-linux",
+      "revision": 1,
+      "model": "glm-5.3-flash",
+      "scenarios": [
+        "edit",
+        "denied_read"
+      ],
+      "max_requests": 6,
+      "context": {
+        "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+        "approved_input_tokens": 12288,
+        "reserved_output_tokens": 4096,
+        "operating_context_tokens": 16384,
+        "fixed_margin": 2048,
+        "ratio_margin_basis_points": 2000
+      },
+      "projection": [
+        {
+          "path": "reference.md",
+          "sha256": "480a018a0f0a60cca5c7a700dd5a42974d7594df817c10aac0accda2f7a52721",
+          "writable": false
+        },
+        {
+          "path": "src/fixture.py",
+          "sha256": "5ce9939a494a0ebeb2ed030c5f45258d0e22be107290c2b887b632418ef73363",
+          "writable": true
+        }
+      ],
+      "prompt_sha256": {
+        "edit": "45464e198927e43152dfa6604f4e3c507e03b3f4cb2e9b201042ea5187e2028c",
+        "denied_read": "ef02373eef6d3ab82394cf3b102997168aaf65a8aaa34ad3aedba26a7ea0fd4e"
+      },
+      "baseline_manifest": [
+        {
+          "path": "assets/unchanged.bin",
+          "mode": "100644",
+          "sha256": "d88503a22420deec42284986229cead70cbcf40f2229d5f8e6b6985051255ae7",
+          "bytes": 22,
+          "blob_sha": "04a3937a4d7ade87e1b74c0c548c130927ca5fc3"
+        },
+        {
+          "path": "bin/unchanged",
+          "mode": "100755",
+          "sha256": "306c6ca7407560340797866e077e053627ad409277d1b9da58106fce4cf717cb",
+          "bytes": 17,
+          "blob_sha": "039e4d0069c5c26909f86c505b9de66182e6d1f3"
+        },
+        {
+          "path": "reference.md",
+          "mode": "100644",
+          "sha256": "480a018a0f0a60cca5c7a700dd5a42974d7594df817c10aac0accda2f7a52721",
+          "bytes": 75,
+          "blob_sha": "941c0fff066cdafba29a8db6088ce78cddea98b9"
+        },
+        {
+          "path": "src/fixture.py",
+          "mode": "100644",
+          "sha256": "5ce9939a494a0ebeb2ed030c5f45258d0e22be107290c2b887b632418ef73363",
+          "bytes": 67,
+          "blob_sha": "312a3b53f73c947281f541f7172bd91ddcfe4fa6"
+        }
+      ]
+    }
+  },
+  "observation_origin": "http_fixture",
+  "qualification_scope": "projected_native_tools_fixture",
+  "runtime_tools_status": "not_run",
+  "dispatch_eligible": false,
+  "provider_remote_stop": "unknown",
+  "billing_limit_qualification": "not_run",
+  "scenarios": [
+    {
+      "scenario": "edit",
+      "attempt_id": "attempt-edit",
+      "fence": 1,
+      "grant_id": "grant-edit",
+      "status": "failed",
+      "reason_codes": [
+        "PROJECTED_CONTEXT_OR_RETENTION_INVALID"
+      ],
+      "observation": {
+        "schema_version": "karajan.projected-opencode-go-observation.v1",
+        "scope": "projected_native_tools_fixture",
+        "scenario": "edit",
+        "grant_id": "grant-edit",
+        "observation_origin": "http_fixture",
+        "runtime_tools_status": "not_run",
+        "dispatch_eligible": false,
+        "real_credential_passed_to_runtime": false,
+        "provider_remote_stop": "unknown",
+        "billing_limit_qualification": "not_run",
+        "runtime_source": {
+          "schema_version": "karajan.fixed-go-runtime-source.v1",
+          "execution_path": "linux-unshare-chroot-opencode-go-projected-capture-v1",
+          "runtime_version": "1.18.29",
+          "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+          "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+          "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+          "machine": "x86_64",
+          "source_sha256": {
+            "go_probe.py": "f9fe86a085db0e9d863a79087f67356c3715048735eddde5917cbf4b141d4743",
+            "opencode_runtime.py": "72b2705c8abdd5e1f976c774c2f521bab01d5345c6b95e0d70dd89e9f7e3b55d",
+            "_opencode_namespace.py": "6e981c2f8d0de875380ad342f168a0e8bddb46ae9e607202121ebd26b8d35019",
+            "_opencode_inner.py": "3fed107dda1ba908fbc098f37f5d26b22c82b7402a79f2c9612d208dfa01b3e3",
+            "_opencode_projection.py": "cac01b05d8aae1ab1916b30d6f50500585fdce3dfd07fe956ffb002243274c57",
+            "_opencode_capture.py": "9cb7c45bbf073c39efcf0d0591bb287ab4891a9ee0cecf0adbc5cea1b0383907",
+            "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+            "go_relay.py": "2f8f32de73d95d0c2298f1e10f7cb8bee667cd6e4c394cabaa3e81a881d7ac16",
+            "go_journal.py": "dbc3d31c63b8b2e0269a0cd4e3034352cc877ca7d845c0892d3a2b159c93290e",
+            "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b",
+            "isolation/go_projected_probe.py": "85d13bf5ce4c86343d7831cb99ab48e37d01fded79416c622a95b031f26648ce",
+            "isolation/_go_projected_evidence.py": "e7a40071694572daaeeba50479acd333e6847540820c62926c606c913465eea4",
+            "candidates/store.py": "9096bc2904d34ec01ab3adb22da45f151b94bfda90fd3e942890ba93675243ca",
+            "candidates/models.py": "99e99e5cb8f3ae6d6b02f9f0047e8239e8bc8901670c217e88cc6a6d31180769",
+            "candidates/_projection.py": "73c8a2edf707937af6a53fae7e1e124ccc98d32e8f13159540ebe11767ab7ce9",
+            "adapters/opencode/go_context.py": "ab351b634e38351bed631db97734d1e519fc7e4577b0fb094f2651fa112d0428"
+          },
+          "system_executable_sha256": {
+            "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c",
+            "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+            "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+            "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118",
+            "git": "2a8c18fbf43da9f692d75474c72bea9dfd796c260b0f3dfe456376abc3bbd668"
+          },
+          "native_settings_digest": "57fc9102fe09cac98badb23eb75c63515c6dbede6b2dae26ce62e26c9304bebd",
+          "probe_spec": {
+            "schema_version": "karajan.go-projected-probe-spec.v1",
+            "id": "opencode-go-projected-read-edit-capture-linux",
+            "revision": 1,
+            "model": "glm-5.3-flash",
+            "scenarios": [
+              "edit",
+              "denied_read"
+            ],
+            "max_requests": 6,
+            "context": {
+              "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+              "approved_input_tokens": 12288,
+              "reserved_output_tokens": 4096,
+              "operating_context_tokens": 16384,
+              "fixed_margin": 2048,
+              "ratio_margin_basis_points": 2000
+            },
+            "projection": [
+              {
+                "path": "reference.md",
+                "sha256": "480a018a0f0a60cca5c7a700dd5a42974d7594df817c10aac0accda2f7a52721",
+                "writable": false
+              },
+              {
+                "path": "src/fixture.py",
+                "sha256": "5ce9939a494a0ebeb2ed030c5f45258d0e22be107290c2b887b632418ef73363",
+                "writable": true
+              }
+            ],
+            "prompt_sha256": {
+              "edit": "45464e198927e43152dfa6604f4e3c507e03b3f4cb2e9b201042ea5187e2028c",
+              "denied_read": "ef02373eef6d3ab82394cf3b102997168aaf65a8aaa34ad3aedba26a7ea0fd4e"
+            },
+            "baseline_manifest": [
+              {
+                "path": "assets/unchanged.bin",
+                "mode": "100644",
+                "sha256": "d88503a22420deec42284986229cead70cbcf40f2229d5f8e6b6985051255ae7",
+                "bytes": 22,
+                "blob_sha": "04a3937a4d7ade87e1b74c0c548c130927ca5fc3"
+              },
+              {
+                "path": "bin/unchanged",
+                "mode": "100755",
+                "sha256": "306c6ca7407560340797866e077e053627ad409277d1b9da58106fce4cf717cb",
+                "bytes": 17,
+                "blob_sha": "039e4d0069c5c26909f86c505b9de66182e6d1f3"
+              },
+              {
+                "path": "reference.md",
+                "mode": "100644",
+                "sha256": "480a018a0f0a60cca5c7a700dd5a42974d7594df817c10aac0accda2f7a52721",
+                "bytes": 75,
+                "blob_sha": "941c0fff066cdafba29a8db6088ce78cddea98b9"
+              },
+              {
+                "path": "src/fixture.py",
+                "mode": "100644",
+                "sha256": "5ce9939a494a0ebeb2ed030c5f45258d0e22be107290c2b887b632418ef73363",
+                "bytes": 67,
+                "blob_sha": "312a3b53f73c947281f541f7172bd91ddcfe4fa6"
+              }
+            ]
+          },
+          "probe_spec_digest": "1b851a74619d3097c8a8d16d24a6e1e4311f97da8df5910601c8c630f93a6b84",
+          "accounting_source": {
+            "schema_version": "karajan.go-context-source.v1",
+            "model": "glm-5.3-flash",
+            "channel": "opencode-go",
+            "measurement_method": "reference_tokenizer_estimate",
+            "libraries": {
+              "transformers": "5.16.1",
+              "tokenizers": "0.23.2",
+              "Jinja2": "3.1.6"
+            },
+            "artifacts": {
+              "tokenizer.json": {
+                "sha256": "19e773648cb4e65de8660ea6365e10acca112d42a854923df93db4a6f333a82d",
+                "bytes": 20217442,
+                "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/690b705278a3a58e538fcb37c2ca8b5f9511213c/tokenizer.json"
+              },
+              "tokenizer_config.json": {
+                "sha256": "98b1271574f41abf89427ae2dda030d94dc9478f0edc5a8bd240db213c6fd5fc",
+                "bytes": 761,
+                "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/690b705278a3a58e538fcb37c2ca8b5f9511213c/tokenizer_config.json"
+              },
+              "chat_template.jinja": {
+                "sha256": "0c4099f3382d6c92700dfb99725025360966fd73032f0ecf32377c0d9e6309c5",
+                "bytes": 10950,
+                "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/690b705278a3a58e538fcb37c2ca8b5f9511213c/chat_template.jinja"
+              }
+            },
+            "normalizer": {
+              "id": "openai-compatible-text-functions.v1",
+              "implementation_sha256": "ab351b634e38351bed631db97734d1e519fc7e4577b0fb094f2651fa112d0428",
+              "generation_prompt": true,
+              "add_special_tokens": false,
+              "default_reasoning_effort": "max",
+              "default_clear_thinking": false,
+              "tool_argument_normalization": "duplicate-rejecting-json-object",
+              "request_digest_encoding": "ordered-json-utf8-compact"
+            },
+            "declared_capacity": {
+              "basis": "provider_declared",
+              "context_tokens": 1000000,
+              "max_output_tokens": 131072,
+              "catalog_revision": "98383f3755693d8b173ec1a2ff8bd0ae851ef207",
+              "channel_record_url": "https://github.com/anomalyco/models.dev/blob/98383f3755693d8b173ec1a2ff8bd0ae851ef207/providers/opencode-go/models/glm-5.3-flash.toml",
+              "model_record_url": "https://github.com/anomalyco/models.dev/blob/98383f3755693d8b173ec1a2ff8bd0ae851ef207/models/zhipuai/glm-5.3-flash.toml",
+              "channel_record_sha256": "04995d39482667fe746b81bb5bd2ad08817ee0a11ad2de0d93a9d774f54c68f0",
+              "model_record_sha256": "541b4e2dc3b05cfae7e89766882eff3dc6e733b8309d9d11fe9037d5bd374b0a",
+              "model_documentation": "https://docs.z.ai/guides/vlm/glm-5.3-flash",
+              "channel_documentation": "https://opencode.ai/docs/go/"
+            },
+            "server_exact_accounting": false,
+            "qualification_granted": false
+          }
+        },
+        "runtime_digest": "316d83e7d10ab51f4ba524988d9177cece4ffc27ee24f50f693efc875dadec0b",
+        "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+        "source_sha256": {
+          "go_probe.py": "f9fe86a085db0e9d863a79087f67356c3715048735eddde5917cbf4b141d4743",
+          "opencode_runtime.py": "72b2705c8abdd5e1f976c774c2f521bab01d5345c6b95e0d70dd89e9f7e3b55d",
+          "_opencode_namespace.py": "6e981c2f8d0de875380ad342f168a0e8bddb46ae9e607202121ebd26b8d35019",
+          "_opencode_inner.py": "3fed107dda1ba908fbc098f37f5d26b22c82b7402a79f2c9612d208dfa01b3e3",
+          "_opencode_projection.py": "cac01b05d8aae1ab1916b30d6f50500585fdce3dfd07fe956ffb002243274c57",
+          "_opencode_capture.py": "9cb7c45bbf073c39efcf0d0591bb287ab4891a9ee0cecf0adbc5cea1b0383907",
+          "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+          "go_relay.py": "2f8f32de73d95d0c2298f1e10f7cb8bee667cd6e4c394cabaa3e81a881d7ac16",
+          "go_journal.py": "dbc3d31c63b8b2e0269a0cd4e3034352cc877ca7d845c0892d3a2b159c93290e",
+          "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b",
+          "isolation/go_projected_probe.py": "85d13bf5ce4c86343d7831cb99ab48e37d01fded79416c622a95b031f26648ce",
+          "isolation/_go_projected_evidence.py": "e7a40071694572daaeeba50479acd333e6847540820c62926c606c913465eea4",
+          "candidates/store.py": "9096bc2904d34ec01ab3adb22da45f151b94bfda90fd3e942890ba93675243ca",
+          "candidates/models.py": "99e99e5cb8f3ae6d6b02f9f0047e8239e8bc8901670c217e88cc6a6d31180769",
+          "candidates/_projection.py": "73c8a2edf707937af6a53fae7e1e124ccc98d32e8f13159540ebe11767ab7ce9",
+          "adapters/opencode/go_context.py": "ab351b634e38351bed631db97734d1e519fc7e4577b0fb094f2651fa112d0428"
+        },
+        "probe_spec": {
+          "schema_version": "karajan.go-projected-probe-spec.v1",
+          "id": "opencode-go-projected-read-edit-capture-linux",
+          "revision": 1,
+          "model": "glm-5.3-flash",
+          "scenarios": [
+            "edit",
+            "denied_read"
+          ],
+          "max_requests": 6,
+          "context": {
+            "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+            "approved_input_tokens": 12288,
+            "reserved_output_tokens": 4096,
+            "operating_context_tokens": 16384,
+            "fixed_margin": 2048,
+            "ratio_margin_basis_points": 2000
+          },
+          "projection": [
+            {
+              "path": "reference.md",
+              "sha256": "480a018a0f0a60cca5c7a700dd5a42974d7594df817c10aac0accda2f7a52721",
+              "writable": false
+            },
+            {
+              "path": "src/fixture.py",
+              "sha256": "5ce9939a494a0ebeb2ed030c5f45258d0e22be107290c2b887b632418ef73363",
+              "writable": true
+            }
+          ],
+          "prompt_sha256": {
+            "edit": "45464e198927e43152dfa6604f4e3c507e03b3f4cb2e9b201042ea5187e2028c",
+            "denied_read": "ef02373eef6d3ab82394cf3b102997168aaf65a8aaa34ad3aedba26a7ea0fd4e"
+          },
+          "baseline_manifest": [
+            {
+              "path": "assets/unchanged.bin",
+              "mode": "100644",
+              "sha256": "d88503a22420deec42284986229cead70cbcf40f2229d5f8e6b6985051255ae7",
+              "bytes": 22,
+              "blob_sha": "04a3937a4d7ade87e1b74c0c548c130927ca5fc3"
+            },
+            {
+              "path": "bin/unchanged",
+              "mode": "100755",
+              "sha256": "306c6ca7407560340797866e077e053627ad409277d1b9da58106fce4cf717cb",
+              "bytes": 17,
+              "blob_sha": "039e4d0069c5c26909f86c505b9de66182e6d1f3"
+            },
+            {
+              "path": "reference.md",
+              "mode": "100644",
+              "sha256": "480a018a0f0a60cca5c7a700dd5a42974d7594df817c10aac0accda2f7a52721",
+              "bytes": 75,
+              "blob_sha": "941c0fff066cdafba29a8db6088ce78cddea98b9"
+            },
+            {
+              "path": "src/fixture.py",
+              "mode": "100644",
+              "sha256": "5ce9939a494a0ebeb2ed030c5f45258d0e22be107290c2b887b632418ef73363",
+              "bytes": 67,
+              "blob_sha": "312a3b53f73c947281f541f7172bd91ddcfe4fa6"
+            }
+          ]
+        },
+        "probe_spec_digest": "1b851a74619d3097c8a8d16d24a6e1e4311f97da8df5910601c8c630f93a6b84",
+        "runtime": {
+          "state": "running",
+          "runtime_version": "1.18.29",
+          "runtime_tools_status": "not_run",
+          "dispatch_eligible": false,
+          "namespace_pid": 1,
+          "namespaces": {
+            "user": "user:[4026532240]",
+            "mnt": "mnt:[4026532241]",
+            "pid": "pid:[4026532242]",
+            "net": "net:[4026532243]"
+          },
+          "host_mount_visible": false,
+          "wsl_interop_visible": false,
+          "native_control_fd_inherited": false,
+          "network_interfaces": [
+            "lo"
+          ],
+          "ipv4_routes": [],
+          "capabilities": {
+            "effective": "0000000000000000",
+            "permitted": "0000000000000000",
+            "bounding": "0000000000000000"
+          },
+          "no_new_privileges": true,
+          "runtime_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650"
+        },
+        "effective_configuration_matches": true,
+        "assistants": [
+          {
+            "model_matches": true,
+            "completed": true,
+            "stopped": false,
+            "error": false
+          },
+          {
+            "model_matches": true,
+            "completed": true,
+            "stopped": false,
+            "error": false
+          },
+          {
+            "model_matches": true,
+            "completed": true,
+            "stopped": false,
+            "error": false
+          },
+          {
+            "model_matches": true,
+            "completed": true,
+            "stopped": true,
+            "error": false
+          }
+        ],
+        "tools": [
+          {
+            "tool": "read",
+            "path": "reference.md",
+            "status": "completed",
+            "permission_denied": false
+          },
+          {
+            "tool": "read",
+            "path": "src/fixture.py",
+            "status": "completed",
+            "permission_denied": false
+          },
+          {
+            "tool": "edit",
+            "path": "src/fixture.py",
+            "status": "completed",
+            "permission_denied": false
+          }
+        ],
+        "native_cleanup": {
+          "dispatch_eligible": false,
+          "local_stop": "confirmed",
+          "namespace_init_stopped": true,
+          "observed_processes": [
+            {
+              "birth": "9017131",
+              "namespace_pid": 1,
+              "pid": 70101
+            },
+            {
+              "birth": "9017332",
+              "namespace_pid": 45,
+              "pid": 70145
+            }
+          ],
+          "observed_processes_still_running": [],
+          "remote_stop": "unknown",
+          "runtime_tools_status": "not_run"
+        },
+        "capture": {
+          "status": "passed",
+          "baseline_id": "455ced11cc077c7b8f46ae74896477bb27e2f42493570bd82b8371a29ead2294",
+          "baseline_tree_sha": "66d5e722449355d969040a7c866dda4ad404292b",
+          "baseline_manifest_sha256": "360613db30b44484915cb9550f09476d650f6add3b5c3054cd3506888bfc1021",
+          "candidate_id": "2102aee0-75e8-43b5-9ce7-1cbf30702a52",
+          "candidate_revision": 1,
+          "candidate_tree_sha": "c94177739f9684f1abd963107f4469087969cdf2",
+          "candidate_manifest_sha256": "2e7cd8db5278a2eeae1715b71af78683e7e388f50212c1f298627b34f3f0f0e9",
+          "projection_digest": "a805d6962fdcd624f84d41185d56ebc347e9a3d16e907304ac3adf333c088694",
+          "captured_files": [
+            {
+              "path": "reference.md",
+              "sha256": "480a018a0f0a60cca5c7a700dd5a42974d7594df817c10aac0accda2f7a52721",
+              "bytes": 75
+            },
+            {
+              "path": "src/fixture.py",
+              "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+              "bytes": 67
+            }
+          ],
+          "changed_paths": [
+            "src/fixture.py"
+          ],
+          "readonly_unchanged": true,
+          "outside_projection_unchanged": true,
+          "full_baseline_preserved": true,
+          "materialization_matches": true,
+          "local_stop_confirmed": true,
+          "validation_gate": {
+            "local_gate_passed": false,
+            "reasons": [
+              "CHECK_EVIDENCE_MISSING:fixture_check",
+              "REVIEW_EVIDENCE_MISSING"
+            ]
+          },
+          "baseline_manifest": [
+            {
+              "path": "assets/unchanged.bin",
+              "mode": "100644",
+              "blob_sha": "04a3937a4d7ade87e1b74c0c548c130927ca5fc3",
+              "sha256": "d88503a22420deec42284986229cead70cbcf40f2229d5f8e6b6985051255ae7",
+              "bytes": 22
+            },
+            {
+              "path": "bin/unchanged",
+              "mode": "100755",
+              "blob_sha": "039e4d0069c5c26909f86c505b9de66182e6d1f3",
+              "sha256": "306c6ca7407560340797866e077e053627ad409277d1b9da58106fce4cf717cb",
+              "bytes": 17
+            },
+            {
+              "path": "reference.md",
+              "mode": "100644",
+              "blob_sha": "941c0fff066cdafba29a8db6088ce78cddea98b9",
+              "sha256": "480a018a0f0a60cca5c7a700dd5a42974d7594df817c10aac0accda2f7a52721",
+              "bytes": 75
+            },
+            {
+              "path": "src/fixture.py",
+              "mode": "100644",
+              "blob_sha": "312a3b53f73c947281f541f7172bd91ddcfe4fa6",
+              "sha256": "5ce9939a494a0ebeb2ed030c5f45258d0e22be107290c2b887b632418ef73363",
+              "bytes": 67
+            }
+          ],
+          "candidate_manifest": [
+            {
+              "path": "assets/unchanged.bin",
+              "mode": "100644",
+              "blob_sha": "04a3937a4d7ade87e1b74c0c548c130927ca5fc3",
+              "sha256": "d88503a22420deec42284986229cead70cbcf40f2229d5f8e6b6985051255ae7",
+              "bytes": 22
+            },
+            {
+              "path": "bin/unchanged",
+              "mode": "100755",
+              "blob_sha": "039e4d0069c5c26909f86c505b9de66182e6d1f3",
+              "sha256": "306c6ca7407560340797866e077e053627ad409277d1b9da58106fce4cf717cb",
+              "bytes": 17
+            },
+            {
+              "path": "reference.md",
+              "mode": "100644",
+              "blob_sha": "941c0fff066cdafba29a8db6088ce78cddea98b9",
+              "sha256": "480a018a0f0a60cca5c7a700dd5a42974d7594df817c10aac0accda2f7a52721",
+              "bytes": 75
+            },
+            {
+              "path": "src/fixture.py",
+              "mode": "100644",
+              "blob_sha": "8cd5d490288d25a33524493d22f6c13e60704d23",
+              "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+              "bytes": 67
+            }
+          ]
+        },
+        "fixture_changed": true,
+        "fixture_cases": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "relay_cleanup": {
+          "status": "closed",
+          "errors": []
+        },
+        "requests": [
+          {
+            "requested_model": "glm-5.3-flash",
+            "session_header_present": true,
+            "tool_results_in_request": 0,
+            "fixture_content_in_tool_result": false,
+            "denied_canary_in_request": false,
+            "requested_stream": true,
+            "reported_models": [
+              "glm-5.3-flash"
+            ],
+            "tool_names": [
+              "read"
+            ],
+            "usage": {
+              "prompt_tokens": 100,
+              "completion_tokens": 20
+            },
+            "upstream_send_attempted": true,
+            "upstream_status": 200,
+            "upstream_response_complete": true,
+            "response_bytes": 897,
+            "stream_terminated": true,
+            "protocol_passed": true,
+            "relay_completed": true,
+            "reason_codes": [],
+            "sequence": 1,
+            "request_context": {
+              "schema_version": "karajan.go-context-measurement.v1",
+              "model": "glm-5.3-flash",
+              "measurement_method": "reference_tokenizer_estimate",
+              "measurement_confidence": "local_estimate",
+              "request_digest": "7843d709c21651a47df66492cb3f898c68d5f59c7f3d007119f4cb737fbf59f6",
+              "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+              "local_input_tokens": 3170,
+              "fixed_margin": 2048,
+              "ratio_margin_basis_points": 2000,
+              "margin_tokens": 2682,
+              "accounted_input_tokens": 5852,
+              "requested_output_tokens": 4096,
+              "approved_input_tokens": 12288,
+              "reserved_output_tokens": 4096,
+              "operating_context_tokens": 16384,
+              "declared_context_tokens": 1000000,
+              "declared_max_output_tokens": 131072,
+              "template_reasoning_effort": "max",
+              "template_clear_thinking": false
+            },
+            "journal_call_id": "63343454-b0c5-4592-9f9b-0fd0ef7f4ec4",
+            "finish_reason": "tool_calls",
+            "go_cost_trailer_seen": false,
+            "provider_reported_cost": null,
+            "provider_reported_cost_unit": "unknown"
+          },
+          {
+            "requested_model": "glm-5.3-flash",
+            "session_header_present": true,
+            "tool_results_in_request": 1,
+            "fixture_content_in_tool_result": false,
+            "denied_canary_in_request": false,
+            "requested_stream": true,
+            "reported_models": [
+              "glm-5.3-flash"
+            ],
+            "tool_names": [
+              "read"
+            ],
+            "usage": {
+              "prompt_tokens": 100,
+              "completion_tokens": 20
+            },
+            "upstream_send_attempted": true,
+            "upstream_status": 200,
+            "upstream_response_complete": true,
+            "response_bytes": 899,
+            "stream_terminated": true,
+            "protocol_passed": true,
+            "relay_completed": true,
+            "reason_codes": [],
+            "sequence": 2,
+            "request_context": {
+              "schema_version": "karajan.go-context-measurement.v1",
+              "model": "glm-5.3-flash",
+              "measurement_method": "reference_tokenizer_estimate",
+              "measurement_confidence": "local_estimate",
+              "request_digest": "90d6cfc78cc9866eb0d61756fb4f1bc70a9c2f0ba305fbe306e81578733e9461",
+              "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+              "local_input_tokens": 3235,
+              "fixed_margin": 2048,
+              "ratio_margin_basis_points": 2000,
+              "margin_tokens": 2695,
+              "accounted_input_tokens": 5930,
+              "requested_output_tokens": 4096,
+              "approved_input_tokens": 12288,
+              "reserved_output_tokens": 4096,
+              "operating_context_tokens": 16384,
+              "declared_context_tokens": 1000000,
+              "declared_max_output_tokens": 131072,
+              "template_reasoning_effort": "max",
+              "template_clear_thinking": false
+            },
+            "journal_call_id": "398eb2f5-3d87-4db7-9d54-67ef8541781e",
+            "finish_reason": "tool_calls",
+            "go_cost_trailer_seen": false,
+            "provider_reported_cost": null,
+            "provider_reported_cost_unit": "unknown"
+          },
+          {
+            "requested_model": "glm-5.3-flash",
+            "session_header_present": true,
+            "tool_results_in_request": 2,
+            "fixture_content_in_tool_result": true,
+            "denied_canary_in_request": false,
+            "requested_stream": true,
+            "reported_models": [
+              "glm-5.3-flash"
+            ],
+            "tool_names": [
+              "edit"
+            ],
+            "usage": {
+              "prompt_tokens": 100,
+              "completion_tokens": 20
+            },
+            "upstream_send_attempted": true,
+            "upstream_status": 200,
+            "upstream_response_complete": true,
+            "response_bytes": 1007,
+            "stream_terminated": true,
+            "protocol_passed": true,
+            "relay_completed": true,
+            "reason_codes": [],
+            "sequence": 3,
+            "request_context": {
+              "schema_version": "karajan.go-context-measurement.v1",
+              "model": "glm-5.3-flash",
+              "measurement_method": "reference_tokenizer_estimate",
+              "measurement_confidence": "local_estimate",
+              "request_digest": "1e241659135f97066810848928954ec07994e09750c639788de15b54749aaf7f",
+              "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+              "local_input_tokens": 3309,
+              "fixed_margin": 2048,
+              "ratio_margin_basis_points": 2000,
+              "margin_tokens": 2710,
+              "accounted_input_tokens": 6019,
+              "requested_output_tokens": 4096,
+              "approved_input_tokens": 12288,
+              "reserved_output_tokens": 4096,
+              "operating_context_tokens": 16384,
+              "declared_context_tokens": 1000000,
+              "declared_max_output_tokens": 131072,
+              "template_reasoning_effort": "max",
+              "template_clear_thinking": false
+            },
+            "journal_call_id": "4d710878-55e4-46b1-9734-a0054394b127",
+            "finish_reason": "tool_calls",
+            "go_cost_trailer_seen": false,
+            "provider_reported_cost": null,
+            "provider_reported_cost_unit": "unknown"
+          },
+          {
+            "requested_model": "glm-5.3-flash",
+            "session_header_present": true,
+            "tool_results_in_request": 3,
+            "fixture_content_in_tool_result": true,
+            "denied_canary_in_request": false,
+            "requested_stream": true,
+            "reported_models": [
+              "glm-5.3-flash"
+            ],
+            "tool_names": [],
+            "usage": {
+              "prompt_tokens": 100,
+              "completion_tokens": 20
+            },
+            "upstream_send_attempted": true,
+            "upstream_status": 200,
+            "upstream_response_complete": true,
+            "response_bytes": 745,
+            "stream_terminated": true,
+            "protocol_passed": true,
+            "relay_completed": true,
+            "reason_codes": [],
+            "sequence": 4,
+            "request_context": {
+              "schema_version": "karajan.go-context-measurement.v1",
+              "model": "glm-5.3-flash",
+              "measurement_method": "reference_tokenizer_estimate",
+              "measurement_confidence": "local_estimate",
+              "request_digest": "3fbf8cdc03d928417a7c8b64d13b83e1a52f6d7be2cd2326cdd9c0cf5a4b849c",
+              "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+              "local_input_tokens": 3523,
+              "fixed_margin": 2048,
+              "ratio_margin_basis_points": 2000,
+              "margin_tokens": 2753,
+              "accounted_input_tokens": 6276,
+              "requested_output_tokens": 4096,
+              "approved_input_tokens": 12288,
+              "reserved_output_tokens": 4096,
+              "operating_context_tokens": 16384,
+              "declared_context_tokens": 1000000,
+              "declared_max_output_tokens": 131072,
+              "template_reasoning_effort": "max",
+              "template_clear_thinking": false
+            },
+            "journal_call_id": "f92893d0-f147-4d01-b465-79bb6521656a",
+            "finish_reason": "stop",
+            "go_cost_trailer_seen": false,
+            "provider_reported_cost": null,
+            "provider_reported_cost_unit": "unknown"
+          }
+        ],
+        "retention": {
+          "schema_version": "karajan.projected-wire-retention.v1",
+          "source": "measured_final_payload",
+          "calls": [
+            {
+              "sequence": 1,
+              "request_digest": "7843d709c21651a47df66492cb3f898c68d5f59c7f3d007119f4cb737fbf59f6",
+              "message_count": 2,
+              "tool_message_count": 0,
+              "messages_digest": "3617173fd3bdc1869987dcee3b65ebe9aadf66c2052ffd5e44ca476305137477",
+              "initial_input_retained": true,
+              "prior_messages_retained": true,
+              "reference_tool_result_observed": false,
+              "target_tool_result_observed": false
+            },
+            {
+              "sequence": 2,
+              "request_digest": "90d6cfc78cc9866eb0d61756fb4f1bc70a9c2f0ba305fbe306e81578733e9461",
+              "message_count": 4,
+              "tool_message_count": 1,
+              "messages_digest": "af59c9a28aa6a706c121cbe30f2699e9615c96308240a15f745939039d015e53",
+              "initial_input_retained": true,
+              "prior_messages_retained": true,
+              "reference_tool_result_observed": true,
+              "target_tool_result_observed": false
+            },
+            {
+              "sequence": 3,
+              "request_digest": "1e241659135f97066810848928954ec07994e09750c639788de15b54749aaf7f",
+              "message_count": 6,
+              "tool_message_count": 2,
+              "messages_digest": "a7ff377acfeb2fb344c43e5aacfa1e48a2de57f20ebe3a9adeff4d8b8fce446a",
+              "initial_input_retained": true,
+              "prior_messages_retained": true,
+              "reference_tool_result_observed": true,
+              "target_tool_result_observed": true
+            },
+            {
+              "sequence": 4,
+              "request_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+              "message_count": 9,
+              "tool_message_count": 3,
+              "messages_digest": "e4f43ea1e7931551800eaff5ed2c0c83765b9bae4ef2cad7f586e4a740f78e0a",
+              "initial_input_retained": true,
+              "prior_messages_retained": true,
+              "reference_tool_result_observed": true,
+              "target_tool_result_observed": true
+            }
+          ],
+          "initial_input_retained": true,
+          "tool_history_retained": true,
+          "reference_input_observed": true,
+          "target_input_observed": true
+        },
+        "journal": {
+          "grant_id": "grant-edit",
+          "binding": {
+            "attempt_id": "attempt-edit",
+            "auth_generation": "generation-one",
+            "channel": "go-channel",
+            "context": {
+              "approved_input_tokens": 12288,
+              "fixed_margin": 2048,
+              "operating_context_tokens": 16384,
+              "ratio_margin_basis_points": 2000,
+              "reserved_output_tokens": 4096,
+              "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588"
+            },
+            "expires_at": 1788696308.084253,
+            "fence": 1,
+            "max_requests": 6,
+            "model": "glm-5.3-flash",
+            "probe_spec_digest": "1b851a74619d3097c8a8d16d24a6e1e4311f97da8df5910601c8c630f93a6b84",
+            "profile_digest": "1dd12fb5318b6eedfe607732e6096cd40305b777bd06eb9bee8b1dea43d6895c",
+            "qualification_id": "qualification-one",
+            "runtime_digest": "316d83e7d10ab51f4ba524988d9177cece4ffc27ee24f50f693efc875dadec0b",
+            "scenario": "edit",
+            "schema_version": "karajan.go-qualification-grant.v2"
+          },
+          "created_at": 1788695890.1969898,
+          "revoked_at": 1788695901.0845246,
+          "state": "revoked",
+          "request_count": 4,
+          "calls": [
+            {
+              "call_id": "63343454-b0c5-4592-9f9b-0fd0ef7f4ec4",
+              "completed_at": 1788695900.5787585,
+              "grant_id": "grant-edit",
+              "outcome": {
+                "protocol_passed": true,
+                "reason_codes": [],
+                "response_bytes": 897,
+                "state": "response_received",
+                "upstream_status": 200,
+                "usage": {
+                  "completion_tokens": 20,
+                  "prompt_tokens": 100
+                }
+              },
+              "request_context": {
+                "accounted_input_tokens": 5852,
+                "approved_input_tokens": 12288,
+                "declared_context_tokens": 1000000,
+                "declared_max_output_tokens": 131072,
+                "fixed_margin": 2048,
+                "local_input_tokens": 3170,
+                "margin_tokens": 2682,
+                "measurement_confidence": "local_estimate",
+                "measurement_method": "reference_tokenizer_estimate",
+                "model": "glm-5.3-flash",
+                "operating_context_tokens": 16384,
+                "ratio_margin_basis_points": 2000,
+                "request_digest": "7843d709c21651a47df66492cb3f898c68d5f59c7f3d007119f4cb737fbf59f6",
+                "requested_output_tokens": 4096,
+                "reserved_output_tokens": 4096,
+                "schema_version": "karajan.go-context-measurement.v1",
+                "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+                "template_clear_thinking": false,
+                "template_reasoning_effort": "max"
+              },
+              "send_intent_at": 1788695900.5729384,
+              "sequence": 1,
+              "state": "response_received"
+            },
+            {
+              "call_id": "398eb2f5-3d87-4db7-9d54-67ef8541781e",
+              "completed_at": 1788695900.9165514,
+              "grant_id": "grant-edit",
+              "outcome": {
+                "protocol_passed": true,
+                "reason_codes": [],
+                "response_bytes": 899,
+                "state": "response_received",
+                "upstream_status": 200,
+                "usage": {
+                  "completion_tokens": 20,
+                  "prompt_tokens": 100
+                }
+              },
+              "request_context": {
+                "accounted_input_tokens": 5930,
+                "approved_input_tokens": 12288,
+                "declared_context_tokens": 1000000,
+                "declared_max_output_tokens": 131072,
+                "fixed_margin": 2048,
+                "local_input_tokens": 3235,
+                "margin_tokens": 2695,
+                "measurement_confidence": "local_estimate",
+                "measurement_method": "reference_tokenizer_estimate",
+                "model": "glm-5.3-flash",
+                "operating_context_tokens": 16384,
+                "ratio_margin_basis_points": 2000,
+                "request_digest": "90d6cfc78cc9866eb0d61756fb4f1bc70a9c2f0ba305fbe306e81578733e9461",
+                "requested_output_tokens": 4096,
+                "reserved_output_tokens": 4096,
+                "schema_version": "karajan.go-context-measurement.v1",
+                "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+                "template_clear_thinking": false,
+                "template_reasoning_effort": "max"
+              },
+              "send_intent_at": 1788695900.9119983,
+              "sequence": 2,
+              "state": "response_received"
+            },
+            {
+              "call_id": "4d710878-55e4-46b1-9734-a0054394b127",
+              "completed_at": 1788695900.984386,
+              "grant_id": "grant-edit",
+              "outcome": {
+                "protocol_passed": true,
+                "reason_codes": [],
+                "response_bytes": 1007,
+                "state": "response_received",
+                "upstream_status": 200,
+                "usage": {
+                  "completion_tokens": 20,
+                  "prompt_tokens": 100
+                }
+              },
+              "request_context": {
+                "accounted_input_tokens": 6019,
+                "approved_input_tokens": 12288,
+                "declared_context_tokens": 1000000,
+                "declared_max_output_tokens": 131072,
+                "fixed_margin": 2048,
+                "local_input_tokens": 3309,
+                "margin_tokens": 2710,
+                "measurement_confidence": "local_estimate",
+                "measurement_method": "reference_tokenizer_estimate",
+                "model": "glm-5.3-flash",
+                "operating_context_tokens": 16384,
+                "ratio_margin_basis_points": 2000,
+                "request_digest": "1e241659135f97066810848928954ec07994e09750c639788de15b54749aaf7f",
+                "requested_output_tokens": 4096,
+                "reserved_output_tokens": 4096,
+                "schema_version": "karajan.go-context-measurement.v1",
+                "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+                "template_clear_thinking": false,
+                "template_reasoning_effort": "max"
+              },
+              "send_intent_at": 1788695900.9799528,
+              "sequence": 3,
+              "state": "response_received"
+            },
+            {
+              "call_id": "f92893d0-f147-4d01-b465-79bb6521656a",
+              "completed_at": 1788695901.045041,
+              "grant_id": "grant-edit",
+              "outcome": {
+                "protocol_passed": true,
+                "reason_codes": [],
+                "response_bytes": 745,
+                "state": "response_received",
+                "upstream_status": 200,
+                "usage": {
+                  "completion_tokens": 20,
+                  "prompt_tokens": 100
+                }
+              },
+              "request_context": {
+                "accounted_input_tokens": 6276,
+                "approved_input_tokens": 12288,
+                "declared_context_tokens": 1000000,
+                "declared_max_output_tokens": 131072,
+                "fixed_margin": 2048,
+                "local_input_tokens": 3523,
+                "margin_tokens": 2753,
+                "measurement_confidence": "local_estimate",
+                "measurement_method": "reference_tokenizer_estimate",
+                "model": "glm-5.3-flash",
+                "operating_context_tokens": 16384,
+                "ratio_margin_basis_points": 2000,
+                "request_digest": "3fbf8cdc03d928417a7c8b64d13b83e1a52f6d7be2cd2326cdd9c0cf5a4b849c",
+                "requested_output_tokens": 4096,
+                "reserved_output_tokens": 4096,
+                "schema_version": "karajan.go-context-measurement.v1",
+                "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+                "template_clear_thinking": false,
+                "template_reasoning_effort": "max"
+              },
+              "send_intent_at": 1788695901.0387452,
+              "sequence": 4,
+              "state": "response_received"
+            }
+          ]
+        },
+        "reason_codes": [],
+        "status": "passed"
+      }
+    },
+    {
+      "scenario": "denied_read",
+      "attempt_id": "attempt-denied_read",
+      "fence": 1,
+      "grant_id": "grant-denied_read",
+      "status": "not_run",
+      "reason_codes": [
+        "PRIOR_STAGE_INCOMPLETE"
+      ]
+    }
+  ],
+  "reason_codes": [
+    "FIXED_SCENARIO_FAILED"
+  ],
+  "grant_cleanup": [
+    {
+      "grant_id": "grant-edit",
+      "state": "revoked"
+    },
+    {
+      "grant_id": "grant-denied_read",
+      "state": "revoked"
+    }
+  ],
+  "status": "failed",
+  "validation": {
+    "runtime_tools": "not_run",
+    "budget": "unknown",
+    "context_capacity": "unknown",
+    "dispatch": false,
+    "projected_native_tools": "failed",
+    "candidate_capture": "failed",
+    "context_accounting": "failed"
+  }
+}

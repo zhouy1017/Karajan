@@ -1,0 +1,52 @@
+"""Local synthetic SSE diagnostic, not a replay of the unretained official body."""
+
+import json
+
+import pytest
+from test_go_relay import answer, event, post, running, stream
+
+
+def tool_event(index, function):
+    return event(choices=[{
+        "index": 0,
+        "delta": {"tool_calls": [{"index": index, "function": function}]},
+        "finish_reason": None,
+    }])
+
+
+def body(parts):
+    return stream(
+        *(tool_event(index, function) for index, function in parts),
+        event(choices=[{"index": 0, "delta": {}, "finish_reason": "tool_calls"}]),
+    )
+
+
+@pytest.mark.parametrize(("parts", "code"), [
+    ([(0, {"name": "re"}), (0, {"name": "ad", "arguments": "{}"})], None),
+    ([(0, {"name": "read"}), (0, {"arguments": "{}"})], None),
+    ([(0, {"name": "read"}), (1, {"name": "read"})], None),
+    ([(0, {"name": "read"}), (0, {"name": None, "arguments": "{}"})], "INVALID_TOOL_NAME"),
+    ([(0, {"name": "read"}), (0, {"name": "read"})], "UNAPPROVED_TOOL"),
+    ([(0, {"name": "read"})] * 9, "INVALID_TOOL_NAME"),
+    ([(0, {"name": "x" * 33})], "INVALID_TOOL_NAME"),
+    ([(0, {"name": ["read"]})], "INVALID_TOOL_NAME"),
+])
+def test_public_relay_distinguishes_name_fragment_failure_modes(parts, code, tmp_path):
+    raw = body(parts)
+    with running(lambda request: answer(raw)) as (relay, requests):
+        result = post(relay)
+        receipt = relay.receipts[0]
+        assert len(requests) == 1
+        if code is None:
+            assert result.status_code == 200
+            assert receipt["tool_names"] == ["read"]
+            assert receipt["protocol_passed"] is True
+        else:
+            assert result.status_code == 502
+            assert receipt["reason_codes"] == [code]
+            assert receipt["protocol_passed"] is False
+        (tmp_path / "summary.json").write_text(json.dumps({
+            "response_bytes": len(raw),
+            "status": result.status_code,
+            "reason_codes": receipt["reason_codes"],
+        }))

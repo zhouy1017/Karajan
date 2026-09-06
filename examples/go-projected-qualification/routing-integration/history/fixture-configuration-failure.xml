@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.594" timestamp="2026-09-06T19:46:57.039857+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_projected_go_routing" name="test_public_approval_persists_narrowed_execution_limits_and_reserves_once" time="0.335"><failure message="karajan.projects.registry.ProjectError: CONFIGURATION_NOT_READY">projected = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x000001B893E4E090&gt;, 'project_id': '23427448-710f-4e...C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-756/test_public_approval_persists_0/fixture/repository'), ...}
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-756/test_public_approval_persists_0')
+
+    def test_public_approval_persists_narrowed_execution_limits_and_reserves_once(projected, tmp_path):
+&gt;       admission, routing, run, observation = approved_task(projected, tmp_path)
+                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\runs\test_projected_go_routing.py:131: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\runs\test_projected_go_routing.py:84: in approved_task
+    registered = projects.register_execution_policy(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.projects.registry.ProjectRegistry object at 0x000001B893E4E090&gt;
+project_id = '23427448-710f-4ef3-bd67-9aabf3ec343d'
+request = {'schema_version': 'karajan.execution-policy.v2', 'id': 'project-execution', 'revision': 1, 'configuration_digest': '968532420e1b6a7975666e814db7feec7b93fe707366c01c11a22d585e0810ca', ...}
+command_key = 'execution-policy', principal = 'owner'
+
+    def register_execution_policy(
+        self, project_id: str, request: dict[str, Any], *, command_key: str, principal: str
+    ) -&gt; dict[str, Any]:
+        """Fix explicit routing constraints under the project owner's authority."""
+        from karajan.routing.compiler import RoutingError
+    
+        from .execution_policy import policy_components, validate_policy
+    
+        project_id = identifier(project_id)
+        identity = hashlib.sha256(
+            encoded(["execution_policy", project_id, request]).encode()
+        ).hexdigest()
+        with self._transaction() as db:
+            prior = self._replay(db, principal, command_key, identity)
+            if prior is not None:
+                return prior
+            self._require_owner(db, project_id, principal)
+            row = db.execute("SELECT snapshot FROM projects WHERE id=?", (project_id,)).fetchone()
+            snapshot = json.loads(row["snapshot"])
+            if snapshot["configuration"]["status"] != "offline_valid":
+&gt;               raise ProjectError("CONFIGURATION_NOT_READY")
+E               karajan.projects.registry.ProjectError: CONFIGURATION_NOT_READY
+
+backend\karajan\projects\registry.py:703: ProjectError</failure></testcase></testsuite></testsuites>
