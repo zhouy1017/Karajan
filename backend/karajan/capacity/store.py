@@ -14,6 +14,7 @@ from uuid import uuid4
 from pydantic import BaseModel, ValidationError
 
 from karajan.resources.broker import money, units
+from karajan.storage import open_database, require_schema
 
 from .facts import CapacityFacts, capture_routing_facts
 from .models import (
@@ -84,8 +85,27 @@ def _stored_receipt(db: sqlite3.Connection, command_key: str, digest: str) -> di
 
 
 class CapacityStore:
-    def __init__(self, path: Path, *, clock: Callable[[], float] = time.time) -> None:
+    def __init__(
+        self, path: Path, *, existing_only: bool = False, clock: Callable[[], float] = time.time
+    ) -> None:
         self.path, self.clock = Path(path), clock
+        self.existing_only = existing_only
+        if existing_only:
+            require_schema(
+                self.path,
+                {
+                    "pools": ["id", "data"],
+                    "profiles": ["id", "revision", "data"],
+                    "observations": ["sequence", "pool_id", "data", "received_at", "applied"],
+                    "policies": ["account_id", "revision", "data"],
+                    "reservations": ["id", "attempt_id", "account_id", "data"],
+                    "commands": ["key", "digest", "result"],
+                    "lifecycle": ["sequence", "admission_id", "data"],
+                    "usage": ["id", "admission_id", "account_id", "data"],
+                    "failures": ["sequence", "account_id", "data"],
+                },
+            )
+            return
         with self._transaction() as db:
             db.execute("CREATE TABLE IF NOT EXISTS pools (id TEXT PRIMARY KEY, data TEXT NOT NULL)")
             db.execute(
@@ -125,7 +145,7 @@ class CapacityStore:
 
     @contextmanager
     def _transaction(self) -> Iterator[sqlite3.Connection]:
-        db = sqlite3.connect(self.path, timeout=10)
+        db = open_database(self.path, existing_only=self.existing_only)
         db.row_factory = sqlite3.Row
         try:
             db.execute("PRAGMA synchronous=FULL")

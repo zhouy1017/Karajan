@@ -75,14 +75,31 @@ def relative_path(value: str, *, directory_allowed: bool = False) -> None:
 
 
 class CandidateStore:
-    def __init__(self, state_directory: Path) -> None:
+    def __init__(
+        self, state_directory: Path, *, existing_only: bool = False, defer_validation: bool = False
+    ) -> None:
+        if defer_validation and not existing_only:
+            raise CandidateError("CANDIDATE_EXISTING_MODE_REQUIRED")
+        if existing_only:
+            self._reject_links(Path(state_directory).absolute(), "CANDIDATE_STORAGE_UNAVAILABLE")
         self.directory = Path(state_directory).resolve()
-        self.directory.mkdir(parents=True, exist_ok=True)
         self.objects = self.directory / "artifacts"
-        self.objects.mkdir(exist_ok=True)
         self.git_directory = self.directory / "objects.git"
+        self._bootstrap = False
+        if existing_only:
+            # Historical commit identity lives in SQLite. Artifact/Git resource
+            # availability is checked only by operations that actually use it.
+            # Recovery may hold a missing optional ledger while cleaning other
+            # resources. Every actual access still validates the existing DB.
+            if not defer_validation:
+                with self._connection(readonly=True):
+                    pass
+            return
+        self.directory.mkdir(parents=True, exist_ok=True)
+        self.objects.mkdir(exist_ok=True)
         if not self.git_directory.exists():
             self._git(["init", "--bare", "--object-format=sha1", str(self.git_directory)])
+        self._bootstrap = True
         with self._connection() as connection:
             connection.executescript("""
                 CREATE TABLE IF NOT EXISTS baselines (id TEXT PRIMARY KEY, data TEXT NOT NULL);
@@ -94,16 +111,31 @@ class CandidateStore:
                     evidence_key TEXT UNIQUE NOT NULL, candidate_id TEXT NOT NULL,
                     kind TEXT NOT NULL, subject TEXT NOT NULL, data TEXT NOT NULL);
             """)
+        self._bootstrap = False
 
     @contextmanager
-    def _connection(self) -> Iterator[sqlite3.Connection]:
-        connection = sqlite3.connect(self.directory / "candidates.sqlite", timeout=10)
+    def _connection(self, *, readonly: bool = False) -> Iterator[sqlite3.Connection]:
+        database = self.directory / "candidates.sqlite"
+        self._reject_links(database, "CANDIDATE_STORAGE_UNAVAILABLE")
+        mode = "ro" if readonly else "rwc" if self._bootstrap else "rw"
+        connection = None
         try:
-            connection.execute("PRAGMA synchronous=FULL")
+            connection = sqlite3.connect(database.as_uri() + "?mode=" + mode, uri=True, timeout=10)
+            connection.execute("PRAGMA query_only=ON" if readonly else "PRAGMA synchronous=FULL")
+            if not self._bootstrap:
+                for columns, table in (
+                    ("id,data", "baselines"),
+                    ("id,series_id,revision,data", "candidates"),
+                    ("sequence,id,evidence_key,candidate_id,kind,subject,data", "evidence"),
+                ):
+                    connection.execute(f"SELECT {columns} FROM {table} LIMIT 0")
             with connection:
                 yield connection
+        except sqlite3.Error:
+            raise CandidateError("CANDIDATE_STORAGE_UNAVAILABLE") from None
         finally:
-            connection.close()
+            if connection is not None:
+                connection.close()
 
     def _git(
         self, args: list[str], data: bytes | None = None, *, repository: Path | None = None
@@ -410,7 +442,7 @@ class CandidateStore:
 
     def get(self, candidate_id: str) -> dict[str, Any]:
         canonical(candidate_id)
-        with self._connection() as connection:
+        with self._connection(readonly=True) as connection:
             row = connection.execute(
                 "SELECT data FROM candidates WHERE id=?", (candidate_id,)
             ).fetchone()
@@ -445,14 +477,18 @@ class CandidateStore:
         """Read a detached baseline and verify its persisted content identity."""
         if not isinstance(baseline_id, str):
             raise CandidateError("BASELINE_INVALID")
-        with self._connection() as connection:
+        with self._connection(readonly=True) as connection:
             row = connection.execute(
                 "SELECT data FROM baselines WHERE id=?", (baseline_id,)
             ).fetchone()
         if row is None:
             raise CandidateError("BASELINE_NOT_FOUND")
+        return self._baseline(row[0], baseline_id)
+
+    @staticmethod
+    def _baseline(data: str, baseline_id: str) -> dict[str, Any]:
         try:
-            baseline = json.loads(row[0])
+            baseline = json.loads(data)
             identity = {
                 "repository_identity": baseline["repository_identity"],
                 "base_sha": baseline["base_sha"],
@@ -464,6 +500,53 @@ class CandidateStore:
         except (KeyError, TypeError, ValueError, AttributeError):
             raise CandidateError("BASELINE_INVALID") from None
         return dict(baseline)
+
+    def lookup_projection_capture(
+        self, request: object, *, projection: object, captured_files: object
+    ) -> dict[str, Any] | None:
+        """Read the exact historical commit without artifacts, Git, clocks or writes.
+
+        The controller must have persisted all these identities before freeze.
+        This port proves the matching commit, not current artifact availability,
+        permission, qualification or delivery eligibility. It never selects the
+        latest similar candidate and rejects ambiguous exact history.
+        """
+        from ._capture_lookup import expected_files, matches
+
+        try:
+            spec = Freeze.model_validate(request)
+        except ValidationError:
+            raise CandidateError("FREEZE_INPUT_INVALID") from None
+        if not spec.writer.stopped or not any(
+            row.attempt_id == spec.writer.attempt_id and row.fence == spec.writer.fence
+            for row in spec.authors
+        ):
+            raise CandidateError("WRITER_STOP_NOT_CONFIRMED")
+        with self._connection(readonly=True) as connection:
+            connection.execute("BEGIN")
+            row = connection.execute(
+                "SELECT data FROM baselines WHERE id=?", (spec.baseline_id,)
+            ).fetchone()
+            if row is None:
+                raise CandidateError("BASELINE_NOT_FOUND")
+            baseline = self._baseline(row[0], spec.baseline_id)
+            expected = expected_files(spec, projection, captured_files, baseline)
+            found = []
+            for row in connection.execute(
+                "SELECT id,series_id,revision,data FROM candidates WHERE series_id=?",
+                (spec.series_id,),
+            ):
+                record = json.loads(row[3])
+                if any(
+                    record.get(key) != row[index]
+                    for index, key in enumerate(("id", "series_id", "revision"))
+                ):
+                    raise CandidateError("CANDIDATE_IDENTITY_INVALID")
+                if matches(record, spec, baseline, expected):
+                    found.append(record)
+            if len(found) > 1:
+                raise CandidateError("CAPTURE_IDENTITY_AMBIGUOUS")
+            return found[0] if found else None
 
     def freeze_projection(
         self,
@@ -484,6 +567,8 @@ class CandidateStore:
             spec = Freeze.model_validate(request)
         except ValidationError:
             raise CandidateError("FREEZE_INPUT_INVALID") from None
+        if len(set(spec.allowed_paths)) != len(spec.allowed_paths):
+            raise CandidateError("PROJECTION_WRITE_SCOPE_MISMATCH")
         if not spec.writer.stopped or not any(
             author.attempt_id == spec.writer.attempt_id and author.fence == spec.writer.fence
             for author in spec.authors

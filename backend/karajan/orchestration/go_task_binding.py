@@ -25,18 +25,10 @@ from .go_execution_intent import GoExecutionSource
 def task_runner_source(runtime: Path, accounting: GoRequestAccounting) -> dict[str, Any]:
     """Actual source envelope, separately binding qualification and Task code."""
     root = Path(__file__).resolve().parents[1]
-    files = (
-        "orchestration/go_task_binding.py",
-        "orchestration/go_task_input.py",
-        "orchestration/go_execution_intent.py",
-        "orchestration/workspace.py",
-        "orchestration/admission.py",
-        "orchestration/routing.py",
-        "orchestration/go_scope.py",
-        "execution/host.py",
-        "execution/_supervisor.py",
-        "execution/_platform.py",
-    )
+    # v1 binds the complete deployed backend, including transitive policy/model
+    # dependencies. A hand-maintained entry-point list can omit an authority
+    # guard. Any backend change requires a fresh source binding; no hot reload.
+    files = sorted(path.relative_to(root).as_posix() for path in root.rglob("*.py"))
     return {
         "schema_version": "karajan.go-task-runner-source.v1",
         "native_task": native_task_source(runtime, accounting),
