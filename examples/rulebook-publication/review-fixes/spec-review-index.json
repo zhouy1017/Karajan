@@ -1,0 +1,56 @@
+{
+  "scope": "Independent publication backend Spec review only; no Web or Run activation guard review",
+  "status": "passed",
+  "unclosed_confirmed_findings": 0,
+  "observed_at": "2026-09-05T19:08:37.062473+00:00",
+  "implementation_commit": null,
+  "implementation_binding": "Frozen WIP source SHA-256; parent publishes commit and remote CI",
+  "cases": [
+    {
+      "case": "legacy-effective-catalog",
+      "status": "passed",
+      "input_sha256": "35fdb61c38e04e5c32a4c4754ae403c9dd402a0cced6a8277d2fec033e43a02d"
+    },
+    {
+      "case": "invalid-budget-catalog",
+      "status": "passed",
+      "input_sha256": "caa02f8c4cd7747277d3d62f0a13234026da4e0a395b5d582b3f2b5257f29f29"
+    }
+  ],
+  "independent_tests": {
+    "path": "tests/projects",
+    "passed": 107,
+    "seconds": 24.07
+  },
+  "source_sha256": {
+    "capacity/models.py": "bd58f6b0c98991cfaff402e863cebbab6f819b54ba244a05db56b4706d40d7ad",
+    "contracts/credentials.py": "17257218593bf80f30ba5a1eec003dc0afce69b9f49cd581df16d08530782fc6",
+    "contracts/probe.py": "7201236169624c597c9ac4747ade03fdfee86d60e8aab5d92fafb6ad8ec7ea8b",
+    "projects/__init__.py": "9e3b2ead9e3ab7b2a52d22205acaeb42db20e2f609552f0be91f0c5d91c236e0",
+    "projects/configuration.py": "3dd388edeea88bd74292725b0680e8f47c46e9a07023215dd8c67273df489b03",
+    "projects/legacy_evaluation.py": "50630560406b7bdcc11d36221a14d605f6a1c5cfe36f32e4b64d2e4f23064d51",
+    "projects/models.py": "ae082cf980f09ce6cb315d8d873875181c6c6f482d0bd581378d1b8ac5e7d698",
+    "projects/publication.py": "b57cd2ef51738b1f9871b55670a0c7b3e434bc6b25ee2c5b3eebc34b0516124a",
+    "projects/registry.py": "aca0573465ce00350547790b3336ea18be64d7b947128d87aff7308d94827458",
+    "resources/broker.py": "cb1d6444a8ea17aa3c86ce4f32db769d205a2dedcaa257be00666bd9ebff8df4",
+    "routing/__init__.py": "0f33eab0165f5fd322d16105c343da220a8365aacf6168992a53559e24e7ca3f",
+    "routing/__main__.py": "30607a3cdd15dd1d7e31731fa32262cdcf34f956c02929779836b9195fabc663",
+    "routing/compiler.py": "11f1e504b04ac0fa596583e1210f456890b9c79622c3fb5f94e941c57b35daa8",
+    "routing/evaluator.py": "e5d716a0f2f3e97d245462022a886fc99e7c1808b0cebfb6c14823ffe65d2a15",
+    "routing/fixture.py": "491ecf20a6b5efd1dc0cc9386a3513607b467eef3ffccfcc76d0b3afa2269bec",
+    "routing/models.py": "06a5b4b65e84044823171d584555bf09b52043d45afca4a4ff1ed398e7d5c757",
+    "routing/quotas.py": "6a9e332943436a6f76ad558b9a064da2b77905922460bbb9dc535b8726f16f53",
+    "routing/ranking.py": "c1b8dfe7464834af3d8ca0b852059b006ec857065ab663cb31fc7f5087c8a99a"
+  },
+  "evidence_sha256": {
+    "spec-invalid-budget-catalog.after.json": "5cb6d4b5d671ea4f1efb5e5f3266b0def4142e029b7b17f6d529f260fe7d4ada",
+    "spec-invalid-budget-catalog.before.json": "d13acf09464c8052b08018bf84144a85fb328f390cab55073a8473bcd9425daa",
+    "spec-invalid-budget-catalog.input.json": "caa02f8c4cd7747277d3d62f0a13234026da4e0a395b5d582b3f2b5257f29f29",
+    "spec-legacy-effective-catalog.after.json": "39c85b23ef1547998785dd967d6b98119bfe0d3d370e10d74b2439085441fb09",
+    "spec-legacy-effective-catalog.before.json": "71ca5cf0d455df69c66bf37e81e24fbafc2379c487d4104c2af628ce392be9cd",
+    "spec-legacy-effective-catalog.input.json": "35fdb61c38e04e5c32a4c4754ae403c9dd402a0cced6a8277d2fec033e43a02d",
+    "spec-projects-final.junit.xml": "0db8573da8b9411f87bf54c0b0fc7a44cbdf8541ebe266806e633d738b38f6bb",
+    "spec-review.md": "f1862236e761d6749ad9766a30b37de644eef2c357574476329e7c23ed4d6773",
+    "spec_replay.py": "da9093861598ae9fc1ba3bc41e07fe5c71366e78d5dfdbb08f46bc25f533c726"
+  }
+}

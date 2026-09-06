@@ -1,0 +1,55 @@
+{
+  "checks": [
+    {
+      "case": "anonymous-versions",
+      "status": 401,
+      "passed": true
+    },
+    {
+      "case": "anonymous-publications",
+      "status": 401,
+      "passed": true
+    },
+    {
+      "case": "anonymous-preview",
+      "status": 401,
+      "passed": true
+    },
+    {
+      "case": "anonymous-publish",
+      "status": 401,
+      "passed": true
+    },
+    {
+      "case": "duplicate-If-Match",
+      "status": 428,
+      "passed": true
+    },
+    {
+      "case": "duplicate-Idempotency-Key",
+      "status": 400,
+      "passed": true
+    },
+    {
+      "case": "publish-extra-body",
+      "status": 422,
+      "passed": true
+    },
+    {
+      "case": "cross-project-preview",
+      "status": 404,
+      "reason": "PREVIEW_NOT_FOUND",
+      "passed": true
+    },
+    {
+      "case": "no-publication-after-rejected-requests",
+      "passed": true
+    }
+  ],
+  "source_sha256": {
+    "backend/karajan/web/projects.py": "0699265da33d7b548d04248549e9b3a443d9071d94adb5172e6ea6ce8b9edf67",
+    "backend/karajan/web/app.py": "2ae7b74d2dc2e58061e7246c0428cdbcdcfef70c10e34fa0becf158d49701f41",
+    "backend/karajan/projects/registry.py": "aca0573465ce00350547790b3336ea18be64d7b947128d87aff7308d94827458",
+    "backend/karajan/projects/publication.py": "b57cd2ef51738b1f9871b55670a0c7b3e434bc6b25ee2c5b3eebc34b0516124a"
+  }
+}

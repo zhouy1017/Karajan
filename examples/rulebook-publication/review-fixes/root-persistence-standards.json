@@ -1,0 +1,22 @@
+{
+  "scope": "Independent root Standards review of publisher-authored persistence/configuration modules only",
+  "standards": [
+    "single ProjectRegistry transaction authority and append-only version identity",
+    "no credential/provider access and explicit qualification boundary",
+    "existing public configuration behavior retained with shared identity constraints",
+    "current revocation separated from malformed draft",
+    "concurrency and replay checked through public commands"
+  ],
+  "findings": [],
+  "source_sha256": {
+    "backend/karajan/projects/registry.py": "aca0573465ce00350547790b3336ea18be64d7b947128d87aff7308d94827458",
+    "backend/karajan/projects/configuration.py": "3dd388edeea88bd74292725b0680e8f47c46e9a07023215dd8c67273df489b03",
+    "backend/karajan/projects/publication.py": "b57cd2ef51738b1f9871b55670a0c7b3e434bc6b25ee2c5b3eebc34b0516124a"
+  },
+  "validation": "Independent root combined tests/projects tests/routing tests/orchestration tests/runs tests/web: 322 passed, 1 POSIX skip; Ruff backend tests and strict mypy backend/karajan: 89 source files passed. See root-test-evidence.json.",
+  "exclusions": [
+    "root-authored legacy matcher and Run/Host guards reviewed separately",
+    "frontend reviewed separately",
+    "real source qualification and full M3-01 not claimed"
+  ]
+}

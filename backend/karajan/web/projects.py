@@ -87,3 +87,43 @@ def register_project_routes(app: FastAPI, registry: ProjectRegistry) -> None:
             principal="owner",
         )
         return JSONResponse(result, headers={"ETag": f'"{result["revision"]}"'})
+
+    @app.get("/v1/projects/{project_id}/rulebook/versions")
+    def rulebook_versions(project_id: str) -> dict[str, Any]:
+        registry.get(project_id)
+        return {"items": registry.list_rulebook_versions(project_id)}
+
+    @app.get("/v1/projects/{project_id}/rulebook/publications")
+    def rulebook_publications(project_id: str) -> dict[str, Any]:
+        registry.get(project_id)
+        return {"items": registry.list_rulebook_publications(project_id)}
+
+    @app.post("/v1/projects/{project_id}/rulebook/preview")
+    def preview_rulebook(
+        project_id: str,
+        request: Request,
+        data: dict[str, Any],
+    ) -> JSONResponse:
+        result = registry.preview_rulebook(
+            project_id,
+            data,
+            expected_revision=expected_revision(request),
+            command_key=command_key(request),
+            principal="owner",
+        )
+        return JSONResponse(result, headers={"ETag": f'"{result["project_revision"]}"'})
+
+    @app.post("/v1/projects/{project_id}/rulebook/publish")
+    def publish_rulebook(
+        project_id: str,
+        request: Request,
+        data: ApplyInput,
+    ) -> JSONResponse:
+        result = registry.publish_rulebook(
+            project_id,
+            data.preview_id,
+            expected_revision=expected_revision(request),
+            command_key=command_key(request),
+            principal="owner",
+        )
+        return JSONResponse(result, headers={"ETag": f'"{result["project_revision"]}"'})

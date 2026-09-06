@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ProjectRuns } from "./ProjectRuns";
 import { ResourcePanel } from "./ResourcePanel";
+import { RulebookPanel } from "./RulebookPanel";
 
 type Project = {
   id: string;
@@ -38,6 +39,7 @@ export function App() {
   const createCommand = useRef<{ payload: string; key: string } | null>(null);
   const [selected, setSelected] = useState<Project | null>(null);
   const [runProject, setRunProject] = useState<Project | null>(null);
+  const [rulebookProject, setRulebookProject] = useState<Project | null>(null);
   const [configuration, setConfiguration] = useState("{}");
   const [preview, setPreview] = useState<Preview | null>(null);
   const [notice, setNotice] = useState("");
@@ -115,6 +117,7 @@ export function App() {
       setProjects([]);
       setSelected(null);
       setRunProject(null);
+      setRulebookProject(null);
       setPreview(null);
       setConfiguration("{}");
       setProjectName("");
@@ -226,6 +229,7 @@ export function App() {
 
   async function openConfiguration(project: Project) {
     setRunProject(null);
+    setRulebookProject(null);
     setBusy(true);
     setError("");
     setNotice("");
@@ -378,6 +382,7 @@ export function App() {
               setProjects([]);
               setSelected(null);
               setRunProject(null);
+              setRulebookProject(null);
             }}
           />
         ) : (
@@ -486,12 +491,26 @@ export function App() {
                       disabled={busy}
                       onClick={() => {
                         setSelected(null);
+                        setRulebookProject(null);
                         setRunProject(project);
                         setError("");
                         setNotice("");
                       }}
                     >
                       需求与计划
+                    </button>
+                    <button
+                      className="secondary"
+                      disabled={busy}
+                      onClick={() => {
+                        setSelected(null);
+                        setRunProject(null);
+                        setRulebookProject(project);
+                        setError("");
+                        setNotice("");
+                      }}
+                    >
+                      调度规则
                     </button>
                   </article>
                 ))
@@ -508,6 +527,19 @@ export function App() {
                 key={runProject.id}
                 project={runProject}
                 csrf={csrf}
+              />
+            )}
+            {rulebookProject && csrf && (
+              <RulebookPanel
+                project={rulebookProject}
+                csrf={csrf}
+                onSessionExpired={() => {
+                  setCsrf(null);
+                  setRulebookProject(null);
+                  setProjects([]);
+                  setSelected(null);
+                  setRunProject(null);
+                }}
               />
             )}
             {selected && (

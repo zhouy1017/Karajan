@@ -1,0 +1,57 @@
+{
+  "schema_version": "karajan.web-ui-independent-review.v1",
+  "scope": "Only new HTTP publication endpoints and RulebookPanel/App integration; reviewer authored ProjectRegistry persistence and did not independently review that domain",
+  "findings": [
+    {
+      "severity": "P2",
+      "case": "unresolved publication discarded on navigation",
+      "status": "closed",
+      "fixed_original_case_passed": true
+    }
+  ],
+  "independent_execution": {
+    "author_test_suites": {
+      "ui-author-tests-independent.junit.xml": {
+        "tests": 42,
+        "failures": 0,
+        "errors": 0,
+        "seconds": 10.1059196
+      },
+      "http-author-tests-independent.junit.xml": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "seconds": 2.438
+      }
+    },
+    "additional_http_public_api_checks": 9,
+    "additional_http_all_passed": true,
+    "original_navigation_case_tests": 1
+  },
+  "limitation": "Pending retry identity is recovered within the same browser tab and login session. A new login can inspect publication history but does not recover the former session retry identity. Logout remains available.",
+  "source_sha256": {
+    "frontend/src/RulebookPanel.tsx": "ca448d4c9f6d2cfa985a173fea4a6cabf0ca6b36d57dc1497acdf26ff108725d",
+    "frontend/src/RulebookPanel.css": "82066fbcf078d9c3ac4a69cf568b078cecabf2eea2fd5b06e9a5a1fbeb47f247",
+    "frontend/src/RulebookPanel.test.tsx": "6bdee16636961b25f394596c1f9384557e42e55163137bcf1b33731397b1f8e9",
+    "frontend/src/App.tsx": "ad6719c1e00b5186816081fcf42312c194f2504a44722a1510ccf74a9947e121",
+    "backend/karajan/web/projects.py": "0699265da33d7b548d04248549e9b3a443d9071d94adb5172e6ea6ce8b9edf67",
+    "backend/karajan/web/app.py": "2ae7b74d2dc2e58061e7246c0428cdbcdcfef70c10e34fa0becf158d49701f41",
+    "tests/web/test_rulebook_http.py": "cea8af5da8059345cb46fe1248c1aa90f7793ca7884dac1609bd4cec12ecf954",
+    "backend/karajan/projects/registry.py": "aca0573465ce00350547790b3336ea18be64d7b947128d87aff7308d94827458",
+    "backend/karajan/projects/configuration.py": "3dd388edeea88bd74292725b0680e8f47c46e9a07023215dd8c67273df489b03",
+    "backend/karajan/projects/publication.py": "b57cd2ef51738b1f9871b55670a0c7b3e434bc6b25ee2c5b3eebc34b0516124a",
+    "examples/projects/offline-configuration.json": "a286b101251e33a44c351b99edff5a07f9c325cef9be79eb90c251a0e9cb204f"
+  },
+  "evidence_sha256": {
+    "ui-unresolved-navigation.case.tsx": "be2f6704d22c9496b707a6424b34c92145ef52e75ccf4190dcf9ba30579325ac",
+    "ui-unresolved-navigation.input.json": "42e12a7e611f0c1fc2141fc2ab5e7d485d1aec1109eedddc696385a76dbff3cd",
+    "ui-unresolved-navigation.before.json": "b1f9448ac1bbf174668241e85e23956742f22672a7bf0a12a76fa86d03896333",
+    "ui-unresolved-navigation.after.json": "d5ae050e29c7312ffe1e2febbf81fb558ee367a344236111ae2ddbc18e7b4d33",
+    "ui_navigation_replay.py": "ad9af531f38ee95ccea1cb6d115c8f0b4f8f54813104326de12a227a5893b733",
+    "ui-author-tests-independent.junit.xml": "4fa1ae0c7e625b26a3224bc55be66785d1ccf342080e82f329203e4b37d2382b",
+    "http-author-tests-independent.junit.xml": "04f3ef74a2625353713650b7530ee40f3ef203706bc8cf759e7c2dec95461efb",
+    "http-independent-checks.json": "d508d18e080a34d2ea75891a486143c376d25831607dcf2d2202931ff33b2f92"
+  },
+  "parent_browser_evidence": "examples/rulebook-publication/browser-verification.json; reviewed but not independently rerun by this reviewer",
+  "open_confirmed_findings": 0
+}

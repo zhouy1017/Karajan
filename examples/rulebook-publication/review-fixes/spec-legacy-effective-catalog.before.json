@@ -1,0 +1,204 @@
+{
+  "input_sha256": "35fdb61c38e04e5c32a4c4754ae403c9dd402a0cced6a8277d2fec033e43a02d",
+  "source_sha256": {
+    "__init__.py": "9e3b2ead9e3ab7b2a52d22205acaeb42db20e2f609552f0be91f0c5d91c236e0",
+    "configuration.py": "1b57edde2eb5ded178a4df81127c72b42dd40b0ba04529b8a0df80de89fd5272",
+    "legacy_evaluation.py": "50630560406b7bdcc11d36221a14d605f6a1c5cfe36f32e4b64d2e4f23064d51",
+    "models.py": "ae082cf980f09ce6cb315d8d873875181c6c6f482d0bd581378d1b8ac5e7d698",
+    "publication.py": "d377df7cd6644a9e45e72daf47880f702cb9d82d37d696e69df11dd2a95f4a4f",
+    "registry.py": "d6ff444b2cfb1050d66c296f89aab8c1195e157a5c32ada92e07e50257d8e20b"
+  },
+  "actual": {
+    "project_id": "541f2abf-7e4e-46eb-a4d3-d03f7293dc3b",
+    "revision": 0,
+    "digest": null,
+    "resources": null,
+    "approved_profile_refs": []
+  },
+  "expected": {
+    "approved_profile_refs": [],
+    "digest": "96457ca72eeef2debdfa32438104ac581807bec37571f5088ea570bce679e4a2",
+    "project_id": "541f2abf-7e4e-46eb-a4d3-d03f7293dc3b",
+    "resources": {
+      "accounts": [
+        {
+          "id": "fixture-account",
+          "provider_id": "fixture-provider",
+          "secret_ref": "secret:fixture-reference"
+        }
+      ],
+      "budgets": [
+        {
+          "currency_limits": {
+            "CNY": "0",
+            "USD": "0"
+          },
+          "id": "planning",
+          "max_duration_seconds": 300,
+          "max_total_attempts": 8,
+          "scope": "planning"
+        },
+        {
+          "currency_limits": {
+            "CNY": "0",
+            "USD": "0"
+          },
+          "id": "run",
+          "max_duration_seconds": 300,
+          "max_total_attempts": 8,
+          "scope": "run"
+        }
+      ],
+      "capacity_policies": [
+        {
+          "account_id": "fixture-account",
+          "conservative_mode": {
+            "cooldown_seconds": 10,
+            "enabled": true,
+            "max_attempt_duration_seconds": 30,
+            "max_local_active_attempts": 1,
+            "observation_max_age_seconds": 60
+          }
+        }
+      ],
+      "channels": [
+        {
+          "account_id": "fixture-account",
+          "approved_data_destination": true,
+          "billing_path": "subscription_only",
+          "id": "fixture-channel"
+        }
+      ],
+      "profiles": [
+        {
+          "capability_evidence": [
+            {
+              "capability": "bounded_code_edit",
+              "evidence_ref": "fixture:bounded_code_edit",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "bounded_implementation",
+              "evidence_ref": "fixture:bounded_implementation",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "candidate_capture",
+              "evidence_ref": "fixture:candidate_capture",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "code_review",
+              "evidence_ref": "fixture:code_review",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "controlled_tools",
+              "evidence_ref": "fixture:controlled_tools",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "critical_code_review",
+              "evidence_ref": "fixture:critical_code_review",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "critical_implementation",
+              "evidence_ref": "fixture:critical_implementation",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "design_reasoning",
+              "evidence_ref": "fixture:design_reasoning",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "structured_findings",
+              "evidence_ref": "fixture:structured_findings",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "structured_plan_output",
+              "evidence_ref": "fixture:structured_plan_output",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            }
+          ],
+          "enabled": false,
+          "id": "fixture-profile",
+          "max_class": "T3",
+          "model_family": "fixture-family",
+          "profile": {
+            "admission_granularity": "attempt",
+            "auth_ref": "secret:fixture-reference",
+            "binding": {
+              "account_id": "fixture-account",
+              "auth_mode": "none",
+              "billing_path": "subscription_only",
+              "channel_id": "fixture-channel",
+              "model_id": "fixture-model",
+              "native_settings": {},
+              "runtime_kind": "fixture-runtime",
+              "runtime_version": "1"
+            },
+            "id": "fixture-profile",
+            "required_permissions": [
+              "fixture-tools"
+            ],
+            "revision": 1,
+            "usage_coverage": "unknown"
+          },
+          "quota_pool_refs": [
+            "service-fixture"
+          ],
+          "required_isolation": "tool_sandboxed",
+          "revision": 1
+        }
+      ],
+      "quota_pools": [
+        {
+          "account_id": "fixture-account",
+          "id": "service-fixture",
+          "kind": "service",
+          "limit": "100",
+          "observation_state": "unknown",
+          "unit": "percent"
+        }
+      ]
+    },
+    "revision": 2
+  },
+  "catalog_preserved": false,
+  "model_calls": 0,
+  "cash_requests": 0,
+  "scope": "real local SQLite migration; synthetic configuration history"
+}

@@ -5,8 +5,9 @@ import json
 import os
 import sqlite3
 import subprocess
+import time
 import uuid
-from collections.abc import Iterator, Sequence
+from collections.abc import Callable, Iterator, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
@@ -15,6 +16,16 @@ from pydantic import TypeAdapter, ValidationError
 
 from .configuration import VALIDATOR_REVISION, validate_configuration, validator_identity
 from .models import Identifier, ProjectCreate, ProjectUpdate, TaskPreview
+from .publication import (
+    PublicationError,
+    apply_catalog,
+    bind_version,
+    compile_document,
+    compiler_identity,
+    effective_catalog,
+    guard_identity,
+    initialize,
+)
 
 
 class ProjectError(ValueError):
@@ -43,8 +54,19 @@ def identifier(value: object, code: str = "IDENTIFIER_INVALID") -> str:
 
 
 class ProjectRegistry:
-    def __init__(self, database: Path, allowed_roots: Sequence[Path]) -> None:
+    def __init__(
+        self,
+        database: Path,
+        allowed_roots: Sequence[Path],
+        *,
+        clock: Callable[[], float] = time.time,
+        preview_ttl_seconds: int = 300,
+    ) -> None:
+        if type(preview_ttl_seconds) is not int or not 1 <= preview_ttl_seconds <= 3600:
+            raise ProjectError("PREVIEW_TTL_INVALID")
         self.database = database
+        self.clock = clock
+        self.preview_ttl_seconds = preview_ttl_seconds
         self.allowed_roots = tuple(path.resolve() for path in allowed_roots)
         with self._transaction() as db:
             db.execute(
@@ -59,6 +81,7 @@ class ProjectRegistry:
                 "project_id TEXT NOT NULL "
                 "REFERENCES projects(id), configuration TEXT, result TEXT NOT NULL)"
             )
+            initialize(db)
 
     @contextmanager
     def _transaction(self) -> Iterator[sqlite3.Connection]:
@@ -70,6 +93,9 @@ class ProjectRegistry:
             db.execute("BEGIN IMMEDIATE")
             yield db
             db.commit()
+        except PublicationError as error:
+            db.rollback()
+            raise ProjectError(str(error)) from None
         except BaseException:
             db.rollback()
             raise
@@ -111,6 +137,7 @@ class ProjectRegistry:
             if previous is not None:
                 return previous
             db.execute("INSERT INTO projects VALUES (?, ?)", (snapshot["id"], encoded(snapshot)))
+            db.execute("INSERT INTO project_owners VALUES (?,?)", (snapshot["id"], principal))
             db.execute(
                 "INSERT INTO commands VALUES (?, ?, ?, ?)",
                 (principal, command_key, digest, encoded(snapshot)),
@@ -207,6 +234,8 @@ class ProjectRegistry:
             if previous is not None:
                 return previous
         snapshot = self.get(project_id)
+        with self._transaction() as db:
+            self._require_owner(db, project_id, principal)
         issues = validate_configuration(configuration)
         can_apply = not any(
             issue["code"] in {"CREDENTIAL_VALUE_FORBIDDEN", "CONFIGURATION_SCHEMA_INVALID"}
@@ -214,6 +243,7 @@ class ProjectRegistry:
         )
         rulebook = configuration.get("rulebook") if isinstance(configuration, dict) else None
         rulebook = rulebook if isinstance(rulebook, dict) else {}
+        compiled, compile_issues = compile_document(rulebook)
         preview = {
             "schema_version": "karajan.configuration-preview.v1",
             "preview_id": str(uuid.uuid4()),
@@ -223,13 +253,20 @@ class ProjectRegistry:
             "status": "draft" if issues else "offline_valid",
             "issues": issues,
             "can_apply": can_apply,
+            "can_save_draft": can_apply,
+            "can_publish": can_apply and compiled is not None and not compile_issues,
+            "principal": principal,
+            "expires_at": self.clock() + self.preview_ttl_seconds,
+            "compiler_identity": compiler_identity(),
             "dispatch_eligible": False,
             "qualification_scope": "offline_configuration",
             "live_qualified": False,
             "validation": {
                 "validator_revision": VALIDATOR_REVISION,
                 "fixed_rulebook_sha256": validator_identity(),
-                "rulebook_id": rulebook.get("id") if isinstance(rulebook.get("id"), str) else None,
+                "rulebook_id": rulebook.get("id")
+                if can_apply and isinstance(rulebook.get("id"), str)
+                else None,
                 "rulebook_revision": rulebook.get("revision")
                 if type(rulebook.get("revision")) is int
                 else None,
@@ -240,7 +277,11 @@ class ProjectRegistry:
             if previous is not None:
                 return previous
             self._current(db, project_id, snapshot["revision"])
-            safe_configuration = encoded(configuration) if can_apply else None
+            preview["catalog_binding"] = {
+                key: effective_catalog(db, project_id)[key] for key in ("revision", "digest")
+            }
+            self._preview_identity(db, project_id, preview, rulebook, compiled)
+            safe_configuration = encoded(configuration) if preview["can_save_draft"] else None
             db.execute(
                 "INSERT INTO previews VALUES (?, ?, ?, ?)",
                 (preview["preview_id"], project_id, safe_configuration, encoded(preview)),
@@ -270,6 +311,7 @@ class ProjectRegistry:
             if previous is not None:
                 return previous
             snapshot = self._current(db, project_id, expected_revision)
+            self._require_owner(db, project_id, principal)
             row = db.execute(
                 "SELECT result, configuration FROM previews WHERE id=? AND project_id=?",
                 (preview_id, project_id),
@@ -277,19 +319,34 @@ class ProjectRegistry:
             if row is None:
                 raise ProjectError("PREVIEW_NOT_FOUND")
             preview = json.loads(row["result"])
-            if not preview["can_apply"] or row["configuration"] is None:
+            self._check_preview(db, project_id, preview, principal)
+            if not preview.get("can_save_draft") or row["configuration"] is None:
                 raise ProjectError("CONFIGURATION_NOT_STORABLE")
-            if (
+            rulebook_draft = preview.get("schema_version") == "karajan.rulebook-preview.v1"
+            if not rulebook_draft and (
                 preview["validation"]["validator_revision"] != VALIDATOR_REVISION
                 or preview["validation"]["fixed_rulebook_sha256"] != validator_identity()
             ):
                 raise ProjectError("PREVIEW_POLICY_CHANGED")
             if preview["project_revision"] != snapshot["revision"]:
                 raise ProjectError("PREVIEW_STALE", current_revision=snapshot["revision"])
+            configuration = json.loads(row["configuration"])
+            if (
+                hashlib.sha256(encoded(configuration).encode()).hexdigest()
+                != preview["configuration_digest"]
+            ):
+                raise ProjectError("PREVIEW_CONTENT_CHANGED")
+            document = configuration.get("rulebook")
+            compiled, compile_issues = compile_document(document)
+            guard_identity(db, project_id, document, compiled)
+            status = "draft" if rulebook_draft else preview["status"]
+            if status == "offline_valid" and compiled is not None and not compile_issues:
+                bind_version(db, project_id, document, compiled)
+            apply_catalog(db, project_id, configuration)
             snapshot["revision"] += 1
             snapshot["configuration"] = {
                 "revision": snapshot["configuration"]["revision"] + 1,
-                "status": preview["status"],
+                "status": status,
                 "digest": preview["configuration_digest"],
                 "preview_id": preview_id,
                 "dispatch_eligible": False,
@@ -301,97 +358,300 @@ class ProjectRegistry:
             )
         return snapshot
 
+    def _require_owner(self, db: sqlite3.Connection, project_id: str, principal: str) -> None:
+        row = db.execute(
+            "SELECT principal FROM project_owners WHERE project_id=?", (project_id,)
+        ).fetchone()
+        if row is None:
+            raise ProjectError("PROJECT_OWNER_UNRESOLVED")
+        if row["principal"] != principal:
+            raise ProjectError("USER_DECISION_REQUIRED")
+
+    def _preview_identity(
+        self,
+        db: sqlite3.Connection,
+        project_id: str,
+        preview: dict[str, Any],
+        document: Any,
+        compiled: dict[str, Any] | None,
+    ) -> None:
+        if not preview["can_save_draft"]:
+            return
+        try:
+            guard_identity(db, project_id, document, compiled)
+        except PublicationError as error:
+            preview["identity_issue"] = str(error)
+            preview["issues"].append({"code": str(error), "path": "rulebook.revision"})
+            preview["can_save_draft"] = False
+            preview["can_publish"] = False
+            if "can_apply" in preview:
+                preview["can_apply"] = False
+                preview["status"] = "draft"
+
+    def _check_preview(
+        self, db: sqlite3.Connection, project_id: str, preview: dict[str, Any], principal: str
+    ) -> None:
+        if any(
+            key not in preview
+            for key in ("principal", "expires_at", "compiler_identity", "catalog_binding")
+        ):
+            raise ProjectError("PREVIEW_REVIEW_REQUIRED")
+        if preview["principal"] != principal:
+            raise ProjectError("PREVIEW_OWNER_MISMATCH")
+        if self.clock() >= preview["expires_at"]:
+            raise ProjectError("PREVIEW_EXPIRED")
+        if preview["compiler_identity"] != compiler_identity():
+            raise ProjectError("PREVIEW_COMPILER_CHANGED")
+        current = effective_catalog(db, project_id)
+        if preview["catalog_binding"] != {key: current[key] for key in ("revision", "digest")}:
+            raise ProjectError("PREVIEW_CATALOG_CHANGED")
+        if preview.get("identity_issue"):
+            raise ProjectError(preview["identity_issue"])
+
+    def preview_rulebook(
+        self,
+        project_id: str,
+        document: dict[str, Any],
+        *,
+        expected_revision: int,
+        command_key: str,
+        principal: str,
+    ) -> dict[str, Any]:
+        project_id = identifier(project_id)
+        identity = hashlib.sha256(
+            encoded(["rulebook_preview", project_id, document, expected_revision]).encode()
+        ).hexdigest()
+        with self._transaction() as db:
+            previous = self._replay(db, principal, command_key, identity)
+            if previous is not None:
+                return previous
+            snapshot = self._current(db, project_id, expected_revision)
+            self._require_owner(db, project_id, principal)
+            catalog = effective_catalog(db, project_id)
+        configuration = {
+            "schema_version": "karajan.project-config.v1",
+            "rulebook": document,
+            "resources": catalog["resources"],
+            "approved_profile_refs": catalog["approved_profile_refs"],
+        }
+        issues = validate_configuration(configuration)
+        compiled, compile_issues = compile_document(document)
+        storable = not any(
+            issue["code"] in {"CREDENTIAL_VALUE_FORBIDDEN", "CONFIGURATION_SCHEMA_INVALID"}
+            for issue in issues
+        )
+        preview = {
+            "schema_version": "karajan.rulebook-preview.v1",
+            "preview_id": str(uuid.uuid4()),
+            "project_id": project_id,
+            "project_revision": snapshot["revision"],
+            "principal": principal,
+            "expires_at": self.clock() + self.preview_ttl_seconds,
+            "compiler_identity": compiler_identity(),
+            "catalog_binding": {key: catalog[key] for key in ("revision", "digest")},
+            "configuration_digest": hashlib.sha256(encoded(configuration).encode()).hexdigest(),
+            "can_save_draft": storable,
+            "can_publish": storable and compiled is not None and not compile_issues,
+            "issues": issues,
+            "compile_issues": compile_issues,
+            "warnings": compiled["warnings"] if compiled else [],
+            "rulebook_sha256": compiled["rulebook_sha256"] if compiled else None,
+            "compiled_document": compiled["document"] if compiled and storable else None,
+            "waiting_reasons": ["LIVE_QUALIFICATION_NOT_RUN"],
+            "activation_allowed": False,
+        }
+        with self._transaction() as db:
+            previous = self._replay(db, principal, command_key, identity)
+            if previous is not None:
+                return previous
+            self._current(db, project_id, expected_revision)
+            self._check_preview(db, project_id, preview, principal)
+            self._preview_identity(db, project_id, preview, document, compiled)
+            db.execute(
+                "INSERT INTO previews VALUES (?,?,?,?)",
+                (
+                    preview["preview_id"],
+                    project_id,
+                    encoded(configuration) if preview["can_save_draft"] else None,
+                    encoded(preview),
+                ),
+            )
+            db.execute(
+                "INSERT INTO commands VALUES (?,?,?,?)",
+                (principal, command_key, identity, encoded(preview)),
+            )
+        return preview
+
+    def publish_rulebook(
+        self,
+        project_id: str,
+        preview_id: str,
+        *,
+        expected_revision: int,
+        command_key: str,
+        principal: str,
+    ) -> dict[str, Any]:
+        project_id, preview_id = identifier(project_id), identifier(preview_id)
+        identity = hashlib.sha256(
+            encoded(["rulebook_publish", project_id, preview_id, expected_revision]).encode()
+        ).hexdigest()
+        with self._transaction() as db:
+            previous = self._replay(db, principal, command_key, identity)
+            if previous is not None:
+                return previous
+            snapshot = self._current(db, project_id, expected_revision)
+            self._require_owner(db, project_id, principal)
+            row = db.execute(
+                "SELECT result,configuration FROM previews WHERE id=? AND project_id=?",
+                (preview_id, project_id),
+            ).fetchone()
+            if row is None:
+                raise ProjectError("PREVIEW_NOT_FOUND")
+            preview = json.loads(row["result"])
+            self._check_preview(db, project_id, preview, principal)
+            if (
+                preview.get("schema_version") != "karajan.rulebook-preview.v1"
+                or not preview.get("can_publish")
+                or row["configuration"] is None
+            ):
+                raise ProjectError("RULEBOOK_NOT_PUBLISHABLE")
+            if preview["project_revision"] != snapshot["revision"]:
+                raise ProjectError("PREVIEW_STALE", current_revision=snapshot["revision"])
+            configuration = json.loads(row["configuration"])
+            if (
+                hashlib.sha256(encoded(configuration).encode()).hexdigest()
+                != preview["configuration_digest"]
+            ):
+                raise ProjectError("PREVIEW_CONTENT_CHANGED")
+            compiled, compile_issues = compile_document(configuration["rulebook"])
+            if (
+                compiled is None
+                or compile_issues
+                or compiled["rulebook_sha256"] != preview["rulebook_sha256"]
+            ):
+                raise ProjectError("PREVIEW_COMPILER_CHANGED")
+            version = bind_version(db, project_id, configuration["rulebook"], compiled)
+            snapshot["revision"] += 1
+            snapshot["configuration"] = {
+                "revision": snapshot["configuration"]["revision"] + 1,
+                "status": "draft" if preview["issues"] else "offline_valid",
+                "digest": preview["configuration_digest"],
+                "preview_id": preview_id,
+                "dispatch_eligible": False,
+            }
+            apply_catalog(db, project_id, configuration)
+            result = {
+                "schema_version": "karajan.rulebook-publication.v1",
+                "publication_id": str(uuid.uuid4()),
+                "project_id": project_id,
+                "project_revision": snapshot["revision"],
+                "configuration_revision": snapshot["configuration"]["revision"],
+                "rulebook": {key: version[key] for key in ("id", "revision", "rulebook_sha256")},
+                "preview_id": preview_id,
+                "state": "waiting_qualification",
+                "principal": principal,
+                "at": self.clock(),
+                "activation_allowed": False,
+                "live_qualification": "not_run",
+            }
+            snapshot["published_rulebook"] = result
+            db.execute(
+                "INSERT INTO rulebook_publications(project_id,result) VALUES (?,?)",
+                (project_id, encoded(result)),
+            )
+            db.execute("UPDATE projects SET snapshot=? WHERE id=?", (encoded(snapshot), project_id))
+            db.execute(
+                "INSERT INTO commands VALUES (?,?,?,?)",
+                (principal, command_key, identity, encoded(result)),
+            )
+        return result
+
+    def get_effective_resources(self, project_id: str) -> dict[str, Any]:
+        with self.effective_resources_guard(project_id) as result:
+            return result
+
+    @contextmanager
+    def effective_resources_guard(self, project_id: str) -> Iterator[dict[str, Any]]:
+        project_id = identifier(project_id)
+        with self._transaction() as db:
+            if db.execute("SELECT 1 FROM projects WHERE id=?", (project_id,)).fetchone() is None:
+                raise ProjectError("PROJECT_NOT_FOUND")
+            yield effective_catalog(db, project_id)
+
+    def get_rulebook(self, project_id: str, rulebook_id: str, revision: int) -> dict[str, Any]:
+        project_id, rulebook_id = identifier(project_id), identifier(rulebook_id)
+        if type(revision) is not int or revision <= 0:
+            raise ProjectError("RULEBOOK_REVISION_INVALID")
+        with self._transaction() as db:
+            if db.execute(
+                "SELECT 1 FROM rulebook_conflicts WHERE project_id=? AND id=? AND revision=?",
+                (project_id, rulebook_id, revision),
+            ).fetchone():
+                raise ProjectError("LEGACY_RULEBOOK_IDENTITY_CONFLICT")
+            row = db.execute(
+                "SELECT result FROM rulebook_versions WHERE project_id=? AND id=? AND revision=?",
+                (project_id, rulebook_id, revision),
+            ).fetchone()
+        if row is None:
+            raise ProjectError("RULEBOOK_NOT_FOUND")
+        return dict(json.loads(row["result"]))
+
+    def list_rulebook_versions(self, project_id: str) -> list[dict[str, Any]]:
+        project_id = identifier(project_id)
+        with self._transaction() as db:
+            versions = [
+                json.loads(row["result"])
+                for row in db.execute(
+                    "SELECT result FROM rulebook_versions WHERE project_id=? ORDER BY id,revision",
+                    (project_id,),
+                )
+            ]
+            versions.extend(
+                {
+                    "project_id": project_id,
+                    "id": row["id"],
+                    "revision": row["revision"],
+                    "status": "legacy_conflict",
+                    "digest_candidates": json.loads(row["digests"]),
+                    "activation_allowed": False,
+                }
+                for row in db.execute(
+                    "SELECT id,revision,digests FROM rulebook_conflicts WHERE project_id=?",
+                    (project_id,),
+                )
+            )
+            return sorted(versions, key=lambda row: (row["id"], row["revision"]))
+
+    def list_rulebook_publications(self, project_id: str) -> list[dict[str, Any]]:
+        project_id = identifier(project_id)
+        with self._transaction() as db:
+            return [
+                json.loads(row["result"])
+                for row in db.execute(
+                    "SELECT result FROM rulebook_publications WHERE project_id=? ORDER BY sequence",
+                    (project_id,),
+                )
+            ]
+
     def evaluate_task(self, project_id: str, task: dict[str, Any]) -> dict[str, Any]:
-        """Trusted coordinator supplies risk; this read-only preview grants no execution."""
+        """Legacy configuration preview; custom rules require complete routing snapshots."""
+        from .legacy_evaluation import evaluate_fixed_task
+
         try:
             request = TaskPreview.model_validate(task)
         except ValidationError:
             raise ProjectError("TASK_INPUT_INVALID") from None
+        exported = self.get_configuration(project_id)
         snapshot = self.get(project_id)
-        effective = max(request.complexity, "T3" if request.risk == "critical" else "T1")
-        result: dict[str, Any] = {
-            "schema_version": "karajan.task-preview.v1",
-            "project_revision": snapshot["revision"],
-            "configuration_digest": snapshot["configuration"]["digest"],
-            "effective_class": effective,
-            "rule_id": None,
-            "qualified_candidates": [],
-            "reason_codes": [],
-            "dispatch_eligible": False,
-            "qualification_scope": "offline_configuration",
-        }
-        if request.role == "worker" and request.readiness != "ready":
-            result["reason_codes"] = ["TASK_NOT_READY"]
-            return result
-        if snapshot["configuration"]["status"] != "offline_valid":
-            result["reason_codes"] = ["CONFIGURATION_NOT_READY"]
-            return result
-        with self._transaction() as db:
-            row = db.execute(
-                "SELECT configuration FROM previews WHERE id=?",
-                (snapshot["configuration"]["preview_id"],),
-            ).fetchone()
-        configuration = json.loads(row["configuration"])
-        rules = []
-        for rule in configuration["rulebook"]["rules"]:
-            when = rule["when"]
-            if when["role"] != request.role or (
-                "purpose" in when and when["purpose"] != request.purpose
-            ):
-                continue
-            if when.get("effective_class", effective) != effective or effective not in when.get(
-                "effective_class_in", [effective]
-            ):
-                continue
-            rules.append(rule)
-        if len(rules) != 1:
-            result["reason_codes"] = ["RULE_NOT_UNIQUE"]
-            return result
-        rule = rules[0]
-        result["rule_id"] = rule["id"]
-        result["required_independence"] = rule.get("independence", [])
-        approved = {(item.id, item.revision) for item in request.approved_profile_refs}
-        candidates = {
-            (ref["id"], ref["revision"])
-            for group in rule["eligible_groups"]
-            for ref in configuration["rulebook"]["profile_groups"][group]
-            if (ref["id"], ref["revision"]) in approved
-        }
-        profiles = {
-            (item["id"], item["revision"]): item for item in configuration["resources"]["profiles"]
-        }
-        authors = {(item.id, item.revision) for item in request.author_profile_refs}
-        author_families = set(request.author_model_families) | {
-            profiles[author]["model_family"] for author in authors if author in profiles
-        }
-        for candidate in tuple(candidates):
-            registration = profiles[candidate]
-            profile_digest = hashlib.sha256(encoded(registration["profile"]).encode()).hexdigest()
-            evidence = registration["capability_evidence"]
-            capabilities = {
-                item["capability"]
-                for item in evidence
-                if item["status"] == "passed"
-                and item["evidence_ref"]
-                and item["profile_digest"] == profile_digest
-                and item["runtime_version"] == registration["profile"]["binding"]["runtime_version"]
-                and item.get("provenance") in {"fixture", "imported_observation"}
-                and sum(other["capability"] == item["capability"] for other in evidence) == 1
-            }
-            if not set(request.required_capabilities) <= capabilities:
-                candidates.remove(candidate)
-            elif (
-                request.role == "reviewer"
-                and effective == "T3"
-                and registration["model_family"] in author_families
-            ):
-                candidates.remove(candidate)
-        result["qualified_candidates"] = [
-            {"id": identity, "revision": revision} for identity, revision in sorted(candidates)
-        ]
-        if not candidates:
-            result["reason_codes"] = ["NO_APPROVED_CANDIDATE"]
-        return result
+        if snapshot["revision"] != exported["project_revision"]:
+            raise ProjectError("REVISION_CONFLICT", current_revision=snapshot["revision"])
+        configuration = exported["configuration"]
+        return evaluate_fixed_task(
+            configuration or {},
+            request,
+            project_revision=exported["project_revision"],
+            configuration_digest=snapshot["configuration"]["digest"],
+        )
 
     def get_configuration(self, project_id: str) -> dict[str, Any]:
         project_id = identifier(project_id)

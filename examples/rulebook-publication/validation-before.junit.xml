@@ -1,0 +1,729 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="15" skipped="0" tests="15" time="3.580" timestamp="2026-09-06T02:57:35.788693+08:00" hostname="ProArt-Zhou"><testcase classname="tests.projects.test_publication_guards" name="test_invalid_resource_values_cannot_restore_revoked_permissions[amount-NaN]" time="0.258"><failure message="AssertionError: assert {'approved_pr...}], ...}, ...} == {'approved_pr...}], ...}, ...}&#10;  &#10;  Omitting 1 identical items, use -vv to show&#10;  Differing items:&#10;  {'approved_profile_refs': [{'id': 'fixture-profile', 'revision': 1}]} != {'approved_profile_refs': []}&#10;  {'revision': 3} != {'revision': 2}&#10;  {'digest': '2430d624c963a66c9ac80bab19daa6de9e6bcb758241d1d4dd89e5784abd7a09'} != {'digest': '96457ca72eeef2debdfa32438104ac581807bec37571f5088ea570bce679e4a2'}&#10;  {'resources': {'accounts': [{'id': 'fixture-account', 'provider_id': 'fixture-provider', 'secret_ref': 'secret:fixture...ture-account', 'approved_data_destination': True, 'billing_path': 'subscription_only', 'id': 'fixtur...&#10;  &#10;  ...Full output truncated (2 lines hidden), use '-vv' to show">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_resource_values_c0')
+repository = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_resource_values_c0/repositories/example')
+field = 'amount', value = 'NaN'
+
+    @pytest.mark.parametrize(
+        "field,value",
+        [
+            ("amount", "NaN"), ("amount", "-1"), ("amount", "1.0000001"),
+            ("amount", None), ("currency", "usd"), ("duration", 0),
+            ("pool_limit", "Infinity"), ("pool_limit", "-1"),
+            ("conservative_bound", -1), ("approval", "missing-profile"),
+        ],
+    )
+    def test_invalid_resource_values_cannot_restore_revoked_permissions(
+        tmp_path: Path, repository: Path, field: str, value: object
+    ) -&gt; None:
+        service, project, config = configured(tmp_path, repository)
+        revoked = copy.deepcopy(config)
+        revoked["resources"]["profiles"][0]["enabled"] = False
+        revoked["approved_profile_refs"] = []
+        preview = service.preview_configuration(
+            project["id"], revoked, command_key="revoke-preview", principal="owner"
+        )
+        service.apply_configuration(
+            project["id"], preview["preview_id"], expected_revision=2,
+            command_key="revoke", principal="owner"
+        )
+        current = service.get_effective_resources(project["id"])
+        broken = copy.deepcopy(config)
+        resources = broken["resources"]
+        if field == "amount":
+            resources["budgets"][0]["currency_limits"]["USD"] = value
+        elif field == "currency":
+            resources["budgets"][0]["currency_limits"] = {value: "1"}
+        elif field == "duration":
+            resources["budgets"][0]["max_duration_seconds"] = value
+        elif field == "pool_limit":
+            resources["quota_pools"][0]["limit"] = value
+        elif field == "conservative_bound":
+            resources["capacity_policies"][0]["conservative_mode"]["cooldown_seconds"] = value
+        else:
+            broken["approved_profile_refs"][0]["id"] = value
+        preview = service.preview_configuration(
+            project["id"], broken, command_key="draft-preview", principal="owner"
+        )
+        saved = service.apply_configuration(
+            project["id"], preview["preview_id"], expected_revision=3,
+            command_key="draft", principal="owner"
+        )
+        assert saved["configuration"]["status"] == "draft"
+&gt;       assert service.get_effective_resources(project["id"]) == current
+E       AssertionError: assert {'approved_pr...}], ...}, ...} == {'approved_pr...}], ...}, ...}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'approved_profile_refs': [{'id': 'fixture-profile', 'revision': 1}]} != {'approved_profile_refs': []}
+E         {'revision': 3} != {'revision': 2}
+E         {'digest': '2430d624c963a66c9ac80bab19daa6de9e6bcb758241d1d4dd89e5784abd7a09'} != {'digest': '96457ca72eeef2debdfa32438104ac581807bec37571f5088ea570bce679e4a2'}
+E         {'resources': {'accounts': [{'id': 'fixture-account', 'provider_id': 'fixture-provider', 'secret_ref': 'secret:fixture...ture-account', 'approved_data_destination': True, 'billing_path': 'subscription_only', 'id': 'fixtur...
+E         
+E         ...Full output truncated (2 lines hidden), use '-vv' to show
+
+tests\projects\test_publication_guards.py:287: AssertionError</failure></testcase><testcase classname="tests.projects.test_publication_guards" name="test_invalid_resource_values_cannot_restore_revoked_permissions[amount--1]" time="0.219"><failure message="AssertionError: assert {'approved_pr...}], ...}, ...} == {'approved_pr...}], ...}, ...}&#10;  &#10;  Omitting 1 identical items, use -vv to show&#10;  Differing items:&#10;  {'approved_profile_refs': [{'id': 'fixture-profile', 'revision': 1}]} != {'approved_profile_refs': []}&#10;  {'revision': 3} != {'revision': 2}&#10;  {'digest': 'c31d7b14507499731a88aa6ff9aa34147ba3b83a1f6c7d3ef44309c591510349'} != {'digest': '96457ca72eeef2debdfa32438104ac581807bec37571f5088ea570bce679e4a2'}&#10;  {'resources': {'accounts': [{'id': 'fixture-account', 'provider_id': 'fixture-provider', 'secret_ref': 'secret:fixture...ture-account', 'approved_data_destination': True, 'billing_path': 'subscription_only', 'id': 'fixtur...&#10;  &#10;  ...Full output truncated (2 lines hidden), use '-vv' to show">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_resource_values_c1')
+repository = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_resource_values_c1/repositories/example')
+field = 'amount', value = '-1'
+
+    @pytest.mark.parametrize(
+        "field,value",
+        [
+            ("amount", "NaN"), ("amount", "-1"), ("amount", "1.0000001"),
+            ("amount", None), ("currency", "usd"), ("duration", 0),
+            ("pool_limit", "Infinity"), ("pool_limit", "-1"),
+            ("conservative_bound", -1), ("approval", "missing-profile"),
+        ],
+    )
+    def test_invalid_resource_values_cannot_restore_revoked_permissions(
+        tmp_path: Path, repository: Path, field: str, value: object
+    ) -&gt; None:
+        service, project, config = configured(tmp_path, repository)
+        revoked = copy.deepcopy(config)
+        revoked["resources"]["profiles"][0]["enabled"] = False
+        revoked["approved_profile_refs"] = []
+        preview = service.preview_configuration(
+            project["id"], revoked, command_key="revoke-preview", principal="owner"
+        )
+        service.apply_configuration(
+            project["id"], preview["preview_id"], expected_revision=2,
+            command_key="revoke", principal="owner"
+        )
+        current = service.get_effective_resources(project["id"])
+        broken = copy.deepcopy(config)
+        resources = broken["resources"]
+        if field == "amount":
+            resources["budgets"][0]["currency_limits"]["USD"] = value
+        elif field == "currency":
+            resources["budgets"][0]["currency_limits"] = {value: "1"}
+        elif field == "duration":
+            resources["budgets"][0]["max_duration_seconds"] = value
+        elif field == "pool_limit":
+            resources["quota_pools"][0]["limit"] = value
+        elif field == "conservative_bound":
+            resources["capacity_policies"][0]["conservative_mode"]["cooldown_seconds"] = value
+        else:
+            broken["approved_profile_refs"][0]["id"] = value
+        preview = service.preview_configuration(
+            project["id"], broken, command_key="draft-preview", principal="owner"
+        )
+        saved = service.apply_configuration(
+            project["id"], preview["preview_id"], expected_revision=3,
+            command_key="draft", principal="owner"
+        )
+        assert saved["configuration"]["status"] == "draft"
+&gt;       assert service.get_effective_resources(project["id"]) == current
+E       AssertionError: assert {'approved_pr...}], ...}, ...} == {'approved_pr...}], ...}, ...}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'approved_profile_refs': [{'id': 'fixture-profile', 'revision': 1}]} != {'approved_profile_refs': []}
+E         {'revision': 3} != {'revision': 2}
+E         {'digest': 'c31d7b14507499731a88aa6ff9aa34147ba3b83a1f6c7d3ef44309c591510349'} != {'digest': '96457ca72eeef2debdfa32438104ac581807bec37571f5088ea570bce679e4a2'}
+E         {'resources': {'accounts': [{'id': 'fixture-account', 'provider_id': 'fixture-provider', 'secret_ref': 'secret:fixture...ture-account', 'approved_data_destination': True, 'billing_path': 'subscription_only', 'id': 'fixtur...
+E         
+E         ...Full output truncated (2 lines hidden), use '-vv' to show
+
+tests\projects\test_publication_guards.py:287: AssertionError</failure></testcase><testcase classname="tests.projects.test_publication_guards" name="test_invalid_resource_values_cannot_restore_revoked_permissions[amount-1.0000001]" time="0.221"><failure message="AssertionError: assert {'approved_pr...}], ...}, ...} == {'approved_pr...}], ...}, ...}&#10;  &#10;  Omitting 1 identical items, use -vv to show&#10;  Differing items:&#10;  {'approved_profile_refs': [{'id': 'fixture-profile', 'revision': 1}]} != {'approved_profile_refs': []}&#10;  {'revision': 3} != {'revision': 2}&#10;  {'digest': '5a224ed64ac17db133ee71fa4f34db3bf39e79ee3e33bd19d7166626047bdc41'} != {'digest': '96457ca72eeef2debdfa32438104ac581807bec37571f5088ea570bce679e4a2'}&#10;  {'resources': {'accounts': [{'id': 'fixture-account', 'provider_id': 'fixture-provider', 'secret_ref': 'secret:fixture...ture-account', 'approved_data_destination': True, 'billing_path': 'subscription_only', 'id': 'fixtur...&#10;  &#10;  ...Full output truncated (2 lines hidden), use '-vv' to show">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_resource_values_c2')
+repository = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_resource_values_c2/repositories/example')
+field = 'amount', value = '1.0000001'
+
+    @pytest.mark.parametrize(
+        "field,value",
+        [
+            ("amount", "NaN"), ("amount", "-1"), ("amount", "1.0000001"),
+            ("amount", None), ("currency", "usd"), ("duration", 0),
+            ("pool_limit", "Infinity"), ("pool_limit", "-1"),
+            ("conservative_bound", -1), ("approval", "missing-profile"),
+        ],
+    )
+    def test_invalid_resource_values_cannot_restore_revoked_permissions(
+        tmp_path: Path, repository: Path, field: str, value: object
+    ) -&gt; None:
+        service, project, config = configured(tmp_path, repository)
+        revoked = copy.deepcopy(config)
+        revoked["resources"]["profiles"][0]["enabled"] = False
+        revoked["approved_profile_refs"] = []
+        preview = service.preview_configuration(
+            project["id"], revoked, command_key="revoke-preview", principal="owner"
+        )
+        service.apply_configuration(
+            project["id"], preview["preview_id"], expected_revision=2,
+            command_key="revoke", principal="owner"
+        )
+        current = service.get_effective_resources(project["id"])
+        broken = copy.deepcopy(config)
+        resources = broken["resources"]
+        if field == "amount":
+            resources["budgets"][0]["currency_limits"]["USD"] = value
+        elif field == "currency":
+            resources["budgets"][0]["currency_limits"] = {value: "1"}
+        elif field == "duration":
+            resources["budgets"][0]["max_duration_seconds"] = value
+        elif field == "pool_limit":
+            resources["quota_pools"][0]["limit"] = value
+        elif field == "conservative_bound":
+            resources["capacity_policies"][0]["conservative_mode"]["cooldown_seconds"] = value
+        else:
+            broken["approved_profile_refs"][0]["id"] = value
+        preview = service.preview_configuration(
+            project["id"], broken, command_key="draft-preview", principal="owner"
+        )
+        saved = service.apply_configuration(
+            project["id"], preview["preview_id"], expected_revision=3,
+            command_key="draft", principal="owner"
+        )
+        assert saved["configuration"]["status"] == "draft"
+&gt;       assert service.get_effective_resources(project["id"]) == current
+E       AssertionError: assert {'approved_pr...}], ...}, ...} == {'approved_pr...}], ...}, ...}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'approved_profile_refs': [{'id': 'fixture-profile', 'revision': 1}]} != {'approved_profile_refs': []}
+E         {'revision': 3} != {'revision': 2}
+E         {'digest': '5a224ed64ac17db133ee71fa4f34db3bf39e79ee3e33bd19d7166626047bdc41'} != {'digest': '96457ca72eeef2debdfa32438104ac581807bec37571f5088ea570bce679e4a2'}
+E         {'resources': {'accounts': [{'id': 'fixture-account', 'provider_id': 'fixture-provider', 'secret_ref': 'secret:fixture...ture-account', 'approved_data_destination': True, 'billing_path': 'subscription_only', 'id': 'fixtur...
+E         
+E         ...Full output truncated (2 lines hidden), use '-vv' to show
+
+tests\projects\test_publication_guards.py:287: AssertionError</failure></testcase><testcase classname="tests.projects.test_publication_guards" name="test_invalid_resource_values_cannot_restore_revoked_permissions[amount-None]" time="0.230"><failure message="AssertionError: assert {'approved_pr...}], ...}, ...} == {'approved_pr...}], ...}, ...}&#10;  &#10;  Omitting 1 identical items, use -vv to show&#10;  Differing items:&#10;  {'approved_profile_refs': [{'id': 'fixture-profile', 'revision': 1}]} != {'approved_profile_refs': []}&#10;  {'revision': 3} != {'revision': 2}&#10;  {'digest': '287d9776e87e9222a99592c7b640765b7bfa35e50d52d9fefd6e7a9b54289652'} != {'digest': '96457ca72eeef2debdfa32438104ac581807bec37571f5088ea570bce679e4a2'}&#10;  {'resources': {'accounts': [{'id': 'fixture-account', 'provider_id': 'fixture-provider', 'secret_ref': 'secret:fixture...ture-account', 'approved_data_destination': True, 'billing_path': 'subscription_only', 'id': 'fixtur...&#10;  &#10;  ...Full output truncated (2 lines hidden), use '-vv' to show">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_resource_values_c3')
+repository = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_resource_values_c3/repositories/example')
+field = 'amount', value = None
+
+    @pytest.mark.parametrize(
+        "field,value",
+        [
+            ("amount", "NaN"), ("amount", "-1"), ("amount", "1.0000001"),
+            ("amount", None), ("currency", "usd"), ("duration", 0),
+            ("pool_limit", "Infinity"), ("pool_limit", "-1"),
+            ("conservative_bound", -1), ("approval", "missing-profile"),
+        ],
+    )
+    def test_invalid_resource_values_cannot_restore_revoked_permissions(
+        tmp_path: Path, repository: Path, field: str, value: object
+    ) -&gt; None:
+        service, project, config = configured(tmp_path, repository)
+        revoked = copy.deepcopy(config)
+        revoked["resources"]["profiles"][0]["enabled"] = False
+        revoked["approved_profile_refs"] = []
+        preview = service.preview_configuration(
+            project["id"], revoked, command_key="revoke-preview", principal="owner"
+        )
+        service.apply_configuration(
+            project["id"], preview["preview_id"], expected_revision=2,
+            command_key="revoke", principal="owner"
+        )
+        current = service.get_effective_resources(project["id"])
+        broken = copy.deepcopy(config)
+        resources = broken["resources"]
+        if field == "amount":
+            resources["budgets"][0]["currency_limits"]["USD"] = value
+        elif field == "currency":
+            resources["budgets"][0]["currency_limits"] = {value: "1"}
+        elif field == "duration":
+            resources["budgets"][0]["max_duration_seconds"] = value
+        elif field == "pool_limit":
+            resources["quota_pools"][0]["limit"] = value
+        elif field == "conservative_bound":
+            resources["capacity_policies"][0]["conservative_mode"]["cooldown_seconds"] = value
+        else:
+            broken["approved_profile_refs"][0]["id"] = value
+        preview = service.preview_configuration(
+            project["id"], broken, command_key="draft-preview", principal="owner"
+        )
+        saved = service.apply_configuration(
+            project["id"], preview["preview_id"], expected_revision=3,
+            command_key="draft", principal="owner"
+        )
+        assert saved["configuration"]["status"] == "draft"
+&gt;       assert service.get_effective_resources(project["id"]) == current
+E       AssertionError: assert {'approved_pr...}], ...}, ...} == {'approved_pr...}], ...}, ...}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'approved_profile_refs': [{'id': 'fixture-profile', 'revision': 1}]} != {'approved_profile_refs': []}
+E         {'revision': 3} != {'revision': 2}
+E         {'digest': '287d9776e87e9222a99592c7b640765b7bfa35e50d52d9fefd6e7a9b54289652'} != {'digest': '96457ca72eeef2debdfa32438104ac581807bec37571f5088ea570bce679e4a2'}
+E         {'resources': {'accounts': [{'id': 'fixture-account', 'provider_id': 'fixture-provider', 'secret_ref': 'secret:fixture...ture-account', 'approved_data_destination': True, 'billing_path': 'subscription_only', 'id': 'fixtur...
+E         
+E         ...Full output truncated (2 lines hidden), use '-vv' to show
+
+tests\projects\test_publication_guards.py:287: AssertionError</failure></testcase><testcase classname="tests.projects.test_publication_guards" name="test_invalid_resource_values_cannot_restore_revoked_permissions[currency-usd]" time="0.233"><failure message="AssertionError: assert {'approved_pr...}], ...}, ...} == {'approved_pr...}], ...}, ...}&#10;  &#10;  Omitting 1 identical items, use -vv to show&#10;  Differing items:&#10;  {'approved_profile_refs': [{'id': 'fixture-profile', 'revision': 1}]} != {'approved_profile_refs': []}&#10;  {'revision': 3} != {'revision': 2}&#10;  {'digest': '450bc30be979ebbf80fd4caeb95aa4a811f202050cc9e47ef577b23128d67276'} != {'digest': '96457ca72eeef2debdfa32438104ac581807bec37571f5088ea570bce679e4a2'}&#10;  {'resources': {'accounts': [{'id': 'fixture-account', 'provider_id': 'fixture-provider', 'secret_ref': 'secret:fixture...ture-account', 'approved_data_destination': True, 'billing_path': 'subscription_only', 'id': 'fixtur...&#10;  &#10;  ...Full output truncated (2 lines hidden), use '-vv' to show">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_resource_values_c4')
+repository = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_resource_values_c4/repositories/example')
+field = 'currency', value = 'usd'
+
+    @pytest.mark.parametrize(
+        "field,value",
+        [
+            ("amount", "NaN"), ("amount", "-1"), ("amount", "1.0000001"),
+            ("amount", None), ("currency", "usd"), ("duration", 0),
+            ("pool_limit", "Infinity"), ("pool_limit", "-1"),
+            ("conservative_bound", -1), ("approval", "missing-profile"),
+        ],
+    )
+    def test_invalid_resource_values_cannot_restore_revoked_permissions(
+        tmp_path: Path, repository: Path, field: str, value: object
+    ) -&gt; None:
+        service, project, config = configured(tmp_path, repository)
+        revoked = copy.deepcopy(config)
+        revoked["resources"]["profiles"][0]["enabled"] = False
+        revoked["approved_profile_refs"] = []
+        preview = service.preview_configuration(
+            project["id"], revoked, command_key="revoke-preview", principal="owner"
+        )
+        service.apply_configuration(
+            project["id"], preview["preview_id"], expected_revision=2,
+            command_key="revoke", principal="owner"
+        )
+        current = service.get_effective_resources(project["id"])
+        broken = copy.deepcopy(config)
+        resources = broken["resources"]
+        if field == "amount":
+            resources["budgets"][0]["currency_limits"]["USD"] = value
+        elif field == "currency":
+            resources["budgets"][0]["currency_limits"] = {value: "1"}
+        elif field == "duration":
+            resources["budgets"][0]["max_duration_seconds"] = value
+        elif field == "pool_limit":
+            resources["quota_pools"][0]["limit"] = value
+        elif field == "conservative_bound":
+            resources["capacity_policies"][0]["conservative_mode"]["cooldown_seconds"] = value
+        else:
+            broken["approved_profile_refs"][0]["id"] = value
+        preview = service.preview_configuration(
+            project["id"], broken, command_key="draft-preview", principal="owner"
+        )
+        saved = service.apply_configuration(
+            project["id"], preview["preview_id"], expected_revision=3,
+            command_key="draft", principal="owner"
+        )
+        assert saved["configuration"]["status"] == "draft"
+&gt;       assert service.get_effective_resources(project["id"]) == current
+E       AssertionError: assert {'approved_pr...}], ...}, ...} == {'approved_pr...}], ...}, ...}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'approved_profile_refs': [{'id': 'fixture-profile', 'revision': 1}]} != {'approved_profile_refs': []}
+E         {'revision': 3} != {'revision': 2}
+E         {'digest': '450bc30be979ebbf80fd4caeb95aa4a811f202050cc9e47ef577b23128d67276'} != {'digest': '96457ca72eeef2debdfa32438104ac581807bec37571f5088ea570bce679e4a2'}
+E         {'resources': {'accounts': [{'id': 'fixture-account', 'provider_id': 'fixture-provider', 'secret_ref': 'secret:fixture...ture-account', 'approved_data_destination': True, 'billing_path': 'subscription_only', 'id': 'fixtur...
+E         
+E         ...Full output truncated (2 lines hidden), use '-vv' to show
+
+tests\projects\test_publication_guards.py:287: AssertionError</failure></testcase><testcase classname="tests.projects.test_publication_guards" name="test_invalid_resource_values_cannot_restore_revoked_permissions[duration-0]" time="0.224"><failure message="AssertionError: assert {'approved_pr...}], ...}, ...} == {'approved_pr...}], ...}, ...}&#10;  &#10;  Omitting 1 identical items, use -vv to show&#10;  Differing items:&#10;  {'approved_profile_refs': [{'id': 'fixture-profile', 'revision': 1}]} != {'approved_profile_refs': []}&#10;  {'revision': 3} != {'revision': 2}&#10;  {'digest': 'b4e0bb77f949f8b3b54d7a9b90f079acfbd010c23f775e126fdd2b70c3498c99'} != {'digest': '96457ca72eeef2debdfa32438104ac581807bec37571f5088ea570bce679e4a2'}&#10;  {'resources': {'accounts': [{'id': 'fixture-account', 'provider_id': 'fixture-provider', 'secret_ref': 'secret:fixture...ture-account', 'approved_data_destination': True, 'billing_path': 'subscription_only', 'id': 'fixtur...&#10;  &#10;  ...Full output truncated (2 lines hidden), use '-vv' to show">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_resource_values_c5')
+repository = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_resource_values_c5/repositories/example')
+field = 'duration', value = 0
+
+    @pytest.mark.parametrize(
+        "field,value",
+        [
+            ("amount", "NaN"), ("amount", "-1"), ("amount", "1.0000001"),
+            ("amount", None), ("currency", "usd"), ("duration", 0),
+            ("pool_limit", "Infinity"), ("pool_limit", "-1"),
+            ("conservative_bound", -1), ("approval", "missing-profile"),
+        ],
+    )
+    def test_invalid_resource_values_cannot_restore_revoked_permissions(
+        tmp_path: Path, repository: Path, field: str, value: object
+    ) -&gt; None:
+        service, project, config = configured(tmp_path, repository)
+        revoked = copy.deepcopy(config)
+        revoked["resources"]["profiles"][0]["enabled"] = False
+        revoked["approved_profile_refs"] = []
+        preview = service.preview_configuration(
+            project["id"], revoked, command_key="revoke-preview", principal="owner"
+        )
+        service.apply_configuration(
+            project["id"], preview["preview_id"], expected_revision=2,
+            command_key="revoke", principal="owner"
+        )
+        current = service.get_effective_resources(project["id"])
+        broken = copy.deepcopy(config)
+        resources = broken["resources"]
+        if field == "amount":
+            resources["budgets"][0]["currency_limits"]["USD"] = value
+        elif field == "currency":
+            resources["budgets"][0]["currency_limits"] = {value: "1"}
+        elif field == "duration":
+            resources["budgets"][0]["max_duration_seconds"] = value
+        elif field == "pool_limit":
+            resources["quota_pools"][0]["limit"] = value
+        elif field == "conservative_bound":
+            resources["capacity_policies"][0]["conservative_mode"]["cooldown_seconds"] = value
+        else:
+            broken["approved_profile_refs"][0]["id"] = value
+        preview = service.preview_configuration(
+            project["id"], broken, command_key="draft-preview", principal="owner"
+        )
+        saved = service.apply_configuration(
+            project["id"], preview["preview_id"], expected_revision=3,
+            command_key="draft", principal="owner"
+        )
+        assert saved["configuration"]["status"] == "draft"
+&gt;       assert service.get_effective_resources(project["id"]) == current
+E       AssertionError: assert {'approved_pr...}], ...}, ...} == {'approved_pr...}], ...}, ...}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'approved_profile_refs': [{'id': 'fixture-profile', 'revision': 1}]} != {'approved_profile_refs': []}
+E         {'revision': 3} != {'revision': 2}
+E         {'digest': 'b4e0bb77f949f8b3b54d7a9b90f079acfbd010c23f775e126fdd2b70c3498c99'} != {'digest': '96457ca72eeef2debdfa32438104ac581807bec37571f5088ea570bce679e4a2'}
+E         {'resources': {'accounts': [{'id': 'fixture-account', 'provider_id': 'fixture-provider', 'secret_ref': 'secret:fixture...ture-account', 'approved_data_destination': True, 'billing_path': 'subscription_only', 'id': 'fixtur...
+E         
+E         ...Full output truncated (2 lines hidden), use '-vv' to show
+
+tests\projects\test_publication_guards.py:287: AssertionError</failure></testcase><testcase classname="tests.projects.test_publication_guards" name="test_invalid_resource_values_cannot_restore_revoked_permissions[pool_limit-Infinity]" time="0.222"><failure message="AssertionError: assert 'offline_valid' == 'draft'&#10;  &#10;  - draft&#10;  + offline_valid">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_resource_values_c6')
+repository = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_resource_values_c6/repositories/example')
+field = 'pool_limit', value = 'Infinity'
+
+    @pytest.mark.parametrize(
+        "field,value",
+        [
+            ("amount", "NaN"), ("amount", "-1"), ("amount", "1.0000001"),
+            ("amount", None), ("currency", "usd"), ("duration", 0),
+            ("pool_limit", "Infinity"), ("pool_limit", "-1"),
+            ("conservative_bound", -1), ("approval", "missing-profile"),
+        ],
+    )
+    def test_invalid_resource_values_cannot_restore_revoked_permissions(
+        tmp_path: Path, repository: Path, field: str, value: object
+    ) -&gt; None:
+        service, project, config = configured(tmp_path, repository)
+        revoked = copy.deepcopy(config)
+        revoked["resources"]["profiles"][0]["enabled"] = False
+        revoked["approved_profile_refs"] = []
+        preview = service.preview_configuration(
+            project["id"], revoked, command_key="revoke-preview", principal="owner"
+        )
+        service.apply_configuration(
+            project["id"], preview["preview_id"], expected_revision=2,
+            command_key="revoke", principal="owner"
+        )
+        current = service.get_effective_resources(project["id"])
+        broken = copy.deepcopy(config)
+        resources = broken["resources"]
+        if field == "amount":
+            resources["budgets"][0]["currency_limits"]["USD"] = value
+        elif field == "currency":
+            resources["budgets"][0]["currency_limits"] = {value: "1"}
+        elif field == "duration":
+            resources["budgets"][0]["max_duration_seconds"] = value
+        elif field == "pool_limit":
+            resources["quota_pools"][0]["limit"] = value
+        elif field == "conservative_bound":
+            resources["capacity_policies"][0]["conservative_mode"]["cooldown_seconds"] = value
+        else:
+            broken["approved_profile_refs"][0]["id"] = value
+        preview = service.preview_configuration(
+            project["id"], broken, command_key="draft-preview", principal="owner"
+        )
+        saved = service.apply_configuration(
+            project["id"], preview["preview_id"], expected_revision=3,
+            command_key="draft", principal="owner"
+        )
+&gt;       assert saved["configuration"]["status"] == "draft"
+E       AssertionError: assert 'offline_valid' == 'draft'
+E         
+E         - draft
+E         + offline_valid
+
+tests\projects\test_publication_guards.py:286: AssertionError</failure></testcase><testcase classname="tests.projects.test_publication_guards" name="test_invalid_resource_values_cannot_restore_revoked_permissions[pool_limit--1]" time="0.224"><failure message="AssertionError: assert 'offline_valid' == 'draft'&#10;  &#10;  - draft&#10;  + offline_valid">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_resource_values_c7')
+repository = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_resource_values_c7/repositories/example')
+field = 'pool_limit', value = '-1'
+
+    @pytest.mark.parametrize(
+        "field,value",
+        [
+            ("amount", "NaN"), ("amount", "-1"), ("amount", "1.0000001"),
+            ("amount", None), ("currency", "usd"), ("duration", 0),
+            ("pool_limit", "Infinity"), ("pool_limit", "-1"),
+            ("conservative_bound", -1), ("approval", "missing-profile"),
+        ],
+    )
+    def test_invalid_resource_values_cannot_restore_revoked_permissions(
+        tmp_path: Path, repository: Path, field: str, value: object
+    ) -&gt; None:
+        service, project, config = configured(tmp_path, repository)
+        revoked = copy.deepcopy(config)
+        revoked["resources"]["profiles"][0]["enabled"] = False
+        revoked["approved_profile_refs"] = []
+        preview = service.preview_configuration(
+            project["id"], revoked, command_key="revoke-preview", principal="owner"
+        )
+        service.apply_configuration(
+            project["id"], preview["preview_id"], expected_revision=2,
+            command_key="revoke", principal="owner"
+        )
+        current = service.get_effective_resources(project["id"])
+        broken = copy.deepcopy(config)
+        resources = broken["resources"]
+        if field == "amount":
+            resources["budgets"][0]["currency_limits"]["USD"] = value
+        elif field == "currency":
+            resources["budgets"][0]["currency_limits"] = {value: "1"}
+        elif field == "duration":
+            resources["budgets"][0]["max_duration_seconds"] = value
+        elif field == "pool_limit":
+            resources["quota_pools"][0]["limit"] = value
+        elif field == "conservative_bound":
+            resources["capacity_policies"][0]["conservative_mode"]["cooldown_seconds"] = value
+        else:
+            broken["approved_profile_refs"][0]["id"] = value
+        preview = service.preview_configuration(
+            project["id"], broken, command_key="draft-preview", principal="owner"
+        )
+        saved = service.apply_configuration(
+            project["id"], preview["preview_id"], expected_revision=3,
+            command_key="draft", principal="owner"
+        )
+&gt;       assert saved["configuration"]["status"] == "draft"
+E       AssertionError: assert 'offline_valid' == 'draft'
+E         
+E         - draft
+E         + offline_valid
+
+tests\projects\test_publication_guards.py:286: AssertionError</failure></testcase><testcase classname="tests.projects.test_publication_guards" name="test_invalid_resource_values_cannot_restore_revoked_permissions[conservative_bound--1]" time="0.240"><failure message="AssertionError: assert {'approved_pr...}], ...}, ...} == {'approved_pr...}], ...}, ...}&#10;  &#10;  Omitting 1 identical items, use -vv to show&#10;  Differing items:&#10;  {'approved_profile_refs': [{'id': 'fixture-profile', 'revision': 1}]} != {'approved_profile_refs': []}&#10;  {'revision': 3} != {'revision': 2}&#10;  {'digest': 'f4e7ed7bce1746e54f3f8ff59e7c46f123e2844d58a2966cdffb164f41049c1a'} != {'digest': '96457ca72eeef2debdfa32438104ac581807bec37571f5088ea570bce679e4a2'}&#10;  {'resources': {'accounts': [{'id': 'fixture-account', 'provider_id': 'fixture-provider', 'secret_ref': 'secret:fixture...ture-account', 'approved_data_destination': True, 'billing_path': 'subscription_only', 'id': 'fixtur...&#10;  &#10;  ...Full output truncated (2 lines hidden), use '-vv' to show">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_resource_values_c8')
+repository = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_resource_values_c8/repositories/example')
+field = 'conservative_bound', value = -1
+
+    @pytest.mark.parametrize(
+        "field,value",
+        [
+            ("amount", "NaN"), ("amount", "-1"), ("amount", "1.0000001"),
+            ("amount", None), ("currency", "usd"), ("duration", 0),
+            ("pool_limit", "Infinity"), ("pool_limit", "-1"),
+            ("conservative_bound", -1), ("approval", "missing-profile"),
+        ],
+    )
+    def test_invalid_resource_values_cannot_restore_revoked_permissions(
+        tmp_path: Path, repository: Path, field: str, value: object
+    ) -&gt; None:
+        service, project, config = configured(tmp_path, repository)
+        revoked = copy.deepcopy(config)
+        revoked["resources"]["profiles"][0]["enabled"] = False
+        revoked["approved_profile_refs"] = []
+        preview = service.preview_configuration(
+            project["id"], revoked, command_key="revoke-preview", principal="owner"
+        )
+        service.apply_configuration(
+            project["id"], preview["preview_id"], expected_revision=2,
+            command_key="revoke", principal="owner"
+        )
+        current = service.get_effective_resources(project["id"])
+        broken = copy.deepcopy(config)
+        resources = broken["resources"]
+        if field == "amount":
+            resources["budgets"][0]["currency_limits"]["USD"] = value
+        elif field == "currency":
+            resources["budgets"][0]["currency_limits"] = {value: "1"}
+        elif field == "duration":
+            resources["budgets"][0]["max_duration_seconds"] = value
+        elif field == "pool_limit":
+            resources["quota_pools"][0]["limit"] = value
+        elif field == "conservative_bound":
+            resources["capacity_policies"][0]["conservative_mode"]["cooldown_seconds"] = value
+        else:
+            broken["approved_profile_refs"][0]["id"] = value
+        preview = service.preview_configuration(
+            project["id"], broken, command_key="draft-preview", principal="owner"
+        )
+        saved = service.apply_configuration(
+            project["id"], preview["preview_id"], expected_revision=3,
+            command_key="draft", principal="owner"
+        )
+        assert saved["configuration"]["status"] == "draft"
+&gt;       assert service.get_effective_resources(project["id"]) == current
+E       AssertionError: assert {'approved_pr...}], ...}, ...} == {'approved_pr...}], ...}, ...}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'approved_profile_refs': [{'id': 'fixture-profile', 'revision': 1}]} != {'approved_profile_refs': []}
+E         {'revision': 3} != {'revision': 2}
+E         {'digest': 'f4e7ed7bce1746e54f3f8ff59e7c46f123e2844d58a2966cdffb164f41049c1a'} != {'digest': '96457ca72eeef2debdfa32438104ac581807bec37571f5088ea570bce679e4a2'}
+E         {'resources': {'accounts': [{'id': 'fixture-account', 'provider_id': 'fixture-provider', 'secret_ref': 'secret:fixture...ture-account', 'approved_data_destination': True, 'billing_path': 'subscription_only', 'id': 'fixtur...
+E         
+E         ...Full output truncated (2 lines hidden), use '-vv' to show
+
+tests\projects\test_publication_guards.py:287: AssertionError</failure></testcase><testcase classname="tests.projects.test_publication_guards" name="test_invalid_resource_values_cannot_restore_revoked_permissions[approval-missing-profile]" time="0.228"><failure message="AssertionError: assert {'approved_pr...}], ...}, ...} == {'approved_pr...}], ...}, ...}&#10;  &#10;  Omitting 1 identical items, use -vv to show&#10;  Differing items:&#10;  {'approved_profile_refs': [{'id': 'missing-profile', 'revision': 1}]} != {'approved_profile_refs': []}&#10;  {'revision': 3} != {'revision': 2}&#10;  {'digest': '462b9977fc29adfed3d5d782d657d1264e2c5b9b031d53782893b39f5bdd274f'} != {'digest': '96457ca72eeef2debdfa32438104ac581807bec37571f5088ea570bce679e4a2'}&#10;  {'resources': {'accounts': [{'id': 'fixture-account', 'provider_id': 'fixture-provider', 'secret_ref': 'secret:fixture...ture-account', 'approved_data_destination': True, 'billing_path': 'subscription_only', 'id': 'fixtur...&#10;  &#10;  ...Full output truncated (2 lines hidden), use '-vv' to show">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_resource_values_c9')
+repository = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_resource_values_c9/repositories/example')
+field = 'approval', value = 'missing-profile'
+
+    @pytest.mark.parametrize(
+        "field,value",
+        [
+            ("amount", "NaN"), ("amount", "-1"), ("amount", "1.0000001"),
+            ("amount", None), ("currency", "usd"), ("duration", 0),
+            ("pool_limit", "Infinity"), ("pool_limit", "-1"),
+            ("conservative_bound", -1), ("approval", "missing-profile"),
+        ],
+    )
+    def test_invalid_resource_values_cannot_restore_revoked_permissions(
+        tmp_path: Path, repository: Path, field: str, value: object
+    ) -&gt; None:
+        service, project, config = configured(tmp_path, repository)
+        revoked = copy.deepcopy(config)
+        revoked["resources"]["profiles"][0]["enabled"] = False
+        revoked["approved_profile_refs"] = []
+        preview = service.preview_configuration(
+            project["id"], revoked, command_key="revoke-preview", principal="owner"
+        )
+        service.apply_configuration(
+            project["id"], preview["preview_id"], expected_revision=2,
+            command_key="revoke", principal="owner"
+        )
+        current = service.get_effective_resources(project["id"])
+        broken = copy.deepcopy(config)
+        resources = broken["resources"]
+        if field == "amount":
+            resources["budgets"][0]["currency_limits"]["USD"] = value
+        elif field == "currency":
+            resources["budgets"][0]["currency_limits"] = {value: "1"}
+        elif field == "duration":
+            resources["budgets"][0]["max_duration_seconds"] = value
+        elif field == "pool_limit":
+            resources["quota_pools"][0]["limit"] = value
+        elif field == "conservative_bound":
+            resources["capacity_policies"][0]["conservative_mode"]["cooldown_seconds"] = value
+        else:
+            broken["approved_profile_refs"][0]["id"] = value
+        preview = service.preview_configuration(
+            project["id"], broken, command_key="draft-preview", principal="owner"
+        )
+        saved = service.apply_configuration(
+            project["id"], preview["preview_id"], expected_revision=3,
+            command_key="draft", principal="owner"
+        )
+        assert saved["configuration"]["status"] == "draft"
+&gt;       assert service.get_effective_resources(project["id"]) == current
+E       AssertionError: assert {'approved_pr...}], ...}, ...} == {'approved_pr...}], ...}, ...}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'approved_profile_refs': [{'id': 'missing-profile', 'revision': 1}]} != {'approved_profile_refs': []}
+E         {'revision': 3} != {'revision': 2}
+E         {'digest': '462b9977fc29adfed3d5d782d657d1264e2c5b9b031d53782893b39f5bdd274f'} != {'digest': '96457ca72eeef2debdfa32438104ac581807bec37571f5088ea570bce679e4a2'}
+E         {'resources': {'accounts': [{'id': 'fixture-account', 'provider_id': 'fixture-provider', 'secret_ref': 'secret:fixture...ture-account', 'approved_data_destination': True, 'billing_path': 'subscription_only', 'id': 'fixtur...
+E         
+E         ...Full output truncated (2 lines hidden), use '-vv' to show
+
+tests\projects\test_publication_guards.py:287: AssertionError</failure></testcase><testcase classname="tests.projects.test_publication_guards" name="test_invalid_unicode_is_not_storable_and_preview_remains_json_exportable[id-configuration]" time="0.212"><failure message="assert True is False">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_unicode_is_not_st0')
+repository = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_unicode_is_not_st0/repositories/example')
+entry = 'configuration', field = 'id'
+
+    @pytest.mark.parametrize("entry", ["configuration", "rulebook"])
+    @pytest.mark.parametrize("field", ["id", "description"])
+    def test_invalid_unicode_is_not_storable_and_preview_remains_json_exportable(
+        tmp_path: Path, repository: Path, entry: str, field: str
+    ) -&gt; None:
+        from starlette.responses import JSONResponse
+    
+        service, project, config = configured(tmp_path, repository)
+        config["rulebook"]["revision"] = 2
+        config["rulebook"][field] = "bad\ud800text"
+        if entry == "configuration":
+            preview = service.preview_configuration(
+                project["id"], config, command_key="preview", principal="owner"
+            )
+        else:
+            preview = service.preview_rulebook(
+                project["id"], config["rulebook"], expected_revision=2,
+                command_key="preview", principal="owner"
+            )
+&gt;       assert preview["can_save_draft"] is False
+E       assert True is False
+
+tests\projects\test_publication_guards.py:309: AssertionError</failure></testcase><testcase classname="tests.projects.test_publication_guards" name="test_invalid_unicode_is_not_storable_and_preview_remains_json_exportable[id-rulebook]" time="0.199"><failure message="assert True is False">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_unicode_is_not_st1')
+repository = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_unicode_is_not_st1/repositories/example')
+entry = 'rulebook', field = 'id'
+
+    @pytest.mark.parametrize("entry", ["configuration", "rulebook"])
+    @pytest.mark.parametrize("field", ["id", "description"])
+    def test_invalid_unicode_is_not_storable_and_preview_remains_json_exportable(
+        tmp_path: Path, repository: Path, entry: str, field: str
+    ) -&gt; None:
+        from starlette.responses import JSONResponse
+    
+        service, project, config = configured(tmp_path, repository)
+        config["rulebook"]["revision"] = 2
+        config["rulebook"][field] = "bad\ud800text"
+        if entry == "configuration":
+            preview = service.preview_configuration(
+                project["id"], config, command_key="preview", principal="owner"
+            )
+        else:
+            preview = service.preview_rulebook(
+                project["id"], config["rulebook"], expected_revision=2,
+                command_key="preview", principal="owner"
+            )
+&gt;       assert preview["can_save_draft"] is False
+E       assert True is False
+
+tests\projects\test_publication_guards.py:309: AssertionError</failure></testcase><testcase classname="tests.projects.test_publication_guards" name="test_invalid_unicode_is_not_storable_and_preview_remains_json_exportable[description-configuration]" time="0.203"><failure message="assert True is False">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_unicode_is_not_st2')
+repository = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_unicode_is_not_st2/repositories/example')
+entry = 'configuration', field = 'description'
+
+    @pytest.mark.parametrize("entry", ["configuration", "rulebook"])
+    @pytest.mark.parametrize("field", ["id", "description"])
+    def test_invalid_unicode_is_not_storable_and_preview_remains_json_exportable(
+        tmp_path: Path, repository: Path, entry: str, field: str
+    ) -&gt; None:
+        from starlette.responses import JSONResponse
+    
+        service, project, config = configured(tmp_path, repository)
+        config["rulebook"]["revision"] = 2
+        config["rulebook"][field] = "bad\ud800text"
+        if entry == "configuration":
+            preview = service.preview_configuration(
+                project["id"], config, command_key="preview", principal="owner"
+            )
+        else:
+            preview = service.preview_rulebook(
+                project["id"], config["rulebook"], expected_revision=2,
+                command_key="preview", principal="owner"
+            )
+&gt;       assert preview["can_save_draft"] is False
+E       assert True is False
+
+tests\projects\test_publication_guards.py:309: AssertionError</failure></testcase><testcase classname="tests.projects.test_publication_guards" name="test_invalid_unicode_is_not_storable_and_preview_remains_json_exportable[description-rulebook]" time="0.207"><failure message="assert True is False">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_unicode_is_not_st3')
+repository = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_invalid_unicode_is_not_st3/repositories/example')
+entry = 'rulebook', field = 'description'
+
+    @pytest.mark.parametrize("entry", ["configuration", "rulebook"])
+    @pytest.mark.parametrize("field", ["id", "description"])
+    def test_invalid_unicode_is_not_storable_and_preview_remains_json_exportable(
+        tmp_path: Path, repository: Path, entry: str, field: str
+    ) -&gt; None:
+        from starlette.responses import JSONResponse
+    
+        service, project, config = configured(tmp_path, repository)
+        config["rulebook"]["revision"] = 2
+        config["rulebook"][field] = "bad\ud800text"
+        if entry == "configuration":
+            preview = service.preview_configuration(
+                project["id"], config, command_key="preview", principal="owner"
+            )
+        else:
+            preview = service.preview_rulebook(
+                project["id"], config["rulebook"], expected_revision=2,
+                command_key="preview", principal="owner"
+            )
+&gt;       assert preview["can_save_draft"] is False
+E       assert True is False
+
+tests\projects\test_publication_guards.py:309: AssertionError</failure></testcase><testcase classname="tests.projects.test_publication_guards" name="test_configuration_preview_does_not_grant_explicit_publication_authority" time="0.211"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'RULEBOOK_PREVIEW_REQUIRED'&#10;  Actual message: 'RULEBOOK_NOT_PUBLISHABLE'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_configuration_preview_doe0')
+repository = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-497/test_configuration_preview_doe0/repositories/example')
+
+    def test_configuration_preview_does_not_grant_explicit_publication_authority(
+        tmp_path: Path, repository: Path
+    ) -&gt; None:
+        service, project, config = configured(tmp_path, repository)
+        config["rulebook"]["revision"] = 2
+        preview = service.preview_configuration(
+            project["id"], config, command_key="preview", principal="owner"
+        )
+        assert preview["can_publish"] is True
+&gt;       with pytest.raises(ProjectError, match="RULEBOOK_PREVIEW_REQUIRED"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'RULEBOOK_PREVIEW_REQUIRED'
+E         Actual message: 'RULEBOOK_NOT_PUBLISHABLE'
+
+tests\projects\test_publication_guards.py:328: AssertionError</failure></testcase></testsuite></testsuites>

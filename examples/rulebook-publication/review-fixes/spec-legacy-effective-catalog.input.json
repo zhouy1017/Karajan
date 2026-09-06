@@ -1,0 +1,267 @@
+{
+  "case": "latest-invalid-draft-preserves-last-applied-revocation",
+  "project_id": "541f2abf-7e4e-46eb-a4d3-d03f7293dc3b",
+  "expected_effective_catalog": {
+    "approved_profile_refs": [],
+    "digest": "96457ca72eeef2debdfa32438104ac581807bec37571f5088ea570bce679e4a2",
+    "project_id": "541f2abf-7e4e-46eb-a4d3-d03f7293dc3b",
+    "resources": {
+      "accounts": [
+        {
+          "id": "fixture-account",
+          "provider_id": "fixture-provider",
+          "secret_ref": "secret:fixture-reference"
+        }
+      ],
+      "budgets": [
+        {
+          "currency_limits": {
+            "CNY": "0",
+            "USD": "0"
+          },
+          "id": "planning",
+          "max_duration_seconds": 300,
+          "max_total_attempts": 8,
+          "scope": "planning"
+        },
+        {
+          "currency_limits": {
+            "CNY": "0",
+            "USD": "0"
+          },
+          "id": "run",
+          "max_duration_seconds": 300,
+          "max_total_attempts": 8,
+          "scope": "run"
+        }
+      ],
+      "capacity_policies": [
+        {
+          "account_id": "fixture-account",
+          "conservative_mode": {
+            "cooldown_seconds": 10,
+            "enabled": true,
+            "max_attempt_duration_seconds": 30,
+            "max_local_active_attempts": 1,
+            "observation_max_age_seconds": 60
+          }
+        }
+      ],
+      "channels": [
+        {
+          "account_id": "fixture-account",
+          "approved_data_destination": true,
+          "billing_path": "subscription_only",
+          "id": "fixture-channel"
+        }
+      ],
+      "profiles": [
+        {
+          "capability_evidence": [
+            {
+              "capability": "bounded_code_edit",
+              "evidence_ref": "fixture:bounded_code_edit",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "bounded_implementation",
+              "evidence_ref": "fixture:bounded_implementation",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "candidate_capture",
+              "evidence_ref": "fixture:candidate_capture",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "code_review",
+              "evidence_ref": "fixture:code_review",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "controlled_tools",
+              "evidence_ref": "fixture:controlled_tools",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "critical_code_review",
+              "evidence_ref": "fixture:critical_code_review",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "critical_implementation",
+              "evidence_ref": "fixture:critical_implementation",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "design_reasoning",
+              "evidence_ref": "fixture:design_reasoning",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "structured_findings",
+              "evidence_ref": "fixture:structured_findings",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            },
+            {
+              "capability": "structured_plan_output",
+              "evidence_ref": "fixture:structured_plan_output",
+              "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+              "provenance": "fixture",
+              "runtime_version": "1",
+              "status": "passed"
+            }
+          ],
+          "enabled": false,
+          "id": "fixture-profile",
+          "max_class": "T3",
+          "model_family": "fixture-family",
+          "profile": {
+            "admission_granularity": "attempt",
+            "auth_ref": "secret:fixture-reference",
+            "binding": {
+              "account_id": "fixture-account",
+              "auth_mode": "none",
+              "billing_path": "subscription_only",
+              "channel_id": "fixture-channel",
+              "model_id": "fixture-model",
+              "native_settings": {},
+              "runtime_kind": "fixture-runtime",
+              "runtime_version": "1"
+            },
+            "id": "fixture-profile",
+            "required_permissions": [
+              "fixture-tools"
+            ],
+            "revision": 1,
+            "usage_coverage": "unknown"
+          },
+          "quota_pool_refs": [
+            "service-fixture"
+          ],
+          "required_isolation": "tool_sandboxed",
+          "revision": 1
+        }
+      ],
+      "quota_pools": [
+        {
+          "account_id": "fixture-account",
+          "id": "service-fixture",
+          "kind": "service",
+          "limit": "100",
+          "observation_state": "unknown",
+          "unit": "percent"
+        }
+      ]
+    },
+    "revision": 2
+  },
+  "legacy_tables": {
+    "projects": {
+      "ddl": "CREATE TABLE projects (id TEXT PRIMARY KEY, snapshot TEXT NOT NULL)",
+      "rows": [
+        [
+          "541f2abf-7e4e-46eb-a4d3-d03f7293dc3b",
+          "{\"allowed_target_branches\":[\"main\"],\"configuration\":{\"digest\":\"c7ae51b453585752fb26e4c8059be1d0a4d5d87375be4b14cdc024b95ab10458\",\"dispatch_eligible\":false,\"preview_id\":\"bacf0dca-3f4e-47ac-909d-60f2ef2d5b6a\",\"revision\":3,\"status\":\"draft\"},\"id\":\"541f2abf-7e4e-46eb-a4d3-d03f7293dc3b\",\"live_qualified\":false,\"name\":\"Legacy migration fixture\",\"repository\":{\"base_ref\":\"HEAD\",\"base_sha\":\"dde7c9c46de9c336ef85ff8d6d9c21dadf289655\",\"identity_sha256\":\"02662a93571513d1adcfbb83c4f0a8e6205fcfabd4076f771a8dfb2c68b34106\",\"root\":\"C:\\\\Users\\\\Chooo\\\\Playground\\\\Karajan\\\\.cache\\\\publication-spec-review\\\\migration-0q8g1hit\\\\repository\"},\"revision\":4,\"schema_version\":\"karajan.project.v1\",\"target_branch\":\"main\"}"
+        ]
+      ]
+    },
+    "commands": {
+      "ddl": "CREATE TABLE commands (principal TEXT NOT NULL, key TEXT NOT NULL, digest TEXT NOT NULL, result TEXT NOT NULL, PRIMARY KEY(principal, key))",
+      "rows": [
+        [
+          "owner",
+          "create",
+          "d42fdab82a4cde9ce2408291191df28d515b3fb100e653c9789fcc9d9eeb99bb",
+          "{\"allowed_target_branches\":[\"main\"],\"configuration\":{\"digest\":null,\"dispatch_eligible\":false,\"preview_id\":null,\"revision\":0,\"status\":\"unconfigured\"},\"id\":\"541f2abf-7e4e-46eb-a4d3-d03f7293dc3b\",\"live_qualified\":false,\"name\":\"Legacy migration fixture\",\"repository\":{\"base_ref\":\"HEAD\",\"base_sha\":\"dde7c9c46de9c336ef85ff8d6d9c21dadf289655\",\"identity_sha256\":\"02662a93571513d1adcfbb83c4f0a8e6205fcfabd4076f771a8dfb2c68b34106\",\"root\":\"C:\\\\Users\\\\Chooo\\\\Playground\\\\Karajan\\\\.cache\\\\publication-spec-review\\\\migration-0q8g1hit\\\\repository\"},\"revision\":1,\"schema_version\":\"karajan.project.v1\",\"target_branch\":\"main\"}"
+        ],
+        [
+          "owner",
+          "preview-valid",
+          "7c44f808fad1c26f08121bc7eb7abedcceeab13af449bda113da89b191eab1f8",
+          "{\"can_apply\":true,\"can_publish\":true,\"can_save_draft\":true,\"catalog_binding\":{\"digest\":null,\"revision\":0},\"compiler_identity\":\"5f58d55362d4cca87d6eb980416cb4bbd8a217c2706e3d8380d964310b1a516e\",\"configuration_digest\":\"bd53d2bb88b31cd992a48c901fc7b08a46d828c6a583f4fe606c4b7e54182f81\",\"dispatch_eligible\":false,\"expires_at\":1788634598.5050497,\"issues\":[],\"live_qualified\":false,\"preview_id\":\"26d4781a-7929-4986-bd57-78bc7380f86a\",\"principal\":\"owner\",\"project_id\":\"541f2abf-7e4e-46eb-a4d3-d03f7293dc3b\",\"project_revision\":1,\"qualification_scope\":\"offline_configuration\",\"schema_version\":\"karajan.configuration-preview.v1\",\"status\":\"offline_valid\",\"validation\":{\"fixed_rulebook_sha256\":\"55db68648c4f4707b4f77ca7786d521cf5a1df8a90da1f7ce78bd1b1532e092b\",\"rulebook_id\":\"personal-code-delivery\",\"rulebook_revision\":1,\"validator_revision\":\"karajan.m1-fixed.v1\"}}"
+        ],
+        [
+          "owner",
+          "apply-valid",
+          "9e5d074bf34c9257c75f9763164a4e08a0db1f1456009ac07d8a67a5b8051bb4",
+          "{\"allowed_target_branches\":[\"main\"],\"configuration\":{\"digest\":\"bd53d2bb88b31cd992a48c901fc7b08a46d828c6a583f4fe606c4b7e54182f81\",\"dispatch_eligible\":false,\"preview_id\":\"26d4781a-7929-4986-bd57-78bc7380f86a\",\"revision\":1,\"status\":\"offline_valid\"},\"id\":\"541f2abf-7e4e-46eb-a4d3-d03f7293dc3b\",\"live_qualified\":false,\"name\":\"Legacy migration fixture\",\"repository\":{\"base_ref\":\"HEAD\",\"base_sha\":\"dde7c9c46de9c336ef85ff8d6d9c21dadf289655\",\"identity_sha256\":\"02662a93571513d1adcfbb83c4f0a8e6205fcfabd4076f771a8dfb2c68b34106\",\"root\":\"C:\\\\Users\\\\Chooo\\\\Playground\\\\Karajan\\\\.cache\\\\publication-spec-review\\\\migration-0q8g1hit\\\\repository\"},\"revision\":2,\"schema_version\":\"karajan.project.v1\",\"target_branch\":\"main\"}"
+        ],
+        [
+          "owner",
+          "preview-revoked",
+          "cf83c917ebb4046bff250ab0e7cecb7dfe7f5b896382c09188d6cd0fe7e5c1b4",
+          "{\"can_apply\":true,\"can_publish\":true,\"can_save_draft\":true,\"catalog_binding\":{\"digest\":\"429226bea2e790de5f6169ce62ecbc56b37a742555e6f85ec2f36ac8932f3c0a\",\"revision\":1},\"compiler_identity\":\"5f58d55362d4cca87d6eb980416cb4bbd8a217c2706e3d8380d964310b1a516e\",\"configuration_digest\":\"0d8ee336f06cf193ed15182e3281c40db4492fd0202b177fb66478f6b402831d\",\"dispatch_eligible\":false,\"expires_at\":1788634598.516245,\"issues\":[{\"code\":\"PROFILE_NOT_APPROVED\",\"path\":\"rulebook.profile_groups.commander_qualified\"},{\"code\":\"PROFILE_UNAVAILABLE\",\"path\":\"rulebook.profile_groups.commander_qualified\"},{\"code\":\"PROFILE_NOT_APPROVED\",\"path\":\"rulebook.profile_groups.adviser_qualified\"},{\"code\":\"PROFILE_UNAVAILABLE\",\"path\":\"rulebook.profile_groups.adviser_qualified\"},{\"code\":\"PROFILE_NOT_APPROVED\",\"path\":\"rulebook.profile_groups.fast_qualified\"},{\"code\":\"PROFILE_UNAVAILABLE\",\"path\":\"rulebook.profile_groups.fast_qualified\"},{\"code\":\"PROFILE_NOT_APPROVED\",\"path\":\"rulebook.profile_groups.standard_qualified\"},{\"code\":\"PROFILE_UNAVAILABLE\",\"path\":\"rulebook.profile_groups.standard_qualified\"},{\"code\":\"PROFILE_NOT_APPROVED\",\"path\":\"rulebook.profile_groups.standard_qualified\"},{\"code\":\"PROFILE_UNAVAILABLE\",\"path\":\"rulebook.profile_groups.standard_qualified\"},{\"code\":\"PROFILE_NOT_APPROVED\",\"path\":\"rulebook.profile_groups.critical_qualified\"},{\"code\":\"PROFILE_UNAVAILABLE\",\"path\":\"rulebook.profile_groups.critical_qualified\"},{\"code\":\"PROFILE_NOT_APPROVED\",\"path\":\"rulebook.profile_groups.critical_qualified\"},{\"code\":\"PROFILE_UNAVAILABLE\",\"path\":\"rulebook.profile_groups.critical_qualified\"},{\"code\":\"PROFILE_NOT_APPROVED\",\"path\":\"rulebook.profile_groups.review_standard_qualified\"},{\"code\":\"PROFILE_UNAVAILABLE\",\"path\":\"rulebook.profile_groups.review_standard_qualified\"},{\"code\":\"PROFILE_NOT_APPROVED\",\"path\":\"rulebook.profile_groups.review_critical_qualified\"},{\"code\":\"PROFILE_UNAVAILABLE\",\"path\":\"rulebook.profile_groups.review_critical_qualified\"}],\"live_qualified\":false,\"preview_id\":\"08b42461-ea5e-406c-8c68-0bfb324ff126\",\"principal\":\"owner\",\"project_id\":\"541f2abf-7e4e-46eb-a4d3-d03f7293dc3b\",\"project_revision\":2,\"qualification_scope\":\"offline_configuration\",\"schema_version\":\"karajan.configuration-preview.v1\",\"status\":\"draft\",\"validation\":{\"fixed_rulebook_sha256\":\"55db68648c4f4707b4f77ca7786d521cf5a1df8a90da1f7ce78bd1b1532e092b\",\"rulebook_id\":\"personal-code-delivery\",\"rulebook_revision\":1,\"validator_revision\":\"karajan.m1-fixed.v1\"}}"
+        ],
+        [
+          "owner",
+          "apply-revoked",
+          "0853b0f2ce025007c554c78b26f215cf7721fd0016e6784ae0a8249809ac54cc",
+          "{\"allowed_target_branches\":[\"main\"],\"configuration\":{\"digest\":\"0d8ee336f06cf193ed15182e3281c40db4492fd0202b177fb66478f6b402831d\",\"dispatch_eligible\":false,\"preview_id\":\"08b42461-ea5e-406c-8c68-0bfb324ff126\",\"revision\":2,\"status\":\"draft\"},\"id\":\"541f2abf-7e4e-46eb-a4d3-d03f7293dc3b\",\"live_qualified\":false,\"name\":\"Legacy migration fixture\",\"repository\":{\"base_ref\":\"HEAD\",\"base_sha\":\"dde7c9c46de9c336ef85ff8d6d9c21dadf289655\",\"identity_sha256\":\"02662a93571513d1adcfbb83c4f0a8e6205fcfabd4076f771a8dfb2c68b34106\",\"root\":\"C:\\\\Users\\\\Chooo\\\\Playground\\\\Karajan\\\\.cache\\\\publication-spec-review\\\\migration-0q8g1hit\\\\repository\"},\"revision\":3,\"schema_version\":\"karajan.project.v1\",\"target_branch\":\"main\"}"
+        ],
+        [
+          "owner",
+          "preview-broken-draft",
+          "7fd60f57b7b0c037a8d72e2feab1993e2f6ac0d55d0d8d02e9f74cc0bd711850",
+          "{\"can_apply\":true,\"can_publish\":true,\"can_save_draft\":true,\"catalog_binding\":{\"digest\":\"96457ca72eeef2debdfa32438104ac581807bec37571f5088ea570bce679e4a2\",\"revision\":2},\"compiler_identity\":\"5f58d55362d4cca87d6eb980416cb4bbd8a217c2706e3d8380d964310b1a516e\",\"configuration_digest\":\"c7ae51b453585752fb26e4c8059be1d0a4d5d87375be4b14cdc024b95ab10458\",\"dispatch_eligible\":false,\"expires_at\":1788634598.5247605,\"issues\":[{\"code\":\"RESOURCE_REFERENCE_INVALID\",\"path\":\"resources\"}],\"live_qualified\":false,\"preview_id\":\"bacf0dca-3f4e-47ac-909d-60f2ef2d5b6a\",\"principal\":\"owner\",\"project_id\":\"541f2abf-7e4e-46eb-a4d3-d03f7293dc3b\",\"project_revision\":3,\"qualification_scope\":\"offline_configuration\",\"schema_version\":\"karajan.configuration-preview.v1\",\"status\":\"draft\",\"validation\":{\"fixed_rulebook_sha256\":\"55db68648c4f4707b4f77ca7786d521cf5a1df8a90da1f7ce78bd1b1532e092b\",\"rulebook_id\":\"personal-code-delivery\",\"rulebook_revision\":1,\"validator_revision\":\"karajan.m1-fixed.v1\"}}"
+        ],
+        [
+          "owner",
+          "apply-broken-draft",
+          "05be8e47260847c6704edc2acb73b833e5fbb3a3d8463589feb013c366fd0638",
+          "{\"allowed_target_branches\":[\"main\"],\"configuration\":{\"digest\":\"c7ae51b453585752fb26e4c8059be1d0a4d5d87375be4b14cdc024b95ab10458\",\"dispatch_eligible\":false,\"preview_id\":\"bacf0dca-3f4e-47ac-909d-60f2ef2d5b6a\",\"revision\":3,\"status\":\"draft\"},\"id\":\"541f2abf-7e4e-46eb-a4d3-d03f7293dc3b\",\"live_qualified\":false,\"name\":\"Legacy migration fixture\",\"repository\":{\"base_ref\":\"HEAD\",\"base_sha\":\"dde7c9c46de9c336ef85ff8d6d9c21dadf289655\",\"identity_sha256\":\"02662a93571513d1adcfbb83c4f0a8e6205fcfabd4076f771a8dfb2c68b34106\",\"root\":\"C:\\\\Users\\\\Chooo\\\\Playground\\\\Karajan\\\\.cache\\\\publication-spec-review\\\\migration-0q8g1hit\\\\repository\"},\"revision\":4,\"schema_version\":\"karajan.project.v1\",\"target_branch\":\"main\"}"
+        ]
+      ]
+    },
+    "previews": {
+      "ddl": "CREATE TABLE previews (id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id), configuration TEXT, result TEXT NOT NULL)",
+      "rows": [
+        [
+          "26d4781a-7929-4986-bd57-78bc7380f86a",
+          "541f2abf-7e4e-46eb-a4d3-d03f7293dc3b",
+          "{\"approved_profile_refs\":[{\"id\":\"fixture-profile\",\"revision\":1}],\"resources\":{\"accounts\":[{\"id\":\"fixture-account\",\"provider_id\":\"fixture-provider\",\"secret_ref\":\"secret:fixture-reference\"}],\"budgets\":[{\"currency_limits\":{\"CNY\":\"0\",\"USD\":\"0\"},\"id\":\"planning\",\"max_duration_seconds\":300,\"max_total_attempts\":8,\"scope\":\"planning\"},{\"currency_limits\":{\"CNY\":\"0\",\"USD\":\"0\"},\"id\":\"run\",\"max_duration_seconds\":300,\"max_total_attempts\":8,\"scope\":\"run\"}],\"capacity_policies\":[{\"account_id\":\"fixture-account\",\"conservative_mode\":{\"cooldown_seconds\":10,\"enabled\":true,\"max_attempt_duration_seconds\":30,\"max_local_active_attempts\":1,\"observation_max_age_seconds\":60}}],\"channels\":[{\"account_id\":\"fixture-account\",\"approved_data_destination\":true,\"billing_path\":\"subscription_only\",\"id\":\"fixture-channel\"}],\"profiles\":[{\"capability_evidence\":[{\"capability\":\"bounded_code_edit\",\"evidence_ref\":\"fixture:bounded_code_edit\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"bounded_implementation\",\"evidence_ref\":\"fixture:bounded_implementation\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"candidate_capture\",\"evidence_ref\":\"fixture:candidate_capture\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"code_review\",\"evidence_ref\":\"fixture:code_review\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"controlled_tools\",\"evidence_ref\":\"fixture:controlled_tools\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"critical_code_review\",\"evidence_ref\":\"fixture:critical_code_review\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"critical_implementation\",\"evidence_ref\":\"fixture:critical_implementation\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"design_reasoning\",\"evidence_ref\":\"fixture:design_reasoning\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"structured_findings\",\"evidence_ref\":\"fixture:structured_findings\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"structured_plan_output\",\"evidence_ref\":\"fixture:structured_plan_output\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"}],\"enabled\":true,\"id\":\"fixture-profile\",\"max_class\":\"T3\",\"model_family\":\"fixture-family\",\"profile\":{\"admission_granularity\":\"attempt\",\"auth_ref\":\"secret:fixture-reference\",\"binding\":{\"account_id\":\"fixture-account\",\"auth_mode\":\"none\",\"billing_path\":\"subscription_only\",\"channel_id\":\"fixture-channel\",\"model_id\":\"fixture-model\",\"native_settings\":{},\"runtime_kind\":\"fixture-runtime\",\"runtime_version\":\"1\"},\"id\":\"fixture-profile\",\"required_permissions\":[\"fixture-tools\"],\"revision\":1,\"usage_coverage\":\"unknown\"},\"quota_pool_refs\":[\"service-fixture\"],\"required_isolation\":\"tool_sandboxed\",\"revision\":1}],\"quota_pools\":[{\"account_id\":\"fixture-account\",\"id\":\"service-fixture\",\"kind\":\"service\",\"limit\":\"100\",\"observation_state\":\"unknown\",\"unit\":\"percent\"}]},\"rulebook\":{\"collaboration\":{\"command_mode\":\"lead_with_advisers\",\"delivery_target\":\"pull_request\",\"implementation_readiness\":\"ready\",\"internal_delegation\":\"disabled_unless_admitted_and_observable\",\"max_infrastructure_retries_per_root_task\":2,\"max_parallel_writers_per_project\":2,\"max_quality_repair_rounds\":2,\"merge_authority\":\"user\",\"plan_approval\":\"explicit_revision\"},\"description\":\"Design example: bind qualified profile revisions and budgets before activation.\",\"global_constraints\":{\"autonomous_tool_execution_min_isolation\":\"tool_sandboxed\",\"final_review_required\":true,\"no_silent_model_or_billing_fallback\":true,\"profile_fixed_per_attempt\":true,\"require_approved_data_destination\":true,\"require_enabled_profile\":true,\"require_explicit_billing_path\":true,\"require_passed_capabilities\":true,\"review_context\":\"fresh_non_author\"},\"id\":\"personal-code-delivery\",\"profile_groups\":{\"adviser_qualified\":[{\"id\":\"fixture-profile\",\"revision\":1}],\"commander_qualified\":[{\"id\":\"fixture-profile\",\"revision\":1}],\"critical_qualified\":[{\"id\":\"fixture-profile\",\"revision\":1}],\"fast_qualified\":[{\"id\":\"fixture-profile\",\"revision\":1}],\"review_critical_qualified\":[{\"id\":\"fixture-profile\",\"revision\":1}],\"review_standard_qualified\":[{\"id\":\"fixture-profile\",\"revision\":1}],\"standard_qualified\":[{\"id\":\"fixture-profile\",\"revision\":1}]},\"resource_policy\":{\"account_capacity_policy_binding\":\"current_global_revision\",\"call_reservations\":\"slices_of_attempt_reservation\",\"candidate_order\":[\"preference_band\",\"uncertainty_band\",\"bottleneck_quota_pressure\",\"incremental_cash_estimate\",\"completion_time_estimate\",\"profile_id\"],\"cash_budget_enforcement\":\"bounded_calls\",\"fairness\":\"aging_and_run_round_robin\",\"id\":\"protect_lead_then_balance\",\"missing_cash_budget\":\"deny_cash_route\",\"planning_budget_ref\":\"planning\",\"queue_order\":[\"lead_feedback\",\"required_review_repair_and_critical_path\",\"worker\",\"optional_adviser\"],\"reset_preference\":\"only_among_equivalent_candidates_all_windows_checked\",\"run_budget_ref\":\"run\",\"subscription_quota_enforcement\":\"conservative_estimate\",\"unknown_quota\":\"require_explicit_conservative_mode\"},\"revision\":1,\"rules\":[{\"capabilities_all\":[\"design_reasoning\",\"structured_plan_output\"],\"eligible_groups\":[\"commander_qualified\"],\"handoff\":\"explicit_checkpoint_record\",\"id\":\"lead-planning\",\"priority\":100,\"reroute\":\"propose_checkpoint_handoff_require_user_decision\",\"when\":{\"purpose\":\"lead\",\"role\":\"commander\"}},{\"capabilities_all\":[\"design_reasoning\"],\"eligible_groups\":[\"adviser_qualified\"],\"id\":\"adviser-planning\",\"lead_reserve_access\":false,\"priority\":100,\"reroute\":\"within_approved_set\",\"when\":{\"purpose\":\"advice\",\"role\":\"commander\"}},{\"capabilities_all\":[\"bounded_code_edit\",\"controlled_tools\",\"candidate_capture\"],\"eligible_groups\":[\"fast_qualified\"],\"id\":\"mechanical-worker\",\"priority\":100,\"quality_escalation_groups\":[\"standard_qualified\"],\"reroute\":\"within_approved_set_preserve_requirements\",\"when\":{\"effective_class\":\"T1\",\"readiness\":\"ready\",\"role\":\"worker\"}},{\"capabilities_all\":[\"bounded_implementation\",\"controlled_tools\",\"candidate_capture\"],\"eligible_groups\":[\"standard_qualified\"],\"id\":\"bounded-worker\",\"priority\":100,\"quality_escalation_groups\":[\"critical_qualified\"],\"reroute\":\"within_approved_set_preserve_requirements\",\"when\":{\"effective_class\":\"T2\",\"readiness\":\"ready\",\"role\":\"worker\"}},{\"capabilities_all\":[\"critical_implementation\",\"controlled_tools\",\"candidate_capture\"],\"eligible_groups\":[\"critical_qualified\"],\"id\":\"critical-worker\",\"priority\":100,\"quality_escalation_groups\":[],\"reroute\":\"within_approved_set_preserve_requirements\",\"when\":{\"effective_class\":\"T3\",\"readiness\":\"ready\",\"role\":\"worker\"}},{\"capabilities_all\":[\"code_review\",\"structured_findings\"],\"eligible_groups\":[\"review_standard_qualified\"],\"id\":\"standard-review\",\"independence\":[\"fresh_context\",\"non_author_attempt\"],\"priority\":100,\"reroute\":\"within_approved_set_preserve_requirements\",\"when\":{\"effective_class_in\":[\"T1\",\"T2\"],\"role\":\"reviewer\"}},{\"capabilities_all\":[\"critical_code_review\",\"structured_findings\"],\"eligible_groups\":[\"review_critical_qualified\"],\"id\":\"critical-review\",\"independence\":[\"fresh_context\",\"non_author_attempt\",\"different_model_family_from_authors\"],\"priority\":100,\"reroute\":\"within_approved_set_preserve_requirements\",\"when\":{\"effective_class\":\"T3\",\"role\":\"reviewer\"}}],\"schema_version\":\"karajan.rulebook.v1\",\"status\":\"configured\"},\"schema_version\":\"karajan.project-config.v1\"}",
+          "{\"can_apply\": true, \"configuration_digest\": \"bd53d2bb88b31cd992a48c901fc7b08a46d828c6a583f4fe606c4b7e54182f81\", \"dispatch_eligible\": false, \"issues\": [], \"live_qualified\": false, \"preview_id\": \"26d4781a-7929-4986-bd57-78bc7380f86a\", \"project_id\": \"541f2abf-7e4e-46eb-a4d3-d03f7293dc3b\", \"project_revision\": 1, \"qualification_scope\": \"offline_configuration\", \"schema_version\": \"karajan.configuration-preview.v1\", \"status\": \"offline_valid\", \"validation\": {\"fixed_rulebook_sha256\": \"55db68648c4f4707b4f77ca7786d521cf5a1df8a90da1f7ce78bd1b1532e092b\", \"rulebook_id\": \"personal-code-delivery\", \"rulebook_revision\": 1, \"validator_revision\": \"karajan.m1-fixed.v1\"}}"
+        ],
+        [
+          "08b42461-ea5e-406c-8c68-0bfb324ff126",
+          "541f2abf-7e4e-46eb-a4d3-d03f7293dc3b",
+          "{\"approved_profile_refs\":[],\"resources\":{\"accounts\":[{\"id\":\"fixture-account\",\"provider_id\":\"fixture-provider\",\"secret_ref\":\"secret:fixture-reference\"}],\"budgets\":[{\"currency_limits\":{\"CNY\":\"0\",\"USD\":\"0\"},\"id\":\"planning\",\"max_duration_seconds\":300,\"max_total_attempts\":8,\"scope\":\"planning\"},{\"currency_limits\":{\"CNY\":\"0\",\"USD\":\"0\"},\"id\":\"run\",\"max_duration_seconds\":300,\"max_total_attempts\":8,\"scope\":\"run\"}],\"capacity_policies\":[{\"account_id\":\"fixture-account\",\"conservative_mode\":{\"cooldown_seconds\":10,\"enabled\":true,\"max_attempt_duration_seconds\":30,\"max_local_active_attempts\":1,\"observation_max_age_seconds\":60}}],\"channels\":[{\"account_id\":\"fixture-account\",\"approved_data_destination\":true,\"billing_path\":\"subscription_only\",\"id\":\"fixture-channel\"}],\"profiles\":[{\"capability_evidence\":[{\"capability\":\"bounded_code_edit\",\"evidence_ref\":\"fixture:bounded_code_edit\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"bounded_implementation\",\"evidence_ref\":\"fixture:bounded_implementation\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"candidate_capture\",\"evidence_ref\":\"fixture:candidate_capture\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"code_review\",\"evidence_ref\":\"fixture:code_review\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"controlled_tools\",\"evidence_ref\":\"fixture:controlled_tools\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"critical_code_review\",\"evidence_ref\":\"fixture:critical_code_review\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"critical_implementation\",\"evidence_ref\":\"fixture:critical_implementation\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"design_reasoning\",\"evidence_ref\":\"fixture:design_reasoning\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"structured_findings\",\"evidence_ref\":\"fixture:structured_findings\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"structured_plan_output\",\"evidence_ref\":\"fixture:structured_plan_output\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"}],\"enabled\":false,\"id\":\"fixture-profile\",\"max_class\":\"T3\",\"model_family\":\"fixture-family\",\"profile\":{\"admission_granularity\":\"attempt\",\"auth_ref\":\"secret:fixture-reference\",\"binding\":{\"account_id\":\"fixture-account\",\"auth_mode\":\"none\",\"billing_path\":\"subscription_only\",\"channel_id\":\"fixture-channel\",\"model_id\":\"fixture-model\",\"native_settings\":{},\"runtime_kind\":\"fixture-runtime\",\"runtime_version\":\"1\"},\"id\":\"fixture-profile\",\"required_permissions\":[\"fixture-tools\"],\"revision\":1,\"usage_coverage\":\"unknown\"},\"quota_pool_refs\":[\"service-fixture\"],\"required_isolation\":\"tool_sandboxed\",\"revision\":1}],\"quota_pools\":[{\"account_id\":\"fixture-account\",\"id\":\"service-fixture\",\"kind\":\"service\",\"limit\":\"100\",\"observation_state\":\"unknown\",\"unit\":\"percent\"}]},\"rulebook\":{\"collaboration\":{\"command_mode\":\"lead_with_advisers\",\"delivery_target\":\"pull_request\",\"implementation_readiness\":\"ready\",\"internal_delegation\":\"disabled_unless_admitted_and_observable\",\"max_infrastructure_retries_per_root_task\":2,\"max_parallel_writers_per_project\":2,\"max_quality_repair_rounds\":2,\"merge_authority\":\"user\",\"plan_approval\":\"explicit_revision\"},\"description\":\"Design example: bind qualified profile revisions and budgets before activation.\",\"global_constraints\":{\"autonomous_tool_execution_min_isolation\":\"tool_sandboxed\",\"final_review_required\":true,\"no_silent_model_or_billing_fallback\":true,\"profile_fixed_per_attempt\":true,\"require_approved_data_destination\":true,\"require_enabled_profile\":true,\"require_explicit_billing_path\":true,\"require_passed_capabilities\":true,\"review_context\":\"fresh_non_author\"},\"id\":\"personal-code-delivery\",\"profile_groups\":{\"adviser_qualified\":[{\"id\":\"fixture-profile\",\"revision\":1}],\"commander_qualified\":[{\"id\":\"fixture-profile\",\"revision\":1}],\"critical_qualified\":[{\"id\":\"fixture-profile\",\"revision\":1}],\"fast_qualified\":[{\"id\":\"fixture-profile\",\"revision\":1}],\"review_critical_qualified\":[{\"id\":\"fixture-profile\",\"revision\":1}],\"review_standard_qualified\":[{\"id\":\"fixture-profile\",\"revision\":1}],\"standard_qualified\":[{\"id\":\"fixture-profile\",\"revision\":1}]},\"resource_policy\":{\"account_capacity_policy_binding\":\"current_global_revision\",\"call_reservations\":\"slices_of_attempt_reservation\",\"candidate_order\":[\"preference_band\",\"uncertainty_band\",\"bottleneck_quota_pressure\",\"incremental_cash_estimate\",\"completion_time_estimate\",\"profile_id\"],\"cash_budget_enforcement\":\"bounded_calls\",\"fairness\":\"aging_and_run_round_robin\",\"id\":\"protect_lead_then_balance\",\"missing_cash_budget\":\"deny_cash_route\",\"planning_budget_ref\":\"planning\",\"queue_order\":[\"lead_feedback\",\"required_review_repair_and_critical_path\",\"worker\",\"optional_adviser\"],\"reset_preference\":\"only_among_equivalent_candidates_all_windows_checked\",\"run_budget_ref\":\"run\",\"subscription_quota_enforcement\":\"conservative_estimate\",\"unknown_quota\":\"require_explicit_conservative_mode\"},\"revision\":1,\"rules\":[{\"capabilities_all\":[\"design_reasoning\",\"structured_plan_output\"],\"eligible_groups\":[\"commander_qualified\"],\"handoff\":\"explicit_checkpoint_record\",\"id\":\"lead-planning\",\"priority\":100,\"reroute\":\"propose_checkpoint_handoff_require_user_decision\",\"when\":{\"purpose\":\"lead\",\"role\":\"commander\"}},{\"capabilities_all\":[\"design_reasoning\"],\"eligible_groups\":[\"adviser_qualified\"],\"id\":\"adviser-planning\",\"lead_reserve_access\":false,\"priority\":100,\"reroute\":\"within_approved_set\",\"when\":{\"purpose\":\"advice\",\"role\":\"commander\"}},{\"capabilities_all\":[\"bounded_code_edit\",\"controlled_tools\",\"candidate_capture\"],\"eligible_groups\":[\"fast_qualified\"],\"id\":\"mechanical-worker\",\"priority\":100,\"quality_escalation_groups\":[\"standard_qualified\"],\"reroute\":\"within_approved_set_preserve_requirements\",\"when\":{\"effective_class\":\"T1\",\"readiness\":\"ready\",\"role\":\"worker\"}},{\"capabilities_all\":[\"bounded_implementation\",\"controlled_tools\",\"candidate_capture\"],\"eligible_groups\":[\"standard_qualified\"],\"id\":\"bounded-worker\",\"priority\":100,\"quality_escalation_groups\":[\"critical_qualified\"],\"reroute\":\"within_approved_set_preserve_requirements\",\"when\":{\"effective_class\":\"T2\",\"readiness\":\"ready\",\"role\":\"worker\"}},{\"capabilities_all\":[\"critical_implementation\",\"controlled_tools\",\"candidate_capture\"],\"eligible_groups\":[\"critical_qualified\"],\"id\":\"critical-worker\",\"priority\":100,\"quality_escalation_groups\":[],\"reroute\":\"within_approved_set_preserve_requirements\",\"when\":{\"effective_class\":\"T3\",\"readiness\":\"ready\",\"role\":\"worker\"}},{\"capabilities_all\":[\"code_review\",\"structured_findings\"],\"eligible_groups\":[\"review_standard_qualified\"],\"id\":\"standard-review\",\"independence\":[\"fresh_context\",\"non_author_attempt\"],\"priority\":100,\"reroute\":\"within_approved_set_preserve_requirements\",\"when\":{\"effective_class_in\":[\"T1\",\"T2\"],\"role\":\"reviewer\"}},{\"capabilities_all\":[\"critical_code_review\",\"structured_findings\"],\"eligible_groups\":[\"review_critical_qualified\"],\"id\":\"critical-review\",\"independence\":[\"fresh_context\",\"non_author_attempt\",\"different_model_family_from_authors\"],\"priority\":100,\"reroute\":\"within_approved_set_preserve_requirements\",\"when\":{\"effective_class\":\"T3\",\"role\":\"reviewer\"}}],\"schema_version\":\"karajan.rulebook.v1\",\"status\":\"configured\"},\"schema_version\":\"karajan.project-config.v1\"}",
+          "{\"can_apply\": true, \"configuration_digest\": \"0d8ee336f06cf193ed15182e3281c40db4492fd0202b177fb66478f6b402831d\", \"dispatch_eligible\": false, \"issues\": [{\"code\": \"PROFILE_NOT_APPROVED\", \"path\": \"rulebook.profile_groups.commander_qualified\"}, {\"code\": \"PROFILE_UNAVAILABLE\", \"path\": \"rulebook.profile_groups.commander_qualified\"}, {\"code\": \"PROFILE_NOT_APPROVED\", \"path\": \"rulebook.profile_groups.adviser_qualified\"}, {\"code\": \"PROFILE_UNAVAILABLE\", \"path\": \"rulebook.profile_groups.adviser_qualified\"}, {\"code\": \"PROFILE_NOT_APPROVED\", \"path\": \"rulebook.profile_groups.fast_qualified\"}, {\"code\": \"PROFILE_UNAVAILABLE\", \"path\": \"rulebook.profile_groups.fast_qualified\"}, {\"code\": \"PROFILE_NOT_APPROVED\", \"path\": \"rulebook.profile_groups.standard_qualified\"}, {\"code\": \"PROFILE_UNAVAILABLE\", \"path\": \"rulebook.profile_groups.standard_qualified\"}, {\"code\": \"PROFILE_NOT_APPROVED\", \"path\": \"rulebook.profile_groups.standard_qualified\"}, {\"code\": \"PROFILE_UNAVAILABLE\", \"path\": \"rulebook.profile_groups.standard_qualified\"}, {\"code\": \"PROFILE_NOT_APPROVED\", \"path\": \"rulebook.profile_groups.critical_qualified\"}, {\"code\": \"PROFILE_UNAVAILABLE\", \"path\": \"rulebook.profile_groups.critical_qualified\"}, {\"code\": \"PROFILE_NOT_APPROVED\", \"path\": \"rulebook.profile_groups.critical_qualified\"}, {\"code\": \"PROFILE_UNAVAILABLE\", \"path\": \"rulebook.profile_groups.critical_qualified\"}, {\"code\": \"PROFILE_NOT_APPROVED\", \"path\": \"rulebook.profile_groups.review_standard_qualified\"}, {\"code\": \"PROFILE_UNAVAILABLE\", \"path\": \"rulebook.profile_groups.review_standard_qualified\"}, {\"code\": \"PROFILE_NOT_APPROVED\", \"path\": \"rulebook.profile_groups.review_critical_qualified\"}, {\"code\": \"PROFILE_UNAVAILABLE\", \"path\": \"rulebook.profile_groups.review_critical_qualified\"}], \"live_qualified\": false, \"preview_id\": \"08b42461-ea5e-406c-8c68-0bfb324ff126\", \"project_id\": \"541f2abf-7e4e-46eb-a4d3-d03f7293dc3b\", \"project_revision\": 2, \"qualification_scope\": \"offline_configuration\", \"schema_version\": \"karajan.configuration-preview.v1\", \"status\": \"draft\", \"validation\": {\"fixed_rulebook_sha256\": \"55db68648c4f4707b4f77ca7786d521cf5a1df8a90da1f7ce78bd1b1532e092b\", \"rulebook_id\": \"personal-code-delivery\", \"rulebook_revision\": 1, \"validator_revision\": \"karajan.m1-fixed.v1\"}}"
+        ],
+        [
+          "bacf0dca-3f4e-47ac-909d-60f2ef2d5b6a",
+          "541f2abf-7e4e-46eb-a4d3-d03f7293dc3b",
+          "{\"approved_profile_refs\":[{\"id\":\"fixture-profile\",\"revision\":1}],\"resources\":{\"accounts\":[{\"id\":\"fixture-account\",\"provider_id\":\"fixture-provider\",\"secret_ref\":\"secret:fixture-reference\"}],\"budgets\":[{\"currency_limits\":{\"CNY\":\"0\",\"USD\":\"0\"},\"id\":\"planning\",\"max_duration_seconds\":300,\"max_total_attempts\":8,\"scope\":\"planning\"},{\"currency_limits\":{\"CNY\":\"0\",\"USD\":\"0\"},\"id\":\"run\",\"max_duration_seconds\":300,\"max_total_attempts\":8,\"scope\":\"run\"}],\"capacity_policies\":[{\"account_id\":\"fixture-account\",\"conservative_mode\":{\"cooldown_seconds\":10,\"enabled\":true,\"max_attempt_duration_seconds\":30,\"max_local_active_attempts\":1,\"observation_max_age_seconds\":60}}],\"channels\":[{\"account_id\":\"unregistered\",\"approved_data_destination\":true,\"billing_path\":\"subscription_only\",\"id\":\"fixture-channel\"}],\"profiles\":[{\"capability_evidence\":[{\"capability\":\"bounded_code_edit\",\"evidence_ref\":\"fixture:bounded_code_edit\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"bounded_implementation\",\"evidence_ref\":\"fixture:bounded_implementation\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"candidate_capture\",\"evidence_ref\":\"fixture:candidate_capture\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"code_review\",\"evidence_ref\":\"fixture:code_review\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"controlled_tools\",\"evidence_ref\":\"fixture:controlled_tools\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"critical_code_review\",\"evidence_ref\":\"fixture:critical_code_review\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"critical_implementation\",\"evidence_ref\":\"fixture:critical_implementation\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"design_reasoning\",\"evidence_ref\":\"fixture:design_reasoning\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"structured_findings\",\"evidence_ref\":\"fixture:structured_findings\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"},{\"capability\":\"structured_plan_output\",\"evidence_ref\":\"fixture:structured_plan_output\",\"profile_digest\":\"3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98\",\"provenance\":\"fixture\",\"runtime_version\":\"1\",\"status\":\"passed\"}],\"enabled\":true,\"id\":\"fixture-profile\",\"max_class\":\"T3\",\"model_family\":\"fixture-family\",\"profile\":{\"admission_granularity\":\"attempt\",\"auth_ref\":\"secret:fixture-reference\",\"binding\":{\"account_id\":\"fixture-account\",\"auth_mode\":\"none\",\"billing_path\":\"subscription_only\",\"channel_id\":\"fixture-channel\",\"model_id\":\"fixture-model\",\"native_settings\":{},\"runtime_kind\":\"fixture-runtime\",\"runtime_version\":\"1\"},\"id\":\"fixture-profile\",\"required_permissions\":[\"fixture-tools\"],\"revision\":1,\"usage_coverage\":\"unknown\"},\"quota_pool_refs\":[\"service-fixture\"],\"required_isolation\":\"tool_sandboxed\",\"revision\":1}],\"quota_pools\":[{\"account_id\":\"fixture-account\",\"id\":\"service-fixture\",\"kind\":\"service\",\"limit\":\"100\",\"observation_state\":\"unknown\",\"unit\":\"percent\"}]},\"rulebook\":{\"collaboration\":{\"command_mode\":\"lead_with_advisers\",\"delivery_target\":\"pull_request\",\"implementation_readiness\":\"ready\",\"internal_delegation\":\"disabled_unless_admitted_and_observable\",\"max_infrastructure_retries_per_root_task\":2,\"max_parallel_writers_per_project\":2,\"max_quality_repair_rounds\":2,\"merge_authority\":\"user\",\"plan_approval\":\"explicit_revision\"},\"description\":\"Design example: bind qualified profile revisions and budgets before activation.\",\"global_constraints\":{\"autonomous_tool_execution_min_isolation\":\"tool_sandboxed\",\"final_review_required\":true,\"no_silent_model_or_billing_fallback\":true,\"profile_fixed_per_attempt\":true,\"require_approved_data_destination\":true,\"require_enabled_profile\":true,\"require_explicit_billing_path\":true,\"require_passed_capabilities\":true,\"review_context\":\"fresh_non_author\"},\"id\":\"personal-code-delivery\",\"profile_groups\":{\"adviser_qualified\":[{\"id\":\"fixture-profile\",\"revision\":1}],\"commander_qualified\":[{\"id\":\"fixture-profile\",\"revision\":1}],\"critical_qualified\":[{\"id\":\"fixture-profile\",\"revision\":1}],\"fast_qualified\":[{\"id\":\"fixture-profile\",\"revision\":1}],\"review_critical_qualified\":[{\"id\":\"fixture-profile\",\"revision\":1}],\"review_standard_qualified\":[{\"id\":\"fixture-profile\",\"revision\":1}],\"standard_qualified\":[{\"id\":\"fixture-profile\",\"revision\":1}]},\"resource_policy\":{\"account_capacity_policy_binding\":\"current_global_revision\",\"call_reservations\":\"slices_of_attempt_reservation\",\"candidate_order\":[\"preference_band\",\"uncertainty_band\",\"bottleneck_quota_pressure\",\"incremental_cash_estimate\",\"completion_time_estimate\",\"profile_id\"],\"cash_budget_enforcement\":\"bounded_calls\",\"fairness\":\"aging_and_run_round_robin\",\"id\":\"protect_lead_then_balance\",\"missing_cash_budget\":\"deny_cash_route\",\"planning_budget_ref\":\"planning\",\"queue_order\":[\"lead_feedback\",\"required_review_repair_and_critical_path\",\"worker\",\"optional_adviser\"],\"reset_preference\":\"only_among_equivalent_candidates_all_windows_checked\",\"run_budget_ref\":\"run\",\"subscription_quota_enforcement\":\"conservative_estimate\",\"unknown_quota\":\"require_explicit_conservative_mode\"},\"revision\":1,\"rules\":[{\"capabilities_all\":[\"design_reasoning\",\"structured_plan_output\"],\"eligible_groups\":[\"commander_qualified\"],\"handoff\":\"explicit_checkpoint_record\",\"id\":\"lead-planning\",\"priority\":100,\"reroute\":\"propose_checkpoint_handoff_require_user_decision\",\"when\":{\"purpose\":\"lead\",\"role\":\"commander\"}},{\"capabilities_all\":[\"design_reasoning\"],\"eligible_groups\":[\"adviser_qualified\"],\"id\":\"adviser-planning\",\"lead_reserve_access\":false,\"priority\":100,\"reroute\":\"within_approved_set\",\"when\":{\"purpose\":\"advice\",\"role\":\"commander\"}},{\"capabilities_all\":[\"bounded_code_edit\",\"controlled_tools\",\"candidate_capture\"],\"eligible_groups\":[\"fast_qualified\"],\"id\":\"mechanical-worker\",\"priority\":100,\"quality_escalation_groups\":[\"standard_qualified\"],\"reroute\":\"within_approved_set_preserve_requirements\",\"when\":{\"effective_class\":\"T1\",\"readiness\":\"ready\",\"role\":\"worker\"}},{\"capabilities_all\":[\"bounded_implementation\",\"controlled_tools\",\"candidate_capture\"],\"eligible_groups\":[\"standard_qualified\"],\"id\":\"bounded-worker\",\"priority\":100,\"quality_escalation_groups\":[\"critical_qualified\"],\"reroute\":\"within_approved_set_preserve_requirements\",\"when\":{\"effective_class\":\"T2\",\"readiness\":\"ready\",\"role\":\"worker\"}},{\"capabilities_all\":[\"critical_implementation\",\"controlled_tools\",\"candidate_capture\"],\"eligible_groups\":[\"critical_qualified\"],\"id\":\"critical-worker\",\"priority\":100,\"quality_escalation_groups\":[],\"reroute\":\"within_approved_set_preserve_requirements\",\"when\":{\"effective_class\":\"T3\",\"readiness\":\"ready\",\"role\":\"worker\"}},{\"capabilities_all\":[\"code_review\",\"structured_findings\"],\"eligible_groups\":[\"review_standard_qualified\"],\"id\":\"standard-review\",\"independence\":[\"fresh_context\",\"non_author_attempt\"],\"priority\":100,\"reroute\":\"within_approved_set_preserve_requirements\",\"when\":{\"effective_class_in\":[\"T1\",\"T2\"],\"role\":\"reviewer\"}},{\"capabilities_all\":[\"critical_code_review\",\"structured_findings\"],\"eligible_groups\":[\"review_critical_qualified\"],\"id\":\"critical-review\",\"independence\":[\"fresh_context\",\"non_author_attempt\",\"different_model_family_from_authors\"],\"priority\":100,\"reroute\":\"within_approved_set_preserve_requirements\",\"when\":{\"effective_class\":\"T3\",\"role\":\"reviewer\"}}],\"schema_version\":\"karajan.rulebook.v1\",\"status\":\"configured\"},\"schema_version\":\"karajan.project-config.v1\"}",
+          "{\"can_apply\": true, \"configuration_digest\": \"c7ae51b453585752fb26e4c8059be1d0a4d5d87375be4b14cdc024b95ab10458\", \"dispatch_eligible\": false, \"issues\": [{\"code\": \"RESOURCE_REFERENCE_INVALID\", \"path\": \"resources\"}], \"live_qualified\": false, \"preview_id\": \"bacf0dca-3f4e-47ac-909d-60f2ef2d5b6a\", \"project_id\": \"541f2abf-7e4e-46eb-a4d3-d03f7293dc3b\", \"project_revision\": 3, \"qualification_scope\": \"offline_configuration\", \"schema_version\": \"karajan.configuration-preview.v1\", \"status\": \"draft\", \"validation\": {\"fixed_rulebook_sha256\": \"55db68648c4f4707b4f77ca7786d521cf5a1df8a90da1f7ce78bd1b1532e092b\", \"rulebook_id\": \"personal-code-delivery\", \"rulebook_revision\": 1, \"validator_revision\": \"karajan.m1-fixed.v1\"}}"
+        ]
+      ]
+    }
+  }
+}

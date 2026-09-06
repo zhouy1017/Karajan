@@ -120,6 +120,59 @@ def resource_references(resources: dict[str, Any]) -> bool:
     return True
 
 
+def resource_catalog_issues(document: dict[str, Any]) -> list[dict[str, str]]:
+    """Check catalog integrity independently of model readiness and Rulebook validity."""
+    resources = document["resources"]
+    if resources is None:
+        return [{"code": "RESOURCES_REQUIRED", "path": "resources"}]
+    issues = []
+    registered = {(item["id"], item["revision"]) for item in resources["profiles"]}
+    approved = [(item["id"], item["revision"]) for item in document["approved_profile_refs"]]
+    if (
+        not resource_references(resources)
+        or len(set(approved)) != len(approved)
+        or not set(approved) <= registered
+    ):
+        issues.append({"code": "RESOURCE_REFERENCE_INVALID", "path": "resources"})
+    for index, budget in enumerate(resources["budgets"]):
+        try:
+            limits = budget["currency_limits"]
+            if not limits:
+                raise ValueError("limits")
+            for currency, amount in limits.items():
+                if (
+                    len(currency) != 3
+                    or not currency.isascii()
+                    or not currency.isalpha()
+                    or not currency.isupper()
+                ):
+                    raise ValueError("currency")
+                units(amount)
+            if not positive(budget["max_total_attempts"]) or not positive(
+                budget["max_duration_seconds"]
+            ):
+                raise ValueError("bounds")
+        except ValueError:
+            issues.append({"code": "BUDGET_INVALID", "path": f"resources.budgets.{index}"})
+    for index, pool in enumerate(resources["quota_pools"]):
+        try:
+            if pool["limit"] is not None:
+                units(pool["limit"])
+        except ValueError:
+            issues.append({"code": "QUOTA_LIMIT_INVALID", "path": f"resources.quota_pools.{index}"})
+    for index, policy in enumerate(resources["capacity_policies"]):
+        mode = policy["conservative_mode"] or {}
+        if any(
+            value is not None and not positive(value)
+            for key, value in mode.items()
+            if key != "enabled"
+        ):
+            issues.append(
+                {"code": "CAPACITY_POLICY_INVALID", "path": f"resources.capacity_policies.{index}"}
+            )
+    return issues
+
+
 def profile_requirements(document: dict[str, Any]) -> list[dict[str, str]]:
     resources, rulebook = document["resources"], document["rulebook"]
     registered = {(item["id"], item["revision"]): item for item in resources["profiles"]}
@@ -129,7 +182,7 @@ def profile_requirements(document: dict[str, Any]) -> list[dict[str, str]]:
     issues = []
     for rule in rulebook["rules"]:
         required_class = max(
-            rule["when"].get("effective_class_in", [rule["when"].get("effective_class", "T1")])
+            rule["when"].get("effective_class_in") or [rule["when"].get("effective_class") or "T1"]
         )
         for group in rule["eligible_groups"] + rule.get("quality_escalation_groups", []):
             refs = rulebook["profile_groups"][group]
@@ -189,8 +242,9 @@ def validate_configuration(document: dict[str, Any]) -> list[dict[str, str]]:
     if contains_credential(document):
         return [{"code": "CREDENTIAL_VALUE_FORBIDDEN", "path": "configuration"}]
     try:
+        json.dumps(document, ensure_ascii=False, allow_nan=False).encode("utf-8")
         document = ConfigurationDraft.model_validate(document).model_dump()
-    except ValidationError:
+    except (ValueError, TypeError):
         return [{"code": "CONFIGURATION_SCHEMA_INVALID", "path": "configuration"}]
     issues = []
     rulebook = document.get("rulebook")
@@ -199,34 +253,20 @@ def validate_configuration(document: dict[str, Any]) -> list[dict[str, str]]:
         issues.append({"code": "RULEBOOK_REQUIRED", "path": "rulebook"})
     if not resources:
         issues.append({"code": "RESOURCES_REQUIRED", "path": "resources"})
-    if rulebook and not fixed_rulebook(rulebook):
-        issues.append({"code": "RULEBOOK_HARD_CONSTRAINT_INVALID", "path": "rulebook"})
-        return issues
+    else:
+        issues.extend(resource_catalog_issues(document))
+    if rulebook:
+        from .publication import compile_document
+
+        compiled, compile_issues = compile_document(rulebook)
+        if compiled is None or compile_issues:
+            issues.append({"code": "RULEBOOK_HARD_CONSTRAINT_INVALID", "path": "rulebook"})
+            return issues
+        rulebook = compiled["document"]
+        document["rulebook"] = rulebook
     if rulebook and resources:
-        if not resource_references(resources):
-            issues.append({"code": "RESOURCE_REFERENCE_INVALID", "path": "resources"})
         issues.extend(profile_requirements(document))
         budgets = {item["id"]: item for item in resources.get("budgets", [])}
-        for index, budget in enumerate(resources.get("budgets", [])):
-            try:
-                limits = budget.get("currency_limits")
-                if not isinstance(limits, dict) or not limits:
-                    raise ValueError("limits")
-                for currency, amount in limits.items():
-                    if (
-                        len(currency) != 3
-                        or not currency.isascii()
-                        or not currency.isalpha()
-                        or not currency.isupper()
-                    ):
-                        raise ValueError("currency")
-                    units(amount)
-                if not positive(budget.get("max_total_attempts")) or not positive(
-                    budget.get("max_duration_seconds")
-                ):
-                    raise ValueError("bounds")
-            except ValueError:
-                issues.append({"code": "BUDGET_INVALID", "path": f"resources.budgets.{index}"})
         for field, scope in (("planning_budget_ref", "planning"), ("run_budget_ref", "run")):
             reference = rulebook.get("resource_policy", {}).get(field)
             if reference not in budgets or budgets[reference].get("scope") != scope:

@@ -1,0 +1,40 @@
+{
+  "observed_at": "2026-09-05T19:19:58.635947+00:00",
+  "surface": "Real Codex in-app browser tab 5 at http://127.0.0.1:8765/; actual built React, FastAPI and local SQLite",
+  "fixture": "Existing locally seeded offline project, no models or cash APIs",
+  "actions": [
+    "Opened project dispatch rules",
+    "Changed revision 1 to 2, description, mechanical-worker priority 100 to 101, fast_qualified members to empty and writer cap 2 to 1",
+    "Generated server preview; saw per-field priority difference, empty-group explanation and real qualification not run",
+    "Clicked confirm publication",
+    "Clicked refresh current version and opened version/publication history"
+  ],
+  "observed": {
+    "project_revision_before": 2,
+    "project_revision_after": 3,
+    "rulebook_revision_before": 1,
+    "rulebook_revision_after": 2,
+    "immutable_versions_seen": 2,
+    "publication_records_seen": 1,
+    "rulebook_sha256": "cbb2c7f623f208c93944e41fd36c6eb5b875fec5c1d6bad9e4382a91accbb9cc",
+    "state": "waiting_qualification",
+    "preview_left_project_and_ledgers_unchanged": true,
+    "publication_left_runs_capacity_and_profile_enabled_unchanged": true
+  },
+  "source_and_build_sha256": {
+    "frontend/src/RulebookPanel.tsx": "ca448d4c9f6d2cfa985a173fea4a6cabf0ca6b36d57dc1497acdf26ff108725d",
+    "frontend/src/RulebookPanel.css": "82066fbcf078d9c3ac4a69cf568b078cecabf2eea2fd5b06e9a5a1fbeb47f247",
+    "frontend/src/App.tsx": "ad6719c1e00b5186816081fcf42312c194f2504a44722a1510ccf74a9947e121",
+    "backend/karajan/web/projects.py": "0699265da33d7b548d04248549e9b3a443d9071d94adb5172e6ea6ce8b9edf67",
+    "backend/karajan/projects/registry.py": "aca0573465ce00350547790b3336ea18be64d7b947128d87aff7308d94827458",
+    "backend/karajan/projects/configuration.py": "3dd388edeea88bd74292725b0680e8f47c46e9a07023215dd8c67273df489b03",
+    "backend/karajan/projects/publication.py": "b57cd2ef51738b1f9871b55670a0c7b3e434bc6b25ee2c5b3eebc34b0516124a",
+    "frontend/dist/assets/index-BFtgx-z6.css": "828d034e51773eaf7c01ad02b61b5ac24b376a8cd27294a2bffb06731e222ebf",
+    "frontend/dist/assets/index-CyRO81fd.js": "9a521c50dfc677d791f365f29da9e1da7a935318809d6a66b055485247b3ff09"
+  },
+  "limits": [
+    "Browser verification covers successful real editing/preview/publication/current-version refresh and history",
+    "Unknown-response navigation recovery tested independently with public App inputs; not injected into real browser",
+    "No full simulation page, Run adoption or live Profile qualification claimed"
+  ]
+}

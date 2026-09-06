@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="1.424" timestamp="2026-09-06T02:45:37.598525+08:00" hostname="ProArt-Zhou"><testcase classname="tests.orchestration.test_pinned_rules" name="test_policy_or_plan_change_cannot_commit_inside_activation_acceptance[revoke]" time="0.665"><failure message="Failed: DID NOT RAISE TimeoutError">case = {'root': WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-484/test_policy_or_plan_change_can0'), ...e_can0/fixture/repository'), 'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x000002A88F4E06B0&gt;, ...}
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002A88F563110&gt;
+change = 'revoke'
+
+    @pytest.mark.parametrize("change", ["revoke", "revise-plan"])
+    def test_policy_or_plan_change_cannot_commit_inside_activation_acceptance(
+        case: dict[str, Any], monkeypatch: pytest.MonkeyPatch, change: str,
+    ) -&gt; None:
+        approve(case)
+        controller = coordinator(case)
+        controller.enqueue(
+            case["run"]["id"], "implement", profile_ref=case["profile"],
+            command_key="queue-before-race", principal="owner",
+        )
+        other_projects = ProjectRegistry(case["projects"].database, [case["fixture_root"]])
+        other_case = {
+            **case, "projects": other_projects,
+            "planner": RunPlanner(
+                case["planner"].database, other_projects, admissions=case["authority"],
+            ),
+        }
+        preparing = threading.Event()
+        release = threading.Event()
+        update_entered = threading.Event()
+        original_prepare = case["host"].prepare
+    
+        def observed_prepare(*args: Any, **kwargs: Any) -&gt; Any:
+            preparing.set()
+            assert release.wait(5)
+            return original_prepare(*args, **kwargs)
+    
+        monkeypatch.setattr(case["host"], "prepare", observed_prepare)
+    
+        def update_current() -&gt; None:
+            update_entered.set()
+            if change == "revise-plan":
+                revise(other_case, "implement")
+            else:
+                config = copy.deepcopy(case["run"]["configuration_snapshot"]["configuration"])
+                config["resources"]["profiles"][0]["enabled"] = False
+                save(other_case, config, "race-revoke")
+    
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            advancing = pool.submit(controller.advance, case["run"]["id"])
+            assert preparing.wait(5)
+            changing = pool.submit(update_current)
+            try:
+                assert update_entered.wait(2)
+&gt;               with pytest.raises(TimeoutError):
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               Failed: DID NOT RAISE TimeoutError
+
+tests\orchestration\test_pinned_rules.py:165: Failed</failure></testcase><testcase classname="tests.orchestration.test_pinned_rules" name="test_policy_or_plan_change_cannot_commit_inside_activation_acceptance[revise-plan]" time="0.676"><failure message="Failed: DID NOT RAISE TimeoutError">case = {'root': WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-484/test_policy_or_plan_change_can1'), ...e_can1/fixture/repository'), 'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x000002A88F536120&gt;, ...}
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002A88F561A30&gt;
+change = 'revise-plan'
+
+    @pytest.mark.parametrize("change", ["revoke", "revise-plan"])
+    def test_policy_or_plan_change_cannot_commit_inside_activation_acceptance(
+        case: dict[str, Any], monkeypatch: pytest.MonkeyPatch, change: str,
+    ) -&gt; None:
+        approve(case)
+        controller = coordinator(case)
+        controller.enqueue(
+            case["run"]["id"], "implement", profile_ref=case["profile"],
+            command_key="queue-before-race", principal="owner",
+        )
+        other_projects = ProjectRegistry(case["projects"].database, [case["fixture_root"]])
+        other_case = {
+            **case, "projects": other_projects,
+            "planner": RunPlanner(
+                case["planner"].database, other_projects, admissions=case["authority"],
+            ),
+        }
+        preparing = threading.Event()
+        release = threading.Event()
+        update_entered = threading.Event()
+        original_prepare = case["host"].prepare
+    
+        def observed_prepare(*args: Any, **kwargs: Any) -&gt; Any:
+            preparing.set()
+            assert release.wait(5)
+            return original_prepare(*args, **kwargs)
+    
+        monkeypatch.setattr(case["host"], "prepare", observed_prepare)
+    
+        def update_current() -&gt; None:
+            update_entered.set()
+            if change == "revise-plan":
+                revise(other_case, "implement")
+            else:
+                config = copy.deepcopy(case["run"]["configuration_snapshot"]["configuration"])
+                config["resources"]["profiles"][0]["enabled"] = False
+                save(other_case, config, "race-revoke")
+    
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            advancing = pool.submit(controller.advance, case["run"]["id"])
+            assert preparing.wait(5)
+            changing = pool.submit(update_current)
+            try:
+                assert update_entered.wait(2)
+&gt;               with pytest.raises(TimeoutError):
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               Failed: DID NOT RAISE TimeoutError
+
+tests\orchestration\test_pinned_rules.py:165: Failed</failure></testcase></testsuite></testsuites>
