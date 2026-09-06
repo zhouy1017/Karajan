@@ -1,0 +1,20 @@
+{
+  "status": "passed",
+  "base": "e29b83ecc60265bd763bef3f2ca9372204980843",
+  "form_fields": [
+    "parent",
+    "scope",
+    "acceptance",
+    "remaining",
+    "progress"
+  ],
+  "ci_only_change": "add dev to push branches",
+  "local_links": "all exist",
+  "sha256": {
+    "AGENTS.md": "b8cdbd3ac0eae73e4742f01d931815e02c4c0a07d637df8a70a9352870e69db2",
+    "docs/agents/issue-tracker.md": "7ae87822c70291a3f48d32148699c21b6b0325c6ade67f09fc9a17d63bfe68e2",
+    ".github/pull_request_template.md": "102631896847d030881030a28e47062852d188abf13afe03d6c4354c09a45335",
+    ".github/ISSUE_TEMPLATE/implementation-task.yml": "a04f56ebe10c9e8984903e8cc0ce02b4729c8140255bfb5fd9a68706a5b32db2",
+    ".github/workflows/ci.yml": "d48034a3c41b0a8c22f93aa4b0dab124a33aaf7e5da8807dd1d6787fed02d14d"
+  }
+}

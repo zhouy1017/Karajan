@@ -1,0 +1,46 @@
+name: 可验收实现任务
+description: 从父需求拆出具有明确范围和行为验收条件的任务。
+labels: ["kind:task"]
+body:
+  - type: input
+    id: parent
+    attributes:
+      label: 父任务与依赖
+      description: 填写父 Issue、依赖链接；创建后补充 GitHub 原生子任务及 blocked-by 关系。独立任务可写无。
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: 目标与修改范围
+      description: 写明任务完成后用户或调用者可观察的变化，以及允许修改的范围。
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 验收条件与证据计划
+      description: 每项列出输入、预期行为、验证操作、证据层级（C / U / P / S / G）。实现与真实资格分别记录。
+      value: |
+        - [ ] 条件：
+          - 输入与预期结果：
+          - 验证操作与证据层级：
+    validations:
+      required: true
+  - type: textarea
+    id: remaining
+    attributes:
+      label: 留给父票的工作与当前阻塞
+      description: 列出不在本任务范围内的原需求、责任子票和阻塞解除条件；无则写无。
+    validations:
+      required: true
+  - type: textarea
+    id: progress
+    attributes:
+      label: 当前进度
+      description: 按 docs/agents/issue-tracker.md 更新；合入 dev 且完成验收后才能关闭实现任务。
+      value: |
+        状态：待核对验收计划与依赖后设置 status:ready
+        已完成：无
+        剩余工作：待实现并逐项验收
+        阻塞：无
