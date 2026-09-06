@@ -6,6 +6,8 @@ or enable execution. A later consumer must recheck authority and acquire admissi
 
 import json
 import uuid
+from collections.abc import Iterator
+from contextlib import ExitStack, contextmanager
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any
 
@@ -90,7 +92,8 @@ class ApprovedRunRouting:
                 "sources": {},
                 "admission_expectations": [],
             }
-            self._build(receipt, run, task_id, principal)
+            with ExitStack() as holds:
+                self._build(receipt, run, task_id, principal, holds)
             receipt["digest"] = digest(receipt)
             db.execute(
                 "INSERT INTO approved_routing_assessments VALUES (?,?,?,?,?,?)",
@@ -111,8 +114,47 @@ class ApprovedRunRouting:
                 raise RunError("ROUTING_ASSESSMENT_NOT_FOUND")
             return dict(json.loads(row["result"]))
 
+    @contextmanager
+    def admission_guard(
+        self, run_id: str, task_id: str, *, principal: str, attempt_id: str, context_id: str
+    ) -> Iterator[dict[str, Any]]:
+        """Fresh controller facts fenced through a consumer's Capacity transaction.
+
+        Order: coordinator (caller), Run, project, Capacity (consumer). The
+        yielded decision is transient and never grants permission to execute.
+        Consumers must already have durably recorded these planned identities.
+        """
+        for value in (run_id, task_id, principal, attempt_id, context_id):
+            identifier(value)
+        with self.planner.activation_guard(run_id) as run, ExitStack() as holds:
+            self.planner._owner(run, principal)
+            receipt: dict[str, Any] = {
+                "schema_version": "karajan.approved-routing-assessment.v1",
+                "id": str(uuid.uuid4()),
+                "run_id": run_id,
+                "task_id": task_id,
+                "planned_attempt_id": attempt_id,
+                "planned_context_id": context_id,
+                "scope": "admission_revalidation",
+                "state": "blocked",
+                "activation_allowed": False,
+                "dispatch_enabled": False,
+                "reason_codes": [],
+                "route": None,
+                "sources": {},
+                "admission_expectations": [],
+            }
+            self._build(receipt, run, task_id, principal, holds)
+            receipt["digest"] = digest(receipt)
+            yield receipt
+
     def _build(
-        self, receipt: dict[str, Any], run: dict[str, Any], task_id: str, principal: str
+        self,
+        receipt: dict[str, Any],
+        run: dict[str, Any],
+        task_id: str,
+        principal: str,
+        holds: ExitStack,
     ) -> None:
         if run["schema_version"] != "karajan.run-planning.v2":
             receipt["reason_codes"] = ["APPROVED_ROUTING_V2_REQUIRED"]
@@ -207,126 +249,119 @@ class ApprovedRunRouting:
                 "approved_quality_stage_indices": [r["index"] for r in grant["quality"]],
             },
         }
-        with self.qualifications.routing_facts_guard(
-            run["project_id"],
-            fixed["resources"]["profiles"],
-            principal=principal,
-            scope="runtime_tools",
-        ) as view:
-            resources = deepcopy(fixed["resources"])
-            current = view["catalog"]
-            profile_facts = []
-            for registration, qualified in zip(
-                resources["profiles"], view["profiles"], strict=True
-            ):
-                # Raw configured 'passed' evidence is a declaration, not a
-                # controller-produced qualification observation.
-                observation = qualified["qualification"]
-                registration["capability_evidence"] = (
-                    observation["capability_evidence"] if observation else []
-                )
-                if observation:
-                    profile_facts.append(observation["facts"])
-                    profile = registration["profile"]
-                    if profile is None or observation["facts"]["data_destination"] != execution[
-                        "channel_destinations"
-                    ].get(profile["binding"]["channel_id"]):
-                        registration["enabled"] = False
-                        qualified["reason_codes"].append("PROFILE_DESTINATION_BINDING_MISMATCH")
-                if not _current_binding(fixed["resources"], current, registration):
+        view = holds.enter_context(
+            self.qualifications.routing_facts_guard(
+                run["project_id"],
+                fixed["resources"]["profiles"],
+                principal=principal,
+                scope="runtime_tools",
+            )
+        )
+        resources = deepcopy(fixed["resources"])
+        current = view["catalog"]
+        profile_facts = []
+        for registration, qualified in zip(resources["profiles"], view["profiles"], strict=True):
+            # Raw configured 'passed' evidence is a declaration, not a
+            # controller-produced qualification observation.
+            observation = qualified["qualification"]
+            registration["capability_evidence"] = (
+                observation["capability_evidence"] if observation else []
+            )
+            if observation:
+                profile_facts.append(observation["facts"])
+                profile = registration["profile"]
+                if profile is None or observation["facts"]["data_destination"] != execution[
+                    "channel_destinations"
+                ].get(profile["binding"]["channel_id"]):
                     registration["enabled"] = False
-                    qualified["reason_codes"].append("CURRENT_PROFILE_RESTRICTED")
-            captured = self.capacity.routing_facts()
-            facts = captured.as_dict()
-            snapshot, capacity_sources = _capacity_snapshot(facts, resources)
-            estimate_sources = []
-            for registration in resources["profiles"]:
-                ref = {"id": registration["id"], "revision": registration["revision"]}
-                windows = [
+                    qualified["reason_codes"].append("PROFILE_DESTINATION_BINDING_MISMATCH")
+            if not _current_binding(fixed["resources"], current, registration):
+                registration["enabled"] = False
+                qualified["reason_codes"].append("CURRENT_PROFILE_RESTRICTED")
+        captured = self.capacity.routing_facts()
+        facts = captured.as_dict()
+        snapshot, capacity_sources = _capacity_snapshot(facts, resources)
+        estimate_sources = []
+        for registration in resources["profiles"]:
+            ref = {"id": registration["id"], "revision": registration["revision"]}
+            windows = [
+                {
+                    "pool_id": p["id"],
+                    **{k: p[k] for k in ("account_id", "kind", "unit", "window_kind", "window_id")},
+                }
+                for p in snapshot["pools"]
+                if p["id"] in registration["quota_pool_refs"]
+            ]
+            resolution = (
+                self.estimates.estimate_locked(
+                    run,
+                    task_id,
+                    ref,
+                    current_catalog=current,
+                    pool_windows=windows,
+                    as_of=facts["captured_at"],
+                )
+                if self.estimates
+                else {
+                    "estimate": None,
+                    "source_binding": None,
+                    "reason_codes": ["RESOURCE_ESTIMATE_MISSING"],
+                }
+            )
+            estimate_sources.append({"profile": ref, **resolution})
+            if resolution["estimate"] is not None:
+                snapshot["estimates"].append(resolution["estimate"])
+        snapshot["id"] = "capacity:" + digest([captured.sha256, estimate_sources])
+        policy = {
+            "schema_version": "karajan.routing.policy.v1",
+            "rulebook": fixed["rulebook"],
+            "resources": resources,
+            "approved_profile_refs": [
+                p for p in fixed["approved_profile_refs"] if p in current["approved_profile_refs"]
+            ],
+            "profile_facts": profile_facts,
+            "risk_policy": execution["risk_policy"],
+            "constraints": execution["constraints"],
+        }
+        route = evaluate_route(task_snapshot, policy, snapshot)
+        receipt["route"] = route
+        receipt["reason_codes"] = route["reason_codes"]
+        receipt["state"] = "selected" if route["selected_profile"] else "blocked"
+        receipt["sources"] = {
+            "approval": approval,
+            "execution_policy_digest": execution["digest"],
+            "routing_digest": plan["routing_digest"],
+            "catalog_digest": current["digest"],
+            "catalog_revision": current["revision"],
+            "profiles": view["profiles"],
+            "capacity_facts_sha256": captured.sha256,
+            "capacity_sources": capacity_sources,
+            "estimates": estimate_sources,
+        }
+        for estimate in snapshot["estimates"]:
+            registration = next(
+                r for r in resources["profiles"] if reference(r) == reference(estimate["profile"])
+            )
+            if registration["profile"] is None:
+                continue
+            account_id = registration["profile"]["binding"]["account_id"]
+            account = next((a for a in snapshot["accounts"] if a["id"] == account_id), None)
+            if account is not None and selection["rule"] is not None:
+                receipt["admission_expectations"].append(
                     {
-                        "pool_id": p["id"],
-                        **{
-                            k: p[k]
-                            for k in ("account_id", "kind", "unit", "window_kind", "window_id")
+                        "profile": estimate["profile"],
+                        "estimate_sha256": digest(estimate),
+                        "expected_capacity": {
+                            "policy_revision": account["policy_revision"],
+                            "pool_windows": {
+                                d["pool_id"]: d["window_id"] for d in estimate["demand"]
+                            },
+                            "lead_reserve_access": task["role"] == "commander"
+                            and task["purpose"] == "lead"
+                            and selection["rule"]["lead_reserve_access"] is not False,
                         },
                     }
-                    for p in snapshot["pools"]
-                    if p["id"] in registration["quota_pool_refs"]
-                ]
-                resolution = (
-                    self.estimates.estimate_locked(
-                        run,
-                        task_id,
-                        ref,
-                        current_catalog=current,
-                        pool_windows=windows,
-                        as_of=facts["captured_at"],
-                    )
-                    if self.estimates
-                    else {
-                        "estimate": None,
-                        "source_binding": None,
-                        "reason_codes": ["RESOURCE_ESTIMATE_MISSING"],
-                    }
                 )
-                estimate_sources.append({"profile": ref, **resolution})
-                if resolution["estimate"] is not None:
-                    snapshot["estimates"].append(resolution["estimate"])
-            snapshot["id"] = "capacity:" + digest([captured.sha256, estimate_sources])
-            policy = {
-                "schema_version": "karajan.routing.policy.v1",
-                "rulebook": fixed["rulebook"],
-                "resources": resources,
-                "approved_profile_refs": [
-                    p
-                    for p in fixed["approved_profile_refs"]
-                    if p in current["approved_profile_refs"]
-                ],
-                "profile_facts": profile_facts,
-                "risk_policy": execution["risk_policy"],
-                "constraints": execution["constraints"],
-            }
-            route = evaluate_route(task_snapshot, policy, snapshot)
-            receipt["route"] = route
-            receipt["reason_codes"] = route["reason_codes"]
-            receipt["state"] = "selected" if route["selected_profile"] else "blocked"
-            receipt["sources"] = {
-                "approval": approval,
-                "execution_policy_digest": execution["digest"],
-                "routing_digest": plan["routing_digest"],
-                "catalog_digest": current["digest"],
-                "catalog_revision": current["revision"],
-                "profiles": view["profiles"],
-                "capacity_facts_sha256": captured.sha256,
-                "capacity_sources": capacity_sources,
-                "estimates": estimate_sources,
-            }
-            for estimate in snapshot["estimates"]:
-                registration = next(
-                    r
-                    for r in resources["profiles"]
-                    if reference(r) == reference(estimate["profile"])
-                )
-                if registration["profile"] is None:
-                    continue
-                account_id = registration["profile"]["binding"]["account_id"]
-                account = next((a for a in snapshot["accounts"] if a["id"] == account_id), None)
-                if account is not None and selection["rule"] is not None:
-                    receipt["admission_expectations"].append(
-                        {
-                            "profile": estimate["profile"],
-                            "estimate_sha256": digest(estimate),
-                            "expected_capacity": {
-                                "policy_revision": account["policy_revision"],
-                                "pool_windows": {
-                                    d["pool_id"]: d["window_id"] for d in estimate["demand"]
-                                },
-                                "lead_reserve_access": task["role"] == "commander"
-                                and task["purpose"] == "lead"
-                                and selection["rule"]["lead_reserve_access"] is not False,
-                            },
-                        }
-                    )
 
 
 def _current_binding(frozen: dict[str, Any], catalog: dict[str, Any], row: dict[str, Any]) -> bool:

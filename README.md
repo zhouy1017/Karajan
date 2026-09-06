@@ -30,6 +30,8 @@ PRD、8 个 M0 Issues、20 个 M1–M4 实现任务和独立 CI 任务已发布�
 
 [已批准 Run 路由判断](docs/implementation/m3-approved-run-routing.md) 已直接消费持久批准、逐规则许可、当前资格、显式任务预测和容量账本，保存候选与排除依据，并提供认证 HTTP 入口。未取得真实资格的来源保持阻塞；判断收据不预留资源或启动 Agent。
 
+[任务配额准入](docs/implementation/m3-task-admission.md) 将该判断接到持久准入意图、真实容量预留、丢失响应恢复、取消与到期状态。未获真实资格时不建预留；预留后的 Agent 激活与实际执行仍待接通。
+
 ## 完整架构设计
 
 从 [Karajan 完整架构设计 v1](docs/architecture/README.md) 开始阅读。它是当前设计入口，覆盖：

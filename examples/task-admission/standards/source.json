@@ -1,0 +1,13 @@
+{
+  "base": "5818835",
+  "excluded_authored_scope": "capacity/store.py and tests/capacity/test_command_receipts.py",
+  "files": {
+    "backend/karajan/orchestration/admission.py": "675bd8ec973458bd3ed98f236466102001b3290696f6e578d9e341cf3d88c0d8",
+    "backend/karajan/orchestration/routing.py": "a3c81c993a2ac1cd5fc05d94bee84a663b1d369b0980901a30d14d28593dc9bd",
+    "backend/karajan/web/admission.py": "a032e36aebe71cc4c7f13222d452eef2378369a4f2c4a95b3067bd7ceb829f18",
+    "backend/karajan/web/app.py": "acd00ef20e1ea307d83f28473f607b82b84f8c805f69dd1012ea43c84776ea75",
+    "tests/runs/test_task_admission.py": "e6dc82c491f986f1276bc163163504e37584960f6e8c89c6b152b9abef432c1b",
+    "tests/runs/test_admission_guard.py": "0660e93328bdfe84a1fc2f22f4140f58ed2f01555c6a9001828e761447c31154",
+    "tests/web/test_task_admission_http.py": "dc4f203e6911673bc364cc2c59abd02a3f3b24b6742a771e10725ad6e4d65ad4"
+  }
+}

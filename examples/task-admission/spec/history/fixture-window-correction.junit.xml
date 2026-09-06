@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="13" time="5.326" timestamp="2026-09-06T13:57:57.720040+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_public_identity_grants_and_repeated_commands_use_one_capacity_hold" time="0.306" /><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_process_crash_after_capacity_commit_recovers_without_reissuing[admit]" time="0.600" /><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_process_crash_after_capacity_commit_recovers_without_reissuing[cancel_unactivated]" time="0.621" /><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_pending_admission_reads_current_authority_and_capacity[qualification]" time="0.285" /><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_pending_admission_reads_current_authority_and_capacity[plan]" time="0.309" /><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_pending_admission_reads_current_authority_and_capacity[balance]" time="0.321" /><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_pending_admission_reads_current_authority_and_capacity[window]" time="0.336"><failure message="AssertionError: assert 'reserved' == 'blocked'&#10;  &#10;  - blocked&#10;  + reserved">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/v2-admission-integration/.cache/v2-admission-spec/state-corrected/test_pending_admission_reads_c3')
+change = 'window'
+
+    @pytest.mark.parametrize("change", ["qualification", "plan", "balance", "window", "policy"])
+    def test_pending_admission_reads_current_authority_and_capacity(tmp_path, change):
+        case = prepare(tmp_path)
+        queued = queue(case)
+        if change == "qualification":
+            case["routing"].qualifications = ProfileQualificationStore(case["registry"], clock=lambda: case["now"][0])
+        elif change == "plan":
+            proposal = copy.deepcopy(case["proposal"])
+            proposal["expected_plan_revision"] = 1
+            proposal["plan"]["tasks"][0]["revision"] = 2
+            proposal["plan"]["tasks"][0]["acceptance"] = ["Different approved acceptance"]
+            plan = case["planner"].submit_plan(case["run"]["id"], proposal, command_key="changed-plan", principal="lead")
+            case["planner"].approve_plan(case["run"]["id"], approval(plan), command_key="changed-approval", principal="owner")
+        elif change == "balance":
+            case["now"][0] += 1
+            observe(case, amount="10")
+        elif change == "window":
+            original = case["capacity"].snapshot()["observations"][-1]["observation"]
+            observation = {**original, "window_id": "another-window", "observed_at": 1001.0, "source_ref": "next-observation"}
+            case["now"][0] = 1001.0
+            case["capacity"].observe(observation, command_key="next-window")
+        else:
+            policy = case["capacity"].snapshot()["policies"][-1]["policy"]
+            policy["lead_reserved_slots"] = 2
+            case["capacity"].activate_policy(policy, expected_revision=1, command_key="next-policy")
+        result = case["admission"].advance(case["run"]["id"], queued["id"], principal="owner")
+&gt;       assert result["state"] == "blocked"
+E       AssertionError: assert 'reserved' == 'blocked'
+E         
+E         - blocked
+E         + reserved
+
+.cache\v2-admission-spec\test_public_admission.py:103: AssertionError</failure></testcase><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_pending_admission_reads_current_authority_and_capacity[policy]" time="0.321" /><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_another_actual_run_consumes_shared_capacity_between_enqueue_and_admit" time="0.321" /><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_cancel_waits_for_in_flight_real_admit_then_releases_once" time="0.505" /><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_project_estimate_revocation_waits_until_real_admission_guard_exits" time="0.515" /><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_readonly_recovery_key_cannot_bind_another_payload" time="0.335" /><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_real_runtime_qualification_never_upgrades_for_admission" time="0.317" /></testsuite></testsuites>

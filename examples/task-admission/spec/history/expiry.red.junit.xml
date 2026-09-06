@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="14" time="5.657" timestamp="2026-09-06T13:58:49.549861+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_public_identity_grants_and_repeated_commands_use_one_capacity_hold" time="0.309" /><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_process_crash_after_capacity_commit_recovers_without_reissuing[admit]" time="0.612" /><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_process_crash_after_capacity_commit_recovers_without_reissuing[cancel_unactivated]" time="0.611" /><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_pending_admission_reads_current_authority_and_capacity[qualification]" time="0.286" /><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_pending_admission_reads_current_authority_and_capacity[plan]" time="0.348" /><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_pending_admission_reads_current_authority_and_capacity[balance]" time="0.309" /><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_pending_admission_reads_current_authority_and_capacity[window]" time="0.317" /><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_pending_admission_reads_current_authority_and_capacity[policy]" time="0.322" /><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_another_actual_run_consumes_shared_capacity_between_enqueue_and_admit" time="0.315" /><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_cancel_waits_for_in_flight_real_admit_then_releases_once" time="0.503" /><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_project_estimate_revocation_waits_until_real_admission_guard_exits" time="0.526" /><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_readonly_recovery_key_cannot_bind_another_payload" time="0.316" /><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_real_runtime_qualification_never_upgrades_for_admission" time="0.325" /><testcase classname=".cache.v2-admission-spec.test_expiry_repro" name="test_expired_reservation_is_not_presented_as_current_reserved" time="0.327"><failure message="AssertionError: assert 'reserved' == 'expired'&#10;  &#10;  - expired&#10;  + reserved">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/v2-admission-integration/.cache/v2-admission-spec/state-boundaries/test_expired_reservation_is_no0')
+
+    def test_expired_reservation_is_not_presented_as_current_reserved(tmp_path):
+        case = prepare(tmp_path)
+        queued = queue(case)
+        service, run = case["admission"], case["run"]["id"]
+        reserved = service.advance(run, queued["id"], principal="owner")
+        assert reserved["state"] == "reserved"
+        case["now"][0] += queued["request"]["duration_seconds"] + 1
+        capacity = case["capacity"].routing_facts().as_dict()
+        assert capacity["accounts"][0]["held_attempts"] == 0
+        current = service.get(run, queued["id"], principal="owner")
+&gt;       assert current["state"] == "expired"
+E       AssertionError: assert 'reserved' == 'expired'
+E         
+E         - expired
+E         + reserved
+
+.cache\v2-admission-spec\test_expiry_repro.py:16: AssertionError</failure></testcase></testsuite></testsuites>

@@ -17,11 +17,13 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
 from karajan.capacity import CapacityStore
+from karajan.orchestration.admission import ApprovedTaskAdmission
 from karajan.orchestration.routing import ApprovedRunRouting
 from karajan.projects import ProjectRegistry
 from karajan.projects.qualification import ProfileQualificationStore
 from karajan.runs import RunPlanner
 
+from .admission import register_admission_routes
 from .approved_routing import register_approved_routing_routes
 from .body_limit import BodyLimitMiddleware
 from .projects import register_project_routes
@@ -142,8 +144,10 @@ def create_app(
     capacity = CapacityStore(state_directory / "capacity.sqlite")
     register_run_routes(app, planner)
     register_resource_routes(app, capacity)
-    register_approved_routing_routes(
-        app, ApprovedRunRouting(planner, ProfileQualificationStore(projects), capacity)
+    routing = ApprovedRunRouting(planner, ProfileQualificationStore(projects), capacity)
+    register_approved_routing_routes(app, routing)
+    register_admission_routes(
+        app, ApprovedTaskAdmission(state_directory / "task-admissions.sqlite", routing)
     )
 
     @app.middleware("http")

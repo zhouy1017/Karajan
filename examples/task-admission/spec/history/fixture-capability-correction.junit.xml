@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="12" skipped="0" tests="13" time="4.258" timestamp="2026-09-06T13:57:17.663559+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_public_identity_grants_and_repeated_commands_use_one_capacity_hold" time="0.295"><failure message="AssertionError: [&quot;NO_ELIGIBLE_PROFILE&quot;]">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/v2-admission-integration/.cache/v2-admission-spec/state-initial/test_public_identity_grants_an0')
+
+    def test_public_identity_grants_and_repeated_commands_use_one_capacity_hold(tmp_path):
+        case = prepare(tmp_path)
+        service, capacity, run = case["admission"], case["capacity"], case["run"]["id"]
+&gt;       queued = queue(case)
+                 ^^^^^^^^^^^
+
+.cache\v2-admission-spec\test_public_admission.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+case = {'planner': &lt;karajan.runs.planning.RunPlanner object at 0x0000016A72A45FD0&gt;, 'run': {'schema_version': 'karajan.run-pl...ubmit-plan.v2', 'term': 1, 'intent_id': 'cd65a8ee-80d7-4857-abd5-1514847ab517', 'expected_plan_revision': 0, ...}, ...}
+key = 'queue'
+
+    def queue(case, key="queue"):
+        result = case["admission"].enqueue(
+            case["run"]["id"], "implement", principal="owner", command_key=key
+        )
+&gt;       assert result["state"] == "queued", json.dumps(result["reason_codes"])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: ["NO_ELIGIBLE_PROFILE"]
+
+.cache\v2-admission-spec\fixture.py:82: AssertionError</failure></testcase><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_process_crash_after_capacity_commit_recovers_without_reissuing[admit]" time="0.296"><failure message="AssertionError: [&quot;NO_ELIGIBLE_PROFILE&quot;]">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/v2-admission-integration/.cache/v2-admission-spec/state-initial/test_process_crash_after_capac0')
+phase = 'admit'
+
+    @pytest.mark.parametrize("phase", ["admit", "cancel_unactivated"])
+    def test_process_crash_after_capacity_commit_recovers_without_reissuing(tmp_path, phase):
+        case = prepare(tmp_path)
+&gt;       queued = queue(case)
+                 ^^^^^^^^^^^
+
+.cache\v2-admission-spec\test_public_admission.py:51: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+case = {'planner': &lt;karajan.runs.planning.RunPlanner object at 0x0000016A72A47E60&gt;, 'run': {'schema_version': 'karajan.run-pl...ubmit-plan.v2', 'term': 1, 'intent_id': '64a7d461-a7fb-4162-8960-9fd1fef05687', 'expected_plan_revision': 0, ...}, ...}
+key = 'queue'
+
+    def queue(case, key="queue"):
+        result = case["admission"].enqueue(
+            case["run"]["id"], "implement", principal="owner", command_key=key
+        )
+&gt;       assert result["state"] == "queued", json.dumps(result["reason_codes"])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: ["NO_ELIGIBLE_PROFILE"]
+
+.cache\v2-admission-spec\fixture.py:82: AssertionError</failure></testcase><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_process_crash_after_capacity_commit_recovers_without_reissuing[cancel_unactivated]" time="0.301"><failure message="AssertionError: [&quot;NO_ELIGIBLE_PROFILE&quot;]">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/v2-admission-integration/.cache/v2-admission-spec/state-initial/test_process_crash_after_capac1')
+phase = 'cancel_unactivated'
+
+    @pytest.mark.parametrize("phase", ["admit", "cancel_unactivated"])
+    def test_process_crash_after_capacity_commit_recovers_without_reissuing(tmp_path, phase):
+        case = prepare(tmp_path)
+&gt;       queued = queue(case)
+                 ^^^^^^^^^^^
+
+.cache\v2-admission-spec\test_public_admission.py:51: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+case = {'planner': &lt;karajan.runs.planning.RunPlanner object at 0x0000016A72A73DD0&gt;, 'run': {'schema_version': 'karajan.run-pl...ubmit-plan.v2', 'term': 1, 'intent_id': '9ca12df9-4405-4920-bd07-339a1153a295', 'expected_plan_revision': 0, ...}, ...}
+key = 'queue'
+
+    def queue(case, key="queue"):
+        result = case["admission"].enqueue(
+            case["run"]["id"], "implement", principal="owner", command_key=key
+        )
+&gt;       assert result["state"] == "queued", json.dumps(result["reason_codes"])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: ["NO_ELIGIBLE_PROFILE"]
+
+.cache\v2-admission-spec\fixture.py:82: AssertionError</failure></testcase><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_pending_admission_reads_current_authority_and_capacity[qualification]" time="0.311"><failure message="AssertionError: [&quot;NO_ELIGIBLE_PROFILE&quot;]">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/v2-admission-integration/.cache/v2-admission-spec/state-initial/test_pending_admission_reads_c0')
+change = 'qualification'
+
+    @pytest.mark.parametrize("change", ["qualification", "plan", "balance", "window", "policy"])
+    def test_pending_admission_reads_current_authority_and_capacity(tmp_path, change):
+        case = prepare(tmp_path)
+&gt;       queued = queue(case)
+                 ^^^^^^^^^^^
+
+.cache\v2-admission-spec\test_public_admission.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+case = {'planner': &lt;karajan.runs.planning.RunPlanner object at 0x0000016A72AA4440&gt;, 'run': {'schema_version': 'karajan.run-pl...ubmit-plan.v2', 'term': 1, 'intent_id': '3f4d2839-ad26-4a20-bef1-7812bc9de929', 'expected_plan_revision': 0, ...}, ...}
+key = 'queue'
+
+    def queue(case, key="queue"):
+        result = case["admission"].enqueue(
+            case["run"]["id"], "implement", principal="owner", command_key=key
+        )
+&gt;       assert result["state"] == "queued", json.dumps(result["reason_codes"])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: ["NO_ELIGIBLE_PROFILE"]
+
+.cache\v2-admission-spec\fixture.py:82: AssertionError</failure></testcase><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_pending_admission_reads_current_authority_and_capacity[plan]" time="0.311"><failure message="AssertionError: [&quot;NO_ELIGIBLE_PROFILE&quot;]">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/v2-admission-integration/.cache/v2-admission-spec/state-initial/test_pending_admission_reads_c1')
+change = 'plan'
+
+    @pytest.mark.parametrize("change", ["qualification", "plan", "balance", "window", "policy"])
+    def test_pending_admission_reads_current_authority_and_capacity(tmp_path, change):
+        case = prepare(tmp_path)
+&gt;       queued = queue(case)
+                 ^^^^^^^^^^^
+
+.cache\v2-admission-spec\test_public_admission.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+case = {'planner': &lt;karajan.runs.planning.RunPlanner object at 0x0000016A72A81400&gt;, 'run': {'schema_version': 'karajan.run-pl...ubmit-plan.v2', 'term': 1, 'intent_id': 'd67ef9bf-91cd-42c7-a9ff-6e5c8b826ee5', 'expected_plan_revision': 0, ...}, ...}
+key = 'queue'
+
+    def queue(case, key="queue"):
+        result = case["admission"].enqueue(
+            case["run"]["id"], "implement", principal="owner", command_key=key
+        )
+&gt;       assert result["state"] == "queued", json.dumps(result["reason_codes"])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: ["NO_ELIGIBLE_PROFILE"]
+
+.cache\v2-admission-spec\fixture.py:82: AssertionError</failure></testcase><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_pending_admission_reads_current_authority_and_capacity[balance]" time="0.290"><failure message="AssertionError: [&quot;NO_ELIGIBLE_PROFILE&quot;]">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/v2-admission-integration/.cache/v2-admission-spec/state-initial/test_pending_admission_reads_c2')
+change = 'balance'
+
+    @pytest.mark.parametrize("change", ["qualification", "plan", "balance", "window", "policy"])
+    def test_pending_admission_reads_current_authority_and_capacity(tmp_path, change):
+        case = prepare(tmp_path)
+&gt;       queued = queue(case)
+                 ^^^^^^^^^^^
+
+.cache\v2-admission-spec\test_public_admission.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+case = {'planner': &lt;karajan.runs.planning.RunPlanner object at 0x0000016A72B391C0&gt;, 'run': {'schema_version': 'karajan.run-pl...ubmit-plan.v2', 'term': 1, 'intent_id': '3bd0d5ae-62bb-4c8e-bdb5-18d62b215ca8', 'expected_plan_revision': 0, ...}, ...}
+key = 'queue'
+
+    def queue(case, key="queue"):
+        result = case["admission"].enqueue(
+            case["run"]["id"], "implement", principal="owner", command_key=key
+        )
+&gt;       assert result["state"] == "queued", json.dumps(result["reason_codes"])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: ["NO_ELIGIBLE_PROFILE"]
+
+.cache\v2-admission-spec\fixture.py:82: AssertionError</failure></testcase><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_pending_admission_reads_current_authority_and_capacity[window]" time="0.285"><failure message="AssertionError: [&quot;NO_ELIGIBLE_PROFILE&quot;]">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/v2-admission-integration/.cache/v2-admission-spec/state-initial/test_pending_admission_reads_c3')
+change = 'window'
+
+    @pytest.mark.parametrize("change", ["qualification", "plan", "balance", "window", "policy"])
+    def test_pending_admission_reads_current_authority_and_capacity(tmp_path, change):
+        case = prepare(tmp_path)
+&gt;       queued = queue(case)
+                 ^^^^^^^^^^^
+
+.cache\v2-admission-spec\test_public_admission.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+case = {'planner': &lt;karajan.runs.planning.RunPlanner object at 0x0000016A729E7E00&gt;, 'run': {'schema_version': 'karajan.run-pl...ubmit-plan.v2', 'term': 1, 'intent_id': '7856641c-37ef-4391-8a8a-c75182546614', 'expected_plan_revision': 0, ...}, ...}
+key = 'queue'
+
+    def queue(case, key="queue"):
+        result = case["admission"].enqueue(
+            case["run"]["id"], "implement", principal="owner", command_key=key
+        )
+&gt;       assert result["state"] == "queued", json.dumps(result["reason_codes"])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: ["NO_ELIGIBLE_PROFILE"]
+
+.cache\v2-admission-spec\fixture.py:82: AssertionError</failure></testcase><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_pending_admission_reads_current_authority_and_capacity[policy]" time="0.291"><failure message="AssertionError: [&quot;NO_ELIGIBLE_PROFILE&quot;]">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/v2-admission-integration/.cache/v2-admission-spec/state-initial/test_pending_admission_reads_c4')
+change = 'policy'
+
+    @pytest.mark.parametrize("change", ["qualification", "plan", "balance", "window", "policy"])
+    def test_pending_admission_reads_current_authority_and_capacity(tmp_path, change):
+        case = prepare(tmp_path)
+&gt;       queued = queue(case)
+                 ^^^^^^^^^^^
+
+.cache\v2-admission-spec\test_public_admission.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+case = {'planner': &lt;karajan.runs.planning.RunPlanner object at 0x0000016A72AA4D10&gt;, 'run': {'schema_version': 'karajan.run-pl...ubmit-plan.v2', 'term': 1, 'intent_id': '34fbab56-09ff-41e3-a611-5f9cc6c8b35d', 'expected_plan_revision': 0, ...}, ...}
+key = 'queue'
+
+    def queue(case, key="queue"):
+        result = case["admission"].enqueue(
+            case["run"]["id"], "implement", principal="owner", command_key=key
+        )
+&gt;       assert result["state"] == "queued", json.dumps(result["reason_codes"])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: ["NO_ELIGIBLE_PROFILE"]
+
+.cache\v2-admission-spec\fixture.py:82: AssertionError</failure></testcase><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_another_actual_run_consumes_shared_capacity_between_enqueue_and_admit" time="0.310"><failure message="AssertionError: [&quot;NO_ELIGIBLE_PROFILE&quot;]">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/v2-admission-integration/.cache/v2-admission-spec/state-initial/test_another_actual_run_consum0')
+
+    def test_another_actual_run_consumes_shared_capacity_between_enqueue_and_admit(tmp_path):
+        case = prepare(tmp_path)
+&gt;       queued = queue(case)
+                 ^^^^^^^^^^^
+
+.cache\v2-admission-spec\test_public_admission.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+case = {'planner': &lt;karajan.runs.planning.RunPlanner object at 0x0000016A72B9B410&gt;, 'run': {'schema_version': 'karajan.run-pl...ubmit-plan.v2', 'term': 1, 'intent_id': '2964d56b-b751-4ff5-bee6-b8de73a43b0d', 'expected_plan_revision': 0, ...}, ...}
+key = 'queue'
+
+    def queue(case, key="queue"):
+        result = case["admission"].enqueue(
+            case["run"]["id"], "implement", principal="owner", command_key=key
+        )
+&gt;       assert result["state"] == "queued", json.dumps(result["reason_codes"])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: ["NO_ELIGIBLE_PROFILE"]
+
+.cache\v2-admission-spec\fixture.py:82: AssertionError</failure></testcase><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_cancel_waits_for_in_flight_real_admit_then_releases_once" time="0.329"><failure message="AssertionError: [&quot;NO_ELIGIBLE_PROFILE&quot;]">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/v2-admission-integration/.cache/v2-admission-spec/state-initial/test_cancel_waits_for_in_fligh0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000016A72B3A4B0&gt;
+
+    def test_cancel_waits_for_in_flight_real_admit_then_releases_once(tmp_path, monkeypatch):
+        case = prepare(tmp_path)
+&gt;       queued = queue(case)
+                 ^^^^^^^^^^^
+
+.cache\v2-admission-spec\test_public_admission.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+case = {'planner': &lt;karajan.runs.planning.RunPlanner object at 0x0000016A724F80E0&gt;, 'run': {'schema_version': 'karajan.run-pl...ubmit-plan.v2', 'term': 1, 'intent_id': '7dda5903-2f4a-4e65-93d7-c9a28a00280e', 'expected_plan_revision': 0, ...}, ...}
+key = 'queue'
+
+    def queue(case, key="queue"):
+        result = case["admission"].enqueue(
+            case["run"]["id"], "implement", principal="owner", command_key=key
+        )
+&gt;       assert result["state"] == "queued", json.dumps(result["reason_codes"])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: ["NO_ELIGIBLE_PROFILE"]
+
+.cache\v2-admission-spec\fixture.py:82: AssertionError</failure></testcase><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_project_estimate_revocation_waits_until_real_admission_guard_exits" time="0.332"><failure message="AssertionError: [&quot;NO_ELIGIBLE_PROFILE&quot;]">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/v2-admission-integration/.cache/v2-admission-spec/state-initial/test_project_estimate_revocati0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000016A72AA4F20&gt;
+
+    def test_project_estimate_revocation_waits_until_real_admission_guard_exits(tmp_path, monkeypatch):
+        case = prepare(tmp_path)
+&gt;       queued = queue(case)
+                 ^^^^^^^^^^^
+
+.cache\v2-admission-spec\test_public_admission.py:152: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+case = {'planner': &lt;karajan.runs.planning.RunPlanner object at 0x0000016A72A80620&gt;, 'run': {'schema_version': 'karajan.run-pl...ubmit-plan.v2', 'term': 1, 'intent_id': '47ca9a6c-720a-48b5-9399-38a844933f19', 'expected_plan_revision': 0, ...}, ...}
+key = 'queue'
+
+    def queue(case, key="queue"):
+        result = case["admission"].enqueue(
+            case["run"]["id"], "implement", principal="owner", command_key=key
+        )
+&gt;       assert result["state"] == "queued", json.dumps(result["reason_codes"])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: ["NO_ELIGIBLE_PROFILE"]
+
+.cache\v2-admission-spec\fixture.py:82: AssertionError</failure></testcase><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_readonly_recovery_key_cannot_bind_another_payload" time="0.304"><failure message="AssertionError: [&quot;NO_ELIGIBLE_PROFILE&quot;]">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/v2-admission-integration/.cache/v2-admission-spec/state-initial/test_readonly_recovery_key_can0')
+
+    def test_readonly_recovery_key_cannot_bind_another_payload(tmp_path):
+        case = prepare(tmp_path)
+&gt;       queued = queue(case)
+                 ^^^^^^^^^^^
+
+.cache\v2-admission-spec\test_public_admission.py:178: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+case = {'planner': &lt;karajan.runs.planning.RunPlanner object at 0x0000016A73C2BF50&gt;, 'run': {'schema_version': 'karajan.run-pl...ubmit-plan.v2', 'term': 1, 'intent_id': 'abcb8f40-d4a4-44f0-8be7-036f18fdb8cd', 'expected_plan_revision': 0, ...}, ...}
+key = 'queue'
+
+    def queue(case, key="queue"):
+        result = case["admission"].enqueue(
+            case["run"]["id"], "implement", principal="owner", command_key=key
+        )
+&gt;       assert result["state"] == "queued", json.dumps(result["reason_codes"])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: ["NO_ELIGIBLE_PROFILE"]
+
+.cache\v2-admission-spec\fixture.py:82: AssertionError</failure></testcase><testcase classname=".cache.v2-admission-spec.test_public_admission" name="test_real_runtime_qualification_never_upgrades_for_admission" time="0.302" /></testsuite></testsuites>

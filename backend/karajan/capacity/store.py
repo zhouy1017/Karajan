@@ -20,6 +20,7 @@ from .models import (
     AdmissionRef,
     AdmissionRequest,
     Failure,
+    Identifier,
     Observation,
     Policy,
     Pool,
@@ -31,6 +32,10 @@ from .models import (
 
 class CapacityError(ValueError):
     """Stable boundary failure; no caller contents are echoed."""
+
+
+class _UnactivatedCancellation(AdmissionRef):
+    evidence_ref: Identifier
 
 
 def encoded(value: object) -> str:
@@ -45,6 +50,37 @@ def validate(model: type[BaseModel], value: object) -> dict[str, Any]:
         return model.model_validate(value).model_dump()
     except (ValidationError, ValueError, TypeError):
         raise CapacityError("CAPACITY_INPUT_INVALID") from None
+
+
+def _admission_payload(payload: object) -> dict[str, Any]:
+    value = validate(AdmissionRequest, payload)
+    # Preserve pre-routing-binding command hashes, including model-dumped None.
+    if value["expected_capacity"] is None:
+        del value["expected_capacity"]
+    return value
+
+
+def _command_digest(kind: str, payload: object, command_key: str) -> str:
+    if (
+        not isinstance(command_key, str)
+        or not 0 < len(command_key) <= 256
+        or not command_key.isprintable()
+    ):
+        raise CapacityError("CAPACITY_INPUT_INVALID")
+    try:
+        command_key.encode("utf-8")
+    except UnicodeError:
+        raise CapacityError("CAPACITY_INPUT_INVALID") from None
+    return hashlib.sha256(encoded([kind, payload]).encode()).hexdigest()
+
+
+def _stored_receipt(db: sqlite3.Connection, command_key: str, digest: str) -> dict[str, Any] | None:
+    original = db.execute("SELECT * FROM commands WHERE key=?", (command_key,)).fetchone()
+    if original is None:
+        return None
+    if original["digest"] != digest:
+        raise CapacityError("IDEMPOTENCY_CONFLICT")
+    return dict(json.loads(original["result"]))
 
 
 class CapacityStore:
@@ -106,28 +142,36 @@ class CapacityStore:
         command_key: str,
         action: Callable[[sqlite3.Connection], dict[str, Any]],
     ) -> dict[str, Any]:
-        if (
-            not isinstance(command_key, str)
-            or not 0 < len(command_key) <= 256
-            or not command_key.isprintable()
-        ):
-            raise CapacityError("CAPACITY_INPUT_INVALID")
-        try:
-            command_key.encode("utf-8")
-        except UnicodeError:
-            raise CapacityError("CAPACITY_INPUT_INVALID") from None
-        digest = hashlib.sha256(encoded([kind, payload]).encode()).hexdigest()
+        digest = _command_digest(kind, payload, command_key)
         with self._transaction() as db:
-            original = db.execute("SELECT * FROM commands WHERE key=?", (command_key,)).fetchone()
+            original = _stored_receipt(db, command_key, digest)
             if original is not None:
-                if original["digest"] != digest:
-                    raise CapacityError("IDEMPOTENCY_CONFLICT")
-                return dict(json.loads(original["result"]))
+                return original
             result = action(db)
             db.execute(
                 "INSERT INTO commands VALUES (?, ?, ?)", (command_key, digest, encoded(result))
             )
             return result
+
+    def command_receipt(
+        self, kind: str, payload: object, *, command_key: str
+    ) -> dict[str, Any] | None:
+        """Read a historical command result without admission or expiration effects."""
+        if kind == "admit":
+            value = _admission_payload(payload)
+        elif kind == "reconcile":
+            value = validate(Reconciliation, payload)
+        elif kind == "cancel_unactivated":
+            value = validate(_UnactivatedCancellation, payload)
+        else:
+            raise CapacityError("COMMAND_RECEIPT_KIND_UNSUPPORTED")
+        digest = _command_digest(kind, value, command_key)
+        db = sqlite3.connect(self.path.resolve().as_uri() + "?mode=ro", uri=True, timeout=10)
+        db.row_factory = sqlite3.Row
+        try:
+            return _stored_receipt(db, command_key, digest)
+        finally:
+            db.close()
 
     def register_pool(self, pool: dict[str, Any], *, command_key: str) -> dict[str, Any]:
         value = validate(Pool, pool)
@@ -328,11 +372,7 @@ class CapacityStore:
         return {"revision": revision, "policy": value}
 
     def admit(self, request: dict[str, Any], *, command_key: str) -> dict[str, Any]:
-        value = validate(AdmissionRequest, request)
-        # Keep historical command hashes and stored requests stable for callers
-        # predating routing bindings, including a model-dumped optional None.
-        if value["expected_capacity"] is None:
-            del value["expected_capacity"]
+        value = _admission_payload(request)
 
         def apply(db: sqlite3.Connection) -> dict[str, Any]:
             if (
@@ -483,6 +523,37 @@ class CapacityStore:
             return result
 
         return self._command("activate", value, command_key, apply)
+
+    def cancel_unactivated(
+        self, admission_id: str, *, evidence_ref: str, command_key: str
+    ) -> dict[str, Any]:
+        """Release only a reservation still unactivated in this command's transaction."""
+        value = validate(
+            _UnactivatedCancellation,
+            {"admission_id": admission_id, "evidence_ref": evidence_ref},
+        )
+
+        def apply(db: sqlite3.Connection) -> dict[str, Any]:
+            item = self._reservation(db, admission_id)
+            if item["state"] in ("active", "unknown"):
+                raise CapacityError("CANNOT_RELEASE_ACTIVATED_ADMISSION")
+            if item["state"] not in ("reserved", "expired"):
+                raise CapacityError("ADMISSION_ALREADY_RECONCILED")
+            now = self._now()
+            self._held(db, item["account_id"], now)
+            item = self._reservation(db, admission_id)
+            if item["state"] == "reserved":
+                item.update(state="released", cancellation=value)
+                self._save(
+                    db, item, {"kind": "cancelled_unactivated", "at": now, "evidence": value}
+                )
+            return {
+                "admission_id": admission_id,
+                "state": item["state"],
+                "activation_allowed": False,
+            }
+
+        return self._command("cancel_unactivated", value, command_key, apply)
 
     def reconcile(
         self,

@@ -1,0 +1,19 @@
+{
+  "base": "5818835",
+  "captured_at": "2026-09-06T06:07:09.033247+00:00",
+  "product_sha256": {
+    "backend/karajan/orchestration/admission.py": "675bd8ec973458bd3ed98f236466102001b3290696f6e578d9e341cf3d88c0d8",
+    "backend/karajan/orchestration/routing.py": "a3c81c993a2ac1cd5fc05d94bee84a663b1d369b0980901a30d14d28593dc9bd",
+    "backend/karajan/capacity/store.py": "676f4a46cfd53fac5256cdea08e8ae8cd318b295bd159c9bf2fee5a90edef30d",
+    "backend/karajan/web/admission.py": "a032e36aebe71cc4c7f13222d452eef2378369a4f2c4a95b3067bd7ceb829f18",
+    "backend/karajan/web/app.py": "acd00ef20e1ea307d83f28473f607b82b84f8c805f69dd1012ea43c84776ea75"
+  },
+  "test_sha256": {
+    "admission_spec_sources.py": "e9fbc67f02fcfb77a86fe7b95e10adf6d31d69d455b14a5d54a7d597d43ae4fc",
+    "admission_spec_fixture.py": "df85b751fba29dbf33f279a875d61a366e51ffa96f9bea71e95f8ff3648d2ef0",
+    "test_public_admission.py": "5a7152bfe3ab28a242ad3e11ed7fe7b55cc45b5c5a5dad8837634ec4b3e36860",
+    "test_expiry_repro.py": "13e087a40e5742920859a5301a7130f78b7e56fa16fd537248f09765155d46fd",
+    "test_http_boundary.py": "1a36b878264ad6a39e116fe4d070c38a223e30ab8325f1f69de361b6b245b960"
+  },
+  "scope": "Admission slice since fixed base; preceding capacity binding implementation is unchanged base context, not reviewed as an independently authored change."
+}

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.144" timestamp="2026-09-06T13:50:16.975199+08:00" hostname="ProArt-Zhou"><testcase classname="tests.capacity.test_command_receipts" name="test_lost_admit_response_is_read_after_reopen_without_expiring_or_mutating_it" time="0.024"><failure message="AttributeError: 'CapacityStore' object has no attribute 'command_receipt'">ledger = (&lt;karajan.capacity.store.CapacityStore object at 0x0000021E734EA540&gt;, [5000.0])
+
+    def test_lost_admit_response_is_read_after_reopen_without_expiring_or_mutating_it(ledger):
+        store, clock = ledger
+        value = request()
+        store.admit(value, command_key="lost-response")
+        before = store.snapshot()
+        clock[0] = 5000.0
+        recovered = CapacityStore(store.path, clock=lambda: clock[0])
+    
+&gt;       receipt = recovered.command_receipt(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+            "admit", {**value, "expected_capacity": None}, command_key="lost-response"
+        )
+E       AttributeError: 'CapacityStore' object has no attribute 'command_receipt'
+
+tests\capacity\test_command_receipts.py:17: AttributeError</failure></testcase></testsuite></testsuites>
