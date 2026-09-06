@@ -20,6 +20,8 @@ PRD、8 个 M0 Issues、20 个 M1–M4 实现任务和独立 CI 任务已发布�
 
 [DeepSeek 离线接入](docs/implementation/m2-deepseek-offline.md) 包含纯协议适配、固定 OpenCode 工具循环、现有预算账本准入与可重跑故障样例。测试全部使用本地假服务，真实 API 资格保持 `not_run`。
 
+[共享配额池](docs/implementation/m3-shared-capacity.md) 已提供跨 Run/模型的多窗口准入、当前 Commander 保护量、消费核销与未知额度规则。Windows/WSL2 的本机验证可重跑；资源工作台和统一调度接线仍在推进。
+
 ## 完整架构设计
 
 从 [Karajan 完整架构设计 v1](docs/architecture/README.md) 开始阅读。它是当前设计入口，覆盖：

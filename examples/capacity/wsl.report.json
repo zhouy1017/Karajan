@@ -1,0 +1,1015 @@
+{
+  "schema_version": "karajan.capacity.fixture-report.v1",
+  "case_status": "passed",
+  "conditions": {
+    "blocked_request_rejected": true,
+    "one_contender_admitted": true,
+    "lead_admitted": true,
+    "exactly_two_actual_fixture_requests": true,
+    "rejected_have_no_actual_fixture_requests": true,
+    "reopened_snapshot_matches": true,
+    "two_durable_receipts": true
+  },
+  "recorded_at": "2026-09-05T16:44:51.936786+00:00",
+  "os": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "python": "3.12.3",
+  "input_sha256": "59d9e9a63f5f4ea4c5e6d7cae164d6e1dde5309bb5d517f8bfddd72a8181ac35",
+  "source_sha256": {
+    "__init__.py": "40bb4ac634db80514b97a271d428dec8d74432488492b87fedcc3eeda4676edf",
+    "__main__.py": "163e50708ddbe8e193d0dcb47a81beb6d291abbb965dc15e85d9417af0b02933",
+    "models.py": "bd58f6b0c98991cfaff402e863cebbab6f819b54ba244a05db56b4706d40d7ad",
+    "probe.py": "ebf14b026b19cd805ec35a2003b89ebd63d7162b2d0dd5c9ab49bb79d76e6c55",
+    "store.py": "9d144304fc6696175fb8a99ea28b5f8d9e226f77bc3162d5dd7f12f96f0b2225"
+  },
+  "blocked": {
+    "decision": "rejected",
+    "reason_codes": [
+      "QUOTA_INSUFFICIENT:weekly"
+    ],
+    "policy_revision": 1,
+    "request": {
+      "attempt_id": "blocked",
+      "run_id": "run-a",
+      "profile_id": "fast-a",
+      "profile_revision": 1,
+      "role": "worker",
+      "purpose": null,
+      "authorization_ref": "fixture-approved-scope",
+      "rulebook_revision": "rules-run-a",
+      "duration_seconds": 30,
+      "demand": {
+        "short": "2",
+        "weekly": "100",
+        "allowance": "2"
+      }
+    },
+    "observations": {
+      "allowance": {
+        "adjustment_reason": null,
+        "amount": "20",
+        "coverage_ref": null,
+        "covered_usage_ids": [],
+        "limit": "100",
+        "metric": "remaining",
+        "observed_at": 1000.0,
+        "pool_id": "allowance",
+        "reset_at": 10000.0,
+        "source": "fixture",
+        "source_ref": "local-fixture-observer",
+        "window_id": "window-1"
+      },
+      "short": {
+        "adjustment_reason": null,
+        "amount": "20",
+        "coverage_ref": null,
+        "covered_usage_ids": [],
+        "limit": "100",
+        "metric": "remaining",
+        "observed_at": 1000.0,
+        "pool_id": "short",
+        "reset_at": 2000.0,
+        "source": "fixture",
+        "source_ref": "local-fixture-observer",
+        "window_id": "window-1"
+      },
+      "weekly": {
+        "adjustment_reason": null,
+        "amount": "5",
+        "coverage_ref": null,
+        "covered_usage_ids": [],
+        "limit": "100",
+        "metric": "remaining",
+        "observed_at": 1000.0,
+        "pool_id": "weekly",
+        "reset_at": 10000.0,
+        "source": "fixture",
+        "source_ref": "local-fixture-observer",
+        "window_id": "window-1"
+      }
+    },
+    "available_before": {
+      "allowance": "20.000000",
+      "short": "20.000000",
+      "weekly": "3.000000"
+    },
+    "admission_id": null,
+    "profile_enabled": false,
+    "activation_allowed": false,
+    "live_qualification": "not_run"
+  },
+  "contention": [
+    {
+      "decision": "rejected",
+      "reason_codes": [
+        "QUOTA_INSUFFICIENT:weekly"
+      ],
+      "policy_revision": 1,
+      "request": {
+        "attempt_id": "worker-a",
+        "run_id": "run-a",
+        "profile_id": "fast-a",
+        "profile_revision": 1,
+        "role": "worker",
+        "purpose": null,
+        "authorization_ref": "fixture-approved-scope",
+        "rulebook_revision": "rules-run-a",
+        "duration_seconds": 30,
+        "demand": {
+          "short": "2",
+          "weekly": "2",
+          "allowance": "2"
+        }
+      },
+      "observations": {
+        "allowance": {
+          "adjustment_reason": null,
+          "amount": "20",
+          "coverage_ref": null,
+          "covered_usage_ids": [],
+          "limit": "100",
+          "metric": "remaining",
+          "observed_at": 1000.0,
+          "pool_id": "allowance",
+          "reset_at": 10000.0,
+          "source": "fixture",
+          "source_ref": "local-fixture-observer",
+          "window_id": "window-1"
+        },
+        "short": {
+          "adjustment_reason": null,
+          "amount": "20",
+          "coverage_ref": null,
+          "covered_usage_ids": [],
+          "limit": "100",
+          "metric": "remaining",
+          "observed_at": 1000.0,
+          "pool_id": "short",
+          "reset_at": 2000.0,
+          "source": "fixture",
+          "source_ref": "local-fixture-observer",
+          "window_id": "window-1"
+        },
+        "weekly": {
+          "adjustment_reason": null,
+          "amount": "5",
+          "coverage_ref": null,
+          "covered_usage_ids": [],
+          "limit": "100",
+          "metric": "remaining",
+          "observed_at": 1000.0,
+          "pool_id": "weekly",
+          "reset_at": 10000.0,
+          "source": "fixture",
+          "source_ref": "local-fixture-observer",
+          "window_id": "window-1"
+        }
+      },
+      "available_before": {
+        "allowance": "18.000000",
+        "short": "18.000000",
+        "weekly": "1.000000"
+      },
+      "admission_id": null,
+      "profile_enabled": false,
+      "activation_allowed": false,
+      "live_qualification": "not_run"
+    },
+    {
+      "decision": "admitted",
+      "reason_codes": [],
+      "policy_revision": 1,
+      "request": {
+        "attempt_id": "worker-b",
+        "run_id": "run-b",
+        "profile_id": "fast-b",
+        "profile_revision": 1,
+        "role": "worker",
+        "purpose": null,
+        "authorization_ref": "fixture-approved-scope",
+        "rulebook_revision": "rules-run-b",
+        "duration_seconds": 30,
+        "demand": {
+          "short": "2",
+          "weekly": "2",
+          "allowance": "2"
+        }
+      },
+      "observations": {
+        "allowance": {
+          "adjustment_reason": null,
+          "amount": "20",
+          "coverage_ref": null,
+          "covered_usage_ids": [],
+          "limit": "100",
+          "metric": "remaining",
+          "observed_at": 1000.0,
+          "pool_id": "allowance",
+          "reset_at": 10000.0,
+          "source": "fixture",
+          "source_ref": "local-fixture-observer",
+          "window_id": "window-1"
+        },
+        "short": {
+          "adjustment_reason": null,
+          "amount": "20",
+          "coverage_ref": null,
+          "covered_usage_ids": [],
+          "limit": "100",
+          "metric": "remaining",
+          "observed_at": 1000.0,
+          "pool_id": "short",
+          "reset_at": 2000.0,
+          "source": "fixture",
+          "source_ref": "local-fixture-observer",
+          "window_id": "window-1"
+        },
+        "weekly": {
+          "adjustment_reason": null,
+          "amount": "5",
+          "coverage_ref": null,
+          "covered_usage_ids": [],
+          "limit": "100",
+          "metric": "remaining",
+          "observed_at": 1000.0,
+          "pool_id": "weekly",
+          "reset_at": 10000.0,
+          "source": "fixture",
+          "source_ref": "local-fixture-observer",
+          "window_id": "window-1"
+        }
+      },
+      "available_before": {
+        "allowance": "20.000000",
+        "short": "20.000000",
+        "weekly": "3.000000"
+      },
+      "admission_id": "440111d6-dff0-4c3c-beae-72f0f786e1db",
+      "profile_enabled": false,
+      "activation_allowed": false,
+      "live_qualification": "not_run"
+    }
+  ],
+  "lead": {
+    "decision": "admitted",
+    "reason_codes": [],
+    "policy_revision": 1,
+    "request": {
+      "attempt_id": "lead",
+      "run_id": "run-a",
+      "profile_id": "fast-a",
+      "profile_revision": 1,
+      "role": "commander",
+      "purpose": "lead",
+      "authorization_ref": "fixture-approved-scope",
+      "rulebook_revision": "rules-run-a",
+      "duration_seconds": 30,
+      "demand": {
+        "short": "2",
+        "weekly": "2",
+        "allowance": "2"
+      }
+    },
+    "observations": {
+      "allowance": {
+        "adjustment_reason": null,
+        "amount": "20",
+        "coverage_ref": null,
+        "covered_usage_ids": [],
+        "limit": "100",
+        "metric": "remaining",
+        "observed_at": 1000.0,
+        "pool_id": "allowance",
+        "reset_at": 10000.0,
+        "source": "fixture",
+        "source_ref": "local-fixture-observer",
+        "window_id": "window-1"
+      },
+      "short": {
+        "adjustment_reason": null,
+        "amount": "20",
+        "coverage_ref": null,
+        "covered_usage_ids": [],
+        "limit": "100",
+        "metric": "remaining",
+        "observed_at": 1000.0,
+        "pool_id": "short",
+        "reset_at": 2000.0,
+        "source": "fixture",
+        "source_ref": "local-fixture-observer",
+        "window_id": "window-1"
+      },
+      "weekly": {
+        "adjustment_reason": null,
+        "amount": "5",
+        "coverage_ref": null,
+        "covered_usage_ids": [],
+        "limit": "100",
+        "metric": "remaining",
+        "observed_at": 1000.0,
+        "pool_id": "weekly",
+        "reset_at": 10000.0,
+        "source": "fixture",
+        "source_ref": "local-fixture-observer",
+        "window_id": "window-1"
+      }
+    },
+    "available_before": {
+      "allowance": "19.000000",
+      "short": "19.000000",
+      "weekly": "4.000000"
+    },
+    "admission_id": "933fc308-3a28-4c55-9074-05d8251b9832",
+    "profile_enabled": false,
+    "activation_allowed": false,
+    "live_qualification": "not_run"
+  },
+  "effects": [
+    {
+      "activation": {
+        "decision": "capacity_revalidated",
+        "reason_codes": [],
+        "policy_revision": 1,
+        "admission_id": "440111d6-dff0-4c3c-beae-72f0f786e1db",
+        "expires_at": 1030.0,
+        "observations": {
+          "allowance": {
+            "adjustment_reason": null,
+            "amount": "20",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1000.0,
+            "pool_id": "allowance",
+            "reset_at": 10000.0,
+            "source": "fixture",
+            "source_ref": "local-fixture-observer",
+            "window_id": "window-1"
+          },
+          "short": {
+            "adjustment_reason": null,
+            "amount": "20",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1000.0,
+            "pool_id": "short",
+            "reset_at": 2000.0,
+            "source": "fixture",
+            "source_ref": "local-fixture-observer",
+            "window_id": "window-1"
+          },
+          "weekly": {
+            "adjustment_reason": null,
+            "amount": "5",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1000.0,
+            "pool_id": "weekly",
+            "reset_at": 10000.0,
+            "source": "fixture",
+            "source_ref": "local-fixture-observer",
+            "window_id": "window-1"
+          }
+        },
+        "available_before": {
+          "allowance": "20.000000",
+          "short": "20.000000",
+          "weekly": "3.000000"
+        },
+        "activation_allowed": false,
+        "live_qualification": "not_run"
+      },
+      "receipt": {
+        "receipt": {
+          "admission_id": "440111d6-dff0-4c3c-beae-72f0f786e1db",
+          "id": "fixture-call-440111d6-dff0-4c3c-beae-72f0f786e1db",
+          "amounts": {
+            "short": "1",
+            "weekly": "1",
+            "allowance": "1"
+          },
+          "window_ids": {
+            "allowance": "window-1",
+            "short": "window-1",
+            "weekly": "window-1"
+          },
+          "evidence_ref": "local-http-receiver",
+          "attribution_ref": "scripted-fixture-window"
+        },
+        "recorded_at": 1000.0,
+        "window_resets": {
+          "allowance": 10000.0,
+          "short": 2000.0,
+          "weekly": 10000.0
+        },
+        "over_estimate_pools": []
+      },
+      "reconciliation": {
+        "admission_id": "440111d6-dff0-4c3c-beae-72f0f786e1db",
+        "state": "ended",
+        "activation_allowed": false
+      },
+      "sent": true
+    },
+    {
+      "activation": {
+        "decision": "capacity_revalidated",
+        "reason_codes": [],
+        "policy_revision": 1,
+        "admission_id": "933fc308-3a28-4c55-9074-05d8251b9832",
+        "expires_at": 1030.0,
+        "observations": {
+          "allowance": {
+            "adjustment_reason": null,
+            "amount": "20",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1000.0,
+            "pool_id": "allowance",
+            "reset_at": 10000.0,
+            "source": "fixture",
+            "source_ref": "local-fixture-observer",
+            "window_id": "window-1"
+          },
+          "short": {
+            "adjustment_reason": null,
+            "amount": "20",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1000.0,
+            "pool_id": "short",
+            "reset_at": 2000.0,
+            "source": "fixture",
+            "source_ref": "local-fixture-observer",
+            "window_id": "window-1"
+          },
+          "weekly": {
+            "adjustment_reason": null,
+            "amount": "5",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1000.0,
+            "pool_id": "weekly",
+            "reset_at": 10000.0,
+            "source": "fixture",
+            "source_ref": "local-fixture-observer",
+            "window_id": "window-1"
+          }
+        },
+        "available_before": {
+          "allowance": "19.000000",
+          "short": "19.000000",
+          "weekly": "4.000000"
+        },
+        "activation_allowed": false,
+        "live_qualification": "not_run"
+      },
+      "receipt": {
+        "receipt": {
+          "admission_id": "933fc308-3a28-4c55-9074-05d8251b9832",
+          "id": "fixture-call-933fc308-3a28-4c55-9074-05d8251b9832",
+          "amounts": {
+            "short": "1",
+            "weekly": "1",
+            "allowance": "1"
+          },
+          "window_ids": {
+            "allowance": "window-1",
+            "short": "window-1",
+            "weekly": "window-1"
+          },
+          "evidence_ref": "local-http-receiver",
+          "attribution_ref": "scripted-fixture-window"
+        },
+        "recorded_at": 1000.0,
+        "window_resets": {
+          "allowance": 10000.0,
+          "short": 2000.0,
+          "weekly": 10000.0
+        },
+        "over_estimate_pools": []
+      },
+      "reconciliation": {
+        "admission_id": "933fc308-3a28-4c55-9074-05d8251b9832",
+        "state": "ended",
+        "activation_allowed": false
+      },
+      "sent": true
+    }
+  ],
+  "receiver_count": 2,
+  "receiver_requests": [
+    {
+      "admission_id": "440111d6-dff0-4c3c-beae-72f0f786e1db",
+      "attempt_id": "worker-b"
+    },
+    {
+      "admission_id": "933fc308-3a28-4c55-9074-05d8251b9832",
+      "attempt_id": "lead"
+    }
+  ],
+  "blocked_request_receiver_count": 0,
+  "reopened_snapshot_matches": true,
+  "snapshot": {
+    "pools": [
+      {
+        "account_id": "shared-account",
+        "id": "allowance",
+        "kind": "platform_allowance",
+        "unit": "requests",
+        "window_kind": "fixed"
+      },
+      {
+        "account_id": "shared-account",
+        "id": "short",
+        "kind": "service",
+        "unit": "requests",
+        "window_kind": "fixed"
+      },
+      {
+        "account_id": "shared-account",
+        "id": "weekly",
+        "kind": "service",
+        "unit": "requests",
+        "window_kind": "fixed"
+      }
+    ],
+    "profiles": [
+      {
+        "account_id": "shared-account",
+        "id": "fast-a",
+        "pool_ids": [
+          "short",
+          "weekly",
+          "allowance"
+        ],
+        "revision": 1
+      },
+      {
+        "account_id": "shared-account",
+        "id": "fast-b",
+        "pool_ids": [
+          "short",
+          "weekly",
+          "allowance"
+        ],
+        "revision": 1
+      }
+    ],
+    "reservations": [
+      {
+        "account_id": "shared-account",
+        "activation_at": 1000.0,
+        "activation_policy_revision": 1,
+        "created_at": 1000.0,
+        "expires_at": 1030.0,
+        "id": "440111d6-dff0-4c3c-beae-72f0f786e1db",
+        "observations": {
+          "allowance": {
+            "adjustment_reason": null,
+            "amount": "20",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1000.0,
+            "pool_id": "allowance",
+            "reset_at": 10000.0,
+            "source": "fixture",
+            "source_ref": "local-fixture-observer",
+            "window_id": "window-1"
+          },
+          "short": {
+            "adjustment_reason": null,
+            "amount": "20",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1000.0,
+            "pool_id": "short",
+            "reset_at": 2000.0,
+            "source": "fixture",
+            "source_ref": "local-fixture-observer",
+            "window_id": "window-1"
+          },
+          "weekly": {
+            "adjustment_reason": null,
+            "amount": "5",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1000.0,
+            "pool_id": "weekly",
+            "reset_at": 10000.0,
+            "source": "fixture",
+            "source_ref": "local-fixture-observer",
+            "window_id": "window-1"
+          }
+        },
+        "policy_revision": 1,
+        "reconciliation": {
+          "admission_id": "440111d6-dff0-4c3c-beae-72f0f786e1db",
+          "evidence_ref": "local-http-response-and-usage",
+          "local_ended": true,
+          "not_sent": false,
+          "remote_ended": true,
+          "usage_complete": true
+        },
+        "request": {
+          "attempt_id": "worker-b",
+          "authorization_ref": "fixture-approved-scope",
+          "demand": {
+            "allowance": "2",
+            "short": "2",
+            "weekly": "2"
+          },
+          "duration_seconds": 30,
+          "profile_id": "fast-b",
+          "profile_revision": 1,
+          "purpose": null,
+          "role": "worker",
+          "rulebook_revision": "rules-run-b",
+          "run_id": "run-b"
+        },
+        "state": "ended"
+      },
+      {
+        "account_id": "shared-account",
+        "activation_at": 1000.0,
+        "activation_policy_revision": 1,
+        "created_at": 1000.0,
+        "expires_at": 1030.0,
+        "id": "933fc308-3a28-4c55-9074-05d8251b9832",
+        "observations": {
+          "allowance": {
+            "adjustment_reason": null,
+            "amount": "20",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1000.0,
+            "pool_id": "allowance",
+            "reset_at": 10000.0,
+            "source": "fixture",
+            "source_ref": "local-fixture-observer",
+            "window_id": "window-1"
+          },
+          "short": {
+            "adjustment_reason": null,
+            "amount": "20",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1000.0,
+            "pool_id": "short",
+            "reset_at": 2000.0,
+            "source": "fixture",
+            "source_ref": "local-fixture-observer",
+            "window_id": "window-1"
+          },
+          "weekly": {
+            "adjustment_reason": null,
+            "amount": "5",
+            "coverage_ref": null,
+            "covered_usage_ids": [],
+            "limit": "100",
+            "metric": "remaining",
+            "observed_at": 1000.0,
+            "pool_id": "weekly",
+            "reset_at": 10000.0,
+            "source": "fixture",
+            "source_ref": "local-fixture-observer",
+            "window_id": "window-1"
+          }
+        },
+        "policy_revision": 1,
+        "reconciliation": {
+          "admission_id": "933fc308-3a28-4c55-9074-05d8251b9832",
+          "evidence_ref": "local-http-response-and-usage",
+          "local_ended": true,
+          "not_sent": false,
+          "remote_ended": true,
+          "usage_complete": true
+        },
+        "request": {
+          "attempt_id": "lead",
+          "authorization_ref": "fixture-approved-scope",
+          "demand": {
+            "allowance": "2",
+            "short": "2",
+            "weekly": "2"
+          },
+          "duration_seconds": 30,
+          "profile_id": "fast-a",
+          "profile_revision": 1,
+          "purpose": "lead",
+          "role": "commander",
+          "rulebook_revision": "rules-run-a",
+          "run_id": "run-a"
+        },
+        "state": "ended"
+      }
+    ],
+    "policies": [
+      {
+        "revision": 1,
+        "policy": {
+          "account_id": "shared-account",
+          "conservative_mode": null,
+          "lead_reserve": {
+            "weekly": "2"
+          },
+          "lead_reserved_slots": 0,
+          "max_active_attempts": 4,
+          "max_attempt_duration_seconds": 60,
+          "observation_max_age_seconds": 30,
+          "require_official_observation": false,
+          "safety_margin": {}
+        }
+      }
+    ],
+    "observations": [
+      {
+        "sequence": 1,
+        "observation": {
+          "adjustment_reason": null,
+          "amount": "20",
+          "coverage_ref": null,
+          "covered_usage_ids": [],
+          "limit": "100",
+          "metric": "remaining",
+          "observed_at": 1000.0,
+          "pool_id": "short",
+          "reset_at": 2000.0,
+          "source": "fixture",
+          "source_ref": "local-fixture-observer",
+          "window_id": "window-1"
+        },
+        "received_at": 1000.0,
+        "applied": true
+      },
+      {
+        "sequence": 2,
+        "observation": {
+          "adjustment_reason": null,
+          "amount": "5",
+          "coverage_ref": null,
+          "covered_usage_ids": [],
+          "limit": "100",
+          "metric": "remaining",
+          "observed_at": 1000.0,
+          "pool_id": "weekly",
+          "reset_at": 10000.0,
+          "source": "fixture",
+          "source_ref": "local-fixture-observer",
+          "window_id": "window-1"
+        },
+        "received_at": 1000.0,
+        "applied": true
+      },
+      {
+        "sequence": 3,
+        "observation": {
+          "adjustment_reason": null,
+          "amount": "20",
+          "coverage_ref": null,
+          "covered_usage_ids": [],
+          "limit": "100",
+          "metric": "remaining",
+          "observed_at": 1000.0,
+          "pool_id": "allowance",
+          "reset_at": 10000.0,
+          "source": "fixture",
+          "source_ref": "local-fixture-observer",
+          "window_id": "window-1"
+        },
+        "received_at": 1000.0,
+        "applied": true
+      }
+    ],
+    "lifecycle": [
+      {
+        "at": 1000.0,
+        "kind": "activation_intent",
+        "result": {
+          "activation_allowed": false,
+          "admission_id": "440111d6-dff0-4c3c-beae-72f0f786e1db",
+          "available_before": {
+            "allowance": "20.000000",
+            "short": "20.000000",
+            "weekly": "3.000000"
+          },
+          "decision": "capacity_revalidated",
+          "expires_at": 1030.0,
+          "live_qualification": "not_run",
+          "observations": {
+            "allowance": {
+              "adjustment_reason": null,
+              "amount": "20",
+              "coverage_ref": null,
+              "covered_usage_ids": [],
+              "limit": "100",
+              "metric": "remaining",
+              "observed_at": 1000.0,
+              "pool_id": "allowance",
+              "reset_at": 10000.0,
+              "source": "fixture",
+              "source_ref": "local-fixture-observer",
+              "window_id": "window-1"
+            },
+            "short": {
+              "adjustment_reason": null,
+              "amount": "20",
+              "coverage_ref": null,
+              "covered_usage_ids": [],
+              "limit": "100",
+              "metric": "remaining",
+              "observed_at": 1000.0,
+              "pool_id": "short",
+              "reset_at": 2000.0,
+              "source": "fixture",
+              "source_ref": "local-fixture-observer",
+              "window_id": "window-1"
+            },
+            "weekly": {
+              "adjustment_reason": null,
+              "amount": "5",
+              "coverage_ref": null,
+              "covered_usage_ids": [],
+              "limit": "100",
+              "metric": "remaining",
+              "observed_at": 1000.0,
+              "pool_id": "weekly",
+              "reset_at": 10000.0,
+              "source": "fixture",
+              "source_ref": "local-fixture-observer",
+              "window_id": "window-1"
+            }
+          },
+          "policy_revision": 1,
+          "reason_codes": []
+        }
+      },
+      {
+        "at": 1000.0,
+        "evidence": {
+          "admission_id": "440111d6-dff0-4c3c-beae-72f0f786e1db",
+          "evidence_ref": "local-http-response-and-usage",
+          "local_ended": true,
+          "not_sent": false,
+          "remote_ended": true,
+          "usage_complete": true
+        },
+        "kind": "reconciled"
+      },
+      {
+        "at": 1000.0,
+        "kind": "activation_intent",
+        "result": {
+          "activation_allowed": false,
+          "admission_id": "933fc308-3a28-4c55-9074-05d8251b9832",
+          "available_before": {
+            "allowance": "19.000000",
+            "short": "19.000000",
+            "weekly": "4.000000"
+          },
+          "decision": "capacity_revalidated",
+          "expires_at": 1030.0,
+          "live_qualification": "not_run",
+          "observations": {
+            "allowance": {
+              "adjustment_reason": null,
+              "amount": "20",
+              "coverage_ref": null,
+              "covered_usage_ids": [],
+              "limit": "100",
+              "metric": "remaining",
+              "observed_at": 1000.0,
+              "pool_id": "allowance",
+              "reset_at": 10000.0,
+              "source": "fixture",
+              "source_ref": "local-fixture-observer",
+              "window_id": "window-1"
+            },
+            "short": {
+              "adjustment_reason": null,
+              "amount": "20",
+              "coverage_ref": null,
+              "covered_usage_ids": [],
+              "limit": "100",
+              "metric": "remaining",
+              "observed_at": 1000.0,
+              "pool_id": "short",
+              "reset_at": 2000.0,
+              "source": "fixture",
+              "source_ref": "local-fixture-observer",
+              "window_id": "window-1"
+            },
+            "weekly": {
+              "adjustment_reason": null,
+              "amount": "5",
+              "coverage_ref": null,
+              "covered_usage_ids": [],
+              "limit": "100",
+              "metric": "remaining",
+              "observed_at": 1000.0,
+              "pool_id": "weekly",
+              "reset_at": 10000.0,
+              "source": "fixture",
+              "source_ref": "local-fixture-observer",
+              "window_id": "window-1"
+            }
+          },
+          "policy_revision": 1,
+          "reason_codes": []
+        }
+      },
+      {
+        "at": 1000.0,
+        "evidence": {
+          "admission_id": "933fc308-3a28-4c55-9074-05d8251b9832",
+          "evidence_ref": "local-http-response-and-usage",
+          "local_ended": true,
+          "not_sent": false,
+          "remote_ended": true,
+          "usage_complete": true
+        },
+        "kind": "reconciled"
+      }
+    ],
+    "usage": [
+      {
+        "over_estimate_pools": [],
+        "receipt": {
+          "admission_id": "440111d6-dff0-4c3c-beae-72f0f786e1db",
+          "amounts": {
+            "allowance": "1",
+            "short": "1",
+            "weekly": "1"
+          },
+          "attribution_ref": "scripted-fixture-window",
+          "evidence_ref": "local-http-receiver",
+          "id": "fixture-call-440111d6-dff0-4c3c-beae-72f0f786e1db",
+          "window_ids": {
+            "allowance": "window-1",
+            "short": "window-1",
+            "weekly": "window-1"
+          }
+        },
+        "recorded_at": 1000.0,
+        "window_resets": {
+          "allowance": 10000.0,
+          "short": 2000.0,
+          "weekly": 10000.0
+        }
+      },
+      {
+        "over_estimate_pools": [],
+        "receipt": {
+          "admission_id": "933fc308-3a28-4c55-9074-05d8251b9832",
+          "amounts": {
+            "allowance": "1",
+            "short": "1",
+            "weekly": "1"
+          },
+          "attribution_ref": "scripted-fixture-window",
+          "evidence_ref": "local-http-receiver",
+          "id": "fixture-call-933fc308-3a28-4c55-9074-05d8251b9832",
+          "window_ids": {
+            "allowance": "window-1",
+            "short": "window-1",
+            "weekly": "window-1"
+          }
+        },
+        "recorded_at": 1000.0,
+        "window_resets": {
+          "allowance": 10000.0,
+          "short": 2000.0,
+          "weekly": 10000.0
+        }
+      }
+    ],
+    "failures": [],
+    "live_qualification": "not_run",
+    "activation_allowed": false
+  },
+  "official_model_calls": 0,
+  "cash_api_calls": 0,
+  "live_qualification": "not_run",
+  "profile_enabled": false,
+  "activation_allowed": false
+}

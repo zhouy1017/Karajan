@@ -1,0 +1,161 @@
+{
+  "before": {
+    "decision": "rejected",
+    "reason_codes": [
+      "QUOTA_INSUFFICIENT:weekly"
+    ],
+    "policy_revision": 1,
+    "request": {
+      "attempt_id": "after-exhaustion",
+      "run_id": "run",
+      "profile_id": "worker",
+      "profile_revision": 1,
+      "role": "worker",
+      "purpose": null,
+      "authorization_ref": "fixture-approved",
+      "rulebook_revision": "rules-1",
+      "duration_seconds": 30,
+      "demand": {
+        "weekly": "1"
+      }
+    },
+    "observations": {
+      "weekly": {
+        "adjustment_reason": null,
+        "amount": "0",
+        "coverage_ref": null,
+        "covered_usage_ids": [],
+        "limit": "100",
+        "metric": "remaining",
+        "observed_at": 1000.0,
+        "pool_id": "weekly",
+        "reset_at": 2000.0,
+        "source": "fixture",
+        "source_ref": "before-exhaustion",
+        "window_id": "week-1"
+      }
+    },
+    "available_before": {
+      "weekly": "0.000000"
+    },
+    "admission_id": null,
+    "profile_enabled": false,
+    "activation_allowed": false,
+    "live_qualification": "not_run"
+  },
+  "after": {
+    "decision": "rejected",
+    "reason_codes": [
+      "EXHAUSTION_REQUIRES_NEW_OBSERVATION:weekly"
+    ],
+    "policy_revision": 1,
+    "request": {
+      "attempt_id": "after-exhaustion",
+      "run_id": "run",
+      "profile_id": "worker",
+      "profile_revision": 1,
+      "role": "worker",
+      "purpose": null,
+      "authorization_ref": "fixture-approved",
+      "rulebook_revision": "rules-1",
+      "duration_seconds": 30,
+      "demand": {
+        "weekly": "1"
+      }
+    },
+    "observations": {
+      "weekly": {
+        "adjustment_reason": null,
+        "amount": null,
+        "coverage_ref": null,
+        "covered_usage_ids": [],
+        "limit": null,
+        "metric": "unknown",
+        "observed_at": 1021.0,
+        "pool_id": "weekly",
+        "reset_at": 2000.0,
+        "source": "fixture",
+        "source_ref": "still-unobservable-after-exhaustion",
+        "window_id": "week-1"
+      }
+    },
+    "available_before": {},
+    "admission_id": null,
+    "profile_enabled": false,
+    "activation_allowed": false,
+    "live_qualification": "not_run"
+  },
+  "snapshot": {
+    "reservations": [],
+    "policies": [
+      {
+        "revision": 1,
+        "policy": {
+          "account_id": "account",
+          "conservative_mode": {
+            "cooldown_seconds": 20,
+            "enabled": true,
+            "max_attempt_duration_seconds": 30,
+            "max_local_active_attempts": 1,
+            "observation_max_age_seconds": 100
+          },
+          "lead_reserve": {},
+          "lead_reserved_slots": 0,
+          "max_active_attempts": 1,
+          "max_attempt_duration_seconds": 30,
+          "observation_max_age_seconds": 100,
+          "require_official_observation": false,
+          "safety_margin": {}
+        }
+      }
+    ],
+    "observations": [
+      {
+        "sequence": 1,
+        "observation": {
+          "adjustment_reason": null,
+          "amount": "0",
+          "coverage_ref": null,
+          "covered_usage_ids": [],
+          "limit": "100",
+          "metric": "remaining",
+          "observed_at": 1000.0,
+          "pool_id": "weekly",
+          "reset_at": 2000.0,
+          "source": "fixture",
+          "source_ref": "before-exhaustion",
+          "window_id": "week-1"
+        },
+        "received_at": 1000.0,
+        "applied": true
+      },
+      {
+        "sequence": 2,
+        "observation": {
+          "adjustment_reason": null,
+          "amount": null,
+          "coverage_ref": null,
+          "covered_usage_ids": [],
+          "limit": null,
+          "metric": "unknown",
+          "observed_at": 1021.0,
+          "pool_id": "weekly",
+          "reset_at": 2000.0,
+          "source": "fixture",
+          "source_ref": "still-unobservable-after-exhaustion",
+          "window_id": "week-1"
+        },
+        "received_at": 1021.0,
+        "applied": true
+      }
+    ],
+    "lifecycle": [],
+    "usage": [],
+    "failures": [],
+    "live_qualification": "not_run",
+    "activation_allowed": false
+  },
+  "input_sha256": "6caade8a3cd80ea7aa8bf5c2fb9b7482a99ec14d0a302774aef80d95dd6f76b3",
+  "source_sha256": "fb39f020611c55e23fbbc8126059fa8d54c51a6a0f1cbc3726e4d597520e2c5b",
+  "cash_calls": 0
+}

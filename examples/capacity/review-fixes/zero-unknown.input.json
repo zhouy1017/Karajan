@@ -1,0 +1,80 @@
+{
+  "schema": "karajan.capacity.review.v1",
+  "initial_time": 1000.0,
+  "pool": {
+    "id": "weekly",
+    "account_id": "account",
+    "kind": "service",
+    "unit": "requests",
+    "window_kind": "fixed"
+  },
+  "profile": {
+    "id": "worker",
+    "revision": 1,
+    "account_id": "account",
+    "pool_ids": [
+      "weekly"
+    ]
+  },
+  "policy": {
+    "account_id": "account",
+    "max_active_attempts": 1,
+    "max_attempt_duration_seconds": 30,
+    "observation_max_age_seconds": 100,
+    "require_official_observation": false,
+    "safety_margin": {},
+    "lead_reserve": {},
+    "lead_reserved_slots": 0,
+    "conservative_mode": {
+      "enabled": true,
+      "max_local_active_attempts": 1,
+      "max_attempt_duration_seconds": 30,
+      "observation_max_age_seconds": 100,
+      "cooldown_seconds": 20
+    }
+  },
+  "initial_observation": {
+    "pool_id": "weekly",
+    "window_id": "week-1",
+    "observed_at": 1000.0,
+    "reset_at": 2000.0,
+    "source": "fixture",
+    "source_ref": "before-exhaustion",
+    "metric": "remaining",
+    "amount": "0",
+    "limit": "100",
+    "covered_usage_ids": []
+  },
+  "failure": null,
+  "later_time": 1021.0,
+  "later_observation": {
+    "pool_id": "weekly",
+    "window_id": "week-1",
+    "observed_at": 1021.0,
+    "reset_at": 2000.0,
+    "source": "fixture",
+    "source_ref": "still-unobservable-after-exhaustion",
+    "metric": "unknown",
+    "amount": null,
+    "limit": null,
+    "covered_usage_ids": []
+  },
+  "request": {
+    "attempt_id": "after-exhaustion",
+    "run_id": "run",
+    "profile_id": "worker",
+    "profile_revision": 1,
+    "role": "worker",
+    "purpose": null,
+    "authorization_ref": "fixture-approved",
+    "rulebook_revision": "rules-1",
+    "duration_seconds": 30,
+    "demand": {
+      "weekly": "1"
+    }
+  },
+  "expected": {
+    "decision": "rejected",
+    "reason": "An unknown observation in the exhausted window does not establish restored quota."
+  }
+}
