@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="30.823" timestamp="2026-09-06T00:48:19.172381+08:00" hostname="ProArt-Zhou"><testcase classname="tests.orchestration.test_serial" name="test_expired_queued_activation_is_a_durable_refusal_without_a_prepared_process" time="30.333"><failure message="AssertionError: {'actual_wall_time': 1788626927.514177, 'expires_at': 1788626929.5495715}&#10;assert 1788626927.514177 &gt; 1788626929.5495715">case = {'root': PosixPath('/tmp/pytest-of-chow/pytest-11/test_expired_queued_activation0'), 'fixture_root': PosixPath('/tmp/p...ctivation0/fixture/repository'), 'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x757e92dcb200&gt;, ...}
+
+    def test_expired_queued_activation_is_a_durable_refusal_without_a_prepared_process(
+        case: dict[str, Any],
+    ) -&gt; None:
+        from karajan.orchestration import LocalFixtureRunner
+    
+        approve(case)
+        coordinator = SerialCoordinator(
+            case["root"] / "orchestration",
+            case["planner"],
+            case["host"],
+            case["candidates"],
+            fixture_runner=LocalFixtureRunner(case["fixture_root"]),
+        )
+        queued = coordinator.enqueue(
+            case["run"]["id"],
+            "implement",
+            profile_ref=case["profile"],
+            command_key="worker",
+            principal="owner",
+        )
+        time.sleep(max(0, queued["attempts"][0]["activation"]["expires_at"] - time.time()) + 0.05)
+        observed_time = time.time()
+&gt;       assert observed_time &gt; queued["attempts"][0]["activation"]["expires_at"], {
+            "actual_wall_time": observed_time, "expires_at": queued["attempts"][0]["activation"]["expires_at"]
+        }
+E       AssertionError: {'actual_wall_time': 1788626927.514177, 'expires_at': 1788626929.5495715}
+E       assert 1788626927.514177 &gt; 1788626929.5495715
+
+tests/orchestration/test_serial.py:885: AssertionError</failure></testcase></testsuite></testsuites>

@@ -22,6 +22,8 @@ PRD、8 个 M0 Issues、20 个 M1–M4 实现任务和独立 CI 任务已发布�
 
 [共享配额池](docs/implementation/m3-shared-capacity.md) 已提供跨 Run/模型的多窗口准入、当前 Commander 保护量、消费核销与未知额度规则。Windows/WSL2 的本机验证可重跑；资源工作台和统一调度接线仍在推进。
 
+[串行执行协调](docs/implementation/m1-serial-orchestration.md) 已把批准计划、真实本机进程、固定候选、检查和独立审查串联为可恢复的离线流程。暂停、取消、输入变化与根任务重试都有持久记录；真实来源、资源原子准入和多 Worker 集成仍待接通。
+
 ## 完整架构设计
 
 从 [Karajan 完整架构设计 v1](docs/architecture/README.md) 开始阅读。它是当前设计入口，覆盖：

@@ -1,0 +1,3916 @@
+{
+  "schema_version": "karajan.serial-evidence.v1",
+  "status": "passed",
+  "temporary_root": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m",
+  "cases": [
+    {
+      "scenario": "success",
+      "exit_code": 0,
+      "stdout": "{\"status\": \"passed\", \"state\": \"local_gate_passed\", \"report\": \"C:\\\\Users\\\\Chooo\\\\AppData\\\\Local\\\\Temp\\\\karajan-serial-evidence-m57x_p0m\\\\success\\\\report.json\"}\n",
+      "stderr": "",
+      "report": {
+        "schema_version": "karajan.serial-probe.v1",
+        "status": "passed",
+        "scenario": "success",
+        "observed_at": "2026-09-05T16:49:25.647783+00:00",
+        "os": "Windows",
+        "python_version": "3.12.14",
+        "source_sha256": {
+          "__init__.py": "44e1aa3ab0a287b1ac3c5b3de9e49c6a2ed74b4d311a032e94a484b43cea53f6",
+          "_fixture_process.py": "41309db0762b87275d3b4e6c54eae3df3da79ed565fb26f29a6780a5cbd252e1",
+          "binding.py": "28647373bfee669b9fd9200a19e3b214f6aa39720e15bc168bc080b349f1ffca",
+          "fixture.py": "15554d1e48c9a45337555e3a60961a37632837615a07927f37f9b50d7f7248c9",
+          "serial.py": "41ec5934357aa2532eec20776215240d3ce7e1e5a99d07334ca13129fe094853"
+        },
+        "probe_source_sha256": "99a181c0c36bbbf3c4fc976bb66eae6a5c58496dc062a2c5176821b15cb5665f",
+        "cash_api_calls": 0,
+        "real_model_calls": 0,
+        "live_qualification": "not_run",
+        "planning_source": "explicit_example_fixture_receipt",
+        "review_source": "separate_fixed_process",
+        "snapshot": {
+          "attempts": [
+            {
+              "activation": {
+                "attempt_id": "2272d599-9a59-4a12-94d9-0b5de6706d20",
+                "authorization_ref": "approval:390f62567bf58349eb994e4070777b46bf4fbe8dd9b90e69c076ad4a11a93f9c",
+                "budget_ref": "run",
+                "expires_at": 1788626994.386545,
+                "fence": 1,
+                "id": "activation:2272d599-9a59-4a12-94d9-0b5de6706d20"
+              },
+              "fence": 1,
+              "id": "2272d599-9a59-4a12-94d9-0b5de6706d20",
+              "manifest": {
+                "authorization_ref": "approval:390f62567bf58349eb994e4070777b46bf4fbe8dd9b90e69c076ad4a11a93f9c",
+                "budget_ref": "run",
+                "fence": 1,
+                "id": "2272d599-9a59-4a12-94d9-0b5de6706d20",
+                "permissions": [
+                  "fixture-tools"
+                ],
+                "profile_id": "fixture-profile",
+                "profile_revision": 1,
+                "requested_binding": {
+                  "account_id": "fixture-account",
+                  "auth_mode": "none",
+                  "billing_path": "subscription_only",
+                  "channel_id": "fixture-channel",
+                  "model_id": "fixture-model",
+                  "native_settings": {},
+                  "runtime_kind": "fixture-runtime",
+                  "runtime_version": "1"
+                },
+                "role": "worker"
+              },
+              "physical": {
+                "attempt_id": "2272d599-9a59-4a12-94d9-0b5de6706d20",
+                "business_status": "pending",
+                "exit_code": 0,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:2272d599-9a59-4a12-94d9-0b5de6706d20",
+                "processes": [],
+                "remote_stop": "unknown",
+                "state": "exited",
+                "supervisor": {
+                  "birth": "134331005645540307",
+                  "pid": 58620
+                },
+                "usage_events": [],
+                "usage_settled": false
+              },
+              "root_task_id": "fbdcd3eefc82e2f6c0651368abf31050d983312af382fde29f53873d3a494e24",
+              "stage": "write",
+              "start_key": "serial:2272d599-9a59-4a12-94d9-0b5de6706d20",
+              "state": "completed",
+              "task_id": "implement",
+              "workspace": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\success\\fixture\\workspaces\\2272d599-9a59-4a12-94d9-0b5de6706d20"
+            },
+            {
+              "activation": {
+                "attempt_id": "cac5be97-0356-4373-a249-3e8d42f8c9b0",
+                "authorization_ref": "approval:390f62567bf58349eb994e4070777b46bf4fbe8dd9b90e69c076ad4a11a93f9c",
+                "budget_ref": "run",
+                "expires_at": 1788626994.937596,
+                "fence": 1,
+                "id": "activation:cac5be97-0356-4373-a249-3e8d42f8c9b0"
+              },
+              "fence": 1,
+              "id": "cac5be97-0356-4373-a249-3e8d42f8c9b0",
+              "manifest": {
+                "authorization_ref": "approval:390f62567bf58349eb994e4070777b46bf4fbe8dd9b90e69c076ad4a11a93f9c",
+                "budget_ref": "run",
+                "fence": 1,
+                "id": "cac5be97-0356-4373-a249-3e8d42f8c9b0",
+                "permissions": [
+                  "fixture-tools"
+                ],
+                "profile_id": "fixture-profile",
+                "profile_revision": 1,
+                "requested_binding": {
+                  "account_id": "fixture-account",
+                  "auth_mode": "none",
+                  "billing_path": "subscription_only",
+                  "channel_id": "fixture-channel",
+                  "model_id": "fixture-model",
+                  "native_settings": {},
+                  "runtime_kind": "fixture-runtime",
+                  "runtime_version": "1"
+                },
+                "role": "worker"
+              },
+              "physical": {
+                "attempt_id": "cac5be97-0356-4373-a249-3e8d42f8c9b0",
+                "business_status": "pending",
+                "exit_code": 0,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:cac5be97-0356-4373-a249-3e8d42f8c9b0",
+                "processes": [],
+                "remote_stop": "unknown",
+                "state": "exited",
+                "supervisor": {
+                  "birth": "134331005649634470",
+                  "pid": 59904
+                },
+                "usage_events": [],
+                "usage_settled": false
+              },
+              "root_task_id": "fbdcd3eefc82e2f6c0651368abf31050d983312af382fde29f53873d3a494e24",
+              "stage": "check",
+              "start_key": "serial:cac5be97-0356-4373-a249-3e8d42f8c9b0",
+              "state": "completed",
+              "task_id": "implement",
+              "workspace": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\success\\fixture\\workspaces\\cac5be97-0356-4373-a249-3e8d42f8c9b0"
+            },
+            {
+              "activation": {
+                "attempt_id": "b5c4db36-10f1-44db-b7d9-5ff56d2b8301",
+                "authorization_ref": "approval:390f62567bf58349eb994e4070777b46bf4fbe8dd9b90e69c076ad4a11a93f9c",
+                "budget_ref": "run",
+                "expires_at": 1788626995.1985207,
+                "fence": 1,
+                "id": "activation:b5c4db36-10f1-44db-b7d9-5ff56d2b8301"
+              },
+              "fence": 1,
+              "id": "b5c4db36-10f1-44db-b7d9-5ff56d2b8301",
+              "manifest": {
+                "authorization_ref": "approval:390f62567bf58349eb994e4070777b46bf4fbe8dd9b90e69c076ad4a11a93f9c",
+                "budget_ref": "run",
+                "fence": 1,
+                "id": "b5c4db36-10f1-44db-b7d9-5ff56d2b8301",
+                "permissions": [
+                  "fixture-tools"
+                ],
+                "profile_id": "fixture-profile",
+                "profile_revision": 1,
+                "requested_binding": {
+                  "account_id": "fixture-account",
+                  "auth_mode": "none",
+                  "billing_path": "subscription_only",
+                  "channel_id": "fixture-channel",
+                  "model_id": "fixture-model",
+                  "native_settings": {},
+                  "runtime_kind": "fixture-runtime",
+                  "runtime_version": "1"
+                },
+                "role": "reviewer"
+              },
+              "physical": {
+                "prepared_id": "serial:b5c4db36-10f1-44db-b7d9-5ff56d2b8301",
+                "attempt_id": "b5c4db36-10f1-44db-b7d9-5ff56d2b8301",
+                "state": "exited",
+                "supervisor": {
+                  "pid": 58184,
+                  "birth": "134331005653792255"
+                },
+                "processes": [],
+                "exit_code": 0,
+                "remote_stop": "unknown",
+                "launch_phase": "acknowledged",
+                "business_status": "pending",
+                "usage_settled": false,
+                "usage_events": []
+              },
+              "root_task_id": "27bfc173e4e697d6df41f36ad3b23241f794fbb0c5687534530ee89eb961d3c1",
+              "stage": "review",
+              "start_key": "serial:b5c4db36-10f1-44db-b7d9-5ff56d2b8301",
+              "state": "completed",
+              "task_id": "review",
+              "workspace": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\success\\fixture\\workspaces\\b5c4db36-10f1-44db-b7d9-5ff56d2b8301"
+            }
+          ],
+          "cancelled": false,
+          "counters": {
+            "max_duration_seconds": 300,
+            "max_infrastructure_retries_per_root_task": 2,
+            "max_quality_repair_rounds": 2,
+            "max_total_attempts": 8,
+            "quality_repair_rounds": 0,
+            "roots": {
+              "27bfc173e4e697d6df41f36ad3b23241f794fbb0c5687534530ee89eb961d3c1": {
+                "infrastructure_retries": 0
+              },
+              "fbdcd3eefc82e2f6c0651368abf31050d983312af382fde29f53873d3a494e24": {
+                "infrastructure_retries": 0
+              }
+            },
+            "started_at": 1788626964.386545,
+            "total_attempts": 3
+          },
+          "delivery_eligible": false,
+          "dispatch_eligible": false,
+          "execution_plan_revision": 1,
+          "execution_worker_tasks": [
+            "implement"
+          ],
+          "inbox": [
+            {
+              "attempt_id": "2272d599-9a59-4a12-94d9-0b5de6706d20",
+              "id": "22dabbe4bc2bee51a665981178bd6e25e51fba84c950a0d37700091536ff3745",
+              "physical": {
+                "attempt_id": "2272d599-9a59-4a12-94d9-0b5de6706d20",
+                "business_status": "pending",
+                "exit_code": null,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:2272d599-9a59-4a12-94d9-0b5de6706d20",
+                "processes": [],
+                "remote_stop": "unknown",
+                "state": "unknown",
+                "supervisor": {
+                  "birth": "134331005645466200",
+                  "pid": 34120
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "2272d599-9a59-4a12-94d9-0b5de6706d20",
+              "id": "4b0fe304251184b374b66d8fd7468aa506aae534151ee56a27d904018f43fbbb",
+              "physical": {
+                "attempt_id": "2272d599-9a59-4a12-94d9-0b5de6706d20",
+                "business_status": "pending",
+                "exit_code": null,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:2272d599-9a59-4a12-94d9-0b5de6706d20",
+                "processes": [
+                  {
+                    "birth": "134331005645540307",
+                    "pid": 58620
+                  },
+                  {
+                    "birth": "134331005647109707",
+                    "pid": 47836
+                  },
+                  {
+                    "birth": "134331005647189896",
+                    "pid": 59080
+                  }
+                ],
+                "remote_stop": "unknown",
+                "state": "running",
+                "supervisor": {
+                  "birth": "134331005645540307",
+                  "pid": 58620
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "2272d599-9a59-4a12-94d9-0b5de6706d20",
+              "id": "ab3270735847bd07ba02361cf56d8ffc9a65ae025c0326e2df78e3f58a38925f",
+              "physical": {
+                "attempt_id": "2272d599-9a59-4a12-94d9-0b5de6706d20",
+                "business_status": "pending",
+                "exit_code": 0,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:2272d599-9a59-4a12-94d9-0b5de6706d20",
+                "processes": [],
+                "remote_stop": "unknown",
+                "state": "exited",
+                "supervisor": {
+                  "birth": "134331005645540307",
+                  "pid": 58620
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "cac5be97-0356-4373-a249-3e8d42f8c9b0",
+              "id": "a37e91de01866a0da1dd037dc647d2c13b1569a123971571be389ee3511e7347",
+              "physical": {
+                "attempt_id": "cac5be97-0356-4373-a249-3e8d42f8c9b0",
+                "business_status": "pending",
+                "exit_code": null,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:cac5be97-0356-4373-a249-3e8d42f8c9b0",
+                "processes": [],
+                "remote_stop": "unknown",
+                "state": "unknown",
+                "supervisor": {
+                  "birth": "134331005649548053",
+                  "pid": 58944
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "cac5be97-0356-4373-a249-3e8d42f8c9b0",
+              "id": "386dbadaa582eb87df549f92ec564b1e4f296277684a09fd8e02e725aa1777b5",
+              "physical": {
+                "attempt_id": "cac5be97-0356-4373-a249-3e8d42f8c9b0",
+                "business_status": "pending",
+                "exit_code": null,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:cac5be97-0356-4373-a249-3e8d42f8c9b0",
+                "processes": [
+                  {
+                    "birth": "134331005649634470",
+                    "pid": 59904
+                  },
+                  {
+                    "birth": "134331005651186446",
+                    "pid": 44056
+                  },
+                  {
+                    "birth": "134331005651266058",
+                    "pid": 42412
+                  }
+                ],
+                "remote_stop": "unknown",
+                "state": "running",
+                "supervisor": {
+                  "birth": "134331005649634470",
+                  "pid": 59904
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "cac5be97-0356-4373-a249-3e8d42f8c9b0",
+              "id": "aca78602010ccfd8f3d7df399f92f12e50ff0c597b7ad325b86e30e0f66bf2cb",
+              "physical": {
+                "attempt_id": "cac5be97-0356-4373-a249-3e8d42f8c9b0",
+                "business_status": "pending",
+                "exit_code": 0,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:cac5be97-0356-4373-a249-3e8d42f8c9b0",
+                "processes": [],
+                "remote_stop": "unknown",
+                "state": "exited",
+                "supervisor": {
+                  "birth": "134331005649634470",
+                  "pid": 59904
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "b5c4db36-10f1-44db-b7d9-5ff56d2b8301",
+              "id": "49a8366b8a860de6baef80f0c336652433e6a7db71d96df88f0c63c3393eec93",
+              "physical": {
+                "attempt_id": "b5c4db36-10f1-44db-b7d9-5ff56d2b8301",
+                "business_status": "pending",
+                "exit_code": null,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:b5c4db36-10f1-44db-b7d9-5ff56d2b8301",
+                "processes": [],
+                "remote_stop": "unknown",
+                "state": "unknown",
+                "supervisor": {
+                  "birth": "134331005653713534",
+                  "pid": 53484
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "b5c4db36-10f1-44db-b7d9-5ff56d2b8301",
+              "id": "6264d1f6b3ed7016fda99782ed54d024842966ffecbba123f8cef73e54fcd38c",
+              "physical": {
+                "attempt_id": "b5c4db36-10f1-44db-b7d9-5ff56d2b8301",
+                "business_status": "pending",
+                "exit_code": null,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:b5c4db36-10f1-44db-b7d9-5ff56d2b8301",
+                "processes": [
+                  {
+                    "birth": "134331005653792255",
+                    "pid": 58184
+                  },
+                  {
+                    "birth": "134331005655456282",
+                    "pid": 60376
+                  },
+                  {
+                    "birth": "134331005655538538",
+                    "pid": 48044
+                  }
+                ],
+                "remote_stop": "unknown",
+                "state": "running",
+                "supervisor": {
+                  "birth": "134331005653792255",
+                  "pid": 58184
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "id": "f669969a7f6a0d5b9d2a32fb124ce840addd1f67b262b4605d7eb0266a9fe23f",
+              "attempt_id": "b5c4db36-10f1-44db-b7d9-5ff56d2b8301",
+              "physical": {
+                "prepared_id": "serial:b5c4db36-10f1-44db-b7d9-5ff56d2b8301",
+                "attempt_id": "b5c4db36-10f1-44db-b7d9-5ff56d2b8301",
+                "state": "exited",
+                "supervisor": {
+                  "pid": 58184,
+                  "birth": "134331005653792255"
+                },
+                "processes": [],
+                "exit_code": 0,
+                "remote_stop": "unknown",
+                "launch_phase": "acknowledged",
+                "business_status": "pending",
+                "usage_settled": false,
+                "usage_events": []
+              }
+            }
+          ],
+          "live_qualification": "not_run",
+          "outbox": [
+            {
+              "attempt_id": "2272d599-9a59-4a12-94d9-0b5de6706d20",
+              "id": "serial:2272d599-9a59-4a12-94d9-0b5de6706d20",
+              "kind": "start",
+              "state": "acknowledged"
+            },
+            {
+              "attempt_id": "cac5be97-0356-4373-a249-3e8d42f8c9b0",
+              "id": "serial:cac5be97-0356-4373-a249-3e8d42f8c9b0",
+              "kind": "start",
+              "state": "acknowledged"
+            },
+            {
+              "attempt_id": "b5c4db36-10f1-44db-b7d9-5ff56d2b8301",
+              "id": "serial:b5c4db36-10f1-44db-b7d9-5ff56d2b8301",
+              "kind": "start",
+              "state": "acknowledged"
+            }
+          ],
+          "paused": false,
+          "quality_repair_enabled": false,
+          "reason_codes": [],
+          "run_id": "4f2dccdb-3d01-41cf-84f3-c1352158fd63",
+          "schema_version": "karajan.serial-run.v1",
+          "state": "local_gate_passed",
+          "tasks": {
+            "implement": {
+              "baseline": {
+                "base_sha": "bfb183bd53d7d6d7704d1bc7866bfc2e974d8292",
+                "id": "ed23355e5da76169e6c0483dcd84b9aafbd9e094c8687f8babe72cdd57e7cf2a",
+                "manifest": [
+                  {
+                    "artifact": {
+                      "path": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\success\\candidates\\artifacts\\adf8aa1160ec2289c1679da284f0f4ea8d17af39717f3cad2d12de66d2803765",
+                      "sha256": "adf8aa1160ec2289c1679da284f0f4ea8d17af39717f3cad2d12de66d2803765",
+                      "size": 18
+                    },
+                    "blob_sha": "9885a0fb7efcb34d1c69566735feb177cbd129d0",
+                    "mode": "100644",
+                    "path": "original.txt"
+                  }
+                ],
+                "repository_identity": "119bd5a1-41de-4286-bf5a-7bb4f9422970",
+                "tree_sha": "3f3205d0317a63085a3f28af7e5227e8c8a683b5"
+              },
+              "binding": {
+                "authorization": {
+                  "budget_ref": "run",
+                  "checks": [
+                    "tests",
+                    "independent_review"
+                  ],
+                  "delivery": "pull_request",
+                  "profile_refs": [
+                    {
+                      "id": "fixture-profile",
+                      "revision": 1
+                    }
+                  ],
+                  "read_paths": [
+                    "src"
+                  ],
+                  "target_branch": "main",
+                  "write_paths": [
+                    "src"
+                  ]
+                },
+                "authorization_digest": "390f62567bf58349eb994e4070777b46bf4fbe8dd9b90e69c076ad4a11a93f9c",
+                "budget": {
+                  "currency_limits": {
+                    "CNY": "0",
+                    "USD": "0"
+                  },
+                  "id": "run",
+                  "max_duration_seconds": 300,
+                  "max_total_attempts": 8,
+                  "scope": "run"
+                },
+                "configuration_digest": "bd53d2bb88b31cd992a48c901fc7b08a46d828c6a583f4fe606c4b7e54182f81",
+                "effective_class": "T2",
+                "input_sha256": "760624e9b3d98e347acbb5d3357c355b1e7ba19f5581de1901a138dd3edd4382",
+                "limits": {
+                  "command_mode": "lead_with_advisers",
+                  "delivery_target": "pull_request",
+                  "implementation_readiness": "ready",
+                  "internal_delegation": "disabled_unless_admitted_and_observable",
+                  "max_infrastructure_retries_per_root_task": 2,
+                  "max_parallel_writers_per_project": 2,
+                  "max_quality_repair_rounds": 2,
+                  "merge_authority": "user",
+                  "plan_approval": "explicit_revision"
+                },
+                "plan_digest": "12a6c9794b94fc9720fa6e36f1230d9da321d6ad2fc331817803f9655d884f14",
+                "plan_revision": 1,
+                "planning_term": 1,
+                "profile": {
+                  "admission_granularity": "attempt",
+                  "auth_ref": "secret:fixture-reference",
+                  "binding": {
+                    "account_id": "fixture-account",
+                    "auth_mode": "none",
+                    "billing_path": "subscription_only",
+                    "channel_id": "fixture-channel",
+                    "model_id": "fixture-model",
+                    "native_settings": {},
+                    "runtime_kind": "fixture-runtime",
+                    "runtime_version": "1"
+                  },
+                  "id": "fixture-profile",
+                  "required_permissions": [
+                    "fixture-tools"
+                  ],
+                  "revision": 1,
+                  "usage_coverage": "unknown"
+                },
+                "registration": {
+                  "capability_evidence": [
+                    {
+                      "capability": "bounded_code_edit",
+                      "evidence_ref": "fixture:bounded_code_edit",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "bounded_implementation",
+                      "evidence_ref": "fixture:bounded_implementation",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "candidate_capture",
+                      "evidence_ref": "fixture:candidate_capture",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "code_review",
+                      "evidence_ref": "fixture:code_review",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "controlled_tools",
+                      "evidence_ref": "fixture:controlled_tools",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "critical_code_review",
+                      "evidence_ref": "fixture:critical_code_review",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "critical_implementation",
+                      "evidence_ref": "fixture:critical_implementation",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "design_reasoning",
+                      "evidence_ref": "fixture:design_reasoning",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "structured_findings",
+                      "evidence_ref": "fixture:structured_findings",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "structured_plan_output",
+                      "evidence_ref": "fixture:structured_plan_output",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    }
+                  ],
+                  "enabled": true,
+                  "id": "fixture-profile",
+                  "max_class": "T3",
+                  "model_family": "fixture-family",
+                  "profile": {
+                    "admission_granularity": "attempt",
+                    "auth_ref": "secret:fixture-reference",
+                    "binding": {
+                      "account_id": "fixture-account",
+                      "auth_mode": "none",
+                      "billing_path": "subscription_only",
+                      "channel_id": "fixture-channel",
+                      "model_id": "fixture-model",
+                      "native_settings": {},
+                      "runtime_kind": "fixture-runtime",
+                      "runtime_version": "1"
+                    },
+                    "id": "fixture-profile",
+                    "required_permissions": [
+                      "fixture-tools"
+                    ],
+                    "revision": 1,
+                    "usage_coverage": "unknown"
+                  },
+                  "quota_pool_refs": [
+                    "service-fixture"
+                  ],
+                  "required_isolation": "tool_sandboxed",
+                  "revision": 1
+                },
+                "repository": {
+                  "base_ref": "HEAD",
+                  "base_sha": "bfb183bd53d7d6d7704d1bc7866bfc2e974d8292",
+                  "identity_sha256": "01de36c4a1a4df5a54bef53f66c7be92b37fd60b1ec2e13780cd5d24d92c4da9",
+                  "root": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\success\\fixture\\repository"
+                },
+                "reviewers": [
+                  {
+                    "capability_evidence": [
+                      {
+                        "capability": "bounded_code_edit",
+                        "evidence_ref": "fixture:bounded_code_edit",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "bounded_implementation",
+                        "evidence_ref": "fixture:bounded_implementation",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "candidate_capture",
+                        "evidence_ref": "fixture:candidate_capture",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "code_review",
+                        "evidence_ref": "fixture:code_review",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "controlled_tools",
+                        "evidence_ref": "fixture:controlled_tools",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "critical_code_review",
+                        "evidence_ref": "fixture:critical_code_review",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "critical_implementation",
+                        "evidence_ref": "fixture:critical_implementation",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "design_reasoning",
+                        "evidence_ref": "fixture:design_reasoning",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "structured_findings",
+                        "evidence_ref": "fixture:structured_findings",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "structured_plan_output",
+                        "evidence_ref": "fixture:structured_plan_output",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      }
+                    ],
+                    "enabled": true,
+                    "id": "fixture-profile",
+                    "max_class": "T3",
+                    "model_family": "fixture-family",
+                    "profile": {
+                      "admission_granularity": "attempt",
+                      "auth_ref": "secret:fixture-reference",
+                      "binding": {
+                        "account_id": "fixture-account",
+                        "auth_mode": "none",
+                        "billing_path": "subscription_only",
+                        "channel_id": "fixture-channel",
+                        "model_id": "fixture-model",
+                        "native_settings": {},
+                        "runtime_kind": "fixture-runtime",
+                        "runtime_version": "1"
+                      },
+                      "id": "fixture-profile",
+                      "required_permissions": [
+                        "fixture-tools"
+                      ],
+                      "revision": 1,
+                      "usage_coverage": "unknown"
+                    },
+                    "quota_pool_refs": [
+                      "service-fixture"
+                    ],
+                    "required_isolation": "tool_sandboxed",
+                    "revision": 1
+                  }
+                ],
+                "task": {
+                  "acceptance": [
+                    "Synthetic fixture passes"
+                  ],
+                  "complexity": "T2",
+                  "depends_on": [],
+                  "id": "implement",
+                  "paths": [
+                    "src/report.py"
+                  ],
+                  "readiness": "ready",
+                  "required": true,
+                  "revision": 1,
+                  "risk": "standard",
+                  "role": "worker"
+                }
+              },
+              "candidate_id": "a760aeed-0490-4c35-996d-eabc41a21bd1",
+              "check_evidence": {
+                "id": "2ed80029-d2fc-48ea-99e6-8703f05f33a0",
+                "input": {
+                  "candidate_id": "a760aeed-0490-4c35-996d-eabc41a21bd1",
+                  "check_id": "tests",
+                  "check_revision": 1,
+                  "environment_sha256": "95d7e1efaa9d64b85039cb3e760e8caf6eb593365ef22137a7b8f2c8113a04b9",
+                  "evidence_key": "evidence:cac5be97-0356-4373-a249-3e8d42f8c9b0",
+                  "executor_ref": "runnerhost:cac5be97-0356-4373-a249-3e8d42f8c9b0",
+                  "exit_code": 0,
+                  "input_sha256": "760624e9b3d98e347acbb5d3357c355b1e7ba19f5581de1901a138dd3edd4382",
+                  "observation_ref": "runnerhost:aca78602010ccfd8f3d7df399f92f12e50ff0c597b7ad325b86e30e0f66bf2cb",
+                  "outcome": "completed",
+                  "policy_sha256": "4ac8b8f84d5f6e9ddc76b4bc84a0e2cfc1e727eb8ca620e9c393d7d060059c0f",
+                  "provenance": "fixture"
+                },
+                "kind": "check",
+                "log": {
+                  "path": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\success\\candidates\\artifacts\\760975da5b7ebe63fcb05e0c185189e96fc64e5faf95fe937b5adbe8dc3a9953",
+                  "sha256": "760975da5b7ebe63fcb05e0c185189e96fc64e5faf95fe937b5adbe8dc3a9953",
+                  "size": 127
+                },
+                "reasons": [],
+                "recorded_at": "2026-09-05T16:49:25.192013+00:00",
+                "status": "passed"
+              },
+              "fixture_recipe": "f35b37e6eaf5473fc695d7feddb7f2a4c6e99c2ca9b4de5118ec1278e6f476db",
+              "id": "implement",
+              "policy": {
+                "checks": [
+                  {
+                    "argv": [
+                      "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+                      "-I",
+                      "C:\\Users\\Chooo\\Playground\\Karajan\\backend\\karajan\\orchestration\\_fixture_process.py",
+                      "check",
+                      "[\"src/report.py\"]",
+                      "{observation_log}",
+                      "pass"
+                    ],
+                    "environment_sha256": "95d7e1efaa9d64b85039cb3e760e8caf6eb593365ef22137a7b8f2c8113a04b9",
+                    "id": "tests",
+                    "revision": 1
+                  }
+                ],
+                "id": "fixed-local-fixture",
+                "review": {
+                  "approved_reviewers": [
+                    {
+                      "model_family": "fixture-family",
+                      "profile_id": "fixture-profile",
+                      "profile_revision": 1,
+                      "qualification_ref": "fixture:fixed-runtime-not-live-qualified"
+                    }
+                  ],
+                  "environment_sha256": "95d7e1efaa9d64b85039cb3e760e8caf6eb593365ef22137a7b8f2c8113a04b9",
+                  "revision": 1
+                },
+                "revision": 1
+              },
+              "profile_ref": {
+                "id": "fixture-profile",
+                "revision": 1
+              },
+              "state": "completed",
+              "subject_task_id": null
+            },
+            "review": {
+              "baseline": {
+                "base_sha": "bfb183bd53d7d6d7704d1bc7866bfc2e974d8292",
+                "id": "ed23355e5da76169e6c0483dcd84b9aafbd9e094c8687f8babe72cdd57e7cf2a",
+                "manifest": [
+                  {
+                    "artifact": {
+                      "path": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\success\\candidates\\artifacts\\adf8aa1160ec2289c1679da284f0f4ea8d17af39717f3cad2d12de66d2803765",
+                      "sha256": "adf8aa1160ec2289c1679da284f0f4ea8d17af39717f3cad2d12de66d2803765",
+                      "size": 18
+                    },
+                    "blob_sha": "9885a0fb7efcb34d1c69566735feb177cbd129d0",
+                    "mode": "100644",
+                    "path": "original.txt"
+                  }
+                ],
+                "repository_identity": "119bd5a1-41de-4286-bf5a-7bb4f9422970",
+                "tree_sha": "3f3205d0317a63085a3f28af7e5227e8c8a683b5"
+              },
+              "binding": {
+                "authorization": {
+                  "budget_ref": "run",
+                  "checks": [
+                    "tests",
+                    "independent_review"
+                  ],
+                  "delivery": "pull_request",
+                  "profile_refs": [
+                    {
+                      "id": "fixture-profile",
+                      "revision": 1
+                    }
+                  ],
+                  "read_paths": [
+                    "src"
+                  ],
+                  "target_branch": "main",
+                  "write_paths": [
+                    "src"
+                  ]
+                },
+                "authorization_digest": "390f62567bf58349eb994e4070777b46bf4fbe8dd9b90e69c076ad4a11a93f9c",
+                "budget": {
+                  "currency_limits": {
+                    "CNY": "0",
+                    "USD": "0"
+                  },
+                  "id": "run",
+                  "max_duration_seconds": 300,
+                  "max_total_attempts": 8,
+                  "scope": "run"
+                },
+                "configuration_digest": "bd53d2bb88b31cd992a48c901fc7b08a46d828c6a583f4fe606c4b7e54182f81",
+                "effective_class": "T2",
+                "input_sha256": "d7189f1e05996026baf5e13ba4b2db993a23b10f1de8cc6522a0f2eadab8e45a",
+                "limits": {
+                  "command_mode": "lead_with_advisers",
+                  "delivery_target": "pull_request",
+                  "implementation_readiness": "ready",
+                  "internal_delegation": "disabled_unless_admitted_and_observable",
+                  "max_infrastructure_retries_per_root_task": 2,
+                  "max_parallel_writers_per_project": 2,
+                  "max_quality_repair_rounds": 2,
+                  "merge_authority": "user",
+                  "plan_approval": "explicit_revision"
+                },
+                "plan_digest": "12a6c9794b94fc9720fa6e36f1230d9da321d6ad2fc331817803f9655d884f14",
+                "plan_revision": 1,
+                "planning_term": 1,
+                "profile": {
+                  "admission_granularity": "attempt",
+                  "auth_ref": "secret:fixture-reference",
+                  "binding": {
+                    "account_id": "fixture-account",
+                    "auth_mode": "none",
+                    "billing_path": "subscription_only",
+                    "channel_id": "fixture-channel",
+                    "model_id": "fixture-model",
+                    "native_settings": {},
+                    "runtime_kind": "fixture-runtime",
+                    "runtime_version": "1"
+                  },
+                  "id": "fixture-profile",
+                  "required_permissions": [
+                    "fixture-tools"
+                  ],
+                  "revision": 1,
+                  "usage_coverage": "unknown"
+                },
+                "registration": {
+                  "capability_evidence": [
+                    {
+                      "capability": "bounded_code_edit",
+                      "evidence_ref": "fixture:bounded_code_edit",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "bounded_implementation",
+                      "evidence_ref": "fixture:bounded_implementation",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "candidate_capture",
+                      "evidence_ref": "fixture:candidate_capture",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "code_review",
+                      "evidence_ref": "fixture:code_review",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "controlled_tools",
+                      "evidence_ref": "fixture:controlled_tools",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "critical_code_review",
+                      "evidence_ref": "fixture:critical_code_review",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "critical_implementation",
+                      "evidence_ref": "fixture:critical_implementation",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "design_reasoning",
+                      "evidence_ref": "fixture:design_reasoning",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "structured_findings",
+                      "evidence_ref": "fixture:structured_findings",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "structured_plan_output",
+                      "evidence_ref": "fixture:structured_plan_output",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    }
+                  ],
+                  "enabled": true,
+                  "id": "fixture-profile",
+                  "max_class": "T3",
+                  "model_family": "fixture-family",
+                  "profile": {
+                    "admission_granularity": "attempt",
+                    "auth_ref": "secret:fixture-reference",
+                    "binding": {
+                      "account_id": "fixture-account",
+                      "auth_mode": "none",
+                      "billing_path": "subscription_only",
+                      "channel_id": "fixture-channel",
+                      "model_id": "fixture-model",
+                      "native_settings": {},
+                      "runtime_kind": "fixture-runtime",
+                      "runtime_version": "1"
+                    },
+                    "id": "fixture-profile",
+                    "required_permissions": [
+                      "fixture-tools"
+                    ],
+                    "revision": 1,
+                    "usage_coverage": "unknown"
+                  },
+                  "quota_pool_refs": [
+                    "service-fixture"
+                  ],
+                  "required_isolation": "tool_sandboxed",
+                  "revision": 1
+                },
+                "repository": {
+                  "base_ref": "HEAD",
+                  "base_sha": "bfb183bd53d7d6d7704d1bc7866bfc2e974d8292",
+                  "identity_sha256": "01de36c4a1a4df5a54bef53f66c7be92b37fd60b1ec2e13780cd5d24d92c4da9",
+                  "root": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\success\\fixture\\repository"
+                },
+                "reviewers": [],
+                "task": {
+                  "acceptance": [
+                    "Synthetic fixture passes"
+                  ],
+                  "complexity": "T2",
+                  "depends_on": [
+                    "implement"
+                  ],
+                  "id": "review",
+                  "paths": [
+                    "src/report.py"
+                  ],
+                  "readiness": "ready",
+                  "required": true,
+                  "revision": 1,
+                  "risk": "standard",
+                  "role": "reviewer"
+                }
+              },
+              "candidate_id": "a760aeed-0490-4c35-996d-eabc41a21bd1",
+              "fixture_recipe": "f35b37e6eaf5473fc695d7feddb7f2a4c6e99c2ca9b4de5118ec1278e6f476db",
+              "id": "review",
+              "policy": {
+                "checks": [
+                  {
+                    "argv": [
+                      "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+                      "-I",
+                      "C:\\Users\\Chooo\\Playground\\Karajan\\backend\\karajan\\orchestration\\_fixture_process.py",
+                      "check",
+                      "[\"src/report.py\"]",
+                      "{observation_log}",
+                      "pass"
+                    ],
+                    "environment_sha256": "95d7e1efaa9d64b85039cb3e760e8caf6eb593365ef22137a7b8f2c8113a04b9",
+                    "id": "tests",
+                    "revision": 1
+                  }
+                ],
+                "id": "fixed-local-fixture",
+                "review": {
+                  "approved_reviewers": [
+                    {
+                      "model_family": "fixture-family",
+                      "profile_id": "fixture-profile",
+                      "profile_revision": 1,
+                      "qualification_ref": "fixture:fixed-runtime-not-live-qualified"
+                    }
+                  ],
+                  "environment_sha256": "95d7e1efaa9d64b85039cb3e760e8caf6eb593365ef22137a7b8f2c8113a04b9",
+                  "revision": 1
+                },
+                "revision": 1
+              },
+              "profile_ref": {
+                "id": "fixture-profile",
+                "revision": 1
+              },
+              "state": "completed",
+              "subject_task_id": "implement",
+              "review_evidence": {
+                "id": "fd07048d-6791-4f2e-a0d1-9f1b733b288e",
+                "kind": "review",
+                "input": {
+                  "evidence_key": "evidence:b5c4db36-10f1-44db-b7d9-5ff56d2b8301",
+                  "candidate_id": "a760aeed-0490-4c35-996d-eabc41a21bd1",
+                  "policy_sha256": "4ac8b8f84d5f6e9ddc76b4bc84a0e2cfc1e727eb8ca620e9c393d7d060059c0f",
+                  "input_sha256": "760624e9b3d98e347acbb5d3357c355b1e7ba19f5581de1901a138dd3edd4382",
+                  "environment_sha256": "95d7e1efaa9d64b85039cb3e760e8caf6eb593365ef22137a7b8f2c8113a04b9",
+                  "observation_ref": "runnerhost:f669969a7f6a0d5b9d2a32fb124ce840addd1f67b262b4605d7eb0266a9fe23f",
+                  "provenance": "fixture",
+                  "review_revision": 1,
+                  "check_evidence_ids": [
+                    "2ed80029-d2fc-48ea-99e6-8703f05f33a0"
+                  ],
+                  "actor": {
+                    "attempt_id": "b5c4db36-10f1-44db-b7d9-5ff56d2b8301",
+                    "fence": 1,
+                    "profile_id": "fixture-profile",
+                    "profile_revision": 1,
+                    "model_family": "fixture-family",
+                    "context_id": "b5c4db36-10f1-44db-b7d9-5ff56d2b8301",
+                    "provenance_ref": "fixture:independent-process"
+                  },
+                  "author_reasoning_included": false,
+                  "verdict": "passed",
+                  "findings": []
+                },
+                "status": "passed",
+                "reasons": [],
+                "log": {
+                  "sha256": "2db2af444f7bd3fa34e95b7f53316b720da09dd434228d9b61b9cb1ec2277d11",
+                  "size": 128,
+                  "path": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\success\\candidates\\artifacts\\2db2af444f7bd3fa34e95b7f53316b720da09dd434228d9b61b9cb1ec2277d11"
+                },
+                "recorded_at": "2026-09-05T16:49:25.631624+00:00"
+              }
+            }
+          },
+          "remaining_required_task_ids": []
+        },
+        "transitions": [
+          "unknown",
+          "running",
+          "candidate_ready",
+          "unknown",
+          "running",
+          "awaiting_review",
+          "unknown",
+          "running",
+          "local_gate_passed"
+        ],
+        "cleanup": [
+          {
+            "prepared_id": "serial:2272d599-9a59-4a12-94d9-0b5de6706d20",
+            "attempt_id": "2272d599-9a59-4a12-94d9-0b5de6706d20",
+            "state": "exited",
+            "supervisor": {
+              "pid": 58620,
+              "birth": "134331005645540307"
+            },
+            "processes": [],
+            "exit_code": 0,
+            "remote_stop": "unknown",
+            "launch_phase": "acknowledged",
+            "business_status": "cancelled",
+            "usage_settled": false,
+            "usage_events": []
+          },
+          {
+            "prepared_id": "serial:b5c4db36-10f1-44db-b7d9-5ff56d2b8301",
+            "attempt_id": "b5c4db36-10f1-44db-b7d9-5ff56d2b8301",
+            "state": "exited",
+            "supervisor": {
+              "pid": 58184,
+              "birth": "134331005653792255"
+            },
+            "processes": [],
+            "exit_code": 0,
+            "remote_stop": "unknown",
+            "launch_phase": "acknowledged",
+            "business_status": "cancelled",
+            "usage_settled": false,
+            "usage_events": []
+          },
+          {
+            "prepared_id": "serial:cac5be97-0356-4373-a249-3e8d42f8c9b0",
+            "attempt_id": "cac5be97-0356-4373-a249-3e8d42f8c9b0",
+            "state": "exited",
+            "supervisor": {
+              "pid": 59904,
+              "birth": "134331005649634470"
+            },
+            "processes": [],
+            "exit_code": 0,
+            "remote_stop": "unknown",
+            "launch_phase": "acknowledged",
+            "business_status": "cancelled",
+            "usage_settled": false,
+            "usage_events": []
+          }
+        ],
+        "candidate": {
+          "base_sha": "bfb183bd53d7d6d7704d1bc7866bfc2e974d8292",
+          "changed_paths": [
+            "src/report.py"
+          ],
+          "content_sha256": "329446faf5a1efff06ceea03948055a325c7ab61e58111e5f97995d25fba2ed5",
+          "frozen_at": "2026-09-05T16:49:24.910354+00:00",
+          "id": "a760aeed-0490-4c35-996d-eabc41a21bd1",
+          "input_sha256": "760624e9b3d98e347acbb5d3357c355b1e7ba19f5581de1901a138dd3edd4382",
+          "manifest": [
+            {
+              "artifact": {
+                "path": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\success\\candidates\\artifacts\\adf8aa1160ec2289c1679da284f0f4ea8d17af39717f3cad2d12de66d2803765",
+                "sha256": "adf8aa1160ec2289c1679da284f0f4ea8d17af39717f3cad2d12de66d2803765",
+                "size": 18
+              },
+              "blob_sha": "9885a0fb7efcb34d1c69566735feb177cbd129d0",
+              "mode": "100644",
+              "path": "original.txt"
+            },
+            {
+              "artifact": {
+                "path": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\success\\candidates\\artifacts\\b7531c4e2faeedb30e30038c2ff081f49ae2971a989c2435a7a7bfaae063331b",
+                "sha256": "b7531c4e2faeedb30e30038c2ff081f49ae2971a989c2435a7a7bfaae063331b",
+                "size": 27
+              },
+              "blob_sha": "dc7bbaae252c5fe416f7eb376223a98f3b302d61",
+              "mode": "100644",
+              "path": "src/report.py"
+            }
+          ],
+          "manifest_sha256": "7ddcd8c8e11cbf092ca84f514c7f78d1c15418450897540a719499e8a761e482",
+          "policy_sha256": "4ac8b8f84d5f6e9ddc76b4bc84a0e2cfc1e727eb8ca620e9c393d7d060059c0f",
+          "repository_identity": "119bd5a1-41de-4286-bf5a-7bb4f9422970",
+          "request": {
+            "allowed_paths": [
+              "src/report.py"
+            ],
+            "authors": [
+              {
+                "attempt_id": "2272d599-9a59-4a12-94d9-0b5de6706d20",
+                "context_id": "2272d599-9a59-4a12-94d9-0b5de6706d20",
+                "fence": 1,
+                "model_family": "fixture-family",
+                "profile_id": "fixture-profile",
+                "profile_revision": 1,
+                "provenance_ref": "fixture:fixed-process"
+              }
+            ],
+            "baseline_id": "ed23355e5da76169e6c0483dcd84b9aafbd9e094c8687f8babe72cdd57e7cf2a",
+            "input_sha256": "760624e9b3d98e347acbb5d3357c355b1e7ba19f5581de1901a138dd3edd4382",
+            "policy": {
+              "checks": [
+                {
+                  "argv": [
+                    "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+                    "-I",
+                    "C:\\Users\\Chooo\\Playground\\Karajan\\backend\\karajan\\orchestration\\_fixture_process.py",
+                    "check",
+                    "[\"src/report.py\"]",
+                    "{observation_log}",
+                    "pass"
+                  ],
+                  "environment_sha256": "95d7e1efaa9d64b85039cb3e760e8caf6eb593365ef22137a7b8f2c8113a04b9",
+                  "id": "tests",
+                  "revision": 1
+                }
+              ],
+              "id": "fixed-local-fixture",
+              "review": {
+                "approved_reviewers": [
+                  {
+                    "model_family": "fixture-family",
+                    "profile_id": "fixture-profile",
+                    "profile_revision": 1,
+                    "qualification_ref": "fixture:fixed-runtime-not-live-qualified"
+                  }
+                ],
+                "environment_sha256": "95d7e1efaa9d64b85039cb3e760e8caf6eb593365ef22137a7b8f2c8113a04b9",
+                "revision": 1
+              },
+              "revision": 1
+            },
+            "series_id": "4f2dccdb-3d01-41cf-84f3-c1352158fd63/implement",
+            "task_class": "T2",
+            "writer": {
+              "attempt_id": "2272d599-9a59-4a12-94d9-0b5de6706d20",
+              "fence": 1,
+              "observation_ref": "runnerhost:ab3270735847bd07ba02361cf56d8ffc9a65ae025c0326e2df78e3f58a38925f",
+              "stopped": true
+            }
+          },
+          "revision": 1,
+          "schema_version": "karajan.candidate.v1",
+          "series_id": "4f2dccdb-3d01-41cf-84f3-c1352158fd63/implement",
+          "tree_sha": "80a1b99d41856b8fe43777cb92ed9a7c60beb25a"
+        },
+        "limitations": [
+          "No real model, quota admission, sandbox, or delivery qualification.",
+          "Cross-database approval/activation is not an atomic revocation protocol."
+        ]
+      }
+    },
+    {
+      "scenario": "production_blocked",
+      "exit_code": 0,
+      "stdout": "{\"status\": \"passed\", \"state\": \"blocked\", \"report\": \"C:\\\\Users\\\\Chooo\\\\AppData\\\\Local\\\\Temp\\\\karajan-serial-evidence-m57x_p0m\\\\production_blocked\\\\report.json\"}\n",
+      "stderr": "",
+      "report": {
+        "schema_version": "karajan.serial-probe.v1",
+        "status": "passed",
+        "scenario": "production_blocked",
+        "observed_at": "2026-09-05T16:49:26.183188+00:00",
+        "os": "Windows",
+        "python_version": "3.12.14",
+        "source_sha256": {
+          "__init__.py": "44e1aa3ab0a287b1ac3c5b3de9e49c6a2ed74b4d311a032e94a484b43cea53f6",
+          "_fixture_process.py": "41309db0762b87275d3b4e6c54eae3df3da79ed565fb26f29a6780a5cbd252e1",
+          "binding.py": "28647373bfee669b9fd9200a19e3b214f6aa39720e15bc168bc080b349f1ffca",
+          "fixture.py": "15554d1e48c9a45337555e3a60961a37632837615a07927f37f9b50d7f7248c9",
+          "serial.py": "41ec5934357aa2532eec20776215240d3ce7e1e5a99d07334ca13129fe094853"
+        },
+        "probe_source_sha256": "99a181c0c36bbbf3c4fc976bb66eae6a5c58496dc062a2c5176821b15cb5665f",
+        "cash_api_calls": 0,
+        "real_model_calls": 0,
+        "live_qualification": "not_run",
+        "planning_source": "explicit_example_fixture_receipt",
+        "review_source": "separate_fixed_process",
+        "snapshot": {
+          "attempts": [],
+          "cancelled": false,
+          "delivery_eligible": false,
+          "dispatch_eligible": false,
+          "inbox": [],
+          "live_qualification": "not_run",
+          "outbox": [],
+          "paused": false,
+          "reason_codes": [
+            "LIVE_QUALIFICATION_NOT_RUN"
+          ],
+          "run_id": "d2b4e6ba-d48f-42a5-8d48-ab25f7b80755",
+          "schema_version": "karajan.serial-run.v1",
+          "state": "blocked",
+          "tasks": {}
+        },
+        "transitions": [
+          "blocked"
+        ],
+        "cleanup": [],
+        "candidate": null,
+        "limitations": [
+          "No real model, quota admission, sandbox, or delivery qualification.",
+          "Cross-database approval/activation is not an atomic revocation protocol."
+        ]
+      }
+    },
+    {
+      "scenario": "unapproved",
+      "exit_code": 0,
+      "stdout": "{\"status\": \"passed\", \"state\": \"blocked\", \"report\": \"C:\\\\Users\\\\Chooo\\\\AppData\\\\Local\\\\Temp\\\\karajan-serial-evidence-m57x_p0m\\\\unapproved\\\\report.json\"}\n",
+      "stderr": "",
+      "report": {
+        "schema_version": "karajan.serial-probe.v1",
+        "status": "passed",
+        "scenario": "unapproved",
+        "observed_at": "2026-09-05T16:49:26.710377+00:00",
+        "os": "Windows",
+        "python_version": "3.12.14",
+        "source_sha256": {
+          "__init__.py": "44e1aa3ab0a287b1ac3c5b3de9e49c6a2ed74b4d311a032e94a484b43cea53f6",
+          "_fixture_process.py": "41309db0762b87275d3b4e6c54eae3df3da79ed565fb26f29a6780a5cbd252e1",
+          "binding.py": "28647373bfee669b9fd9200a19e3b214f6aa39720e15bc168bc080b349f1ffca",
+          "fixture.py": "15554d1e48c9a45337555e3a60961a37632837615a07927f37f9b50d7f7248c9",
+          "serial.py": "41ec5934357aa2532eec20776215240d3ce7e1e5a99d07334ca13129fe094853"
+        },
+        "probe_source_sha256": "99a181c0c36bbbf3c4fc976bb66eae6a5c58496dc062a2c5176821b15cb5665f",
+        "cash_api_calls": 0,
+        "real_model_calls": 0,
+        "live_qualification": "not_run",
+        "planning_source": "explicit_example_fixture_receipt",
+        "review_source": "separate_fixed_process",
+        "snapshot": {
+          "attempts": [],
+          "cancelled": false,
+          "delivery_eligible": false,
+          "dispatch_eligible": false,
+          "inbox": [],
+          "live_qualification": "not_run",
+          "outbox": [],
+          "paused": false,
+          "reason_codes": [
+            "TASK_SCOPE_NOT_APPROVED"
+          ],
+          "run_id": "edaf641e-ae04-42d9-91b2-95b91a5ccffa",
+          "schema_version": "karajan.serial-run.v1",
+          "state": "blocked",
+          "tasks": {}
+        },
+        "transitions": [
+          "blocked"
+        ],
+        "cleanup": [],
+        "candidate": null,
+        "limitations": [
+          "No real model, quota admission, sandbox, or delivery qualification.",
+          "Cross-database approval/activation is not an atomic revocation protocol."
+        ]
+      }
+    },
+    {
+      "scenario": "check_failed",
+      "exit_code": 0,
+      "stdout": "{\"status\": \"passed\", \"state\": \"blocked\", \"report\": \"C:\\\\Users\\\\Chooo\\\\AppData\\\\Local\\\\Temp\\\\karajan-serial-evidence-m57x_p0m\\\\check_failed\\\\report.json\"}\n",
+      "stderr": "",
+      "report": {
+        "schema_version": "karajan.serial-probe.v1",
+        "status": "passed",
+        "scenario": "check_failed",
+        "observed_at": "2026-09-05T16:49:28.054991+00:00",
+        "os": "Windows",
+        "python_version": "3.12.14",
+        "source_sha256": {
+          "__init__.py": "44e1aa3ab0a287b1ac3c5b3de9e49c6a2ed74b4d311a032e94a484b43cea53f6",
+          "_fixture_process.py": "41309db0762b87275d3b4e6c54eae3df3da79ed565fb26f29a6780a5cbd252e1",
+          "binding.py": "28647373bfee669b9fd9200a19e3b214f6aa39720e15bc168bc080b349f1ffca",
+          "fixture.py": "15554d1e48c9a45337555e3a60961a37632837615a07927f37f9b50d7f7248c9",
+          "serial.py": "41ec5934357aa2532eec20776215240d3ce7e1e5a99d07334ca13129fe094853"
+        },
+        "probe_source_sha256": "99a181c0c36bbbf3c4fc976bb66eae6a5c58496dc062a2c5176821b15cb5665f",
+        "cash_api_calls": 0,
+        "real_model_calls": 0,
+        "live_qualification": "not_run",
+        "planning_source": "explicit_example_fixture_receipt",
+        "review_source": "separate_fixed_process",
+        "snapshot": {
+          "attempts": [
+            {
+              "activation": {
+                "attempt_id": "8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+                "authorization_ref": "approval:390f62567bf58349eb994e4070777b46bf4fbe8dd9b90e69c076ad4a11a93f9c",
+                "budget_ref": "run",
+                "expires_at": 1788626997.2420306,
+                "fence": 1,
+                "id": "activation:8618a09f-9e22-4ca5-8c7d-19ab989ed417"
+              },
+              "fence": 1,
+              "id": "8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+              "manifest": {
+                "authorization_ref": "approval:390f62567bf58349eb994e4070777b46bf4fbe8dd9b90e69c076ad4a11a93f9c",
+                "budget_ref": "run",
+                "fence": 1,
+                "id": "8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+                "permissions": [
+                  "fixture-tools"
+                ],
+                "profile_id": "fixture-profile",
+                "profile_revision": 1,
+                "requested_binding": {
+                  "account_id": "fixture-account",
+                  "auth_mode": "none",
+                  "billing_path": "subscription_only",
+                  "channel_id": "fixture-channel",
+                  "model_id": "fixture-model",
+                  "native_settings": {},
+                  "runtime_kind": "fixture-runtime",
+                  "runtime_version": "1"
+                },
+                "role": "worker"
+              },
+              "physical": {
+                "attempt_id": "8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+                "business_status": "pending",
+                "exit_code": 0,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+                "processes": [],
+                "remote_stop": "unknown",
+                "state": "exited",
+                "supervisor": {
+                  "birth": "134331005674089467",
+                  "pid": 59716
+                },
+                "usage_events": [],
+                "usage_settled": false
+              },
+              "root_task_id": "38ef1f5469607f04c0dbd86505036f1fd764f5e5f6f1a5d0e7571e52eccb89da",
+              "stage": "write",
+              "start_key": "serial:8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+              "state": "completed",
+              "task_id": "implement",
+              "workspace": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\check_failed\\fixture\\workspaces\\8618a09f-9e22-4ca5-8c7d-19ab989ed417"
+            },
+            {
+              "activation": {
+                "attempt_id": "b63bcf62-3d5c-464d-a0a5-e7d973b69e08",
+                "authorization_ref": "approval:390f62567bf58349eb994e4070777b46bf4fbe8dd9b90e69c076ad4a11a93f9c",
+                "budget_ref": "run",
+                "expires_at": 1788626997.7722409,
+                "fence": 1,
+                "id": "activation:b63bcf62-3d5c-464d-a0a5-e7d973b69e08"
+              },
+              "fence": 1,
+              "id": "b63bcf62-3d5c-464d-a0a5-e7d973b69e08",
+              "manifest": {
+                "authorization_ref": "approval:390f62567bf58349eb994e4070777b46bf4fbe8dd9b90e69c076ad4a11a93f9c",
+                "budget_ref": "run",
+                "fence": 1,
+                "id": "b63bcf62-3d5c-464d-a0a5-e7d973b69e08",
+                "permissions": [
+                  "fixture-tools"
+                ],
+                "profile_id": "fixture-profile",
+                "profile_revision": 1,
+                "requested_binding": {
+                  "account_id": "fixture-account",
+                  "auth_mode": "none",
+                  "billing_path": "subscription_only",
+                  "channel_id": "fixture-channel",
+                  "model_id": "fixture-model",
+                  "native_settings": {},
+                  "runtime_kind": "fixture-runtime",
+                  "runtime_version": "1"
+                },
+                "role": "worker"
+              },
+              "physical": {
+                "prepared_id": "serial:b63bcf62-3d5c-464d-a0a5-e7d973b69e08",
+                "attempt_id": "b63bcf62-3d5c-464d-a0a5-e7d973b69e08",
+                "state": "exited",
+                "supervisor": {
+                  "pid": 46992,
+                  "birth": "134331005677943949"
+                },
+                "processes": [],
+                "exit_code": 1,
+                "remote_stop": "unknown",
+                "launch_phase": "acknowledged",
+                "business_status": "pending",
+                "usage_settled": false,
+                "usage_events": []
+              },
+              "root_task_id": "38ef1f5469607f04c0dbd86505036f1fd764f5e5f6f1a5d0e7571e52eccb89da",
+              "stage": "check",
+              "start_key": "serial:b63bcf62-3d5c-464d-a0a5-e7d973b69e08",
+              "state": "completed",
+              "task_id": "implement",
+              "workspace": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\check_failed\\fixture\\workspaces\\b63bcf62-3d5c-464d-a0a5-e7d973b69e08"
+            }
+          ],
+          "cancelled": false,
+          "counters": {
+            "max_duration_seconds": 300,
+            "max_infrastructure_retries_per_root_task": 2,
+            "max_quality_repair_rounds": 2,
+            "max_total_attempts": 8,
+            "quality_repair_rounds": 0,
+            "roots": {
+              "38ef1f5469607f04c0dbd86505036f1fd764f5e5f6f1a5d0e7571e52eccb89da": {
+                "infrastructure_retries": 0
+              }
+            },
+            "started_at": 1788626967.2420306,
+            "total_attempts": 2
+          },
+          "delivery_eligible": false,
+          "dispatch_eligible": false,
+          "execution_plan_revision": 1,
+          "execution_worker_tasks": [
+            "implement"
+          ],
+          "inbox": [
+            {
+              "attempt_id": "8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+              "id": "8f9b86a962c54b6dd1a09d708301531a463ad6f3eca4d127c244cc7b6fe688b4",
+              "physical": {
+                "attempt_id": "8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+                "business_status": "pending",
+                "exit_code": null,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+                "processes": [],
+                "remote_stop": "unknown",
+                "state": "unknown",
+                "supervisor": {
+                  "birth": "134331005674013356",
+                  "pid": 55964
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+              "id": "7760c416c11fdb8271f1f6e39053ab83daa9f79d1273f3a96a2c60d62ced9f77",
+              "physical": {
+                "attempt_id": "8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+                "business_status": "pending",
+                "exit_code": null,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+                "processes": [
+                  {
+                    "birth": "134331005674089467",
+                    "pid": 59716
+                  },
+                  {
+                    "birth": "134331005675580766",
+                    "pid": 17804
+                  }
+                ],
+                "remote_stop": "unknown",
+                "state": "running",
+                "supervisor": {
+                  "birth": "134331005674089467",
+                  "pid": 59716
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+              "id": "bda196d73a7ea4e6dc4d469d291965c2087d4c0dc9a4429d8fcf5d11d77ca990",
+              "physical": {
+                "attempt_id": "8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+                "business_status": "pending",
+                "exit_code": null,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+                "processes": [
+                  {
+                    "birth": "134331005674089467",
+                    "pid": 59716
+                  },
+                  {
+                    "birth": "134331005675580766",
+                    "pid": 17804
+                  },
+                  {
+                    "birth": "134331005675663631",
+                    "pid": 32008
+                  }
+                ],
+                "remote_stop": "unknown",
+                "state": "running",
+                "supervisor": {
+                  "birth": "134331005674089467",
+                  "pid": 59716
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+              "id": "59b352b467504df8bad6cd623524623c2b6a3ac90cc9d917ded9c9ca9c0b9c8f",
+              "physical": {
+                "attempt_id": "8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+                "business_status": "pending",
+                "exit_code": null,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+                "processes": [
+                  {
+                    "birth": "134331005674089467",
+                    "pid": 59716
+                  }
+                ],
+                "remote_stop": "unknown",
+                "state": "running",
+                "supervisor": {
+                  "birth": "134331005674089467",
+                  "pid": 59716
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+              "id": "94d9ed00986e242b192a112ad397717f2bbe57dace357fbd2d0b1d5104b0e779",
+              "physical": {
+                "attempt_id": "8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+                "business_status": "pending",
+                "exit_code": 0,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+                "processes": [],
+                "remote_stop": "unknown",
+                "state": "exited",
+                "supervisor": {
+                  "birth": "134331005674089467",
+                  "pid": 59716
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "b63bcf62-3d5c-464d-a0a5-e7d973b69e08",
+              "id": "05c0b3378ff678430df36da43f550735869230cbafd48d55fab73bf045548ab2",
+              "physical": {
+                "attempt_id": "b63bcf62-3d5c-464d-a0a5-e7d973b69e08",
+                "business_status": "pending",
+                "exit_code": null,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:b63bcf62-3d5c-464d-a0a5-e7d973b69e08",
+                "processes": [],
+                "remote_stop": "unknown",
+                "state": "unknown",
+                "supervisor": {
+                  "birth": "134331005677869796",
+                  "pid": 56456
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "b63bcf62-3d5c-464d-a0a5-e7d973b69e08",
+              "id": "256cc3f0223f86a2acc907e8d93cd834a7bbd6df24524913d43ad82f2b816d8e",
+              "physical": {
+                "attempt_id": "b63bcf62-3d5c-464d-a0a5-e7d973b69e08",
+                "business_status": "pending",
+                "exit_code": null,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:b63bcf62-3d5c-464d-a0a5-e7d973b69e08",
+                "processes": [
+                  {
+                    "birth": "134331005677943949",
+                    "pid": 46992
+                  },
+                  {
+                    "birth": "134331005679492929",
+                    "pid": 49388
+                  },
+                  {
+                    "birth": "134331005679571143",
+                    "pid": 47472
+                  }
+                ],
+                "remote_stop": "unknown",
+                "state": "running",
+                "supervisor": {
+                  "birth": "134331005677943949",
+                  "pid": 46992
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "b63bcf62-3d5c-464d-a0a5-e7d973b69e08",
+              "id": "6a35e0cac6e48f3fb752f3636cb6862f7c36218cdec6c9b921b7a99d33f61903",
+              "physical": {
+                "attempt_id": "b63bcf62-3d5c-464d-a0a5-e7d973b69e08",
+                "business_status": "pending",
+                "exit_code": null,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:b63bcf62-3d5c-464d-a0a5-e7d973b69e08",
+                "processes": [
+                  {
+                    "birth": "134331005677943949",
+                    "pid": 46992
+                  }
+                ],
+                "remote_stop": "unknown",
+                "state": "running",
+                "supervisor": {
+                  "birth": "134331005677943949",
+                  "pid": 46992
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "id": "9d0413bf9f950a9d4bd4fdf9f2b7e3ee0d211a54dac0a54acc4335298b5c0190",
+              "attempt_id": "b63bcf62-3d5c-464d-a0a5-e7d973b69e08",
+              "physical": {
+                "prepared_id": "serial:b63bcf62-3d5c-464d-a0a5-e7d973b69e08",
+                "attempt_id": "b63bcf62-3d5c-464d-a0a5-e7d973b69e08",
+                "state": "exited",
+                "supervisor": {
+                  "pid": 46992,
+                  "birth": "134331005677943949"
+                },
+                "processes": [],
+                "exit_code": 1,
+                "remote_stop": "unknown",
+                "launch_phase": "acknowledged",
+                "business_status": "pending",
+                "usage_settled": false,
+                "usage_events": []
+              }
+            }
+          ],
+          "live_qualification": "not_run",
+          "outbox": [
+            {
+              "attempt_id": "8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+              "id": "serial:8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+              "kind": "start",
+              "state": "acknowledged"
+            },
+            {
+              "attempt_id": "b63bcf62-3d5c-464d-a0a5-e7d973b69e08",
+              "id": "serial:b63bcf62-3d5c-464d-a0a5-e7d973b69e08",
+              "kind": "start",
+              "state": "acknowledged"
+            }
+          ],
+          "paused": false,
+          "quality_repair_enabled": false,
+          "reason_codes": [
+            "CHECK_NOT_PASSED"
+          ],
+          "run_id": "d31f9672-34d2-4482-93fe-3d1e6bc4c760",
+          "schema_version": "karajan.serial-run.v1",
+          "state": "blocked",
+          "tasks": {
+            "implement": {
+              "baseline": {
+                "base_sha": "eb86d89d6eb3aeccb45d85f5a19c5e9a8db80f1f",
+                "id": "ecae1748af41cf8d74bc4ff77caab1724665c3b4732db98da7e6382595f4e2a7",
+                "manifest": [
+                  {
+                    "artifact": {
+                      "path": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\check_failed\\candidates\\artifacts\\adf8aa1160ec2289c1679da284f0f4ea8d17af39717f3cad2d12de66d2803765",
+                      "sha256": "adf8aa1160ec2289c1679da284f0f4ea8d17af39717f3cad2d12de66d2803765",
+                      "size": 18
+                    },
+                    "blob_sha": "9885a0fb7efcb34d1c69566735feb177cbd129d0",
+                    "mode": "100644",
+                    "path": "original.txt"
+                  }
+                ],
+                "repository_identity": "3068c66e-c37d-4cb8-981d-6b6bcd1cbdf2",
+                "tree_sha": "3f3205d0317a63085a3f28af7e5227e8c8a683b5"
+              },
+              "binding": {
+                "authorization": {
+                  "budget_ref": "run",
+                  "checks": [
+                    "tests",
+                    "independent_review"
+                  ],
+                  "delivery": "pull_request",
+                  "profile_refs": [
+                    {
+                      "id": "fixture-profile",
+                      "revision": 1
+                    }
+                  ],
+                  "read_paths": [
+                    "src"
+                  ],
+                  "target_branch": "main",
+                  "write_paths": [
+                    "src"
+                  ]
+                },
+                "authorization_digest": "390f62567bf58349eb994e4070777b46bf4fbe8dd9b90e69c076ad4a11a93f9c",
+                "budget": {
+                  "currency_limits": {
+                    "CNY": "0",
+                    "USD": "0"
+                  },
+                  "id": "run",
+                  "max_duration_seconds": 300,
+                  "max_total_attempts": 8,
+                  "scope": "run"
+                },
+                "configuration_digest": "bd53d2bb88b31cd992a48c901fc7b08a46d828c6a583f4fe606c4b7e54182f81",
+                "effective_class": "T2",
+                "input_sha256": "760624e9b3d98e347acbb5d3357c355b1e7ba19f5581de1901a138dd3edd4382",
+                "limits": {
+                  "command_mode": "lead_with_advisers",
+                  "delivery_target": "pull_request",
+                  "implementation_readiness": "ready",
+                  "internal_delegation": "disabled_unless_admitted_and_observable",
+                  "max_infrastructure_retries_per_root_task": 2,
+                  "max_parallel_writers_per_project": 2,
+                  "max_quality_repair_rounds": 2,
+                  "merge_authority": "user",
+                  "plan_approval": "explicit_revision"
+                },
+                "plan_digest": "2793c166fe310265bd5a9eec01dc506374fc5a1fa4f36dfdd7580636c8264415",
+                "plan_revision": 1,
+                "planning_term": 1,
+                "profile": {
+                  "admission_granularity": "attempt",
+                  "auth_ref": "secret:fixture-reference",
+                  "binding": {
+                    "account_id": "fixture-account",
+                    "auth_mode": "none",
+                    "billing_path": "subscription_only",
+                    "channel_id": "fixture-channel",
+                    "model_id": "fixture-model",
+                    "native_settings": {},
+                    "runtime_kind": "fixture-runtime",
+                    "runtime_version": "1"
+                  },
+                  "id": "fixture-profile",
+                  "required_permissions": [
+                    "fixture-tools"
+                  ],
+                  "revision": 1,
+                  "usage_coverage": "unknown"
+                },
+                "registration": {
+                  "capability_evidence": [
+                    {
+                      "capability": "bounded_code_edit",
+                      "evidence_ref": "fixture:bounded_code_edit",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "bounded_implementation",
+                      "evidence_ref": "fixture:bounded_implementation",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "candidate_capture",
+                      "evidence_ref": "fixture:candidate_capture",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "code_review",
+                      "evidence_ref": "fixture:code_review",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "controlled_tools",
+                      "evidence_ref": "fixture:controlled_tools",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "critical_code_review",
+                      "evidence_ref": "fixture:critical_code_review",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "critical_implementation",
+                      "evidence_ref": "fixture:critical_implementation",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "design_reasoning",
+                      "evidence_ref": "fixture:design_reasoning",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "structured_findings",
+                      "evidence_ref": "fixture:structured_findings",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "structured_plan_output",
+                      "evidence_ref": "fixture:structured_plan_output",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    }
+                  ],
+                  "enabled": true,
+                  "id": "fixture-profile",
+                  "max_class": "T3",
+                  "model_family": "fixture-family",
+                  "profile": {
+                    "admission_granularity": "attempt",
+                    "auth_ref": "secret:fixture-reference",
+                    "binding": {
+                      "account_id": "fixture-account",
+                      "auth_mode": "none",
+                      "billing_path": "subscription_only",
+                      "channel_id": "fixture-channel",
+                      "model_id": "fixture-model",
+                      "native_settings": {},
+                      "runtime_kind": "fixture-runtime",
+                      "runtime_version": "1"
+                    },
+                    "id": "fixture-profile",
+                    "required_permissions": [
+                      "fixture-tools"
+                    ],
+                    "revision": 1,
+                    "usage_coverage": "unknown"
+                  },
+                  "quota_pool_refs": [
+                    "service-fixture"
+                  ],
+                  "required_isolation": "tool_sandboxed",
+                  "revision": 1
+                },
+                "repository": {
+                  "base_ref": "HEAD",
+                  "base_sha": "eb86d89d6eb3aeccb45d85f5a19c5e9a8db80f1f",
+                  "identity_sha256": "850e24f3daf82b6d7a073a2ec953235cb2197528a0f62b6900e8795d21b839d8",
+                  "root": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\check_failed\\fixture\\repository"
+                },
+                "reviewers": [
+                  {
+                    "capability_evidence": [
+                      {
+                        "capability": "bounded_code_edit",
+                        "evidence_ref": "fixture:bounded_code_edit",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "bounded_implementation",
+                        "evidence_ref": "fixture:bounded_implementation",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "candidate_capture",
+                        "evidence_ref": "fixture:candidate_capture",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "code_review",
+                        "evidence_ref": "fixture:code_review",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "controlled_tools",
+                        "evidence_ref": "fixture:controlled_tools",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "critical_code_review",
+                        "evidence_ref": "fixture:critical_code_review",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "critical_implementation",
+                        "evidence_ref": "fixture:critical_implementation",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "design_reasoning",
+                        "evidence_ref": "fixture:design_reasoning",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "structured_findings",
+                        "evidence_ref": "fixture:structured_findings",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "structured_plan_output",
+                        "evidence_ref": "fixture:structured_plan_output",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      }
+                    ],
+                    "enabled": true,
+                    "id": "fixture-profile",
+                    "max_class": "T3",
+                    "model_family": "fixture-family",
+                    "profile": {
+                      "admission_granularity": "attempt",
+                      "auth_ref": "secret:fixture-reference",
+                      "binding": {
+                        "account_id": "fixture-account",
+                        "auth_mode": "none",
+                        "billing_path": "subscription_only",
+                        "channel_id": "fixture-channel",
+                        "model_id": "fixture-model",
+                        "native_settings": {},
+                        "runtime_kind": "fixture-runtime",
+                        "runtime_version": "1"
+                      },
+                      "id": "fixture-profile",
+                      "required_permissions": [
+                        "fixture-tools"
+                      ],
+                      "revision": 1,
+                      "usage_coverage": "unknown"
+                    },
+                    "quota_pool_refs": [
+                      "service-fixture"
+                    ],
+                    "required_isolation": "tool_sandboxed",
+                    "revision": 1
+                  }
+                ],
+                "task": {
+                  "acceptance": [
+                    "Synthetic fixture passes"
+                  ],
+                  "complexity": "T2",
+                  "depends_on": [],
+                  "id": "implement",
+                  "paths": [
+                    "src/report.py"
+                  ],
+                  "readiness": "ready",
+                  "required": true,
+                  "revision": 1,
+                  "risk": "standard",
+                  "role": "worker"
+                }
+              },
+              "candidate_id": "6d1f06b7-1625-4d34-9e3a-5df227d14896",
+              "fixture_recipe": "21ccfb20743d5ac860021c998a28c0dbcbe85a39c01e79ffd8b529c0ad44ae2b",
+              "id": "implement",
+              "policy": {
+                "checks": [
+                  {
+                    "argv": [
+                      "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+                      "-I",
+                      "C:\\Users\\Chooo\\Playground\\Karajan\\backend\\karajan\\orchestration\\_fixture_process.py",
+                      "check",
+                      "[\"src/report.py\"]",
+                      "{observation_log}",
+                      "fail"
+                    ],
+                    "environment_sha256": "95d7e1efaa9d64b85039cb3e760e8caf6eb593365ef22137a7b8f2c8113a04b9",
+                    "id": "tests",
+                    "revision": 1
+                  }
+                ],
+                "id": "fixed-local-fixture",
+                "review": {
+                  "approved_reviewers": [
+                    {
+                      "model_family": "fixture-family",
+                      "profile_id": "fixture-profile",
+                      "profile_revision": 1,
+                      "qualification_ref": "fixture:fixed-runtime-not-live-qualified"
+                    }
+                  ],
+                  "environment_sha256": "95d7e1efaa9d64b85039cb3e760e8caf6eb593365ef22137a7b8f2c8113a04b9",
+                  "revision": 1
+                },
+                "revision": 1
+              },
+              "profile_ref": {
+                "id": "fixture-profile",
+                "revision": 1
+              },
+              "state": "blocked",
+              "subject_task_id": null,
+              "check_evidence": {
+                "id": "7bae573a-e960-4824-8501-a0e716678e02",
+                "kind": "check",
+                "input": {
+                  "evidence_key": "evidence:b63bcf62-3d5c-464d-a0a5-e7d973b69e08",
+                  "candidate_id": "6d1f06b7-1625-4d34-9e3a-5df227d14896",
+                  "policy_sha256": "71d44df3ce703a3e727366782a1ac9f47be58ff4c68ee024e36ad546d2f17461",
+                  "input_sha256": "760624e9b3d98e347acbb5d3357c355b1e7ba19f5581de1901a138dd3edd4382",
+                  "environment_sha256": "95d7e1efaa9d64b85039cb3e760e8caf6eb593365ef22137a7b8f2c8113a04b9",
+                  "observation_ref": "runnerhost:9d0413bf9f950a9d4bd4fdf9f2b7e3ee0d211a54dac0a54acc4335298b5c0190",
+                  "provenance": "fixture",
+                  "check_id": "tests",
+                  "check_revision": 1,
+                  "executor_ref": "runnerhost:b63bcf62-3d5c-464d-a0a5-e7d973b69e08",
+                  "exit_code": 1,
+                  "outcome": "completed"
+                },
+                "status": "failed",
+                "reasons": [],
+                "log": {
+                  "sha256": "04f24a1fb572c0c7ffde7e26075ed3de74457cf5008e259ef74669593c00a0db",
+                  "size": 127,
+                  "path": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\check_failed\\candidates\\artifacts\\04f24a1fb572c0c7ffde7e26075ed3de74457cf5008e259ef74669593c00a0db"
+                },
+                "recorded_at": "2026-09-05T16:49:28.045988+00:00"
+              }
+            }
+          }
+        },
+        "transitions": [
+          "unknown",
+          "running",
+          "candidate_ready",
+          "unknown",
+          "running",
+          "blocked"
+        ],
+        "cleanup": [
+          {
+            "prepared_id": "serial:8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+            "attempt_id": "8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+            "state": "exited",
+            "supervisor": {
+              "pid": 59716,
+              "birth": "134331005674089467"
+            },
+            "processes": [],
+            "exit_code": 0,
+            "remote_stop": "unknown",
+            "launch_phase": "acknowledged",
+            "business_status": "cancelled",
+            "usage_settled": false,
+            "usage_events": []
+          },
+          {
+            "prepared_id": "serial:b63bcf62-3d5c-464d-a0a5-e7d973b69e08",
+            "attempt_id": "b63bcf62-3d5c-464d-a0a5-e7d973b69e08",
+            "state": "exited",
+            "supervisor": {
+              "pid": 46992,
+              "birth": "134331005677943949"
+            },
+            "processes": [],
+            "exit_code": 1,
+            "remote_stop": "unknown",
+            "launch_phase": "acknowledged",
+            "business_status": "cancelled",
+            "usage_settled": false,
+            "usage_events": []
+          }
+        ],
+        "candidate": {
+          "base_sha": "eb86d89d6eb3aeccb45d85f5a19c5e9a8db80f1f",
+          "changed_paths": [
+            "src/report.py"
+          ],
+          "content_sha256": "a6e7b1738c75779d21871d472e4a027c30a2fcd220c368871b3a4d87bf43e63a",
+          "frozen_at": "2026-09-05T16:49:27.744914+00:00",
+          "id": "6d1f06b7-1625-4d34-9e3a-5df227d14896",
+          "input_sha256": "760624e9b3d98e347acbb5d3357c355b1e7ba19f5581de1901a138dd3edd4382",
+          "manifest": [
+            {
+              "artifact": {
+                "path": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\check_failed\\candidates\\artifacts\\adf8aa1160ec2289c1679da284f0f4ea8d17af39717f3cad2d12de66d2803765",
+                "sha256": "adf8aa1160ec2289c1679da284f0f4ea8d17af39717f3cad2d12de66d2803765",
+                "size": 18
+              },
+              "blob_sha": "9885a0fb7efcb34d1c69566735feb177cbd129d0",
+              "mode": "100644",
+              "path": "original.txt"
+            },
+            {
+              "artifact": {
+                "path": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\check_failed\\candidates\\artifacts\\b7531c4e2faeedb30e30038c2ff081f49ae2971a989c2435a7a7bfaae063331b",
+                "sha256": "b7531c4e2faeedb30e30038c2ff081f49ae2971a989c2435a7a7bfaae063331b",
+                "size": 27
+              },
+              "blob_sha": "dc7bbaae252c5fe416f7eb376223a98f3b302d61",
+              "mode": "100644",
+              "path": "src/report.py"
+            }
+          ],
+          "manifest_sha256": "7ddcd8c8e11cbf092ca84f514c7f78d1c15418450897540a719499e8a761e482",
+          "policy_sha256": "71d44df3ce703a3e727366782a1ac9f47be58ff4c68ee024e36ad546d2f17461",
+          "repository_identity": "3068c66e-c37d-4cb8-981d-6b6bcd1cbdf2",
+          "request": {
+            "allowed_paths": [
+              "src/report.py"
+            ],
+            "authors": [
+              {
+                "attempt_id": "8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+                "context_id": "8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+                "fence": 1,
+                "model_family": "fixture-family",
+                "profile_id": "fixture-profile",
+                "profile_revision": 1,
+                "provenance_ref": "fixture:fixed-process"
+              }
+            ],
+            "baseline_id": "ecae1748af41cf8d74bc4ff77caab1724665c3b4732db98da7e6382595f4e2a7",
+            "input_sha256": "760624e9b3d98e347acbb5d3357c355b1e7ba19f5581de1901a138dd3edd4382",
+            "policy": {
+              "checks": [
+                {
+                  "argv": [
+                    "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+                    "-I",
+                    "C:\\Users\\Chooo\\Playground\\Karajan\\backend\\karajan\\orchestration\\_fixture_process.py",
+                    "check",
+                    "[\"src/report.py\"]",
+                    "{observation_log}",
+                    "fail"
+                  ],
+                  "environment_sha256": "95d7e1efaa9d64b85039cb3e760e8caf6eb593365ef22137a7b8f2c8113a04b9",
+                  "id": "tests",
+                  "revision": 1
+                }
+              ],
+              "id": "fixed-local-fixture",
+              "review": {
+                "approved_reviewers": [
+                  {
+                    "model_family": "fixture-family",
+                    "profile_id": "fixture-profile",
+                    "profile_revision": 1,
+                    "qualification_ref": "fixture:fixed-runtime-not-live-qualified"
+                  }
+                ],
+                "environment_sha256": "95d7e1efaa9d64b85039cb3e760e8caf6eb593365ef22137a7b8f2c8113a04b9",
+                "revision": 1
+              },
+              "revision": 1
+            },
+            "series_id": "d31f9672-34d2-4482-93fe-3d1e6bc4c760/implement",
+            "task_class": "T2",
+            "writer": {
+              "attempt_id": "8618a09f-9e22-4ca5-8c7d-19ab989ed417",
+              "fence": 1,
+              "observation_ref": "runnerhost:94d9ed00986e242b192a112ad397717f2bbe57dace357fbd2d0b1d5104b0e779",
+              "stopped": true
+            }
+          },
+          "revision": 1,
+          "schema_version": "karajan.candidate.v1",
+          "series_id": "d31f9672-34d2-4482-93fe-3d1e6bc4c760/implement",
+          "tree_sha": "80a1b99d41856b8fe43777cb92ed9a7c60beb25a"
+        },
+        "limitations": [
+          "No real model, quota admission, sandbox, or delivery qualification.",
+          "Cross-database approval/activation is not an atomic revocation protocol."
+        ]
+      }
+    },
+    {
+      "scenario": "review_inconclusive",
+      "exit_code": 0,
+      "stdout": "{\"status\": \"passed\", \"state\": \"blocked\", \"report\": \"C:\\\\Users\\\\Chooo\\\\AppData\\\\Local\\\\Temp\\\\karajan-serial-evidence-m57x_p0m\\\\review_inconclusive\\\\report.json\"}\n",
+      "stderr": "",
+      "report": {
+        "schema_version": "karajan.serial-probe.v1",
+        "status": "passed",
+        "scenario": "review_inconclusive",
+        "observed_at": "2026-09-05T16:49:29.797531+00:00",
+        "os": "Windows",
+        "python_version": "3.12.14",
+        "source_sha256": {
+          "__init__.py": "44e1aa3ab0a287b1ac3c5b3de9e49c6a2ed74b4d311a032e94a484b43cea53f6",
+          "_fixture_process.py": "41309db0762b87275d3b4e6c54eae3df3da79ed565fb26f29a6780a5cbd252e1",
+          "binding.py": "28647373bfee669b9fd9200a19e3b214f6aa39720e15bc168bc080b349f1ffca",
+          "fixture.py": "15554d1e48c9a45337555e3a60961a37632837615a07927f37f9b50d7f7248c9",
+          "serial.py": "41ec5934357aa2532eec20776215240d3ce7e1e5a99d07334ca13129fe094853"
+        },
+        "probe_source_sha256": "99a181c0c36bbbf3c4fc976bb66eae6a5c58496dc062a2c5176821b15cb5665f",
+        "cash_api_calls": 0,
+        "real_model_calls": 0,
+        "live_qualification": "not_run",
+        "planning_source": "explicit_example_fixture_receipt",
+        "review_source": "separate_fixed_process",
+        "snapshot": {
+          "attempts": [
+            {
+              "activation": {
+                "attempt_id": "6735be6b-16e9-43ee-9c9b-385f828a8124",
+                "authorization_ref": "approval:390f62567bf58349eb994e4070777b46bf4fbe8dd9b90e69c076ad4a11a93f9c",
+                "budget_ref": "run",
+                "expires_at": 1788626998.578331,
+                "fence": 1,
+                "id": "activation:6735be6b-16e9-43ee-9c9b-385f828a8124"
+              },
+              "fence": 1,
+              "id": "6735be6b-16e9-43ee-9c9b-385f828a8124",
+              "manifest": {
+                "authorization_ref": "approval:390f62567bf58349eb994e4070777b46bf4fbe8dd9b90e69c076ad4a11a93f9c",
+                "budget_ref": "run",
+                "fence": 1,
+                "id": "6735be6b-16e9-43ee-9c9b-385f828a8124",
+                "permissions": [
+                  "fixture-tools"
+                ],
+                "profile_id": "fixture-profile",
+                "profile_revision": 1,
+                "requested_binding": {
+                  "account_id": "fixture-account",
+                  "auth_mode": "none",
+                  "billing_path": "subscription_only",
+                  "channel_id": "fixture-channel",
+                  "model_id": "fixture-model",
+                  "native_settings": {},
+                  "runtime_kind": "fixture-runtime",
+                  "runtime_version": "1"
+                },
+                "role": "worker"
+              },
+              "physical": {
+                "attempt_id": "6735be6b-16e9-43ee-9c9b-385f828a8124",
+                "business_status": "pending",
+                "exit_code": 0,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:6735be6b-16e9-43ee-9c9b-385f828a8124",
+                "processes": [],
+                "remote_stop": "unknown",
+                "state": "exited",
+                "supervisor": {
+                  "birth": "134331005687293238",
+                  "pid": 54424
+                },
+                "usage_events": [],
+                "usage_settled": false
+              },
+              "root_task_id": "64256ee000b24be1e8a0733c6c3fc9939414c0524ef428b11f43809362a9fc85",
+              "stage": "write",
+              "start_key": "serial:6735be6b-16e9-43ee-9c9b-385f828a8124",
+              "state": "completed",
+              "task_id": "implement",
+              "workspace": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\review_inconclusive\\fixture\\workspaces\\6735be6b-16e9-43ee-9c9b-385f828a8124"
+            },
+            {
+              "activation": {
+                "attempt_id": "f1cef0d6-09af-4c47-a120-8fa8b0b507bf",
+                "authorization_ref": "approval:390f62567bf58349eb994e4070777b46bf4fbe8dd9b90e69c076ad4a11a93f9c",
+                "budget_ref": "run",
+                "expires_at": 1788626999.1094236,
+                "fence": 1,
+                "id": "activation:f1cef0d6-09af-4c47-a120-8fa8b0b507bf"
+              },
+              "fence": 1,
+              "id": "f1cef0d6-09af-4c47-a120-8fa8b0b507bf",
+              "manifest": {
+                "authorization_ref": "approval:390f62567bf58349eb994e4070777b46bf4fbe8dd9b90e69c076ad4a11a93f9c",
+                "budget_ref": "run",
+                "fence": 1,
+                "id": "f1cef0d6-09af-4c47-a120-8fa8b0b507bf",
+                "permissions": [
+                  "fixture-tools"
+                ],
+                "profile_id": "fixture-profile",
+                "profile_revision": 1,
+                "requested_binding": {
+                  "account_id": "fixture-account",
+                  "auth_mode": "none",
+                  "billing_path": "subscription_only",
+                  "channel_id": "fixture-channel",
+                  "model_id": "fixture-model",
+                  "native_settings": {},
+                  "runtime_kind": "fixture-runtime",
+                  "runtime_version": "1"
+                },
+                "role": "worker"
+              },
+              "physical": {
+                "attempt_id": "f1cef0d6-09af-4c47-a120-8fa8b0b507bf",
+                "business_status": "pending",
+                "exit_code": 0,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:f1cef0d6-09af-4c47-a120-8fa8b0b507bf",
+                "processes": [],
+                "remote_stop": "unknown",
+                "state": "exited",
+                "supervisor": {
+                  "birth": "134331005691335206",
+                  "pid": 17784
+                },
+                "usage_events": [],
+                "usage_settled": false
+              },
+              "root_task_id": "64256ee000b24be1e8a0733c6c3fc9939414c0524ef428b11f43809362a9fc85",
+              "stage": "check",
+              "start_key": "serial:f1cef0d6-09af-4c47-a120-8fa8b0b507bf",
+              "state": "completed",
+              "task_id": "implement",
+              "workspace": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\review_inconclusive\\fixture\\workspaces\\f1cef0d6-09af-4c47-a120-8fa8b0b507bf"
+            },
+            {
+              "activation": {
+                "attempt_id": "e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+                "authorization_ref": "approval:390f62567bf58349eb994e4070777b46bf4fbe8dd9b90e69c076ad4a11a93f9c",
+                "budget_ref": "run",
+                "expires_at": 1788626999.3702886,
+                "fence": 1,
+                "id": "activation:e08e8395-d4e5-4703-8183-3b50b3aff3a8"
+              },
+              "fence": 1,
+              "id": "e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+              "manifest": {
+                "authorization_ref": "approval:390f62567bf58349eb994e4070777b46bf4fbe8dd9b90e69c076ad4a11a93f9c",
+                "budget_ref": "run",
+                "fence": 1,
+                "id": "e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+                "permissions": [
+                  "fixture-tools"
+                ],
+                "profile_id": "fixture-profile",
+                "profile_revision": 1,
+                "requested_binding": {
+                  "account_id": "fixture-account",
+                  "auth_mode": "none",
+                  "billing_path": "subscription_only",
+                  "channel_id": "fixture-channel",
+                  "model_id": "fixture-model",
+                  "native_settings": {},
+                  "runtime_kind": "fixture-runtime",
+                  "runtime_version": "1"
+                },
+                "role": "reviewer"
+              },
+              "physical": {
+                "prepared_id": "serial:e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+                "attempt_id": "e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+                "state": "exited",
+                "supervisor": {
+                  "pid": 59628,
+                  "birth": "134331005695426342"
+                },
+                "processes": [],
+                "exit_code": 0,
+                "remote_stop": "unknown",
+                "launch_phase": "acknowledged",
+                "business_status": "pending",
+                "usage_settled": false,
+                "usage_events": []
+              },
+              "root_task_id": "5560173db06ea61b02107c4d09cc8ec40637e9e49f3e87d2c7207445adfa4440",
+              "stage": "review",
+              "start_key": "serial:e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+              "state": "completed",
+              "task_id": "review",
+              "workspace": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\review_inconclusive\\fixture\\workspaces\\e08e8395-d4e5-4703-8183-3b50b3aff3a8"
+            }
+          ],
+          "cancelled": false,
+          "counters": {
+            "max_duration_seconds": 300,
+            "max_infrastructure_retries_per_root_task": 2,
+            "max_quality_repair_rounds": 2,
+            "max_total_attempts": 8,
+            "quality_repair_rounds": 0,
+            "roots": {
+              "5560173db06ea61b02107c4d09cc8ec40637e9e49f3e87d2c7207445adfa4440": {
+                "infrastructure_retries": 0
+              },
+              "64256ee000b24be1e8a0733c6c3fc9939414c0524ef428b11f43809362a9fc85": {
+                "infrastructure_retries": 0
+              }
+            },
+            "started_at": 1788626968.578331,
+            "total_attempts": 3
+          },
+          "delivery_eligible": false,
+          "dispatch_eligible": false,
+          "execution_plan_revision": 1,
+          "execution_worker_tasks": [
+            "implement"
+          ],
+          "inbox": [
+            {
+              "attempt_id": "6735be6b-16e9-43ee-9c9b-385f828a8124",
+              "id": "b398c842b3febae52974dc30f8bd27960aa6daac04851c8bb97faa4be1f0c4c5",
+              "physical": {
+                "attempt_id": "6735be6b-16e9-43ee-9c9b-385f828a8124",
+                "business_status": "pending",
+                "exit_code": null,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:6735be6b-16e9-43ee-9c9b-385f828a8124",
+                "processes": [],
+                "remote_stop": "unknown",
+                "state": "unknown",
+                "supervisor": {
+                  "birth": "134331005687218345",
+                  "pid": 42620
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "6735be6b-16e9-43ee-9c9b-385f828a8124",
+              "id": "308104162503ea4b6c0c9245da9d9acbe2f96ec74f9d8e22d94d1ff3a4d0e360",
+              "physical": {
+                "attempt_id": "6735be6b-16e9-43ee-9c9b-385f828a8124",
+                "business_status": "pending",
+                "exit_code": null,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:6735be6b-16e9-43ee-9c9b-385f828a8124",
+                "processes": [
+                  {
+                    "birth": "134331005687293238",
+                    "pid": 54424
+                  },
+                  {
+                    "birth": "134331005688782969",
+                    "pid": 59028
+                  }
+                ],
+                "remote_stop": "unknown",
+                "state": "running",
+                "supervisor": {
+                  "birth": "134331005687293238",
+                  "pid": 54424
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "6735be6b-16e9-43ee-9c9b-385f828a8124",
+              "id": "efe9e80828b69f6adcc207c6db2c76ed9b06d3601d594ba253f3fe8a05c0fe88",
+              "physical": {
+                "attempt_id": "6735be6b-16e9-43ee-9c9b-385f828a8124",
+                "business_status": "pending",
+                "exit_code": null,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:6735be6b-16e9-43ee-9c9b-385f828a8124",
+                "processes": [
+                  {
+                    "birth": "134331005687293238",
+                    "pid": 54424
+                  },
+                  {
+                    "birth": "134331005688782969",
+                    "pid": 59028
+                  },
+                  {
+                    "birth": "134331005688859976",
+                    "pid": 57200
+                  }
+                ],
+                "remote_stop": "unknown",
+                "state": "running",
+                "supervisor": {
+                  "birth": "134331005687293238",
+                  "pid": 54424
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "6735be6b-16e9-43ee-9c9b-385f828a8124",
+              "id": "788cf3474a03940b94b0307fc570e157feb8ca6fb756953a737ade399d852649",
+              "physical": {
+                "attempt_id": "6735be6b-16e9-43ee-9c9b-385f828a8124",
+                "business_status": "pending",
+                "exit_code": null,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:6735be6b-16e9-43ee-9c9b-385f828a8124",
+                "processes": [
+                  {
+                    "birth": "134331005687293238",
+                    "pid": 54424
+                  }
+                ],
+                "remote_stop": "unknown",
+                "state": "running",
+                "supervisor": {
+                  "birth": "134331005687293238",
+                  "pid": 54424
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "6735be6b-16e9-43ee-9c9b-385f828a8124",
+              "id": "a32c2711a4d90306445bf2766bcc695e53d512d6c66622e628b50654ccd88dd3",
+              "physical": {
+                "attempt_id": "6735be6b-16e9-43ee-9c9b-385f828a8124",
+                "business_status": "pending",
+                "exit_code": 0,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:6735be6b-16e9-43ee-9c9b-385f828a8124",
+                "processes": [],
+                "remote_stop": "unknown",
+                "state": "exited",
+                "supervisor": {
+                  "birth": "134331005687293238",
+                  "pid": 54424
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "f1cef0d6-09af-4c47-a120-8fa8b0b507bf",
+              "id": "f699ccf047ad709e1b5d971d821415dea92988f061cd656f427b1e89233ec32a",
+              "physical": {
+                "attempt_id": "f1cef0d6-09af-4c47-a120-8fa8b0b507bf",
+                "business_status": "pending",
+                "exit_code": null,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:f1cef0d6-09af-4c47-a120-8fa8b0b507bf",
+                "processes": [],
+                "remote_stop": "unknown",
+                "state": "unknown",
+                "supervisor": {
+                  "birth": "134331005691254167",
+                  "pid": 59616
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "f1cef0d6-09af-4c47-a120-8fa8b0b507bf",
+              "id": "7dada4d037356bcaa1ddf5b372fb22e5c47f5fd05cf8506374a03da586b58737",
+              "physical": {
+                "attempt_id": "f1cef0d6-09af-4c47-a120-8fa8b0b507bf",
+                "business_status": "pending",
+                "exit_code": null,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:f1cef0d6-09af-4c47-a120-8fa8b0b507bf",
+                "processes": [
+                  {
+                    "birth": "134331005691335206",
+                    "pid": 17784
+                  }
+                ],
+                "remote_stop": "unknown",
+                "state": "running",
+                "supervisor": {
+                  "birth": "134331005691335206",
+                  "pid": 17784
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "f1cef0d6-09af-4c47-a120-8fa8b0b507bf",
+              "id": "351e300e69436d782cc593345c12a2b0272b39ec46242eb11ca8f39921504f45",
+              "physical": {
+                "attempt_id": "f1cef0d6-09af-4c47-a120-8fa8b0b507bf",
+                "business_status": "pending",
+                "exit_code": null,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:f1cef0d6-09af-4c47-a120-8fa8b0b507bf",
+                "processes": [
+                  {
+                    "birth": "134331005691335206",
+                    "pid": 17784
+                  },
+                  {
+                    "birth": "134331005692820819",
+                    "pid": 47320
+                  },
+                  {
+                    "birth": "134331005692898547",
+                    "pid": 33232
+                  }
+                ],
+                "remote_stop": "unknown",
+                "state": "running",
+                "supervisor": {
+                  "birth": "134331005691335206",
+                  "pid": 17784
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "f1cef0d6-09af-4c47-a120-8fa8b0b507bf",
+              "id": "4a5097dfa8b979a594f4026729bbc9845b8ceb9061799b62649152a91456796d",
+              "physical": {
+                "attempt_id": "f1cef0d6-09af-4c47-a120-8fa8b0b507bf",
+                "business_status": "pending",
+                "exit_code": 0,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:f1cef0d6-09af-4c47-a120-8fa8b0b507bf",
+                "processes": [],
+                "remote_stop": "unknown",
+                "state": "exited",
+                "supervisor": {
+                  "birth": "134331005691335206",
+                  "pid": 17784
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+              "id": "ce8a555334b842212dc487de050b1a405c17ab43335ac47526ff8c3fb7176a71",
+              "physical": {
+                "attempt_id": "e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+                "business_status": "pending",
+                "exit_code": null,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+                "processes": [],
+                "remote_stop": "unknown",
+                "state": "unknown",
+                "supervisor": {
+                  "birth": "134331005695351272",
+                  "pid": 23820
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+              "id": "2dbc39e57dde298e96fa66cf7db1fb87d49b4555af704ef5aa170ee18f8b7d96",
+              "physical": {
+                "attempt_id": "e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+                "business_status": "pending",
+                "exit_code": null,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+                "processes": [
+                  {
+                    "birth": "134331005695426342",
+                    "pid": 59628
+                  },
+                  {
+                    "birth": "134331005696952859",
+                    "pid": 59660
+                  }
+                ],
+                "remote_stop": "unknown",
+                "state": "running",
+                "supervisor": {
+                  "birth": "134331005695426342",
+                  "pid": 59628
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+              "id": "6b388841dd094aafd07745661ca9cfc513fc6443440a1f2707aa4862eb4740d9",
+              "physical": {
+                "attempt_id": "e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+                "business_status": "pending",
+                "exit_code": null,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+                "processes": [
+                  {
+                    "birth": "134331005695426342",
+                    "pid": 59628
+                  },
+                  {
+                    "birth": "134331005696952859",
+                    "pid": 59660
+                  },
+                  {
+                    "birth": "134331005697031672",
+                    "pid": 47768
+                  }
+                ],
+                "remote_stop": "unknown",
+                "state": "running",
+                "supervisor": {
+                  "birth": "134331005695426342",
+                  "pid": 59628
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "attempt_id": "e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+              "id": "66e9de8cc121fd48bb8174543ccab52a734aef8dd968780fd6139919b63d2cc1",
+              "physical": {
+                "attempt_id": "e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+                "business_status": "pending",
+                "exit_code": null,
+                "launch_phase": "acknowledged",
+                "prepared_id": "serial:e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+                "processes": [
+                  {
+                    "birth": "134331005695426342",
+                    "pid": 59628
+                  }
+                ],
+                "remote_stop": "unknown",
+                "state": "running",
+                "supervisor": {
+                  "birth": "134331005695426342",
+                  "pid": 59628
+                },
+                "usage_events": [],
+                "usage_settled": false
+              }
+            },
+            {
+              "id": "0871d456b4cc0dbcfdc885da2d92190e0d998c5bb1a752ab6c7cdbf48b8320eb",
+              "attempt_id": "e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+              "physical": {
+                "prepared_id": "serial:e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+                "attempt_id": "e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+                "state": "exited",
+                "supervisor": {
+                  "pid": 59628,
+                  "birth": "134331005695426342"
+                },
+                "processes": [],
+                "exit_code": 0,
+                "remote_stop": "unknown",
+                "launch_phase": "acknowledged",
+                "business_status": "pending",
+                "usage_settled": false,
+                "usage_events": []
+              }
+            }
+          ],
+          "live_qualification": "not_run",
+          "outbox": [
+            {
+              "attempt_id": "6735be6b-16e9-43ee-9c9b-385f828a8124",
+              "id": "serial:6735be6b-16e9-43ee-9c9b-385f828a8124",
+              "kind": "start",
+              "state": "acknowledged"
+            },
+            {
+              "attempt_id": "f1cef0d6-09af-4c47-a120-8fa8b0b507bf",
+              "id": "serial:f1cef0d6-09af-4c47-a120-8fa8b0b507bf",
+              "kind": "start",
+              "state": "acknowledged"
+            },
+            {
+              "attempt_id": "e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+              "id": "serial:e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+              "kind": "start",
+              "state": "acknowledged"
+            }
+          ],
+          "paused": false,
+          "quality_repair_enabled": false,
+          "reason_codes": [
+            "REVIEW_NOT_PASSED"
+          ],
+          "run_id": "f8616b0e-73ae-4d53-8c39-aca713cfead4",
+          "schema_version": "karajan.serial-run.v1",
+          "state": "blocked",
+          "tasks": {
+            "implement": {
+              "baseline": {
+                "base_sha": "eaf9fdfd35e790f93daea96a53939169e32b9e3c",
+                "id": "2332004e608d8cb89f7f31393624deea6a7915141590fb9d243e26b2e0400259",
+                "manifest": [
+                  {
+                    "artifact": {
+                      "path": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\review_inconclusive\\candidates\\artifacts\\adf8aa1160ec2289c1679da284f0f4ea8d17af39717f3cad2d12de66d2803765",
+                      "sha256": "adf8aa1160ec2289c1679da284f0f4ea8d17af39717f3cad2d12de66d2803765",
+                      "size": 18
+                    },
+                    "blob_sha": "9885a0fb7efcb34d1c69566735feb177cbd129d0",
+                    "mode": "100644",
+                    "path": "original.txt"
+                  }
+                ],
+                "repository_identity": "0906478f-2f33-4c09-9e47-32dd4c4745bc",
+                "tree_sha": "3f3205d0317a63085a3f28af7e5227e8c8a683b5"
+              },
+              "binding": {
+                "authorization": {
+                  "budget_ref": "run",
+                  "checks": [
+                    "tests",
+                    "independent_review"
+                  ],
+                  "delivery": "pull_request",
+                  "profile_refs": [
+                    {
+                      "id": "fixture-profile",
+                      "revision": 1
+                    }
+                  ],
+                  "read_paths": [
+                    "src"
+                  ],
+                  "target_branch": "main",
+                  "write_paths": [
+                    "src"
+                  ]
+                },
+                "authorization_digest": "390f62567bf58349eb994e4070777b46bf4fbe8dd9b90e69c076ad4a11a93f9c",
+                "budget": {
+                  "currency_limits": {
+                    "CNY": "0",
+                    "USD": "0"
+                  },
+                  "id": "run",
+                  "max_duration_seconds": 300,
+                  "max_total_attempts": 8,
+                  "scope": "run"
+                },
+                "configuration_digest": "bd53d2bb88b31cd992a48c901fc7b08a46d828c6a583f4fe606c4b7e54182f81",
+                "effective_class": "T2",
+                "input_sha256": "760624e9b3d98e347acbb5d3357c355b1e7ba19f5581de1901a138dd3edd4382",
+                "limits": {
+                  "command_mode": "lead_with_advisers",
+                  "delivery_target": "pull_request",
+                  "implementation_readiness": "ready",
+                  "internal_delegation": "disabled_unless_admitted_and_observable",
+                  "max_infrastructure_retries_per_root_task": 2,
+                  "max_parallel_writers_per_project": 2,
+                  "max_quality_repair_rounds": 2,
+                  "merge_authority": "user",
+                  "plan_approval": "explicit_revision"
+                },
+                "plan_digest": "86ea84c6d42496b9250ccd8a79cab6604a6492c21cf235eff6c9ca39cddf1665",
+                "plan_revision": 1,
+                "planning_term": 1,
+                "profile": {
+                  "admission_granularity": "attempt",
+                  "auth_ref": "secret:fixture-reference",
+                  "binding": {
+                    "account_id": "fixture-account",
+                    "auth_mode": "none",
+                    "billing_path": "subscription_only",
+                    "channel_id": "fixture-channel",
+                    "model_id": "fixture-model",
+                    "native_settings": {},
+                    "runtime_kind": "fixture-runtime",
+                    "runtime_version": "1"
+                  },
+                  "id": "fixture-profile",
+                  "required_permissions": [
+                    "fixture-tools"
+                  ],
+                  "revision": 1,
+                  "usage_coverage": "unknown"
+                },
+                "registration": {
+                  "capability_evidence": [
+                    {
+                      "capability": "bounded_code_edit",
+                      "evidence_ref": "fixture:bounded_code_edit",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "bounded_implementation",
+                      "evidence_ref": "fixture:bounded_implementation",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "candidate_capture",
+                      "evidence_ref": "fixture:candidate_capture",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "code_review",
+                      "evidence_ref": "fixture:code_review",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "controlled_tools",
+                      "evidence_ref": "fixture:controlled_tools",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "critical_code_review",
+                      "evidence_ref": "fixture:critical_code_review",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "critical_implementation",
+                      "evidence_ref": "fixture:critical_implementation",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "design_reasoning",
+                      "evidence_ref": "fixture:design_reasoning",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "structured_findings",
+                      "evidence_ref": "fixture:structured_findings",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "structured_plan_output",
+                      "evidence_ref": "fixture:structured_plan_output",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    }
+                  ],
+                  "enabled": true,
+                  "id": "fixture-profile",
+                  "max_class": "T3",
+                  "model_family": "fixture-family",
+                  "profile": {
+                    "admission_granularity": "attempt",
+                    "auth_ref": "secret:fixture-reference",
+                    "binding": {
+                      "account_id": "fixture-account",
+                      "auth_mode": "none",
+                      "billing_path": "subscription_only",
+                      "channel_id": "fixture-channel",
+                      "model_id": "fixture-model",
+                      "native_settings": {},
+                      "runtime_kind": "fixture-runtime",
+                      "runtime_version": "1"
+                    },
+                    "id": "fixture-profile",
+                    "required_permissions": [
+                      "fixture-tools"
+                    ],
+                    "revision": 1,
+                    "usage_coverage": "unknown"
+                  },
+                  "quota_pool_refs": [
+                    "service-fixture"
+                  ],
+                  "required_isolation": "tool_sandboxed",
+                  "revision": 1
+                },
+                "repository": {
+                  "base_ref": "HEAD",
+                  "base_sha": "eaf9fdfd35e790f93daea96a53939169e32b9e3c",
+                  "identity_sha256": "20406bbe01b0bc5a7ae61eea7780dae2d374769f62984308a4f1446f229c0989",
+                  "root": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\review_inconclusive\\fixture\\repository"
+                },
+                "reviewers": [
+                  {
+                    "capability_evidence": [
+                      {
+                        "capability": "bounded_code_edit",
+                        "evidence_ref": "fixture:bounded_code_edit",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "bounded_implementation",
+                        "evidence_ref": "fixture:bounded_implementation",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "candidate_capture",
+                        "evidence_ref": "fixture:candidate_capture",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "code_review",
+                        "evidence_ref": "fixture:code_review",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "controlled_tools",
+                        "evidence_ref": "fixture:controlled_tools",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "critical_code_review",
+                        "evidence_ref": "fixture:critical_code_review",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "critical_implementation",
+                        "evidence_ref": "fixture:critical_implementation",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "design_reasoning",
+                        "evidence_ref": "fixture:design_reasoning",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "structured_findings",
+                        "evidence_ref": "fixture:structured_findings",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      },
+                      {
+                        "capability": "structured_plan_output",
+                        "evidence_ref": "fixture:structured_plan_output",
+                        "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                        "provenance": "fixture",
+                        "runtime_version": "1",
+                        "status": "passed"
+                      }
+                    ],
+                    "enabled": true,
+                    "id": "fixture-profile",
+                    "max_class": "T3",
+                    "model_family": "fixture-family",
+                    "profile": {
+                      "admission_granularity": "attempt",
+                      "auth_ref": "secret:fixture-reference",
+                      "binding": {
+                        "account_id": "fixture-account",
+                        "auth_mode": "none",
+                        "billing_path": "subscription_only",
+                        "channel_id": "fixture-channel",
+                        "model_id": "fixture-model",
+                        "native_settings": {},
+                        "runtime_kind": "fixture-runtime",
+                        "runtime_version": "1"
+                      },
+                      "id": "fixture-profile",
+                      "required_permissions": [
+                        "fixture-tools"
+                      ],
+                      "revision": 1,
+                      "usage_coverage": "unknown"
+                    },
+                    "quota_pool_refs": [
+                      "service-fixture"
+                    ],
+                    "required_isolation": "tool_sandboxed",
+                    "revision": 1
+                  }
+                ],
+                "task": {
+                  "acceptance": [
+                    "Synthetic fixture passes"
+                  ],
+                  "complexity": "T2",
+                  "depends_on": [],
+                  "id": "implement",
+                  "paths": [
+                    "src/report.py"
+                  ],
+                  "readiness": "ready",
+                  "required": true,
+                  "revision": 1,
+                  "risk": "standard",
+                  "role": "worker"
+                }
+              },
+              "candidate_id": "cadffadb-7133-4fcf-8665-719ee78ec5e0",
+              "check_evidence": {
+                "id": "7b059d85-b551-40de-8659-602913067ca9",
+                "input": {
+                  "candidate_id": "cadffadb-7133-4fcf-8665-719ee78ec5e0",
+                  "check_id": "tests",
+                  "check_revision": 1,
+                  "environment_sha256": "95d7e1efaa9d64b85039cb3e760e8caf6eb593365ef22137a7b8f2c8113a04b9",
+                  "evidence_key": "evidence:f1cef0d6-09af-4c47-a120-8fa8b0b507bf",
+                  "executor_ref": "runnerhost:f1cef0d6-09af-4c47-a120-8fa8b0b507bf",
+                  "exit_code": 0,
+                  "input_sha256": "760624e9b3d98e347acbb5d3357c355b1e7ba19f5581de1901a138dd3edd4382",
+                  "observation_ref": "runnerhost:4a5097dfa8b979a594f4026729bbc9845b8ceb9061799b62649152a91456796d",
+                  "outcome": "completed",
+                  "policy_sha256": "4ac8b8f84d5f6e9ddc76b4bc84a0e2cfc1e727eb8ca620e9c393d7d060059c0f",
+                  "provenance": "fixture"
+                },
+                "kind": "check",
+                "log": {
+                  "path": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\review_inconclusive\\candidates\\artifacts\\760975da5b7ebe63fcb05e0c185189e96fc64e5faf95fe937b5adbe8dc3a9953",
+                  "sha256": "760975da5b7ebe63fcb05e0c185189e96fc64e5faf95fe937b5adbe8dc3a9953",
+                  "size": 127
+                },
+                "reasons": [],
+                "recorded_at": "2026-09-05T16:49:29.364287+00:00",
+                "status": "passed"
+              },
+              "fixture_recipe": "7ecadbb936759641ffb4374d0cf638d2e2102a4dd8edb6fafbfb72eac0910877",
+              "id": "implement",
+              "policy": {
+                "checks": [
+                  {
+                    "argv": [
+                      "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+                      "-I",
+                      "C:\\Users\\Chooo\\Playground\\Karajan\\backend\\karajan\\orchestration\\_fixture_process.py",
+                      "check",
+                      "[\"src/report.py\"]",
+                      "{observation_log}",
+                      "pass"
+                    ],
+                    "environment_sha256": "95d7e1efaa9d64b85039cb3e760e8caf6eb593365ef22137a7b8f2c8113a04b9",
+                    "id": "tests",
+                    "revision": 1
+                  }
+                ],
+                "id": "fixed-local-fixture",
+                "review": {
+                  "approved_reviewers": [
+                    {
+                      "model_family": "fixture-family",
+                      "profile_id": "fixture-profile",
+                      "profile_revision": 1,
+                      "qualification_ref": "fixture:fixed-runtime-not-live-qualified"
+                    }
+                  ],
+                  "environment_sha256": "95d7e1efaa9d64b85039cb3e760e8caf6eb593365ef22137a7b8f2c8113a04b9",
+                  "revision": 1
+                },
+                "revision": 1
+              },
+              "profile_ref": {
+                "id": "fixture-profile",
+                "revision": 1
+              },
+              "state": "awaiting_review",
+              "subject_task_id": null
+            },
+            "review": {
+              "baseline": {
+                "base_sha": "eaf9fdfd35e790f93daea96a53939169e32b9e3c",
+                "id": "2332004e608d8cb89f7f31393624deea6a7915141590fb9d243e26b2e0400259",
+                "manifest": [
+                  {
+                    "artifact": {
+                      "path": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\review_inconclusive\\candidates\\artifacts\\adf8aa1160ec2289c1679da284f0f4ea8d17af39717f3cad2d12de66d2803765",
+                      "sha256": "adf8aa1160ec2289c1679da284f0f4ea8d17af39717f3cad2d12de66d2803765",
+                      "size": 18
+                    },
+                    "blob_sha": "9885a0fb7efcb34d1c69566735feb177cbd129d0",
+                    "mode": "100644",
+                    "path": "original.txt"
+                  }
+                ],
+                "repository_identity": "0906478f-2f33-4c09-9e47-32dd4c4745bc",
+                "tree_sha": "3f3205d0317a63085a3f28af7e5227e8c8a683b5"
+              },
+              "binding": {
+                "authorization": {
+                  "budget_ref": "run",
+                  "checks": [
+                    "tests",
+                    "independent_review"
+                  ],
+                  "delivery": "pull_request",
+                  "profile_refs": [
+                    {
+                      "id": "fixture-profile",
+                      "revision": 1
+                    }
+                  ],
+                  "read_paths": [
+                    "src"
+                  ],
+                  "target_branch": "main",
+                  "write_paths": [
+                    "src"
+                  ]
+                },
+                "authorization_digest": "390f62567bf58349eb994e4070777b46bf4fbe8dd9b90e69c076ad4a11a93f9c",
+                "budget": {
+                  "currency_limits": {
+                    "CNY": "0",
+                    "USD": "0"
+                  },
+                  "id": "run",
+                  "max_duration_seconds": 300,
+                  "max_total_attempts": 8,
+                  "scope": "run"
+                },
+                "configuration_digest": "bd53d2bb88b31cd992a48c901fc7b08a46d828c6a583f4fe606c4b7e54182f81",
+                "effective_class": "T2",
+                "input_sha256": "d7189f1e05996026baf5e13ba4b2db993a23b10f1de8cc6522a0f2eadab8e45a",
+                "limits": {
+                  "command_mode": "lead_with_advisers",
+                  "delivery_target": "pull_request",
+                  "implementation_readiness": "ready",
+                  "internal_delegation": "disabled_unless_admitted_and_observable",
+                  "max_infrastructure_retries_per_root_task": 2,
+                  "max_parallel_writers_per_project": 2,
+                  "max_quality_repair_rounds": 2,
+                  "merge_authority": "user",
+                  "plan_approval": "explicit_revision"
+                },
+                "plan_digest": "86ea84c6d42496b9250ccd8a79cab6604a6492c21cf235eff6c9ca39cddf1665",
+                "plan_revision": 1,
+                "planning_term": 1,
+                "profile": {
+                  "admission_granularity": "attempt",
+                  "auth_ref": "secret:fixture-reference",
+                  "binding": {
+                    "account_id": "fixture-account",
+                    "auth_mode": "none",
+                    "billing_path": "subscription_only",
+                    "channel_id": "fixture-channel",
+                    "model_id": "fixture-model",
+                    "native_settings": {},
+                    "runtime_kind": "fixture-runtime",
+                    "runtime_version": "1"
+                  },
+                  "id": "fixture-profile",
+                  "required_permissions": [
+                    "fixture-tools"
+                  ],
+                  "revision": 1,
+                  "usage_coverage": "unknown"
+                },
+                "registration": {
+                  "capability_evidence": [
+                    {
+                      "capability": "bounded_code_edit",
+                      "evidence_ref": "fixture:bounded_code_edit",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "bounded_implementation",
+                      "evidence_ref": "fixture:bounded_implementation",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "candidate_capture",
+                      "evidence_ref": "fixture:candidate_capture",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "code_review",
+                      "evidence_ref": "fixture:code_review",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "controlled_tools",
+                      "evidence_ref": "fixture:controlled_tools",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "critical_code_review",
+                      "evidence_ref": "fixture:critical_code_review",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "critical_implementation",
+                      "evidence_ref": "fixture:critical_implementation",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "design_reasoning",
+                      "evidence_ref": "fixture:design_reasoning",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "structured_findings",
+                      "evidence_ref": "fixture:structured_findings",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    },
+                    {
+                      "capability": "structured_plan_output",
+                      "evidence_ref": "fixture:structured_plan_output",
+                      "profile_digest": "3eb636e7b907875a09a8105492f193b4fc8419f083bfa2be2d63c26369ab2e98",
+                      "provenance": "fixture",
+                      "runtime_version": "1",
+                      "status": "passed"
+                    }
+                  ],
+                  "enabled": true,
+                  "id": "fixture-profile",
+                  "max_class": "T3",
+                  "model_family": "fixture-family",
+                  "profile": {
+                    "admission_granularity": "attempt",
+                    "auth_ref": "secret:fixture-reference",
+                    "binding": {
+                      "account_id": "fixture-account",
+                      "auth_mode": "none",
+                      "billing_path": "subscription_only",
+                      "channel_id": "fixture-channel",
+                      "model_id": "fixture-model",
+                      "native_settings": {},
+                      "runtime_kind": "fixture-runtime",
+                      "runtime_version": "1"
+                    },
+                    "id": "fixture-profile",
+                    "required_permissions": [
+                      "fixture-tools"
+                    ],
+                    "revision": 1,
+                    "usage_coverage": "unknown"
+                  },
+                  "quota_pool_refs": [
+                    "service-fixture"
+                  ],
+                  "required_isolation": "tool_sandboxed",
+                  "revision": 1
+                },
+                "repository": {
+                  "base_ref": "HEAD",
+                  "base_sha": "eaf9fdfd35e790f93daea96a53939169e32b9e3c",
+                  "identity_sha256": "20406bbe01b0bc5a7ae61eea7780dae2d374769f62984308a4f1446f229c0989",
+                  "root": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\review_inconclusive\\fixture\\repository"
+                },
+                "reviewers": [],
+                "task": {
+                  "acceptance": [
+                    "Synthetic fixture passes"
+                  ],
+                  "complexity": "T2",
+                  "depends_on": [
+                    "implement"
+                  ],
+                  "id": "review",
+                  "paths": [
+                    "src/report.py"
+                  ],
+                  "readiness": "ready",
+                  "required": true,
+                  "revision": 1,
+                  "risk": "standard",
+                  "role": "reviewer"
+                }
+              },
+              "candidate_id": "cadffadb-7133-4fcf-8665-719ee78ec5e0",
+              "fixture_recipe": "7ecadbb936759641ffb4374d0cf638d2e2102a4dd8edb6fafbfb72eac0910877",
+              "id": "review",
+              "policy": {
+                "checks": [
+                  {
+                    "argv": [
+                      "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+                      "-I",
+                      "C:\\Users\\Chooo\\Playground\\Karajan\\backend\\karajan\\orchestration\\_fixture_process.py",
+                      "check",
+                      "[\"src/report.py\"]",
+                      "{observation_log}",
+                      "pass"
+                    ],
+                    "environment_sha256": "95d7e1efaa9d64b85039cb3e760e8caf6eb593365ef22137a7b8f2c8113a04b9",
+                    "id": "tests",
+                    "revision": 1
+                  }
+                ],
+                "id": "fixed-local-fixture",
+                "review": {
+                  "approved_reviewers": [
+                    {
+                      "model_family": "fixture-family",
+                      "profile_id": "fixture-profile",
+                      "profile_revision": 1,
+                      "qualification_ref": "fixture:fixed-runtime-not-live-qualified"
+                    }
+                  ],
+                  "environment_sha256": "95d7e1efaa9d64b85039cb3e760e8caf6eb593365ef22137a7b8f2c8113a04b9",
+                  "revision": 1
+                },
+                "revision": 1
+              },
+              "profile_ref": {
+                "id": "fixture-profile",
+                "revision": 1
+              },
+              "state": "blocked",
+              "subject_task_id": "implement",
+              "review_evidence": {
+                "id": "f4b94d11-2929-4c7e-afd4-2d70c26808e3",
+                "kind": "review",
+                "input": {
+                  "evidence_key": "evidence:e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+                  "candidate_id": "cadffadb-7133-4fcf-8665-719ee78ec5e0",
+                  "policy_sha256": "4ac8b8f84d5f6e9ddc76b4bc84a0e2cfc1e727eb8ca620e9c393d7d060059c0f",
+                  "input_sha256": "760624e9b3d98e347acbb5d3357c355b1e7ba19f5581de1901a138dd3edd4382",
+                  "environment_sha256": "95d7e1efaa9d64b85039cb3e760e8caf6eb593365ef22137a7b8f2c8113a04b9",
+                  "observation_ref": "runnerhost:0871d456b4cc0dbcfdc885da2d92190e0d998c5bb1a752ab6c7cdbf48b8320eb",
+                  "provenance": "fixture",
+                  "review_revision": 1,
+                  "check_evidence_ids": [
+                    "7b059d85-b551-40de-8659-602913067ca9"
+                  ],
+                  "actor": {
+                    "attempt_id": "e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+                    "fence": 1,
+                    "profile_id": "fixture-profile",
+                    "profile_revision": 1,
+                    "model_family": "fixture-family",
+                    "context_id": "e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+                    "provenance_ref": "fixture:independent-process"
+                  },
+                  "author_reasoning_included": false,
+                  "verdict": "inconclusive",
+                  "findings": []
+                },
+                "status": "inconclusive",
+                "reasons": [],
+                "log": {
+                  "sha256": "d68bd5b78e40cb76849d8f87e11b691941bd1bc44beaa1f0fbfca1d4bd393871",
+                  "size": 134,
+                  "path": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\review_inconclusive\\candidates\\artifacts\\d68bd5b78e40cb76849d8f87e11b691941bd1bc44beaa1f0fbfca1d4bd393871"
+                },
+                "recorded_at": "2026-09-05T16:49:29.782670+00:00"
+              }
+            }
+          }
+        },
+        "transitions": [
+          "unknown",
+          "running",
+          "candidate_ready",
+          "unknown",
+          "running",
+          "awaiting_review",
+          "unknown",
+          "running",
+          "blocked"
+        ],
+        "cleanup": [
+          {
+            "prepared_id": "serial:6735be6b-16e9-43ee-9c9b-385f828a8124",
+            "attempt_id": "6735be6b-16e9-43ee-9c9b-385f828a8124",
+            "state": "exited",
+            "supervisor": {
+              "pid": 54424,
+              "birth": "134331005687293238"
+            },
+            "processes": [],
+            "exit_code": 0,
+            "remote_stop": "unknown",
+            "launch_phase": "acknowledged",
+            "business_status": "cancelled",
+            "usage_settled": false,
+            "usage_events": []
+          },
+          {
+            "prepared_id": "serial:e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+            "attempt_id": "e08e8395-d4e5-4703-8183-3b50b3aff3a8",
+            "state": "exited",
+            "supervisor": {
+              "pid": 59628,
+              "birth": "134331005695426342"
+            },
+            "processes": [],
+            "exit_code": 0,
+            "remote_stop": "unknown",
+            "launch_phase": "acknowledged",
+            "business_status": "cancelled",
+            "usage_settled": false,
+            "usage_events": []
+          },
+          {
+            "prepared_id": "serial:f1cef0d6-09af-4c47-a120-8fa8b0b507bf",
+            "attempt_id": "f1cef0d6-09af-4c47-a120-8fa8b0b507bf",
+            "state": "exited",
+            "supervisor": {
+              "pid": 17784,
+              "birth": "134331005691335206"
+            },
+            "processes": [],
+            "exit_code": 0,
+            "remote_stop": "unknown",
+            "launch_phase": "acknowledged",
+            "business_status": "cancelled",
+            "usage_settled": false,
+            "usage_events": []
+          }
+        ],
+        "candidate": {
+          "base_sha": "eaf9fdfd35e790f93daea96a53939169e32b9e3c",
+          "changed_paths": [
+            "src/report.py"
+          ],
+          "content_sha256": "47bd48e09e796df1c487024618f5e15c1dd7e222e5842c2444911d2967293024",
+          "frozen_at": "2026-09-05T16:49:29.082218+00:00",
+          "id": "cadffadb-7133-4fcf-8665-719ee78ec5e0",
+          "input_sha256": "760624e9b3d98e347acbb5d3357c355b1e7ba19f5581de1901a138dd3edd4382",
+          "manifest": [
+            {
+              "artifact": {
+                "path": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\review_inconclusive\\candidates\\artifacts\\adf8aa1160ec2289c1679da284f0f4ea8d17af39717f3cad2d12de66d2803765",
+                "sha256": "adf8aa1160ec2289c1679da284f0f4ea8d17af39717f3cad2d12de66d2803765",
+                "size": 18
+              },
+              "blob_sha": "9885a0fb7efcb34d1c69566735feb177cbd129d0",
+              "mode": "100644",
+              "path": "original.txt"
+            },
+            {
+              "artifact": {
+                "path": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-serial-evidence-m57x_p0m\\review_inconclusive\\candidates\\artifacts\\b7531c4e2faeedb30e30038c2ff081f49ae2971a989c2435a7a7bfaae063331b",
+                "sha256": "b7531c4e2faeedb30e30038c2ff081f49ae2971a989c2435a7a7bfaae063331b",
+                "size": 27
+              },
+              "blob_sha": "dc7bbaae252c5fe416f7eb376223a98f3b302d61",
+              "mode": "100644",
+              "path": "src/report.py"
+            }
+          ],
+          "manifest_sha256": "7ddcd8c8e11cbf092ca84f514c7f78d1c15418450897540a719499e8a761e482",
+          "policy_sha256": "4ac8b8f84d5f6e9ddc76b4bc84a0e2cfc1e727eb8ca620e9c393d7d060059c0f",
+          "repository_identity": "0906478f-2f33-4c09-9e47-32dd4c4745bc",
+          "request": {
+            "allowed_paths": [
+              "src/report.py"
+            ],
+            "authors": [
+              {
+                "attempt_id": "6735be6b-16e9-43ee-9c9b-385f828a8124",
+                "context_id": "6735be6b-16e9-43ee-9c9b-385f828a8124",
+                "fence": 1,
+                "model_family": "fixture-family",
+                "profile_id": "fixture-profile",
+                "profile_revision": 1,
+                "provenance_ref": "fixture:fixed-process"
+              }
+            ],
+            "baseline_id": "2332004e608d8cb89f7f31393624deea6a7915141590fb9d243e26b2e0400259",
+            "input_sha256": "760624e9b3d98e347acbb5d3357c355b1e7ba19f5581de1901a138dd3edd4382",
+            "policy": {
+              "checks": [
+                {
+                  "argv": [
+                    "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+                    "-I",
+                    "C:\\Users\\Chooo\\Playground\\Karajan\\backend\\karajan\\orchestration\\_fixture_process.py",
+                    "check",
+                    "[\"src/report.py\"]",
+                    "{observation_log}",
+                    "pass"
+                  ],
+                  "environment_sha256": "95d7e1efaa9d64b85039cb3e760e8caf6eb593365ef22137a7b8f2c8113a04b9",
+                  "id": "tests",
+                  "revision": 1
+                }
+              ],
+              "id": "fixed-local-fixture",
+              "review": {
+                "approved_reviewers": [
+                  {
+                    "model_family": "fixture-family",
+                    "profile_id": "fixture-profile",
+                    "profile_revision": 1,
+                    "qualification_ref": "fixture:fixed-runtime-not-live-qualified"
+                  }
+                ],
+                "environment_sha256": "95d7e1efaa9d64b85039cb3e760e8caf6eb593365ef22137a7b8f2c8113a04b9",
+                "revision": 1
+              },
+              "revision": 1
+            },
+            "series_id": "f8616b0e-73ae-4d53-8c39-aca713cfead4/implement",
+            "task_class": "T2",
+            "writer": {
+              "attempt_id": "6735be6b-16e9-43ee-9c9b-385f828a8124",
+              "fence": 1,
+              "observation_ref": "runnerhost:a32c2711a4d90306445bf2766bcc695e53d512d6c66622e628b50654ccd88dd3",
+              "stopped": true
+            }
+          },
+          "revision": 1,
+          "schema_version": "karajan.candidate.v1",
+          "series_id": "f8616b0e-73ae-4d53-8c39-aca713cfead4/implement",
+          "tree_sha": "80a1b99d41856b8fe43777cb92ed9a7c60beb25a"
+        },
+        "limitations": [
+          "No real model, quota admission, sandbox, or delivery qualification.",
+          "Cross-database approval/activation is not an atomic revocation protocol."
+        ]
+      }
+    }
+  ]
+}

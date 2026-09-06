@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.580" timestamp="2026-09-06T00:59:19.529732+08:00" hostname="ProArt-Zhou"><testcase classname="tests.orchestration.test_serial" name="test_resume_preserves_an_input_invalidation_that_happened_while_paused" time="0.473"><failure message="AssertionError: assert 'queued' == 'blocked'&#10;  &#10;  - blocked&#10;  + queued">case = {'root': WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-445/test_resume_preserves_an_input0'), ...input0/fixture/repository'), 'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x00000192C0EBBEC0&gt;, ...}
+
+    def test_resume_preserves_an_input_invalidation_that_happened_while_paused(case: dict[str, Any]) -&gt; None:
+        from karajan.orchestration import LocalFixtureRunner
+    
+        approve(case)
+        coordinator = SerialCoordinator(case["root"] / "orchestration", case["planner"], case["host"], case["candidates"], fixture_runner=LocalFixtureRunner(case["fixture_root"]))
+        coordinator.enqueue(case["run"]["id"], "implement", profile_ref=case["profile"], command_key="worker", principal="owner")
+        coordinator.control(case["run"]["id"], "pause", command_key="pause", principal="owner")
+        revise(case, "implement")
+        invalidated = advance_until(coordinator, case["run"]["id"], "blocked")
+        assert invalidated["tasks"]["implement"]["state"] == "invalidated"
+        resumed = coordinator.control(case["run"]["id"], "resume", command_key="resume", principal="owner")
+        assert resumed["paused"] is False
+&gt;       assert resumed["state"] == "blocked"
+E       AssertionError: assert 'queued' == 'blocked'
+E         
+E         - blocked
+E         + queued
+
+tests\orchestration\test_serial.py:1085: AssertionError</failure></testcase></testsuite></testsuites>
