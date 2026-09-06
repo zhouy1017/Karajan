@@ -1,0 +1,40 @@
+{
+  "schema_version": "karajan.resource-review.observation.v1",
+  "observed_at": "2026-09-05T17:32:08.234224+00:00",
+  "input_sha256": "ef53e55d05dc40062ef3945dc39599b014d965b96e3a6deed208204a14ba4337",
+  "source_sha256": {
+    "backend/karajan/capacity/store.py": "ecce38cfeb1a5ca9e878934266d2e3e37d72831375c1e20a445fb539df97be01",
+    "backend/karajan/web/resources.py": "51d88e3c686b67d804c0cd7faffb8439263f5100f968997c659f9d0564af21e0"
+  },
+  "observation": {
+    "registered_account": "..",
+    "request_url": "http://127.0.0.1:8765/v1/resources/policy?account_id=..",
+    "status": 200,
+    "response": {
+      "revision": 2,
+      "policy": {
+        "account_id": "..",
+        "max_active_attempts": 4,
+        "max_attempt_duration_seconds": 60,
+        "observation_max_age_seconds": 30,
+        "require_official_observation": false,
+        "safety_margin": {},
+        "lead_reserve": {
+          "weekly": "2"
+        },
+        "lead_reserved_slots": 0,
+        "conservative_mode": null
+      }
+    }
+  },
+  "same_command_replay_matches": true,
+  "duplicate_query": {
+    "status": 422,
+    "response": {
+      "reason_code": "POLICY_ACCOUNT_INVALID"
+    }
+  },
+  "cash_api_calls": 0,
+  "real_model_calls": 0,
+  "live_qualification": "not_run"
+}

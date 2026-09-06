@@ -1,0 +1,13 @@
+{
+  "base": "b8aafa6b29a5dc9005e4264f27c3aff5f5d39724",
+  "sha256": {
+    "backend/karajan/capacity/store.py": "3a7ff7bf598f81bb6d5b2f8d0771f004b4bf3697725f42c549d407071ce56bd1",
+    "backend/karajan/web/resources.py": "b456daa42c0dc40d3ea393ac4b3478336a6044e26711d82fcbfc0f1bfc227625",
+    "backend/karajan/web/app.py": "2ae7b74d2dc2e58061e7246c0428cdbcdcfef70c10e34fa0becf158d49701f41",
+    "frontend/src/ResourcePanel.tsx": "0f2aeb548770d191992e1f77e6c39a5c14b7ac79df386ffeb44683756ac528de",
+    "frontend/src/ResourcePanel.test.tsx": "a5c5d8310a15b5602b4ecbf9bc3c142a1375a1504f411b30b893475e9dceb456",
+    "frontend/src/App.tsx": "b1baf3d0cf14e317c5d0fa2f53a41daa6ef002c0ce288b9eebfe3881a5eb6975",
+    "tests/capacity/test_resource_view.py": "8f16be264e128afed5955ec4bf7342cdd1256045319d97a7cec72cd193740f99",
+    "tests/web/test_resources_http.py": "ea73e0b925f1140b0b7094a13ce81c5f05fb8e3e955fab38b9bd98642abe6aa4"
+  }
+}

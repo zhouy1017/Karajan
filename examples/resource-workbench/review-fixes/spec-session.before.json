@@ -1,0 +1,16 @@
+{
+  "requests": [
+    "/v1/session",
+    "/v1/projects",
+    "/v1/resources",
+    "/v1/session/logout",
+    "/v1/session/bootstrap",
+    "/v1/projects"
+  ],
+  "old_resource_response_status": 401,
+  "replacement_session_was_logged_in": true,
+  "project_visible": false,
+  "login_visible": true,
+  "provider_calls": 0,
+  "source": "public App UI with explicitly deferred local HTTP fixture"
+}

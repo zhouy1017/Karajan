@@ -103,6 +103,17 @@ a {
   font-size: 18px;
   display: flex;
   gap: 12px;
+  width: 100%;
+  text-align: left;
+  color: #c9dcd5;
+}
+.workspace-navigation {
+  display: grid;
+  gap: 8px;
+}
+.nav-item[aria-pressed="false"] {
+  background: transparent;
+  border-color: transparent;
 }
 .nav-item span {
   font-size: 14px;
@@ -246,7 +257,6 @@ h1 {
     padding: 18px 24px;
   }
   .sidebar > p,
-  .nav-item,
   .local-mark {
     display: none;
   }
@@ -255,6 +265,10 @@ h1 {
   }
   .brand span {
     font-size: 20px;
+  }
+  .workspace-navigation {
+    margin-top: 18px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   main {
     padding: 0 25px 32px;

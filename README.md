@@ -20,7 +20,7 @@ PRD、8 个 M0 Issues、20 个 M1–M4 实现任务和独立 CI 任务已发布�
 
 [DeepSeek 离线接入](docs/implementation/m2-deepseek-offline.md) 包含纯协议适配、固定 OpenCode 工具循环、现有预算账本准入与可重跑故障样例。测试全部使用本地假服务，真实 API 资格保持 `not_run`。
 
-[共享配额池](docs/implementation/m3-shared-capacity.md) 已提供跨 Run/模型的多窗口准入、当前 Commander 保护量、消费核销与未知额度规则。Windows/WSL2 的本机验证可重跑；资源工作台和统一调度接线仍在推进。
+[共享配额池](docs/implementation/m3-shared-capacity.md) 已提供跨 Run/模型的多窗口准入、当前 Commander 保护量、消费核销与未知额度规则。[资源工作台](docs/implementation/m3-resource-workbench.md) 可查看已有账户的共享窗口并保存 Commander 保护量，显示报告来源与未知状态。统一调度接线与真实来源观察仍在推进。
 
 [串行执行协调](docs/implementation/m1-serial-orchestration.md) 已把批准计划、真实本机进程、固定候选、检查和独立审查串联为可恢复的离线流程。暂停、取消、输入变化与根任务重试都有持久记录；真实来源、资源原子准入和多 Worker 集成仍待接通。
 

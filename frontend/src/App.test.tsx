@@ -8,6 +8,35 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+it("opens shared resources and leaves the view when the owner session expires", async () => {
+  let expired = false;
+  vi.stubGlobal("fetch", async (path: string) => {
+    if (path === "/v1/session")
+      return Response.json({ csrf_token: "csrf-fixture" });
+    if (path === "/v1/projects") return Response.json({ items: [] });
+    if (path === "/v1/resources")
+      return expired
+        ? new Response("{}", { status: 401 })
+        : Response.json({
+            schema_version: "karajan.resources.view.v1",
+            accounts: [],
+            observed_at: 1000,
+            live_qualification: "not_run",
+            activation_allowed: false,
+          });
+    throw new Error("Unexpected request");
+  });
+  render(<App />);
+  await screen.findByRole("heading", { name: "你的项目" });
+  await userEvent.click(screen.getByRole("button", { name: "资源与配额" }));
+  await screen.findByRole("heading", { name: "还没有账户额度记录" });
+  expect(screen.queryByRole("heading", { name: "你的项目" })).toBeNull();
+  expired = true;
+  await userEvent.click(screen.getByRole("button", { name: "刷新额度" }));
+  await screen.findByLabelText("本机访问码");
+  expect(screen.queryByRole("heading", { name: "账户额度" })).toBeNull();
+});
+
 it("revokes the session with CSRF before returning to the login page", async () => {
   const writes: RequestInit[] = [];
   vi.stubGlobal("fetch", async (path: string, options?: RequestInit) => {

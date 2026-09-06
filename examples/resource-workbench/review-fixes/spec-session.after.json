@@ -1,0 +1,35 @@
+{
+  "input": {
+    "initial_csrf": "old-fixture-session",
+    "replacement_csrf": "replacement-fixture-session",
+    "replacement_code": "replacement-code-canary",
+    "old_resource_response_status": 401,
+    "actions": [
+      "open resources and hold its HTTP response",
+      "log out",
+      "log in using a replacement fixture session",
+      "release old resource response",
+      "observe current page"
+    ]
+  },
+  "input_sha256": "1d40e5fbf67fa52839131642d2b724ea3bc43419c833ccfbec97d8f295e5a984",
+  "requests": [
+    "/v1/session",
+    "/v1/projects",
+    "/v1/resources",
+    "/v1/session/logout",
+    "/v1/session/bootstrap",
+    "/v1/projects"
+  ],
+  "old_resource_response_status": 401,
+  "replacement_session_was_logged_in": true,
+  "project_visible": true,
+  "login_visible": false,
+  "source_sha256": {
+    "frontend/src/App.tsx": "b1baf3d0cf14e317c5d0fa2f53a41daa6ef002c0ce288b9eebfe3881a5eb6975",
+    "frontend/src/ResourcePanel.tsx": "c1a05e1f496e09455f51ba3f211354d381c678e6234ae1354b7e2f85bf39375b"
+  },
+  "provider_calls": 0,
+  "cash_calls": 0,
+  "source": "public App UI with explicitly deferred local HTTP fixture"
+}

@@ -1,0 +1,262 @@
+{
+  "schema_version": "karajan.resource-spec-replay.v1",
+  "case": "exhaustion",
+  "status": "passed",
+  "input": {
+    "pools": [
+      {
+        "id": "short",
+        "account_id": "shared-account",
+        "kind": "service",
+        "unit": "requests",
+        "window_kind": "fixed"
+      },
+      {
+        "id": "weekly",
+        "account_id": "shared-account",
+        "kind": "service",
+        "unit": "requests",
+        "window_kind": "fixed"
+      },
+      {
+        "id": "allowance",
+        "account_id": "shared-account",
+        "kind": "platform_allowance",
+        "unit": "requests",
+        "window_kind": "fixed"
+      }
+    ],
+    "policy": {
+      "account_id": "shared-account",
+      "conservative_mode": null,
+      "lead_reserve": {
+        "weekly": "2"
+      },
+      "lead_reserved_slots": 0,
+      "max_active_attempts": 4,
+      "max_attempt_duration_seconds": 60,
+      "observation_max_age_seconds": 30,
+      "require_official_observation": false,
+      "safety_margin": {}
+    },
+    "observations": [],
+    "failure": "QUOTA_EXHAUSTED",
+    "failure_at": 1000,
+    "cooldown_until": 1020
+  },
+  "input_sha256": "6a9116a1bd8facca36afec316fbc50e40058ec3fcbe7cb983ee94f253e67c770",
+  "directory": "C:\\Users\\Chooo\\AppData\\Local\\Temp\\karajan-resource-spec-ftmaj8f_",
+  "source_sha256": {
+    "backend/karajan/capacity/store.py": "ecce38cfeb1a5ca9e878934266d2e3e37d72831375c1e20a445fb539df97be01",
+    "backend/karajan/web/resources.py": "51d88e3c686b67d804c0cd7faffb8439263f5100f968997c659f9d0564af21e0",
+    "backend/karajan/web/app.py": "2ae7b74d2dc2e58061e7246c0428cdbcdcfef70c10e34fa0becf158d49701f41"
+  },
+  "model_calls": 0,
+  "cash_calls": 0,
+  "before": {
+    "schema_version": "karajan.resources.view.v1",
+    "observed_at": 1000.0,
+    "accounts": [
+      {
+        "id": "shared-account",
+        "policy_revision": 1,
+        "policy": {
+          "account_id": "shared-account",
+          "conservative_mode": null,
+          "lead_reserve": {
+            "weekly": "2"
+          },
+          "lead_reserved_slots": 0,
+          "max_active_attempts": 4,
+          "max_attempt_duration_seconds": 60,
+          "observation_max_age_seconds": 30,
+          "require_official_observation": false,
+          "safety_margin": {}
+        },
+        "active_attempts": 0,
+        "waiting_reconciliation": 0,
+        "pools": [
+          {
+            "id": "allowance",
+            "kind": "platform_allowance",
+            "unit": "requests",
+            "window_kind": "fixed",
+            "window_id": null,
+            "reported_remaining": null,
+            "reported_limit": null,
+            "local_uncovered": "0.000000",
+            "future_reserved": "0.000000",
+            "safety_margin": "0",
+            "lead_reserve": "0",
+            "available_for_worker": null,
+            "available_for_lead": null,
+            "source": null,
+            "observed_at": null,
+            "received_at": null,
+            "reset_at": null,
+            "status": "unconfigured",
+            "coverage_status": "no_local_usage",
+            "covered_usage_count": 0
+          },
+          {
+            "id": "short",
+            "kind": "service",
+            "unit": "requests",
+            "window_kind": "fixed",
+            "window_id": null,
+            "reported_remaining": null,
+            "reported_limit": null,
+            "local_uncovered": "0.000000",
+            "future_reserved": "0.000000",
+            "safety_margin": "0",
+            "lead_reserve": "0",
+            "available_for_worker": null,
+            "available_for_lead": null,
+            "source": null,
+            "observed_at": null,
+            "received_at": null,
+            "reset_at": null,
+            "status": "unconfigured",
+            "coverage_status": "no_local_usage",
+            "covered_usage_count": 0
+          },
+          {
+            "id": "weekly",
+            "kind": "service",
+            "unit": "requests",
+            "window_kind": "fixed",
+            "window_id": null,
+            "reported_remaining": null,
+            "reported_limit": null,
+            "local_uncovered": "0.000000",
+            "future_reserved": "0.000000",
+            "safety_margin": "0",
+            "lead_reserve": "2",
+            "available_for_worker": null,
+            "available_for_lead": null,
+            "source": null,
+            "observed_at": null,
+            "received_at": null,
+            "reset_at": null,
+            "status": "unconfigured",
+            "coverage_status": "no_local_usage",
+            "covered_usage_count": 0
+          }
+        ],
+        "blockers": [
+          {
+            "reason_code": "ACCOUNT_COOLDOWN",
+            "until": 1020.0
+          },
+          {
+            "reason_code": "EXHAUSTION_REQUIRES_NEW_OBSERVATION",
+            "until": null
+          }
+        ]
+      }
+    ],
+    "live_qualification": "not_run",
+    "activation_allowed": false
+  },
+  "after": {
+    "schema_version": "karajan.resources.view.v1",
+    "observed_at": 1021.0,
+    "accounts": [
+      {
+        "id": "shared-account",
+        "policy_revision": 1,
+        "policy": {
+          "account_id": "shared-account",
+          "conservative_mode": null,
+          "lead_reserve": {
+            "weekly": "2"
+          },
+          "lead_reserved_slots": 0,
+          "max_active_attempts": 4,
+          "max_attempt_duration_seconds": 60,
+          "observation_max_age_seconds": 30,
+          "require_official_observation": false,
+          "safety_margin": {}
+        },
+        "active_attempts": 0,
+        "waiting_reconciliation": 0,
+        "pools": [
+          {
+            "id": "allowance",
+            "kind": "platform_allowance",
+            "unit": "requests",
+            "window_kind": "fixed",
+            "window_id": null,
+            "reported_remaining": null,
+            "reported_limit": null,
+            "local_uncovered": "0.000000",
+            "future_reserved": "0.000000",
+            "safety_margin": "0",
+            "lead_reserve": "0",
+            "available_for_worker": null,
+            "available_for_lead": null,
+            "source": null,
+            "observed_at": null,
+            "received_at": null,
+            "reset_at": null,
+            "status": "unconfigured",
+            "coverage_status": "no_local_usage",
+            "covered_usage_count": 0
+          },
+          {
+            "id": "short",
+            "kind": "service",
+            "unit": "requests",
+            "window_kind": "fixed",
+            "window_id": null,
+            "reported_remaining": null,
+            "reported_limit": null,
+            "local_uncovered": "0.000000",
+            "future_reserved": "0.000000",
+            "safety_margin": "0",
+            "lead_reserve": "0",
+            "available_for_worker": null,
+            "available_for_lead": null,
+            "source": null,
+            "observed_at": null,
+            "received_at": null,
+            "reset_at": null,
+            "status": "unconfigured",
+            "coverage_status": "no_local_usage",
+            "covered_usage_count": 0
+          },
+          {
+            "id": "weekly",
+            "kind": "service",
+            "unit": "requests",
+            "window_kind": "fixed",
+            "window_id": null,
+            "reported_remaining": null,
+            "reported_limit": null,
+            "local_uncovered": "0.000000",
+            "future_reserved": "0.000000",
+            "safety_margin": "0",
+            "lead_reserve": "2",
+            "available_for_worker": null,
+            "available_for_lead": null,
+            "source": null,
+            "observed_at": null,
+            "received_at": null,
+            "reset_at": null,
+            "status": "unconfigured",
+            "coverage_status": "no_local_usage",
+            "covered_usage_count": 0
+          }
+        ],
+        "blockers": [
+          {
+            "reason_code": "EXHAUSTION_REQUIRES_NEW_OBSERVATION",
+            "until": null
+          }
+        ]
+      }
+    ],
+    "live_qualification": "not_run",
+    "activation_allowed": false
+  }
+}

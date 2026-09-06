@@ -1,0 +1,42 @@
+{
+  "pools": [
+    {
+      "id": "short",
+      "account_id": "shared-account",
+      "kind": "service",
+      "unit": "requests",
+      "window_kind": "fixed"
+    },
+    {
+      "id": "weekly",
+      "account_id": "shared-account",
+      "kind": "service",
+      "unit": "requests",
+      "window_kind": "fixed"
+    },
+    {
+      "id": "allowance",
+      "account_id": "shared-account",
+      "kind": "platform_allowance",
+      "unit": "requests",
+      "window_kind": "fixed"
+    }
+  ],
+  "policy": {
+    "account_id": "shared-account",
+    "conservative_mode": null,
+    "lead_reserve": {
+      "weekly": "2"
+    },
+    "lead_reserved_slots": 0,
+    "max_active_attempts": 4,
+    "max_attempt_duration_seconds": 60,
+    "observation_max_age_seconds": 30,
+    "require_official_observation": false,
+    "safety_margin": {}
+  },
+  "observations": [],
+  "failure": "QUOTA_EXHAUSTED",
+  "failure_at": 1000,
+  "cooldown_until": 1020
+}

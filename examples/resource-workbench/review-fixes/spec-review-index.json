@@ -1,0 +1,47 @@
+{
+  "schema_version": "karajan.resource-spec-review.v1",
+  "base_commit": "b8aafa6b29a5dc9005e4264f27c3aff5f5d39724",
+  "observed_at": "2026-09-05T17:39:27.126734+00:00",
+  "implementation_commit": null,
+  "status": "three_confirmed_spec_findings_closed_by_narrow_retest",
+  "findings": [
+    "old_session_401_does_not_expire_replacement_session",
+    "known_pool_limit_enforced",
+    "known_exhaustion_without_first_observation_retained"
+  ],
+  "source_sha256": {
+    "backend/karajan/capacity/store.py": "ecce38cfeb1a5ca9e878934266d2e3e37d72831375c1e20a445fb539df97be01",
+    "backend/karajan/web/resources.py": "51d88e3c686b67d804c0cd7faffb8439263f5100f968997c659f9d0564af21e0",
+    "backend/karajan/web/app.py": "2ae7b74d2dc2e58061e7246c0428cdbcdcfef70c10e34fa0becf158d49701f41",
+    "frontend/src/ResourcePanel.tsx": "c1a05e1f496e09455f51ba3f211354d381c678e6234ae1354b7e2f85bf39375b",
+    "frontend/src/App.tsx": "b1baf3d0cf14e317c5d0fa2f53a41daa6ef002c0ce288b9eebfe3881a5eb6975"
+  },
+  "evidence_sha256": {
+    "spec-exhaustion.after.json": "9f8ce7551529144825aba696a6044801198efec829f681ff6782bc6ef1326a5b",
+    "spec-exhaustion.before.json": "4bce56414990b9d20df16159c4ee673cc371b591e3c653ae211801e2b01b08b3",
+    "spec-exhaustion.input.json": "6a9116a1bd8facca36afec316fbc50e40058ec3fcbe7cb983ee94f253e67c770",
+    "spec-limit.after.json": "44df682dd41374112c03233293770b25e32bf885d22196eb6eb60c4351ee1ac7",
+    "spec-limit.before.json": "398fcb16923d47231e734b318df72a126f8b6bb4c510ed592ad423bac248211f",
+    "spec-limit.input.json": "4e4c452f6f1b4a0c2af051967f99fdb6062a3fa8f5938b602ba2344da689ddb1",
+    "spec-README.md": "ab412ce7f1a782c60ca5b288267608ba1250191a73ae4a80f49e0f1534cbc8b9",
+    "spec-session.after.json": "7d8440572676d37e077299f03d3783ff75a5f338b471b2022254896f8d807cff",
+    "spec-session.after.vitest.json": "5ede391af4bbb0c2fb73258cb3403fe922aeecc1be0a030619585a00602b749c",
+    "spec-session.before.json": "ae3118f8624490220411a34499151f8598b98e472f59599d3c762594ee5fec71",
+    "spec-session.input.json": "1d40e5fbf67fa52839131642d2b724ea3bc43419c833ccfbec97d8f295e5a984",
+    "spec-session.test.ts": "d724e0c366195c8b24cf08aa3d872a3f2000b36d45b31b6c1e8a9db0a339ee23",
+    "spec-source.before.json": "0cc05e0ccd0990e3cc6cc83f14b9e87d9bb01efcf3018d0e4381634d6a033bdf",
+    "spec_replay.py": "96e32a3788aec0b0bb0ff8bc6de46d05ee53fbd69add86dd8b1c42c40bd60697"
+  },
+  "backend_original_inputs_equal": {
+    "spec-limit": true,
+    "spec-exhaustion": true
+  },
+  "before_reports_copied_without_changes": true,
+  "model_calls": 0,
+  "cash_calls": 0,
+  "limits": [
+    "UI HTTP responses are controlled fixtures; backend state and HTTP authentication use real local implementation",
+    "No F05/provider qualification or whole M3 completion asserted",
+    "Dot-segment original input belongs to separate Standards review evidence"
+  ]
+}
