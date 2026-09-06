@@ -1,0 +1,1608 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="10" time="78.758" timestamp="2026-09-06T16:28:12.873821+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_all_credential_identity_axes_reject_before_grants_or_native[project_id]" time="1.970"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_all_credential_identity_axes_reject_before_grants_or_native[auth_ref]" time="1.989"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_all_credential_identity_axes_reject_before_grants_or_native[generation]" time="1.968"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_all_credential_identity_axes_reject_before_grants_or_native[source_id]" time="1.964"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_conflicting_existing_grant_is_not_revoked_by_another_start" time="3.069"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_lost_matching_capabilities_are_revoked_without_revealing_or_sending" time="4.084"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_real_native_run_keeps_issued_start_and_rechecks_source_before_second_stage[caller_start]" time="27.884"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+{
+  "schema_version": "karajan.fixed-go-suite-observation.v1",
+  "suite_ref": {
+    "id": "opencode-go-native-read-edit-linux",
+    "revision": 1
+  },
+  "qualification_id": "qualification-one",
+  "source": {
+    "schema_version": "karajan.fixed-go-suite-source.v1",
+    "suite_ref": {
+      "id": "opencode-go-native-read-edit-linux",
+      "revision": 1
+    },
+    "observation_origin": "http_fixture",
+    "qualification_scope": "fixed_native_tools_fixture",
+    "runtime_source": {
+      "schema_version": "karajan.fixed-go-runtime-source.v1",
+      "execution_path": "linux-unshare-chroot-opencode-go-fixed-tools-v1",
+      "runtime_version": "1.18.29",
+      "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+      "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+      "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+      "machine": "x86_64",
+      "source_sha256": {
+        "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+        "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123",
+        "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+        "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+        "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+        "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+        "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+        "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b"
+      },
+      "system_executable_sha256": {
+        "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c",
+        "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+        "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+        "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "native_settings_digest": "e0a8d0daa8172f93abee79ac1b1640ca1663702933c11918c3477476de098a69"
+    },
+    "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3",
+    "work_root": {
+      "path": "/tmp/karajan-suite-review-5jive39h"
+    },
+    "journal": {
+      "path": "/tmp/karajan-suite-review-5jive39h/journal.sqlite"
+    },
+    "producer_sha256": "942b23a8f04ec459f1fa130c10cfb3f5301e50e9dbde1b92c7309662675a1c5b"
+  },
+  "observation_origin": "http_fixture",
+  "qualification_scope": "fixed_native_tools_fixture",
+  "runtime_tools_status": "not_run",
+  "dispatch_eligible": false,
+  "provider_remote_stop": "unknown",
+  "billing_limit_qualification": "not_run",
+  "scenarios": [
+    {
+      "scenario": "edit",
+      "attempt_id": "attempt-edit",
+      "fence": 1,
+      "grant_id": "grant-edit",
+      "status": "passed",
+      "reason_codes": [],
+      "observation": {
+        "schema_version": "karajan.isolated-opencode-go-observation.v1",
+        "scenario": "edit",
+        "scope": "fixed_native_tools",
+        "observation_origin": "http_fixture",
+        "runtime_tools_status": "not_run",
+        "dispatch_eligible": false,
+        "real_credential_passed_to_runtime": false,
+        "provider_remote_stop": "unknown",
+        "billing_limit_qualification": "not_run",
+        "grant_id": "grant-edit",
+        "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3",
+        "runtime_source": {
+          "schema_version": "karajan.fixed-go-runtime-source.v1",
+          "execution_path": "linux-unshare-chroot-opencode-go-fixed-tools-v1",
+          "runtime_version": "1.18.29",
+          "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+          "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+          "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+          "machine": "x86_64",
+          "source_sha256": {
+            "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+            "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123",
+            "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+            "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+            "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+            "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+            "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+            "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b"
+          },
+          "system_executable_sha256": {
+            "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c",
+            "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+            "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+            "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+          },
+          "native_settings_digest": "e0a8d0daa8172f93abee79ac1b1640ca1663702933c11918c3477476de098a69"
+        },
+        "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+        "source_sha256": {
+          "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+          "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123",
+          "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+          "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+          "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+          "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+          "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+          "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b"
+        },
+        "runtime": {
+          "state": "running",
+          "runtime_version": "1.18.29",
+          "runtime_tools_status": "not_run",
+          "dispatch_eligible": false,
+          "namespace_pid": 1,
+          "namespaces": {
+            "user": "user:[4026532303]",
+            "mnt": "mnt:[4026532304]",
+            "pid": "pid:[4026532305]",
+            "net": "net:[4026532306]"
+          },
+          "host_mount_visible": false,
+          "wsl_interop_visible": false,
+          "native_control_fd_inherited": false,
+          "network_interfaces": [
+            "lo"
+          ],
+          "ipv4_routes": [],
+          "capabilities": {
+            "effective": "0000000000000000",
+            "permitted": "0000000000000000",
+            "bounding": "0000000000000000"
+          },
+          "no_new_privileges": true,
+          "runtime_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650"
+        },
+        "assistants": [
+          {
+            "model_matches": true,
+            "completed": true,
+            "stopped": false,
+            "error": false
+          },
+          {
+            "model_matches": true,
+            "completed": true,
+            "stopped": false,
+            "error": false
+          },
+          {
+            "model_matches": true,
+            "completed": true,
+            "stopped": true,
+            "error": false
+          }
+        ],
+        "tools": [
+          {
+            "tool": "read",
+            "status": "completed",
+            "path": "fixture.py",
+            "permission_denied": false
+          },
+          {
+            "tool": "edit",
+            "status": "completed",
+            "path": "fixture.py",
+            "permission_denied": false
+          }
+        ],
+        "fixture_changed": true,
+        "fixture_cases": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "blocked_file_unchanged": true,
+        "workspace_files": [
+          "blocked.txt",
+          "fixture.py"
+        ],
+        "native_cleanup": {
+          "local_stop": "confirmed",
+          "namespace_init_stopped": true,
+          "observed_processes": [
+            {
+              "pid": 44251,
+              "birth": "7654533",
+              "namespace_pid": 1
+            },
+            {
+              "pid": 44291,
+              "birth": "7654692",
+              "namespace_pid": 41
+            }
+          ],
+          "observed_processes_still_running": [],
+          "remote_stop": "unknown",
+          "runtime_tools_status": "not_run",
+          "dispatch_eligible": false
+        },
+        "relay_cleanup": {
+          "status": "closed",
+          "errors": []
+        },
+        "requests": [
+          {
+            "requested_model": "glm-5.3-flash",
+            "session_header_present": true,
+            "tool_results_in_request": 0,
+            "fixture_content_in_tool_result": false,
+            "denied_canary_in_request": false,
+            "requested_stream": true,
+            "reported_models": [
+              "glm-5.3-flash"
+            ],
+            "tool_names": [
+              "read"
+            ],
+            "usage": {},
+            "upstream_send_attempted": true,
+            "upstream_status": 200,
+            "upstream_response_complete": true,
+            "response_bytes": 703,
+            "stream_terminated": true,
+            "protocol_passed": true,
+            "relay_completed": true,
+            "reason_codes": [],
+            "sequence": 1,
+            "journal_call_id": "c87c34e1-7705-40b6-842c-ddaeaa1c6892",
+            "finish_reason": "tool_calls",
+            "go_cost_trailer_seen": false,
+            "provider_reported_cost": null,
+            "provider_reported_cost_unit": "unknown"
+          },
+          {
+            "requested_model": "glm-5.3-flash",
+            "session_header_present": true,
+            "tool_results_in_request": 1,
+            "fixture_content_in_tool_result": true,
+            "denied_canary_in_request": false,
+            "requested_stream": true,
+            "reported_models": [
+              "glm-5.3-flash"
+            ],
+            "tool_names": [
+              "edit"
+            ],
+            "usage": {},
+            "upstream_send_attempted": true,
+            "upstream_status": 200,
+            "upstream_response_complete": true,
+            "response_bytes": 811,
+            "stream_terminated": true,
+            "protocol_passed": true,
+            "relay_completed": true,
+            "reason_codes": [],
+            "sequence": 2,
+            "journal_call_id": "071738c4-e4f8-4ad6-a30b-b4a1cf488656",
+            "finish_reason": "tool_calls",
+            "go_cost_trailer_seen": false,
+            "provider_reported_cost": null,
+            "provider_reported_cost_unit": "unknown"
+          },
+          {
+            "requested_model": "glm-5.3-flash",
+            "session_header_present": true,
+            "tool_results_in_request": 2,
+            "fixture_content_in_tool_result": true,
+            "denied_canary_in_request": false,
+            "requested_stream": true,
+            "reported_models": [
+              "glm-5.3-flash"
+            ],
+            "tool_names": [],
+            "usage": {},
+            "upstream_send_attempted": true,
+            "upstream_status": 200,
+            "upstream_response_complete": true,
+            "response_bytes": 563,
+            "stream_terminated": true,
+            "protocol_passed": true,
+            "relay_completed": true,
+            "reason_codes": [],
+            "sequence": 3,
+            "journal_call_id": "d72c85f2-0750-4f99-9e31-235493dbf556",
+            "finish_reason": "stop",
+            "go_cost_trailer_seen": false,
+            "provider_reported_cost": null,
+            "provider_reported_cost_unit": "unknown"
+          }
+        ],
+        "journal": {
+          "grant_id": "grant-edit",
+          "binding": {
+            "attempt_id": "attempt-edit",
+            "auth_generation": "generation-one",
+            "channel": "go-channel",
+            "expires_at": 1788683727.224932,
+            "fence": 1,
+            "max_requests": 6,
+            "model": "glm-5.3-flash",
+            "profile_digest": "c50046540201a1c278d23ec27251caaf0de36ea36639e5d1a0b9acf79192e1c8",
+            "qualification_id": "qualification-one",
+            "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3"
+          },
+          "created_at": 1788683308.225195,
+          "revoked_at": 1788683320.8185687,
+          "state": "revoked",
+          "request_count": 3,
+          "calls": [
+            {
+              "call_id": "c87c34e1-7705-40b6-842c-ddaeaa1c6892",
+              "completed_at": 1788683320.3369644,
+              "grant_id": "grant-edit",
+              "outcome": {
+                "protocol_passed": true,
+                "reason_codes": [],
+                "response_bytes": 703,
+                "state": "response_received",
+                "upstream_status": 200,
+                "usage": {}
+              },
+              "send_intent_at": 1788683320.3314354,
+              "sequence": 1,
+              "state": "response_received"
+            },
+            {
+              "call_id": "071738c4-e4f8-4ad6-a30b-b4a1cf488656",
+              "completed_at": 1788683320.6488676,
+              "grant_id": "grant-edit",
+              "outcome": {
+                "protocol_passed": true,
+                "reason_codes": [],
+                "response_bytes": 811,
+                "state": "response_received",
+                "upstream_status": 200,
+                "usage": {}
+              },
+              "send_intent_at": 1788683320.6443048,
+              "sequence": 2,
+              "state": "response_received"
+            },
+            {
+              "call_id": "d72c85f2-0750-4f99-9e31-235493dbf556",
+              "completed_at": 1788683320.7137632,
+              "grant_id": "grant-edit",
+              "outcome": {
+                "protocol_passed": true,
+                "reason_codes": [],
+                "response_bytes": 563,
+                "state": "response_received",
+                "upstream_status": 200,
+                "usage": {}
+              },
+              "send_intent_at": 1788683320.7096283,
+              "sequence": 3,
+              "state": "response_received"
+            }
+          ]
+        },
+        "reason_codes": [],
+        "status": "passed"
+      }
+    },
+    {
+      "scenario": "denied_read",
+      "attempt_id": "attempt-denied_read",
+      "fence": 1,
+      "grant_id": "grant-denied_read",
+      "status": "passed",
+      "reason_codes": [],
+      "observation": {
+        "schema_version": "karajan.isolated-opencode-go-observation.v1",
+        "scenario": "denied_read",
+        "scope": "fixed_native_tools",
+        "observation_origin": "http_fixture",
+        "runtime_tools_status": "not_run",
+        "dispatch_eligible": false,
+        "real_credential_passed_to_runtime": false,
+        "provider_remote_stop": "unknown",
+        "billing_limit_qualification": "not_run",
+        "grant_id": "grant-denied_read",
+        "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3",
+        "runtime_source": {
+          "schema_version": "karajan.fixed-go-runtime-source.v1",
+          "execution_path": "linux-unshare-chroot-opencode-go-fixed-tools-v1",
+          "runtime_version": "1.18.29",
+          "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+          "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+          "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+          "machine": "x86_64",
+          "source_sha256": {
+            "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+            "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123",
+            "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+            "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+            "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+            "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+            "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+            "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b"
+          },
+          "system_executable_sha256": {
+            "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c",
+            "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+            "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+            "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+          },
+          "native_settings_digest": "e0a8d0daa8172f93abee79ac1b1640ca1663702933c11918c3477476de098a69"
+        },
+        "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+        "source_sha256": {
+          "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+          "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123",
+          "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+          "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+          "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+          "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+          "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+          "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b"
+        },
+        "runtime": {
+          "state": "running",
+          "runtime_version": "1.18.29",
+          "runtime_tools_status": "not_run",
+          "dispatch_eligible": false,
+          "namespace_pid": 1,
+          "namespaces": {
+            "user": "user:[4026532179]",
+            "mnt": "mnt:[4026532304]",
+            "pid": "pid:[4026532305]",
+            "net": "net:[4026532306]"
+          },
+          "host_mount_visible": false,
+          "wsl_interop_visible": false,
+          "native_control_fd_inherited": false,
+          "network_interfaces": [
+            "lo"
+          ],
+          "ipv4_routes": [],
+          "capabilities": {
+            "effective": "0000000000000000",
+            "permitted": "0000000000000000",
+            "bounding": "0000000000000000"
+          },
+          "no_new_privileges": true,
+          "runtime_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650"
+        },
+        "assistants": [
+          {
+            "model_matches": true,
+            "completed": true,
+            "stopped": false,
+            "error": false
+          },
+          {
+            "model_matches": true,
+            "completed": true,
+            "stopped": true,
+            "error": false
+          }
+        ],
+        "tools": [
+          {
+            "tool": "read",
+            "status": "error",
+            "path": "blocked.txt",
+            "permission_denied": true
+          }
+        ],
+        "fixture_changed": false,
+        "fixture_cases": null,
+        "blocked_file_unchanged": true,
+        "workspace_files": [
+          "blocked.txt",
+          "fixture.py"
+        ],
+        "native_cleanup": {
+          "local_stop": "confirmed",
+          "namespace_init_stopped": true,
+          "observed_processes": [
+            {
+              "pid": 44390,
+              "birth": "7655786",
+              "namespace_pid": 1
+            },
+            {
+              "pid": 44430,
+              "birth": "7655937",
+              "namespace_pid": 41
+            }
+          ],
+          "observed_processes_still_running": [],
+          "remote_stop": "unknown",
+          "runtime_tools_status": "not_run",
+          "dispatch_eligible": false
+        },
+        "relay_cleanup": {
+          "status": "closed",
+          "errors": []
+        },
+        "requests": [
+          {
+            "requested_model": "glm-5.3-flash",
+            "session_header_present": true,
+            "tool_results_in_request": 0,
+            "fixture_content_in_tool_result": false,
+            "denied_canary_in_request": false,
+            "requested_stream": true,
+            "reported_models": [
+              "glm-5.3-flash"
+            ],
+            "tool_names": [
+              "read"
+            ],
+            "usage": {},
+            "upstream_send_attempted": true,
+            "upstream_status": 200,
+            "upstream_response_complete": true,
+            "response_bytes": 704,
+            "stream_terminated": true,
+            "protocol_passed": true,
+            "relay_completed": true,
+            "reason_codes": [],
+            "sequence": 1,
+            "journal_call_id": "c3ff437d-e214-44c3-8568-d5cb761ae520",
+            "finish_reason": "tool_calls",
+            "go_cost_trailer_seen": false,
+            "provider_reported_cost": null,
+            "provider_reported_cost_unit": "unknown"
+          },
+          {
+            "requested_model": "glm-5.3-flash",
+            "session_header_present": true,
+            "tool_results_in_request": 1,
+            "fixture_content_in_tool_result": false,
+            "denied_canary_in_request": false,
+            "requested_stream": true,
+            "reported_models": [
+              "glm-5.3-flash"
+            ],
+            "tool_names": [],
+            "usage": {},
+            "upstream_send_attempted": true,
+            "upstream_status": 200,
+            "upstream_response_complete": true,
+            "response_bytes": 563,
+            "stream_terminated": true,
+            "protocol_passed": true,
+            "relay_completed": true,
+            "reason_codes": [],
+            "sequence": 2,
+            "journal_call_id": "393bf5f8-6954-4558-8b30-bbcfd09fcc43",
+            "finish_reason": "stop",
+            "go_cost_trailer_seen": false,
+            "provider_reported_cost": null,
+            "provider_reported_cost_unit": "unknown"
+          }
+        ],
+        "journal": {
+          "grant_id": "grant-denied_read",
+          "binding": {
+            "attempt_id": "attempt-denied_read",
+            "auth_generation": "generation-one",
+            "channel": "go-channel",
+            "expires_at": 1788683727.224932,
+            "fence": 1,
+            "max_requests": 6,
+            "model": "glm-5.3-flash",
+            "profile_digest": "c50046540201a1c278d23ec27251caaf0de36ea36639e5d1a0b9acf79192e1c8",
+            "qualification_id": "qualification-one",
+            "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3"
+          },
+          "created_at": 1788683308.228814,
+          "revoked_at": 1788683333.083452,
+          "state": "revoked",
+          "request_count": 2,
+          "calls": [
+            {
+              "call_id": "c3ff437d-e214-44c3-8568-d5cb761ae520",
+              "completed_at": 1788683332.768456,
+              "grant_id": "grant-denied_read",
+              "outcome": {
+                "protocol_passed": true,
+                "reason_codes": [],
+                "response_bytes": 704,
+                "state": "response_received",
+                "upstream_status": 200,
+                "usage": {}
+              },
+              "send_intent_at": 1788683332.764145,
+              "sequence": 1,
+              "state": "response_received"
+            },
+            {
+              "call_id": "393bf5f8-6954-4558-8b30-bbcfd09fcc43",
+              "completed_at": 1788683332.9785469,
+              "grant_id": "grant-denied_read",
+              "outcome": {
+                "protocol_passed": true,
+                "reason_codes": [],
+                "response_bytes": 563,
+                "state": "response_received",
+                "upstream_status": 200,
+                "usage": {}
+              },
+              "send_intent_at": 1788683332.9740286,
+              "sequence": 2,
+              "state": "response_received"
+            }
+          ]
+        },
+        "reason_codes": [],
+        "status": "passed"
+      }
+    }
+  ],
+  "reason_codes": [],
+  "grant_cleanup": [
+    {
+      "grant_id": "grant-edit",
+      "state": "revoked"
+    },
+    {
+      "grant_id": "grant-denied_read",
+      "state": "revoked"
+    }
+  ],
+  "status": "passed",
+  "validation": {
+    "fixed_native_tools": "passed",
+    "runtime_tools": "not_run",
+    "budget": "unknown",
+    "context_capacity": "unknown",
+    "dispatch": false
+  }
+}
+{
+  "synthetic_tool_feedback": [
+    {
+      "role": "tool",
+      "tool_call_id": "call_1",
+      "content": "&lt;path&gt;/workspace/fixture.py&lt;/path&gt;\n&lt;type&gt;file&lt;/type&gt;\n&lt;content&gt;\n1: def clamp(value, low, high):\n2:     return min(low, max(value, high))\n\n(End of file - total 2 lines)\n&lt;/content&gt;"
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_1",
+      "content": "&lt;path&gt;/workspace/fixture.py&lt;/path&gt;\n&lt;type&gt;file&lt;/type&gt;\n&lt;content&gt;\n1: def clamp(value, low, high):\n2:     return min(low, max(value, high))\n\n(End of file - total 2 lines)\n&lt;/content&gt;"
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_2",
+      "content": "Edit applied successfully."
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_1",
+      "content": "The user has specified a rule which prevents you from using this specific tool call. Here are some of the relevant rules [{\"permission\":\"*\",\"action\":\"allow\",\"pattern\":\"*\"},{\"permission\":\"read\",\"pattern\":\"*\",\"action\":\"allow\"},{\"permission\":\"read\",\"pattern\":\"*.env\",\"action\":\"ask\"},{\"permission\":\"read\",\"pattern\":\"*.env.*\",\"action\":\"ask\"},{\"permission\":\"read\",\"pattern\":\"*.env.example\",\"action\":\"allow\"},{\"permission\":\"*\",\"action\":\"deny\",\"pattern\":\"*\"},{\"permission\":\"read\",\"pattern\":\"*\",\"action\":\"deny\"},{\"permission\":\"read\",\"pattern\":\"workspace/fixture.py\",\"action\":\"allow\"},{\"permission\":\"*\",\"action\":\"deny\",\"pattern\":\"*\"},{\"permission\":\"read\",\"pattern\":\"*\",\"action\":\"deny\"},{\"permission\":\"read\",\"pattern\":\"workspace/fixture.py\",\"action\":\"allow\"}]"
+    }
+  ]
+}
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_real_native_run_keeps_issued_start_and_rechecks_source_before_second_stage[controller_source]" time="16.339"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+{
+  "schema_version": "karajan.fixed-go-suite-observation.v1",
+  "suite_ref": {
+    "id": "opencode-go-native-read-edit-linux",
+    "revision": 1
+  },
+  "qualification_id": "qualification-one",
+  "source": {
+    "schema_version": "karajan.fixed-go-suite-source.v1",
+    "suite_ref": {
+      "id": "opencode-go-native-read-edit-linux",
+      "revision": 1
+    },
+    "observation_origin": "http_fixture",
+    "qualification_scope": "fixed_native_tools_fixture",
+    "runtime_source": {
+      "schema_version": "karajan.fixed-go-runtime-source.v1",
+      "execution_path": "linux-unshare-chroot-opencode-go-fixed-tools-v1",
+      "runtime_version": "1.18.29",
+      "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+      "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+      "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+      "machine": "x86_64",
+      "source_sha256": {
+        "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+        "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123",
+        "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+        "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+        "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+        "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+        "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+        "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b"
+      },
+      "system_executable_sha256": {
+        "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c",
+        "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+        "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+        "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "native_settings_digest": "e0a8d0daa8172f93abee79ac1b1640ca1663702933c11918c3477476de098a69"
+    },
+    "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3",
+    "work_root": {
+      "path": "/tmp/karajan-suite-review-b9m7i6w9"
+    },
+    "journal": {
+      "path": "/tmp/karajan-suite-review-b9m7i6w9/journal.sqlite"
+    },
+    "producer_sha256": "942b23a8f04ec459f1fa130c10cfb3f5301e50e9dbde1b92c7309662675a1c5b"
+  },
+  "observation_origin": "http_fixture",
+  "qualification_scope": "fixed_native_tools_fixture",
+  "runtime_tools_status": "not_run",
+  "dispatch_eligible": false,
+  "provider_remote_stop": "unknown",
+  "billing_limit_qualification": "not_run",
+  "scenarios": [
+    {
+      "scenario": "edit",
+      "attempt_id": "attempt-edit",
+      "fence": 1,
+      "grant_id": "grant-edit",
+      "status": "passed",
+      "reason_codes": [],
+      "observation": {
+        "schema_version": "karajan.isolated-opencode-go-observation.v1",
+        "scenario": "edit",
+        "scope": "fixed_native_tools",
+        "observation_origin": "http_fixture",
+        "runtime_tools_status": "not_run",
+        "dispatch_eligible": false,
+        "real_credential_passed_to_runtime": false,
+        "provider_remote_stop": "unknown",
+        "billing_limit_qualification": "not_run",
+        "grant_id": "grant-edit",
+        "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3",
+        "runtime_source": {
+          "schema_version": "karajan.fixed-go-runtime-source.v1",
+          "execution_path": "linux-unshare-chroot-opencode-go-fixed-tools-v1",
+          "runtime_version": "1.18.29",
+          "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+          "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+          "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+          "machine": "x86_64",
+          "source_sha256": {
+            "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+            "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123",
+            "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+            "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+            "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+            "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+            "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+            "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b"
+          },
+          "system_executable_sha256": {
+            "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c",
+            "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+            "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+            "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+          },
+          "native_settings_digest": "e0a8d0daa8172f93abee79ac1b1640ca1663702933c11918c3477476de098a69"
+        },
+        "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+        "source_sha256": {
+          "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+          "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123",
+          "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+          "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+          "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+          "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+          "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+          "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b"
+        },
+        "runtime": {
+          "state": "running",
+          "runtime_version": "1.18.29",
+          "runtime_tools_status": "not_run",
+          "dispatch_eligible": false,
+          "namespace_pid": 1,
+          "namespaces": {
+            "user": "user:[4026532303]",
+            "mnt": "mnt:[4026532304]",
+            "pid": "pid:[4026532305]",
+            "net": "net:[4026532306]"
+          },
+          "host_mount_visible": false,
+          "wsl_interop_visible": false,
+          "native_control_fd_inherited": false,
+          "network_interfaces": [
+            "lo"
+          ],
+          "ipv4_routes": [],
+          "capabilities": {
+            "effective": "0000000000000000",
+            "permitted": "0000000000000000",
+            "bounding": "0000000000000000"
+          },
+          "no_new_privileges": true,
+          "runtime_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650"
+        },
+        "assistants": [
+          {
+            "model_matches": true,
+            "completed": true,
+            "stopped": false,
+            "error": false
+          },
+          {
+            "model_matches": true,
+            "completed": true,
+            "stopped": false,
+            "error": false
+          },
+          {
+            "model_matches": true,
+            "completed": true,
+            "stopped": true,
+            "error": false
+          }
+        ],
+        "tools": [
+          {
+            "tool": "read",
+            "status": "completed",
+            "path": "fixture.py",
+            "permission_denied": false
+          },
+          {
+            "tool": "edit",
+            "status": "completed",
+            "path": "fixture.py",
+            "permission_denied": false
+          }
+        ],
+        "fixture_changed": true,
+        "fixture_cases": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "blocked_file_unchanged": true,
+        "workspace_files": [
+          "blocked.txt",
+          "fixture.py"
+        ],
+        "native_cleanup": {
+          "local_stop": "confirmed",
+          "namespace_init_stopped": true,
+          "observed_processes": [
+            {
+              "pid": 44490,
+              "birth": "7657313",
+              "namespace_pid": 1
+            },
+            {
+              "pid": 44547,
+              "birth": "7657466",
+              "namespace_pid": 41
+            }
+          ],
+          "observed_processes_still_running": [],
+          "remote_stop": "unknown",
+          "runtime_tools_status": "not_run",
+          "dispatch_eligible": false
+        },
+        "relay_cleanup": {
+          "status": "closed",
+          "errors": []
+        },
+        "requests": [
+          {
+            "requested_model": "glm-5.3-flash",
+            "session_header_present": true,
+            "tool_results_in_request": 0,
+            "fixture_content_in_tool_result": false,
+            "denied_canary_in_request": false,
+            "requested_stream": true,
+            "reported_models": [
+              "glm-5.3-flash"
+            ],
+            "tool_names": [
+              "read"
+            ],
+            "usage": {},
+            "upstream_send_attempted": true,
+            "upstream_status": 200,
+            "upstream_response_complete": true,
+            "response_bytes": 703,
+            "stream_terminated": true,
+            "protocol_passed": true,
+            "relay_completed": true,
+            "reason_codes": [],
+            "sequence": 1,
+            "journal_call_id": "51ab91e7-911b-429a-9913-4a3d8df55f0e",
+            "finish_reason": "tool_calls",
+            "go_cost_trailer_seen": false,
+            "provider_reported_cost": null,
+            "provider_reported_cost_unit": "unknown"
+          },
+          {
+            "requested_model": "glm-5.3-flash",
+            "session_header_present": true,
+            "tool_results_in_request": 1,
+            "fixture_content_in_tool_result": true,
+            "denied_canary_in_request": false,
+            "requested_stream": true,
+            "reported_models": [
+              "glm-5.3-flash"
+            ],
+            "tool_names": [
+              "edit"
+            ],
+            "usage": {},
+            "upstream_send_attempted": true,
+            "upstream_status": 200,
+            "upstream_response_complete": true,
+            "response_bytes": 811,
+            "stream_terminated": true,
+            "protocol_passed": true,
+            "relay_completed": true,
+            "reason_codes": [],
+            "sequence": 2,
+            "journal_call_id": "57cc2acc-58fa-402d-8866-a3c093c35d26",
+            "finish_reason": "tool_calls",
+            "go_cost_trailer_seen": false,
+            "provider_reported_cost": null,
+            "provider_reported_cost_unit": "unknown"
+          },
+          {
+            "requested_model": "glm-5.3-flash",
+            "session_header_present": true,
+            "tool_results_in_request": 2,
+            "fixture_content_in_tool_result": true,
+            "denied_canary_in_request": false,
+            "requested_stream": true,
+            "reported_models": [
+              "glm-5.3-flash"
+            ],
+            "tool_names": [],
+            "usage": {},
+            "upstream_send_attempted": true,
+            "upstream_status": 200,
+            "upstream_response_complete": true,
+            "response_bytes": 563,
+            "stream_terminated": true,
+            "protocol_passed": true,
+            "relay_completed": true,
+            "reason_codes": [],
+            "sequence": 3,
+            "journal_call_id": "500e742d-1ea4-45f6-9609-170c975d8f71",
+            "finish_reason": "stop",
+            "go_cost_trailer_seen": false,
+            "provider_reported_cost": null,
+            "provider_reported_cost_unit": "unknown"
+          }
+        ],
+        "journal": {
+          "grant_id": "grant-edit",
+          "binding": {
+            "attempt_id": "attempt-edit",
+            "auth_generation": "generation-one",
+            "channel": "go-channel",
+            "expires_at": 1788683752.6414108,
+            "fence": 1,
+            "max_requests": 6,
+            "model": "glm-5.3-flash",
+            "profile_digest": "c50046540201a1c278d23ec27251caaf0de36ea36639e5d1a0b9acf79192e1c8",
+            "qualification_id": "qualification-one",
+            "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3"
+          },
+          "created_at": 1788683333.6267645,
+          "revoked_at": 1788683345.8943813,
+          "state": "revoked",
+          "request_count": 3,
+          "calls": [
+            {
+              "call_id": "51ab91e7-911b-429a-9913-4a3d8df55f0e",
+              "completed_at": 1788683345.4509962,
+              "grant_id": "grant-edit",
+              "outcome": {
+                "protocol_passed": true,
+                "reason_codes": [],
+                "response_bytes": 703,
+                "state": "response_received",
+                "upstream_status": 200,
+                "usage": {}
+              },
+              "send_intent_at": 1788683345.4414349,
+              "sequence": 1,
+              "state": "response_received"
+            },
+            {
+              "call_id": "57cc2acc-58fa-402d-8866-a3c093c35d26",
+              "completed_at": 1788683345.7138004,
+              "grant_id": "grant-edit",
+              "outcome": {
+                "protocol_passed": true,
+                "reason_codes": [],
+                "response_bytes": 811,
+                "state": "response_received",
+                "upstream_status": 200,
+                "usage": {}
+              },
+              "send_intent_at": 1788683345.7097826,
+              "sequence": 2,
+              "state": "response_received"
+            },
+            {
+              "call_id": "500e742d-1ea4-45f6-9609-170c975d8f71",
+              "completed_at": 1788683345.7719514,
+              "grant_id": "grant-edit",
+              "outcome": {
+                "protocol_passed": true,
+                "reason_codes": [],
+                "response_bytes": 563,
+                "state": "response_received",
+                "upstream_status": 200,
+                "usage": {}
+              },
+              "send_intent_at": 1788683345.7679155,
+              "sequence": 3,
+              "state": "response_received"
+            }
+          ]
+        },
+        "reason_codes": [],
+        "status": "passed"
+      }
+    },
+    {
+      "scenario": "denied_read",
+      "attempt_id": "attempt-denied_read",
+      "fence": 1,
+      "grant_id": "grant-denied_read",
+      "status": "not_run",
+      "reason_codes": [
+        "PRIOR_STAGE_INCOMPLETE"
+      ]
+    }
+  ],
+  "reason_codes": [
+    "FIXED_SUITE_EXECUTION_FAILED",
+    "SUITE_SOURCE_CHANGED"
+  ],
+  "grant_cleanup": [
+    {
+      "grant_id": "grant-edit",
+      "state": "revoked"
+    },
+    {
+      "grant_id": "grant-denied_read",
+      "state": "revoked"
+    }
+  ],
+  "error_type": "ValueError",
+  "status": "failed",
+  "validation": {
+    "fixed_native_tools": "failed",
+    "runtime_tools": "not_run",
+    "budget": "unknown",
+    "context_capacity": "unknown",
+    "dispatch": false
+  }
+}
+{
+  "synthetic_tool_feedback": [
+    {
+      "role": "tool",
+      "tool_call_id": "call_1",
+      "content": "&lt;path&gt;/workspace/fixture.py&lt;/path&gt;\n&lt;type&gt;file&lt;/type&gt;\n&lt;content&gt;\n1: def clamp(value, low, high):\n2:     return min(low, max(value, high))\n\n(End of file - total 2 lines)\n&lt;/content&gt;"
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_1",
+      "content": "&lt;path&gt;/workspace/fixture.py&lt;/path&gt;\n&lt;type&gt;file&lt;/type&gt;\n&lt;content&gt;\n1: def clamp(value, low, high):\n2:     return min(low, max(value, high))\n\n(End of file - total 2 lines)\n&lt;/content&gt;"
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_2",
+      "content": "Edit applied successfully."
+    }
+  ]
+}
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_real_native_run_keeps_issued_start_and_rechecks_source_before_second_stage[source_unavailable]" time="14.395"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+{
+  "schema_version": "karajan.fixed-go-suite-observation.v1",
+  "suite_ref": {
+    "id": "opencode-go-native-read-edit-linux",
+    "revision": 1
+  },
+  "qualification_id": "qualification-one",
+  "source": {
+    "schema_version": "karajan.fixed-go-suite-source.v1",
+    "suite_ref": {
+      "id": "opencode-go-native-read-edit-linux",
+      "revision": 1
+    },
+    "observation_origin": "http_fixture",
+    "qualification_scope": "fixed_native_tools_fixture",
+    "runtime_source": {
+      "schema_version": "karajan.fixed-go-runtime-source.v1",
+      "execution_path": "linux-unshare-chroot-opencode-go-fixed-tools-v1",
+      "runtime_version": "1.18.29",
+      "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+      "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+      "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+      "machine": "x86_64",
+      "source_sha256": {
+        "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+        "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123",
+        "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+        "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+        "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+        "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+        "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+        "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b"
+      },
+      "system_executable_sha256": {
+        "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c",
+        "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+        "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+        "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "native_settings_digest": "e0a8d0daa8172f93abee79ac1b1640ca1663702933c11918c3477476de098a69"
+    },
+    "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3",
+    "work_root": {
+      "path": "/tmp/karajan-suite-review-t_g9a4_p"
+    },
+    "journal": {
+      "path": "/tmp/karajan-suite-review-t_g9a4_p/journal.sqlite"
+    },
+    "producer_sha256": "942b23a8f04ec459f1fa130c10cfb3f5301e50e9dbde1b92c7309662675a1c5b"
+  },
+  "observation_origin": "http_fixture",
+  "qualification_scope": "fixed_native_tools_fixture",
+  "runtime_tools_status": "not_run",
+  "dispatch_eligible": false,
+  "provider_remote_stop": "unknown",
+  "billing_limit_qualification": "not_run",
+  "scenarios": [
+    {
+      "scenario": "edit",
+      "attempt_id": "attempt-edit",
+      "fence": 1,
+      "grant_id": "grant-edit",
+      "status": "passed",
+      "reason_codes": [],
+      "observation": {
+        "schema_version": "karajan.isolated-opencode-go-observation.v1",
+        "scenario": "edit",
+        "scope": "fixed_native_tools",
+        "observation_origin": "http_fixture",
+        "runtime_tools_status": "not_run",
+        "dispatch_eligible": false,
+        "real_credential_passed_to_runtime": false,
+        "provider_remote_stop": "unknown",
+        "billing_limit_qualification": "not_run",
+        "grant_id": "grant-edit",
+        "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3",
+        "runtime_source": {
+          "schema_version": "karajan.fixed-go-runtime-source.v1",
+          "execution_path": "linux-unshare-chroot-opencode-go-fixed-tools-v1",
+          "runtime_version": "1.18.29",
+          "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+          "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+          "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+          "machine": "x86_64",
+          "source_sha256": {
+            "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+            "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123",
+            "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+            "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+            "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+            "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+            "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+            "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b"
+          },
+          "system_executable_sha256": {
+            "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c",
+            "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+            "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+            "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+          },
+          "native_settings_digest": "e0a8d0daa8172f93abee79ac1b1640ca1663702933c11918c3477476de098a69"
+        },
+        "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+        "source_sha256": {
+          "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+          "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123",
+          "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+          "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+          "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+          "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+          "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+          "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b"
+        },
+        "runtime": {
+          "state": "running",
+          "runtime_version": "1.18.29",
+          "runtime_tools_status": "not_run",
+          "dispatch_eligible": false,
+          "namespace_pid": 1,
+          "namespaces": {
+            "user": "user:[4026532302]",
+            "mnt": "mnt:[4026532304]",
+            "pid": "pid:[4026532305]",
+            "net": "net:[4026532306]"
+          },
+          "host_mount_visible": false,
+          "wsl_interop_visible": false,
+          "native_control_fd_inherited": false,
+          "network_interfaces": [
+            "lo"
+          ],
+          "ipv4_routes": [],
+          "capabilities": {
+            "effective": "0000000000000000",
+            "permitted": "0000000000000000",
+            "bounding": "0000000000000000"
+          },
+          "no_new_privileges": true,
+          "runtime_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650"
+        },
+        "assistants": [
+          {
+            "model_matches": true,
+            "completed": true,
+            "stopped": false,
+            "error": false
+          },
+          {
+            "model_matches": true,
+            "completed": true,
+            "stopped": false,
+            "error": false
+          },
+          {
+            "model_matches": true,
+            "completed": true,
+            "stopped": true,
+            "error": false
+          }
+        ],
+        "tools": [
+          {
+            "tool": "read",
+            "status": "completed",
+            "path": "fixture.py",
+            "permission_denied": false
+          },
+          {
+            "tool": "edit",
+            "status": "completed",
+            "path": "fixture.py",
+            "permission_denied": false
+          }
+        ],
+        "fixture_changed": true,
+        "fixture_cases": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "blocked_file_unchanged": true,
+        "workspace_files": [
+          "blocked.txt",
+          "fixture.py"
+        ],
+        "native_cleanup": {
+          "local_stop": "confirmed",
+          "namespace_init_stopped": true,
+          "observed_processes": [
+            {
+              "pid": 44671,
+              "birth": "7658939",
+              "namespace_pid": 1
+            },
+            {
+              "pid": 44750,
+              "birth": "7659094",
+              "namespace_pid": 41
+            }
+          ],
+          "observed_processes_still_running": [],
+          "remote_stop": "unknown",
+          "runtime_tools_status": "not_run",
+          "dispatch_eligible": false
+        },
+        "relay_cleanup": {
+          "status": "closed",
+          "errors": []
+        },
+        "requests": [
+          {
+            "requested_model": "glm-5.3-flash",
+            "session_header_present": true,
+            "tool_results_in_request": 0,
+            "fixture_content_in_tool_result": false,
+            "denied_canary_in_request": false,
+            "requested_stream": true,
+            "reported_models": [
+              "glm-5.3-flash"
+            ],
+            "tool_names": [
+              "read"
+            ],
+            "usage": {},
+            "upstream_send_attempted": true,
+            "upstream_status": 200,
+            "upstream_response_complete": true,
+            "response_bytes": 703,
+            "stream_terminated": true,
+            "protocol_passed": true,
+            "relay_completed": true,
+            "reason_codes": [],
+            "sequence": 1,
+            "journal_call_id": "b8c42d8c-da6f-42ad-bca3-4b1f0fcbb940",
+            "finish_reason": "tool_calls",
+            "go_cost_trailer_seen": false,
+            "provider_reported_cost": null,
+            "provider_reported_cost_unit": "unknown"
+          },
+          {
+            "requested_model": "glm-5.3-flash",
+            "session_header_present": true,
+            "tool_results_in_request": 1,
+            "fixture_content_in_tool_result": true,
+            "denied_canary_in_request": false,
+            "requested_stream": true,
+            "reported_models": [
+              "glm-5.3-flash"
+            ],
+            "tool_names": [
+              "edit"
+            ],
+            "usage": {},
+            "upstream_send_attempted": true,
+            "upstream_status": 200,
+            "upstream_response_complete": true,
+            "response_bytes": 811,
+            "stream_terminated": true,
+            "protocol_passed": true,
+            "relay_completed": true,
+            "reason_codes": [],
+            "sequence": 2,
+            "journal_call_id": "c0c08633-8ac7-469f-b335-caf91cdebe6b",
+            "finish_reason": "tool_calls",
+            "go_cost_trailer_seen": false,
+            "provider_reported_cost": null,
+            "provider_reported_cost_unit": "unknown"
+          },
+          {
+            "requested_model": "glm-5.3-flash",
+            "session_header_present": true,
+            "tool_results_in_request": 2,
+            "fixture_content_in_tool_result": true,
+            "denied_canary_in_request": false,
+            "requested_stream": true,
+            "reported_models": [
+              "glm-5.3-flash"
+            ],
+            "tool_names": [],
+            "usage": {},
+            "upstream_send_attempted": true,
+            "upstream_status": 200,
+            "upstream_response_complete": true,
+            "response_bytes": 563,
+            "stream_terminated": true,
+            "protocol_passed": true,
+            "relay_completed": true,
+            "reason_codes": [],
+            "sequence": 3,
+            "journal_call_id": "f1b9f7af-b9ab-4882-a13a-80d8851582bb",
+            "finish_reason": "stop",
+            "go_cost_trailer_seen": false,
+            "provider_reported_cost": null,
+            "provider_reported_cost_unit": "unknown"
+          }
+        ],
+        "journal": {
+          "grant_id": "grant-edit",
+          "binding": {
+            "attempt_id": "attempt-edit",
+            "auth_generation": "generation-one",
+            "channel": "go-channel",
+            "expires_at": 1788683768.9800515,
+            "fence": 1,
+            "max_requests": 6,
+            "model": "glm-5.3-flash",
+            "profile_digest": "c50046540201a1c278d23ec27251caaf0de36ea36639e5d1a0b9acf79192e1c8",
+            "qualification_id": "qualification-one",
+            "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3"
+          },
+          "created_at": 1788683349.950282,
+          "revoked_at": 1788683362.3174815,
+          "state": "revoked",
+          "request_count": 3,
+          "calls": [
+            {
+              "call_id": "b8c42d8c-da6f-42ad-bca3-4b1f0fcbb940",
+              "completed_at": 1788683361.8490794,
+              "grant_id": "grant-edit",
+              "outcome": {
+                "protocol_passed": true,
+                "reason_codes": [],
+                "response_bytes": 703,
+                "state": "response_received",
+                "upstream_status": 200,
+                "usage": {}
+              },
+              "send_intent_at": 1788683361.8449235,
+              "sequence": 1,
+              "state": "response_received"
+            },
+            {
+              "call_id": "c0c08633-8ac7-469f-b335-caf91cdebe6b",
+              "completed_at": 1788683362.1613007,
+              "grant_id": "grant-edit",
+              "outcome": {
+                "protocol_passed": true,
+                "reason_codes": [],
+                "response_bytes": 811,
+                "state": "response_received",
+                "upstream_status": 200,
+                "usage": {}
+              },
+              "send_intent_at": 1788683362.1520793,
+              "sequence": 2,
+              "state": "response_received"
+            },
+            {
+              "call_id": "f1b9f7af-b9ab-4882-a13a-80d8851582bb",
+              "completed_at": 1788683362.2136788,
+              "grant_id": "grant-edit",
+              "outcome": {
+                "protocol_passed": true,
+                "reason_codes": [],
+                "response_bytes": 563,
+                "state": "response_received",
+                "upstream_status": 200,
+                "usage": {}
+              },
+              "send_intent_at": 1788683362.2092824,
+              "sequence": 3,
+              "state": "response_received"
+            }
+          ]
+        },
+        "reason_codes": [],
+        "status": "passed"
+      }
+    },
+    {
+      "scenario": "denied_read",
+      "attempt_id": "attempt-denied_read",
+      "fence": 1,
+      "grant_id": "grant-denied_read",
+      "status": "not_run",
+      "reason_codes": [
+        "PRIOR_STAGE_INCOMPLETE"
+      ]
+    }
+  ],
+  "reason_codes": [
+    "FIXED_SUITE_EXECUTION_FAILED",
+    "SUITE_SOURCE_UNAVAILABLE"
+  ],
+  "grant_cleanup": [
+    {
+      "grant_id": "grant-edit",
+      "state": "revoked"
+    },
+    {
+      "grant_id": "grant-denied_read",
+      "state": "revoked"
+    }
+  ],
+  "error_type": "FileNotFoundError",
+  "status": "failed",
+  "validation": {
+    "fixed_native_tools": "failed",
+    "runtime_tools": "not_run",
+    "budget": "unknown",
+    "context_capacity": "unknown",
+    "dispatch": false
+  }
+}
+{
+  "synthetic_tool_feedback": [
+    {
+      "role": "tool",
+      "tool_call_id": "call_1",
+      "content": "&lt;path&gt;/workspace/fixture.py&lt;/path&gt;\n&lt;type&gt;file&lt;/type&gt;\n&lt;content&gt;\n1: def clamp(value, low, high):\n2:     return min(low, max(value, high))\n\n(End of file - total 2 lines)\n&lt;/content&gt;"
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_1",
+      "content": "&lt;path&gt;/workspace/fixture.py&lt;/path&gt;\n&lt;type&gt;file&lt;/type&gt;\n&lt;content&gt;\n1: def clamp(value, low, high):\n2:     return min(low, max(value, high))\n\n(End of file - total 2 lines)\n&lt;/content&gt;"
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_2",
+      "content": "Edit applied successfully."
+    }
+  ]
+}
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_real_native_receipt_numbers_cannot_disagree_with_durable_journal" time="3.951"><failure message="AssertionError: assert ['PRIOR_STAGE_INCOMPLETE'] == ['JOURNAL_CAL...ATION_FAILED']&#10;  &#10;  At index 0 diff: 'PRIOR_STAGE_INCOMPLETE' != 'JOURNAL_CALL_CORRELATION_FAILED'&#10;  Use -v to get more diff">case = (&lt;karajan.projects.go_suite.FixedGoSuite object at 0x7e94fdc18bc0&gt;, &lt;karajan.adapters.opencode.go_journal.GoCallJourna...path': 'subscription_only', 'approved_data_destination': True}, 'repository': {'root': 'unused-by-fixed-suite'}}, ...})
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7e94fdc1a810&gt;
+
+    def test_real_native_receipt_numbers_cannot_disagree_with_durable_journal(case, monkeypatch):
+        from karajan.isolation.go_probe import observe_go_tools
+    
+        suite, journal, start = case
+        count = 0
+    
+        def receive(_):
+            nonlocal count
+            count += 1
+            return fixture_response(count, False)
+    
+        suite.client_factory = lambda: httpx.Client(
+            transport=httpx.MockTransport(receive), trust_env=False
+        )
+    
+        def changed_report(*args, **kwargs):
+            report = observe_go_tools(*args, **kwargs)
+            assert report["status"] == "passed", report
+            report["requests"][0]["response_bytes"] += 1
+            return report
+    
+        monkeypatch.setattr("karajan.projects.go_suite.observe_go_tools", changed_report)
+        result = suite.observe(start, credential())
+        assert result["status"] == "failed", result
+&gt;       assert result["scenarios"][0]["reason_codes"] == ["JOURNAL_CALL_CORRELATION_FAILED"]
+E       AssertionError: assert ['PRIOR_STAGE_INCOMPLETE'] == ['JOURNAL_CAL...ATION_FAILED']
+E         
+E         At index 0 diff: 'PRIOR_STAGE_INCOMPLETE' != 'JOURNAL_CALL_CORRELATION_FAILED'
+E         Use -v to get more diff
+
+.cache/go-suite-independent-review/test_go_suite_review.py:192: AssertionError</failure><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase></testsuite></testsuites>

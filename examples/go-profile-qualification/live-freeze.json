@@ -1,0 +1,78 @@
+{
+  "schema_version": "karajan.public-go-live-freeze.v1",
+  "report": "examples/go-profile-qualification/live.report.json",
+  "report_sha256": "078e1c7ec276e67abe1f39538982f382603d103d1bc156a558c94f7a2d45dcb7",
+  "observed_at_utc": "2026-09-06T08:29:27.769616+00:00",
+  "source_sha256": {
+    "backend/karajan/projects/qualification.py": "a726c01baedec7f60ec6f13e7fda0b41d9ef8d52c6d6b6a39b0b5f733bbc68e3",
+    "backend/karajan/projects/go_suite.py": "942b23a8f04ec459f1fa130c10cfb3f5301e50e9dbde1b92c7309662675a1c5b",
+    "examples/go-profile-qualification/run_live.py": "a613778a8f1b312f0f57896e37bcfe30ca8197a3672ee09e301e6f073b57b197",
+    "backend/karajan/projects/credential_sources.py": "2a5f7e849c3a5fc012c04622c7ecdaa9a7aee749ea8acce24952b5ba4ad85c85",
+    "backend/karajan/isolation/go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+    "backend/karajan/isolation/opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123",
+    "backend/karajan/isolation/_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+    "backend/karajan/isolation/_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+    "backend/karajan/isolation/_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+    "backend/karajan/adapters/opencode/go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+    "backend/karajan/adapters/opencode/go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+    "backend/karajan/adapters/opencode/go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b"
+  },
+  "runtime_artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+  "scenarios": [
+    {
+      "scenario": "edit",
+      "status": "passed",
+      "request_count": 3,
+      "native_cleanup": {
+        "local_stop": "confirmed",
+        "namespace_init_stopped": true,
+        "observed_processes": [
+          {
+            "pid": 44192,
+            "birth": "7654044",
+            "namespace_pid": 1
+          },
+          {
+            "pid": 44234,
+            "birth": "7654250",
+            "namespace_pid": 43
+          }
+        ],
+        "observed_processes_still_running": [],
+        "remote_stop": "unknown",
+        "runtime_tools_status": "not_run",
+        "dispatch_eligible": false
+      }
+    },
+    {
+      "scenario": "denied_read",
+      "status": "passed",
+      "request_count": 2,
+      "native_cleanup": {
+        "local_stop": "confirmed",
+        "namespace_init_stopped": true,
+        "observed_processes": [
+          {
+            "pid": 44612,
+            "birth": "7658206",
+            "namespace_pid": 1
+          },
+          {
+            "pid": 44654,
+            "birth": "7658361",
+            "namespace_pid": 41
+          }
+        ],
+        "observed_processes_still_running": [],
+        "remote_stop": "unknown",
+        "runtime_tools_status": "not_run",
+        "dispatch_eligible": false
+      }
+    }
+  ],
+  "real_http_requests": 5,
+  "replay_additional_requests": 0,
+  "runtime_tools_status": "not_run",
+  "dispatch_eligible": false,
+  "check_script_sha256": "eb09cce9ca79811ab74012a35098e49e1c4ea57f14bc1bfb3723031fcffacae8"
+}

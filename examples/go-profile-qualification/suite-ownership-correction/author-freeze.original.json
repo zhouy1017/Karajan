@@ -1,0 +1,32 @@
+{
+  "schema_version": "karajan.author-correction-freeze.v1",
+  "base": "9bcf9815cde6c6feb65c236bb7762cbac2573c34",
+  "finding_origin": "Independent Spec reviewer qualification_integration; not an author-origin finding",
+  "independent_original_test": ".cache/go-suite-independent-review/test_go_suite_review.py::test_conflicting_existing_grant_is_not_revoked_by_another_start",
+  "correction": "Before revoking either preallocated ID, read its public journal snapshot and compare the complete immutable grant binding with this scenario. A foreign binding remains unchanged and cleanup records not_owned plus GRANT_CLEANUP_BINDING_MISMATCH. Matching lost create returns still revoke.",
+  "files": {
+    "backend/karajan/projects/go_suite.py": "942b23a8f04ec459f1fa130c10cfb3f5301e50e9dbde1b92c7309662675a1c5b",
+    "tests/projects/test_go_suite.py": "df4d6a905b89c503bf78a7d480b3208f06cc814f6611db3db77fd1ccc487539b"
+  },
+  "author_tests": {
+    "new_red": "2 failed, first/second scenario grants whose authentication generation differs",
+    "red_junit": ".cache/go-suite-ownership-red.xml",
+    "red_sha256": "a39f8de1ad2acda9b08cc8c5e2f3f8ccb15fe2c1129dc762e91a336a246a61eb",
+    "lightweight_green": "14 passed, including both lost-create-return cases",
+    "green_junit": ".cache/go-suite-ownership-green.xml",
+    "green_sha256": "9333f4715510bdd22300e284868170b563a7ac049734079951615454487fd78c",
+    "linux_final": "18 passed in 78.27 seconds",
+    "linux_junit": ".cache/go-suite-ownership-final.xml",
+    "linux_sha256": "180f2f402a969d3da19463c676fdbf9d7b54234d0fbc353400926e47542d4854",
+    "windows_final": "8 passed, 10 skipped",
+    "windows_junit": ".cache/go-suite-ownership-windows.xml",
+    "windows_sha256": "7dd2dfdc834ee66fe46ef8056c650f21c471050e77062f1cb8f0b7d4df65b0d1",
+    "static": "Ruff check/format and mypy Windows / --platform linux passed",
+    "linux_command": "env KARAJAN_REQUIRE_OPENCODE_ISOLATION=1 KARAJAN_OPENCODE_LINUX_BINARY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest -q -p no:cacheprovider --basetemp /tmp/gsownfinal tests/projects/test_go_suite.py --junitxml=.cache/go-suite-ownership-final.xml"
+  },
+  "history": "Original go-suite-freeze.json and prior JUnit remain pre-correction history.",
+  "independent_retest": "Requested from the original reviewer; its evidence remains separate.",
+  "provider_requests": 0,
+  "user_key_reads": 0,
+  "scope": "Fixed native fixture only; runtime_tools not_run, dispatch false, provider remote stop unknown"
+}

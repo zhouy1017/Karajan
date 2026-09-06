@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="1.358" timestamp="2026-09-06T16:15:57.655921+08:00" hostname="ProArt-Zhou"><testcase classname="tests.projects.test_go_suite" name="test_conflicting_grant_cleanup_preserves_foreign_binding[0]" time="0.038"><failure message="AssertionError: assert {'grant_id': ...8.541148, ...} == {'grant_id': ...t': None, ...}&#10;  &#10;  Omitting 5 identical items, use -vv to show&#10;  Differing items:&#10;  {'state': 'revoked'} != {'state': 'active'}&#10;  {'revoked_at': 1788682558.541148} != {'revoked_at': None}&#10;  Use -v to get more diff">synthetic_suite = (&lt;karajan.projects.go_suite.FixedGoSuite object at 0x7bfd68b9df10&gt;, &lt;karajan.adapters.opencode.go_journal.GoCallJourna...path': 'subscription_only', 'approved_data_destination': True}, 'repository': {'root': 'unused-by-fixed-suite'}}, ...})
+conflict_index = 0
+
+    @pytest.mark.skipif(sys.platform != "linux", reason="Short native controller paths use Linux")
+    @pytest.mark.parametrize("conflict_index", [0, 1])
+    def test_conflicting_grant_cleanup_preserves_foreign_binding(synthetic_suite, conflict_index):
+        suite, journal, start = synthetic_suite
+        scenario = start["scenarios"][conflict_index]
+        foreign = {**scenario["grant_binding"], "auth_generation": "another-generation"}
+        journal.create_grant(foreign, grant_id=scenario["grant_id"])
+        before = journal.snapshot(scenario["grant_id"])
+    
+        result = suite.observe(start, credential())
+    
+        assert result["status"] == "failed"
+&gt;       assert journal.snapshot(scenario["grant_id"]) == before
+E       AssertionError: assert {'grant_id': ...8.541148, ...} == {'grant_id': ...t': None, ...}
+E         
+E         Omitting 5 identical items, use -vv to show
+E         Differing items:
+E         {'state': 'revoked'} != {'state': 'active'}
+E         {'revoked_at': 1788682558.541148} != {'revoked_at': None}
+E         Use -v to get more diff
+
+tests/projects/test_go_suite.py:170: AssertionError</failure></testcase><testcase classname="tests.projects.test_go_suite" name="test_conflicting_grant_cleanup_preserves_foreign_binding[1]" time="0.030"><failure message="AssertionError: assert {'grant_id': ....9826477, ...} == {'grant_id': ...t': None, ...}&#10;  &#10;  Omitting 5 identical items, use -vv to show&#10;  Differing items:&#10;  {'state': 'revoked'} != {'state': 'active'}&#10;  {'revoked_at': 1788682558.9826477} != {'revoked_at': None}&#10;  Use -v to get more diff">synthetic_suite = (&lt;karajan.projects.go_suite.FixedGoSuite object at 0x7bfd68bef530&gt;, &lt;karajan.adapters.opencode.go_journal.GoCallJourna...path': 'subscription_only', 'approved_data_destination': True}, 'repository': {'root': 'unused-by-fixed-suite'}}, ...})
+conflict_index = 1
+
+    @pytest.mark.skipif(sys.platform != "linux", reason="Short native controller paths use Linux")
+    @pytest.mark.parametrize("conflict_index", [0, 1])
+    def test_conflicting_grant_cleanup_preserves_foreign_binding(synthetic_suite, conflict_index):
+        suite, journal, start = synthetic_suite
+        scenario = start["scenarios"][conflict_index]
+        foreign = {**scenario["grant_binding"], "auth_generation": "another-generation"}
+        journal.create_grant(foreign, grant_id=scenario["grant_id"])
+        before = journal.snapshot(scenario["grant_id"])
+    
+        result = suite.observe(start, credential())
+    
+        assert result["status"] == "failed"
+&gt;       assert journal.snapshot(scenario["grant_id"]) == before
+E       AssertionError: assert {'grant_id': ....9826477, ...} == {'grant_id': ...t': None, ...}
+E         
+E         Omitting 5 identical items, use -vv to show
+E         Differing items:
+E         {'state': 'revoked'} != {'state': 'active'}
+E         {'revoked_at': 1788682558.9826477} != {'revoked_at': None}
+E         Use -v to get more diff
+
+tests/projects/test_go_suite.py:170: AssertionError</failure></testcase></testsuite></testsuites>

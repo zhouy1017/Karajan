@@ -1,0 +1,24 @@
+{
+  "scope": "Independent fixed Go public CLI Spec",
+  "finding": {
+    "id": "GO-PROFILE-CLI-001",
+    "priority": 2,
+    "state": "closed",
+    "before": "before.junit.xml",
+    "after": "after.junit.xml"
+  },
+  "final": {
+    "passed": 6,
+    "failed": 0,
+    "seconds": 5.69,
+    "real_provider_calls": 0,
+    "real_credential_reads": 0
+  },
+  "entry_sha256": "a613778a8f1b312f0f57896e37bcfe30ca8197a3672ee09e301e6f073b57b197",
+  "evidence_sha256": {
+    "test_live_entry.py": "a8f592a8a6c3e67b4ec8045b7af837fc90afffa9019d3298a890b45704321af0",
+    "before.junit.xml": "5f7d1f93536f5c730cd6eac5845f137fb4f0eced27b2c7733e1b18f1052f9aab",
+    "after.junit.xml": "56275dfc985f3a00cb2b48a57b7cfa03f1dcd6dc01cb3727566b550cb4b6a6c6",
+    "run_live.before.py.txt": "e2ce878fed807b2aa7dd28db8c910899426e844f1a7adbf28eba38191df58519"
+  }
+}

@@ -1,0 +1,2936 @@
+{
+  "schema_version": "karajan.public-go-qualification-evidence.v1",
+  "status": "passed",
+  "record": {
+    "schema_version": "karajan.profile-qualification.v1",
+    "id": "0816baa2-e8b3-4fc1-878c-6d55c9aceb6a",
+    "project_id": "fecc980a-66a4-407f-a645-3f9e429cdfd0",
+    "principal": "owner",
+    "status": "passed",
+    "qualification_scope": "fixed_native_tools",
+    "suite_ref": {
+      "id": "opencode-go-native-read-edit-linux",
+      "revision": 1
+    },
+    "provenance": "imported_observation",
+    "runtime_tools_status": "not_run",
+    "live_qualified": false,
+    "dispatch_eligible": false,
+    "binding": {
+      "qualification_scope": "fixed_native_tools",
+      "suite_ref": {
+        "id": "opencode-go-native-read-edit-linux",
+        "revision": 1
+      },
+      "profile_binding": {
+        "registration": {
+          "id": "fixture-profile",
+          "revision": 1,
+          "profile": {
+            "id": "fixture-profile",
+            "revision": 1,
+            "binding": {
+              "model_id": "glm-5.3-flash",
+              "channel_id": "fixture-channel",
+              "account_id": "fixture-account",
+              "runtime_kind": "opencode-go-isolated",
+              "runtime_version": "1.18.29",
+              "auth_mode": "api_key",
+              "billing_path": "subscription_only",
+              "native_settings": {
+                "suite_ref": {
+                  "id": "opencode-go-native-read-edit-linux",
+                  "revision": 1
+                }
+              }
+            },
+            "auth_ref": "secret:go-public-diagnostic",
+            "required_permissions": [
+              "read",
+              "edit"
+            ],
+            "admission_granularity": "attempt",
+            "usage_coverage": "unknown"
+          },
+          "model_family": "zai-glm-owner-declaration",
+          "max_class": "T3",
+          "required_isolation": "tool_sandboxed",
+          "enabled": true,
+          "quota_pool_refs": [
+            "service-fixture"
+          ],
+          "capability_evidence": []
+        },
+        "account": {
+          "id": "fixture-account",
+          "provider_id": "opencode-go",
+          "secret_ref": "secret:go-public-diagnostic"
+        },
+        "channel": {
+          "account_id": "fixture-account",
+          "approved_data_destination": true,
+          "billing_path": "subscription_only",
+          "id": "fixture-channel"
+        },
+        "repository": {
+          "base_ref": "main",
+          "base_sha": "cf26515fa010bf009c23d563dc915705621dcb37",
+          "identity_sha256": "256b04738d68c0c0c3944a19caffc7bffd537ca9383bb9225a3dff081da01766",
+          "root": "/tmp/karajan-go-profile-live-20260906/repository"
+        }
+      },
+      "execution_start": {
+        "qualification_id": "0816baa2-e8b3-4fc1-878c-6d55c9aceb6a",
+        "project_id": "fecc980a-66a4-407f-a645-3f9e429cdfd0",
+        "suite_ref": {
+          "id": "opencode-go-native-read-edit-linux",
+          "revision": 1
+        },
+        "profile_binding": {
+          "registration": {
+            "id": "fixture-profile",
+            "revision": 1,
+            "profile": {
+              "id": "fixture-profile",
+              "revision": 1,
+              "binding": {
+                "model_id": "glm-5.3-flash",
+                "channel_id": "fixture-channel",
+                "account_id": "fixture-account",
+                "runtime_kind": "opencode-go-isolated",
+                "runtime_version": "1.18.29",
+                "auth_mode": "api_key",
+                "billing_path": "subscription_only",
+                "native_settings": {
+                  "suite_ref": {
+                    "id": "opencode-go-native-read-edit-linux",
+                    "revision": 1
+                  }
+                }
+              },
+              "auth_ref": "secret:go-public-diagnostic",
+              "required_permissions": [
+                "read",
+                "edit"
+              ],
+              "admission_granularity": "attempt",
+              "usage_coverage": "unknown"
+            },
+            "model_family": "zai-glm-owner-declaration",
+            "max_class": "T3",
+            "required_isolation": "tool_sandboxed",
+            "enabled": true,
+            "quota_pool_refs": [
+              "service-fixture"
+            ],
+            "capability_evidence": []
+          },
+          "account": {
+            "id": "fixture-account",
+            "provider_id": "opencode-go",
+            "secret_ref": "secret:go-public-diagnostic"
+          },
+          "channel": {
+            "account_id": "fixture-account",
+            "approved_data_destination": true,
+            "billing_path": "subscription_only",
+            "id": "fixture-channel"
+          },
+          "repository": {
+            "base_ref": "main",
+            "base_sha": "cf26515fa010bf009c23d563dc915705621dcb37",
+            "identity_sha256": "256b04738d68c0c0c3944a19caffc7bffd537ca9383bb9225a3dff081da01766",
+            "root": "/tmp/karajan-go-profile-live-20260906/repository"
+          }
+        },
+        "profile_digest": "1aa1bfe11dbcf4d0819a6b787a30d2ac35c65f47e7748f66bbbe90c16aaa0d12",
+        "auth_generation": "67b6123d-b4d6-4f6e-9916-52f0b986770c",
+        "credential_source_id": "opencode-go",
+        "authentication_source": {
+          "auth_ref": "secret:go-public-diagnostic",
+          "generation": "67b6123d-b4d6-4f6e-9916-52f0b986770c",
+          "previous_generation": null,
+          "project_id": "fecc980a-66a4-407f-a645-3f9e429cdfd0",
+          "registered_at": 1788683303.7826445,
+          "schema_version": "karajan.credential-generation.v1",
+          "source": {
+            "id": "opencode-go",
+            "kind": "controller_local_key_file"
+          }
+        },
+        "source": {
+          "schema_version": "karajan.fixed-go-suite-source.v1",
+          "suite_ref": {
+            "id": "opencode-go-native-read-edit-linux",
+            "revision": 1
+          },
+          "observation_origin": "official_go",
+          "qualification_scope": "fixed_native_tools",
+          "runtime_source": {
+            "schema_version": "karajan.fixed-go-runtime-source.v1",
+            "execution_path": "linux-unshare-chroot-opencode-go-fixed-tools-v1",
+            "runtime_version": "1.18.29",
+            "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+            "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+            "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+            "machine": "x86_64",
+            "source_sha256": {
+              "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+              "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123",
+              "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+              "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+              "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+              "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+              "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+              "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b"
+            },
+            "system_executable_sha256": {
+              "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c",
+              "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+              "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+              "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+            },
+            "native_settings_digest": "e0a8d0daa8172f93abee79ac1b1640ca1663702933c11918c3477476de098a69"
+          },
+          "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3",
+          "work_root": {
+            "path": "/tmp/karajan-go-profile-live-20260906/suite"
+          },
+          "journal": {
+            "path": "/tmp/karajan-go-profile-live-20260906/calls.sqlite"
+          },
+          "producer_sha256": "942b23a8f04ec459f1fa130c10cfb3f5301e50e9dbde1b92c7309662675a1c5b"
+        },
+        "started_at": 1788683302.315228,
+        "expires_at": 1788683722.315228,
+        "scenarios": [
+          {
+            "scenario": "edit",
+            "attempt_id": "92fe057e-57fa-4b76-b5b0-50feb6471363",
+            "fence": 1,
+            "grant_id": "74943dc4-bf1b-4f73-95e4-95b1281b64e8",
+            "grant_binding": {
+              "qualification_id": "0816baa2-e8b3-4fc1-878c-6d55c9aceb6a",
+              "attempt_id": "92fe057e-57fa-4b76-b5b0-50feb6471363",
+              "fence": 1,
+              "profile_digest": "1aa1bfe11dbcf4d0819a6b787a30d2ac35c65f47e7748f66bbbe90c16aaa0d12",
+              "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3",
+              "channel": "fixture-channel",
+              "model": "glm-5.3-flash",
+              "auth_generation": "67b6123d-b4d6-4f6e-9916-52f0b986770c",
+              "expires_at": 1788683722.315228,
+              "max_requests": 6
+            }
+          },
+          {
+            "scenario": "denied_read",
+            "attempt_id": "05352107-4772-4637-af07-01f3df59d84a",
+            "fence": 1,
+            "grant_id": "034f6ef9-82e9-4303-a084-439c02d576bd",
+            "grant_binding": {
+              "qualification_id": "0816baa2-e8b3-4fc1-878c-6d55c9aceb6a",
+              "attempt_id": "05352107-4772-4637-af07-01f3df59d84a",
+              "fence": 1,
+              "profile_digest": "1aa1bfe11dbcf4d0819a6b787a30d2ac35c65f47e7748f66bbbe90c16aaa0d12",
+              "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3",
+              "channel": "fixture-channel",
+              "model": "glm-5.3-flash",
+              "auth_generation": "67b6123d-b4d6-4f6e-9916-52f0b986770c",
+              "expires_at": 1788683722.315228,
+              "max_requests": 6
+            }
+          }
+        ]
+      },
+      "controller_sha256": "a726c01baedec7f60ec6f13e7fda0b41d9ef8d52c6d6b6a39b0b5f733bbc68e3"
+    },
+    "observed_at": 1788683367.7696157,
+    "valid_until": 1788686967.7696157,
+    "observation": {
+      "schema_version": "karajan.fixed-go-suite-observation.v1",
+      "suite_ref": {
+        "id": "opencode-go-native-read-edit-linux",
+        "revision": 1
+      },
+      "qualification_id": "0816baa2-e8b3-4fc1-878c-6d55c9aceb6a",
+      "source": {
+        "schema_version": "karajan.fixed-go-suite-source.v1",
+        "suite_ref": {
+          "id": "opencode-go-native-read-edit-linux",
+          "revision": 1
+        },
+        "observation_origin": "official_go",
+        "qualification_scope": "fixed_native_tools",
+        "runtime_source": {
+          "schema_version": "karajan.fixed-go-runtime-source.v1",
+          "execution_path": "linux-unshare-chroot-opencode-go-fixed-tools-v1",
+          "runtime_version": "1.18.29",
+          "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+          "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+          "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+          "machine": "x86_64",
+          "source_sha256": {
+            "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+            "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123",
+            "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+            "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+            "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+            "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+            "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+            "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b"
+          },
+          "system_executable_sha256": {
+            "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c",
+            "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+            "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+            "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+          },
+          "native_settings_digest": "e0a8d0daa8172f93abee79ac1b1640ca1663702933c11918c3477476de098a69"
+        },
+        "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3",
+        "work_root": {
+          "path": "/tmp/karajan-go-profile-live-20260906/suite"
+        },
+        "journal": {
+          "path": "/tmp/karajan-go-profile-live-20260906/calls.sqlite"
+        },
+        "producer_sha256": "942b23a8f04ec459f1fa130c10cfb3f5301e50e9dbde1b92c7309662675a1c5b"
+      },
+      "observation_origin": "official_go",
+      "qualification_scope": "fixed_native_tools",
+      "runtime_tools_status": "not_run",
+      "dispatch_eligible": false,
+      "provider_remote_stop": "unknown",
+      "billing_limit_qualification": "not_run",
+      "scenarios": [
+        {
+          "scenario": "edit",
+          "attempt_id": "92fe057e-57fa-4b76-b5b0-50feb6471363",
+          "fence": 1,
+          "grant_id": "74943dc4-bf1b-4f73-95e4-95b1281b64e8",
+          "status": "passed",
+          "reason_codes": [],
+          "observation": {
+            "schema_version": "karajan.isolated-opencode-go-observation.v1",
+            "scenario": "edit",
+            "scope": "fixed_native_tools",
+            "observation_origin": "official_go",
+            "runtime_tools_status": "not_run",
+            "dispatch_eligible": false,
+            "real_credential_passed_to_runtime": false,
+            "provider_remote_stop": "unknown",
+            "billing_limit_qualification": "not_run",
+            "grant_id": "74943dc4-bf1b-4f73-95e4-95b1281b64e8",
+            "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3",
+            "runtime_source": {
+              "schema_version": "karajan.fixed-go-runtime-source.v1",
+              "execution_path": "linux-unshare-chroot-opencode-go-fixed-tools-v1",
+              "runtime_version": "1.18.29",
+              "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+              "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+              "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+              "machine": "x86_64",
+              "source_sha256": {
+                "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+                "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123",
+                "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+                "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+                "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+                "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+                "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+                "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b"
+              },
+              "system_executable_sha256": {
+                "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c",
+                "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+                "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+                "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+              },
+              "native_settings_digest": "e0a8d0daa8172f93abee79ac1b1640ca1663702933c11918c3477476de098a69"
+            },
+            "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+            "source_sha256": {
+              "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+              "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123",
+              "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+              "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+              "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+              "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+              "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+              "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b"
+            },
+            "runtime": {
+              "state": "running",
+              "runtime_version": "1.18.29",
+              "runtime_tools_status": "not_run",
+              "dispatch_eligible": false,
+              "namespace_pid": 1,
+              "namespaces": {
+                "user": "user:[4026532235]",
+                "mnt": "mnt:[4026532238]",
+                "pid": "pid:[4026532239]",
+                "net": "net:[4026532240]"
+              },
+              "host_mount_visible": false,
+              "wsl_interop_visible": false,
+              "native_control_fd_inherited": false,
+              "network_interfaces": [
+                "lo"
+              ],
+              "ipv4_routes": [],
+              "capabilities": {
+                "effective": "0000000000000000",
+                "permitted": "0000000000000000",
+                "bounding": "0000000000000000"
+              },
+              "no_new_privileges": true,
+              "runtime_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650"
+            },
+            "assistants": [
+              {
+                "model_matches": true,
+                "completed": true,
+                "stopped": false,
+                "error": false
+              },
+              {
+                "model_matches": true,
+                "completed": true,
+                "stopped": false,
+                "error": false
+              },
+              {
+                "model_matches": true,
+                "completed": true,
+                "stopped": true,
+                "error": false
+              }
+            ],
+            "tools": [
+              {
+                "tool": "read",
+                "status": "completed",
+                "path": "fixture.py",
+                "permission_denied": false
+              },
+              {
+                "tool": "edit",
+                "status": "completed",
+                "path": "fixture.py",
+                "permission_denied": false
+              }
+            ],
+            "fixture_changed": true,
+            "fixture_cases": [
+              true,
+              true,
+              true,
+              true
+            ],
+            "blocked_file_unchanged": true,
+            "workspace_files": [
+              "blocked.txt",
+              "fixture.py"
+            ],
+            "native_cleanup": {
+              "local_stop": "confirmed",
+              "namespace_init_stopped": true,
+              "observed_processes": [
+                {
+                  "pid": 44192,
+                  "birth": "7654044",
+                  "namespace_pid": 1
+                },
+                {
+                  "pid": 44234,
+                  "birth": "7654250",
+                  "namespace_pid": 43
+                }
+              ],
+              "observed_processes_still_running": [],
+              "remote_stop": "unknown",
+              "runtime_tools_status": "not_run",
+              "dispatch_eligible": false
+            },
+            "relay_cleanup": {
+              "status": "closed",
+              "errors": []
+            },
+            "requests": [
+              {
+                "requested_model": "glm-5.3-flash",
+                "session_header_present": true,
+                "tool_results_in_request": 0,
+                "fixture_content_in_tool_result": false,
+                "denied_canary_in_request": false,
+                "requested_stream": true,
+                "reported_models": [
+                  "glm-5.3-flash"
+                ],
+                "tool_names": [
+                  "read"
+                ],
+                "usage": {
+                  "prompt_tokens": 3167,
+                  "completion_tokens": 21,
+                  "total_tokens": 3188,
+                  "prompt_tokens_details": {
+                    "cached_tokens": 0
+                  },
+                  "completion_tokens_details": {
+                    "reasoning_tokens": 7
+                  }
+                },
+                "upstream_send_attempted": true,
+                "upstream_status": 200,
+                "upstream_response_complete": true,
+                "response_bytes": 3356,
+                "stream_terminated": true,
+                "protocol_passed": true,
+                "relay_completed": true,
+                "reason_codes": [],
+                "sequence": 1,
+                "journal_call_id": "001bbe1b-0031-4f9a-b561-4be17a2a581d",
+                "finish_reason": "tool_calls",
+                "go_cost_trailer_seen": true,
+                "provider_reported_cost": "0",
+                "provider_reported_cost_unit": "unknown"
+              },
+              {
+                "requested_model": "glm-5.3-flash",
+                "session_header_present": true,
+                "tool_results_in_request": 1,
+                "fixture_content_in_tool_result": true,
+                "denied_canary_in_request": false,
+                "requested_stream": true,
+                "reported_models": [
+                  "glm-5.3-flash"
+                ],
+                "tool_names": [
+                  "edit"
+                ],
+                "usage": {
+                  "prompt_tokens": 3246,
+                  "completion_tokens": 215,
+                  "total_tokens": 3461,
+                  "prompt_tokens_details": {
+                    "cached_tokens": 3136
+                  },
+                  "completion_tokens_details": {
+                    "reasoning_tokens": 169
+                  }
+                },
+                "upstream_send_attempted": true,
+                "upstream_status": 200,
+                "upstream_response_complete": true,
+                "response_bytes": 44033,
+                "stream_terminated": true,
+                "protocol_passed": true,
+                "relay_completed": true,
+                "reason_codes": [],
+                "sequence": 2,
+                "journal_call_id": "90b76b7f-5265-4e4c-8f3a-7f1ae76fad2e",
+                "finish_reason": "tool_calls",
+                "go_cost_trailer_seen": true,
+                "provider_reported_cost": "0",
+                "provider_reported_cost_unit": "unknown"
+              },
+              {
+                "requested_model": "glm-5.3-flash",
+                "session_header_present": true,
+                "tool_results_in_request": 2,
+                "fixture_content_in_tool_result": true,
+                "denied_canary_in_request": false,
+                "requested_stream": true,
+                "reported_models": [
+                  "glm-5.3-flash"
+                ],
+                "tool_names": [],
+                "usage": {
+                  "prompt_tokens": 3469,
+                  "completion_tokens": 42,
+                  "total_tokens": 3511,
+                  "prompt_tokens_details": {
+                    "cached_tokens": 0
+                  }
+                },
+                "upstream_send_attempted": true,
+                "upstream_status": 200,
+                "upstream_response_complete": true,
+                "response_bytes": 5352,
+                "stream_terminated": true,
+                "protocol_passed": true,
+                "relay_completed": true,
+                "reason_codes": [],
+                "sequence": 3,
+                "journal_call_id": "9181015c-6468-48b9-98a4-9d97d5452faf",
+                "finish_reason": "stop",
+                "go_cost_trailer_seen": true,
+                "provider_reported_cost": "0",
+                "provider_reported_cost_unit": "unknown"
+              }
+            ],
+            "journal": {
+              "grant_id": "74943dc4-bf1b-4f73-95e4-95b1281b64e8",
+              "binding": {
+                "attempt_id": "92fe057e-57fa-4b76-b5b0-50feb6471363",
+                "auth_generation": "67b6123d-b4d6-4f6e-9916-52f0b986770c",
+                "channel": "fixture-channel",
+                "expires_at": 1788683722.315228,
+                "fence": 1,
+                "max_requests": 6,
+                "model": "glm-5.3-flash",
+                "profile_digest": "1aa1bfe11dbcf4d0819a6b787a30d2ac35c65f47e7748f66bbbe90c16aaa0d12",
+                "qualification_id": "0816baa2-e8b3-4fc1-878c-6d55c9aceb6a",
+                "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3"
+              },
+              "created_at": 1788683303.3420255,
+              "revoked_at": 1788683342.5125575,
+              "state": "revoked",
+              "request_count": 3,
+              "calls": [
+                {
+                  "call_id": "001bbe1b-0031-4f9a-b561-4be17a2a581d",
+                  "completed_at": 1788683330.957403,
+                  "grant_id": "74943dc4-bf1b-4f73-95e4-95b1281b64e8",
+                  "outcome": {
+                    "protocol_passed": true,
+                    "reason_codes": [],
+                    "response_bytes": 3356,
+                    "state": "response_received",
+                    "upstream_status": 200,
+                    "usage": {
+                      "completion_tokens": 21,
+                      "completion_tokens_details": {
+                        "reasoning_tokens": 7
+                      },
+                      "prompt_tokens": 3167,
+                      "prompt_tokens_details": {
+                        "cached_tokens": 0
+                      },
+                      "total_tokens": 3188
+                    }
+                  },
+                  "send_intent_at": 1788683316.0055623,
+                  "sequence": 1,
+                  "state": "response_received"
+                },
+                {
+                  "call_id": "90b76b7f-5265-4e4c-8f3a-7f1ae76fad2e",
+                  "completed_at": 1788683339.870088,
+                  "grant_id": "74943dc4-bf1b-4f73-95e4-95b1281b64e8",
+                  "outcome": {
+                    "protocol_passed": true,
+                    "reason_codes": [],
+                    "response_bytes": 44033,
+                    "state": "response_received",
+                    "upstream_status": 200,
+                    "usage": {
+                      "completion_tokens": 215,
+                      "completion_tokens_details": {
+                        "reasoning_tokens": 169
+                      },
+                      "prompt_tokens": 3246,
+                      "prompt_tokens_details": {
+                        "cached_tokens": 3136
+                      },
+                      "total_tokens": 3461
+                    }
+                  },
+                  "send_intent_at": 1788683331.0428553,
+                  "sequence": 2,
+                  "state": "response_received"
+                },
+                {
+                  "call_id": "9181015c-6468-48b9-98a4-9d97d5452faf",
+                  "completed_at": 1788683342.490262,
+                  "grant_id": "74943dc4-bf1b-4f73-95e4-95b1281b64e8",
+                  "outcome": {
+                    "protocol_passed": true,
+                    "reason_codes": [],
+                    "response_bytes": 5352,
+                    "state": "response_received",
+                    "upstream_status": 200,
+                    "usage": {
+                      "completion_tokens": 42,
+                      "prompt_tokens": 3469,
+                      "prompt_tokens_details": {
+                        "cached_tokens": 0
+                      },
+                      "total_tokens": 3511
+                    }
+                  },
+                  "send_intent_at": 1788683339.974979,
+                  "sequence": 3,
+                  "state": "response_received"
+                }
+              ]
+            },
+            "reason_codes": [],
+            "status": "passed"
+          }
+        },
+        {
+          "scenario": "denied_read",
+          "attempt_id": "05352107-4772-4637-af07-01f3df59d84a",
+          "fence": 1,
+          "grant_id": "034f6ef9-82e9-4303-a084-439c02d576bd",
+          "status": "passed",
+          "reason_codes": [],
+          "observation": {
+            "schema_version": "karajan.isolated-opencode-go-observation.v1",
+            "scenario": "denied_read",
+            "scope": "fixed_native_tools",
+            "observation_origin": "official_go",
+            "runtime_tools_status": "not_run",
+            "dispatch_eligible": false,
+            "real_credential_passed_to_runtime": false,
+            "provider_remote_stop": "unknown",
+            "billing_limit_qualification": "not_run",
+            "grant_id": "034f6ef9-82e9-4303-a084-439c02d576bd",
+            "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3",
+            "runtime_source": {
+              "schema_version": "karajan.fixed-go-runtime-source.v1",
+              "execution_path": "linux-unshare-chroot-opencode-go-fixed-tools-v1",
+              "runtime_version": "1.18.29",
+              "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+              "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+              "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+              "machine": "x86_64",
+              "source_sha256": {
+                "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+                "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123",
+                "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+                "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+                "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+                "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+                "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+                "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b"
+              },
+              "system_executable_sha256": {
+                "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c",
+                "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+                "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+                "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+              },
+              "native_settings_digest": "e0a8d0daa8172f93abee79ac1b1640ca1663702933c11918c3477476de098a69"
+            },
+            "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+            "source_sha256": {
+              "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+              "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123",
+              "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+              "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+              "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+              "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+              "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+              "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b"
+            },
+            "runtime": {
+              "state": "running",
+              "runtime_version": "1.18.29",
+              "runtime_tools_status": "not_run",
+              "dispatch_eligible": false,
+              "namespace_pid": 1,
+              "namespaces": {
+                "user": "user:[4026532179]",
+                "mnt": "mnt:[4026532235]",
+                "pid": "pid:[4026532238]",
+                "net": "net:[4026532239]"
+              },
+              "host_mount_visible": false,
+              "wsl_interop_visible": false,
+              "native_control_fd_inherited": false,
+              "network_interfaces": [
+                "lo"
+              ],
+              "ipv4_routes": [],
+              "capabilities": {
+                "effective": "0000000000000000",
+                "permitted": "0000000000000000",
+                "bounding": "0000000000000000"
+              },
+              "no_new_privileges": true,
+              "runtime_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650"
+            },
+            "assistants": [
+              {
+                "model_matches": true,
+                "completed": true,
+                "stopped": false,
+                "error": false
+              },
+              {
+                "model_matches": true,
+                "completed": true,
+                "stopped": true,
+                "error": false
+              }
+            ],
+            "tools": [
+              {
+                "tool": "read",
+                "status": "error",
+                "path": "blocked.txt",
+                "permission_denied": true
+              }
+            ],
+            "fixture_changed": false,
+            "fixture_cases": null,
+            "blocked_file_unchanged": true,
+            "workspace_files": [
+              "blocked.txt",
+              "fixture.py"
+            ],
+            "native_cleanup": {
+              "local_stop": "confirmed",
+              "namespace_init_stopped": true,
+              "observed_processes": [
+                {
+                  "pid": 44612,
+                  "birth": "7658206",
+                  "namespace_pid": 1
+                },
+                {
+                  "pid": 44654,
+                  "birth": "7658361",
+                  "namespace_pid": 41
+                }
+              ],
+              "observed_processes_still_running": [],
+              "remote_stop": "unknown",
+              "runtime_tools_status": "not_run",
+              "dispatch_eligible": false
+            },
+            "relay_cleanup": {
+              "status": "closed",
+              "errors": []
+            },
+            "requests": [
+              {
+                "requested_model": "glm-5.3-flash",
+                "session_header_present": true,
+                "tool_results_in_request": 0,
+                "fixture_content_in_tool_result": false,
+                "denied_canary_in_request": false,
+                "requested_stream": true,
+                "reported_models": [
+                  "glm-5.3-flash"
+                ],
+                "tool_names": [
+                  "read"
+                ],
+                "usage": {
+                  "prompt_tokens": 3138,
+                  "completion_tokens": 56,
+                  "total_tokens": 3194,
+                  "prompt_tokens_details": {
+                    "cached_tokens": 0
+                  },
+                  "completion_tokens_details": {
+                    "reasoning_tokens": 42
+                  }
+                },
+                "upstream_send_attempted": true,
+                "upstream_status": 200,
+                "upstream_response_complete": true,
+                "response_bytes": 11242,
+                "stream_terminated": true,
+                "protocol_passed": true,
+                "relay_completed": true,
+                "reason_codes": [],
+                "sequence": 1,
+                "journal_call_id": "1fc62972-2783-4d9b-82fa-dfd4fec2a368",
+                "finish_reason": "tool_calls",
+                "go_cost_trailer_seen": true,
+                "provider_reported_cost": "0",
+                "provider_reported_cost_unit": "unknown"
+              },
+              {
+                "requested_model": "glm-5.3-flash",
+                "session_header_present": true,
+                "tool_results_in_request": 1,
+                "fixture_content_in_tool_result": false,
+                "denied_canary_in_request": false,
+                "requested_stream": true,
+                "reported_models": [
+                  "glm-5.3-flash"
+                ],
+                "tool_names": [],
+                "usage": {
+                  "prompt_tokens": 3366,
+                  "completion_tokens": 8,
+                  "total_tokens": 3374,
+                  "prompt_tokens_details": {
+                    "cached_tokens": 3136
+                  },
+                  "completion_tokens_details": {
+                    "reasoning_tokens": 0
+                  }
+                },
+                "upstream_send_attempted": true,
+                "upstream_status": 200,
+                "upstream_response_complete": true,
+                "response_bytes": 1597,
+                "stream_terminated": true,
+                "protocol_passed": true,
+                "relay_completed": true,
+                "reason_codes": [],
+                "sequence": 2,
+                "journal_call_id": "46bc9d6b-0211-42d9-ba00-126ccae58c7a",
+                "finish_reason": "stop",
+                "go_cost_trailer_seen": true,
+                "provider_reported_cost": "0",
+                "provider_reported_cost_unit": "unknown"
+              }
+            ],
+            "journal": {
+              "grant_id": "034f6ef9-82e9-4303-a084-439c02d576bd",
+              "binding": {
+                "attempt_id": "05352107-4772-4637-af07-01f3df59d84a",
+                "auth_generation": "67b6123d-b4d6-4f6e-9916-52f0b986770c",
+                "channel": "fixture-channel",
+                "expires_at": 1788683722.315228,
+                "fence": 1,
+                "max_requests": 6,
+                "model": "glm-5.3-flash",
+                "profile_digest": "1aa1bfe11dbcf4d0819a6b787a30d2ac35c65f47e7748f66bbbe90c16aaa0d12",
+                "qualification_id": "0816baa2-e8b3-4fc1-878c-6d55c9aceb6a",
+                "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3"
+              },
+              "created_at": 1788683303.3498936,
+              "revoked_at": 1788683366.7328787,
+              "state": "revoked",
+              "request_count": 2,
+              "calls": [
+                {
+                  "call_id": "1fc62972-2783-4d9b-82fa-dfd4fec2a368",
+                  "completed_at": 1788683363.2074528,
+                  "grant_id": "034f6ef9-82e9-4303-a084-439c02d576bd",
+                  "outcome": {
+                    "protocol_passed": true,
+                    "reason_codes": [],
+                    "response_bytes": 11242,
+                    "state": "response_received",
+                    "upstream_status": 200,
+                    "usage": {
+                      "completion_tokens": 56,
+                      "completion_tokens_details": {
+                        "reasoning_tokens": 42
+                      },
+                      "prompt_tokens": 3138,
+                      "prompt_tokens_details": {
+                        "cached_tokens": 0
+                      },
+                      "total_tokens": 3194
+                    }
+                  },
+                  "send_intent_at": 1788683354.408708,
+                  "sequence": 1,
+                  "state": "response_received"
+                },
+                {
+                  "call_id": "46bc9d6b-0211-42d9-ba00-126ccae58c7a",
+                  "completed_at": 1788683366.6628668,
+                  "grant_id": "034f6ef9-82e9-4303-a084-439c02d576bd",
+                  "outcome": {
+                    "protocol_passed": true,
+                    "reason_codes": [],
+                    "response_bytes": 1597,
+                    "state": "response_received",
+                    "upstream_status": 200,
+                    "usage": {
+                      "completion_tokens": 8,
+                      "completion_tokens_details": {
+                        "reasoning_tokens": 0
+                      },
+                      "prompt_tokens": 3366,
+                      "prompt_tokens_details": {
+                        "cached_tokens": 3136
+                      },
+                      "total_tokens": 3374
+                    }
+                  },
+                  "send_intent_at": 1788683363.276204,
+                  "sequence": 2,
+                  "state": "response_received"
+                }
+              ]
+            },
+            "reason_codes": [],
+            "status": "passed"
+          }
+        }
+      ],
+      "reason_codes": [],
+      "grant_cleanup": [
+        {
+          "grant_id": "74943dc4-bf1b-4f73-95e4-95b1281b64e8",
+          "state": "revoked"
+        },
+        {
+          "grant_id": "034f6ef9-82e9-4303-a084-439c02d576bd",
+          "state": "revoked"
+        }
+      ],
+      "status": "passed",
+      "validation": {
+        "fixed_native_tools": "passed",
+        "runtime_tools": "not_run",
+        "budget": "unknown",
+        "context_capacity": "unknown",
+        "dispatch": false
+      }
+    },
+    "reason_codes": [],
+    "limitations": [
+      "Only the fixed file is covered; arbitrary Task paths are unqualified.",
+      "No Commander, Reviewer, context, candidate capture, or cash bound qualified.",
+      "Provider remote stop remains unknown; local grant cleanup is not a billing cap."
+    ]
+  },
+  "start": {
+    "id": "0816baa2-e8b3-4fc1-878c-6d55c9aceb6a",
+    "project_id": "fecc980a-66a4-407f-a645-3f9e429cdfd0",
+    "qualification_scope": "fixed_native_tools",
+    "suite_ref": {
+      "id": "opencode-go-native-read-edit-linux",
+      "revision": 1
+    },
+    "binding": {
+      "controller_sha256": "a726c01baedec7f60ec6f13e7fda0b41d9ef8d52c6d6b6a39b0b5f733bbc68e3",
+      "execution_start": {
+        "auth_generation": "67b6123d-b4d6-4f6e-9916-52f0b986770c",
+        "authentication_source": {
+          "auth_ref": "secret:go-public-diagnostic",
+          "generation": "67b6123d-b4d6-4f6e-9916-52f0b986770c",
+          "previous_generation": null,
+          "project_id": "fecc980a-66a4-407f-a645-3f9e429cdfd0",
+          "registered_at": 1788683303.7826445,
+          "schema_version": "karajan.credential-generation.v1",
+          "source": {
+            "id": "opencode-go",
+            "kind": "controller_local_key_file"
+          }
+        },
+        "credential_source_id": "opencode-go",
+        "expires_at": 1788683722.315228,
+        "profile_binding": {
+          "account": {
+            "id": "fixture-account",
+            "provider_id": "opencode-go",
+            "secret_ref": "secret:go-public-diagnostic"
+          },
+          "channel": {
+            "account_id": "fixture-account",
+            "approved_data_destination": true,
+            "billing_path": "subscription_only",
+            "id": "fixture-channel"
+          },
+          "registration": {
+            "capability_evidence": [],
+            "enabled": true,
+            "id": "fixture-profile",
+            "max_class": "T3",
+            "model_family": "zai-glm-owner-declaration",
+            "profile": {
+              "admission_granularity": "attempt",
+              "auth_ref": "secret:go-public-diagnostic",
+              "binding": {
+                "account_id": "fixture-account",
+                "auth_mode": "api_key",
+                "billing_path": "subscription_only",
+                "channel_id": "fixture-channel",
+                "model_id": "glm-5.3-flash",
+                "native_settings": {
+                  "suite_ref": {
+                    "id": "opencode-go-native-read-edit-linux",
+                    "revision": 1
+                  }
+                },
+                "runtime_kind": "opencode-go-isolated",
+                "runtime_version": "1.18.29"
+              },
+              "id": "fixture-profile",
+              "required_permissions": [
+                "read",
+                "edit"
+              ],
+              "revision": 1,
+              "usage_coverage": "unknown"
+            },
+            "quota_pool_refs": [
+              "service-fixture"
+            ],
+            "required_isolation": "tool_sandboxed",
+            "revision": 1
+          },
+          "repository": {
+            "base_ref": "main",
+            "base_sha": "cf26515fa010bf009c23d563dc915705621dcb37",
+            "identity_sha256": "256b04738d68c0c0c3944a19caffc7bffd537ca9383bb9225a3dff081da01766",
+            "root": "/tmp/karajan-go-profile-live-20260906/repository"
+          }
+        },
+        "profile_digest": "1aa1bfe11dbcf4d0819a6b787a30d2ac35c65f47e7748f66bbbe90c16aaa0d12",
+        "project_id": "fecc980a-66a4-407f-a645-3f9e429cdfd0",
+        "qualification_id": "0816baa2-e8b3-4fc1-878c-6d55c9aceb6a",
+        "scenarios": [
+          {
+            "attempt_id": "92fe057e-57fa-4b76-b5b0-50feb6471363",
+            "fence": 1,
+            "grant_binding": {
+              "attempt_id": "92fe057e-57fa-4b76-b5b0-50feb6471363",
+              "auth_generation": "67b6123d-b4d6-4f6e-9916-52f0b986770c",
+              "channel": "fixture-channel",
+              "expires_at": 1788683722.315228,
+              "fence": 1,
+              "max_requests": 6,
+              "model": "glm-5.3-flash",
+              "profile_digest": "1aa1bfe11dbcf4d0819a6b787a30d2ac35c65f47e7748f66bbbe90c16aaa0d12",
+              "qualification_id": "0816baa2-e8b3-4fc1-878c-6d55c9aceb6a",
+              "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3"
+            },
+            "grant_id": "74943dc4-bf1b-4f73-95e4-95b1281b64e8",
+            "scenario": "edit"
+          },
+          {
+            "attempt_id": "05352107-4772-4637-af07-01f3df59d84a",
+            "fence": 1,
+            "grant_binding": {
+              "attempt_id": "05352107-4772-4637-af07-01f3df59d84a",
+              "auth_generation": "67b6123d-b4d6-4f6e-9916-52f0b986770c",
+              "channel": "fixture-channel",
+              "expires_at": 1788683722.315228,
+              "fence": 1,
+              "max_requests": 6,
+              "model": "glm-5.3-flash",
+              "profile_digest": "1aa1bfe11dbcf4d0819a6b787a30d2ac35c65f47e7748f66bbbe90c16aaa0d12",
+              "qualification_id": "0816baa2-e8b3-4fc1-878c-6d55c9aceb6a",
+              "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3"
+            },
+            "grant_id": "034f6ef9-82e9-4303-a084-439c02d576bd",
+            "scenario": "denied_read"
+          }
+        ],
+        "source": {
+          "journal": {
+            "path": "/tmp/karajan-go-profile-live-20260906/calls.sqlite"
+          },
+          "observation_origin": "official_go",
+          "producer_sha256": "942b23a8f04ec459f1fa130c10cfb3f5301e50e9dbde1b92c7309662675a1c5b",
+          "qualification_scope": "fixed_native_tools",
+          "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3",
+          "runtime_source": {
+            "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+            "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+            "execution_path": "linux-unshare-chroot-opencode-go-fixed-tools-v1",
+            "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+            "machine": "x86_64",
+            "native_settings_digest": "e0a8d0daa8172f93abee79ac1b1640ca1663702933c11918c3477476de098a69",
+            "runtime_version": "1.18.29",
+            "schema_version": "karajan.fixed-go-runtime-source.v1",
+            "source_sha256": {
+              "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+              "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+              "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+              "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b",
+              "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+              "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+              "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+              "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123"
+            },
+            "system_executable_sha256": {
+              "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+              "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+              "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118",
+              "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c"
+            }
+          },
+          "schema_version": "karajan.fixed-go-suite-source.v1",
+          "suite_ref": {
+            "id": "opencode-go-native-read-edit-linux",
+            "revision": 1
+          },
+          "work_root": {
+            "path": "/tmp/karajan-go-profile-live-20260906/suite"
+          }
+        },
+        "started_at": 1788683302.315228,
+        "suite_ref": {
+          "id": "opencode-go-native-read-edit-linux",
+          "revision": 1
+        }
+      },
+      "profile_binding": {
+        "account": {
+          "id": "fixture-account",
+          "provider_id": "opencode-go",
+          "secret_ref": "secret:go-public-diagnostic"
+        },
+        "channel": {
+          "account_id": "fixture-account",
+          "approved_data_destination": true,
+          "billing_path": "subscription_only",
+          "id": "fixture-channel"
+        },
+        "registration": {
+          "capability_evidence": [],
+          "enabled": true,
+          "id": "fixture-profile",
+          "max_class": "T3",
+          "model_family": "zai-glm-owner-declaration",
+          "profile": {
+            "admission_granularity": "attempt",
+            "auth_ref": "secret:go-public-diagnostic",
+            "binding": {
+              "account_id": "fixture-account",
+              "auth_mode": "api_key",
+              "billing_path": "subscription_only",
+              "channel_id": "fixture-channel",
+              "model_id": "glm-5.3-flash",
+              "native_settings": {
+                "suite_ref": {
+                  "id": "opencode-go-native-read-edit-linux",
+                  "revision": 1
+                }
+              },
+              "runtime_kind": "opencode-go-isolated",
+              "runtime_version": "1.18.29"
+            },
+            "id": "fixture-profile",
+            "required_permissions": [
+              "read",
+              "edit"
+            ],
+            "revision": 1,
+            "usage_coverage": "unknown"
+          },
+          "quota_pool_refs": [
+            "service-fixture"
+          ],
+          "required_isolation": "tool_sandboxed",
+          "revision": 1
+        },
+        "repository": {
+          "base_ref": "main",
+          "base_sha": "cf26515fa010bf009c23d563dc915705621dcb37",
+          "identity_sha256": "256b04738d68c0c0c3944a19caffc7bffd537ca9383bb9225a3dff081da01766",
+          "root": "/tmp/karajan-go-profile-live-20260906/repository"
+        }
+      },
+      "qualification_scope": "fixed_native_tools",
+      "suite_ref": {
+        "id": "opencode-go-native-read-edit-linux",
+        "revision": 1
+      }
+    },
+    "completed": true
+  },
+  "authentication_source": {
+    "schema_version": "karajan.credential-generation.v1",
+    "project_id": "fecc980a-66a4-407f-a645-3f9e429cdfd0",
+    "auth_ref": "secret:go-public-diagnostic",
+    "generation": "67b6123d-b4d6-4f6e-9916-52f0b986770c",
+    "source": {
+      "kind": "controller_local_key_file",
+      "id": "opencode-go"
+    },
+    "registered_at": 1788683303.7826445,
+    "previous_generation": null
+  },
+  "replay_equal": true,
+  "journal_after_replay": [
+    {
+      "grant_id": "74943dc4-bf1b-4f73-95e4-95b1281b64e8",
+      "binding": {
+        "attempt_id": "92fe057e-57fa-4b76-b5b0-50feb6471363",
+        "auth_generation": "67b6123d-b4d6-4f6e-9916-52f0b986770c",
+        "channel": "fixture-channel",
+        "expires_at": 1788683722.315228,
+        "fence": 1,
+        "max_requests": 6,
+        "model": "glm-5.3-flash",
+        "profile_digest": "1aa1bfe11dbcf4d0819a6b787a30d2ac35c65f47e7748f66bbbe90c16aaa0d12",
+        "qualification_id": "0816baa2-e8b3-4fc1-878c-6d55c9aceb6a",
+        "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3"
+      },
+      "created_at": 1788683303.3420255,
+      "revoked_at": 1788683342.5125575,
+      "state": "revoked",
+      "request_count": 3,
+      "calls": [
+        {
+          "call_id": "001bbe1b-0031-4f9a-b561-4be17a2a581d",
+          "completed_at": 1788683330.957403,
+          "grant_id": "74943dc4-bf1b-4f73-95e4-95b1281b64e8",
+          "outcome": {
+            "protocol_passed": true,
+            "reason_codes": [],
+            "response_bytes": 3356,
+            "state": "response_received",
+            "upstream_status": 200,
+            "usage": {
+              "completion_tokens": 21,
+              "completion_tokens_details": {
+                "reasoning_tokens": 7
+              },
+              "prompt_tokens": 3167,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              },
+              "total_tokens": 3188
+            }
+          },
+          "send_intent_at": 1788683316.0055623,
+          "sequence": 1,
+          "state": "response_received"
+        },
+        {
+          "call_id": "90b76b7f-5265-4e4c-8f3a-7f1ae76fad2e",
+          "completed_at": 1788683339.870088,
+          "grant_id": "74943dc4-bf1b-4f73-95e4-95b1281b64e8",
+          "outcome": {
+            "protocol_passed": true,
+            "reason_codes": [],
+            "response_bytes": 44033,
+            "state": "response_received",
+            "upstream_status": 200,
+            "usage": {
+              "completion_tokens": 215,
+              "completion_tokens_details": {
+                "reasoning_tokens": 169
+              },
+              "prompt_tokens": 3246,
+              "prompt_tokens_details": {
+                "cached_tokens": 3136
+              },
+              "total_tokens": 3461
+            }
+          },
+          "send_intent_at": 1788683331.0428553,
+          "sequence": 2,
+          "state": "response_received"
+        },
+        {
+          "call_id": "9181015c-6468-48b9-98a4-9d97d5452faf",
+          "completed_at": 1788683342.490262,
+          "grant_id": "74943dc4-bf1b-4f73-95e4-95b1281b64e8",
+          "outcome": {
+            "protocol_passed": true,
+            "reason_codes": [],
+            "response_bytes": 5352,
+            "state": "response_received",
+            "upstream_status": 200,
+            "usage": {
+              "completion_tokens": 42,
+              "prompt_tokens": 3469,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              },
+              "total_tokens": 3511
+            }
+          },
+          "send_intent_at": 1788683339.974979,
+          "sequence": 3,
+          "state": "response_received"
+        }
+      ]
+    },
+    {
+      "grant_id": "034f6ef9-82e9-4303-a084-439c02d576bd",
+      "binding": {
+        "attempt_id": "05352107-4772-4637-af07-01f3df59d84a",
+        "auth_generation": "67b6123d-b4d6-4f6e-9916-52f0b986770c",
+        "channel": "fixture-channel",
+        "expires_at": 1788683722.315228,
+        "fence": 1,
+        "max_requests": 6,
+        "model": "glm-5.3-flash",
+        "profile_digest": "1aa1bfe11dbcf4d0819a6b787a30d2ac35c65f47e7748f66bbbe90c16aaa0d12",
+        "qualification_id": "0816baa2-e8b3-4fc1-878c-6d55c9aceb6a",
+        "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3"
+      },
+      "created_at": 1788683303.3498936,
+      "revoked_at": 1788683366.7328787,
+      "state": "revoked",
+      "request_count": 2,
+      "calls": [
+        {
+          "call_id": "1fc62972-2783-4d9b-82fa-dfd4fec2a368",
+          "completed_at": 1788683363.2074528,
+          "grant_id": "034f6ef9-82e9-4303-a084-439c02d576bd",
+          "outcome": {
+            "protocol_passed": true,
+            "reason_codes": [],
+            "response_bytes": 11242,
+            "state": "response_received",
+            "upstream_status": 200,
+            "usage": {
+              "completion_tokens": 56,
+              "completion_tokens_details": {
+                "reasoning_tokens": 42
+              },
+              "prompt_tokens": 3138,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              },
+              "total_tokens": 3194
+            }
+          },
+          "send_intent_at": 1788683354.408708,
+          "sequence": 1,
+          "state": "response_received"
+        },
+        {
+          "call_id": "46bc9d6b-0211-42d9-ba00-126ccae58c7a",
+          "completed_at": 1788683366.6628668,
+          "grant_id": "034f6ef9-82e9-4303-a084-439c02d576bd",
+          "outcome": {
+            "protocol_passed": true,
+            "reason_codes": [],
+            "response_bytes": 1597,
+            "state": "response_received",
+            "upstream_status": 200,
+            "usage": {
+              "completion_tokens": 8,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 3366,
+              "prompt_tokens_details": {
+                "cached_tokens": 3136
+              },
+              "total_tokens": 3374
+            }
+          },
+          "send_intent_at": 1788683363.276204,
+          "sequence": 2,
+          "state": "response_received"
+        }
+      ]
+    }
+  ],
+  "routing_guard": {
+    "catalog": {
+      "approved_profile_refs": [
+        {
+          "id": "fixture-profile",
+          "revision": 1
+        }
+      ],
+      "digest": "a577bd056389d5d6fc76219ee3eafcbd82c596c41d91b519b450c6b4d7448d6c",
+      "project_id": "fecc980a-66a4-407f-a645-3f9e429cdfd0",
+      "resources": {
+        "accounts": [
+          {
+            "id": "fixture-account",
+            "provider_id": "opencode-go",
+            "secret_ref": "secret:go-public-diagnostic"
+          }
+        ],
+        "budgets": [
+          {
+            "currency_limits": {
+              "CNY": "0",
+              "USD": "0"
+            },
+            "id": "planning",
+            "max_duration_seconds": 300,
+            "max_total_attempts": 8,
+            "scope": "planning"
+          },
+          {
+            "currency_limits": {
+              "CNY": "0",
+              "USD": "0"
+            },
+            "id": "run",
+            "max_duration_seconds": 300,
+            "max_total_attempts": 8,
+            "scope": "run"
+          }
+        ],
+        "capacity_policies": [
+          {
+            "account_id": "fixture-account",
+            "conservative_mode": {
+              "cooldown_seconds": 10,
+              "enabled": true,
+              "max_attempt_duration_seconds": 30,
+              "max_local_active_attempts": 1,
+              "observation_max_age_seconds": 60
+            }
+          }
+        ],
+        "channels": [
+          {
+            "account_id": "fixture-account",
+            "approved_data_destination": true,
+            "billing_path": "subscription_only",
+            "id": "fixture-channel"
+          }
+        ],
+        "profiles": [
+          {
+            "capability_evidence": [],
+            "enabled": true,
+            "id": "fixture-profile",
+            "max_class": "T3",
+            "model_family": "zai-glm-owner-declaration",
+            "profile": {
+              "admission_granularity": "attempt",
+              "auth_ref": "secret:go-public-diagnostic",
+              "binding": {
+                "account_id": "fixture-account",
+                "auth_mode": "api_key",
+                "billing_path": "subscription_only",
+                "channel_id": "fixture-channel",
+                "model_id": "glm-5.3-flash",
+                "native_settings": {
+                  "suite_ref": {
+                    "id": "opencode-go-native-read-edit-linux",
+                    "revision": 1
+                  }
+                },
+                "runtime_kind": "opencode-go-isolated",
+                "runtime_version": "1.18.29"
+              },
+              "id": "fixture-profile",
+              "required_permissions": [
+                "read",
+                "edit"
+              ],
+              "revision": 1,
+              "usage_coverage": "unknown"
+            },
+            "quota_pool_refs": [
+              "service-fixture"
+            ],
+            "required_isolation": "tool_sandboxed",
+            "revision": 1
+          }
+        ],
+        "quota_pools": [
+          {
+            "account_id": "fixture-account",
+            "id": "service-fixture",
+            "kind": "service",
+            "limit": "100",
+            "observation_state": "unknown",
+            "unit": "percent"
+          }
+        ]
+      },
+      "revision": 1
+    },
+    "profiles": [
+      {
+        "profile": {
+          "id": "fixture-profile",
+          "revision": 1
+        },
+        "qualification": null,
+        "reason_codes": [
+          "TASK_PERMISSION_SCOPE_NOT_QUALIFIED"
+        ]
+      }
+    ],
+    "qualification_scope": "runtime_tools",
+    "activation_allowed": false
+  },
+  "configuration": {
+    "schema_version": "karajan.project-config.v1",
+    "rulebook": {
+      "schema_version": "karajan.rulebook.v1",
+      "id": "personal-code-delivery",
+      "revision": 1,
+      "status": "configured",
+      "description": "Design example: bind qualified profile revisions and budgets before activation.",
+      "collaboration": {
+        "command_mode": "lead_with_advisers",
+        "plan_approval": "explicit_revision",
+        "implementation_readiness": "ready",
+        "delivery_target": "pull_request",
+        "merge_authority": "user",
+        "max_parallel_writers_per_project": 2,
+        "max_quality_repair_rounds": 2,
+        "max_infrastructure_retries_per_root_task": 2,
+        "internal_delegation": "disabled_unless_admitted_and_observable"
+      },
+      "profile_groups": {
+        "commander_qualified": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ],
+        "adviser_qualified": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ],
+        "fast_qualified": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ],
+        "standard_qualified": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ],
+        "critical_qualified": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ],
+        "review_standard_qualified": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ],
+        "review_critical_qualified": [
+          {
+            "id": "fixture-profile",
+            "revision": 1
+          }
+        ]
+      },
+      "global_constraints": {
+        "require_enabled_profile": true,
+        "require_passed_capabilities": true,
+        "require_explicit_billing_path": true,
+        "require_approved_data_destination": true,
+        "autonomous_tool_execution_min_isolation": "tool_sandboxed",
+        "profile_fixed_per_attempt": true,
+        "no_silent_model_or_billing_fallback": true,
+        "review_context": "fresh_non_author",
+        "final_review_required": true
+      },
+      "resource_policy": {
+        "id": "protect_lead_then_balance",
+        "queue_order": [
+          "lead_feedback",
+          "required_review_repair_and_critical_path",
+          "worker",
+          "optional_adviser"
+        ],
+        "fairness": "aging_and_run_round_robin",
+        "candidate_order": [
+          "preference_band",
+          "uncertainty_band",
+          "bottleneck_quota_pressure",
+          "incremental_cash_estimate",
+          "completion_time_estimate",
+          "profile_id"
+        ],
+        "reset_preference": "only_among_equivalent_candidates_all_windows_checked",
+        "account_capacity_policy_binding": "current_global_revision",
+        "unknown_quota": "require_explicit_conservative_mode",
+        "planning_budget_ref": "planning",
+        "run_budget_ref": "run",
+        "missing_cash_budget": "deny_cash_route",
+        "cash_budget_enforcement": "bounded_calls",
+        "subscription_quota_enforcement": "conservative_estimate",
+        "call_reservations": "slices_of_attempt_reservation"
+      },
+      "rules": [
+        {
+          "id": "lead-planning",
+          "priority": 100,
+          "when": {
+            "role": "commander",
+            "purpose": "lead"
+          },
+          "eligible_groups": [
+            "commander_qualified"
+          ],
+          "capabilities_all": [
+            "design_reasoning",
+            "structured_plan_output"
+          ],
+          "handoff": "explicit_checkpoint_record",
+          "reroute": "propose_checkpoint_handoff_require_user_decision"
+        },
+        {
+          "id": "adviser-planning",
+          "priority": 100,
+          "when": {
+            "role": "commander",
+            "purpose": "advice"
+          },
+          "eligible_groups": [
+            "adviser_qualified"
+          ],
+          "capabilities_all": [
+            "design_reasoning"
+          ],
+          "lead_reserve_access": false,
+          "reroute": "within_approved_set"
+        },
+        {
+          "id": "mechanical-worker",
+          "priority": 100,
+          "when": {
+            "role": "worker",
+            "readiness": "ready",
+            "effective_class": "T1"
+          },
+          "eligible_groups": [
+            "fast_qualified"
+          ],
+          "capabilities_all": [
+            "bounded_code_edit",
+            "controlled_tools",
+            "candidate_capture"
+          ],
+          "reroute": "within_approved_set_preserve_requirements",
+          "quality_escalation_groups": [
+            "standard_qualified"
+          ]
+        },
+        {
+          "id": "bounded-worker",
+          "priority": 100,
+          "when": {
+            "role": "worker",
+            "readiness": "ready",
+            "effective_class": "T2"
+          },
+          "eligible_groups": [
+            "standard_qualified"
+          ],
+          "capabilities_all": [
+            "bounded_implementation",
+            "controlled_tools",
+            "candidate_capture"
+          ],
+          "reroute": "within_approved_set_preserve_requirements",
+          "quality_escalation_groups": [
+            "critical_qualified"
+          ]
+        },
+        {
+          "id": "critical-worker",
+          "priority": 100,
+          "when": {
+            "role": "worker",
+            "readiness": "ready",
+            "effective_class": "T3"
+          },
+          "eligible_groups": [
+            "critical_qualified"
+          ],
+          "capabilities_all": [
+            "critical_implementation",
+            "controlled_tools",
+            "candidate_capture"
+          ],
+          "reroute": "within_approved_set_preserve_requirements",
+          "quality_escalation_groups": []
+        },
+        {
+          "id": "standard-review",
+          "priority": 100,
+          "when": {
+            "role": "reviewer",
+            "effective_class_in": [
+              "T1",
+              "T2"
+            ]
+          },
+          "eligible_groups": [
+            "review_standard_qualified"
+          ],
+          "capabilities_all": [
+            "code_review",
+            "structured_findings"
+          ],
+          "independence": [
+            "fresh_context",
+            "non_author_attempt"
+          ],
+          "reroute": "within_approved_set_preserve_requirements"
+        },
+        {
+          "id": "critical-review",
+          "priority": 100,
+          "when": {
+            "role": "reviewer",
+            "effective_class": "T3"
+          },
+          "eligible_groups": [
+            "review_critical_qualified"
+          ],
+          "capabilities_all": [
+            "critical_code_review",
+            "structured_findings"
+          ],
+          "independence": [
+            "fresh_context",
+            "non_author_attempt",
+            "different_model_family_from_authors"
+          ],
+          "reroute": "within_approved_set_preserve_requirements"
+        }
+      ]
+    },
+    "approved_profile_refs": [
+      {
+        "id": "fixture-profile",
+        "revision": 1
+      }
+    ],
+    "resources": {
+      "accounts": [
+        {
+          "id": "fixture-account",
+          "provider_id": "opencode-go",
+          "secret_ref": "secret:go-public-diagnostic"
+        }
+      ],
+      "channels": [
+        {
+          "id": "fixture-channel",
+          "account_id": "fixture-account",
+          "billing_path": "subscription_only",
+          "approved_data_destination": true
+        }
+      ],
+      "profiles": [
+        {
+          "id": "fixture-profile",
+          "revision": 1,
+          "profile": {
+            "id": "fixture-profile",
+            "revision": 1,
+            "binding": {
+              "model_id": "glm-5.3-flash",
+              "channel_id": "fixture-channel",
+              "account_id": "fixture-account",
+              "runtime_kind": "opencode-go-isolated",
+              "runtime_version": "1.18.29",
+              "auth_mode": "api_key",
+              "billing_path": "subscription_only",
+              "native_settings": {
+                "suite_ref": {
+                  "id": "opencode-go-native-read-edit-linux",
+                  "revision": 1
+                }
+              }
+            },
+            "auth_ref": "secret:go-public-diagnostic",
+            "required_permissions": [
+              "read",
+              "edit"
+            ],
+            "admission_granularity": "attempt",
+            "usage_coverage": "unknown"
+          },
+          "model_family": "zai-glm-owner-declaration",
+          "max_class": "T3",
+          "required_isolation": "tool_sandboxed",
+          "enabled": true,
+          "quota_pool_refs": [
+            "service-fixture"
+          ],
+          "capability_evidence": []
+        }
+      ],
+      "quota_pools": [
+        {
+          "id": "service-fixture",
+          "account_id": "fixture-account",
+          "kind": "service",
+          "unit": "percent",
+          "limit": "100",
+          "observation_state": "unknown"
+        }
+      ],
+      "capacity_policies": [
+        {
+          "account_id": "fixture-account",
+          "conservative_mode": {
+            "enabled": true,
+            "max_local_active_attempts": 1,
+            "max_attempt_duration_seconds": 30,
+            "observation_max_age_seconds": 60,
+            "cooldown_seconds": 10
+          }
+        }
+      ],
+      "budgets": [
+        {
+          "id": "planning",
+          "scope": "planning",
+          "currency_limits": {
+            "USD": "0",
+            "CNY": "0"
+          },
+          "max_total_attempts": 8,
+          "max_duration_seconds": 300
+        },
+        {
+          "id": "run",
+          "scope": "run",
+          "currency_limits": {
+            "USD": "0",
+            "CNY": "0"
+          },
+          "max_total_attempts": 8,
+          "max_duration_seconds": 300
+        }
+      ]
+    }
+  },
+  "harness_sha256": "a613778a8f1b312f0f57896e37bcfe30ca8197a3672ee09e301e6f073b57b197",
+  "provider_remote_stop": "unknown",
+  "dispatch_eligible": false,
+  "fixed_facts": {
+    "facts": {
+      "profile": {
+        "id": "fixture-profile",
+        "revision": 1
+      },
+      "profile_digest": "1aa1bfe11dbcf4d0819a6b787a30d2ac35c65f47e7748f66bbbe90c16aaa0d12",
+      "runtime_version": "1.18.29",
+      "roles": [
+        "worker"
+      ],
+      "tools": [
+        "fixed_go_fixture_read",
+        "fixed_go_fixture_edit"
+      ],
+      "context_tokens": null,
+      "data_destination": "opencode-go",
+      "budget_enforcement": "unknown",
+      "provenance": "imported_observation",
+      "evidence_ref": "fixed-go-qualification:0816baa2-e8b3-4fc1-878c-6d55c9aceb6a",
+      "observed_at": 1788683367.7696157,
+      "valid_until": 1788686967.7696157
+    },
+    "qualification_scope": "fixed_native_tools",
+    "runtime_tools_status": "not_run",
+    "dispatch_eligible": false,
+    "observation": {
+      "binding": {
+        "controller_sha256": "a726c01baedec7f60ec6f13e7fda0b41d9ef8d52c6d6b6a39b0b5f733bbc68e3",
+        "execution_start": {
+          "auth_generation": "67b6123d-b4d6-4f6e-9916-52f0b986770c",
+          "authentication_source": {
+            "auth_ref": "secret:go-public-diagnostic",
+            "generation": "67b6123d-b4d6-4f6e-9916-52f0b986770c",
+            "previous_generation": null,
+            "project_id": "fecc980a-66a4-407f-a645-3f9e429cdfd0",
+            "registered_at": 1788683303.7826445,
+            "schema_version": "karajan.credential-generation.v1",
+            "source": {
+              "id": "opencode-go",
+              "kind": "controller_local_key_file"
+            }
+          },
+          "credential_source_id": "opencode-go",
+          "expires_at": 1788683722.315228,
+          "profile_binding": {
+            "account": {
+              "id": "fixture-account",
+              "provider_id": "opencode-go",
+              "secret_ref": "secret:go-public-diagnostic"
+            },
+            "channel": {
+              "account_id": "fixture-account",
+              "approved_data_destination": true,
+              "billing_path": "subscription_only",
+              "id": "fixture-channel"
+            },
+            "registration": {
+              "capability_evidence": [],
+              "enabled": true,
+              "id": "fixture-profile",
+              "max_class": "T3",
+              "model_family": "zai-glm-owner-declaration",
+              "profile": {
+                "admission_granularity": "attempt",
+                "auth_ref": "secret:go-public-diagnostic",
+                "binding": {
+                  "account_id": "fixture-account",
+                  "auth_mode": "api_key",
+                  "billing_path": "subscription_only",
+                  "channel_id": "fixture-channel",
+                  "model_id": "glm-5.3-flash",
+                  "native_settings": {
+                    "suite_ref": {
+                      "id": "opencode-go-native-read-edit-linux",
+                      "revision": 1
+                    }
+                  },
+                  "runtime_kind": "opencode-go-isolated",
+                  "runtime_version": "1.18.29"
+                },
+                "id": "fixture-profile",
+                "required_permissions": [
+                  "read",
+                  "edit"
+                ],
+                "revision": 1,
+                "usage_coverage": "unknown"
+              },
+              "quota_pool_refs": [
+                "service-fixture"
+              ],
+              "required_isolation": "tool_sandboxed",
+              "revision": 1
+            },
+            "repository": {
+              "base_ref": "main",
+              "base_sha": "cf26515fa010bf009c23d563dc915705621dcb37",
+              "identity_sha256": "256b04738d68c0c0c3944a19caffc7bffd537ca9383bb9225a3dff081da01766",
+              "root": "/tmp/karajan-go-profile-live-20260906/repository"
+            }
+          },
+          "profile_digest": "1aa1bfe11dbcf4d0819a6b787a30d2ac35c65f47e7748f66bbbe90c16aaa0d12",
+          "project_id": "fecc980a-66a4-407f-a645-3f9e429cdfd0",
+          "qualification_id": "0816baa2-e8b3-4fc1-878c-6d55c9aceb6a",
+          "scenarios": [
+            {
+              "attempt_id": "92fe057e-57fa-4b76-b5b0-50feb6471363",
+              "fence": 1,
+              "grant_binding": {
+                "attempt_id": "92fe057e-57fa-4b76-b5b0-50feb6471363",
+                "auth_generation": "67b6123d-b4d6-4f6e-9916-52f0b986770c",
+                "channel": "fixture-channel",
+                "expires_at": 1788683722.315228,
+                "fence": 1,
+                "max_requests": 6,
+                "model": "glm-5.3-flash",
+                "profile_digest": "1aa1bfe11dbcf4d0819a6b787a30d2ac35c65f47e7748f66bbbe90c16aaa0d12",
+                "qualification_id": "0816baa2-e8b3-4fc1-878c-6d55c9aceb6a",
+                "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3"
+              },
+              "grant_id": "74943dc4-bf1b-4f73-95e4-95b1281b64e8",
+              "scenario": "edit"
+            },
+            {
+              "attempt_id": "05352107-4772-4637-af07-01f3df59d84a",
+              "fence": 1,
+              "grant_binding": {
+                "attempt_id": "05352107-4772-4637-af07-01f3df59d84a",
+                "auth_generation": "67b6123d-b4d6-4f6e-9916-52f0b986770c",
+                "channel": "fixture-channel",
+                "expires_at": 1788683722.315228,
+                "fence": 1,
+                "max_requests": 6,
+                "model": "glm-5.3-flash",
+                "profile_digest": "1aa1bfe11dbcf4d0819a6b787a30d2ac35c65f47e7748f66bbbe90c16aaa0d12",
+                "qualification_id": "0816baa2-e8b3-4fc1-878c-6d55c9aceb6a",
+                "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3"
+              },
+              "grant_id": "034f6ef9-82e9-4303-a084-439c02d576bd",
+              "scenario": "denied_read"
+            }
+          ],
+          "source": {
+            "journal": {
+              "path": "/tmp/karajan-go-profile-live-20260906/calls.sqlite"
+            },
+            "observation_origin": "official_go",
+            "producer_sha256": "942b23a8f04ec459f1fa130c10cfb3f5301e50e9dbde1b92c7309662675a1c5b",
+            "qualification_scope": "fixed_native_tools",
+            "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3",
+            "runtime_source": {
+              "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+              "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+              "execution_path": "linux-unshare-chroot-opencode-go-fixed-tools-v1",
+              "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+              "machine": "x86_64",
+              "native_settings_digest": "e0a8d0daa8172f93abee79ac1b1640ca1663702933c11918c3477476de098a69",
+              "runtime_version": "1.18.29",
+              "schema_version": "karajan.fixed-go-runtime-source.v1",
+              "source_sha256": {
+                "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+                "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+                "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+                "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b",
+                "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+                "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+                "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+                "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123"
+              },
+              "system_executable_sha256": {
+                "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+                "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+                "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118",
+                "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c"
+              }
+            },
+            "schema_version": "karajan.fixed-go-suite-source.v1",
+            "suite_ref": {
+              "id": "opencode-go-native-read-edit-linux",
+              "revision": 1
+            },
+            "work_root": {
+              "path": "/tmp/karajan-go-profile-live-20260906/suite"
+            }
+          },
+          "started_at": 1788683302.315228,
+          "suite_ref": {
+            "id": "opencode-go-native-read-edit-linux",
+            "revision": 1
+          }
+        },
+        "profile_binding": {
+          "account": {
+            "id": "fixture-account",
+            "provider_id": "opencode-go",
+            "secret_ref": "secret:go-public-diagnostic"
+          },
+          "channel": {
+            "account_id": "fixture-account",
+            "approved_data_destination": true,
+            "billing_path": "subscription_only",
+            "id": "fixture-channel"
+          },
+          "registration": {
+            "capability_evidence": [],
+            "enabled": true,
+            "id": "fixture-profile",
+            "max_class": "T3",
+            "model_family": "zai-glm-owner-declaration",
+            "profile": {
+              "admission_granularity": "attempt",
+              "auth_ref": "secret:go-public-diagnostic",
+              "binding": {
+                "account_id": "fixture-account",
+                "auth_mode": "api_key",
+                "billing_path": "subscription_only",
+                "channel_id": "fixture-channel",
+                "model_id": "glm-5.3-flash",
+                "native_settings": {
+                  "suite_ref": {
+                    "id": "opencode-go-native-read-edit-linux",
+                    "revision": 1
+                  }
+                },
+                "runtime_kind": "opencode-go-isolated",
+                "runtime_version": "1.18.29"
+              },
+              "id": "fixture-profile",
+              "required_permissions": [
+                "read",
+                "edit"
+              ],
+              "revision": 1,
+              "usage_coverage": "unknown"
+            },
+            "quota_pool_refs": [
+              "service-fixture"
+            ],
+            "required_isolation": "tool_sandboxed",
+            "revision": 1
+          },
+          "repository": {
+            "base_ref": "main",
+            "base_sha": "cf26515fa010bf009c23d563dc915705621dcb37",
+            "identity_sha256": "256b04738d68c0c0c3944a19caffc7bffd537ca9383bb9225a3dff081da01766",
+            "root": "/tmp/karajan-go-profile-live-20260906/repository"
+          }
+        },
+        "qualification_scope": "fixed_native_tools",
+        "suite_ref": {
+          "id": "opencode-go-native-read-edit-linux",
+          "revision": 1
+        }
+      },
+      "dispatch_eligible": false,
+      "id": "0816baa2-e8b3-4fc1-878c-6d55c9aceb6a",
+      "limitations": [
+        "Only the fixed file is covered; arbitrary Task paths are unqualified.",
+        "No Commander, Reviewer, context, candidate capture, or cash bound qualified.",
+        "Provider remote stop remains unknown; local grant cleanup is not a billing cap."
+      ],
+      "live_qualified": false,
+      "observation": {
+        "billing_limit_qualification": "not_run",
+        "dispatch_eligible": false,
+        "grant_cleanup": [
+          {
+            "grant_id": "74943dc4-bf1b-4f73-95e4-95b1281b64e8",
+            "state": "revoked"
+          },
+          {
+            "grant_id": "034f6ef9-82e9-4303-a084-439c02d576bd",
+            "state": "revoked"
+          }
+        ],
+        "observation_origin": "official_go",
+        "provider_remote_stop": "unknown",
+        "qualification_id": "0816baa2-e8b3-4fc1-878c-6d55c9aceb6a",
+        "qualification_scope": "fixed_native_tools",
+        "reason_codes": [],
+        "runtime_tools_status": "not_run",
+        "scenarios": [
+          {
+            "attempt_id": "92fe057e-57fa-4b76-b5b0-50feb6471363",
+            "fence": 1,
+            "grant_id": "74943dc4-bf1b-4f73-95e4-95b1281b64e8",
+            "observation": {
+              "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+              "assistants": [
+                {
+                  "completed": true,
+                  "error": false,
+                  "model_matches": true,
+                  "stopped": false
+                },
+                {
+                  "completed": true,
+                  "error": false,
+                  "model_matches": true,
+                  "stopped": false
+                },
+                {
+                  "completed": true,
+                  "error": false,
+                  "model_matches": true,
+                  "stopped": true
+                }
+              ],
+              "billing_limit_qualification": "not_run",
+              "blocked_file_unchanged": true,
+              "dispatch_eligible": false,
+              "fixture_cases": [
+                true,
+                true,
+                true,
+                true
+              ],
+              "fixture_changed": true,
+              "grant_id": "74943dc4-bf1b-4f73-95e4-95b1281b64e8",
+              "journal": {
+                "binding": {
+                  "attempt_id": "92fe057e-57fa-4b76-b5b0-50feb6471363",
+                  "auth_generation": "67b6123d-b4d6-4f6e-9916-52f0b986770c",
+                  "channel": "fixture-channel",
+                  "expires_at": 1788683722.315228,
+                  "fence": 1,
+                  "max_requests": 6,
+                  "model": "glm-5.3-flash",
+                  "profile_digest": "1aa1bfe11dbcf4d0819a6b787a30d2ac35c65f47e7748f66bbbe90c16aaa0d12",
+                  "qualification_id": "0816baa2-e8b3-4fc1-878c-6d55c9aceb6a",
+                  "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3"
+                },
+                "calls": [
+                  {
+                    "call_id": "001bbe1b-0031-4f9a-b561-4be17a2a581d",
+                    "completed_at": 1788683330.957403,
+                    "grant_id": "74943dc4-bf1b-4f73-95e4-95b1281b64e8",
+                    "outcome": {
+                      "protocol_passed": true,
+                      "reason_codes": [],
+                      "response_bytes": 3356,
+                      "state": "response_received",
+                      "upstream_status": 200,
+                      "usage": {
+                        "completion_tokens": 21,
+                        "completion_tokens_details": {
+                          "reasoning_tokens": 7
+                        },
+                        "prompt_tokens": 3167,
+                        "prompt_tokens_details": {
+                          "cached_tokens": 0
+                        },
+                        "total_tokens": 3188
+                      }
+                    },
+                    "send_intent_at": 1788683316.0055623,
+                    "sequence": 1,
+                    "state": "response_received"
+                  },
+                  {
+                    "call_id": "90b76b7f-5265-4e4c-8f3a-7f1ae76fad2e",
+                    "completed_at": 1788683339.870088,
+                    "grant_id": "74943dc4-bf1b-4f73-95e4-95b1281b64e8",
+                    "outcome": {
+                      "protocol_passed": true,
+                      "reason_codes": [],
+                      "response_bytes": 44033,
+                      "state": "response_received",
+                      "upstream_status": 200,
+                      "usage": {
+                        "completion_tokens": 215,
+                        "completion_tokens_details": {
+                          "reasoning_tokens": 169
+                        },
+                        "prompt_tokens": 3246,
+                        "prompt_tokens_details": {
+                          "cached_tokens": 3136
+                        },
+                        "total_tokens": 3461
+                      }
+                    },
+                    "send_intent_at": 1788683331.0428553,
+                    "sequence": 2,
+                    "state": "response_received"
+                  },
+                  {
+                    "call_id": "9181015c-6468-48b9-98a4-9d97d5452faf",
+                    "completed_at": 1788683342.490262,
+                    "grant_id": "74943dc4-bf1b-4f73-95e4-95b1281b64e8",
+                    "outcome": {
+                      "protocol_passed": true,
+                      "reason_codes": [],
+                      "response_bytes": 5352,
+                      "state": "response_received",
+                      "upstream_status": 200,
+                      "usage": {
+                        "completion_tokens": 42,
+                        "prompt_tokens": 3469,
+                        "prompt_tokens_details": {
+                          "cached_tokens": 0
+                        },
+                        "total_tokens": 3511
+                      }
+                    },
+                    "send_intent_at": 1788683339.974979,
+                    "sequence": 3,
+                    "state": "response_received"
+                  }
+                ],
+                "created_at": 1788683303.3420255,
+                "grant_id": "74943dc4-bf1b-4f73-95e4-95b1281b64e8",
+                "request_count": 3,
+                "revoked_at": 1788683342.5125575,
+                "state": "revoked"
+              },
+              "native_cleanup": {
+                "dispatch_eligible": false,
+                "local_stop": "confirmed",
+                "namespace_init_stopped": true,
+                "observed_processes": [
+                  {
+                    "birth": "7654044",
+                    "namespace_pid": 1,
+                    "pid": 44192
+                  },
+                  {
+                    "birth": "7654250",
+                    "namespace_pid": 43,
+                    "pid": 44234
+                  }
+                ],
+                "observed_processes_still_running": [],
+                "remote_stop": "unknown",
+                "runtime_tools_status": "not_run"
+              },
+              "observation_origin": "official_go",
+              "provider_remote_stop": "unknown",
+              "real_credential_passed_to_runtime": false,
+              "reason_codes": [],
+              "relay_cleanup": {
+                "errors": [],
+                "status": "closed"
+              },
+              "requests": [
+                {
+                  "denied_canary_in_request": false,
+                  "finish_reason": "tool_calls",
+                  "fixture_content_in_tool_result": false,
+                  "go_cost_trailer_seen": true,
+                  "journal_call_id": "001bbe1b-0031-4f9a-b561-4be17a2a581d",
+                  "protocol_passed": true,
+                  "provider_reported_cost": "0",
+                  "provider_reported_cost_unit": "unknown",
+                  "reason_codes": [],
+                  "relay_completed": true,
+                  "reported_models": [
+                    "glm-5.3-flash"
+                  ],
+                  "requested_model": "glm-5.3-flash",
+                  "requested_stream": true,
+                  "response_bytes": 3356,
+                  "sequence": 1,
+                  "session_header_present": true,
+                  "stream_terminated": true,
+                  "tool_names": [
+                    "read"
+                  ],
+                  "tool_results_in_request": 0,
+                  "upstream_response_complete": true,
+                  "upstream_send_attempted": true,
+                  "upstream_status": 200,
+                  "usage": {
+                    "completion_tokens": 21,
+                    "completion_tokens_details": {
+                      "reasoning_tokens": 7
+                    },
+                    "prompt_tokens": 3167,
+                    "prompt_tokens_details": {
+                      "cached_tokens": 0
+                    },
+                    "total_tokens": 3188
+                  }
+                },
+                {
+                  "denied_canary_in_request": false,
+                  "finish_reason": "tool_calls",
+                  "fixture_content_in_tool_result": true,
+                  "go_cost_trailer_seen": true,
+                  "journal_call_id": "90b76b7f-5265-4e4c-8f3a-7f1ae76fad2e",
+                  "protocol_passed": true,
+                  "provider_reported_cost": "0",
+                  "provider_reported_cost_unit": "unknown",
+                  "reason_codes": [],
+                  "relay_completed": true,
+                  "reported_models": [
+                    "glm-5.3-flash"
+                  ],
+                  "requested_model": "glm-5.3-flash",
+                  "requested_stream": true,
+                  "response_bytes": 44033,
+                  "sequence": 2,
+                  "session_header_present": true,
+                  "stream_terminated": true,
+                  "tool_names": [
+                    "edit"
+                  ],
+                  "tool_results_in_request": 1,
+                  "upstream_response_complete": true,
+                  "upstream_send_attempted": true,
+                  "upstream_status": 200,
+                  "usage": {
+                    "completion_tokens": 215,
+                    "completion_tokens_details": {
+                      "reasoning_tokens": 169
+                    },
+                    "prompt_tokens": 3246,
+                    "prompt_tokens_details": {
+                      "cached_tokens": 3136
+                    },
+                    "total_tokens": 3461
+                  }
+                },
+                {
+                  "denied_canary_in_request": false,
+                  "finish_reason": "stop",
+                  "fixture_content_in_tool_result": true,
+                  "go_cost_trailer_seen": true,
+                  "journal_call_id": "9181015c-6468-48b9-98a4-9d97d5452faf",
+                  "protocol_passed": true,
+                  "provider_reported_cost": "0",
+                  "provider_reported_cost_unit": "unknown",
+                  "reason_codes": [],
+                  "relay_completed": true,
+                  "reported_models": [
+                    "glm-5.3-flash"
+                  ],
+                  "requested_model": "glm-5.3-flash",
+                  "requested_stream": true,
+                  "response_bytes": 5352,
+                  "sequence": 3,
+                  "session_header_present": true,
+                  "stream_terminated": true,
+                  "tool_names": [],
+                  "tool_results_in_request": 2,
+                  "upstream_response_complete": true,
+                  "upstream_send_attempted": true,
+                  "upstream_status": 200,
+                  "usage": {
+                    "completion_tokens": 42,
+                    "prompt_tokens": 3469,
+                    "prompt_tokens_details": {
+                      "cached_tokens": 0
+                    },
+                    "total_tokens": 3511
+                  }
+                }
+              ],
+              "runtime": {
+                "capabilities": {
+                  "bounding": "0000000000000000",
+                  "effective": "0000000000000000",
+                  "permitted": "0000000000000000"
+                },
+                "dispatch_eligible": false,
+                "host_mount_visible": false,
+                "ipv4_routes": [],
+                "namespace_pid": 1,
+                "namespaces": {
+                  "mnt": "mnt:[4026532238]",
+                  "net": "net:[4026532240]",
+                  "pid": "pid:[4026532239]",
+                  "user": "user:[4026532235]"
+                },
+                "native_control_fd_inherited": false,
+                "network_interfaces": [
+                  "lo"
+                ],
+                "no_new_privileges": true,
+                "runtime_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+                "runtime_tools_status": "not_run",
+                "runtime_version": "1.18.29",
+                "state": "running",
+                "wsl_interop_visible": false
+              },
+              "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3",
+              "runtime_source": {
+                "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+                "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+                "execution_path": "linux-unshare-chroot-opencode-go-fixed-tools-v1",
+                "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+                "machine": "x86_64",
+                "native_settings_digest": "e0a8d0daa8172f93abee79ac1b1640ca1663702933c11918c3477476de098a69",
+                "runtime_version": "1.18.29",
+                "schema_version": "karajan.fixed-go-runtime-source.v1",
+                "source_sha256": {
+                  "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+                  "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+                  "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+                  "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b",
+                  "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+                  "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+                  "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+                  "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123"
+                },
+                "system_executable_sha256": {
+                  "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+                  "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+                  "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118",
+                  "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c"
+                }
+              },
+              "runtime_tools_status": "not_run",
+              "scenario": "edit",
+              "schema_version": "karajan.isolated-opencode-go-observation.v1",
+              "scope": "fixed_native_tools",
+              "source_sha256": {
+                "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+                "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+                "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+                "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b",
+                "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+                "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+                "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+                "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123"
+              },
+              "status": "passed",
+              "tools": [
+                {
+                  "path": "fixture.py",
+                  "permission_denied": false,
+                  "status": "completed",
+                  "tool": "read"
+                },
+                {
+                  "path": "fixture.py",
+                  "permission_denied": false,
+                  "status": "completed",
+                  "tool": "edit"
+                }
+              ],
+              "workspace_files": [
+                "blocked.txt",
+                "fixture.py"
+              ]
+            },
+            "reason_codes": [],
+            "scenario": "edit",
+            "status": "passed"
+          },
+          {
+            "attempt_id": "05352107-4772-4637-af07-01f3df59d84a",
+            "fence": 1,
+            "grant_id": "034f6ef9-82e9-4303-a084-439c02d576bd",
+            "observation": {
+              "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+              "assistants": [
+                {
+                  "completed": true,
+                  "error": false,
+                  "model_matches": true,
+                  "stopped": false
+                },
+                {
+                  "completed": true,
+                  "error": false,
+                  "model_matches": true,
+                  "stopped": true
+                }
+              ],
+              "billing_limit_qualification": "not_run",
+              "blocked_file_unchanged": true,
+              "dispatch_eligible": false,
+              "fixture_cases": null,
+              "fixture_changed": false,
+              "grant_id": "034f6ef9-82e9-4303-a084-439c02d576bd",
+              "journal": {
+                "binding": {
+                  "attempt_id": "05352107-4772-4637-af07-01f3df59d84a",
+                  "auth_generation": "67b6123d-b4d6-4f6e-9916-52f0b986770c",
+                  "channel": "fixture-channel",
+                  "expires_at": 1788683722.315228,
+                  "fence": 1,
+                  "max_requests": 6,
+                  "model": "glm-5.3-flash",
+                  "profile_digest": "1aa1bfe11dbcf4d0819a6b787a30d2ac35c65f47e7748f66bbbe90c16aaa0d12",
+                  "qualification_id": "0816baa2-e8b3-4fc1-878c-6d55c9aceb6a",
+                  "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3"
+                },
+                "calls": [
+                  {
+                    "call_id": "1fc62972-2783-4d9b-82fa-dfd4fec2a368",
+                    "completed_at": 1788683363.2074528,
+                    "grant_id": "034f6ef9-82e9-4303-a084-439c02d576bd",
+                    "outcome": {
+                      "protocol_passed": true,
+                      "reason_codes": [],
+                      "response_bytes": 11242,
+                      "state": "response_received",
+                      "upstream_status": 200,
+                      "usage": {
+                        "completion_tokens": 56,
+                        "completion_tokens_details": {
+                          "reasoning_tokens": 42
+                        },
+                        "prompt_tokens": 3138,
+                        "prompt_tokens_details": {
+                          "cached_tokens": 0
+                        },
+                        "total_tokens": 3194
+                      }
+                    },
+                    "send_intent_at": 1788683354.408708,
+                    "sequence": 1,
+                    "state": "response_received"
+                  },
+                  {
+                    "call_id": "46bc9d6b-0211-42d9-ba00-126ccae58c7a",
+                    "completed_at": 1788683366.6628668,
+                    "grant_id": "034f6ef9-82e9-4303-a084-439c02d576bd",
+                    "outcome": {
+                      "protocol_passed": true,
+                      "reason_codes": [],
+                      "response_bytes": 1597,
+                      "state": "response_received",
+                      "upstream_status": 200,
+                      "usage": {
+                        "completion_tokens": 8,
+                        "completion_tokens_details": {
+                          "reasoning_tokens": 0
+                        },
+                        "prompt_tokens": 3366,
+                        "prompt_tokens_details": {
+                          "cached_tokens": 3136
+                        },
+                        "total_tokens": 3374
+                      }
+                    },
+                    "send_intent_at": 1788683363.276204,
+                    "sequence": 2,
+                    "state": "response_received"
+                  }
+                ],
+                "created_at": 1788683303.3498936,
+                "grant_id": "034f6ef9-82e9-4303-a084-439c02d576bd",
+                "request_count": 2,
+                "revoked_at": 1788683366.7328787,
+                "state": "revoked"
+              },
+              "native_cleanup": {
+                "dispatch_eligible": false,
+                "local_stop": "confirmed",
+                "namespace_init_stopped": true,
+                "observed_processes": [
+                  {
+                    "birth": "7658206",
+                    "namespace_pid": 1,
+                    "pid": 44612
+                  },
+                  {
+                    "birth": "7658361",
+                    "namespace_pid": 41,
+                    "pid": 44654
+                  }
+                ],
+                "observed_processes_still_running": [],
+                "remote_stop": "unknown",
+                "runtime_tools_status": "not_run"
+              },
+              "observation_origin": "official_go",
+              "provider_remote_stop": "unknown",
+              "real_credential_passed_to_runtime": false,
+              "reason_codes": [],
+              "relay_cleanup": {
+                "errors": [],
+                "status": "closed"
+              },
+              "requests": [
+                {
+                  "denied_canary_in_request": false,
+                  "finish_reason": "tool_calls",
+                  "fixture_content_in_tool_result": false,
+                  "go_cost_trailer_seen": true,
+                  "journal_call_id": "1fc62972-2783-4d9b-82fa-dfd4fec2a368",
+                  "protocol_passed": true,
+                  "provider_reported_cost": "0",
+                  "provider_reported_cost_unit": "unknown",
+                  "reason_codes": [],
+                  "relay_completed": true,
+                  "reported_models": [
+                    "glm-5.3-flash"
+                  ],
+                  "requested_model": "glm-5.3-flash",
+                  "requested_stream": true,
+                  "response_bytes": 11242,
+                  "sequence": 1,
+                  "session_header_present": true,
+                  "stream_terminated": true,
+                  "tool_names": [
+                    "read"
+                  ],
+                  "tool_results_in_request": 0,
+                  "upstream_response_complete": true,
+                  "upstream_send_attempted": true,
+                  "upstream_status": 200,
+                  "usage": {
+                    "completion_tokens": 56,
+                    "completion_tokens_details": {
+                      "reasoning_tokens": 42
+                    },
+                    "prompt_tokens": 3138,
+                    "prompt_tokens_details": {
+                      "cached_tokens": 0
+                    },
+                    "total_tokens": 3194
+                  }
+                },
+                {
+                  "denied_canary_in_request": false,
+                  "finish_reason": "stop",
+                  "fixture_content_in_tool_result": false,
+                  "go_cost_trailer_seen": true,
+                  "journal_call_id": "46bc9d6b-0211-42d9-ba00-126ccae58c7a",
+                  "protocol_passed": true,
+                  "provider_reported_cost": "0",
+                  "provider_reported_cost_unit": "unknown",
+                  "reason_codes": [],
+                  "relay_completed": true,
+                  "reported_models": [
+                    "glm-5.3-flash"
+                  ],
+                  "requested_model": "glm-5.3-flash",
+                  "requested_stream": true,
+                  "response_bytes": 1597,
+                  "sequence": 2,
+                  "session_header_present": true,
+                  "stream_terminated": true,
+                  "tool_names": [],
+                  "tool_results_in_request": 1,
+                  "upstream_response_complete": true,
+                  "upstream_send_attempted": true,
+                  "upstream_status": 200,
+                  "usage": {
+                    "completion_tokens": 8,
+                    "completion_tokens_details": {
+                      "reasoning_tokens": 0
+                    },
+                    "prompt_tokens": 3366,
+                    "prompt_tokens_details": {
+                      "cached_tokens": 3136
+                    },
+                    "total_tokens": 3374
+                  }
+                }
+              ],
+              "runtime": {
+                "capabilities": {
+                  "bounding": "0000000000000000",
+                  "effective": "0000000000000000",
+                  "permitted": "0000000000000000"
+                },
+                "dispatch_eligible": false,
+                "host_mount_visible": false,
+                "ipv4_routes": [],
+                "namespace_pid": 1,
+                "namespaces": {
+                  "mnt": "mnt:[4026532235]",
+                  "net": "net:[4026532239]",
+                  "pid": "pid:[4026532238]",
+                  "user": "user:[4026532179]"
+                },
+                "native_control_fd_inherited": false,
+                "network_interfaces": [
+                  "lo"
+                ],
+                "no_new_privileges": true,
+                "runtime_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+                "runtime_tools_status": "not_run",
+                "runtime_version": "1.18.29",
+                "state": "running",
+                "wsl_interop_visible": false
+              },
+              "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3",
+              "runtime_source": {
+                "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+                "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+                "execution_path": "linux-unshare-chroot-opencode-go-fixed-tools-v1",
+                "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+                "machine": "x86_64",
+                "native_settings_digest": "e0a8d0daa8172f93abee79ac1b1640ca1663702933c11918c3477476de098a69",
+                "runtime_version": "1.18.29",
+                "schema_version": "karajan.fixed-go-runtime-source.v1",
+                "source_sha256": {
+                  "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+                  "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+                  "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+                  "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b",
+                  "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+                  "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+                  "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+                  "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123"
+                },
+                "system_executable_sha256": {
+                  "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+                  "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+                  "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118",
+                  "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c"
+                }
+              },
+              "runtime_tools_status": "not_run",
+              "scenario": "denied_read",
+              "schema_version": "karajan.isolated-opencode-go-observation.v1",
+              "scope": "fixed_native_tools",
+              "source_sha256": {
+                "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+                "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+                "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+                "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b",
+                "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+                "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+                "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+                "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123"
+              },
+              "status": "passed",
+              "tools": [
+                {
+                  "path": "blocked.txt",
+                  "permission_denied": true,
+                  "status": "error",
+                  "tool": "read"
+                }
+              ],
+              "workspace_files": [
+                "blocked.txt",
+                "fixture.py"
+              ]
+            },
+            "reason_codes": [],
+            "scenario": "denied_read",
+            "status": "passed"
+          }
+        ],
+        "schema_version": "karajan.fixed-go-suite-observation.v1",
+        "source": {
+          "journal": {
+            "path": "/tmp/karajan-go-profile-live-20260906/calls.sqlite"
+          },
+          "observation_origin": "official_go",
+          "producer_sha256": "942b23a8f04ec459f1fa130c10cfb3f5301e50e9dbde1b92c7309662675a1c5b",
+          "qualification_scope": "fixed_native_tools",
+          "runtime_digest": "ca788ec4dade8caffc5ede8154a38a6054b190c676e9304097781b25ac944fb3",
+          "runtime_source": {
+            "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+            "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+            "execution_path": "linux-unshare-chroot-opencode-go-fixed-tools-v1",
+            "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+            "machine": "x86_64",
+            "native_settings_digest": "e0a8d0daa8172f93abee79ac1b1640ca1663702933c11918c3477476de098a69",
+            "runtime_version": "1.18.29",
+            "schema_version": "karajan.fixed-go-runtime-source.v1",
+            "source_sha256": {
+              "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+              "_opencode_inner.py": "cef4fe8a27d3b762b983697a9561a5059988f42bca084b6ccfb67de0f644b766",
+              "_opencode_namespace.py": "c3d3c0422ab05380b6058510ec7e50fa1bca1bc58f820e6c71e844dbacd5508c",
+              "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b",
+              "go_journal.py": "2da85e23d025e5ff821dbd17869b1385ee9fde9f5ca0acaff150d94aced3852d",
+              "go_probe.py": "86fc8ff126b14d03d809780f3bd27b158b6366db30a4db406647934b4b40aa3f",
+              "go_relay.py": "3df7d85e0e199e31e0bb3368467828e77d1207b49890e620ee13a0f79400abec",
+              "opencode_runtime.py": "084dcd9f9e35f03e410d04aa61721bb34d8bfc060d42534e5cdd21dcde347123"
+            },
+            "system_executable_sha256": {
+              "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+              "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+              "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118",
+              "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c"
+            }
+          },
+          "schema_version": "karajan.fixed-go-suite-source.v1",
+          "suite_ref": {
+            "id": "opencode-go-native-read-edit-linux",
+            "revision": 1
+          },
+          "work_root": {
+            "path": "/tmp/karajan-go-profile-live-20260906/suite"
+          }
+        },
+        "status": "passed",
+        "suite_ref": {
+          "id": "opencode-go-native-read-edit-linux",
+          "revision": 1
+        },
+        "validation": {
+          "budget": "unknown",
+          "context_capacity": "unknown",
+          "dispatch": false,
+          "fixed_native_tools": "passed",
+          "runtime_tools": "not_run"
+        }
+      },
+      "observed_at": 1788683367.7696157,
+      "principal": "owner",
+      "project_id": "fecc980a-66a4-407f-a645-3f9e429cdfd0",
+      "provenance": "imported_observation",
+      "qualification_scope": "fixed_native_tools",
+      "reason_codes": [],
+      "runtime_tools_status": "not_run",
+      "schema_version": "karajan.profile-qualification.v1",
+      "status": "passed",
+      "suite_ref": {
+        "id": "opencode-go-native-read-edit-linux",
+        "revision": 1
+      },
+      "valid_until": 1788686967.7696157
+    },
+    "capability_evidence": [
+      {
+        "capability": "fixed_go_fixture_read",
+        "status": "passed",
+        "profile_digest": "1aa1bfe11dbcf4d0819a6b787a30d2ac35c65f47e7748f66bbbe90c16aaa0d12",
+        "runtime_version": "1.18.29",
+        "evidence_ref": "fixed-go-qualification:0816baa2-e8b3-4fc1-878c-6d55c9aceb6a",
+        "provenance": "imported_observation"
+      },
+      {
+        "capability": "fixed_go_fixture_edit",
+        "status": "passed",
+        "profile_digest": "1aa1bfe11dbcf4d0819a6b787a30d2ac35c65f47e7748f66bbbe90c16aaa0d12",
+        "runtime_version": "1.18.29",
+        "evidence_ref": "fixed-go-qualification:0816baa2-e8b3-4fc1-878c-6d55c9aceb6a",
+        "provenance": "imported_observation"
+      },
+      {
+        "capability": "fixed_go_fixture_denied_read",
+        "status": "passed",
+        "profile_digest": "1aa1bfe11dbcf4d0819a6b787a30d2ac35c65f47e7748f66bbbe90c16aaa0d12",
+        "runtime_version": "1.18.29",
+        "evidence_ref": "fixed-go-qualification:0816baa2-e8b3-4fc1-878c-6d55c9aceb6a",
+        "provenance": "imported_observation"
+      }
+    ]
+  }
+}

@@ -1,0 +1,68 @@
+import datetime
+import hashlib
+import json
+from pathlib import Path
+
+root = Path.cwd()
+report_path = root / "examples/go-profile-qualification/live.report.json"
+report = json.loads(report_path.read_text(encoding="utf-8"))
+record = report["record"]
+binding = record["binding"]
+source = binding["execution_start"]["source"]
+expected = {
+    "backend/karajan/projects/qualification.py": binding["controller_sha256"],
+    "backend/karajan/projects/go_suite.py": source["producer_sha256"],
+    "examples/go-profile-qualification/run_live.py": report["harness_sha256"],
+    "backend/karajan/projects/credential_sources.py":
+        "2a5f7e849c3a5fc012c04622c7ecdaa9a7aee749ea8acce24952b5ba4ad85c85",
+}
+for name, digest in source["runtime_source"]["source_sha256"].items():
+    matches = list((root / "backend/karajan").rglob(name))
+    assert len(matches) == 1
+    expected[matches[0].relative_to(root).as_posix()] = digest
+for relative, digest in expected.items():
+    assert hashlib.sha256((root / relative).read_bytes()).hexdigest() == digest, relative
+assert record["status"] == "passed" and record["reason_codes"] == []
+assert record["qualification_scope"] == "fixed_native_tools"
+assert record["runtime_tools_status"] == "not_run"
+assert record["dispatch_eligible"] is False
+assert report["replay_equal"] is True and report["start"]["completed"] is True
+assert [g["request_count"] for g in report["journal_after_replay"]] == [3, 2]
+assert all(g["state"] == "revoked" for g in report["journal_after_replay"])
+assert report["routing_guard"]["profiles"][0]["reason_codes"] == [
+    "TASK_PERMISSION_SCOPE_NOT_QUALIFIED"
+]
+scenarios = []
+for scenario in record["observation"]["scenarios"]:
+    evidence = scenario["observation"]
+    assert scenario["status"] == "passed"
+    assert evidence["observation_origin"] == "official_go"
+    assert evidence["native_cleanup"]["local_stop"] == "confirmed"
+    assert evidence["provider_remote_stop"] == "unknown"
+    assert evidence["real_credential_passed_to_runtime"] is False
+    scenarios.append({
+        "scenario": scenario["scenario"],
+        "status": scenario["status"],
+        "request_count": evidence["journal"]["request_count"],
+        "native_cleanup": evidence["native_cleanup"],
+    })
+manifest = {
+    "schema_version": "karajan.public-go-live-freeze.v1",
+    "report": report_path.relative_to(root).as_posix(),
+    "report_sha256": hashlib.sha256(report_path.read_bytes()).hexdigest(),
+    "observed_at_utc": datetime.datetime.fromtimestamp(
+        record["observed_at"], datetime.UTC
+    ).isoformat(),
+    "source_sha256": expected,
+    "runtime_artifact_sha256": source["runtime_source"]["artifact_sha256"],
+    "scenarios": scenarios,
+    "real_http_requests": 5,
+    "replay_additional_requests": 0,
+    "runtime_tools_status": "not_run",
+    "dispatch_eligible": False,
+    "check_script_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+}
+(report_path.parent / "live-freeze.json").write_text(
+    json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+)
+print(json.dumps({"source_files_verified": len(expected), "requests": 5}))

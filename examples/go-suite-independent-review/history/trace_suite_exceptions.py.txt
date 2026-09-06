@@ -1,0 +1,85 @@
+"""Optional diagnostic plugin: synthetic fixed-suite tests only; never CI default."""
+
+import copy
+import json
+import sys
+
+import httpx
+import pytest
+from karajan.projects.go_suite import FixedGoSuite
+
+
+@pytest.fixture(autouse=True)
+def trace_fixed_suite(request, monkeypatch):
+    if request.module.__name__ != "test_go_suite_review":
+        yield
+        return
+    events = []
+    tools = []
+    target = FixedGoSuite.observe.__code__.co_filename
+    previous_trace = sys.gettrace()
+    original_observe = FixedGoSuite.observe
+    original_http = httpx.MockTransport.handle_request
+
+    def trace(frame, event, argument):
+        if frame.f_code.co_filename != target:
+            return None
+        if event == "exception":
+            error_type, error, _ = argument
+            item = {
+                "method": frame.f_code.co_name,
+                "line": frame.f_lineno,
+                "error_type": error_type.__name__,
+            }
+            if isinstance(error, ValueError):
+                item["stable_code"] = str(error)
+            if frame.f_code.co_name == "_validate_start":
+                item["validation_clock"] = {
+                    key: frame.f_locals.get(key) for key in ("started", "expires", "now", "valid")
+                }
+                suite, start = frame.f_locals["self"], frame.f_locals["start"]
+                try:
+                    item["source_still_matches"] = suite.source() == start.get("source")
+                except Exception as source_error:
+                    item["source_error"] = type(source_error).__name__
+            events.append(item)
+        return trace
+
+    def observed(suite, start, credential):
+        assert suite.client_factory is not None, "Diagnostic plugin requires synthetic HTTP"
+        issued = copy.deepcopy(start)
+        try:
+            result = original_observe(suite, start, credential)
+        except Exception as error:
+            events.append({"public_exception_type": type(error).__name__})
+            raise
+        item = {"public_result": result, "clock_after": suite.clock()}
+        try:
+            item["source_after_matches"] = suite.source() == issued.get("source")
+        except Exception as error:
+            item["source_after_error"] = type(error).__name__
+        item["grant_state_after"] = []
+        for scenario in issued["scenarios"]:
+            try:
+                snapshot = suite.journal.snapshot(scenario["grant_id"])
+                item["grant_state_after"].append(snapshot)
+            except Exception as error:
+                item["grant_state_after"].append({"error_type": type(error).__name__})
+        events.append(item)
+        return result
+
+    def transport(transport_instance, incoming):
+        body = json.loads(incoming.content)
+        tools.extend(
+            message for message in body.get("messages", []) if message.get("role") == "tool"
+        )
+        return original_http(transport_instance, incoming)
+
+    monkeypatch.setattr(FixedGoSuite, "observe", observed)
+    monkeypatch.setattr(httpx.MockTransport, "handle_request", transport)
+    sys.settrace(trace)
+    try:
+        yield
+    finally:
+        sys.settrace(previous_trace)
+        print(json.dumps({"diagnostic_events": events, "synthetic_tool_feedback": tools}, indent=2))

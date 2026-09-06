@@ -1,0 +1,29 @@
+{
+  "axis": "Standards",
+  "base": "9bcf9815cde6c6feb65c236bb7762cbac2573c34",
+  "review_mode": "explicit working-tree delta plus assigned new files",
+  "findings": [],
+  "hard_violations": 0,
+  "actionable_judgment_findings": 0,
+  "sources": ["C:/Users/Chooo/.agents/skills/code-review/SKILL.md", "docs/agents/issue-tracker.md", "CONTEXT.md"],
+  "reviewed_sha256": {
+    "backend/karajan/projects/qualification.py": "a726c01baedec7f60ec6f13e7fda0b41d9ef8d52c6d6b6a39b0b5f733bbc68e3",
+    "pyproject.toml": "125493b020d602cca295f0893c975785b60b4cf58fad11cd7b18eb81bc2a86f5",
+    "uv.lock": "443442763d638d0c020d105a7d0e146dff515dbe9b5e06ba4b91eb53085ae52d",
+    "tests/projects/test_runtime_qualification_store.py": "44a972fb93db1d99a5115562b96af19c926e5cf3b377404b0877c34d3a1d0b53",
+    "docs/implementation/m3-go-profile-qualification.md": "77d7ef3db2231dd548ba5486010e539c1cbe74bf43bb291e063d981b1477432e"
+  },
+  "independent_tests": {
+    "file": ".cache/go-profile-standards/test_store_failure_boundaries.py",
+    "test_sha256": "272d533ead446d9175ab1939476c2dabedb42d4f6fa1a22978a5195bc23d218c",
+    "command": "python -m pytest -q -p no:cacheprovider -o 'pythonpath=backend tests/projects' .cache/go-profile-standards/test_store_failure_boundaries.py --junitxml=.cache/go-profile-standards/final.xml",
+    "passed": 4,
+    "failed": 0,
+    "junit": ".cache/go-profile-standards/final.xml",
+    "junit_sha256": "fe5d43a029f79dde9a2f5ebb3e67d1440a00753c03672e776c656774f464345a",
+    "scope": "Real ProjectRegistry and SQLite; explicit source/credential failure doubles; no native/model/provider execution"
+  },
+  "excluded": ["go_suite.py (reviewer authored)", "credential_sources.py (separate owner/review)", "future general Task qualification"],
+  "product_modified": false,
+  "provider_called": false
+}

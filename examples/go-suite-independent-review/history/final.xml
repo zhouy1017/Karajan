@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="10" time="91.913" timestamp="2026-09-06T16:17:59.218057+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_all_credential_identity_axes_reject_before_grants_or_native[project_id]" time="2.057" /><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_all_credential_identity_axes_reject_before_grants_or_native[auth_ref]" time="2.068" /><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_all_credential_identity_axes_reject_before_grants_or_native[generation]" time="2.058" /><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_all_credential_identity_axes_reject_before_grants_or_native[source_id]" time="2.049" /><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_conflicting_existing_grant_is_not_revoked_by_another_start" time="2.959" /><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_lost_matching_capabilities_are_revoked_without_revealing_or_sending" time="3.973" /><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_real_native_run_keeps_issued_start_and_rechecks_source_before_second_stage[caller_start]" time="28.572" /><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_real_native_run_keeps_issued_start_and_rechecks_source_before_second_stage[controller_source]" time="15.992"><failure message="AssertionError: assert ['failed', 'not_run'] == ['passed', 'not_run']&#10;  &#10;  At index 0 diff: 'failed' != 'passed'&#10;  Use -v to get more diff">case = (&lt;karajan.projects.go_suite.FixedGoSuite object at 0x776f80decb60&gt;, &lt;karajan.adapters.opencode.go_journal.GoCallJourna...path': 'subscription_only', 'approved_data_destination': True}, 'repository': {'root': 'unused-by-fixed-suite'}}, ...})
+change = 'controller_source'
+
+    @pytest.mark.parametrize("change", ["caller_start", "controller_source", "source_unavailable"])
+    def test_real_native_run_keeps_issued_start_and_rechecks_source_before_second_stage(case, change):
+        suite, journal, start = case
+        frozen = copy.deepcopy(start)
+        calls = [[], []]
+    
+        def factory():
+            def receive(request):
+                current = [journal.snapshot(item["grant_id"]) for item in frozen["scenarios"]]
+                assert [item["binding"] for item in current] == [
+                    item["grant_binding"] for item in frozen["scenarios"]
+                ]
+                denied = current[0]["state"] == "revoked"
+                scenario_calls = calls[1 if denied else 0]
+                scenario_calls.append(request)
+                if sum(map(len, calls)) == 1:
+                    if change == "caller_start":
+                        start["scenarios"][1]["grant_binding"]["auth_generation"] = "caller-mutated"
+                        start["source"]["observation_origin"] = "official_go"
+                    elif change == "controller_source":
+                        suite.work_root = suite.work_root / "changed-controller-source"
+                    else:
+                        suite.runtime = suite.work_root / "missing-controller-runtime"
+                return fixture_response(len(scenario_calls), denied)
+    
+            return httpx.Client(transport=httpx.MockTransport(receive), trust_env=False)
+    
+        suite.client_factory = factory
+        result = suite.observe(start, credential())
+        assert result["source"] == frozen["source"]
+        assert result["qualification_scope"] == "fixed_native_tools_fixture"
+        assert result["runtime_tools_status"] == "not_run"
+        assert result["dispatch_eligible"] is False
+        assert result["provider_remote_stop"] == "unknown"
+        assert result["validation"]["budget"] == "unknown"
+        assert result["validation"]["context_capacity"] == "unknown"
+        assert credential().reveal() not in json.dumps(result)
+        if change == "caller_start":
+            assert result["status"] == "passed", result
+            assert [len(items) for items in calls] == [3, 2]
+        else:
+            assert result["status"] == "failed", result
+            assert (
+                "SUITE_SOURCE_CHANGED" if change == "controller_source" else "SUITE_SOURCE_UNAVAILABLE"
+            ) in result["reason_codes"]
+&gt;           assert [item["status"] for item in result["scenarios"]] == ["passed", "not_run"]
+E           AssertionError: assert ['failed', 'not_run'] == ['passed', 'not_run']
+E             
+E             At index 0 diff: 'failed' != 'passed'
+E             Use -v to get more diff
+
+.cache/go-suite-independent-review/test_go_suite_review.py:138: AssertionError</failure></testcase><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_real_native_run_keeps_issued_start_and_rechecks_source_before_second_stage[source_unavailable]" time="14.995" /><testcase classname=".cache.go-suite-independent-review.test_go_suite_review" name="test_real_native_receipt_numbers_cannot_disagree_with_durable_journal" time="16.010" /></testsuite></testsuites>

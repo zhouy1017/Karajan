@@ -1,0 +1,107 @@
+{
+  "schema_version": "karajan.independent-fixed-go-suite-spec.v1",
+  "baseline": "8a3d4ea",
+  "scope": [
+    "backend/karajan/projects/go_suite.py"
+  ],
+  "excluded_own_author_modules": [
+    "backend/karajan/projects/credential_sources.py",
+    "backend/karajan/adapters/opencode/go_journal.py"
+  ],
+  "product_source_sha256": "942b23a8f04ec459f1fa130c10cfb3f5301e50e9dbde1b92c7309662675a1c5b",
+  "author_test_sha256": "df4d6a905b89c503bf78a7d480b3208f06cc814f6611db3db77fd1ccc487539b",
+  "test_sha256": "bbab58ca26bf750e62e2624ac6e439b82bdc9106784246820c1f94b146bdd0af",
+  "results": {
+    "linux": {
+      "passed": 11,
+      "failed": 0,
+      "seconds": 90.67,
+      "runtime": "actual pinned OpenCode in Linux namespaces; synthetic local HTTP"
+    },
+    "published_windows": {
+      "passed": 0,
+      "skipped": 11,
+      "seconds": 0.23
+    },
+    "ruff": "passed"
+  },
+  "findings": [
+    {
+      "id": "GO-SUITE-SPEC-001",
+      "priority": 2,
+      "status": "closed_by_independent_public_test",
+      "problem": "Cleanup revoked a grant whose immutable binding belonged to a different qualification/attempt.",
+      "initial_product_sha256": "c7e7dedc3ef3db0ab7a1ab1e05689be320f546bf6daabe8515f0aaa86e13475b",
+      "fixed_product_sha256": "942b23a8f04ec459f1fa130c10cfb3f5301e50e9dbde1b92c7309662675a1c5b"
+    }
+  ],
+  "stability": {
+    "historical_unclassified_failures": 3,
+    "original_junit": [
+      "history/before-diagnostics.xml",
+      "history/frozen.xml",
+      "history/sequence.xml"
+    ],
+    "historical_causes_individually_proven": false,
+    "measured_wsl_wall_clock_regression_seconds": -2.4767227172851562,
+    "measured_monotonic_advance_seconds": 0.020303784011048265,
+    "deterministic_public_rollback_replay": "not_run; both matching grants revoked; zero sends",
+    "non_time_tests_clock": "suite and issued start share explicit monotonic-relative test clock; journal retains real time.time",
+    "production_time_policy_changed": false,
+    "bounded_trace_rounds": [
+      {
+        "passed": 10,
+        "seconds": 100.04
+      },
+      {
+        "passed": 10,
+        "seconds": 94.91
+      },
+      {
+        "passed": 10,
+        "seconds": 94.73
+      }
+    ],
+    "bounded_trace_reproduced_unexpected_error": false
+  },
+  "provider_calls": 0,
+  "real_provider_key_read": false,
+  "scope_promotion": false,
+  "input_provenance_note": "Initial, pre-stable-clock and final test snapshots are retained. Some intermediate diagnostic printing/assertion variants were not separately snapshotted; no exact source digest is claimed for those variants.",
+  "artifacts_sha256": {
+    ".gitattributes": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da",
+    "final.junit.xml": "facb4693765d335d25b362eacdcad4297918ecf00b8e14dad3777467ed96681f",
+    "history/before-diagnostics.xml": "ae3f36d568ae235df387ee467e5a0c72290723a018268afc91f609ff78639db2",
+    "history/complete-diagnostics.xml": "bf0d168380404462581c824eef9d365d4366260201ded2993cbca69621d1bc55",
+    "history/diagnostic.xml": "67416b1ccfa9b17b1846bca2b88968e7c5d2a311ec06b2ecef429e5e6ff97c38",
+    "history/diagnostic2.xml": "84057f05c70353731b39baf9b3c97a7cc8b6fd49ee770a51cde11b7914e56b40",
+    "history/final.xml": "ae3f36d568ae235df387ee467e5a0c72290723a018268afc91f609ff78639db2",
+    "history/frozen.xml": "52c6de51f60e72283dddbdab7c21b4a0b0a8fed338d15e18e28ea17affdb77bc",
+    "history/initial-freeze.json": "c4ae7326bdf4b5ebd8480d7874826b00689f7df4aeeee08d4cc16e070d564e56",
+    "history/initial.xml": "dd3a40d551939f60e5134ecbf5c7258c2f0653f1909d17d129c14f0191eb3368",
+    "history/native-initial.xml": "60c349a0ccb9be49923f0d680f176f4a3fcffb7e77bda65147369b30246cd3af",
+    "history/observe_local_clock.py.txt": "e84d604d013c3d97b2147222f6ef1ef7c0ccf48f422cd453b3db7333f2e6e06b",
+    "history/repeat-1.xml": "102461e02292fffe8a1802344def9ded0a85bf2544b0aa0a211dcc8090a8d858",
+    "history/repeat-2.xml": "5ca366391cd2f0084b53fff74f0c8f7d8c68f53a4be0815aed5fbd2bf5438271",
+    "history/repeat-3.xml": "ef602a74c07aa971d057dc8ce8ab74512860c9aba996e2c06d97d9f1c46e64fe",
+    "history/run_bounded_trace.py.txt": "5da195e60734b9b695fff14fcc56da360ad4194a7def08a787b798228e195c4c",
+    "history/run_diagnostic_repeats.py.txt": "382330cf4a20d0c01ce2ce36e79ee6b24eb90c8f5f82536a7e159ba24f9a7eba",
+    "history/sequence.xml": "01b94de9db5c09f765180a6d4dc4818ef4da16b90d88e01150226986a925f57c",
+    "history/test_go_suite_review.before-diagnostics.py.txt": "1858ab914f00c9dab32aa9e03cabf5f5d9f10df7954b5dd2ef98a28a9a7723eb",
+    "history/test_go_suite_review.before-stable-clock.py.txt": "210e3eb2eb5ce74ccb7b32133850832a130aaa93dd05ee9accc9236ef2963ca0",
+    "history/test_go_suite_review.initial.py.txt": "41b852fa576b9e3f86f40dfb81544cda641c1d9d49ef51546184f0a910342dae",
+    "history/test_go_suite_review.inline-diagnostics.py.txt": "111886983cf746938576f26a7119e6313421be8964d71ce4f258c69b489263a2",
+    "history/test_go_suite_review.second-run.py.txt": "210e3eb2eb5ce74ccb7b32133850832a130aaa93dd05ee9accc9236ef2963ca0",
+    "history/trace-1.xml": "86c82099fdc8125dd3131285c3f36e06f1e8066458394f02ada21763d559deeb",
+    "history/trace-2.xml": "059d7f9b471d7610a053297e02179a80c27ce1e035367f685ea5a25805ecd24d",
+    "history/trace-3.xml": "ca8f519fd29f54c1fa9a4b99edc86c3b4e79be213c255e3b23b8b49085c9720d",
+    "history/trace_suite_exceptions.py.txt": "484feb9896222c7c042785007ba11000ccd82cfe8e05dd6e0fb28294ec475173",
+    "history/windows.xml": "4a028b499060644baab23d46eb7d37f17b6e20b8e062108224cea0aa281490bb",
+    "history/wsl-clock-observation.json": "726c7019cf194db7bd93f0293284c8dbc572b0992a8038a4660c411be64412cb",
+    "published-windows.xml": "3aab220bd88f011f0b737bad10ef0d3ffe7f5eb2457f39af9166746e350b6c97",
+    "README.md": "4b119e582f5ab2a34003821f30363d03329fdbf0383a7a448f6001e6666bece8",
+    "review.md": "20596c3ba8b1e9c4ca637dd228fd5b60b89350a98d2a19c7e18989c1d9dc4170",
+    "source.json": "cb2b7c6357b962ccf63e94f8d82b36d52d8a4404be29eedeb6c0d6548429b83b",
+    "test_go_suite_review.py": "bbab58ca26bf750e62e2624ac6e439b82bdc9106784246820c1f94b146bdd0af"
+  }
+}

@@ -25,7 +25,7 @@ jobs:
   python-quality:
     name: python-quality (${{ matrix.os }}, Python 3.12)
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -107,6 +107,18 @@ jobs:
           examples/opencode-go-isolated-relay
           examples/opencode-go-isolated-observer
           examples/opencode-go-isolated-namespace
+        env:
+          KARAJAN_REQUIRE_OPENCODE_ISOLATION: "1"
+          KARAJAN_OPENCODE_LINUX_BINARY: runtimes/opencode/node_modules/opencode-linux-x64/bin/opencode
+
+      - name: Check persistent Go qualification independent boundaries without credentials
+        run: >-
+          uv run --frozen --extra dev pytest
+          -o "pythonpath=backend tests/projects tests/isolation"
+          examples/go-profile-qualification-spec
+          examples/go-profile-standards
+          examples/go-suite-independent-review
+          examples/go-profile-cli-spec
         env:
           KARAJAN_REQUIRE_OPENCODE_ISOLATION: "1"
           KARAJAN_OPENCODE_LINUX_BINARY: runtimes/opencode/node_modules/opencode-linux-x64/bin/opencode

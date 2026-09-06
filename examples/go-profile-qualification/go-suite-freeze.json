@@ -1,0 +1,44 @@
+{
+  "schema_version": "karajan.author-test-freeze.v1",
+  "base": "8a3d4ea",
+  "scope": "FixedGoSuite author implementation and tests; independent review is separate",
+  "files": {
+    "backend/karajan/projects/go_suite.py": "c7e7dedc3ef3db0ab7a1ab1e05689be320f546bf6daabe8515f0aaa86e13475b",
+    "tests/projects/test_go_suite.py": "f69291b8404a9a001f12ef67d02253ac5e6c2763b3f9b061c697b54206f07174"
+  },
+  "line_endings": "Both source/test files verified LF, zero CRLF sequences",
+  "linux": {
+    "result": "16 passed",
+    "seconds": 78.921,
+    "lightweight_public_boundary_tests": 12,
+    "actual_native_tests": 4,
+    "actual_native_detail": "One two-scenario complete suite (3 edit + 2 denied_read calls); three real edit observations each followed by explicit report alteration to verify rejection.",
+    "upstream": "httpx.MockTransport synthetic fixture only",
+    "command": "env KARAJAN_REQUIRE_OPENCODE_ISOLATION=1 KARAJAN_OPENCODE_LINUX_BINARY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest -q -p no:cacheprovider --basetemp /tmp/gsfin tests/projects/test_go_suite.py --junitxml=.cache/go-suite-final.xml",
+    "junit": ".cache/go-suite-final.xml",
+    "junit_sha256": "f4b2304dc5e0bc747529604576d7763ab3a4ac15b91b9c0a55e62311a69f30af"
+  },
+  "windows": {
+    "result": "8 passed, 8 skipped",
+    "junit": ".cache/go-suite-windows.xml",
+    "junit_sha256": "2fd30223b91429d5a4e6c7e1a5e8aceb2db51b57da52ff5ef95f0096d25f82fa"
+  },
+  "static_checks": {
+    "ruff_check": "passed",
+    "ruff_format": "passed",
+    "mypy_windows": "passed, --follow-imports=silent",
+    "mypy_linux": "passed using Windows Python with --platform linux --follow-imports=silent; WSL test interpreter does not have mypy installed"
+  },
+  "red_history": {
+    "junit": ".cache/go-suite-red.xml",
+    "junit_sha256": "697b307d04d44564f3aa6262909efe1de5d0a50a20f022d12ec9b36da2de0ad2",
+    "failures": ["source unavailable after effect lost cleanup result", "removing native tool evidence did not override report passed status"],
+    "fixture_correction": "Initial HTTP fixture incorrectly reset scenario counting each client construction. Fixed to use shared per-grant scenario counting; this is separate from product findings."
+  },
+  "limitations": [
+    "No official Go request or user credential was used by this author suite.",
+    "Fixed fixture scope only; runtime_tools stays not_run and dispatch remains false.",
+    "No cash bound, quota balance, generic Task path capability, or provider remote cancellation qualification.",
+    "The suite source binds controller-configured paths; no cross-store/file atomicity is claimed."
+  ]
+}

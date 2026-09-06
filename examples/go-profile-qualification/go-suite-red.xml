@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="29.871" timestamp="2026-09-06T15:59:07.789660+08:00" hostname="ProArt-Zhou"><testcase classname="tests.projects.test_go_suite" name="test_source_disappearing_during_effect_preserves_failed_cleanup_result" time="0.037"><failure message="FileNotFoundError: synthetic source removed">synthetic_suite = (&lt;karajan.projects.go_suite.FixedGoSuite object at 0x70b2110aad80&gt;, &lt;karajan.adapters.opencode.go_journal.GoCallJourna...path': 'subscription_only', 'approved_data_destination': True}, 'repository': {'root': 'unused-by-fixed-suite'}}, ...})
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x70b2110aa3f0&gt;
+
+    @pytest.mark.skipif(sys.platform != "linux", reason="Short native controller paths use Linux")
+    def test_source_disappearing_during_effect_preserves_failed_cleanup_result(synthetic_suite, monkeypatch):
+        suite, journal, start = synthetic_suite
+    
+        def unavailable(*args):
+            raise FileNotFoundError("synthetic source removed")
+    
+        def broken(*args, **kwargs):
+            monkeypatch.setattr("karajan.projects.go_suite.go_runtime_source", unavailable)
+            raise RuntimeError("synthetic failure")
+    
+        monkeypatch.setattr("karajan.projects.go_suite.observe_go_tools", broken)
+&gt;       result = suite.observe(start, credential())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/projects/test_go_suite.py:182: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/karajan/projects/go_suite.py:238: in observe
+    if start["source"] != self.source():
+                          ^^^^^^^^^^^^^
+backend/karajan/projects/go_suite.py:40: in source
+    runtime = go_runtime_source(self.runtime)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+args = (PosixPath('/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-profile-qualification/test-runtime'),)
+
+    def unavailable(*args):
+&gt;       raise FileNotFoundError("synthetic source removed")
+E       FileNotFoundError: synthetic source removed
+
+tests/projects/test_go_suite.py:175: FileNotFoundError</failure></testcase><testcase classname="tests.projects.test_go_suite" name="test_fixed_suite_cross_checks_two_real_native_scenarios_and_durable_journal[tools]" time="28.712"><failure message="AssertionError: {'schema_version': 'karajan.fixed-go-suite-observation.v1', 'suite_ref': {'id': 'opencode-go-native-read-edit-linux', ..., 'revision': 1}, 'observation_origin': 'http_fixture', 'qualification_scope': 'fixed_native_tools_fixture', ...}, ...}&#10;assert 'passed' == 'failed'&#10;  &#10;  - failed&#10;  + passed">tmp_path = PosixPath('/tmp/gsred/test_fixed_suite_cross_checks_0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x70b2110edb80&gt;
+report_change = 'tools'
+
+    @pytest.mark.skipif(sys.platform != "linux", reason="Linux namespaces required")
+    @pytest.mark.parametrize("report_change", [None, "call_id", "origin", "tools"])
+    def test_fixed_suite_cross_checks_two_real_native_scenarios_and_durable_journal(
+        tmp_path, monkeypatch, report_change
+    ):
+        from karajan.projects.go_suite import FixedGoSuite
+        from karajan.isolation.go_probe import observe_go_tools
+    
+        artifact = Path(
+            os.environ.get(
+                "KARAJAN_OPENCODE_LINUX_BINARY",
+                str(
+                    Path(__file__).resolve().parents[2]
+                    / "runtimes/opencode/node_modules/opencode-linux-x64/bin/opencode"
+                ),
+            )
+        )
+        if not artifact.is_file():
+            if os.environ.get("KARAJAN_REQUIRE_OPENCODE_ISOLATION") == "1":
+                pytest.fail("Prepared fixed Linux OpenCode artifact is required")
+            pytest.skip("Prepared fixed Linux OpenCode artifact is unavailable")
+        journal, calls = GoCallJournal(tmp_path / "journal.sqlite"), [[], []]
+    
+        def factory():
+            def receive(request):
+                # Both grants must be durable before the first native request.
+                assert journal.snapshot("grant-edit")["binding"]["max_requests"] == 6
+                assert journal.snapshot("grant-denied_read")["binding"]["max_requests"] == 6
+                denied = journal.snapshot("grant-edit")["state"] == "revoked"
+                scenario_calls = calls[1 if denied else 0]
+                scenario_calls.append(request)
+                return fixture_response(len(scenario_calls), denied)
+    
+            return httpx.Client(transport=httpx.MockTransport(receive), trust_env=False)
+    
+        suite = FixedGoSuite(artifact, tmp_path, journal, client_factory=factory)
+        start = execution_start(suite)
+        if report_change:
+            def altered(*args, **kwargs):
+                report = observe_go_tools(*args, **kwargs)
+                assert report["status"] == "passed", report
+                if report_change == "call_id":
+                    report["requests"][0]["journal_call_id"] = "other-real-call"
+                elif report_change == "origin":
+                    report["observation_origin"] = "official_go"
+                else:
+                    report["tools"] = []
+                return report
+            monkeypatch.setattr("karajan.projects.go_suite.observe_go_tools", altered)
+        result = suite.observe(start, credential())
+        if report_change:
+&gt;           assert result["status"] == "failed", result
+E           AssertionError: {'schema_version': 'karajan.fixed-go-suite-observation.v1', 'suite_ref': {'id': 'opencode-go-native-read-edit-linux', ..., 'revision': 1}, 'observation_origin': 'http_fixture', 'qualification_scope': 'fixed_native_tools_fixture', ...}, ...}
+E           assert 'passed' == 'failed'
+E             
+E             - failed
+E             + passed
+
+tests/projects/test_go_suite.py:342: AssertionError</failure></testcase></testsuite></testsuites>

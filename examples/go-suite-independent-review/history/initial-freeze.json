@@ -1,0 +1,17 @@
+{
+  "schema": "karajan.independent-review-start.v1",
+  "source": {
+    "backend/karajan/projects/go_suite.py": "c7e7dedc3ef3db0ab7a1ab1e05689be320f546bf6daabe8515f0aaa86e13475b",
+    "tests/projects/test_go_suite.py": "f69291b8404a9a001f12ef67d02253ac5e6c2763b3f9b061c697b54206f07174"
+  },
+  "artifacts": {
+    "test_go_suite_review.initial.py": "41b852fa576b9e3f86f40dfb81544cda641c1d9d49ef51546184f0a910342dae",
+    "initial.xml": "dd3a40d551939f60e5134ecbf5c7258c2f0653f1909d17d129c14f0191eb3368",
+    "native-initial.xml": "60c349a0ccb9be49923f0d680f176f4a3fcffb7e77bda65147369b30246cd3af"
+  },
+  "result": {
+    "initial": "1 failed, 5 passed, 2 deselected",
+    "native-initial": "2 passed, 6 deselected"
+  },
+  "finding": "GO-SUITE-SPEC-001: conflicting foreign grant is incorrectly revoked during cleanup"
+}

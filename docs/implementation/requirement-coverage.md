@@ -4,7 +4,9 @@
 
 本文件追踪全项目完成证据。用户已授权推进整个 PRD，但授权、设计确定、源码存在和能力通过是不同事实。完整验收尚未完成；下文另列已经通过的窄切片，保留其适用范围。标注 `not_run` 的完整要求不能由这些切片自动升级。
 
-2026-09-06 的[固定 Go 隔离链路](m2-opencode-go-isolated.md) 已将单文件 OS 投影、原生 read/edit、单一 UDS 推理出口与持久发送许可组合。最终真实 Go 的修改/拒绝读取分别为 3/2 次 HTTP 200，本地停止已确认，未知远端状态保留；Linux 137 项相关回归和发布目录中的 38 项独立回归通过，14 项隔离作者测试另含 8 个子测试。五项 namespace、以及 relay/journal/observer/CLI 的已发现问题均保留修复前后证据。它为 FR07–FR10/A02/A05–A07/A12–A14 提供固定场景子集证据，完整 M2-05、Profile 资格、账户窗口与任意 Task 执行仍未完成。[实测与审查记录](../../examples/opencode-go-isolated/README.md)
+2026-09-06 的[固定 Go 隔离链路](m2-opencode-go-isolated.md) 已将单文件 OS 投影、原生 read/edit、单一 UDS 推理出口与持久发送许可组合。最终真实 Go 的修改/拒绝读取分别为 3/2 次 HTTP 200，本地停止已确认，未知远端状态保留；Linux 137 项相关回归和发布目录中的 38 项独立回归通过，14 项隔离作者测试另含 8 个子测试。五项 namespace、以及 relay/journal/observer/CLI 的已发现问题均保留修复前后证据。它为 FR07–FR10/A02/A05–A07/A12–A14 提供固定场景子集证据，完整 M2-05、账户窗口与任意 Task 执行仍未完成。[实测与审查记录](../../examples/opencode-go-isolated/README.md)
+
+随后，[Go 固定场景的持久 Profile 入口](m3-go-profile-qualification.md) 已把当前批准配置、控制器登记的 credential generation、固定 suite、真实调用账本与资格记录连接起来。2026-09-06 的一次真实官方 Go 公共入口验证通过：修改/拒绝读取分别为 3/2 次 HTTP 200；重放同一命令得到相同记录且无新增请求，默认路由 guard 返回 `TASK_PERMISSION_SCOPE_NOT_QUALIFIED`。该次执行绑定 suite `942b23a8…`、controller `a726c01b…` 与入口脚本 `a613778a…` 的来源摘要；[实际报告与修复历史](../../examples/go-profile-qualification/README.md) 单独保存。此为 FR02/A12 的固定 scope 持久化及真实来源子集证据，`runtime_tools` 仍为 `not_run`、`dispatch_eligible=false`；批准 Task 的路径权限、可信 Collector、角色/上下文资格和完整 M2-05 仍未完成。本切片的新提交及 PR CI 尚待实际运行，不能引用前序 CI 代替。
 
 ## 1. 审计状态和证据规则
 
@@ -60,7 +62,7 @@ M0-05/06 的固定 OpenCode 运行时与隔离探针在 [PR #33](https://github.
 | ID | 完成必须有的证据 | 候选责任票与验收关联 | 当前状态 |
 |---|---|---|---|
 | FR01 | U+C：有效项目解析到可信 repo/base/目标分支；越界路径、未知 base 拒绝且无模型调用/仓库修改；原工作区保持原样 | M1-01、M1-05；AC01，A01、A16 | 实现中；登记/API 子集 passed，完整变体 not_run |
-| FR02 | C+S+P：五来源分别有 Profile 目录、真实资格和可启用角色；空模型、未知必需能力、参数被忽略不启用；同名模型不同通道身份分开 | M0-07、M2-02–M2-06、M4-03；A02、A12、A13 | 实现中；Go 固定模型/原生工具诊断 passed，完整来源资格 not_run |
+| FR02 | C+S+P：五来源分别有 Profile 目录、真实资格和可启用角色；空模型、未知必需能力、参数被忽略不启用；同名模型不同通道身份分开 | M0-07、M2-02–M2-06、M4-03；A02、A12、A13 | 实现中；Go 固定 scope 的持久资格入口及一次真实公共验证 passed，通用 Task 与完整来源资格 not_run |
 | FR03 | U+C+S：真实规划与顾问计入规划预算，未确认无代码写入；T0 留规划；只有当前主 term 可提交有效计划 | M1-02、M3-05；AC02 | 实现中；计划协议子集 passed，真实规划和资源接线 not_run |
 | FR04 | U+C：批准记录绑定具体 plan/authorization hash、任务图/来源/预算/检查/PR 权限；旧版本拒绝；范围内正常运行不重复批准 | M1-01、M1-02、M3-01；A11 | 实现中；版本化批准及 Web 子集 passed，调度集成 not_run |
 | FR05 | U+C：v2 成员显式复用 A、替换 B，输入变化传递失效；旧 B 迟到不能满足新计划，其进程/消费仍核对 | M1-05、M2-01；A22 | 未实现 / not_run |
@@ -153,7 +155,7 @@ M0 关联仅表示可复用原语探针。以下完整用例仍全部 not_run；
 | ChatGPT 订阅 | 官方账户/订阅形态、固定 Codex runtime/model、原生参数、角色、工具/权限/停止、可见额度、额外现金路径处理 | M2-02；可引用同版本 M0 证据 | 未配置事实未补齐；真实资格 not_run |
 | Claude 订阅 | 官方订阅身份、固定 CLI/model、实际 OS/WSL2、Bash/文件/MCP/hooks 各启用路径、计费优先级与可见消费 | M2-03 | 未配置事实未补齐；真实资格 not_run |
 | DeepSeek 官方 API | 官方 endpoint/model、认证引用、价格/全部收费上界、所有请求经 broker、原币预算、重试/未知和角色工具循环 | M2-04 | 未配置事实未补齐；真实资格 not_run |
-| OpenCode Go | 实际订阅通道/档位/model、服务窗口与计量单位、共享账户、允许现金路径、runner/协议和实际限制 | M2-05 | 固定官方 Go 模型与原生工具诊断 passed；窗口、计费单位和完整资格未补齐，不启用 Profile |
+| OpenCode Go | 实际订阅通道/档位/model、服务窗口与计量单位、共享账户、允许现金路径、runner/协议和实际限制 | M2-05 | 固定官方 Go 的持久 Profile scope 入口与一次真实公共验证 passed；默认 runtime_tools guard 仍拒绝，Task 权限/Collector、窗口、计费单位和完整资格未补齐，不启用通用执行 |
 | 指定第三方 API | 用户指定厂商/endpoint/model、可接受数据去向、身份/家族证据、价格/收费上界、协议差异和真实工具资格 | M2-06 | 厂商等具体输入待定；真实资格 not_run |
 
 认证成功、纯文本回答、工具能用、独立 Review 可用、bounded_calls 及隔离是不同能力。M0 的“一订阅＋一 API”只填入对应两行的已覆盖变体；其余三行不会自动完成。秘密仍在受限存储，审计只记录引用与脱敏证据。
