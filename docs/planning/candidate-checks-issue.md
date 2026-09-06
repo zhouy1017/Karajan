@@ -53,3 +53,14 @@ C/P 必须使用真实 stores、临时 Git/CAS、Host/隔离进程；规划/资�
 ## 建议文件范围和交接
 
 `orchestration/candidate_checks.py`、固定 check runner/私有环境 resolver、必要 CandidateStore Evidence 查询、公开入口与相应测试/实施文档；复用原存储，不另起任务调度数据库。A票持有 checks 运行记录；Reviewer票持有 review binding/Reviewer执行记录。共同的 `validation.subject` 及 CandidateStore 新接口由一个作者统一实现并先冻结契约，其他工作可并行。
+
+<!-- candidate-checks-local-progress -->
+## 当前实现与验收进展（2026-09-07）
+
+已完成：尚无本票实现已进入 dev 的完成项。草稿 [PR #97](https://github.com/zhouy1017/Karajan/pull/97) 已发布原 capture subject revision 1 的实现和本地 C/P 证据；代码 `0d63cde8cc4098894ecf4eec01109a1b7d3b7a70`，首发候选 `3beb8074bc102b2e96f30ed207c5eba10d90a2f5`。
+
+本地验证：实际固定工厂、Host child、namespace 与全部 Checks 的正反例 2 passed / 73.85s；运行中两个 advance 与 cancel 竞争 1 passed / 22.18s。每项 Check 独立 Evidence，缺 Review 时 gate/delivery 仍 false；157 份复制证据和 136 个 backend 源码 Git blob 摘要已核对。[证据索引](https://github.com/zhouy1017/Karajan/blob/3beb8074bc102b2e96f30ed207c5eba10d90a2f5/examples/candidate-checks/README.md)保留作者与独立报告、失败和修正历史。规划/资格/Writer 输出为明确 fixture，没有官方 provider 调用。
+
+剩余工作：原验收清单保持不变。#95/#96 可信 Reviewer 绑定的新 Candidate revision 消费、原 capture 指针保留、全部 Checks 重跑及新 Review ID 集交接尚未实现；当前 PR 必需 CI、合并与原范围最终验收未完成。状态保持 status:in-progress，未使用 Closes。
+
+阻塞：基础 Task #90 / PR #92 及共享 relay PR #88 有已定位 CI 失败。指定 Spark 修复模型当前无额度，替换模型选择等待 owner；本草稿尚不可合并。真实整链另依赖 #93，不从本地 C/P 推断 S。
