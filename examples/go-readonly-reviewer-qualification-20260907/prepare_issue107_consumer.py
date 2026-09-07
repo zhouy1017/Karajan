@@ -21,6 +21,7 @@ from typing import Any
 from karajan.candidates import CandidateError, CandidateStore
 from karajan.capacity import CapacityStore
 from karajan.orchestration.admission import ApprovedTaskAdmission
+from karajan.orchestration.candidate_subjects import candidate_identity
 from karajan.orchestration.reviewer_binding import ApprovedReviewerBindings
 from karajan.orchestration.routing import ApprovedRunRouting
 from karajan.projects import ProjectRegistry
@@ -743,15 +744,8 @@ def positive_result(
 ) -> dict[str, Any]:
     """Consume the membership-only effect and bind its exact owning qualification."""
     service, args, _facts = ensure_fixture(private_root)
-    prepared = service.advance(*args, principal=FIXTURE_OWNER)
-    ready = service.advance(*args, principal=FIXTURE_OWNER)
-    if (
-        prepared.get("state") != "prepared"
-        or ready.get("state") != "ready"
-        or ready.get("transition", {}).get("phase") != "ready"
-        or ready.get("assessment", {}).get("actual_reviewer_attempt") is not None
-    ):
-        raise RuntimeError("ISSUE107_POSITIVE_BINDING_NOT_READY")
+    # Persist ownership before either advance can claim or commit the Candidate CAS.
+    # A ready reply may be lost; recovery then reads this binding plus the CAS receipt.
     if qualification_identity is not None:
         with service.admissions._transaction() as database:
             operation = service.admissions._load(database, *args)
@@ -761,6 +755,15 @@ def positive_result(
                 raise RuntimeError("ISSUE107_POSITIVE_IDENTITY_CONFLICT")
             validation["issue107_recovery_identity"] = qualification_identity
             service.admissions._save(database, operation)
+    prepared = service.advance(*args, principal=FIXTURE_OWNER)
+    ready = service.advance(*args, principal=FIXTURE_OWNER)
+    if (
+        prepared.get("state") != "prepared"
+        or ready.get("state") != "ready"
+        or ready.get("transition", {}).get("phase") != "ready"
+        or ready.get("assessment", {}).get("actual_reviewer_attempt") is not None
+    ):
+        raise RuntimeError("ISSUE107_POSITIVE_BINDING_NOT_READY")
     return {
         "prepared_state": prepared["state"],
         "ready_state": ready["state"],
@@ -823,7 +826,7 @@ def positive_history(
             receipt = candidate.lookup_review_rebind(
                 transition["binding"], command_key=transition.get("command_key", "")
             )
-            if receipt != transition["receipt"]:
+            if candidate_identity(receipt) != transition["receipt"]:
                 return None
         result = {
             "state": "ready",
