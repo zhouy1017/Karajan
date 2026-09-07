@@ -1,0 +1,3 @@
+issue-*.md -text
+publication.json -text
+relation-verification.json -text
