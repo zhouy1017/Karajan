@@ -1,0 +1,70 @@
+"""Independent historical evidence lookup, actual SQLite/Git; no execution."""
+
+import hashlib
+import sqlite3
+
+import pytest
+from karajan.candidates import CandidateError, CandidateStore
+from test_validation import case as case
+from test_validation import check_record, review_record
+
+
+def lookup(store, request, kind, log):
+    return store.lookup_evidence(
+        request,
+        kind=kind,
+        log_sha256=hashlib.sha256(log).hexdigest(),
+        log_size=len(log),
+    )
+
+
+@pytest.mark.parametrize("kind", ["check", "review"])
+def test_failed_history_remains_exact_detached_without_any_artifact_directories(case, kind):
+    store = case["store"]
+    candidate = store.freeze(case["workspace"], case["request"])
+    check = store.record_check(check_record(candidate), log=b"check")
+    if kind == "check":
+        request = check_record(candidate) | {"evidence_key": "failed-check", "exit_code": 1}
+    else:
+        request = review_record(candidate, [check]) | {"verdict": "failed"}
+    log = b"failed observation"
+    saved = getattr(store, "record_" + kind)(request, log=log)
+    assert saved["status"] == "failed"
+    store.objects.rename(store.directory / "saved-artifacts")
+    store.git_directory.rename(store.directory / "saved-git")
+    case["repository"].rename(case["repository"].with_name("saved-repository"))
+    before = (store.directory / "candidates.sqlite").read_bytes()
+    reopened = CandidateStore(store.directory, existing_only=True)
+    result = lookup(reopened, dict(reversed(list(request.items()))), kind, log)
+    assert result == saved
+    result["input"]["observation_ref"] = "reader-mutation"
+    result["reasons"].append("reader-mutation")
+    assert lookup(reopened, request, kind, log) == saved
+    assert (store.directory / "candidates.sqlite").read_bytes() == before
+    assert not store.objects.exists() and not store.git_directory.exists()
+
+
+@pytest.mark.parametrize("change", [{"provenance": "trusted_observation"}, {"outcome": "unknown"}])
+def test_same_key_does_not_rebind_provenance_or_outcome(case, change):
+    store = case["store"]
+    candidate = store.freeze(case["workspace"], case["request"])
+    request = check_record(candidate)
+    store.record_check(request, log=b"original")
+    before = (store.directory / "candidates.sqlite").read_bytes()
+    with pytest.raises(CandidateError, match="EVIDENCE_KEY_CONFLICT"):
+        lookup(store, request | change, "check", b"original")
+    assert (store.directory / "candidates.sqlite").read_bytes() == before
+
+
+def test_corrupt_subject_metadata_is_not_a_recoverable_commit(case):
+    store = case["store"]
+    candidate = store.freeze(case["workspace"], case["request"])
+    request = check_record(candidate)
+    store.record_check(request, log=b"log")
+    database = store.directory / "candidates.sqlite"
+    with sqlite3.connect(database) as connection:
+        connection.execute("UPDATE evidence SET subject='another-check'")
+    before = database.read_bytes()
+    with pytest.raises(CandidateError, match="EVIDENCE_IDENTITY_INVALID"):
+        lookup(store, request, "check", b"log")
+    assert database.read_bytes() == before

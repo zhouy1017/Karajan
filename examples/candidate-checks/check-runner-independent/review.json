@@ -1,0 +1,48 @@
+{
+  "issue": 94,
+  "reviewer": "capacity_facts",
+  "author": "qualification_integration",
+  "scope": "Independent fixed Linux Check runner, namespace, image, recovery and evidence boundary; Host/facade excluded",
+  "findings": [],
+  "final_sources_unchanged": true,
+  "source_before_final": {
+    "backend/karajan/isolation/check_runner.py": "6dbb03373ddcd2262f861c6598aa911522ca52954c83028fc39bb7700af66935",
+    "backend/karajan/isolation/_check_environment.py": "56e8773a179eacd11810e145409448334a16fe65448e70a91cb000d9094d3565",
+    "backend/karajan/isolation/_check_namespace.py": "09db7084625729c4ec43acb915790e05d92a6f986f610dc81cc3c7d0f9c38cbb",
+    "tests/isolation/test_check_runner.py": "f0a0cbfea6acfd6a1e9f8c15a273c0a1b8619b9789def96a8378f33723ee9400"
+  },
+  "source_after_final": {
+    "backend/karajan/isolation/check_runner.py": "6dbb03373ddcd2262f861c6598aa911522ca52954c83028fc39bb7700af66935",
+    "backend/karajan/isolation/_check_environment.py": "56e8773a179eacd11810e145409448334a16fe65448e70a91cb000d9094d3565",
+    "backend/karajan/isolation/_check_namespace.py": "09db7084625729c4ec43acb915790e05d92a6f986f610dc81cc3c7d0f9c38cbb",
+    "tests/isolation/test_check_runner.py": "f0a0cbfea6acfd6a1e9f8c15a273c0a1b8619b9789def96a8378f33723ee9400"
+  },
+  "independent": {
+    "evidence_level": "C/P with synthetic approval/guard facts",
+    "seconds": 14.86,
+    "passed": 5,
+    "platform": "Linux/WSL"
+  },
+  "original_regression_independently_executed": {
+    "passed": 19,
+    "seconds": 48.71
+  },
+  "initial": {
+    "classification": "Reviewer assertion too strict: completed/-9/confirmed does not mean passed",
+    "product_finding": false,
+    "passed": 4,
+    "failed": 1
+  },
+  "provider_calls": 0,
+  "evidence": {
+    "README.md": "68bb96d72e4a7b34e00ec846740e2aaf9a98561ee2429d83b12dc4dfb0c4f806",
+    "source-before.json": "e657f113663c76adb7ac649d43a0eeb158e8fd767e6c697a7649972c7a717313",
+    "source-final-before.json": "a43e77484e31abdad7c283612a37d56bc01d8c5f3fb9fe72215aeb648e5c65d3",
+    "test-initial.py.txt": "63b591bae0aafc5b797540cdba8688225a61eb33165da2e046400e15f39f9f76",
+    "test_runner_boundaries.py": "5ce9e4479d8475ecf69368c6d816c4b5a1c2a22f46e7944fbf9331e270301251",
+    "linux-first.xml": "ffa66cda26ae3c9ca3be999e503284d1be87b15a4319d17b93fa27db1353263e",
+    "linux-final.xml": "ec2cb43824a727fab809636cff008c0daf2504ad283cd71b039cfaf8b0ac7201",
+    "linux-original-regression.xml": "245b88ee1061d1ed56030b251fd2133720c9063e745f84dd7e53b2bc43c237df",
+    "external-cancel-observation.json": "1f919469dd223012249ff962bb234433c8e6df1debe60340d8fded0bc1b65d9a"
+  }
+}

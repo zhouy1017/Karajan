@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="4.440" timestamp="2026-09-06T23:48:05.371073+08:00" hostname="ProArt-Zhou"><testcase classname="tests.isolation.test_check_runner" name="test_durable_write_cannot_carry_popen_past_its_effective_deadline" time="3.260"><failure message="assert not [True]">tests/isolation/test_check_runner.py:562: in test_durable_write_cannot_carry_popen_past_its_effective_deadline
+    assert not started
+E   assert not [True]</failure></testcase></testsuite></testsuites>

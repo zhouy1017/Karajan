@@ -1,0 +1,44 @@
+"""Deterministic Check attempts use the same Host without inventing a Profile."""
+
+import sys
+
+from karajan.execution import (
+    CheckAttemptManifest,
+    ProcessSpec,
+    RunnerHost,
+    parse_host_manifest,
+    parse_host_manifest_json,
+)
+
+
+def check_manifest():
+    return CheckAttemptManifest(
+        schema_version="karajan.check-attempt.v1",
+        id="check-attempt-1",
+        fence=1,
+        role="check",
+        authorization_ref="approved-plan-1",
+        budget_ref="approved-budget-1",
+        permissions=["candidate-check"],
+        environment_id="python-check-1",
+        environment_revision=2,
+        environment_source_sha256="a" * 64,
+        execution_sha256="b" * 64,
+    )
+
+
+def test_check_manifest_roundtrips_and_prepares_without_model_identity(tmp_path):
+    attempt = check_manifest()
+    assert parse_host_manifest(attempt.model_dump()) == attempt
+    assert parse_host_manifest_json(attempt.model_dump_json()) == attempt
+    assert set(attempt.model_dump()) == {
+        "schema_version", "id", "fence", "role", "authorization_ref", "budget_ref",
+        "permissions", "environment_id", "environment_revision",
+        "environment_source_sha256", "execution_sha256",
+    }
+    host = RunnerHost(tmp_path / "host")
+    spec = ProcessSpec((sys.executable, "-c", "pass"), tmp_path)
+    first = host.prepare(attempt, "check-start", spec)
+    reopened = RunnerHost(host.directory, existing_only=True)
+    assert reopened.prepare(attempt, "check-start", spec) == first
+    assert first.state == "prepared" and first.supervisor is None

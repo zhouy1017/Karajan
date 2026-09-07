@@ -61,6 +61,10 @@ class ApprovedTaskAdmission:
                 "CREATE TABLE IF NOT EXISTS commands (principal TEXT NOT NULL, key TEXT NOT NULL, "
                 "payload TEXT NOT NULL, result TEXT NOT NULL, PRIMARY KEY(principal,key))"
             )
+            db.execute(
+                "CREATE TABLE IF NOT EXISTS run_execution_budgets "
+                "(run_id TEXT PRIMARY KEY, data TEXT NOT NULL)"
+            )
 
     @contextmanager
     def _transaction(self) -> Iterator[sqlite3.Connection]:

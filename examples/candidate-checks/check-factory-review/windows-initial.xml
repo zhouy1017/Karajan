@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="5" time="3.932" timestamp="2026-09-06T23:27:21.255933+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.check-factory-review.test_independent_factory" name="test_fixed_isolated_entry_ignores_cwd_and_pythonpath_modules" time="0.253"><failure message="AssertionError: assert ['candidates'...t', 'karajan'] == ['karajan']&#10;  &#10;  At index 0 diff: 'candidates' != 'karajan'&#10;  Left contains 2 more items, first extra item: 'host'&#10;  Use -v to get more diff">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-884/test_fixed_isolated_entry_igno0')
+
+    def test_fixed_isolated_entry_ignores_cwd_and_pythonpath_modules(tmp_path):
+        marker = tmp_path / "poison-imported"
+        package = tmp_path / "karajan"
+        package.mkdir()
+        (package / "__init__.py").write_text(
+            f"from pathlib import Path\nPath({str(marker)!r}).write_text('poison')\n",
+            encoding="utf-8",
+        )
+        result = subprocess.run(
+            [sys.executable, "-I", str(Path(_candidate_check_runner.__file__).resolve()),
+             "run", "operation", "check", "owner"],
+            cwd=tmp_path,
+            env=os.environ | {"PYTHONPATH": str(tmp_path)},
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        assert result.returncode == 1
+        assert result.stdout.strip() == "CHECK_RUNNER_FAILED"
+        assert not result.stderr and not marker.exists()
+&gt;       assert sorted(p.name for p in tmp_path.iterdir()) == ["karajan"]
+E       AssertionError: assert ['candidates'...t', 'karajan'] == ['karajan']
+E         
+E         At index 0 diff: 'candidates' != 'karajan'
+E         Left contains 2 more items, first extra item: 'host'
+E         Use -v to get more diff
+
+.cache\check-factory-review\test_independent_factory.py:49: AssertionError</failure></testcase><testcase classname=".cache.check-factory-review.test_independent_factory" name="test_hardlinked_bootstrap_is_rejected_without_changing_bytes" time="0.011" /><testcase classname=".cache.check-factory-review.test_independent_factory" name="test_history_factory_never_opens_current_environment_or_source" time="0.899" /><testcase classname=".cache.check-factory-review.test_independent_factory" name="test_wrong_owner_fails_before_execution_material" time="0.888" /><testcase classname=".cache.check-factory-review.test_independent_factory" name="test_history_open_does_not_recreate_missing_optional_host_ledger" time="0.876" /></testsuite></testsuites>

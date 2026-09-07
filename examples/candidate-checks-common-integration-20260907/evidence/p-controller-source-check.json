@@ -1,0 +1,26 @@
+{
+  "rows": [
+    {
+      "report": "p-receipts\\test_running_check_two_advance0\\race-observation.json",
+      "check_run_id": "check:ff66ab49-e583-4b73-8e03-c9ae83caa3ef",
+      "execution_digest": "06f0ffb546c020118bf82a27eb2c68ec9ecf5c3424ce72863f40dc22faa009f5",
+      "phase": "recorded",
+      "production_controller_count": 136,
+      "production_controller_exact_source_map": true,
+      "qualification": "formal Check factory; planning/Writer fixtures remain synthetic",
+      "fixture_files": []
+    },
+    {
+      "report": "p-receipts\\test_running_check_two_advance0\\race-observation.json",
+      "check_run_id": "check:316d2318-9c2e-49b0-ab6f-12a2488d6eda",
+      "execution_digest": null,
+      "phase": "cancelled",
+      "production_controller_count": 136,
+      "production_controller_exact_source_map": true,
+      "qualification": "formal Check factory; planning/Writer fixtures remain synthetic",
+      "fixture_files": []
+    }
+  ],
+  "all_match": true,
+  "note": "Actual persisted Check execution source read from test-saved public validation receipts. A never-claimed cancelled row can lack execution_digest; it is not counted as a started Check."
+}

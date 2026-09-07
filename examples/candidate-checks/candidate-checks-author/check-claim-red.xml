@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="2.443" timestamp="2026-09-06T23:23:32.839839+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_candidate_checks" name="test_check_claim_commits_original_identity_and_shared_time_before_host_start" time="1.438"><failure message="AssertionError: assert 'prepared' == 'claimed'&#10;  &#10;  - claimed&#10;  + prepared">check_case = (&lt;karajan.orchestration.go_execution_intent.GoExecutionIntents object at 0x0000028AFF653410&gt;, ('72f6d0c4-8d77-4b3d-a2e...0628964fdc', 'revision': 1, 'content_sha256': '0207ba45c7d47669db73725bbc09f3204394a77917b48c73183064b5e30b9c76', ...})
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-882/test_check_claim_commits_origi0')
+
+    def test_check_claim_commits_original_identity_and_shared_time_before_host_start(check_case, tmp_path):
+        from karajan.orchestration.candidate_checks import ApprovedCandidateChecks, CheckLaunchSpec
+        from karajan.orchestration.execution_budget import RunExecutionBudget
+    
+        intents, args, candidates, _ = check_case
+        checks = ApprovedCandidateChecks(
+            intents.admissions,
+            candidates,
+            runner=SourceFixture(),
+            controller_source=lambda: {"schema_version": "synthetic.check-controller.v1"},
+            launch_compiler=lambda execution: CheckLaunchSpec(
+                ProcessSpec((sys._base_executable, "-c", "pass"), tmp_path), "b" * 64
+            ),
+        )
+        before = checks.advance(*args, principal="owner")
+        claimed = checks.advance(*args, principal="owner")
+        old, new = before["checks"]["runs"][0], claimed["checks"]["runs"][0]
+&gt;       assert new["phase"] == "claimed"
+E       AssertionError: assert 'prepared' == 'claimed'
+E         
+E         - claimed
+E         + prepared
+
+tests\runs\test_candidate_checks.py:135: AssertionError</failure></testcase></testsuite></testsuites>

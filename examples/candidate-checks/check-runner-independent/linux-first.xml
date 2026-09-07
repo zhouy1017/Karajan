@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="5" time="15.058" timestamp="2026-09-06T23:46:28.900758+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.check-runner-independent.test_runner_boundaries" name="test_private_host_paths_are_inaccessible_through_proc_roots_and_inherited_fds" time="3.492" /><testcase classname=".cache.check-runner-independent.test_runner_boundaries" name="test_namespace_exit_stops_an_orphan_with_a_separate_session" time="2.771" /><testcase classname=".cache.check-runner-independent.test_runner_boundaries" name="test_actual_source_changes_inside_guard_are_rejected_and_never_retried" time="2.095" /><testcase classname=".cache.check-runner-independent.test_runner_boundaries" name="test_missing_or_hardlinked_logs_cannot_recover_a_passed_complete_result" time="2.844" /><testcase classname=".cache.check-runner-independent.test_runner_boundaries" name="test_external_cancel_stops_live_execution_and_replay_cannot_restore_it" time="2.696"><failure message="AssertionError: CheckObservation(execution_digest='98929796a356d773098dd389b3a5120a1f223c56d0ca22e1a871a415a470b528', outcome='complet...thon-check.v1', environment_sha256='b8b00e47f4a1f6d4d60d45ed6018023fa494e5eeb8754ea5ca0cce9276839cd1', reason_codes=())&#10;assert ('completed' != 'completed')&#10; +  where 'completed' = CheckObservation(execution_digest='98929796a356d773098dd389b3a5120a1f223c56d0ca22e1a871a415a470b528', outcome='complet...thon-check.v1', environment_sha256='b8b00e47f4a1f6d4d60d45ed6018023fa494e5eeb8754ea5ca0cce9276839cd1', reason_codes=()).outcome">environment = &lt;karajan.isolation._check_environment.PythonCheckEnvironment object at 0x70d76d8d2a80&gt;
+tmp_path = PosixPath('/tmp/karajan-check-independent-20260906-a/test_external_cancel_stops_liv0')
+
+    def test_external_cancel_stops_live_execution_and_replay_cannot_restore_it(environment, tmp_path):
+        runner, execution, _ = candidate(
+            tmp_path,
+            "import time; print('CHECK_ENTERED',flush=True); time.sleep(20)",
+            environment,
+        )
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            future = pool.submit(
+                runner.run, execution, start_guard=allowed_start, cancelled=lambda: False
+            )
+            until = time.monotonic() + 8
+            init = []
+            while not init and not future.done() and time.monotonic() &lt; until:
+                init = list(runner.directory.glob("*/namespace-init.json"))
+                time.sleep(0.02)
+            assert init, "fixed namespace never registered"
+            init_record = json.loads(init[0].read_bytes())
+            assert isinstance(init_record["pid"], int) and init_record["pid"] &gt; 0
+            other = FixedCheckRunner(runner.directory, runner.candidates, environments={})
+            other.cancel(execution)
+            observed = future.result(timeout=8)
+&gt;       assert observed.outcome != "completed" and observed.local_stop == "confirmed", observed
+E       AssertionError: CheckObservation(execution_digest='98929796a356d773098dd389b3a5120a1f223c56d0ca22e1a871a415a470b528', outcome='complet...thon-check.v1', environment_sha256='b8b00e47f4a1f6d4d60d45ed6018023fa494e5eeb8754ea5ca0cce9276839cd1', reason_codes=())
+E       assert ('completed' != 'completed')
+E        +  where 'completed' = CheckObservation(execution_digest='98929796a356d773098dd389b3a5120a1f223c56d0ca22e1a871a415a470b528', outcome='complet...thon-check.v1', environment_sha256='b8b00e47f4a1f6d4d60d45ed6018023fa494e5eeb8754ea5ca0cce9276839cd1', reason_codes=()).outcome
+
+.cache/check-runner-independent/test_runner_boundaries.py:160: AssertionError</failure></testcase></testsuite></testsuites>

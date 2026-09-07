@@ -1,0 +1,15 @@
+[
+  {
+    "execution_digest": "98929796a356d773098dd389b3a5120a1f223c56d0ca22e1a871a415a470b528",
+    "outcome": "completed",
+    "exit_code": -9,
+    "local_stop": "confirmed",
+    "log_complete": true,
+    "log_sha256": "0685788b240abf5fdab04d066d18a0e822a9fbcc791a40883c8286271a8cb947",
+    "log_size": 43,
+    "observation_ref": "check-observation:98929796a356d773098dd389b3a5120a1f223c56d0ca22e1a871a415a470b528",
+    "executor_ref": "fixed-python-check.v1",
+    "environment_sha256": "b8b00e47f4a1f6d4d60d45ed6018023fa494e5eeb8754ea5ca0cce9276839cd1",
+    "reason_codes": []
+  }
+]

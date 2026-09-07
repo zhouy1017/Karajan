@@ -1,0 +1,106 @@
+{
+  "author": "ui_spec_finalize",
+  "base_commit": "624ad8b8490003f155baf7842ba91b9975b9526a",
+  "source_sha256": {
+    "backend/karajan/orchestration/candidate_checks.py": "346014ca0410b90acecc3139a87a2b45f81b93d5839e56040bcc00a0958b4d5b",
+    "backend/karajan/orchestration/execution_budget.py": "dcbc042da90c931cf2f39a7d69f99420f391dde47e31dddd98bcd1f0c4fbdb8c",
+    "backend/karajan/orchestration/admission.py": "ab0cb33e9025d5ea9df08fc3c4ff002c62bf495354f27812a36e72cbe14c7623",
+    "backend/karajan/orchestration/go_execution_intent.py": "eb64051c6a51815c64017d23447b1ce1ba98300b8c2840409e1c85bfc964ef30",
+    "backend/karajan/orchestration/go_task_execution.py": "bd7f64485c116b83955d557b95bcf21cc0bb1731fd6a09006bf73c454692390c"
+  },
+  "test_sha256": {
+    "tests/runs/test_candidate_checks.py": "8700de3e1db95a6ec2bbd9c097b4b91b486c7207a453bcf88b222648d5c3c9c4",
+    "tests/runs/candidate_checks_case.py": "4ab3ecfb1207ceb92fb7156056de08cb22cc52a03eb9fa002ae1dea63522fdb7"
+  },
+  "implementation_doc": "docs/implementation/m3-candidate-checks.md",
+  "implementation_doc_sha256": "3c5b6ed5b3839dc0502846f7d4db2d58bec1be939665bf134846db4cb407b5de",
+  "final_author_windows": {
+    "path": "final-formatted-windows.xml",
+    "sha256": "bf0d816f45e2b6e5cd1e040a93b43996e46c64bb9c40361b7252a2d0b93b2fc3",
+    "name": "pytest",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "tests": "26",
+    "time": "42.195",
+    "timestamp": "2026-09-07T00:11:51.989331+08:00",
+    "hostname": "ProArt-Zhou"
+  },
+  "final_writer_capture_regression": {
+    "path": "final-writer-regression.xml",
+    "sha256": "9dc5cd478974f3bdb64091ec57a76b8c91d2fcaa2fa0588db89d91e2270b5556",
+    "name": "pytest",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "tests": "61",
+    "time": "58.288",
+    "timestamp": "2026-09-07T00:12:59.187793+08:00",
+    "hostname": "ProArt-Zhou"
+  },
+  "static": {
+    "ruff.txt": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0",
+    "format.txt": "9fa2e30088122b883ebbf1c300359d4a0c9d09c988b20631e8625a40425a9723",
+    "mypy.txt": "718df785efbbd4b57e63b5f64aff2c5b5592e433447681f759b307f97a3ec96a"
+  },
+  "root_actual_linux_composition": {
+    "owner": "root",
+    "junit": "../check-composition-current.xml",
+    "junit_sha256": "09249795d3a9f87e3c05eceabbb04c3a58ab6bc51dc70da67365084ad8d076ce",
+    "observations": "../check-composition-observations.json",
+    "observations_sha256": "7c80086c543ce5d982c6977442e194f711844060df73758fd1cecb45e0d039ef",
+    "before": "../check-composition-source-before.json",
+    "after": "../check-composition-source-after.json",
+    "scope": "Two actual Host/fixed-entry/namespace/CAS/Evidence scenarios; planning and model author are explicit fixtures, not S"
+  },
+  "independent_budget_review": {
+    "owner": "capacity_facts",
+    "report": "../shared-budget-independent/review.json",
+    "report_sha256": "b3d45ad6cd4b67185e6e799b3b052616c1f2161c6992d9bddf770ae49aeaf799"
+  },
+  "independent_facade_review": "pending separate reviewer report; not claimed by author",
+  "provider_calls": 0,
+  "reviewer": "not_run",
+  "delivery_eligible": false,
+  "remaining": [
+    "Trusted same-content validation subject rebind belongs to the explicit #95 dependency",
+    "No new quality-repair or infrastructure-retry loop",
+    "No current-head CI claim in this author record",
+    "Controller deadline admission is not an end-to-end hard provider/transport acceptance bound"
+  ],
+  "history": {
+    "all-checks-final.xml": "5c48730846cd52d19371808347cdf7a43ed39671534d13260b40fb1914366eed",
+    "all-checks-fixture-correction.xml": "b19af1b4b45ac53c33c67b085157b13cc7521e11d6060427f47af80289c160af",
+    "all-checks-initial.xml": "0d62d56557a954a38142aaa97f81a338e5cc69de42886d14a9865f050dcd4022",
+    "cancel-green.xml": "62ca9cf6aaee6590462c814ebb4d938c24504d8e57b79b925936817214ed3b3e",
+    "cancel-red.xml": "d45837d8f8ec2a3b1f6d2de928c0a71a47e4e5f320b3264a6da6a7d3f893e2f1",
+    "check-claim-green.xml": "63867f50a07c02642707e202df6b5483837371a58de18e59a9932c77b2264721",
+    "check-claim-red.xml": "d854e9daed14e670288675ade08f213e4db046030e9b6dde5664ead764c7156c",
+    "consume-identity-green.xml": "ffab1dba7204897c7e11d1cf09999e1f3bd95ff6a0fdc5b1fe3e9ccdfeb4ebcd",
+    "consume-identity-red.xml": "03a493acc83f7011676c4219e1c045de88b3fa3af4c7b3b51800295f5b78f024",
+    "current-author.xml": "eae45e09b9438a4a109b9980cbaed95e6a271a37c87a4df5a4e3fa4eac601829",
+    "current-gates-correction.xml": "0386c8482171882ecaf52f7c5b17c6363e6163ab406627b5652b2032b095a1df",
+    "current-gates.xml": "f2494917ebd84587d80b8468c749debcf9922123abcf2529aa22955330ebf8cb",
+    "evidence-green.xml": "00b5c4fe67147c222dcc0c93388e0ef2e3c93f73b44f4d6a7e757e50334593b9",
+    "evidence-recovery-initial.xml": "44fc99e4e010d0345bd5e8d7922cd04a65bce90698d276cab95dc9faf0bf30da",
+    "evidence-red.xml": "a65327e0727749ac5916d37cf131ce4280983bc0ad067936a2fb4f0d4b9c8ada",
+    "fault-boundaries-initial.xml": "b532654923c286e9a18ad399789cd3aba2358368407a67d5fa18ce637d40d85b",
+    "final-windows.xml": "c1176d37962d47d2264575895f1b461f16251bca5709e6983b67083787bb2153",
+    "first-budget-regression.xml": "03ca38e672c3a4e09fc15b4c2a06c786cc833cf82d4c9aec31ea364581a7237d",
+    "history-boundaries.xml": "449efbabf058174e917ca7db2da1341daca720f7e917efcde39486fea813fdb9",
+    "history-read-green.xml": "2ca0bbd197942d6b3648a5f159c2887725db235a96820fd9faf6f2b9c84e348f",
+    "history-read-red.xml": "befe3a5302604307524ad06d5a037b6ab73e1450e1ffddacbe584a6408fbe97f",
+    "host-prepare-green.xml": "38da0e0afd9a8d5b37d9506921e046f6557357e8478fc9307a3fa4b77a48b600",
+    "host-prepare-red.xml": "aeb4cb85f8695c2f2d220baf4bfa1d75f390382af6a5b67aef02f890a70a8488",
+    "host-start-green.xml": "2cf99c04f5900dbeda2e7e9cdd5e0c5015d88fd31bef07cbad05c00c2393ef98",
+    "host-start-red.xml": "317fff133cf126ee903d1198bbf94fa3a06e29cecfa24a6357db81cdaec002b9",
+    "prepare-green.xml": "d722e061b295ca67aca51e7d69aae54563765f7be5335860cd848d6f8dbc92bb",
+    "prepare-red.xml": "b427e19fce32fa5004df93a92206ea6ccfba458db62954f82d409927f9d3fbae",
+    "second-regression.xml": "d42a73d4b4798706c2ada9b412c80b7b34bf436688b3c8e14b5c8cf0a9bb0c19",
+    "typing-correction.xml": "3144c35c23fa6c58b1c4b5435b58c19057319b0fd289abe94cf2160c4480e89e",
+    "typing-refactor-check.xml": "ed14aaa262d51e36fde5f54542d0d364e0ddf8a37707b23f88f49ad50619961e",
+    "writer-budget-green.xml": "c02d204a7fadf3e0d9e335c2f35515daeac5e2cfe92368f774faf8dc7e9cfc3b",
+    "writer-budget-red.xml": "ae579e585d80cc8a99e7f47bcc68e3b85769cc774f26aea7762ec00fbc39340c",
+    "writer-current-budget-green.xml": "24519f13ec001d8018c49923e2fefc37cdb8ac940ecf4696941ee98802dc5d46"
+  }
+}

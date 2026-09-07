@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="0.156" timestamp="2026-09-06T23:33:39.461794+08:00" hostname="ProArt-Zhou"><testcase classname="" name="tests.execution.test_check_manifest" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\Users\Chooo\Playground\Karajan\.cache\go-task-validation\tests\execution\test_check_manifest.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\execution\test_check_manifest.py:5: in &lt;module&gt;
+    from karajan.execution import (
+E   ImportError: cannot import name 'CheckAttemptManifest' from 'karajan.execution' (C:\Users\Chooo\Playground\Karajan\.cache\go-task-validation\backend\karajan\execution\__init__.py)</error></testcase></testsuite></testsuites>

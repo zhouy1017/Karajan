@@ -1,0 +1,43 @@
+[
+  {
+    "phase": "c-win",
+    "tests": 118,
+    "passed": 117,
+    "failed": 0,
+    "errors": 0,
+    "skipped": [
+      {
+        "name": "test_consume_preserves_native_failure_when_collector_rejects_missing_capture",
+        "reason": "Fixed Linux runtime required"
+      }
+    ],
+    "junit_time": "153.795",
+    "exit_code": 0,
+    "source_before_after_equal": true,
+    "xml": "c-win.xml"
+  },
+  {
+    "phase": "c-linux",
+    "tests": 118,
+    "passed": 118,
+    "failed": 0,
+    "errors": 0,
+    "skipped": [],
+    "junit_time": "90.069",
+    "exit_code": 0,
+    "source_before_after_equal": true,
+    "xml": "c-linux.xml"
+  },
+  {
+    "phase": "p-linux",
+    "tests": 3,
+    "passed": 3,
+    "failed": 0,
+    "errors": 0,
+    "skipped": [],
+    "junit_time": "98.080",
+    "exit_code": 0,
+    "source_before_after_equal": true,
+    "xml": "p-linux.xml"
+  }
+]

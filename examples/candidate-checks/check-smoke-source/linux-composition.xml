@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="250.204" timestamp="2026-09-07T00:00:39.780488+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_candidate_checks_native" name="test_fixed_host_child_runs_every_approved_check_and_reopens_without_reexecution[False]" time="122.176"><failure message="Failed: Fixed Check entry did not record both required checks">projected = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x7369b23310d0&gt;, 'project_id': 'e057fa9d-f11e-49d9-b...y': PosixPath('/tmp/karajan-check-composition-smoke-20260907/test_fixed_host_child_runs_eve0/fixture/repository'), ...}
+tmp_path = PosixPath('/tmp/karajan-check-composition-smoke-20260907/test_fixed_host_child_runs_eve0')
+defective = False
+
+    @pytest.mark.parametrize("defective", [False, True])
+    def test_fixed_host_child_runs_every_approved_check_and_reopens_without_reexecution(
+        projected, tmp_path, defective
+    ):
+        image = PythonCheckEnvironment.provision(tmp_path / "image")
+        environment = {
+            "id": "stdlib",
+            "revision": 1,
+            "runtime_kind": "python312-stdlib",
+            "platform": "linux_x64",
+            "source_sha256": image.source()["environment_sha256"],
+            "filesystem": "candidate_copy",
+            "network": "none",
+            "env": {},
+            "max_log_bytes": 16384,
+        }
+        reference = {"id": "stdlib", "revision": 1}
+        approved = approved_check_candidate(
+            projected,
+            tmp_path / "approved",
+            environment=environment,
+            checks=[
+                {
+                    "id": "behavior",
+                    "revision": 1,
+                    "environment_ref": reference,
+                    "timeout_seconds": 10,
+                    "argv": [
+                        "python3.12",
+                        "-I",
+                        "-c",
+                        "from pathlib import Path; "
+                        "assert Path('src/report.py').read_bytes() == b\"print('collected')\\n\"; "
+                        "print('behavior-ok')",
+                    ],
+                },
+                {
+                    "id": "syntax",
+                    "revision": 1,
+                    "environment_ref": reference,
+                    "timeout_seconds": 10,
+                    "argv": ["python3.12", "-I", "-m", "py_compile", "src/report.py"],
+                },
+            ],
+            worker_output=b"print('defective')\n" if defective else b"print('collected')\n",
+        )
+        settings = deploy(approved, tmp_path, image)
+        run_id, operation_id = approved.args
+        service = open_check_services(
+            settings, run_id=run_id, operation_id=operation_id, principal="owner", for_execution=True
+        )
+        deadline = time.monotonic() + 120
+        try:
+            while time.monotonic() &lt; deadline:
+                service.advance(run_id, operation_id, principal="owner")
+                service.reconcile(run_id, operation_id, principal="owner")
+                validation = service.get(run_id, operation_id, principal="owner")
+                rows = validation["checks"]["runs"] if validation else []
+                if len(rows) == 2 and all(row.get("evidence") is not None for row in rows):
+                    break
+                time.sleep(0.1)
+            else:
+                status = service.get(run_id, operation_id, principal="owner")
+                (tmp_path / "public-validation.json").write_text(json.dumps(status, indent=2))
+&gt;               pytest.fail("Fixed Check entry did not record both required checks")
+E               Failed: Fixed Check entry did not record both required checks
+
+tests/runs/test_candidate_checks_native.py:125: Failed</failure></testcase><testcase classname="tests.runs.test_candidate_checks_native" name="test_fixed_host_child_runs_every_approved_check_and_reopens_without_reexecution[True]" time="122.330"><failure message="Failed: Fixed Check entry did not record both required checks">projected = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x7369b1d56a50&gt;, 'project_id': '300f5afd-5a79-4bb2-b...y': PosixPath('/tmp/karajan-check-composition-smoke-20260907/test_fixed_host_child_runs_eve1/fixture/repository'), ...}
+tmp_path = PosixPath('/tmp/karajan-check-composition-smoke-20260907/test_fixed_host_child_runs_eve1')
+defective = True
+
+    @pytest.mark.parametrize("defective", [False, True])
+    def test_fixed_host_child_runs_every_approved_check_and_reopens_without_reexecution(
+        projected, tmp_path, defective
+    ):
+        image = PythonCheckEnvironment.provision(tmp_path / "image")
+        environment = {
+            "id": "stdlib",
+            "revision": 1,
+            "runtime_kind": "python312-stdlib",
+            "platform": "linux_x64",
+            "source_sha256": image.source()["environment_sha256"],
+            "filesystem": "candidate_copy",
+            "network": "none",
+            "env": {},
+            "max_log_bytes": 16384,
+        }
+        reference = {"id": "stdlib", "revision": 1}
+        approved = approved_check_candidate(
+            projected,
+            tmp_path / "approved",
+            environment=environment,
+            checks=[
+                {
+                    "id": "behavior",
+                    "revision": 1,
+                    "environment_ref": reference,
+                    "timeout_seconds": 10,
+                    "argv": [
+                        "python3.12",
+                        "-I",
+                        "-c",
+                        "from pathlib import Path; "
+                        "assert Path('src/report.py').read_bytes() == b\"print('collected')\\n\"; "
+                        "print('behavior-ok')",
+                    ],
+                },
+                {
+                    "id": "syntax",
+                    "revision": 1,
+                    "environment_ref": reference,
+                    "timeout_seconds": 10,
+                    "argv": ["python3.12", "-I", "-m", "py_compile", "src/report.py"],
+                },
+            ],
+            worker_output=b"print('defective')\n" if defective else b"print('collected')\n",
+        )
+        settings = deploy(approved, tmp_path, image)
+        run_id, operation_id = approved.args
+        service = open_check_services(
+            settings, run_id=run_id, operation_id=operation_id, principal="owner", for_execution=True
+        )
+        deadline = time.monotonic() + 120
+        try:
+            while time.monotonic() &lt; deadline:
+                service.advance(run_id, operation_id, principal="owner")
+                service.reconcile(run_id, operation_id, principal="owner")
+                validation = service.get(run_id, operation_id, principal="owner")
+                rows = validation["checks"]["runs"] if validation else []
+                if len(rows) == 2 and all(row.get("evidence") is not None for row in rows):
+                    break
+                time.sleep(0.1)
+            else:
+                status = service.get(run_id, operation_id, principal="owner")
+                (tmp_path / "public-validation.json").write_text(json.dumps(status, indent=2))
+&gt;               pytest.fail("Fixed Check entry did not record both required checks")
+E               Failed: Fixed Check entry did not record both required checks
+
+tests/runs/test_candidate_checks_native.py:125: Failed</failure></testcase></testsuite></testsuites>
