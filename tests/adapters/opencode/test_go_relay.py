@@ -234,13 +234,25 @@ def test_local_path_is_exact(path: str) -> None:
         assert not requests
 
 
-def test_wrong_path_with_a_streaming_body_returns_404_without_upstream() -> None:
-    body = b"x" * 200_000
+def test_wrong_path_with_a_streaming_body_returns_404_without_upstream(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    body = b"x" * 8192
+    drain_started = threading.Event()
+    original_drain = GoRelay._drain_request_body
+
+    def observe_drain(handler: Any) -> None:
+        if getattr(handler, "_go_relay_unread_body", 0) > 0:
+            drain_started.set()
+        original_drain(handler)
+
+    monkeypatch.setattr(GoRelay, "_drain_request_body", staticmethod(observe_drain))
 
     def chunks():
-        for offset in range(0, len(body), 1024):
-            yield body[offset : offset + 1024]
-            time.sleep(0.002)
+        yield body[:4096]
+        if not drain_started.wait(timeout=1):
+            raise AssertionError("path rejection did not enter the bounded body drain")
+        yield body[4096:]
 
     with running() as (relay, requests), httpx.Client(trust_env=False, timeout=5) as client:
         response = client.post(
