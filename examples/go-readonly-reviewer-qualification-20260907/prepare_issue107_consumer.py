@@ -417,6 +417,41 @@ def positive_result(private_root: Path) -> dict[str, Any]:
     }
 
 
+def positive_history(private_root: Path) -> dict[str, Any] | None:
+    """Read the original membership receipt without rebuilding fixture state."""
+    path = private_root / "consumer-fixture" / "admission.sqlite"
+    try:
+        database = sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)
+        try:
+            row = database.execute(
+                "SELECT data FROM operations WHERE id=?", ("issue107-fixed-consumer-operation",)
+            ).fetchone()
+        finally:
+            database.close()
+        if row is None:
+            return None
+        operation = json.loads(row[0])
+        validation = operation.get("validation") or {}
+        transition = validation.get("subject_transition")
+        binding_status = validation.get("review_binding_status") or {}
+        assessment = binding_status.get("assessment") or {}
+        if (
+            binding_status.get("state") != "ready"
+            or not isinstance(transition, dict)
+            or transition.get("phase") != "ready"
+            or assessment.get("actual_reviewer_attempt") is not None
+        ):
+            return None
+        return {
+            "state": "ready",
+            "transition": transition,
+            "membership_only": True,
+            "actual_reviewer_attempt": None,
+        }
+    except (OSError, sqlite3.Error, TypeError, ValueError, json.JSONDecodeError):
+        return None
+
+
 def main() -> None:
     import argparse
     parser = argparse.ArgumentParser()

@@ -89,6 +89,8 @@ def _counts(start: dict[str, Any], journal: Any) -> dict[str, int]:
 
 
 def execute(private_root: Path, report: Path) -> None:
+    """Retained historical entry point; new effects use qualification_recovery_driver."""
+    raise RuntimeError("ISSUE107_ORDERED_DRIVER_SUPERSEDED")
     """One future run. Any failure stops here; it never starts another command."""
     store, project_id, reviewer, journal = controller.open_controller(private_root)
     try:
