@@ -1,0 +1,15 @@
+{
+  "schema_version": "karajan.issue107-pre-effect-failure.v1",
+  "issue": 107,
+  "command": "issue107-official-go-reviewer-20260907",
+  "stage": "ProjectRegistry.create before durable qualification start",
+  "result": "failed",
+  "reason_code": "REPOSITORY_INVALID",
+  "cause": "The DrvFS checkout cannot be used as a Linux controller Project repository under the registry's isolated Git invocation.",
+  "official_effect_started": false,
+  "credential_resolved": false,
+  "provider_requests": 0,
+  "grants": 0,
+  "sessions": 0,
+  "preserved_at": "2026-09-07"
+}
