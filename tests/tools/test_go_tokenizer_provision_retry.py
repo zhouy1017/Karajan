@@ -434,6 +434,40 @@ def test_complete_content_length_does_not_wait_for_delayed_connection_close(
     assert (tmp_path / "fixture.bin").read_bytes() == small_artifact
 
 
+def test_chunked_response_preserves_standard_read_semantics_across_tcp_splits(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    payload = b"abcd"
+
+    def writer(stream: IO[bytes]) -> None:
+        try:
+            stream.write(b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n4\r\nab")
+            stream.flush()
+            time.sleep(0.10)
+            stream.write(b"cd\r\n0\r\n\r\n")
+            stream.flush()
+        except (BrokenPipeError, ConnectionResetError):
+            return
+
+    monkeypatch.setattr(
+        SCRIPT,
+        "ARTIFACTS",
+        {"fixture.bin": (len(payload), hashlib.sha256(payload).hexdigest())},
+    )
+    monkeypatch.setattr(SCRIPT, "DOWNLOAD_BUDGET_SECONDS", 1.0)
+    open_default = SCRIPT._open
+    with raw_server(writer) as url:
+        monkeypatch.setattr(
+            SCRIPT,
+            "_open",
+            lambda _, *, timeout=30.0: open_default(url, timeout=timeout),
+        )
+        result = SCRIPT.provision(tmp_path)
+
+    assert result["artifacts"][0]["status"] == "downloaded"
+    assert (tmp_path / "fixture.bin").read_bytes() == payload
+
+
 def test_final_read_crossing_deadline_cannot_publish(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, small_artifact: bytes
 ) -> None:

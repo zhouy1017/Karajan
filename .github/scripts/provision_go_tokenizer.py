@@ -158,7 +158,8 @@ class _DeadlineSocket:
         if "r" not in mode or "b" not in mode:
             raise ValueError("TOKENIZER_TRANSPORT_UNAVAILABLE")
         stream = cast(socket.SocketIO, cast(Any, self._sock).makefile(mode, 0))
-        return cast(IO[bytes], _DeadlineSocketIO(self._sock, stream, self._deadline))
+        raw = _DeadlineSocketIO(self._sock, stream, self._deadline)
+        return cast(IO[bytes], io.BufferedReader(raw))
 
     def sendall(self, data: bytes, flags: int = 0) -> None:
         remaining = self._deadline - time.monotonic()
