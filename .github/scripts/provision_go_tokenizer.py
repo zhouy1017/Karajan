@@ -54,10 +54,18 @@ ARTIFACTS = {
 OpenURL = Callable[[str], AbstractContextManager[BinaryIO]]
 MAX_DOWNLOAD_ATTEMPTS = 3
 DOWNLOAD_BUDGET_SECONDS = 180
-_RESOLVE_PROGRAM = (
-    "import json,socket,sys; "
-    "print(json.dumps(socket.getaddrinfo(sys.argv[1],int(sys.argv[2]),0,socket.SOCK_STREAM)))"
-)
+_RESOLVE_PROGRAM = """\
+import json
+import socket
+import sys
+
+try:
+    addresses = socket.getaddrinfo(sys.argv[1], int(sys.argv[2]), 0, socket.SOCK_STREAM)
+except socket.gaierror as error:
+    print(json.dumps({"status": "gaierror", "code": error.errno}))
+else:
+    print(json.dumps({"status": "ok", "addresses": addresses}))
+"""
 
 
 class ProvisionError(ValueError):
@@ -226,6 +234,15 @@ def _resolve_addresses(host: str, port: int, deadline: float) -> list[tuple[Any,
         raise
     except (OSError, ValueError, TypeError):
         raise OSError("resolver failed") from None
+    if not isinstance(decoded, dict):
+        raise OSError("resolver failed")
+    if decoded.get("status") == "gaierror":
+        if decoded.get("code") == socket.EAI_AGAIN:
+            raise ConnectionError
+        raise OSError("resolver failed")
+    if decoded.get("status") != "ok":
+        raise OSError("resolver failed")
+    decoded = decoded.get("addresses")
     if not isinstance(decoded, list) or not decoded:
         raise OSError("resolver failed")
     addresses: list[tuple[Any, ...]] = []

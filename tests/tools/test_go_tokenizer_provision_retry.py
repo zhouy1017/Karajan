@@ -584,10 +584,10 @@ def test_blocked_resolver_is_killed_and_reaped_at_the_deadline(
         "import time; time.sleep(2)",
     )
 
-    def observe_popen(*args: Any, **kwargs: Any) -> subprocess.Popen[str]:
+    def observe_popen(*args: Any, **kwargs: Any) -> Any:
         process = original_popen(*args, **kwargs)
         processes.append(process)
-        return cast(Any, process)
+        return process
 
     monkeypatch.setattr(SCRIPT.subprocess, "Popen", observe_popen)
     connection = SCRIPT._DeadlineHTTPConnection(
@@ -598,6 +598,69 @@ def test_blocked_resolver_is_killed_and_reaped_at_the_deadline(
         connection._deadline_create_connection(("origin.invalid", 443), 1.0, None)
 
     assert time.perf_counter() - started < 0.80
+    assert len(processes) == 1
+    assert processes[0].poll() is not None
+
+
+def test_transient_resolver_failure_is_classified_and_can_retry(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, small_artifact: bytes
+) -> None:
+    marker = repr(str(tmp_path / "resolver-attempt"))
+    monkeypatch.setattr(
+        SCRIPT,
+        "_RESOLVE_PROGRAM",
+        f"""
+import json
+import pathlib
+import socket
+
+marker = pathlib.Path({marker})
+if not marker.exists():
+    marker.write_text("seen", encoding="ascii")
+    print(json.dumps({{"status": "gaierror", "code": socket.EAI_AGAIN}}))
+else:
+    print(json.dumps({{"status": "ok", "addresses": [[2, 1, 6, "", ["127.0.0.1", 443]]]}}))
+""",
+    )
+    calls = 0
+    deadline = time.monotonic() + 2.0
+
+    def open_url(_: str) -> object:
+        nonlocal calls
+        calls += 1
+        try:
+            addresses = SCRIPT._resolve_addresses("transient.invalid", 443, deadline)
+        except ConnectionError as error:
+            raise URLError(error) from error
+        assert addresses == [(2, 1, 6, "", ("127.0.0.1", 443))]
+        return response(small_artifact)
+
+    result = SCRIPT.provision(tmp_path, open_url=open_url)
+    assert calls == 2
+    assert result["artifacts"][0]["status"] == "downloaded"
+    assert (tmp_path / "fixture.bin").read_bytes() == small_artifact
+
+
+def test_permanent_resolver_failure_is_deterministic_and_reaped(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    processes: list[subprocess.Popen[str]] = []
+    original_popen = SCRIPT.subprocess.Popen
+    monkeypatch.setattr(
+        SCRIPT,
+        "_RESOLVE_PROGRAM",
+        "import json, socket; print(json.dumps({'status': 'gaierror', 'code': socket.EAI_NONAME}))",
+    )
+
+    def observe_popen(*args: Any, **kwargs: Any) -> Any:
+        process = original_popen(*args, **kwargs)
+        processes.append(process)
+        return process
+
+    monkeypatch.setattr(SCRIPT.subprocess, "Popen", observe_popen)
+    with pytest.raises(OSError):
+        SCRIPT._resolve_addresses("permanent.invalid", 443, time.monotonic() + 2.0)
+
     assert len(processes) == 1
     assert processes[0].poll() is not None
 

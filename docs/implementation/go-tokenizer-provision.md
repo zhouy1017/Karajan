@@ -26,6 +26,11 @@ Hostname resolution is performed by a short-lived resolver process so a
 blocked system resolver can be terminated and reaped at the same deadline;
 numeric addresses use a direct address tuple. TCP address attempts and the
 non-blocking TLS handshake then consume the remaining budget.
+The resolver helper emits only a JSON success or a numeric `gaierror` code;
+`EAI_AGAIN` is classified as the same retryable network failure as a connection
+error and shares the three-attempt budget, while other resolver failures are
+deterministic and are attempted once. Resolver exception text and child
+standard error are discarded.
 
 The command line reports only stable, redacted categories. HTTP failures may
 include the numeric status (`TOKENIZER_HTTP_STATUS_429`); transport failures
