@@ -1,0 +1,168 @@
+{
+  "candidate": "aee3ca8269c622cb96833ea1b8f2477fb3e773e9",
+  "source_sha256": "51b438f4c728bd10f05501da02c4bb510706a5aa7f54d3f6a5c2b5e8eb4a8291",
+  "script_sha256": "95a21f900b7f32ba93bcbcab087b599b44e058efe615408696227d42e2d154ae",
+  "external_traffic": false,
+  "TLS_verification": "enabled; trusts generated local CA only",
+  "results": [
+    {
+      "case": "slow_headers",
+      "budget_seconds": 0.3,
+      "elapsed_seconds": 0.328,
+      "reason": "ProvisionError:TOKENIZER_DOWNLOAD_TIMEOUT",
+      "requests": [
+        "/"
+      ],
+      "old_preserved": true,
+      "valid_published": false,
+      "temps": 0,
+      "passed": true
+    },
+    {
+      "case": "slow_body",
+      "budget_seconds": 0.3,
+      "elapsed_seconds": 0.313,
+      "reason": "ProvisionError:TOKENIZER_DOWNLOAD_TIMEOUT",
+      "requests": [
+        "/"
+      ],
+      "old_preserved": true,
+      "valid_published": false,
+      "temps": 0,
+      "passed": true
+    },
+    {
+      "case": "slow_chunk_size",
+      "budget_seconds": 0.3,
+      "elapsed_seconds": 0.328,
+      "reason": "ProvisionError:TOKENIZER_DOWNLOAD_TIMEOUT",
+      "requests": [
+        "/"
+      ],
+      "old_preserved": true,
+      "valid_published": false,
+      "temps": 0,
+      "passed": true
+    },
+    {
+      "case": "slow_trailer",
+      "budget_seconds": 0.3,
+      "elapsed_seconds": 0.328,
+      "reason": "ProvisionError:TOKENIZER_DOWNLOAD_TIMEOUT",
+      "requests": [
+        "/"
+      ],
+      "old_preserved": true,
+      "valid_published": false,
+      "temps": 0,
+      "passed": true
+    },
+    {
+      "case": "later_read",
+      "budget_seconds": 0.8,
+      "elapsed_seconds": 0.812,
+      "reason": "ProvisionError:TOKENIZER_DOWNLOAD_TIMEOUT",
+      "requests": [
+        "/"
+      ],
+      "old_preserved": true,
+      "valid_published": false,
+      "temps": 0,
+      "passed": true
+    },
+    {
+      "case": "fixed_hold",
+      "budget_seconds": 0.3,
+      "elapsed_seconds": 0.031,
+      "reason": null,
+      "requests": [
+        "/"
+      ],
+      "old_preserved": false,
+      "valid_published": true,
+      "temps": 0,
+      "passed": true
+    },
+    {
+      "case": "chunk_tcp_split",
+      "budget_seconds": 2.0,
+      "elapsed_seconds": 0.25,
+      "reason": null,
+      "requests": [
+        "/"
+      ],
+      "old_preserved": false,
+      "valid_published": true,
+      "temps": 0,
+      "passed": true
+    },
+    {
+      "case": "eof",
+      "budget_seconds": 2.0,
+      "elapsed_seconds": 0.015,
+      "reason": null,
+      "requests": [
+        "/"
+      ],
+      "old_preserved": false,
+      "valid_published": true,
+      "temps": 0,
+      "passed": true
+    },
+    {
+      "case": "redirect_budget",
+      "budget_seconds": 0.3,
+      "elapsed_seconds": 0.313,
+      "reason": "ProvisionError:TOKENIZER_DOWNLOAD_TIMEOUT",
+      "requests": [
+        "/",
+        "/final"
+      ],
+      "old_preserved": true,
+      "valid_published": false,
+      "temps": 0,
+      "passed": true
+    },
+    {
+      "case": "redirect_tls_handshake",
+      "budget_seconds": 0.3,
+      "elapsed_seconds": 0.328,
+      "reason": "ProvisionError:TOKENIZER_DOWNLOAD_TIMEOUT",
+      "requests": [
+        "/"
+      ],
+      "old_preserved": true,
+      "valid_published": false,
+      "temps": 0,
+      "passed": true
+    },
+    {
+      "case": "retry_budget",
+      "budget_seconds": 0.3,
+      "elapsed_seconds": 0.312,
+      "reason": "ProvisionError:TOKENIZER_DOWNLOAD_TIMEOUT",
+      "requests": [
+        "/",
+        "/",
+        "/"
+      ],
+      "old_preserved": true,
+      "valid_published": false,
+      "temps": 0,
+      "passed": true
+    },
+    {
+      "case": "bad_digest",
+      "budget_seconds": 0.3,
+      "elapsed_seconds": 0.032,
+      "reason": "ProvisionError:TOKENIZER_DIGEST_MISMATCH",
+      "requests": [
+        "/"
+      ],
+      "old_preserved": true,
+      "valid_published": false,
+      "temps": 0,
+      "passed": true
+    }
+  ]
+}

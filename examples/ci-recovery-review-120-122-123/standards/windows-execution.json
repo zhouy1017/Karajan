@@ -1,0 +1,16 @@
+{
+  "candidate": "205cd9063e14ad516c1a21cb1d62f674bda75885",
+  "command": [
+    "C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe",
+    "-m",
+    "pytest",
+    "tests/tools/test_go_tokenizer_provision_retry.py",
+    ".cache/standards-aee3ca/test_connection_boundaries.py",
+    ".cache/standards-205cd90/test_dns_protocol.py",
+    "-q",
+    "--basetemp=.cache/standards-205cd90/windows-temp"
+  ],
+  "cwd": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\dispatch-tokenizer-ci",
+  "utc": "2026-09-07T07:40:46.633052+00:00",
+  "exit_code": 0
+}
