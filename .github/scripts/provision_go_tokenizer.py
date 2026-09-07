@@ -14,7 +14,7 @@ import tempfile
 import time
 from collections.abc import Callable
 from contextlib import AbstractContextManager
-from http.client import HTTPMessage
+from http.client import HTTPMessage, HTTPResponse
 from pathlib import Path
 from typing import IO, BinaryIO, NoReturn, cast
 from urllib.error import URLError
@@ -106,6 +106,24 @@ def _url_error_code(error: URLError) -> NoReturn:
     raise ProvisionError("TOKENIZER_NETWORK_ERROR") from None
 
 
+def _set_response_timeout(response: BinaryIO, timeout: float) -> None:
+    """Tighten the timeout on the socket owned by urllib's HTTP response."""
+    if not isinstance(response, HTTPResponse):
+        return
+    if response.fp is None:
+        if response.length == 0:
+            return
+        raise ProvisionError("TOKENIZER_TRANSPORT_UNAVAILABLE")
+    raw = getattr(response.fp, "raw", None)
+    sock = getattr(raw, "_sock", None)
+    if sock is None or not callable(getattr(sock, "settimeout", None)):
+        raise ProvisionError("TOKENIZER_TRANSPORT_UNAVAILABLE")
+    try:
+        sock.settimeout(timeout)
+    except OSError:
+        raise ProvisionError("TOKENIZER_TRANSPORT_UNAVAILABLE") from None
+
+
 def provision(directory: Path, *, open_url: OpenURL | None = None) -> dict[str, object]:
     """Verify/reuse or atomically publish each artifact; injection is only for offline tests."""
     directory = directory.resolve()
@@ -138,10 +156,32 @@ def provision(directory: Path, *, open_url: OpenURL | None = None) -> dict[str, 
                                 response_context = open_url(url)
                             with response_context as response:
                                 while True:
-                                    if time.monotonic() >= deadline:
+                                    remaining = deadline - time.monotonic()
+                                    if remaining <= 0:
                                         raise ProvisionError("TOKENIZER_DOWNLOAD_TIMEOUT")
+                                    _set_response_timeout(response, remaining)
                                     try:
-                                        chunk = response.read(min(65_536, size + 1 - count))
+                                        amount = min(65_536, size + 1 - count)
+                                        if (
+                                            isinstance(response, HTTPResponse)
+                                            and response.fp is None
+                                        ):
+                                            if response.length == 0:
+                                                chunk = b""
+                                            else:
+                                                raise ProvisionError(
+                                                    "TOKENIZER_TRANSPORT_UNAVAILABLE"
+                                                )
+                                        else:
+                                            read1 = (
+                                                getattr(response, "read1", None)
+                                                if isinstance(response, HTTPResponse)
+                                                else None
+                                            )
+                                            if callable(read1):
+                                                chunk = read1(amount)
+                                            else:
+                                                chunk = response.read(amount)
                                     except (ConnectionError, TimeoutError) as error:
                                         raise _RetryableDownloadError(
                                             "TOKENIZER_NETWORK_ERROR"

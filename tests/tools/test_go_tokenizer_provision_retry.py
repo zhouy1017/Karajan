@@ -3,17 +3,21 @@
 from __future__ import annotations
 
 import hashlib
+import http.server
 import importlib.util
 import io
 import json
 import ssl
 import sys
-from collections.abc import Iterator
+import threading
+import time
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from email.message import Message
 from pathlib import Path
-from typing import BinaryIO
+from typing import IO, BinaryIO, cast
 from urllib.error import HTTPError, URLError
+from urllib.request import urlopen
 
 import pytest
 
@@ -29,6 +33,29 @@ SPEC.loader.exec_module(SCRIPT)
 @contextmanager
 def response(data: bytes | BinaryIO) -> Iterator[BinaryIO]:
     yield io.BytesIO(data) if isinstance(data, bytes) else data
+
+
+@contextmanager
+def local_server(writer: Callable[[IO[bytes]], None], content_length: int) -> Iterator[str]:
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            self.send_response(200)
+            self.send_header("Content-Length", str(content_length))
+            self.end_headers()
+            writer(cast(IO[bytes], self.wfile))
+
+        def log_message(self, format: str, *args: object) -> None:
+            del format, args
+
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield f"http://127.0.0.1:{server.server_port}/fixture"
+    finally:
+        server.shutdown()
+        thread.join(timeout=2)
+        server.server_close()
 
 
 @pytest.fixture
@@ -182,6 +209,94 @@ def test_default_connect_receives_remaining_budget(
 
     assert timeouts == [30.0, 1.0]
     assert (tmp_path / "fixture.bin").read_bytes() == small_artifact
+
+
+def test_loopback_slow_byte_stream_stops_at_small_budget(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, small_artifact: bytes
+) -> None:
+    stop = threading.Event()
+
+    def writer(stream: IO[bytes]) -> None:
+        for index, byte in enumerate(small_artifact):
+            try:
+                stream.write(bytes((byte,)))
+                stream.flush()
+            except (BrokenPipeError, ConnectionResetError):
+                return
+            if index + 1 < len(small_artifact) and stop.wait(0.07):
+                return
+
+    monkeypatch.setattr(SCRIPT, "DOWNLOAD_BUDGET_SECONDS", 0.30)
+    with local_server(writer, len(small_artifact)) as url:
+        monkeypatch.setattr(
+            SCRIPT,
+            "_open",
+            lambda _, *, timeout=30.0: urlopen(url, timeout=timeout),
+        )
+        started = time.perf_counter()
+        with pytest.raises(SCRIPT.ProvisionError, match="^TOKENIZER_DOWNLOAD_TIMEOUT$"):
+            SCRIPT.provision(tmp_path)
+        elapsed = time.perf_counter() - started
+        stop.set()
+
+    assert elapsed < 0.90
+    assert not (tmp_path / "fixture.bin").exists()
+
+
+def test_loopback_delayed_byte_cannot_extend_budget(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    payload = b"x" * 65_537
+    monkeypatch.setattr(
+        SCRIPT,
+        "ARTIFACTS",
+        {"fixture.bin": (len(payload), hashlib.sha256(payload).hexdigest())},
+    )
+    sent = threading.Event()
+    release = threading.Event()
+
+    def writer(stream: IO[bytes]) -> None:
+        try:
+            time.sleep(0.50)
+            stream.write(payload[:-1])
+            stream.flush()
+            sent.set()
+            release.wait(2)
+            stream.write(payload[-1:])
+            stream.flush()
+        except (BrokenPipeError, ConnectionResetError):
+            return
+
+    monkeypatch.setattr(SCRIPT, "DOWNLOAD_BUDGET_SECONDS", 0.80)
+    with local_server(writer, len(payload)) as url:
+        monkeypatch.setattr(
+            SCRIPT,
+            "_open",
+            lambda _, *, timeout=30.0: urlopen(url, timeout=timeout),
+        )
+        failure: list[BaseException] = []
+
+        def run() -> None:
+            try:
+                SCRIPT.provision(tmp_path)
+            except BaseException as error:
+                failure.append(error)
+
+        worker = threading.Thread(target=run)
+        started = time.perf_counter()
+        worker.start()
+        assert sent.wait(2)
+        assert release.wait(0.60) is False
+        release.set()
+        worker.join(timeout=2)
+        elapsed = time.perf_counter() - started
+
+    assert not worker.is_alive()
+    assert len(failure) == 1
+    assert isinstance(failure[0], SCRIPT.ProvisionError)
+    assert str(failure[0]) == "TOKENIZER_DOWNLOAD_TIMEOUT"
+    assert elapsed < 1.40
+    assert not (tmp_path / "fixture.bin").exists()
 
 
 def test_final_read_crossing_deadline_cannot_publish(

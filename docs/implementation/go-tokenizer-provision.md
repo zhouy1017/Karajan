@@ -12,6 +12,12 @@ HTTP 4xx, and filesystem failures are deterministic failures and are not
 retried. Every attempt uses its own temporary file; only a verified file is
 atomically renamed into place, and failed temporary files are removed.
 
+The default HTTP transport receives the remaining budget on connection and
+updates its owned socket timeout before every read. `HTTPResponse.read1` is
+used where available so a slow stream cannot extend the deadline by waiting
+for a full buffer. EOF, digest completion, and publication each recheck the
+same deadline.
+
 The command line reports only stable, redacted categories. HTTP failures may
 include the numeric status (`TOKENIZER_HTTP_STATUS_429`); transport failures
 use `TOKENIZER_NETWORK_ERROR`; exception text, response bodies, signed URLs,
