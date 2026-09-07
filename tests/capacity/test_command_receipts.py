@@ -405,6 +405,30 @@ def test_admit_final_callback_failure_rolls_back_reservation_and_receipt(ledger)
     assert store.command_receipt("admit", value, command_key="final-capacity-deadline") is None
 
 
+def test_admit_final_callback_can_defer_its_scalar_check_until_the_write_tail(ledger):
+    store, clock = ledger
+    calls: list[str] = []
+
+    def prepare_final_check():
+        calls.append("prepare")
+
+        def final_check() -> None:
+            calls.append("final")
+            clock[0] = 1001.0
+
+        return final_check
+
+    admitted = store.admit(
+        request(), command_key="deferred-final-check", before_reservation_write=prepare_final_check
+    )
+
+    assert admitted["decision"] == "admitted"
+    assert calls == ["prepare", "final"]
+    reservation = store.snapshot()["reservations"][0]
+    assert reservation["created_at"] == 1001.0
+    assert reservation["expires_at"] == 1031.0
+
+
 def test_admit_rechecks_time_and_uses_the_post_callback_reservation_clock(ledger):
     store, clock = ledger
     calls: list[str] = []

@@ -169,6 +169,34 @@ def test_pre_effect_final_callback_rechecks_its_clock_before_yield(ledger):
     assert store.snapshot() == before
 
 
+def test_pre_effect_final_callback_can_defer_its_scalar_check_until_yield(ledger):
+    store, clock = ledger
+    value = bound_request(store)
+    admission_id = store.admit(value, command_key="reserve")["admission_id"]
+    store.activate(admission_id, command_key="activate")
+    before = store.snapshot()
+    callbacks: list[str] = []
+
+    def prepare_final_check():
+        callbacks.append("prepare")
+
+        def final_check() -> None:
+            callbacks.append("final")
+            clock[0] = 1005.0
+
+        return final_check
+
+    with pytest.raises(CapacityError, match="^OBSERVATION_STALE:short$"):
+        with store.pre_effect_guard(
+            admission_id,
+            expected_request=value,
+            before_effect_yield=prepare_final_check,
+        ):
+            pytest.fail("final stale facts entered the effect guard")
+    assert callbacks == ["prepare", "final"]
+    assert store.snapshot() == before
+
+
 def test_pre_effect_rechecks_expiry_after_capacity_reads_without_a_final_callback(
     ledger, monkeypatch
 ):
