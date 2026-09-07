@@ -350,16 +350,26 @@ def evaluate_reserved_profile(
     policy_snapshot: dict[str, Any],
     capacity_snapshot: dict[str, Any],
     profile_ref: dict[str, Any],
+    *,
+    revalidate_quota: bool = False,
 ) -> dict[str, Any]:
     """Recheck one fixed Profile without authorizing activation or reserving again.
 
     This pure input check does not prove that a reservation exists. The controller
     must bind these snapshots and the exact Profile to its held admission, then use
-    Capacity activation/pre-effect checks for current quota availability. Cash,
-    authorization, qualification and complete bound demand are still checked here.
+    Capacity activation/pre-effect checks for current quota availability. A
+    held controller may opt into the same pure quota algorithm against a fresh
+    immutable Capacity snapshot. Cash, authorization, qualification and
+    complete bound demand are still checked here.
     """
     ref = parse(ProfileRef, profile_ref, "RESERVED_PROFILE_REFERENCE_INVALID")
-    return _evaluate(task_snapshot, policy_snapshot, capacity_snapshot, reserved_profile=ref)
+    return _evaluate(
+        task_snapshot,
+        policy_snapshot,
+        capacity_snapshot,
+        reserved_profile=ref,
+        revalidate_reserved_quota=revalidate_quota,
+    )
 
 
 def _evaluate(
@@ -368,6 +378,7 @@ def _evaluate(
     capacity_snapshot: dict[str, Any],
     *,
     reserved_profile: dict[str, Any] | None = None,
+    revalidate_reserved_quota: bool = False,
 ) -> dict[str, Any]:
     task = parse(TaskSnapshot, task_snapshot, "TASK_SNAPSHOT_INVALID")
     policy = parse(PolicySnapshot, policy_snapshot, "POLICY_SNAPSHOT_INVALID")
@@ -414,7 +425,7 @@ def _evaluate(
         return report
     report["reason_codes"] = []
     for candidate in report["candidates"]:
-        if reserved_profile is None:
+        if reserved_profile is None or revalidate_reserved_quota:
             check_quota(candidate, task, policy, capacity, rule)
         else:
             check_reserved_inputs(candidate, task, policy, capacity, rule)

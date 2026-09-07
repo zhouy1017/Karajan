@@ -35,6 +35,17 @@ def test_held_slots_and_pool_balance_do_not_reject_the_fixed_profile() -> None:
     assert (task, policy, capacity, ref) == before
 
 
+def test_opt_in_quota_revalidation_uses_the_normal_shared_quota_checks() -> None:
+    task, policy, capacity = sample()
+    capacity["accounts"][0]["active_attempts"] = 2
+    capacity["pools"][0]["reported_remaining"] = "0"
+    capacity["pools"][0]["future_reserved"] = "1"
+
+    report = evaluate_reserved_profile(task, policy, capacity, REF, revalidate_quota=True)
+    assert report["selected_profile"] is None
+    assert "QUOTA_INSUFFICIENT:service-fixture" in report["candidates"][0]["reason_codes"]
+
+
 def test_different_eligible_profile_cannot_replace_the_reserved_profile() -> None:
     task, policy, capacity = sample()
     add_candidate(task, policy, capacity, "other")
