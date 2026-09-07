@@ -1,5 +1,6 @@
 """ID-only binding over real approved stores/CAS; no real Reviewer qualification."""
 
+import json
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
@@ -139,6 +140,114 @@ def test_public_ids_compile_original_authors_and_create_ready_without_model_admi
         == original["execution"]["collection"]
     )
     assert intents.admissions.routing.capacity.path.read_bytes() == capacity_before
+
+
+def _passed_reviewer_subject(binding_case):
+    service, qualification, intents, args, candidates, captured, checks = binding_case
+    # Binding preparation/commit is separate from the later current check cycle.
+    service.advance(*args, principal="owner")
+    service.advance(*args, principal="owner")
+    checks.advance(*args, principal="owner")  # Install the current bound subject.
+    # This fixture has no native Check runner.  Make the already-controller-owned
+    # current Check cycle explicit C evidence, then exercise real admission and
+    # Capacity persistence below.
+    with sqlite3.connect(intents.admissions.database) as db:
+        row = db.execute("SELECT data FROM operations WHERE id=?", (args[1],)).fetchone()
+        worker = json.loads(row[0])
+        for check in worker["validation"]["checks"]["runs"]:
+            check.update(phase="recorded", evidence={"status": "passed"})
+        worker["validation"]["checks"]["phase"] = "checks_passed"
+        db.execute("UPDATE operations SET data=? WHERE id=?", (json.dumps(worker), args[1]))
+    routing = intents.admissions.routing
+    routing.qualifications = qualification
+    run_id, worker_operation_id = args
+    run = routing.planner.get(run_id, principal="owner")
+    demand = [
+        {"pool_id": pool["id"], "unit": pool["unit"], "window_kind": "fixed", "amount": "3"}
+        for pool in run["configuration_snapshot"]["configuration"]["resources"]["quota_pools"]
+    ]
+    routing.estimates.register(
+        run_id,
+        "review",
+        {"id": "fixture-profile", "revision": 1},
+        {
+            "id": "checks-reviewer-estimate",
+            "revision": 1,
+            "source_kind": "owner_conservative_estimate",
+            "validity_seconds": 600,
+            "measurement_semantics": "window_independent_attempt",
+            "demand": demand,
+            "completion_seconds": None,
+            "basis": "Synthetic reviewer forecast for this exact approved task.",
+        },
+        principal="owner",
+        command_key="reviewer-estimate",
+    )
+    return intents, args, candidates, captured, checks
+
+
+def test_reviewer_admission_uses_distinct_operation_identity_and_capacity_request(binding_case):
+    intents, (run_id, worker_operation_id), _, _, _ = _passed_reviewer_subject(binding_case)
+    queued = intents.admissions.enqueue(
+        run_id, "review", principal="owner", command_key="reviewer-admission"
+    )
+    assert queued["state"] == "queued", queued
+    assert queued["id"] != worker_operation_id
+    assert queued["depends_on_operation_id"] == worker_operation_id
+    assert queued["planned_attempt_id"] != queued["assessment"]["route"]["snapshots"]["task"][
+        "authors"
+    ][0]["attempt_id"]
+    assert queued["assessment"]["route"]["snapshots"]["task"]["authors"]
+    reserved = intents.admissions.advance(run_id, queued["id"], principal="owner")
+    assert reserved["state"] == "reserved", reserved
+    assert reserved["request"]["attempt_id"] == queued["planned_attempt_id"]
+    assert reserved["request"]["role"] == "reviewer"
+
+
+def test_multiple_credible_worker_operations_are_rejected_before_capacity(binding_case):
+    intents, (run_id, worker_operation_id), _, _, _ = _passed_reviewer_subject(binding_case)
+    with sqlite3.connect(intents.admissions.database) as db:
+        row = db.execute(
+            "SELECT data FROM operations WHERE id=?", (worker_operation_id,)
+        ).fetchone()
+        duplicate = json.loads(row[0])
+        duplicate["id"] = "second-credible-worker-operation"
+        db.execute(
+            "INSERT INTO operations VALUES (?,?,?,?,?)",
+            (
+                duplicate["id"],
+                duplicate["run_id"],
+                duplicate["task_id"],
+                duplicate["state"],
+                json.dumps(duplicate),
+            ),
+        )
+    before = intents.admissions.routing.capacity.path.read_bytes()
+    with pytest.raises(RunError, match="REVIEW_WORKER_LINEAGE_REQUIRED"):
+        intents.admissions.enqueue(run_id, "review", principal="owner", command_key="ambiguous")
+    assert intents.admissions.routing.capacity.path.read_bytes() == before
+
+
+def test_current_check_change_blocks_reviewer_admission_before_capacity(binding_case):
+    intents, (run_id, worker_operation_id), _, _, _ = _passed_reviewer_subject(binding_case)
+    queued = intents.admissions.enqueue(
+        run_id, "review", principal="owner", command_key="current-checks"
+    )
+    with sqlite3.connect(intents.admissions.database) as db:
+        row = db.execute(
+            "SELECT data FROM operations WHERE id=?", (worker_operation_id,)
+        ).fetchone()
+        worker = json.loads(row[0])
+        worker["validation"]["checks"]["runs"][0]["evidence"]["status"] = "failed"
+        worker["validation"]["checks"]["phase"] = "blocked"
+        db.execute(
+            "UPDATE operations SET data=? WHERE id=?", (json.dumps(worker), worker_operation_id)
+        )
+    before = intents.admissions.routing.capacity.path.read_bytes()
+    result = intents.admissions.advance(run_id, queued["id"], principal="owner")
+    assert result["state"] == "blocked"
+    assert result["reason_codes"] == ["REVIEW_SUBJECT_CHECKS_REQUIRED"]
+    assert intents.admissions.routing.capacity.path.read_bytes() == before
 
 
 def test_installed_binding_is_stable_over_time_and_next_generation_uses_direct_predecessor(

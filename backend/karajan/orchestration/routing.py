@@ -20,6 +20,7 @@ from karajan.runs import RunError, RunPlanner
 from karajan.runs.planning import encoded, identifier
 from karajan.storage import require_schema
 
+from .go_reviewer_scope import resolve_go_reviewer_execution
 from .go_scope import resolve_go_execution
 
 if TYPE_CHECKING:
@@ -129,6 +130,71 @@ class ApprovedRunRouting:
             )
             return receipt
 
+    def assess_reviewer(
+        self,
+        run_id: str,
+        task_id: str,
+        *,
+        principal: str,
+        command_key: str,
+        worker_operation: dict[str, Any],
+        candidates: Any,
+    ) -> dict[str, Any]:
+        """Assess a Reviewer from its recorded Worker lineage.
+
+        This is intentionally an internal controller port: public callers only
+        reach it through ``ApprovedTaskAdmission.enqueue`` with Run/task IDs.
+        The Worker operation and Candidate store are controller-owned facts,
+        never part of an RPC payload.
+        """
+        for value in (run_id, task_id, principal, command_key):
+            identifier(value)
+        payload = encoded([run_id, task_id])
+        with self.planner._transaction() as db:
+            run = self.planner._get(db, run_id)
+            self.planner._owner(run, principal)
+            prior = db.execute(
+                "SELECT payload,result FROM approved_routing_assessments "
+                "WHERE principal=? AND command_key=?",
+                (principal, command_key),
+            ).fetchone()
+            if prior:
+                if prior["payload"] != payload:
+                    raise RunError("IDEMPOTENCY_CONFLICT")
+                return dict(json.loads(prior["result"]))
+            receipt: dict[str, Any] = {
+                "schema_version": "karajan.approved-routing-assessment.v1",
+                "id": str(uuid.uuid4()),
+                "run_id": run_id,
+                "task_id": task_id,
+                "planned_attempt_id": str(uuid.uuid4()),
+                "planned_context_id": str(uuid.uuid4()),
+                "scope": "approved_reviewer_assessment",
+                "state": "blocked",
+                "activation_allowed": False,
+                "dispatch_enabled": False,
+                "reason_codes": [],
+                "route": None,
+                "sources": {},
+                "admission_expectations": [],
+            }
+            with ExitStack() as holds:
+                self._build(
+                    receipt,
+                    run,
+                    task_id,
+                    principal,
+                    holds,
+                    worker_operation=worker_operation,
+                    candidates=candidates,
+                )
+            receipt["digest"] = digest(receipt)
+            db.execute(
+                "INSERT INTO approved_routing_assessments VALUES (?,?,?,?,?,?)",
+                (receipt["id"], run_id, principal, command_key, payload, encoded(receipt)),
+            )
+            return receipt
+
     def get(self, run_id: str, assessment_id: str, *, principal: str) -> dict[str, Any]:
         for value in (run_id, assessment_id, principal):
             identifier(value)
@@ -173,6 +239,51 @@ class ApprovedRunRouting:
                 "admission_expectations": [],
             }
             self._build(receipt, run, task_id, principal, holds)
+            receipt["digest"] = digest(receipt)
+            yield receipt
+
+    @contextmanager
+    def reviewer_admission_guard(
+        self,
+        run_id: str,
+        task_id: str,
+        *,
+        principal: str,
+        attempt_id: str,
+        context_id: str,
+        worker_operation: dict[str, Any],
+        candidates: Any,
+    ) -> Iterator[dict[str, Any]]:
+        """Fresh Reviewer guard using the original Worker operation only."""
+        for value in (run_id, task_id, principal, attempt_id, context_id):
+            identifier(value)
+        with self.planner.activation_guard(run_id) as run, ExitStack() as holds:
+            self.planner._owner(run, principal)
+            receipt: dict[str, Any] = {
+                "schema_version": "karajan.approved-routing-assessment.v1",
+                "id": str(uuid.uuid4()),
+                "run_id": run_id,
+                "task_id": task_id,
+                "planned_attempt_id": attempt_id,
+                "planned_context_id": context_id,
+                "scope": "reviewer_admission_revalidation",
+                "state": "blocked",
+                "activation_allowed": False,
+                "dispatch_enabled": False,
+                "reason_codes": [],
+                "route": None,
+                "sources": {},
+                "admission_expectations": [],
+            }
+            self._build(
+                receipt,
+                run,
+                task_id,
+                principal,
+                holds,
+                worker_operation=worker_operation,
+                candidates=candidates,
+            )
             receipt["digest"] = digest(receipt)
             yield receipt
 
@@ -253,6 +364,8 @@ class ApprovedRunRouting:
         holds: ExitStack,
         *,
         reserved_profile: dict[str, Any] | None = None,
+        worker_operation: dict[str, Any] | None = None,
+        candidates: Any | None = None,
     ) -> None:
         if run["schema_version"] != "karajan.run-planning.v2":
             receipt["reason_codes"] = ["APPROVED_ROUTING_V2_REQUIRED"]
@@ -281,9 +394,18 @@ class ApprovedRunRouting:
         if task is None:
             receipt["reason_codes"] = ["TASK_SCOPE_NOT_APPROVED"]
             return
-        # Until recorded execution lineage is consumed, no client can manufacture
-        # authors, dependency evidence, failure history or a quality stage here.
-        if task["role"] != "worker" or task["depends_on"]:
+        reviewer = task["role"] == "reviewer"
+        if reviewer:
+            if worker_operation is None or candidates is None:
+                receipt["reason_codes"] = ["EXECUTION_LINEAGE_REQUIRED"]
+                return
+            reviewer_operation = worker_operation
+            try:
+                lineage = _reviewer_lineage(run, task, reviewer_operation, candidates)
+            except RunError as error:
+                receipt["reason_codes"] = [error.code]
+                return
+        elif task["role"] != "worker" or task["depends_on"]:
             receipt["reason_codes"] = [
                 "EXECUTION_LINEAGE_REQUIRED" if task["depends_on"] else "ROLE_NOT_IMPLEMENTED"
             ]
@@ -291,9 +413,15 @@ class ApprovedRunRouting:
         fixed = run["configuration_snapshot"]["configuration"]
         execution = run["execution_policy_snapshot"]
         classification = {
-            key: task[key] for key in TaskClassification.model_fields if key != "authors"
+            key: (
+                lineage["worker_task"][key]
+                if reviewer and key in {"complexity", "risk", "paths"}
+                else task[key]
+            )
+            for key in TaskClassification.model_fields
+            if key != "authors"
         }
-        classification["authors"] = []
+        classification["authors"] = lineage["authors"] if reviewer else []
         selection = select_rule(classification, fixed["rulebook"], execution["risk_policy"])
         auth = plan["plan"]["authorization"]
         grant = plan["routing_binding"]["stage_grants"].get(
@@ -347,6 +475,15 @@ class ApprovedRunRouting:
                 "approved_quality_stage_indices": [r["index"] for r in grant["quality"]],
             },
         }
+        if reviewer:
+            receipt["reviewer_lineage"] = {
+                "worker_operation_id": reviewer_operation["id"],
+                "worker_task_id": lineage["worker_task"]["id"],
+                "source_candidate": lineage["source_candidate"],
+                "subject_digest": lineage["subject_digest"],
+                "checks_digest": lineage["checks_digest"],
+                "binding_digest": lineage["binding_digest"],
+            }
         view = holds.enter_context(
             self.qualifications.routing_facts_guard(
                 run["project_id"],
@@ -362,9 +499,26 @@ class ApprovedRunRouting:
             # Raw configured 'passed' evidence is a declaration, not a
             # controller-produced qualification observation.
             observation = qualified["qualification"]
-            execution_context, scope_issues = resolve_go_execution(
-                registration, observation, task_snapshot, execution, selection["effective_class"]
-            )
+            if reviewer:
+                execution_context, scope_issues = resolve_go_reviewer_execution(
+                    registration,
+                    observation,
+                    task_snapshot,
+                    execution,
+                    selection["effective_class"],
+                )
+                ref = {"id": registration["id"], "revision": registration["revision"]}
+                if reference(ref) not in lineage["reviewer_profiles"]:
+                    registration["enabled"] = False
+                    qualified["reason_codes"].append("APPROVED_REVIEWER_PROFILE_REQUIRED")
+            else:
+                execution_context, scope_issues = resolve_go_execution(
+                    registration,
+                    observation,
+                    task_snapshot,
+                    execution,
+                    selection["effective_class"],
+                )
             if execution_context is not None:
                 qualified["execution_context"] = execution_context
             if scope_issues:
@@ -496,6 +650,109 @@ def _current_binding(frozen: dict[str, Any], catalog: dict[str, Any], row: dict[
             if before is None or before != after:
                 return False
     return registered["enabled"] is True
+
+
+def _reviewer_lineage(
+    run: dict[str, Any], reviewer: dict[str, Any], worker_operation: dict[str, Any], candidates: Any
+) -> dict[str, Any]:
+    """Return only controller-captured Reviewer inputs, or reject before Capacity.
+
+    The Reviewer task cannot nominate a Worker, Candidate, author, check, or
+    membership identity.  A bound current validation subject supplies those
+    facts, while the frozen plan supplies the Worker classification so a
+    Reviewer task cannot lower complexity, risk, or path scope.
+    """
+    from .candidate_subjects import current_subject
+
+    if worker_operation.get("run_id") != run["id"]:
+        raise RunError("REVIEW_WORKER_OPERATION_RUN_MISMATCH")
+    dependencies = reviewer.get("depends_on")
+    if not isinstance(dependencies, list) or len(dependencies) != 1:
+        raise RunError("UNIQUE_APPROVED_REVIEWER_DEPENDENCY_REQUIRED")
+    worker_task = next(
+        (row for plan in run["plans"] if plan["plan_revision"] == run["active_plan_revision"]
+        for row in plan["plan"]["tasks"]
+        if row["id"] == dependencies[0]),
+        None,
+    )
+    if (
+        worker_task is None
+        or worker_task["role"] != "worker"
+        or worker_task["depends_on"]
+        or worker_operation.get("task_id") != worker_task["id"]
+        or worker_operation.get("cancel_requested")
+    ):
+        raise RunError("REVIEW_WORKER_LINEAGE_REQUIRED")
+    validation = worker_operation.get("validation")
+    execution = worker_operation.get("execution", {})
+    if validation is None or execution.get("collection") is None:
+        raise RunError("REVIEW_SUBJECT_REQUIRED")
+    checks = validation.get("checks")
+    if (
+        not isinstance(checks, dict)
+        or checks.get("phase") != "checks_passed"
+        or not checks.get("runs")
+        or any(
+            row.get("phase") != "recorded"
+            or row.get("evidence", {}).get("status") != "passed"
+            for row in checks["runs"]
+        )
+    ):
+        raise RunError("REVIEW_SUBJECT_CHECKS_REQUIRED")
+    installed = validation.get("review_binding")
+    if not isinstance(installed, dict) or installed.get("phase") != "installed":
+        raise RunError("REVIEWER_BINDING_REQUIRED")
+    binding = installed.get("binding")
+    if (
+        not isinstance(binding, dict)
+        or binding.get("run_id") != run["id"]
+        or binding.get("operation_id") != worker_operation["id"]
+        or binding.get("reviewer_task_id") != reviewer["id"]
+        or binding.get("reviewer_task_digest") != digest(reviewer)
+    ):
+        raise RunError("REVIEW_SUBJECT_BINDING_MISMATCH")
+    subject = current_subject(worker_operation, candidates)
+    authors = subject["capture_candidate"]["request"].get("authors")
+    if not isinstance(authors, list) or not authors:
+        raise RunError("REVIEW_AUTHOR_LINEAGE_REQUIRED")
+    compiled_authors = []
+    for author in authors:
+        try:
+            compiled_authors.append(
+                {
+                    "profile": {
+                        "id": author["profile_id"],
+                        "revision": author["profile_revision"],
+                    },
+                    "model_family": author["model_family"],
+                    "attempt_id": author["attempt_id"],
+                    "context_id": author["context_id"],
+                    "complexity": worker_task["complexity"],
+                    "risk": worker_task["risk"],
+                    "paths": worker_task["paths"],
+                }
+            )
+        except (KeyError, TypeError):
+            raise RunError("REVIEW_AUTHOR_LINEAGE_REQUIRED") from None
+    sources = binding.get("reviewer_sources")
+    if not isinstance(sources, list) or not sources:
+        raise RunError("REVIEWER_BINDING_REQUIRED")
+    try:
+        profiles = {
+            (row["reviewer"]["profile_id"], row["reviewer"]["profile_revision"])
+            for row in sources
+        }
+    except (KeyError, TypeError):
+        raise RunError("REVIEWER_BINDING_REQUIRED") from None
+    return {
+        "worker_task": worker_task,
+        "authors": compiled_authors,
+        "reviewer_profiles": profiles,
+        "source_candidate": subject["subject"]["candidate"],
+        "subject_digest": digest(subject["subject"]),
+        "checks_digest": digest(checks),
+        "binding_digest": digest(binding),
+    }
 
 
 def _capacity_snapshot(

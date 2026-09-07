@@ -34,6 +34,10 @@ class ApprovedTaskAdmission:
         ):
             raise RunError("EXISTING_STORE_PARENT_MODE_REQUIRED")
         self.database, self.routing = database.resolve(), routing
+        # Installed after ApprovedReviewerBindings is constructed.  Keeping this
+        # controller-owned avoids a public Reviewer payload or a second source
+        # of Candidate authority.
+        self.reviewer_bindings: Any | None = None
         self.existing_only = existing_only
         if not existing_only:
             self.database.parent.mkdir(parents=True, exist_ok=True)
@@ -83,6 +87,57 @@ class ApprovedTaskAdmission:
 
     def _owner(self, run_id: str, principal: str) -> None:
         self.routing.planner.get(run_id, principal=principal)
+
+    def set_reviewer_bindings(self, bindings: Any) -> None:
+        """Attach the current-subject authority after the cyclic services exist."""
+        if getattr(bindings, "admissions", None) is not self:
+            raise RunError("REVIEW_BINDING_ADMISSION_MISMATCH")
+        self.reviewer_bindings = bindings
+
+    def _reviewer_context(
+        self, db: sqlite3.Connection, run_id: str, task_id: str, principal: str
+    ) -> dict[str, Any] | None:
+        """Locate the one persisted Worker operation for an approved Reviewer."""
+        with self.routing.planner.activation_guard(run_id) as run:
+            self.routing.planner._owner(run, principal)
+            plan = next(
+                (
+                    row
+                    for row in run["plans"]
+                    if row["plan_revision"] == run["active_plan_revision"]
+                ),
+                None,
+            )
+            task = (
+                next((row for row in plan["plan"]["tasks"] if row["id"] == task_id), None)
+                if plan is not None
+                else None
+            )
+            if task is None or task["role"] != "reviewer":
+                return None
+            bindings = self.reviewer_bindings
+            if bindings is None:
+                raise RunError("REVIEWER_BINDING_CONTROLLER_REQUIRED")
+            dependencies = task.get("depends_on")
+            if not isinstance(dependencies, list) or len(dependencies) != 1:
+                raise RunError("UNIQUE_APPROVED_REVIEWER_DEPENDENCY_REQUIRED")
+            rows = [
+                dict(json.loads(row["data"]))
+                for row in db.execute(
+                    "SELECT data FROM operations WHERE run_id=? AND task_id=?",
+                    (run_id, dependencies[0]),
+                ).fetchall()
+            ]
+            rows = [
+                row
+                for row in rows
+                if row.get("workspace") is not None
+                and row.get("execution", {}).get("collection") is not None
+                and not row.get("cancel_requested")
+            ]
+            if len(rows) != 1:
+                raise RunError("REVIEW_WORKER_LINEAGE_REQUIRED")
+            return rows[0]
 
     @staticmethod
     def _load(db: sqlite3.Connection, run_id: str, operation_id: str) -> dict[str, Any]:
@@ -173,15 +228,32 @@ class ApprovedTaskAdmission:
             ).fetchone():
                 raise RunError("TASK_ADMISSION_PENDING")
             identity = str(uuid.uuid4())
-            assessment = self.routing.assess(
-                run_id, task_id, principal=principal, command_key="admission-assess:" + identity
-            )
+            reviewer_worker = self._reviewer_context(db, run_id, task_id, principal)
+            if reviewer_worker is None:
+                assessment = self.routing.assess(
+                    run_id, task_id, principal=principal, command_key="admission-assess:" + identity
+                )
+            else:
+                bindings = self.reviewer_bindings
+                if bindings is None:
+                    raise RunError("REVIEWER_BINDING_CONTROLLER_REQUIRED")
+                assessment = self.routing.assess_reviewer(
+                    run_id,
+                    task_id,
+                    principal=principal,
+                    command_key="admission-assess:" + identity,
+                    worker_operation=reviewer_worker,
+                    candidates=bindings.candidates,
+                )
             request = _request(assessment)
             operation = {
                 "schema_version": "karajan.approved-task-admission.v1",
                 "id": identity,
                 "run_id": run_id,
                 "task_id": task_id,
+                "depends_on_operation_id": assessment.get("reviewer_lineage", {}).get(
+                    "worker_operation_id"
+                ),
                 "planned_attempt_id": assessment["planned_attempt_id"],
                 "planned_context_id": assessment["planned_context_id"],
                 "state": "queued" if request else "blocked",
@@ -222,13 +294,31 @@ class ApprovedTaskAdmission:
             # A lost response is recovered without re-authorizing or re-sending.
             receipt = self.routing.capacity.command_receipt("admit", request, command_key=key)
             if receipt is None:
-                with self.routing.admission_guard(
-                    run_id,
-                    operation["task_id"],
-                    principal=principal,
-                    attempt_id=operation["planned_attempt_id"],
-                    context_id=operation["planned_context_id"],
-                ) as current:
+                reviewer_worker = self._reviewer_context(
+                    db, run_id, operation["task_id"], principal
+                )
+                bindings = self.reviewer_bindings
+                if reviewer_worker is not None:
+                    if bindings is None:
+                        raise RunError("REVIEWER_BINDING_CONTROLLER_REQUIRED")
+                    guard = self.routing.reviewer_admission_guard(
+                        run_id,
+                        operation["task_id"],
+                        principal=principal,
+                        attempt_id=operation["planned_attempt_id"],
+                        context_id=operation["planned_context_id"],
+                        worker_operation=reviewer_worker,
+                        candidates=bindings.candidates,
+                    )
+                else:
+                    guard = self.routing.admission_guard(
+                        run_id,
+                        operation["task_id"],
+                        principal=principal,
+                        attempt_id=operation["planned_attempt_id"],
+                        context_id=operation["planned_context_id"],
+                    )
+                with guard as current:
                     operation["revalidation"] = current
                     current_request = _request(current)
                     if current_request is None or current_request != request:
