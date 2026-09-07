@@ -169,6 +169,69 @@ def test_pre_effect_final_callback_rechecks_its_clock_before_yield(ledger):
     assert store.snapshot() == before
 
 
+def test_pre_effect_rechecks_expiry_after_capacity_reads_without_a_final_callback(
+    ledger, monkeypatch
+):
+    store, clock = ledger
+    clock[0] = 1006.0
+    for pool in ("short", "weekly"):
+        store.observe(
+            {
+                "pool_id": pool,
+                "window_id": "window-2" if pool == "short" else "window-1",
+                "observed_at": clock[0],
+                "reset_at": 2000.0 if pool == "short" else 10000.0,
+                "source": "fixture",
+                "source_ref": "fresh-window-for-expiry-boundary",
+                "metric": "remaining",
+                "amount": "20",
+                "limit": "20",
+                "covered_usage_ids": [],
+            },
+            command_key="fresh-window-for-expiry-" + pool,
+        )
+    value = bound_request(store)
+    admission_id = store.admit(value, command_key="reserve")["admission_id"]
+    store.activate(admission_id, command_key="activate")
+    clock[0] = 1035.0
+    before = store.snapshot()
+    original = store._observation
+
+    def delayed_observation(*args):
+        observed = original(*args)
+        clock[0] = 1036.0
+        return observed
+
+    monkeypatch.setattr(store, "_observation", delayed_observation)
+    with pytest.raises(CapacityError, match="^RESERVATION_EXPIRED$"):
+        with store.pre_effect_guard(admission_id, expected_request=value):
+            pytest.fail("an expired active reservation entered the effect guard")
+    assert store.snapshot() == before
+
+
+def test_pre_effect_rejects_a_clock_that_regresses_after_its_capacity_evaluation(
+    ledger, monkeypatch
+):
+    store, clock = ledger
+    value = bound_request(store)
+    admission_id = store.admit(value, command_key="reserve")["admission_id"]
+    store.activate(admission_id, command_key="activate")
+    clock[0] = 1001.0
+    before = store.snapshot()
+    original = store._observation
+
+    def regressing_observation(*args):
+        observed = original(*args)
+        clock[0] = 1000.0
+        return observed
+
+    monkeypatch.setattr(store, "_observation", regressing_observation)
+    with pytest.raises(CapacityError, match="^CAPACITY_CLOCK_REGRESSED$"):
+        with store.pre_effect_guard(admission_id, expected_request=value):
+            pytest.fail("a regressed Capacity clock entered the effect guard")
+    assert store.snapshot() == before
+
+
 @pytest.mark.parametrize("other_state", ["reserved", "active", "unknown"])
 def test_other_runs_holds_remain_charged_when_excluding_only_the_original_admission(
     ledger, other_state
