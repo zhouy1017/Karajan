@@ -409,7 +409,11 @@ class ApprovedCandidateChecks:
         if (
             row.get("host_prepared_id") is not None
             and self.host is not None
-            and (row.get("native_claim") is None or native_observed is not None)
+            and (
+                row.get("native_claim") is None
+                or native_observed is not None
+                or row.get("observation") is not None
+            )
         ):
             try:
                 stopped = self.host.cancel(
