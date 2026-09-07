@@ -532,6 +532,8 @@ class CapacityStore:
                     policy, observations, evaluated_at=evaluated_at
                 )
                 final_now = self._now()
+                if final_now < temporal_fence.floor:
+                    raise CapacityError("CAPACITY_CLOCK_REGRESSED")
                 if not temporal_fence.current(final_now):
                     reasons = self._final_temporal_reasons(
                         value, policy, held, observations, final_now, evaluated_at=evaluated_at
@@ -557,6 +559,8 @@ class CapacityStore:
                 # after every source/controller calculation, but the later
                 # boundary can still reject if encoding consumed its lifetime.
                 created_at = self._now()
+                if created_at < temporal_fence.floor:
+                    raise CapacityError("CAPACITY_CLOCK_REGRESSED")
                 if not temporal_fence.current(created_at):
                     reasons = self._final_temporal_reasons(
                         value,
@@ -586,6 +590,8 @@ class CapacityStore:
                     final_check()
                 if not reasons:
                     final_now = self._now()
+                    if final_now < temporal_fence.floor:
+                        raise CapacityError("CAPACITY_CLOCK_REGRESSED")
                     if reservation is None or reservation["expires_at"] <= final_now:
                         reasons = ["RESERVATION_EXPIRED"]
                     if not temporal_fence.current(final_now):
