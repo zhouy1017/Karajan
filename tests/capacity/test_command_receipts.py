@@ -4,9 +4,10 @@ from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from threading import Barrier
 
+import karajan.capacity.store as capacity_store
 import pytest
 from karajan.capacity import CapacityError, CapacityStore
-from test_admission_bindings import bound_request, ledger, request
+from test_admission_bindings import bound_request, ledger, observation, request
 
 __all__ = ["ledger"]
 
@@ -425,8 +426,32 @@ def test_admit_final_callback_can_defer_its_scalar_check_until_the_write_tail(le
     assert admitted["decision"] == "admitted"
     assert calls == ["prepare", "final"]
     reservation = store.snapshot()["reservations"][0]
-    assert reservation["created_at"] == 1001.0
-    assert reservation["expires_at"] == 1031.0
+    assert reservation["created_at"] == 1000.0
+    assert reservation["expires_at"] == 1030.0
+
+
+def test_admit_rejects_when_reservation_encoding_consumes_its_lifetime(ledger, monkeypatch):
+    store, clock = ledger
+    policy = store.snapshot()["policies"][-1]["policy"]
+    policy["observation_max_age_seconds"] = 1000
+    store.activate_policy(policy, expected_revision=1, command_key="long-observation-window")
+    clock[0] = 1006.0
+    for pool in ("short", "weekly"):
+        observation(store, pool, "20", at=clock[0], window="window-2")
+    original = capacity_store.encoded
+
+    def delayed_reservation_encoding(value):
+        result = original(value)
+        if isinstance(value, dict) and value.get("state") == "reserved":
+            clock[0] = 1036.0
+        return result
+
+    monkeypatch.setattr(capacity_store, "encoded", delayed_reservation_encoding)
+    rejected = store.admit(request(), command_key="encoding-crosses-reservation-expiry")
+
+    assert rejected["decision"] == "rejected"
+    assert rejected["reason_codes"] == ["RESERVATION_EXPIRED"]
+    assert store.snapshot()["reservations"] == []
 
 
 def test_admit_rechecks_time_and_uses_the_post_callback_reservation_clock(ledger):
