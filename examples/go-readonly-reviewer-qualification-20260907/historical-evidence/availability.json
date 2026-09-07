@@ -79,9 +79,9 @@
   },
   "acceptance_projection": {
     "request_accounting_and_local_revoke_stop": "partially evidenced by existing records and this Journal availability audit",
-    "new_session_prompt_final_causality": "unverified: no stored native session, prompt identity, complete final, or text digest",
-    "read_history_to_request_digest_alignment": "unverified: no stored read or tool-history digest",
-    "clean_defect_denied_semantic_acceptance": "unverified: attempt2/3 retain only verdict and finding count; no whitelist-parsed blocking severity/location/behaviour/trigger/acceptance-reference facts were recovered; attempt4 has no full scenario parse",
+    "new_session_prompt_final_causality": "recovered from the existing qualification-record observation; see record-observation-recovery.md. Journal receipts alone still do not carry those fields.",
+    "read_history_to_request_digest_alignment": "recovered from existing record retention: each request digest is present in the Journal and retains message/read digests; see record-observation-recovery.md",
+    "clean_defect_denied_semantic_acceptance": "recovered from existing parsed_review observations, including schema-approved defect fields; see record-observation-manifest.json",
     "real_consumer_positive_then_revoke_negative": "not_run/unverified: no actual reviewer attempt or transition was recorded",
     "remote_provider_stop": "unknown",
     "issue107_s_passed": false

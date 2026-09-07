@@ -20,7 +20,12 @@ complete final/text digest, and read/tool-history digest are absent from every
 stored call receipt.  `response_bytes` presence is not a replacement for any
 of those fields.
 
-Accordingly this file adds no passed S claim.  It preserves the earlier nulls,
+The follow-up recovery in `record-observation-recovery.md` and
+`causal-identity-digests.json` found the same historical native-final and
+retention facts in the existing qualification records.  It corrects only the
+earlier statement about what the Journal receipt table itself retained.
+
+This archive still adds no passed Issue 107 S claim.  It preserves the earlier
 failures, unknown remote stop, expired/revoked state, and missing real consumer
 positive transition.  See `availability.json` for the fixed candidate, sources,
 method, and per-acceptance result.
