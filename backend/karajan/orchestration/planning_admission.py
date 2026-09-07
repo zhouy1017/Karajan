@@ -10,18 +10,23 @@ import json
 import sqlite3
 from collections.abc import Iterator
 from contextlib import contextmanager
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, Protocol
 
 from karajan.capacity import CapacityError, CapacityStore
+from karajan.projects import ProjectRegistry
 from karajan.resources.broker import units
-from karajan.routing import select_rule
+from karajan.routing import RoutingError, evaluate_reserved_profile, evaluate_route
 from karajan.runs import RunError, RunPlanner
 from karajan.runs.planning import digest, encoded, identifier
 from karajan.storage import open_database, require_schema
 
+from .routing import _capacity_snapshot
+
 COMMANDER_QUALIFICATION_SCOPE = "commander_planning.v1"
 COMMANDER_QUALIFICATION_READER_VERSION = "karajan.commander-qualification-reader.v1"
+PLANNING_ADMISSION_BOOTSTRAP = "planning-admission-bootstrap.json"
 
 
 class CommanderQualificationReader(Protocol):
@@ -30,6 +35,82 @@ class CommanderQualificationReader(Protocol):
     def read_commander(
         self, binding: dict[str, Any], *, scope: str, reader_version: str
     ) -> dict[str, Any] | None: ...
+
+
+class PersistentCommanderQualificationReader:
+    """Current production reader: Worker/Reviewer facts never become Commander facts."""
+
+    def read_commander(
+        self, binding: dict[str, Any], *, scope: str, reader_version: str
+    ) -> dict[str, Any] | None:
+        del binding, scope, reader_version
+        # The existing qualification store deliberately exposes no Commander
+        # source. #113 replaces this reader after an independent probe.
+        return None
+
+
+def open_persistent_planning_admission(control_directory: Path) -> "PlanningAdmissionAuthority":
+    """Rebuild only fixed existing stores from a private deployment descriptor."""
+    control = control_directory.resolve(strict=True)
+    descriptor = control / PLANNING_ADMISSION_BOOTSTRAP
+    try:
+        if not control.is_dir() or descriptor.is_symlink() or not descriptor.is_file():
+            raise ValueError()
+        raw = descriptor.read_bytes()
+        value = json.loads(raw)
+        if (
+            set(value)
+            != {
+                "schema_version",
+                "state_directory",
+                "planning_execution_database",
+                "planning_admission_database",
+                "capacity_database",
+                "projects_database",
+                "allowed_roots",
+            }
+            or value["schema_version"] != "karajan.planning-admission-bootstrap.v1"
+        ):
+            raise ValueError()
+
+        def path(name: str) -> Path:
+            item = Path(value[name])
+            if not item.is_absolute() or ".." in item.parts:
+                raise ValueError()
+            return item.resolve(strict=True)
+
+        state = path("state_directory")
+        execution_db, admission_db = (
+            path("planning_execution_database"),
+            path("planning_admission_database"),
+        )
+        capacity_db, projects_db = path("capacity_database"), path("projects_database")
+        if any(
+            not item.is_file() for item in (execution_db, admission_db, capacity_db, projects_db)
+        ):
+            raise ValueError()
+        roots = tuple(Path(row).resolve(strict=True) for row in value["allowed_roots"])
+        if not roots or any(not root.is_dir() for root in roots):
+            raise ValueError()
+        if any(
+            not item.is_relative_to(state)
+            for item in (execution_db, admission_db, capacity_db, projects_db)
+        ):
+            raise ValueError()
+    except (OSError, TypeError, ValueError, KeyError, json.JSONDecodeError):
+        raise RunError("PLANNING_ADMISSION_BOOTSTRAP_INVALID") from None
+    projects = ProjectRegistry(projects_db, roots, existing_only=True)
+    planner = RunPlanner(state / "runs.sqlite", projects, existing_only=True)
+    capacity = CapacityStore(capacity_db, existing_only=True)
+    return PlanningAdmissionAuthority(
+        admission_db,
+        execution_db,
+        planner,
+        capacity,
+        PersistentCommanderQualificationReader(),
+        authority_kind="production",
+        existing_only=True,
+    )
 
 
 class PlanningAdmissionAuthority:
@@ -207,9 +288,7 @@ class PlanningAdmissionAuthority:
             if prior is not None:
                 if prior["payload"] != payload:
                     raise RunError("IDEMPOTENCY_CONFLICT")
-                prior_result = dict(json.loads(prior["result"]))
-                if prior_result.get("phase") in {"admitted", "denied"}:
-                    return prior_result
+                return dict(json.loads(prior["result"]))
             db.execute(
                 "INSERT INTO planning_estimates VALUES (?,?,?,?,?) ON CONFLICT("
                 "run_id,budget_ref,profile_id,profile_revision) DO UPDATE SET data=excluded.data",
@@ -244,25 +323,168 @@ class PlanningAdmissionAuthority:
             or binding["authorization_ceiling_sha256"] != digest(run["authorization_ceiling"])
         ):
             raise RunError("PLANNING_ADMISSION_BINDING_STALE")
-        execution = run.get("execution_policy_snapshot")
-        if execution is not None:
-            selection = select_rule(
-                {
-                    "role": "commander",
-                    "purpose": "lead",
-                    "readiness": "ready",
-                    "complexity": "T1",
-                    "risk": "standard",
-                    "paths": [],
-                    "domains": [],
-                    "authors": [],
-                },
-                configuration["configuration"]["rulebook"],
-                execution["risk_policy"],
-            )
-            if selection["reason_codes"]:
-                raise RunError(selection["reason_codes"][0])
         return run, intent
+
+    @staticmethod
+    def _planning_authorization(
+        run: dict[str, Any], binding: dict[str, Any], record: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Derive a narrow planning-only authorization from frozen v2 Run facts.
+
+        A planning intent has no approved Plan or task grant.  This document is
+        therefore deliberately a new routing identity, bounded only by the
+        owner-frozen execution policy, Run ceiling, planning budget, and the
+        rulebook that were all frozen on the original Run.
+        """
+        execution = run["execution_policy_snapshot"]
+        ceiling = run["authorization_ceiling"]
+        constraints = execution["constraints"]
+        permitted = {
+            (row["id"], row["revision"])
+            for row in constraints["profile_refs"]
+        } & {
+            (row["id"], row["revision"])
+            for row in ceiling["profile_refs"]
+        }
+        profiles = [
+            row
+            for row in constraints["profile_refs"]
+            if (row["id"], row["revision"]) in permitted
+        ]
+        rulebook = run["configuration_snapshot"]["configuration"]["rulebook"]
+        approved_groups = {
+            group: [
+                row
+                for row in members
+                if (row["id"], row["revision"]) in permitted
+            ]
+            for group, members in rulebook["profile_groups"].items()
+        }
+        return {
+            "profile_refs": profiles,
+            "ceiling_profile_refs": profiles,
+            "channel_ids": sorted(set(constraints["channel_ids"]) & set(ceiling["channel_ids"])),
+            "tools": sorted(set(constraints["tools"]) & set(ceiling["tools"])),
+            "data_destinations": sorted(
+                set(constraints["data_destinations"]) & set(ceiling["data_destinations"])
+            ),
+            "required_capabilities": sorted(
+                set(constraints["required_capabilities"])
+                | set(ceiling["required_capabilities"])
+            ),
+            "min_isolation": "tool_sandboxed",
+            "allowed_stages": ["normal"],
+            "approved_groups": approved_groups,
+            "approved_quality_stage_indices": [],
+            "budget_ref": binding["budget_ref"],
+            "currency_limits": record["budget"]["currency_limits"],
+            "max_attempt_duration_seconds": min(
+                record["estimate"]["duration_seconds"],
+                record["budget"]["max_duration_seconds"],
+            ),
+            "max_quality_repair_rounds": 0,
+        }
+
+    def _evaluate_planning_route(
+        self,
+        run: dict[str, Any],
+        binding: dict[str, Any],
+        record: dict[str, Any],
+        qualification: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Run the ordinary routing evaluator over frozen policy and live capacity.
+
+        This intentionally feeds the evaluator a distinct planning schema
+        instead of inventing approved Task/Plan identifiers before approval.
+        """
+        facts = self.capacity.routing_facts()
+        fixed = run["configuration_snapshot"]["configuration"]
+        resources = deepcopy(fixed["resources"])
+        capacity, diagnostics = _capacity_snapshot(facts.as_dict(), resources)
+        estimate = record["estimate"]
+        registration = next(
+            row
+            for row in resources["profiles"]
+            if {"id": row["id"], "revision": row["revision"]} == binding["profile"]
+        )
+        windows = {
+            row["id"]: row
+            for row in capacity["pools"]
+            if row["id"] in registration["quota_pool_refs"]
+        }
+        capacity["estimates"] = [
+            {
+                "profile": binding["profile"],
+                "demand": [
+                    {
+                        "pool_id": pool_id,
+                        "unit": windows[pool_id]["unit"],
+                        "window_id": windows[pool_id]["window_id"],
+                        "amount": amount,
+                    }
+                    for pool_id, amount in sorted(estimate["demand"].items())
+                    if pool_id in windows
+                ],
+                "confidence": "unknown",
+                "completion_seconds": float(estimate["duration_seconds"]),
+                "price": None,
+                "evidence_ref": "planning-estimate:" + estimate["digest"],
+            }
+        ]
+        capacity["id"] = "planning-capacity:" + digest(
+            [facts.sha256, estimate["digest"], capacity["estimates"]]
+        )
+        task = {
+            "schema_version": "karajan.routing.planning.v1",
+            "run_id": binding["run_id"],
+            "intent_id": binding["intent_id"],
+            "execution_id": binding["execution_id"],
+            "planning_binding_sha256": digest(binding),
+            "role": "commander",
+            "purpose": "lead",
+            "readiness": "ready",
+            "complexity": "T1",
+            "risk": "standard",
+            "domains": [],
+            "paths": [],
+            "authors": [],
+            "required_capabilities": ["design_reasoning", "structured_plan_output"],
+            "tools": [],
+            "context_tokens": 1,
+            "reserved_output_tokens": 0,
+            "duration_seconds": estimate["duration_seconds"],
+            "stage": "normal",
+            "quality_stage_index": 0,
+            "failure_reason": None,
+            "previous_profile": None,
+            "quality_repair_rounds_used": 0,
+            "planned_attempt_id": binding["attempt_id"],
+            "planned_context_id": "planning-context:" + binding["execution_id"],
+            "authorization": self._planning_authorization(run, binding, record),
+        }
+        policy = {
+            "schema_version": "karajan.routing.policy.v1",
+            "rulebook": fixed["rulebook"],
+            "resources": resources,
+            "approved_profile_refs": fixed["approved_profile_refs"],
+            "profile_facts": [qualification["profile_facts"]],
+            "risk_policy": run["execution_policy_snapshot"]["risk_policy"],
+            "constraints": run["execution_policy_snapshot"]["constraints"],
+        }
+        try:
+            route = evaluate_route(task, policy, capacity)
+            reserved = evaluate_reserved_profile(task, policy, capacity, binding["profile"])
+        except (RoutingError, KeyError, TypeError, ValueError):
+            raise RunError("PLANNING_ROUTE_INPUT_INVALID") from None
+        return {
+            "route": route,
+            "reserved": reserved,
+            "capacity_facts_sha256": facts.sha256,
+            "capacity_diagnostics": diagnostics,
+            "task_sha256": digest(task),
+            "policy_sha256": digest(policy),
+            "capacity_sha256": digest(capacity),
+        }
 
     def _execution_binding(self, execution_id: str, principal: str) -> dict[str, Any]:
         """Read the controller's original ID-only binding without opening a claim."""
@@ -550,6 +772,22 @@ class PlanningAdmissionAuthority:
                 self._save(db, current)
                 record = current
             return self._finish_command(record, principal, command_key, payload)
+        # A pre-Plan execution may only draw planning authority from the full,
+        # owner-frozen v2 policy.  Legacy Runs do not carry the authorization
+        # fields needed by the ordinary evaluator; guessing them would expand
+        # production authority.
+        execution_policy = run.get("execution_policy_snapshot")
+        if (
+            run.get("schema_version") != "karajan.run-planning.v2"
+            or not isinstance(execution_policy, dict)
+            or binding.get("execution_policy_sha256") != execution_policy.get("digest")
+        ):
+            return self._finish_command(
+                self._deny(record, "PLANNING_POLICY_REQUIRED"),
+                principal,
+                command_key,
+                payload,
+            )
         profile = binding["profile"]
         registration = next(
             (
@@ -582,6 +820,7 @@ class PlanningAdmissionAuthority:
             or qualification.get("reader_version") != COMMANDER_QUALIFICATION_READER_VERSION
             or qualification.get("binding_sha256") != digest(binding)
             or qualification.get("source_generation_sha256") is None
+            or not isinstance(qualification.get("profile_facts"), dict)
             or not isinstance(qualification.get("valid_until"), (int, float))
             or qualification["valid_until"] <= self.planner.clock()
             or self.authority_kind == "production"
@@ -589,29 +828,18 @@ class PlanningAdmissionAuthority:
         ):
             record = self._deny(record, "COMMANDER_QUALIFICATION_REQUIRED")
         else:
-            rulebook = run["configuration_snapshot"]["configuration"]["rulebook"]
-            matching = [
-                rule
-                for rule in rulebook["rules"]
-                if rule["when"]["role"] == "commander" and rule["when"].get("purpose") == "lead"
-            ]
-            highest = [
-                rule
-                for rule in matching
-                if rule["priority"] == max((row["priority"] for row in matching), default=0)
-            ]
-            allowed = (
-                len(highest) == 1
-                and binding["profile"]
-                in [
-                    profile
-                    for group in highest[0]["eligible_groups"]
-                    for profile in rulebook["profile_groups"].get(group, [])
-                ]
-                and set(highest[0]["capabilities_all"])
-                <= set(qualification.get("capabilities", []))
-            )
-            if not allowed:
+            route_sources = self._evaluate_planning_route(run, binding, record, qualification)
+            route, reserved = route_sources["route"], route_sources["reserved"]
+            with self._transaction() as db:
+                stored = self._load(db, execution_id)
+                if stored is not None and stored["phase"] == "prepared":
+                    stored["route_sources"] = route_sources
+                    self._save(db, stored)
+                    record = stored
+            if (
+                route["selected_profile"] != binding["profile"]
+                or reserved["selected_profile"] != binding["profile"]
+            ):
                 record = self._deny(record, "COMMANDER_ROUTE_NOT_AUTHORIZED")
                 return self._finish_command(record, principal, command_key, payload)
             with self._transaction() as db:

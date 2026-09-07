@@ -7,7 +7,7 @@ from karajan.contracts.credentials import contains_credential
 from karajan.projects.models import ProfileRef
 
 from .compiler import RoutingError, compile_rulebook, digest, parse, reference
-from .models import CapacitySnapshot, PolicySnapshot, TaskSnapshot
+from .models import CapacitySnapshot, PlanningTaskSnapshot, PolicySnapshot, TaskSnapshot
 from .quotas import check_quota, check_reserved_inputs
 from .ranking import check_cash, rank
 from .selection import CLASSES, select_compiled_rule, validate_classification
@@ -308,7 +308,7 @@ def evaluate_profile_membership(
         observed = float(as_of)
     except (ValueError, TypeError, OverflowError):
         raise RoutingError("MEMBERSHIP_AS_OF_INVALID") from None
-    task = parse(TaskSnapshot, task_snapshot, "TASK_SNAPSHOT_INVALID")
+    task = parse_task_snapshot(task_snapshot)
     policy = parse(PolicySnapshot, policy_snapshot, "POLICY_SNAPSHOT_INVALID")
     compiled = compile_rulebook(policy["rulebook"])
     _validate(task, policy)
@@ -369,7 +369,7 @@ def _evaluate(
     *,
     reserved_profile: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    task = parse(TaskSnapshot, task_snapshot, "TASK_SNAPSHOT_INVALID")
+    task = parse_task_snapshot(task_snapshot)
     policy = parse(PolicySnapshot, policy_snapshot, "POLICY_SNAPSHOT_INVALID")
     capacity = parse(CapacitySnapshot, capacity_snapshot, "CAPACITY_SNAPSHOT_INVALID")
     compiled = compile_rulebook(policy["rulebook"])
@@ -432,3 +432,10 @@ def _evaluate(
             "NO_ELIGIBLE_PROFILE" if report["candidates"] else "NO_STAGE_CANDIDATE"
         ]
     return report
+
+
+def parse_task_snapshot(value: dict[str, Any]) -> dict[str, Any]:
+    """Dispatch Task and planning identities into the same routing algorithm."""
+    schema = value.get("schema_version") if isinstance(value, dict) else None
+    model = TaskSnapshot if schema == "karajan.routing.task.v1" else PlanningTaskSnapshot
+    return parse(model, value, "TASK_SNAPSHOT_INVALID")

@@ -130,23 +130,20 @@ class PlanningExecution:
     @classmethod
     def from_trusted_factory(
         cls,
-        database: Path,
-        planner: RunPlanner,
-        *,
-        admissions: PlanningAdmissionAuthority,
-        outputs: PlanningOutputAuthority,
-        capacity: CapacityStore,
-        existing_only: bool = True,
-        clock: Callable[[], float] | None = None,
+        control_directory: Path,
     ) -> "PlanningExecution":
-        """Reject injected ports until a fixed persistent bootstrap exists.
+        """Rebuild the admission port from the protected persistent bootstrap."""
+        from .planning_admission import open_persistent_planning_admission
 
-        Object identity and an ``authority_kind`` field are not a trust root.
-        The #113/bootstrap follow-up must reconstruct both ports from its
-        protected deployment descriptor; callers cannot promote fixtures here.
-        """
-        del database, planner, admissions, outputs, capacity, existing_only, clock
-        raise RunError("PLANNING_TRUSTED_BOOTSTRAP_REQUIRED")
+        admissions = open_persistent_planning_admission(control_directory)
+        return cls(
+            admissions.execution_database,
+            admissions.planner,
+            admissions=admissions,
+            capacity=admissions.capacity,
+            existing_only=True,
+            _trusted_authority_ids=frozenset({id(admissions)}),
+        )
 
     def _authority_allowed(self, authority: object, kind: str) -> bool:
         if kind == "fixture":
@@ -337,6 +334,10 @@ class PlanningExecution:
         except (RunError, ValueError):
             # The immutable authority record is the only result consumers see.
             pass
+        if self.outputs is None:
+            # #112 owns the output transport. Admission remains observable via
+            # its sealed receipt without treating missing output as a denial.
+            return self.get(execution_id, principal=principal)
         return self.reconcile(execution_id, principal=principal)
 
     def cancel(self, execution_id: str, *, principal: str, command_key: str) -> dict[str, Any]:
@@ -389,6 +390,22 @@ class PlanningExecution:
                 if evidence["authority_kind"] == "fixture"
                 else "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE",
             )
+        # An interrupted Capacity effect is neither an approval nor a denial.
+        # Keep the controller resumable and let a later ID-only admission read
+        # the original durable receipt; do not convert uncertainty to a
+        # terminal blocked execution.
+        if evidence["state"] == "unknown":
+            with self._transaction() as db:
+                current = self._load(db, execution_id)
+                if current["cancel_requested"]:
+                    return current
+                if current["admission"] not in (None, evidence):
+                    return self._blocked_locked(db, current, "PLANNING_ADMISSION_EVIDENCE_CHANGED")
+                current["admission"] = evidence
+                current["state"] = "admission_unknown"
+                current["reason_codes"] = ["PLANNING_ADMISSION_UNKNOWN"]
+                self._save(db, current)
+                return current
         if self.capacity is None:
             return self._blocked(execution_id, principal, "PLANNING_CAPACITY_AUTHORITY_UNAVAILABLE")
         if (
