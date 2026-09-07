@@ -393,7 +393,21 @@ class CapacityStore:
         )
         return {"revision": revision, "policy": value}
 
-    def admit(self, request: dict[str, Any], *, command_key: str) -> dict[str, Any]:
+    def admit(
+        self,
+        request: dict[str, Any],
+        *,
+        command_key: str,
+        before_reserve: Callable[[], None] | None = None,
+    ) -> dict[str, Any]:
+        """Admit a request, optionally rechecking a controller fact at the lock boundary.
+
+        ``before_reserve`` is an internal trusted callback.  It is invoked only
+        after this Capacity transaction has acquired its write lock and found a
+        request admissible, immediately before the reservation row is written.
+        Historical command receipts return before it is invoked.  It cannot
+        alter request validation, Capacity receipt identity, or default callers.
+        """
         value = _admission_payload(request)
 
         def apply(db: sqlite3.Connection) -> dict[str, Any]:
@@ -437,6 +451,8 @@ class CapacityStore:
                 "live_qualification": "not_run",
             }
             if not reasons:
+                if before_reserve is not None:
+                    before_reserve()
                 identity = str(uuid4())
                 reservation = {
                     "id": identity,
