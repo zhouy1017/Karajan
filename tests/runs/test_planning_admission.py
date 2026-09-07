@@ -7,6 +7,7 @@ import sys
 import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
 from threading import Barrier
@@ -836,10 +837,10 @@ def test_persistent_reader_observes_material_sealed_current_generation(
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
-def test_capacity_boundary_reobserves_material_sealed_commander_source(
+def test_effect_guard_reobserves_material_sealed_commander_source_before_body(
     configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """A changed sealed key rejects before Capacity writes its reservation."""
+    """A changed sealed key rejects before the effect context yields its body."""
     _, authority, run, execution = _case(tmp_path, configured)
     key = tmp_path / "synthetic-boundary.key"
     key.write_text("synthetic-boundary-key\n", encoding="utf-8")
@@ -948,25 +949,36 @@ def test_capacity_boundary_reobserves_material_sealed_commander_source(
             (record["id"], json.dumps(record), digest(record)),
         )
     authority.qualifications = reader
-    original = authority.capacity.admit
+    assert (
+        authority.advance(execution["id"], "owner", "synthetic-boundary-advance")["phase"]
+        == "admitted"
+    )
+    original = authority.capacity.pre_effect_guard
 
+    @contextmanager
     def mutate_key_while_capacity_is_held(
-        request: dict[str, Any],
+        admission_id: str,
         *,
-        command_key: str,
-        before_reserve: Callable[[], None] | None = None,
-    ) -> dict[str, Any]:
-        def recheck() -> None:
-            key.write_text("synthetic-boundary-key-changed\n", encoding="utf-8")
-            assert before_reserve is not None
-            before_reserve()
+        expected_request: dict[str, Any],
+        before_effect: Callable[[], None] | None = None,
+    ) -> Any:
+        # This wrapper is reached after #111 has retained the Run/Project
+        # guards and before the real Capacity callback invokes its source
+        # recheck. The context body must remain unreachable.
+        key.write_text("synthetic-boundary-key-changed\n", encoding="utf-8")
+        with original(
+            admission_id,
+            expected_request=expected_request,
+            before_effect=before_effect,
+        ) as capacity:
+            yield capacity
 
-        return original(request, command_key=command_key, before_reserve=recheck)
-
-    monkeypatch.setattr(authority.capacity, "admit", mutate_key_while_capacity_is_held)
-    denied = authority.advance(execution["id"], "owner", "synthetic-boundary-advance")
-    assert denied["reason_codes"] == ["COMMANDER_QUALIFICATION_CHANGED"]
-    assert authority.capacity.snapshot()["reservations"] == []
+    monkeypatch.setattr(authority.capacity, "pre_effect_guard", mutate_key_while_capacity_is_held)
+    entered = False
+    with pytest.raises(RunError, match="^COMMANDER_QUALIFICATION_CHANGED$"):
+        with authority.effect_guard(execution["id"], "owner", "synthetic-boundary-effect"):
+            entered = True
+    assert not entered
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
