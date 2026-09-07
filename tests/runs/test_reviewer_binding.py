@@ -428,6 +428,23 @@ def test_reviewer_route_checks_independence_against_every_captured_author(bindin
     assert intents.admissions.routing.capacity.path.read_bytes() == before
 
 
+@pytest.mark.parametrize("field", ["attempt_id", "context_id"])
+def test_second_author_collision_rejects_reviewer_before_capacity(binding_case, field):
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
+    queued = intents.admissions.enqueue(run_id, "review", principal="owner", command_key="second")
+    route = queued["assessment"]["route"]
+    task = deepcopy(route["snapshots"]["task"])
+    second = deepcopy(task["authors"][0])
+    second.update(attempt_id="second-author-attempt", context_id="second-author-context")
+    second[field] = task["planned_" + field]
+    task["authors"].append(second)
+    before = intents.admissions.routing.capacity.path.read_bytes()
+    result = evaluate_route(task, route["snapshots"]["policy"], route["snapshots"]["capacity"])
+    assert result["selected_profile"] is None
+    assert "REVIEW_NOT_INDEPENDENT" in result["candidates"][0]["reason_codes"]
+    assert intents.admissions.routing.capacity.path.read_bytes() == before
+
+
 @pytest.mark.parametrize("family", ["same", None])
 def test_t3_reviewer_same_or_unknown_family_is_rejected_before_capacity(binding_case, family):
     intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)

@@ -14,6 +14,7 @@ from karajan.runs import RunError
 from karajan.runs.planning import encoded, identifier
 from karajan.storage import open_database, require_schema
 
+from .execution_budget import admission_allowed
 from .routing import ApprovedRunRouting
 
 
@@ -300,6 +301,21 @@ class ApprovedTaskAdmission:
                 )
                 bindings = self.reviewer_bindings
                 if reviewer_worker is not None:
+                    # A Reviewer reservation is not a future process claim
+                    # (#116 owns that), but an already-started Run may not
+                    # admit work after its original cumulative boundary ends.
+                    with self.routing.planner.activation_guard(run_id) as run:
+                        self.routing.planner._owner(run, principal)
+                        try:
+                            deadline = admission_allowed(
+                                db, run, now=self.routing.planner.clock()
+                            )
+                        except RunError as error:
+                            operation["state"] = "blocked"
+                            operation["reason_codes"] = [error.code]
+                            self._save(db, operation)
+                            return operation
+                        operation["execution_budget_gate"] = {"deadline": deadline}
                     if bindings is None:
                         raise RunError("REVIEWER_BINDING_CONTROLLER_REQUIRED")
                     guard = self.routing.reviewer_admission_guard(
@@ -323,11 +339,17 @@ class ApprovedTaskAdmission:
                 with guard as current:
                     operation["revalidation"] = current
                     current_request = _request(current)
-                    if current_request is None or current_request != request:
+                    provenance_changed = (
+                        operation["assessment"].get("reviewer_lineage")
+                        != current.get("reviewer_lineage")
+                    )
+                    if current_request is None or current_request != request or provenance_changed:
                         operation["state"] = "blocked"
-                        operation["reason_codes"] = current["reason_codes"] or [
-                            "APPROVED_ADMISSION_INPUT_CHANGED"
-                        ]
+                        operation["reason_codes"] = (
+                            ["REVIEWER_ADMISSION_PROVENANCE_CHANGED"]
+                            if provenance_changed
+                            else current["reason_codes"] or ["APPROVED_ADMISSION_INPUT_CHANGED"]
+                        )
                         self._save(db, operation)
                         return operation
                     receipt = self.routing.capacity.admit(request, command_key=key)

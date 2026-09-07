@@ -151,3 +151,31 @@ def current_process(
     if now >= deadline:
         raise RunError("RUN_DURATION_LIMIT")
     return float(deadline)
+
+
+def admission_allowed(db: sqlite3.Connection, run: dict[str, Any], *, now: float) -> float:
+    """Check the existing Run ledger without claiming a future process.
+
+    Reviewer admission must not mint a second ledger or reset its first clock;
+    #116 owns the later process claim.  An absent ledger is deliberately not
+    interpreted as unused capacity once execution history exists.
+    """
+    if not _has_table(db) or (budget := _read(db, run["id"])) is None:
+        raise RunError("RUN_EXECUTION_HISTORY_RECONCILIATION_REQUIRED")
+    if type(now) not in (int, float) or not math.isfinite(now) or now < budget["started_at"]:
+        raise RunError("RUN_EXECUTION_CLOCK_REGRESSED")
+    plan = next(row for row in run["plans"] if row["plan_revision"] == run["active_plan_revision"])
+    resource = next(
+        row
+        for row in run["configuration_snapshot"]["configuration"]["resources"]["budgets"]
+        if row["id"] == plan["plan"]["authorization"]["budget_ref"]
+    )
+    maximum = min(budget["max_total_attempts"], resource["max_total_attempts"])
+    deadline = budget["started_at"] + min(
+        budget["max_duration_seconds"], resource["max_duration_seconds"]
+    )
+    if len(budget["claims"]) >= maximum:
+        raise RunError("RUN_ATTEMPT_LIMIT")
+    if now >= deadline:
+        raise RunError("RUN_DURATION_LIMIT")
+    return float(deadline)
