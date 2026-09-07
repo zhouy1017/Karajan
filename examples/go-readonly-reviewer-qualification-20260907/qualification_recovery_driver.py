@@ -18,7 +18,7 @@ import tempfile
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 ROOT = Path(__file__).resolve().parents[2]
 _SQLITE_CONNECT = sqlite3.connect
@@ -186,7 +186,7 @@ class ReceiptLedger:
                 if previous != value:
                     raise RecoveryError("RESUME_RECEIPT_CONFLICT")
                 database.commit()
-                return previous
+                return cast(dict[str, Any], previous)
             database.execute("INSERT INTO stages VALUES (?,?)", (stage, encoded))
             database.commit()
         except BaseException:
@@ -270,6 +270,7 @@ class QualificationRecovery:
         )
         positive_stage = self.ledger.read("positive_observed")
         positive_reconciled = self.ledger.read("positive_reconciled")
+        history_error: Exception | None = None
         if positive_stage is None or positive_stage.get("status") == "unknown":
             try:
                 historical_positive = self.positive_history()
@@ -382,6 +383,7 @@ class QualificationRecovery:
                 )
             result = negative.get("result") if isinstance(negative, dict) else None
             reasons = result.get("reason_codes") if isinstance(result, dict) else []
+            reasons = reasons if isinstance(reasons, list) else []
             if isinstance(result, dict) and (
                 negative.get("expected_revoke_reason_observed") is not True
                 or result.get("state") == "ready"

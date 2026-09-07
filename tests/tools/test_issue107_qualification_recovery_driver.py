@@ -4,6 +4,7 @@
 import importlib.util
 import json
 import sqlite3
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 from typing import Any
 
@@ -21,13 +22,24 @@ driver = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(driver)
 
 
+def _competing_stage_writer(directory: str, status: str) -> str:
+    """Subprocess boundary for the SQLite single-writer receipt test."""
+    try:
+        driver.ReceiptLedger(Path(directory)).write("positive_observed", {"status": status})
+    except driver.RecoveryError:
+        return "conflict"
+    return "accepted"
+
+
 class Store:
     def __init__(self, *, expires_at: float = 2000.0, status: str = "passed") -> None:
         self.start = {"id": "start", "qualification_id": "record", "expires_at": expires_at}
         self.record = {"id": "record", "status": status, "reason_codes": [], "revocation": None}
         self.starts = self.gets = self.revokes = 0
 
-    def get_command_start(self, project_id: str, command_key: str, *, principal: str) -> dict[str, Any]:
+    def get_command_start(
+        self, project_id: str, command_key: str, *, principal: str
+    ) -> dict[str, Any]:
         self.starts += 1
         assert command_key == driver.COMMAND
         return dict(self.start)
@@ -36,7 +48,9 @@ class Store:
         self.gets += 1
         return {"record": dict(self.record)}
 
-    def revoke(self, project_id: str, observation_id: str, *, principal: str, reason: str) -> dict[str, Any]:
+    def revoke(
+        self, project_id: str, observation_id: str, *, principal: str, reason: str
+    ) -> dict[str, Any]:
         self.revokes += 1
         self.record["revocation"] = {"reason": reason}
         return {"reason": reason, "id": observation_id}
@@ -47,7 +61,9 @@ class NewStore(Store):
         super().__init__()
         self.created = False
 
-    def get_command_start(self, project_id: str, command_key: str, *, principal: str) -> dict[str, Any]:
+    def get_command_start(
+        self, project_id: str, command_key: str, *, principal: str
+    ) -> dict[str, Any]:
         self.starts += 1
         if not self.created:
             raise driver.RecoveryError("QUALIFICATION_START_NOT_FOUND")
@@ -93,18 +109,24 @@ def test_resume_uses_only_original_store_records_and_persists_every_stage(tmp_pa
 def test_expired_or_unknown_original_record_never_calls_consumer_or_revoke(tmp_path: Path) -> None:
     calls: list[str] = []
     expired = recovery(
-        tmp_path / "expired", Store(expires_at=999.0), lambda: calls.append("positive"), lambda: calls.append("negative")
+        tmp_path / "expired",
+        Store(expires_at=999.0),
+        lambda: calls.append("positive"),
+        lambda: calls.append("negative"),
     )
     assert expired.resume()["reason_code"] == "QUALIFICATION_EXPIRED"
     unknown = recovery(
-        tmp_path / "unknown", Store(status="failed"), lambda: calls.append("positive"), lambda: calls.append("negative")
+        tmp_path / "unknown",
+        Store(status="failed"),
+        lambda: calls.append("positive"),
+        lambda: calls.append("negative"),
     )
     assert unknown.resume()["reason_code"] == "QUALIFICATION_UNKNOWN"
     assert calls == []
 
 
 def test_interruption_after_positive_reuses_its_durable_receipt_without_repeating_consumer(
-    tmp_path: Path
+    tmp_path: Path,
 ) -> None:
     store = Store()
     positive_calls = 0
@@ -128,7 +150,9 @@ def test_interruption_after_positive_reuses_its_durable_receipt_without_repeatin
     assert store.revokes == 0
 
 
-def test_revoke_reply_loss_recovers_the_original_store_receipt_without_a_second_revoke(tmp_path: Path) -> None:
+def test_revoke_reply_loss_recovers_the_original_store_receipt_without_a_second_revoke(
+    tmp_path: Path,
+) -> None:
     store = Store()
 
     def committed_then_lost(*args: Any, **kwargs: Any) -> dict[str, Any]:
@@ -139,7 +163,10 @@ def test_revoke_reply_loss_recovers_the_original_store_receipt_without_a_second_
     result = recovery(tmp_path, store).resume()
     assert result["status"] == "completed"
     assert store.revokes == 0
-    assert json.loads((tmp_path / "receipts" / "revoked_observed.json").read_text())["status"] == "recovered"
+    assert (
+        json.loads((tmp_path / "receipts" / "revoked_observed.json").read_text())["status"]
+        == "recovered"
+    )
 
 
 def test_revoked_record_with_persisted_positive_recovery_runs_only_negative_history(
@@ -160,12 +187,28 @@ def test_revoked_record_with_persisted_positive_recovery_runs_only_negative_hist
     assert store.revokes == 0
 
 
-def test_atomic_receipt_failure_does_not_publish_a_partial_stage(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_receipt_publication_failure_keeps_the_committed_sqlite_stage(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     ledger = driver.ReceiptLedger(tmp_path / "receipts")
-    monkeypatch.setattr(driver.os, "replace", lambda source, destination: (_ for _ in ()).throw(OSError()))
+    monkeypatch.setattr(
+        driver.os, "link", lambda source, destination: (_ for _ in ()).throw(OSError())
+    )
     with pytest.raises(driver.RecoveryError, match="UNCLASSIFIED"):
         ledger.write("start_observed", {"status": "observed"})
-    assert ledger.read("start_observed") is None
+    assert ledger.read("start_observed")["status"] == "observed"
+
+
+def test_multiprocess_stage_race_preserves_the_first_committed_receipt(tmp_path: Path) -> None:
+    with ProcessPoolExecutor(max_workers=2) as pool:
+        outcomes = list(
+            pool.map(
+                _competing_stage_writer, [str(tmp_path / "receipts")] * 2, ["passed", "unknown"]
+            )
+        )
+    assert sorted(outcomes) == ["accepted", "conflict"]
+    receipt = driver.ReceiptLedger(tmp_path / "receipts").read("positive_observed")
+    assert receipt is not None and receipt["status"] in {"passed", "unknown"}
 
 
 def test_execute_prepares_before_the_one_qualification_call_and_then_reuses_resume(
@@ -185,7 +228,9 @@ def test_execute_prepares_before_the_one_qualification_call_and_then_reuses_resu
     assert (tmp_path / "receipts" / "execute_start.json").exists()
 
 
-def test_qualification_reply_loss_recovers_the_fixed_start_without_a_second_call(tmp_path: Path) -> None:
+def test_qualification_reply_loss_recovers_the_fixed_start_without_a_second_call(
+    tmp_path: Path,
+) -> None:
     class LostReplyStore(NewStore):
         def qualify_runtime_tools(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
             super().qualify_runtime_tools(*args, **kwargs)
@@ -211,11 +256,19 @@ def test_original_start_and_record_can_be_reopened_from_real_sqlite(tmp_path: Pa
         connection.execute("CREATE TABLE facts (kind TEXT PRIMARY KEY, value TEXT NOT NULL)")
         connection.execute(
             "INSERT INTO facts VALUES (?, ?)",
-            ("start", json.dumps({"id": "start", "qualification_id": "record", "expires_at": 999.0})),
+            (
+                "start",
+                json.dumps({"id": "start", "qualification_id": "record", "expires_at": 999.0}),
+            ),
         )
         connection.execute(
             "INSERT INTO facts VALUES (?, ?)",
-            ("record", json.dumps({"id": "record", "status": "passed", "reason_codes": [], "revocation": None})),
+            (
+                "record",
+                json.dumps(
+                    {"id": "record", "status": "passed", "reason_codes": [], "revocation": None}
+                ),
+            ),
         )
 
     class ReadOnlyStore:
@@ -238,7 +291,9 @@ def test_original_start_and_record_can_be_reopened_from_real_sqlite(tmp_path: Pa
     assert result["reason_code"] == "QUALIFICATION_EXPIRED"
 
 
-def test_actual_store_views_use_bound_start_expiry_and_separate_revoke_receipt(tmp_path: Path) -> None:
+def test_actual_store_views_use_bound_start_expiry_and_separate_revoke_receipt(
+    tmp_path: Path,
+) -> None:
     database = tmp_path / "qualification.sqlite"
     with sqlite3.connect(database) as connection:
         connection.execute("CREATE TABLE facts (kind TEXT PRIMARY KEY, value TEXT NOT NULL)")
@@ -249,7 +304,9 @@ def test_actual_store_views_use_bound_start_expiry_and_separate_revoke_receipt(t
                 json.dumps(
                     {
                         "id": "record",
-                        "binding": {"execution_start": {"qualification_id": "record", "expires_at": 2000.0}},
+                        "binding": {
+                            "execution_start": {"qualification_id": "record", "expires_at": 2000.0}
+                        },
                     }
                 ),
             ),
@@ -258,7 +315,9 @@ def test_actual_store_views_use_bound_start_expiry_and_separate_revoke_receipt(t
             "INSERT INTO facts VALUES (?, ?)",
             ("record", json.dumps({"id": "record", "status": "passed", "reason_codes": []})),
         )
-        connection.execute("INSERT INTO facts VALUES (?, ?)", ("revocation", json.dumps({"reason": "retained"})))
+        connection.execute(
+            "INSERT INTO facts VALUES (?, ?)", ("revocation", json.dumps({"reason": "retained"}))
+        )
 
     class ActualStore:
         def _read(self, kind: str) -> dict[str, Any]:
@@ -307,22 +366,45 @@ def test_positive_history_reads_a_real_admission_receipt_without_fixture_rebuild
                                 "state": "ready",
                                 "assessment": {"actual_reviewer_attempt": None},
                             },
-                            "subject_transition": {"phase": "ready", "receipt": {"id": "candidate"}},
+                            "subject_transition": {
+                                "phase": "ready",
+                                "receipt": {"id": "candidate"},
+                                "binding": {
+                                    "reviewer_sources": [
+                                        {
+                                            "reviewer": {
+                                                "qualification_ref": "fixed-go-qualification:record"
+                                            }
+                                        }
+                                    ]
+                                },
+                            },
                         },
                     }
                 ),
             ),
         )
     monkeypatch.syspath_prepend(str(CONSUMER_SOURCE.parent))
-    consumer_spec = importlib.util.spec_from_file_location("issue107_consumer_history", CONSUMER_SOURCE)
+    consumer_spec = importlib.util.spec_from_file_location(
+        "issue107_consumer_history", CONSUMER_SOURCE
+    )
     assert consumer_spec is not None and consumer_spec.loader is not None
     consumer = importlib.util.module_from_spec(consumer_spec)
     consumer_spec.loader.exec_module(consumer)
     assert consumer.positive_history(tmp_path) == {
         "state": "ready",
-        "transition": {"phase": "ready", "receipt": {"id": "candidate"}},
+        "transition": {
+            "phase": "ready",
+            "receipt": {"id": "candidate"},
+            "binding": {
+                "reviewer_sources": [
+                    {"reviewer": {"qualification_ref": "fixed-go-qualification:record"}}
+                ]
+            },
+        },
         "membership_only": True,
         "actual_reviewer_attempt": None,
+        "qualification_ref": "fixed-go-qualification:record",
     }
 
 
@@ -344,13 +426,17 @@ def test_real_profile_store_revoke_commit_reply_loss_is_read_back_without_repeat
 
             return ProfileQualificationStore(actual_store, clock=lambda: actual_case["clock"][0])
 
-        def get_command_start(self, project_id: str, command_key: str, *, principal: str) -> dict[str, Any]:
+        def get_command_start(
+            self, project_id: str, command_key: str, *, principal: str
+        ) -> dict[str, Any]:
             return self._store().get_command_start(project_id, command_key, principal="owner")
 
         def get(self, project_id: str, observation_id: str, *, principal: str) -> dict[str, Any]:
             return self._store().get(project_id, observation_id, principal="owner")
 
-        def revoke(self, project_id: str, observation_id: str, *, principal: str, reason: str) -> dict[str, Any]:
+        def revoke(
+            self, project_id: str, observation_id: str, *, principal: str, reason: str
+        ) -> dict[str, Any]:
             self._store().revoke(project_id, observation_id, principal="owner", reason=reason)
             raise OSError("injected reply loss after ProfileQualificationStore commit")
 
@@ -364,6 +450,8 @@ def test_real_profile_store_revoke_commit_reply_loss_is_read_back_without_repeat
         now=lambda: actual_case["clock"][0],
     ).resume()
     assert result["status"] == "completed"
-    start = LostReplyStore().get_command_start(actual_case["project_id"], driver.COMMAND, principal="ignored")
+    start = LostReplyStore().get_command_start(
+        actual_case["project_id"], driver.COMMAND, principal="ignored"
+    )
     persisted = LostReplyStore().get(actual_case["project_id"], start["id"], principal="ignored")
     assert persisted["revocation"]["reason"] == "issue107-driver-post-positive"
