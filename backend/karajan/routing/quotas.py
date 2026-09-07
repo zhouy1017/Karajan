@@ -1,11 +1,93 @@
 """Read-only vector checks and pressure components; no reservations are created."""
 
+import math
+from dataclasses import dataclass
 from fractions import Fraction
-from typing import Any
+from typing import Any, cast
 
 from karajan.resources.broker import money, units
 
-from .compiler import digest, reference
+from .compiler import RoutingError, digest, reference
+
+
+@dataclass(frozen=True)
+class QuotaTemporalFence:
+    """O(1) time-only tail check for one successful shared quota report."""
+
+    floor: float
+    inclusive_until: float
+    exclusive_until: float | None
+
+    def assert_current(self, *, as_of: float) -> None:
+        if type(as_of) not in (int, float) or not math.isfinite(as_of) or as_of < self.floor:
+            raise RoutingError("QUOTA_TIME_REGRESSED")
+        if as_of > self.inclusive_until or (
+            self.exclusive_until is not None and as_of >= self.exclusive_until
+        ):
+            raise RoutingError("QUOTA_TIME_FENCE_EXPIRED")
+
+
+def capture_quota_temporal_fence(report: dict[str, Any]) -> QuotaTemporalFence:
+    """Retain selected-report observation limits without re-deciding quota mode."""
+    selected = report.get("selected_profile")
+    capacity = report.get("snapshots", {}).get("capacity")
+    if not isinstance(selected, dict) or not isinstance(capacity, dict):
+        raise RoutingError("QUOTA_TIME_FENCE_INVALID")
+    floor = capacity.get("as_of")
+    if type(floor) not in (int, float):
+        raise RoutingError("QUOTA_TIME_FENCE_INVALID")
+    floor_value = cast(float, floor)
+    if not math.isfinite(floor_value):
+        raise RoutingError("QUOTA_TIME_FENCE_INVALID")
+    candidate = next(
+        (
+            row
+            for row in report.get("candidates", [])
+            if isinstance(row, dict)
+            and row.get("profile") == selected
+            and row.get("eligible") is True
+        ),
+        None,
+    )
+    if candidate is None or not isinstance(candidate.get("capacity_policy"), dict):
+        raise RoutingError("QUOTA_TIME_FENCE_INVALID")
+    account_id = candidate["capacity_policy"].get("account_id")
+    account = next(
+        (row for row in capacity.get("accounts", []) if row.get("id") == account_id), None
+    )
+    policy = account.get("policy") if isinstance(account, dict) else None
+    evaluations = candidate.get("pool_evaluations")
+    if not isinstance(policy, dict) or not isinstance(evaluations, list) or not evaluations:
+        raise RoutingError("QUOTA_TIME_FENCE_INVALID")
+    global_age = policy.get("observation_max_age_seconds")
+    if type(global_age) is not int or global_age < 0:
+        raise RoutingError("QUOTA_TIME_FENCE_INVALID")
+    inclusive: list[float] = []
+    exclusive: list[float] = []
+    for evaluation in evaluations:
+        observation = evaluation.get("observation") if isinstance(evaluation, dict) else None
+        if not isinstance(observation, dict):
+            raise RoutingError("QUOTA_TIME_FENCE_INVALID")
+        observed_at, reset_at = observation.get("observed_at"), observation.get("reset_at")
+        if type(observed_at) not in (int, float):
+            raise RoutingError("QUOTA_TIME_FENCE_INVALID")
+        observation_time = cast(float, observed_at)
+        if not math.isfinite(observation_time):
+            raise RoutingError("QUOTA_TIME_FENCE_INVALID")
+        inclusive.append(observation_time + global_age)
+        if reset_at is not None:
+            if type(reset_at) not in (int, float) or not math.isfinite(reset_at):
+                raise RoutingError("QUOTA_TIME_FENCE_INVALID")
+            exclusive.append(cast(float, reset_at))
+        # `unknown_mode` is the evaluator's decision, not a fact this helper
+        # can reconstruct or accept from a controller.
+        if evaluation.get("unknown_mode") is True:
+            mode = policy.get("conservative_mode")
+            age = mode.get("observation_max_age_seconds") if isinstance(mode, dict) else None
+            if type(age) is not int or age < 0:
+                raise RoutingError("QUOTA_TIME_FENCE_INVALID")
+            inclusive.append(observation_time + age)
+    return QuotaTemporalFence(floor_value, min(inclusive), min(exclusive) if exclusive else None)
 
 
 def ratio(value: Fraction | None) -> dict[str, int] | None:
