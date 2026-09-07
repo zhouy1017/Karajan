@@ -129,4 +129,3 @@ def test_generic_worker_reconciliation_does_not_use_reviewer_refresh(prepared):
     )
     assert service.get(run["id"], queued["id"], principal="owner") == pending
 
-
