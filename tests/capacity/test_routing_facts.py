@@ -208,6 +208,55 @@ def test_boundary_view_rejects_an_unproven_or_rebound_owned_claim(tmp_path: Path
     assert source.as_dict()["accounts"][0]["held_admission_ids"] == [own]
 
 
+def test_boundary_view_handles_two_valid_claims_with_future_above_the_input_maximum(
+    tmp_path: Path,
+) -> None:
+    store = setup(tmp_path)
+    policy = store.snapshot()["policies"][-1]["policy"]
+    policy["conservative_mode"] = {
+        "enabled": True,
+        "max_local_active_attempts": 4,
+        "max_attempt_duration_seconds": 30,
+        "observation_max_age_seconds": 10,
+        "cooldown_seconds": 20,
+    }
+    store.activate_policy(policy, expected_revision=1, command_key="aggregate-unknown-policy")
+    store.clock = lambda: 1001.0
+    for pool_id in ("short", "weekly", "allowance"):
+        refresh(store, pool_id, None, metric="unknown")
+    demand = "5000000000000"
+    first = request("aggregate-first")
+    second = request("aggregate-second", run="run-b", profile="fast-b")
+    first["demand"] = dict.fromkeys(first["demand"], demand)
+    second["demand"] = dict.fromkeys(second["demand"], demand)
+    first_admission = store.admit(first, command_key="aggregate-first")
+    second_admission = store.admit(second, command_key="aggregate-second")
+    assert first_admission["decision"] == second_admission["decision"] == "admitted"
+    store.activate(first_admission["admission_id"], command_key="aggregate-first-activate")
+    store.activate(second_admission["admission_id"], command_key="aggregate-second-activate")
+    source = store.routing_facts(account_ids=("shared-account",))
+    facts = source.as_dict()
+    first_request = next(
+        item["reservation"]["request"]
+        for item in facts["accounts"][0]["admissions"]
+        if item["admission_id"] == first_admission["admission_id"]
+    )
+
+    derived = derive_capacity_boundary_facts(
+        CapacityBoundaryFacts(source, owned_admission_id=first_admission["admission_id"]),
+        expected_request=first_request,
+    )
+    assert all(
+        pool["future_reserved"] == "10000000000000.000000"
+        for pool in facts["accounts"][0]["pools"]
+    )
+    assert all(
+        pool["future_reserved"] == "5000000000000.000000"
+        for pool in derived["accounts"][0]["pools"]
+    )
+    assert source.sha256 == hashlib.sha256(source.canonical_json.encode()).hexdigest()
+
+
 def test_all_account_pools_and_runs_share_one_held_count(tmp_path: Path) -> None:
     store = setup(tmp_path)
     generous(store)
