@@ -381,22 +381,36 @@ class ApprovedCandidateChecks:
 
     def _cleanup(self, run_id: str, operation_id: str, row: dict[str, Any]) -> None:
         cleanup = deepcopy(row.get("cleanup", {}))
+        native_observed = None
         if row.get("native_claim") is not None and self.runner is not None:
             try:
-                observed = self.runner.cancel(execution_document(row))
+                native_observed = self.runner.cancel(execution_document(row))
                 cleanup["native"] = {
-                    "local_stop": observed.local_stop if observed is not None else "unknown"
+                    "local_stop": (
+                        native_observed.local_stop if native_observed is not None else "unknown"
+                    )
                 }
-                if observed is not None and row.get("observation") is None:
+                if native_observed is not None and row.get("observation") is None:
                     self._save_observation(
-                        run_id, operation_id, row["check_run_id"], execution_document(row), observed
+                        run_id,
+                        operation_id,
+                        row["check_run_id"],
+                        execution_document(row),
+                        native_observed,
                     )
             except Exception:
                 cleanup["native"] = {
                     "local_stop": "unknown",
                     "reason": "CANDIDATE_CHECK_CLEANUP_UNAVAILABLE",
                 }
-        if row.get("host_prepared_id") is not None and self.host is not None:
+        # A native claim owns a publisher that may still be writing its result
+        # after runner.cancel returns. Killing its Host here can lose the
+        # receipt; reconcile will inspect it and perform Host cleanup later.
+        if (
+            row.get("host_prepared_id") is not None
+            and self.host is not None
+            and (row.get("native_claim") is None or native_observed is not None)
+        ):
             try:
                 stopped = self.host.cancel(
                     row["attempt_id"],

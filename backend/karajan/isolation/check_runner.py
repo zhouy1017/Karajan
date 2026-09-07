@@ -224,15 +224,7 @@ class FixedCheckRunner:
             if (directory / "started.json").exists():
                 value = json.loads(regular(directory / "started.json"))
                 _kill(ProcessIdentity(value["pid"], value["birth"]))
-        # The runner writes result.json after its child has stopped.  A
-        # concurrent cancellation can otherwise observe the kill before that
-        # write and permanently lose the authoritative local-stop observation.
-        for _ in range(40):
-            observed = self.inspect(execution)
-            if observed is not None:
-                return observed
-            time.sleep(0.05)
-        return None
+        return self.inspect(execution)
 
     def run(
         self,
