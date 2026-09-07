@@ -1,6 +1,8 @@
 """C evidence for durable planning admission; no provider is contacted."""
 
 import json
+import time
+from collections.abc import Callable
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
@@ -48,6 +50,21 @@ class FixtureCommander:
             "capabilities": ["design_reasoning", "structured_plan_output"],
             "provenance": "fixture",
             "profile_facts": self.profile_facts,
+            "capability_evidence": [
+                {
+                    "capability": capability,
+                    "status": "passed",
+                    "profile_digest": self.profile_facts["profile_digest"],
+                    "runtime_version": self.profile_facts["runtime_version"],
+                    "evidence_ref": "fixture:commander:" + capability,
+                    "provenance": "fixture",
+                }
+                for capability in (
+                    "design_reasoning",
+                    "structured_plan_output",
+                    "controlled_tools",
+                )
+            ],
         }
 
 
@@ -105,9 +122,13 @@ def planning_capacity(directory: Path) -> CapacityStore:
 
 
 def _case(
-    tmp_path: Path, configured: dict, *, available: bool = True
+    tmp_path: Path,
+    configured: dict,
+    *,
+    available: bool = True,
+    clock: Callable[[], float] | None = None,
 ) -> tuple[PlanningExecution, PlanningAdmissionAuthority, dict, Any]:
-    planner = RunPlanner(tmp_path / "runs.sqlite", configured["registry"])
+    planner = RunPlanner(tmp_path / "runs.sqlite", configured["registry"], clock=clock or time.time)
     fixed = configured["registry"].register_execution_policy(
         configured["id"], policy_request(configured), command_key="policy", principal="owner"
     )
@@ -166,7 +187,7 @@ def _case(
             },
             "lead_reserve_access": True,
         },
-        duration_seconds=30,
+        duration_seconds=25,
         max_requests=5,
         max_duration_seconds=100,
         principal="owner",
@@ -185,6 +206,12 @@ def test_two_intents_share_the_original_frozen_planning_budget(
     assert (
         first_result["route_sources"]["reserved"]["selected_profile"]
         == first["binding"]["profile"]
+    )
+    task = first_result["route_sources"]["route"]["snapshots"]["task"]
+    assert (task["duration_seconds"], task["context_tokens"], task["reserved_output_tokens"]) == (
+        25,
+        7168,
+        1024,
     )
     assert run["plans"] == []
 
@@ -243,10 +270,22 @@ def test_effect_guard_reuses_only_the_original_binding(configured: dict, tmp_pat
         assert guard["source_generation_sha256"] == "b" * 64
 
 
+def test_effect_guard_rechecks_the_original_run_budget_deadline(
+    configured: dict, tmp_path: Path
+) -> None:
+    now = [1000.0]
+    _, authority, _, execution = _case(tmp_path, configured, clock=lambda: now[0])
+    assert authority.advance(execution["id"], "owner", "advance")["phase"] == "admitted"
+    now[0] = 1301.0
+    with pytest.raises(RunError, match="PLANNING_BUDGET_EXPIRED"):
+        with authority.effect_guard(execution["id"], "owner", "start"):
+            pass
+
+
 def test_lost_activation_reply_reopens_the_original_capacity_command(
     configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    _, authority, _, execution = _case(tmp_path, configured)
+    service, authority, run, execution = _case(tmp_path, configured)
     original = authority.capacity.activate
 
     def lose_reply(*args: Any, **kwargs: Any) -> dict[str, Any]:
@@ -256,6 +295,16 @@ def test_lost_activation_reply_reopens_the_original_capacity_command(
     monkeypatch.setattr(authority.capacity, "activate", lose_reply)
     with pytest.raises(RuntimeError, match="reply lost"):
         authority.advance(execution["id"], "owner", "advance")
+
+    # The external reply was lost after Capacity committed. The caller key was
+    # bound before that mutation, so it cannot be recycled for another Run
+    # execution while the original receipt remains unresolved.
+    intent = service.planner.planning_intent(
+        run["id"], term=1, command_key="intent-2", principal="lead"
+    )
+    second = service.begin(run["id"], intent["id"], principal="owner", command_key="begin-2")
+    with pytest.raises(RunError, match="IDEMPOTENCY_CONFLICT"):
+        authority.advance(second["id"], "owner", "advance")
 
     reopened = PlanningAdmissionAuthority(
         authority.database,
@@ -333,7 +382,7 @@ def test_capacity_unknown_is_read_only_and_controller_stays_resumable(
             "purpose": "lead",
             "authorization_ref": record["budget_identity"],
             "rulebook_revision": binding["rulebook_sha256"],
-            "duration_seconds": 30,
+            "duration_seconds": 25,
             "demand": {"service-fixture": "5"},
             "expected_capacity": record["estimate"]["expected_capacity"],
         }
@@ -356,6 +405,43 @@ def test_capacity_unknown_is_read_only_and_controller_stays_resumable(
     resumed = controller.reconcile(execution["id"], principal="owner")
     assert resumed["state"] == "admission_unknown"
     assert resumed["reason_codes"] == ["PLANNING_ADMISSION_UNKNOWN"]
+
+
+def test_controller_accepts_exact_unknown_receipt_completion(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _, authority, _, execution = _case(tmp_path, configured)
+    original = authority.capacity.activate
+
+    def lose_reply(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        original(*args, **kwargs)
+        raise RuntimeError("activation reply lost")
+
+    monkeypatch.setattr(authority.capacity, "activate", lose_reply)
+    with pytest.raises(RuntimeError, match="reply lost"):
+        authority.advance(execution["id"], "owner", "advance")
+    controller = PlanningExecution(
+        authority.execution_database,
+        authority.planner,
+        admissions=authority,
+        capacity=authority.capacity,
+        allow_fixture_authorities=True,
+    )
+    assert controller.reconcile(execution["id"], principal="owner")["state"] == "admission_unknown"
+    reopened = PlanningAdmissionAuthority(
+        authority.database,
+        authority.execution_database,
+        authority.planner,
+        authority.capacity,
+        authority.qualifications,
+        authority_kind="fixture",
+    )
+    assert reopened.advance(execution["id"], "owner", "recover")["phase"] == "admitted"
+    # The next blocker is the intentionally absent #112 output reader. It is
+    # not an evidence-changed blocker, proving the exact unknown -> completed
+    # receipt transition was accepted monotonically.
+    completed = controller.reconcile(execution["id"], principal="owner")
+    assert completed["reason_codes"] == ["PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE"]
 
 
 def test_persistent_factory_rebuilds_production_reader_and_reserves_nothing_without_commander(
@@ -384,3 +470,32 @@ def test_persistent_factory_rebuilds_production_reader_and_reserves_nothing_with
     assert production["phase"] == "denied"
     assert production["reason_codes"] == ["COMMANDER_QUALIFICATION_REQUIRED"]
     assert authority.capacity.snapshot()["reservations"] == []
+
+
+def test_fixture_admission_cannot_be_relabelled_after_production_reopen(
+    configured: dict, tmp_path: Path
+) -> None:
+    _, authority, _, execution = _case(tmp_path, configured)
+    admitted = authority.advance(execution["id"], "owner", "fixture-admit")
+    assert admitted["phase"] == "admitted"
+    assert authority.read_admission(execution["binding"])["authority_kind"] == "fixture"
+    control = tmp_path / "control"
+    control.mkdir()
+    (control / PLANNING_ADMISSION_BOOTSTRAP).write_text(
+        json.dumps(
+            {
+                "schema_version": "karajan.planning-admission-bootstrap.v1",
+                "state_directory": str(tmp_path),
+                "planning_execution_database": str(authority.execution_database),
+                "planning_admission_database": str(authority.database),
+                "capacity_database": str(authority.capacity.path),
+                "projects_database": str(authority.planner.projects.database),
+                "allowed_roots": [str(tmp_path)],
+            }
+        ),
+        encoding="utf-8",
+    )
+    production = PlanningExecution.from_trusted_factory(control)
+    assert production.admissions is not None
+    with pytest.raises(RunError, match="PLANNING_ADMISSION_PROVENANCE_FORBIDDEN"):
+        production.admissions.advance(execution["id"], "owner", "production-admit")

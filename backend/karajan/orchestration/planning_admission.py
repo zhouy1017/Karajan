@@ -16,6 +16,8 @@ from typing import Any, Protocol
 
 from karajan.capacity import CapacityError, CapacityStore
 from karajan.projects import ProjectRegistry
+from karajan.projects.credential_sources import CredentialSourceStore, LocalKeyFile
+from karajan.projects.qualification import ProfileQualificationStore
 from karajan.resources.broker import units
 from karajan.routing import RoutingError, evaluate_reserved_profile, evaluate_route
 from karajan.runs import RunError, RunPlanner
@@ -40,13 +42,95 @@ class CommanderQualificationReader(Protocol):
 class PersistentCommanderQualificationReader:
     """Current production reader: Worker/Reviewer facts never become Commander facts."""
 
+    def __init__(
+        self,
+        planner: RunPlanner,
+        qualifications: ProfileQualificationStore,
+        *,
+        control_directory: Path,
+    ) -> None:
+        self.planner = planner
+        self.qualifications = qualifications
+        self.control_directory = control_directory
+
+    def _current_source(
+        self, db: sqlite3.Connection, project_id: str, current: dict[str, Any], principal: str
+    ) -> dict[str, Any]:
+        """Re-observe protected deployment/runtime and current credential material.
+
+        The Go bootstrap is controller-owned and private. Its source identifiers
+        only locate credential files; ``current_locked`` verifies their material
+        seal before yielding a generation. A missing future Commander suite or
+        unsupported platform remains unavailable instead of becoming a pass.
+        """
+        from karajan.adapters.opencode.go_context import GoRequestAccounting
+        from karajan.orchestration.go_task_runtime import (
+            _read_bootstrap,
+            deployment_source,
+        )
+
+        settings, bootstrap_sha = _read_bootstrap(self.control_directory)
+        if (
+            (settings.state_directory / "projects.sqlite").resolve()
+            != self.planner.projects.database.resolve()
+        ):
+            raise RunError("COMMANDER_SOURCE_STATE_MISMATCH")
+        credentials = CredentialSourceStore(
+            self.planner.projects,
+            sources={
+                (row.project_id, row.auth_ref): LocalKeyFile(row.source_id, row.path)
+                for row in settings.credential_sources
+            },
+            private_directory=settings.credential_private_directory,
+            existing_only=True,
+        )
+        profile = current["registration"]["profile"]
+        generation = credentials.current_locked(
+            db, project_id, profile["auth_ref"], principal=principal
+        )
+        runtime = deployment_source(settings, GoRequestAccounting(settings.tokenizer_directory))
+        return {
+            "schema_version": "karajan.commander-qualification-source.v1",
+            "bootstrap_sha256": bootstrap_sha,
+            "credential_generation": generation["generation"],
+            "credential_source": generation["source"],
+            "profile_sha256": digest(profile),
+            "runtime": runtime,
+        }
+
     def read_commander(
         self, binding: dict[str, Any], *, scope: str, reader_version: str
     ) -> dict[str, Any] | None:
-        del binding, scope, reader_version
-        # The existing qualification store deliberately exposes no Commander
-        # source. #113 replaces this reader after an independent probe.
-        return None
+        # The reader opens the existing Project qualification ledger. A missing
+        # #113 source/record is an explicit no-fact result, never a conversion
+        # of frozen declaration or Worker/Reviewer observations.
+        run = self.planner.get(binding["run_id"], principal=binding["owner"])
+        registration = next(
+            (
+                row
+                for row in run["configuration_snapshot"]["configuration"]["resources"]["profiles"]
+                if {"id": row["id"], "revision": row["revision"]} == binding["profile"]
+            ),
+            None,
+        )
+        if registration is None:
+            return None
+        with self.qualifications.commander_facts_guard(
+            run["project_id"],
+            registration,
+            principal=binding["owner"],
+            scope=scope,
+            reader_version=reader_version,
+        ) as current:
+            if current is None:
+                return None
+            return {
+                "schema_version": "karajan.commander-qualification.v1",
+                "scope": scope,
+                "reader_version": reader_version,
+                "binding_sha256": digest(binding),
+                **current,
+            }
 
 
 def open_persistent_planning_admission(control_directory: Path) -> "PlanningAdmissionAuthority":
@@ -102,12 +186,17 @@ def open_persistent_planning_admission(control_directory: Path) -> "PlanningAdmi
     projects = ProjectRegistry(projects_db, roots, existing_only=True)
     planner = RunPlanner(state / "runs.sqlite", projects, existing_only=True)
     capacity = CapacityStore(capacity_db, existing_only=True)
+    qualifications = ProfileQualificationStore(projects, commander_reader_only=True)
+    reader = PersistentCommanderQualificationReader(
+        planner, qualifications, control_directory=control
+    )
+    qualifications.commander_source = reader._current_source
     return PlanningAdmissionAuthority(
         admission_db,
         execution_db,
         planner,
         capacity,
-        PersistentCommanderQualificationReader(),
+        reader,
         authority_kind="production",
         existing_only=True,
     )
@@ -304,6 +393,13 @@ class PlanningAdmissionAuthority:
         self, binding: dict[str, Any], principal: str
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         run = self.planner.get(binding["run_id"], principal=principal)
+        return self._run_intent_from_run(run, binding, principal)
+
+    @staticmethod
+    def _run_intent_from_run(
+        run: dict[str, Any], binding: dict[str, Any], principal: str
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Validate a Run snapshot supplied by an already-held Run guard."""
         participant = run["commander"]
         intent = next(
             (row for row in run["planning_intents"] if row["id"] == binding["intent_id"]), None
@@ -381,6 +477,7 @@ class PlanningAdmissionAuthority:
             "max_attempt_duration_seconds": min(
                 record["estimate"]["duration_seconds"],
                 record["budget"]["max_duration_seconds"],
+                ceiling["max_attempt_duration_seconds"],
             ),
             "max_quality_repair_rounds": 0,
         }
@@ -399,6 +496,12 @@ class PlanningAdmissionAuthority:
         """
         facts = self.capacity.routing_facts()
         fixed = run["configuration_snapshot"]["configuration"]
+        with self.planner.projects.effective_resources_guard(run["project_id"]) as current_catalog:
+            if (
+                current_catalog.get("resources") != fixed["resources"]
+                or current_catalog.get("approved_profile_refs") != fixed["approved_profile_refs"]
+            ):
+                raise RunError("PLANNING_CURRENT_CATALOG_CHANGED")
         resources = deepcopy(fixed["resources"])
         capacity, diagnostics = _capacity_snapshot(facts.as_dict(), resources)
         estimate = record["estimate"]
@@ -407,6 +510,10 @@ class PlanningAdmissionAuthority:
             for row in resources["profiles"]
             if {"id": row["id"], "revision": row["revision"]} == binding["profile"]
         )
+        verified_capabilities = qualification.get("capability_evidence")
+        if not isinstance(verified_capabilities, list):
+            raise RunError("COMMANDER_CAPABILITY_EVIDENCE_REQUIRED")
+        registration["capability_evidence"] = verified_capabilities
         windows = {
             row["id"]: row
             for row in capacity["pools"]
@@ -449,9 +556,15 @@ class PlanningAdmissionAuthority:
             "paths": [],
             "authors": [],
             "required_capabilities": ["design_reasoning", "structured_plan_output"],
+            # Planning has no approved Task, but it must still account for the
+            # complete owner-frozen context envelope. A later transport can
+            # narrow tools, never silently widen this bounded snapshot.
             "tools": [],
-            "context_tokens": 1,
-            "reserved_output_tokens": 0,
+            "context_tokens": run["execution_policy_snapshot"]["max_context_tokens"]
+            - run["execution_policy_snapshot"]["context_policy"]["reserved_output_tokens"],
+            "reserved_output_tokens": run["execution_policy_snapshot"]["context_policy"][
+                "reserved_output_tokens"
+            ],
             "duration_seconds": estimate["duration_seconds"],
             "stage": "normal",
             "quality_stage_index": 0,
@@ -559,6 +672,55 @@ class PlanningAdmissionAuthority:
                 )
             return record
 
+    def _claim_command(
+        self, principal: str, command_key: str, payload: str
+    ) -> dict[str, Any] | None:
+        """Durably bind a caller key before any budget or Capacity mutation."""
+        placeholder = {
+            "schema_version": "karajan.planning-admission-command.v1",
+            "phase": "claimed",
+        }
+        with self._transaction() as db:
+            prior = db.execute(
+                "SELECT payload,result FROM commands WHERE principal=? AND key=?",
+                (principal, command_key),
+            ).fetchone()
+            if prior is not None:
+                if prior["payload"] != payload:
+                    raise RunError("IDEMPOTENCY_CONFLICT")
+                return dict(json.loads(prior["result"]))
+            db.execute(
+                "INSERT INTO commands VALUES (?,?,?,?)",
+                (principal, command_key, payload, encoded(placeholder)),
+            )
+        return None
+
+    @staticmethod
+    def _capacity_admit_transition(record: dict[str, Any], receipt: dict[str, Any]) -> None:
+        """Apply the one durable admission receipt meaning in normal and recovery paths."""
+        record["capacity_receipt"] = receipt
+        if receipt.get("decision") != "admitted" or not isinstance(
+            receipt.get("admission_id"), str
+        ):
+            record["phase"] = "denied"
+            record["reason_codes"] = receipt.get("reason_codes", ["PLANNING_CAPACITY_DENIED"])
+            return
+        record["capacity_activation_request"] = {"admission_id": receipt["admission_id"]}
+        record["phase"] = "capacity_activate_unknown"
+
+    def _budget_live(self, record: dict[str, Any]) -> None:
+        """Recheck the original frozen Run deadline immediately before every effect."""
+        with self._transaction() as db:
+            row = db.execute(
+                "SELECT data FROM planning_budget_usage WHERE run_id=? AND budget_identity=?",
+                (record["run_id"], record["budget_identity"]),
+            ).fetchone()
+        if row is None:
+            raise RunError("PLANNING_BUDGET_USAGE_MISSING")
+        usage = dict(json.loads(row["data"]))
+        if self.planner.clock() >= usage["started_at"] + record["budget"]["max_duration_seconds"]:
+            raise RunError("PLANNING_BUDGET_EXPIRED")
+
     @staticmethod
     def _budget(run: dict[str, Any], budget_ref: str) -> tuple[dict[str, Any], str]:
         configuration = run["configuration_snapshot"]
@@ -586,6 +748,11 @@ class PlanningAdmissionAuthority:
             if existing is not None:
                 if existing["binding_sha256"] != digest(binding):
                     raise RunError("PLANNING_ADMISSION_BINDING_CHANGED")
+                if (
+                    self.authority_kind == "production"
+                    and existing.get("producer_authority_kind") != "production"
+                ):
+                    raise RunError("PLANNING_ADMISSION_PROVENANCE_FORBIDDEN")
                 return existing
             row = db.execute(
                 "SELECT data FROM planning_estimates WHERE run_id=? AND budget_ref=? "
@@ -605,6 +772,7 @@ class PlanningAdmissionAuthority:
                 "intent_id": intent["id"],
                 "binding_sha256": digest(binding),
                 "binding": binding,
+                "producer_authority_kind": self.authority_kind,
                 "phase": "prepared",
                 "reason_codes": [],
                 "estimate": estimate,
@@ -708,15 +876,9 @@ class PlanningAdmissionAuthority:
         binding = self._execution_binding(execution_id, principal)
         run = self.planner.get(binding["run_id"], principal=principal)
         payload = encoded([execution_id, digest(binding)])
-        with self._transaction() as db:
-            prior = db.execute(
-                "SELECT payload,result FROM commands WHERE principal=? AND key=?",
-                (principal, command_key),
-            ).fetchone()
-            if prior is not None:
-                if prior["payload"] != payload:
-                    raise RunError("IDEMPOTENCY_CONFLICT")
-                return dict(json.loads(prior["result"]))
+        prior = self._claim_command(principal, command_key, payload)
+        if prior is not None:
+            return prior
         record = self._prepare(execution_id, binding, principal)
         if record["phase"] in {"admitted", "denied"}:
             return self._finish_command(record, principal, command_key, payload)
@@ -749,11 +911,11 @@ class PlanningAdmissionAuthority:
                 return self._finish_command(record, principal, command_key, payload)
             with self._transaction() as db:
                 current = self._load(db, execution_id) or record
-                current["capacity_receipt"] = receipt
-                current["capacity_activation_request"] = {"admission_id": receipt["admission_id"]}
-                current["phase"] = "capacity_activate_unknown"
+                self._capacity_admit_transition(current, receipt)
                 self._save(db, current)
                 record = current
+            if record["phase"] == "denied":
+                return self._finish_command(record, principal, command_key, payload)
         if record["phase"] == "capacity_activate_unknown":
             request = record["capacity_activation_request"]
             assert isinstance(request, dict)
@@ -821,6 +983,7 @@ class PlanningAdmissionAuthority:
             or qualification.get("binding_sha256") != digest(binding)
             or qualification.get("source_generation_sha256") is None
             or not isinstance(qualification.get("profile_facts"), dict)
+            or not isinstance(qualification.get("capability_evidence"), list)
             or not isinstance(qualification.get("valid_until"), (int, float))
             or qualification["valid_until"] <= self.planner.clock()
             or self.authority_kind == "production"
@@ -922,19 +1085,9 @@ class PlanningAdmissionAuthority:
         dispatch_activate = False
         with self._transaction() as db:
             record = self._load(db, execution_id) or record
-            record["capacity_receipt"] = receipt
-            if receipt.get("decision") != "admitted":
-                record["phase"], record["reason_codes"] = (
-                    "denied",
-                    receipt.get("reason_codes", ["PLANNING_CAPACITY_DENIED"]),
-                )
-                self._save(db, record)
-                dispatch_activate = False
-            else:
-                record["capacity_activation_request"] = {"admission_id": receipt["admission_id"]}
-                record["phase"] = "capacity_activate_unknown"
-                self._save(db, record)
-                dispatch_activate = True
+            self._capacity_admit_transition(record, receipt)
+            self._save(db, record)
+            dispatch_activate = record["phase"] == "capacity_activate_unknown"
         if not dispatch_activate:
             return self._finish_command(record, principal, command_key, payload)
         try:
@@ -974,7 +1127,9 @@ class PlanningAdmissionAuthority:
         return {
             "schema_version": "karajan.planning-admission-evidence.v1",
             "binding_sha256": record["binding_sha256"],
-            "authority_kind": self.authority_kind,
+            # Evidence describes the producer that made the durable decision,
+            # never the process that happened to reopen its database later.
+            "authority_kind": record.get("producer_authority_kind", "fixture"),
             "source_sha256": digest(record["capacity_request"])
             if record["capacity_request"]
             else "0" * 64,
@@ -1008,26 +1163,31 @@ class PlanningAdmissionAuthority:
             record = self.advance(execution_id, principal, "planning-guard:" + effect_id)
             if record["phase"] != "admitted" or record["binding"] != binding:
                 raise RunError("PLANNING_EFFECT_NOT_ADMITTED")
-            self._run_intent(binding, principal)
-            qualification = self.qualifications.read_commander(
-                binding,
-                scope=COMMANDER_QUALIFICATION_SCOPE,
-                reader_version=COMMANDER_QUALIFICATION_READER_VERSION,
-            )
-            if not isinstance(qualification, dict) or qualification != record["qualification"]:
-                raise RunError("COMMANDER_QUALIFICATION_CHANGED")
-            if qualification["valid_until"] <= self.planner.clock():
-                raise RunError("COMMANDER_QUALIFICATION_EXPIRED")
-            with self.capacity.pre_effect_guard(
-                record["capacity_receipt"]["admission_id"],
-                expected_request=record["capacity_request"],
-            ) as capacity:
-                yield {
-                    "execution_id": execution_id,
-                    "binding_sha256": record["binding_sha256"],
-                    "attempt_id": binding["attempt_id"],
-                    "fence": binding["fence"],
-                    "source_generation_sha256": qualification["source_generation_sha256"],
-                    "budget_identity": record["budget_identity"],
-                    "capacity": capacity,
-                }
+            # Keep execution -> Run -> Project/qualification -> Capacity in
+            # this order until the actual transport boundary exits.  The Run
+            # guard supplies its snapshot so no public getter re-enters it.
+            with self.planner.activation_guard(binding["run_id"]) as held_run:
+                self._run_intent_from_run(held_run, binding, principal)
+                self._budget_live(record)
+                qualification = self.qualifications.read_commander(
+                    binding,
+                    scope=COMMANDER_QUALIFICATION_SCOPE,
+                    reader_version=COMMANDER_QUALIFICATION_READER_VERSION,
+                )
+                if not isinstance(qualification, dict) or qualification != record["qualification"]:
+                    raise RunError("COMMANDER_QUALIFICATION_CHANGED")
+                if qualification["valid_until"] <= self.planner.clock():
+                    raise RunError("COMMANDER_QUALIFICATION_EXPIRED")
+                with self.capacity.pre_effect_guard(
+                    record["capacity_receipt"]["admission_id"],
+                    expected_request=record["capacity_request"],
+                ) as capacity:
+                    yield {
+                        "execution_id": execution_id,
+                        "binding_sha256": record["binding_sha256"],
+                        "attempt_id": binding["attempt_id"],
+                        "fence": binding["fence"],
+                        "source_generation_sha256": qualification["source_generation_sha256"],
+                        "budget_identity": record["budget_identity"],
+                        "capacity": capacity,
+                    }

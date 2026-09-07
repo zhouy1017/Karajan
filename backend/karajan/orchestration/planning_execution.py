@@ -150,6 +150,30 @@ class PlanningExecution:
             return self.allow_fixture_authorities
         return kind == "production" and id(authority) in self._trusted_authority_ids
 
+    @staticmethod
+    def _monotonic_admission(previous: object, fresh: dict[str, Any]) -> bool:
+        """Allow only an exact unknown receipt to become its durable completion."""
+        if previous is None:
+            return True
+        if not isinstance(previous, dict) or previous == fresh:
+            return previous == fresh
+        if previous.get("state") != "unknown" or fresh.get("state") not in {"admitted", "denied"}:
+            return False
+        return all(
+            previous.get(key) == fresh.get(key)
+            for key in (
+                "schema_version",
+                "binding_sha256",
+                "authority_kind",
+                "source_sha256",
+                "budget_ref",
+                "capacity_request",
+                "capacity_command_key",
+                "capacity_activation_request",
+                "capacity_activation_command_key",
+            )
+        )
+
     @contextmanager
     def _transaction(self) -> Iterator[sqlite3.Connection]:
         db = open_database(self.database, existing_only=self.existing_only, isolation_level=None)
@@ -399,7 +423,7 @@ class PlanningExecution:
                 current = self._load(db, execution_id)
                 if current["cancel_requested"]:
                     return current
-                if current["admission"] not in (None, evidence):
+                if not self._monotonic_admission(current["admission"], evidence):
                     return self._blocked_locked(db, current, "PLANNING_ADMISSION_EVIDENCE_CHANGED")
                 current["admission"] = evidence
                 current["state"] = "admission_unknown"
@@ -478,7 +502,7 @@ class PlanningExecution:
             current = self._load(db, execution_id)
             if current["cancel_requested"]:
                 return current
-            if current["admission"] not in (None, evidence):
+            if not self._monotonic_admission(current["admission"], evidence):
                 return self._blocked_locked(db, current, "PLANNING_ADMISSION_EVIDENCE_CHANGED")
             current["admission"] = evidence
             if current.get("output_source_sha256") not in (None, source["source_sha256"]):
