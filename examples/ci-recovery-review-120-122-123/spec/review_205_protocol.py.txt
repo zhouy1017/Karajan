@@ -1,0 +1,48 @@
+"""Actual child protocol/budget checks. No external DNS, HTTP or model requests."""
+import contextlib
+import hashlib
+import io
+import json
+from pathlib import Path
+import subprocess
+import tempfile
+import time
+import types
+
+ROOT=Path(__file__).resolve().parents[2]
+SHA='205cd9063e14ad516c1a21cb1d62f674bda75885'
+source=subprocess.check_output(['git','show',SHA+':.github/scripts/provision_go_tokenizer.py'],cwd=ROOT)
+results=[]
+programs={
+    'malformed_json': "print('not-json secret-url')",
+    'unknown_status': "print('{\"status\":\"secret-url\",\"addresses\":[]}')",
+    'arbitrary_error_code': "print('{\"status\":\"gaierror\",\"code\":\"https://signed.invalid/?token=fake\"}')",
+    'invalid_address_shape': "print('{\"status\":\"ok\",\"addresses\":[[]]}')",
+    'slow_EAI_AGAIN': None,
+}
+for case,program in programs.items():
+    m=types.ModuleType('review'); exec(compile(source,SHA,'exec'),m.__dict__)
+    if program is None:
+        program='import socket,time\ndef controlled(*args,**kwargs):\n time.sleep(0.12)\n raise socket.gaierror(socket.EAI_AGAIN,"private error text")\nsocket.getaddrinfo=controlled\n'+m._RESOLVE_PROGRAM
+    m._RESOLVE_PROGRAM=program
+    m.ARTIFACTS={'fixture.bin':(1,hashlib.sha256(b'x').hexdigest())}
+    m.DOWNLOAD_BUDGET_SECONDS=0.3 if case=='slow_EAI_AGAIN' else 2
+    original=m.subprocess.Popen; children=[]
+    def observed(*args,**kwargs):
+        p=original(*args,**kwargs); children.append(p); return p
+    m.subprocess.Popen=observed
+    oldargv=m.sys.argv
+    with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as folder:
+        m.sys.argv=['fixture-script','--directory',folder]
+        output=io.StringIO(); started=time.monotonic()
+        try:
+            with contextlib.redirect_stdout(output): exit_code=m.main()
+        finally: m.sys.argv=oldargv; m.subprocess.Popen=original
+        elapsed=time.monotonic()-started; stdout=output.getvalue()
+        clean=list(Path(folder).iterdir())==[]
+    reason=json.loads(stdout)['reason']
+    safe=all(s not in stdout for s in ['secret-url','signed.invalid','token=fake','private error text',folder])
+    passed=exit_code==1 and safe and clean and all(c.poll() is not None for c in children)
+    passed=passed and ((1<len(children)<=3 and elapsed<0.4 and reason=='TOKENIZER_DOWNLOAD_TIMEOUT') if case=='slow_EAI_AGAIN' else len(children)==1)
+    results.append({'case':case,'child_count':len(children),'elapsed_seconds':elapsed,'stdout':stdout.strip(),'all_reaped':all(c.poll() is not None for c in children),'temp_clean':clean,'passed':passed})
+print(json.dumps({'candidate':SHA,'external_traffic':False,'results':results},indent=2))

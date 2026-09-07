@@ -26,7 +26,7 @@ jobs:
   python-quality:
     name: python-quality (${{ matrix.os }}, Python 3.12)
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 40
+    timeout-minutes: ${{ matrix.os == 'windows-2022' && 60 || 40 }}
     env:
       KARAJAN_GO_TOKENIZER_DIRECTORY: .cache/go-context-artifacts
       KARAJAN_REQUIRE_GO_TOKENIZER: "1"

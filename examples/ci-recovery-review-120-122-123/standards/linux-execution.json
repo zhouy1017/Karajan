@@ -1,0 +1,13 @@
+{
+  "candidate": "205cd9063e14ad516c1a21cb1d62f674bda75885",
+  "command": [
+    "wsl",
+    "-e",
+    "bash",
+    "-lc",
+    "cd /mnt/c/Users/Chooo/Playground/Karajan/.cache/dispatch-tokenizer-ci && /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest .cache/standards-205cd90/test_dns_protocol.py -q --basetemp=/tmp/karajan-standards-205cd90-20260907-r1"
+  ],
+  "cwd": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\dispatch-tokenizer-ci",
+  "utc": "2026-09-07T07:41:00.686178+00:00",
+  "exit_code": 0
+}
