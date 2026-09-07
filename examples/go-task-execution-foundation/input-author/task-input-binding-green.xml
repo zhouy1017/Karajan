@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="13" time="14.781" timestamp="2026-09-06T20:47:03.057003+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_go_task_input" name="test_input_comes_from_approved_text_and_cas_after_original_repository_disappears" time="1.115" /><testcase classname="tests.runs.test_go_task_input" name="test_workspace_both_digest_layers_are_required[outer]" time="1.087"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'TASK_INPUT_WORKSPACE_DIGEST_MISMATCH'&#10;  Actual message: 'TASK_INPUT_INVALID'">workspace_case = ({'schema_version': 'karajan.approved-task-workspace.v1', 'run_id': '21034730-ea67-4a55-b1e4-ed1e0cd89665', 'operation...mission object at 0x00000218FFDBA930&gt;, &lt;karajan.orchestration.routing.ApprovedRunRouting object at 0x00000218FFDBABD0&gt;)
+fault = 'outer'
+
+    @pytest.mark.parametrize("fault", ["outer", "input"])
+    def test_workspace_both_digest_layers_are_required(workspace_case, fault):
+        workspace, candidates, *_ = workspace_case
+        changed = deepcopy(workspace)
+        if fault == "outer":
+            changed["write_paths"].append("src/reference.txt")
+        else:
+            changed["input_sha256"] = "0" * 64
+            changed["digest"] = digest({key: value for key, value in changed.items() if key != "digest"})
+&gt;       with pytest.raises(RunError, match="TASK_INPUT_WORKSPACE_DIGEST_MISMATCH"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'TASK_INPUT_WORKSPACE_DIGEST_MISMATCH'
+E         Actual message: 'TASK_INPUT_INVALID'
+
+tests\runs\test_go_task_input.py:81: AssertionError</failure></testcase><testcase classname="tests.runs.test_go_task_input" name="test_workspace_both_digest_layers_are_required[input]" time="1.019"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'TASK_INPUT_WORKSPACE_DIGEST_MISMATCH'&#10;  Actual message: 'TASK_INPUT_INVALID'">workspace_case = ({'schema_version': 'karajan.approved-task-workspace.v1', 'run_id': '17d3efe3-9ce5-41d5-b0d1-60689f71fcfd', 'operation...mission object at 0x00000218FFD97C80&gt;, &lt;karajan.orchestration.routing.ApprovedRunRouting object at 0x00000218FFD96BD0&gt;)
+fault = 'input'
+
+    @pytest.mark.parametrize("fault", ["outer", "input"])
+    def test_workspace_both_digest_layers_are_required(workspace_case, fault):
+        workspace, candidates, *_ = workspace_case
+        changed = deepcopy(workspace)
+        if fault == "outer":
+            changed["write_paths"].append("src/reference.txt")
+        else:
+            changed["input_sha256"] = "0" * 64
+            changed["digest"] = digest({key: value for key, value in changed.items() if key != "digest"})
+&gt;       with pytest.raises(RunError, match="TASK_INPUT_WORKSPACE_DIGEST_MISMATCH"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'TASK_INPUT_WORKSPACE_DIGEST_MISMATCH'
+E         Actual message: 'TASK_INPUT_INVALID'
+
+tests\runs\test_go_task_input.py:81: AssertionError</failure></testcase><testcase classname="tests.runs.test_go_task_input" name="test_rehashed_workspace_cannot_expand_or_substitute_approved_bindings[expand_read]" time="1.021" /><testcase classname="tests.runs.test_go_task_input" name="test_rehashed_workspace_cannot_expand_or_substitute_approved_bindings[expand_write]" time="1.024" /><testcase classname="tests.runs.test_go_task_input" name="test_rehashed_workspace_cannot_expand_or_substitute_approved_bindings[files]" time="1.061" /><testcase classname="tests.runs.test_go_task_input" name="test_rehashed_workspace_cannot_expand_or_substitute_approved_bindings[baseline]" time="1.087" /><testcase classname="tests.runs.test_go_task_input" name="test_rehashed_workspace_cannot_expand_or_substitute_approved_bindings[repository]" time="1.056" /><testcase classname="tests.runs.test_go_task_input" name="test_rehashed_workspace_cannot_expand_or_substitute_approved_bindings[plan]" time="1.032" /><testcase classname="tests.runs.test_go_task_input" name="test_rehashed_workspace_cannot_expand_or_substitute_approved_bindings[approval]" time="1.027" /><testcase classname="tests.runs.test_go_task_input" name="test_rehashed_workspace_cannot_expand_or_substitute_approved_bindings[policy]" time="1.069" /><testcase classname="tests.runs.test_go_task_input" name="test_rehashed_workspace_cannot_expand_or_substitute_approved_bindings[task_id]" time="1.062" /><testcase classname="tests.runs.test_go_task_input" name="test_rehashed_workspace_cannot_expand_or_substitute_approved_bindings[duplicate_task]" time="1.034" /></testsuite></testsuites>

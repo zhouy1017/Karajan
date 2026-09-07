@@ -140,6 +140,10 @@ class RunnerHost:
                 "fence INTEGER NOT NULL, authorization_ref TEXT NOT NULL, "
                 "dispatch_enabled INTEGER NOT NULL)"
             )
+            columns = {row[1] for row in connection.execute("PRAGMA table_info(executions)")}
+            for name, kind in (("runner_pid", "INTEGER"), ("runner_birth", "TEXT")):
+                if name not in columns:
+                    connection.execute(f"ALTER TABLE executions ADD COLUMN {name} {kind}")
             connection.execute(
                 "CREATE TABLE IF NOT EXISTS cancellations (cancel_key TEXT PRIMARY KEY, "
                 "attempt_id TEXT NOT NULL)"
@@ -293,6 +297,79 @@ class RunnerHost:
                 "activation_id": activation.id,
                 "activation_allowed": False,
             }
+
+    def wait_for_runner_registration(
+        self, attempt_id: str, *, timeout_seconds: float = 5.0
+    ) -> ProcessIdentity:
+        """Wait outside business guards for the supervisor's child registration.
+
+        This read-only handshake is not permission to launch a native worker.
+        Every effect still requires current_runner_guard and business guards.
+        """
+        _identifier.validate_python(attempt_id, strict=True)
+        if (
+            isinstance(timeout_seconds, bool)
+            or not math.isfinite(timeout_seconds)
+            or not 0 < timeout_seconds <= 30
+        ):
+            raise ValueError("Invalid runner registration timeout.")
+        deadline = time.monotonic() + timeout_seconds
+        identity = process_identity(os.getpid())
+        if identity is None:
+            raise LaunchDenied("RUNNER_IDENTITY_NOT_CURRENT")
+        while True:
+            with self._connect(existing_only=True) as connection:
+                connection.execute("PRAGMA query_only=ON")
+                row = connection.execute(
+                    "SELECT runner_pid, runner_birth, cancelled FROM executions WHERE attempt_id=?",
+                    (attempt_id,),
+                ).fetchone()
+            if row is None:
+                raise KeyError(attempt_id)
+            if row["cancelled"]:
+                raise LaunchDenied("RUNNER_REGISTRATION_UNPROVEN")
+            if row["runner_pid"] is not None:
+                if (row["runner_pid"], row["runner_birth"]) != (identity.pid, identity.birth):
+                    raise LaunchDenied("RUNNER_IDENTITY_NOT_CURRENT")
+                return identity
+            if time.monotonic() >= deadline:
+                raise LaunchDenied("RUNNER_REGISTRATION_UNPROVEN")
+            time.sleep(0.01)
+
+    @contextmanager
+    def current_runner_guard(
+        self, attempt_id: str, *, fence: int, authorization_ref: str
+    ) -> Iterator[ProcessIdentity]:
+        """Fence effects to the exact live ProcessSpec child, not its descendants.
+
+        The supervisor alone records this identity after its one Popen call.
+        The caller cannot supply a PID or adopt a historical runner identity.
+        The outer fence transaction holds Host withdrawal through the effect.
+        """
+        with self.current_fence_guard(attempt_id, fence=fence, authorization_ref=authorization_ref):
+            with self._connect(existing_only=True) as connection:
+                connection.execute("PRAGMA query_only=ON")
+                row = connection.execute(
+                    "SELECT * FROM executions WHERE attempt_id=?", (attempt_id,)
+                ).fetchone()
+            identity = process_identity(os.getpid())
+            if (
+                row is None
+                or row["state"] != "running"
+                or identity is None
+                or (row["runner_pid"], row["runner_birth"]) != (identity.pid, identity.birth)
+            ):
+                raise LaunchDenied("RUNNER_IDENTITY_NOT_CURRENT")
+            supervisor = ProcessIdentity(row["supervisor_pid"], row["supervisor_birth"])
+            if observe_process(supervisor) != "running":
+                raise LaunchDenied("RUNNER_CONTAINMENT_UNPROVEN")
+            group = ProcessGroup(row["nonce"], supervisor.pid)
+            try:
+                if identity not in group.members():
+                    raise LaunchDenied("RUNNER_CONTAINMENT_UNPROVEN")
+            finally:
+                group.close()
+            yield identity
 
     def start(
         self, prepared_id: str, activation: Activation, *, crash_at: str | None = None

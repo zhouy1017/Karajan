@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="10" time="12.347" timestamp="2026-09-06T20:40:18.255413+08:00" hostname="ProArt-Zhou"><testcase classname="tests.execution.test_runner_identity_independent" name="test_same_group_grandchild_is_denied_both_registration_and_runner_authority" time="0.608" /><testcase classname="tests.execution.test_runner_identity_independent" name="test_public_control_and_cancellation_wait_until_actual_child_guard_releases[disable]" time="0.586" /><testcase classname="tests.execution.test_runner_identity_independent" name="test_public_control_and_cancellation_wait_until_actual_child_guard_releases[cancel]" time="0.585" /><testcase classname="tests.execution.test_runner_identity_independent" name="test_exception_from_child_guard_releases_lock_without_mutating_control" time="0.432" /><testcase classname="tests.execution.test_runner_identity_independent" name="test_direct_child_revalidates_public_control_after_registration[fence]" time="0.441" /><testcase classname="tests.execution.test_runner_identity_independent" name="test_direct_child_revalidates_public_control_after_registration[authorization]" time="0.430" /><testcase classname="tests.execution.test_runner_identity_independent" name="test_direct_child_revalidates_public_control_after_registration[disabled]" time="0.417" /><testcase classname="tests.execution.test_runner_identity_independent" name="test_lost_live_supervisor_rejects_previously_registered_child" time="8.411"><failure message="Failed: Missing real child observation: C:\Users\Chooo\AppData\Local\Temp\pytest-of-Chooo\pytest-778\test_lost_live_supervisor_reje0\observations\after.json">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-778/test_lost_live_supervisor_reje0')
+
+    def test_lost_live_supervisor_rejects_previously_registered_child(tmp_path):
+        with child_host(tmp_path) as (host, output, _, _, _):
+            supervisor = host.inspect(manifest().id).supervisor
+            assert supervisor is not None and supervisor.pid != os.getpid()
+            # This exact PID came from our own public Host launch, never from a scan.
+            os.kill(supervisor.pid, signal.SIGTERM)
+            deadline = time.monotonic() + 5
+            from karajan.execution import observe_process
+            while observe_process(supervisor) == "running" and time.monotonic() &lt; deadline:
+                time.sleep(.01)
+            assert observe_process(supervisor) != "running"
+            (output / "check").touch()
+&gt;           assert observed(output / "after.json")["decision"] == "RUNNER_CONTAINMENT_UNPROVEN"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\execution\test_runner_identity_independent.py:203: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-778/test_lost_live_supervisor_reje0/observations/after.json')
+timeout = 8
+
+    def observed(path, timeout=8):
+        deadline = time.monotonic() + timeout
+        while time.monotonic() &lt; deadline:
+            if path.exists():
+                return json.loads(path.read_text())
+            time.sleep(0.01)
+&gt;       pytest.fail(f"Missing real child observation: {path}")
+E       Failed: Missing real child observation: C:\Users\Chooo\AppData\Local\Temp\pytest-of-Chooo\pytest-778\test_lost_live_supervisor_reje0\observations\after.json
+
+tests\execution\test_runner_identity_independent.py:93: Failed</failure></testcase><testcase classname="tests.execution.test_runner_identity_independent" name="test_legacy_execution_schema_migration_preserves_accepted_start_without_respawn" time="0.270" /><testcase classname="tests.execution.test_runner_identity_independent" name="test_missing_ledger_read_handshake_does_not_create_replacement_database" time="0.013" /></testsuite></testsuites>

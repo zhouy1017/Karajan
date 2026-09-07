@@ -1,0 +1,41 @@
+{
+  "schema_version": "karajan.task-foundation-source-freeze.v1",
+  "base_commit": "f2d639559e738dfbb951163c6e8d83b460d758fb",
+  "issue": "https://github.com/zhouy1017/Karajan/issues/89",
+  "sources": {
+    "backend/karajan/adapters/opencode/go_relay.py": "56fc35a5f91e142f8527e47b7bbab42b8c5503d7e80b8ff4c7c34c97a97073c2",
+    "backend/karajan/execution/_supervisor.py": "b0196157d8f0f60a52471dd073976e8eefa2107397af88c0542aed3a28cce86f",
+    "backend/karajan/execution/host.py": "5eddca510eef10e316d09ba14d25a49a7599907d60271bad0a0a85e48e1b76db",
+    "backend/karajan/isolation/go_task.py": "43fd65a93550e1903692d12dad2349437e60aab8e88a1c0d60d90397143e1cbf",
+    "backend/karajan/orchestration/admission.py": "571394f63dcc4ef5f83194b4bac24fe265b33432d82bc98d2a5b296cd9014e74",
+    "backend/karajan/orchestration/go_execution_intent.py": "f27910d3ca613a8e11c88cc780b6b038d9de8b421a2dfde9a8f2df3a4ebd1bc1",
+    "backend/karajan/orchestration/go_task_binding.py": "92e3421922bc8ab6d9710a9da285fc24ad9b2822ed1f0e074c90419e9973af57",
+    "backend/karajan/orchestration/go_task_input.py": "062d86ed8b419e59142eb2b6506a9083962917be3e4886c25d3205fc84db7e8e",
+    "tests/adapters/opencode/test_go_send_guard.py": "c4430c0c3d0f2e6d4c55f2d272fa4d69a169891c7ff0700f9cdc12d247af4f7f",
+    "tests/execution/test_runner_identity.py": "db2ac42775fb3119fa190de6ec25e2f71c672a44962707cedf9b31a07afe19d2",
+    "tests/execution/test_runner_identity_independent.py": "f4f8d0a0549d438e2b54cabc745a05807a4cbb22b470b27eafe3dd47826c6474",
+    "tests/isolation/test_go_task.py": "c66c1e79e9f2051c43fe4286137023fbf685f14c7536490e3ffa207d3a08395d",
+    "tests/runs/test_go_execution_intent.py": "986e8952c58391744b1a27a8176785358b81412d03dbeace37afc3c3841a7a5b",
+    "tests/runs/test_go_execution_intent_independent.py": "f7908e640bccb354c1b06c465f2208e7c13c405e70232d6315c57d1c926ddd70",
+    "tests/runs/test_go_task_binding.py": "aa919f8d1593495a1abf2059993c30ede918e8493f76ba3c889cfabf84a76c32",
+    "tests/runs/test_go_task_binding_independent.py": "bf96265838520fdf4cac7f08a8b82c97ee705c8b1c0189561eb2e99beba1d08e",
+    "tests/runs/test_go_task_binding_source.py": "b663981b59cda51ae01efa3ec9cc433726c4256554b82be1af15f33dbcd6038f",
+    "tests/runs/test_go_task_input.py": "eac210652527b42336d44fb87535890c0e27f550410691152a927f44b45c6324"
+  },
+  "checks": {
+    "ruff": "passed",
+    "mypy_platforms": [
+      "win32",
+      "linux"
+    ],
+    "mypy_source_files": 122,
+    "secret_scan": "passed"
+  },
+  "limitations": [
+    "No new official provider calls",
+    "No complete approved Task facade/entry or Candidate result commit",
+    "Source-specific author/reviewer reports retain earlier exact sources",
+    "Copilot PR88 CI repair is independently tracked and not included in this freeze",
+    "Local validation is not current PR head CI evidence"
+  ]
+}

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="0.251" timestamp="2026-09-06T20:43:21.938150+08:00" hostname="ProArt-Zhou"><testcase classname="" name="tests.runs.test_go_task_input" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\Users\Chooo\Playground\Karajan\.cache\go-task-runner\tests\runs\test_go_task_input.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\runs\test_go_task_input.py:8: in &lt;module&gt;
+    from karajan.orchestration.go_task_input import build_task_input
+E   ModuleNotFoundError: No module named 'karajan.orchestration.go_task_input'</error></testcase></testsuite></testsuites>

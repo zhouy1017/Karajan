@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="5" time="5.904" timestamp="2026-09-06T20:45:11.879994+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_go_task_binding" name="test_original_task_identity_derives_host_manifest_activation_and_one_journal_grant" time="1.831"><failure message="karajan.adapters.opencode.go_journal.GoJournalError: GRANT_EXPIRED">activated = {'activation_allowed': False, 'assessment': {'activation_allowed': False, 'admission_expectations': [{'estimate_sha256...b04633c47688fdce5be0ac', 'dispatch_enabled': False, ...}, 'cancel_requested': False, 'cancellation_receipt': None, ...}
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-784/test_original_task_identity_de0')
+
+    def test_original_task_identity_derives_host_manifest_activation_and_one_journal_grant(
+        activated, tmp_path
+    ):
+        from karajan.orchestration.go_task_binding import (
+            task_grant_binding,
+            task_host_activation,
+            task_host_manifest,
+        )
+    
+        operation = activated
+        execution = operation["execution"]
+        intent = execution["intent"]
+        manifest = task_host_manifest(operation)
+        activation = task_host_activation(operation)
+        binding = task_grant_binding(operation)
+        assert manifest.id == activation.attempt_id == binding["attempt_id"] == intent["attempt_id"]
+        assert manifest.fence == activation.fence == binding["fence"] == 1
+        assert manifest.permissions == ["read", "edit"]
+        assert binding["subject"] == {
+            "kind": "task_attempt",
+            "project_id": intent["project_id"],
+            "run_id": operation["run_id"],
+            "task_id": operation["task_id"],
+        }
+        assert binding["runtime_digest"] == "a" * 64
+        assert binding["workspace_digest"] == operation["workspace"]["digest"]
+        assert binding["approval_digest"] == digest(
+            operation["workspace"]["source_binding"]["approval"]
+        )
+        assert (
+            activation.expires_at
+            == binding["expires_at"]
+            == execution["capacity_activation"]["expires_at"]
+        )
+        journal = GoCallJournal(tmp_path / "binding-journal.sqlite")
+&gt;       capability = journal.create_grant(binding, grant_id=intent["grant_id"])["capability"]
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\runs\test_go_task_binding.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.adapters.opencode.go_journal.GoCallJournal object at 0x000001B11351D040&gt;
+binding = {'subject': {'kind': 'task_attempt', 'project_id': '21be4d1c-aad3-4997-9448-f760b362d977', 'run_id': 'f94a995e-e1ce-4d...6-9a29a9b28aca', 'fence': 1, 'profile_digest': 'c4df87154e4481ef62ff696c7f83fa3253e66fbb87883bb49695b3d6556d28f6', ...}
+grant_id = 'go-task-grant:c93786b7-8af6-49db-8b51-ea147ab177e6'
+
+    def create_grant(self, binding: object, *, grant_id: str) -&gt; dict[str, Any]:
+        """Controller-only creation; a lost capability is deliberately unrecoverable.
+    
+        Repeating creation returns no capability and cannot reset request count.
+        Controllers must not mint a replacement grant after a lost create return.
+        Task digests bind trusted controller material; the journal does not prove
+        current approval, workspace isolation or capability qualification itself.
+        """
+        _validated(_GrantRef, {"grant_id": grant_id})
+        value = _binding(binding)
+        encoded = _encoded(value)
+        with self._transaction() as db:
+            old = db.execute("SELECT * FROM go_grants WHERE id=?", (grant_id,)).fetchone()
+            if old is not None:
+                if old["binding"] != encoded:
+                    raise GoJournalError("GRANT_CONFLICT")
+                return {"grant_id": grant_id, "binding": value, "capability": None}
+            now = self._now()
+            if value["expires_at"] &lt;= now:
+&gt;               raise GoJournalError("GRANT_EXPIRED")
+E               karajan.adapters.opencode.go_journal.GoJournalError: GRANT_EXPIRED
+
+backend\karajan\adapters\opencode\go_journal.py:297: GoJournalError</failure></testcase><testcase classname="tests.runs.test_go_task_binding" name="test_changed_immutable_or_withdrawn_operation_cannot_produce_execution_binding[intent]" time="0.949" /><testcase classname="tests.runs.test_go_task_binding" name="test_changed_immutable_or_withdrawn_operation_cannot_produce_execution_binding[workspace]" time="0.934" /><testcase classname="tests.runs.test_go_task_binding" name="test_changed_immutable_or_withdrawn_operation_cannot_produce_execution_binding[activation]" time="0.961" /><testcase classname="tests.runs.test_go_task_binding" name="test_changed_immutable_or_withdrawn_operation_cannot_produce_execution_binding[cancel]" time="0.927" /></testsuite></testsuites>

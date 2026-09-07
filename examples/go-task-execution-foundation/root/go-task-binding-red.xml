@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="5" skipped="0" tests="5" time="5.052" timestamp="2026-09-06T20:42:26.111574+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_go_task_binding" name="test_original_task_identity_derives_host_manifest_activation_and_one_journal_grant" time="0.938"><failure message="ModuleNotFoundError: No module named 'karajan.orchestration.go_task_binding'">activated = {'activation_allowed': False, 'assessment': {'activation_allowed': False, 'admission_expectations': [{'estimate_sha256...ac8d9f51ae9da49afa1f47', 'dispatch_enabled': False, ...}, 'cancel_requested': False, 'cancellation_receipt': None, ...}
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-780/test_original_task_identity_de0')
+
+    def test_original_task_identity_derives_host_manifest_activation_and_one_journal_grant(activated, tmp_path):
+&gt;       from karajan.orchestration.go_task_binding import task_grant_binding, task_host_activation, task_host_manifest
+E       ModuleNotFoundError: No module named 'karajan.orchestration.go_task_binding'
+
+tests\runs\test_go_task_binding.py:32: ModuleNotFoundError</failure></testcase><testcase classname="tests.runs.test_go_task_binding" name="test_changed_immutable_or_withdrawn_operation_cannot_produce_execution_binding[intent]" time="0.934"><failure message="ModuleNotFoundError: No module named 'karajan.orchestration.go_task_binding'">activated = {'activation_allowed': False, 'assessment': {'activation_allowed': False, 'admission_expectations': [{'estimate_sha256...3b76ee8fb3e72439ee10c3', 'dispatch_enabled': False, ...}, 'cancel_requested': False, 'cancellation_receipt': None, ...}
+change = 'intent'
+
+    @pytest.mark.parametrize("change", ["intent", "workspace", "activation", "cancel"])
+    def test_changed_immutable_or_withdrawn_operation_cannot_produce_execution_binding(activated, change):
+&gt;       from karajan.orchestration.go_task_binding import task_grant_binding
+E       ModuleNotFoundError: No module named 'karajan.orchestration.go_task_binding'
+
+tests\runs\test_go_task_binding.py:60: ModuleNotFoundError</failure></testcase><testcase classname="tests.runs.test_go_task_binding" name="test_changed_immutable_or_withdrawn_operation_cannot_produce_execution_binding[workspace]" time="0.959"><failure message="ModuleNotFoundError: No module named 'karajan.orchestration.go_task_binding'">activated = {'activation_allowed': False, 'assessment': {'activation_allowed': False, 'admission_expectations': [{'estimate_sha256...1f9bc314a26cb1d94cca9a', 'dispatch_enabled': False, ...}, 'cancel_requested': False, 'cancellation_receipt': None, ...}
+change = 'workspace'
+
+    @pytest.mark.parametrize("change", ["intent", "workspace", "activation", "cancel"])
+    def test_changed_immutable_or_withdrawn_operation_cannot_produce_execution_binding(activated, change):
+&gt;       from karajan.orchestration.go_task_binding import task_grant_binding
+E       ModuleNotFoundError: No module named 'karajan.orchestration.go_task_binding'
+
+tests\runs\test_go_task_binding.py:60: ModuleNotFoundError</failure></testcase><testcase classname="tests.runs.test_go_task_binding" name="test_changed_immutable_or_withdrawn_operation_cannot_produce_execution_binding[activation]" time="0.993"><failure message="ModuleNotFoundError: No module named 'karajan.orchestration.go_task_binding'">activated = {'activation_allowed': False, 'assessment': {'activation_allowed': False, 'admission_expectations': [{'estimate_sha256...73d5b493a5a4dfe22c9682', 'dispatch_enabled': False, ...}, 'cancel_requested': False, 'cancellation_receipt': None, ...}
+change = 'activation'
+
+    @pytest.mark.parametrize("change", ["intent", "workspace", "activation", "cancel"])
+    def test_changed_immutable_or_withdrawn_operation_cannot_produce_execution_binding(activated, change):
+&gt;       from karajan.orchestration.go_task_binding import task_grant_binding
+E       ModuleNotFoundError: No module named 'karajan.orchestration.go_task_binding'
+
+tests\runs\test_go_task_binding.py:60: ModuleNotFoundError</failure></testcase><testcase classname="tests.runs.test_go_task_binding" name="test_changed_immutable_or_withdrawn_operation_cannot_produce_execution_binding[cancel]" time="0.963"><failure message="ModuleNotFoundError: No module named 'karajan.orchestration.go_task_binding'">activated = {'activation_allowed': False, 'assessment': {'activation_allowed': False, 'admission_expectations': [{'estimate_sha256...8dddc905ec4a7188f384c6', 'dispatch_enabled': False, ...}, 'cancel_requested': False, 'cancellation_receipt': None, ...}
+change = 'cancel'
+
+    @pytest.mark.parametrize("change", ["intent", "workspace", "activation", "cancel"])
+    def test_changed_immutable_or_withdrawn_operation_cannot_produce_execution_binding(activated, change):
+&gt;       from karajan.orchestration.go_task_binding import task_grant_binding
+E       ModuleNotFoundError: No module named 'karajan.orchestration.go_task_binding'
+
+tests\runs\test_go_task_binding.py:60: ModuleNotFoundError</failure></testcase></testsuite></testsuites>

@@ -60,6 +60,15 @@ def supervise(database: Path, start_key: str) -> None:
                 stdout=log,
                 stderr=subprocess.STDOUT,
             )
+            runner = process_identity(process.pid)
+            if runner is not None:
+                with host._connect(existing_only=True) as connection:
+                    connection.execute(
+                        "UPDATE executions SET runner_pid=?, runner_birth=? WHERE start_key=? "
+                        "AND state='running' AND runner_pid IS NULL AND supervisor_pid=? "
+                        "AND supervisor_birth=?",
+                        (runner.pid, runner.birth, start_key, identity.pid, identity.birth),
+                    )
             deadline = time.monotonic() + spec["timeout_seconds"]
             while True:
                 with host._connect() as connection:

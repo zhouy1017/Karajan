@@ -1,0 +1,479 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="16" skipped="0" tests="22" time="48.573" timestamp="2026-09-06T20:33:09.157775+08:00" hostname="ProArt-Zhou"><testcase classname="tests.isolation.test_go_task" name="test_input_is_immutable_and_descriptor_contains_only_bound_summaries" time="0.000" /><testcase classname="tests.isolation.test_go_task" name="test_real_native_task_returns_owned_stopped_projection_and_durable_usage" time="14.025" /><testcase classname="tests.isolation.test_go_task" name="test_misbound_inputs_have_no_start_or_send_callback[native_source]" time="1.036"><failure message="NameError: name 'replace' is not defined">tmp_path = PosixPath('/tmp/karajan-native-task-first/test_misbound_inputs_have_no_s0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x713888056bd0&gt;
+fault = 'native_source'
+
+    @pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux runtime required")
+    @pytest.mark.parametrize(
+        "fault",
+        [
+            "native_source",
+            "runner_source",
+            "workspace",
+            "context_source",
+            "policy",
+            "context_limit",
+            "margin",
+            "credential_project",
+            "credential_generation",
+            "capability",
+            "revoked",
+        ],
+    )
+    def test_misbound_inputs_have_no_start_or_send_callback(tmp_path, accounting, fault):
+        runtime, task, credential, auth, context = prepared(tmp_path, accounting)
+        if fault == "native_source":
+&gt;           task = replace(task, native_source_sha256="0" * 64)
+                   ^^^^^^^
+E           NameError: name 'replace' is not defined
+
+tests/isolation/test_go_task.py:228: NameError</failure></testcase><testcase classname="tests.isolation.test_go_task" name="test_misbound_inputs_have_no_start_or_send_callback[runner_source]" time="1.034"><failure message="NameError: name 'replace' is not defined">tmp_path = PosixPath('/tmp/karajan-native-task-first/test_misbound_inputs_have_no_s1')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x713888056bd0&gt;
+fault = 'runner_source'
+
+    @pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux runtime required")
+    @pytest.mark.parametrize(
+        "fault",
+        [
+            "native_source",
+            "runner_source",
+            "workspace",
+            "context_source",
+            "policy",
+            "context_limit",
+            "margin",
+            "credential_project",
+            "credential_generation",
+            "capability",
+            "revoked",
+        ],
+    )
+    def test_misbound_inputs_have_no_start_or_send_callback(tmp_path, accounting, fault):
+        runtime, task, credential, auth, context = prepared(tmp_path, accounting)
+        if fault == "native_source":
+            task = replace(task, native_source_sha256="0" * 64)
+        elif fault == "runner_source":
+&gt;           task = replace(task, runner_source_digest="0" * 64)
+                   ^^^^^^^
+E           NameError: name 'replace' is not defined
+
+tests/isolation/test_go_task.py:230: NameError</failure></testcase><testcase classname="tests.isolation.test_go_task" name="test_misbound_inputs_have_no_start_or_send_callback[workspace]" time="1.049"><failure message="NameError: name 'replace' is not defined">tmp_path = PosixPath('/tmp/karajan-native-task-first/test_misbound_inputs_have_no_s2')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x713888056bd0&gt;
+fault = 'workspace'
+
+    @pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux runtime required")
+    @pytest.mark.parametrize(
+        "fault",
+        [
+            "native_source",
+            "runner_source",
+            "workspace",
+            "context_source",
+            "policy",
+            "context_limit",
+            "margin",
+            "credential_project",
+            "credential_generation",
+            "capability",
+            "revoked",
+        ],
+    )
+    def test_misbound_inputs_have_no_start_or_send_callback(tmp_path, accounting, fault):
+        runtime, task, credential, auth, context = prepared(tmp_path, accounting)
+        if fault == "native_source":
+            task = replace(task, native_source_sha256="0" * 64)
+        elif fault == "runner_source":
+            task = replace(task, runner_source_digest="0" * 64)
+        elif fault == "workspace":
+&gt;           task = replace(task, workspace_digest="0" * 64)
+                   ^^^^^^^
+E           NameError: name 'replace' is not defined
+
+tests/isolation/test_go_task.py:232: NameError</failure></testcase><testcase classname="tests.isolation.test_go_task" name="test_misbound_inputs_have_no_start_or_send_callback[context_source]" time="1.033"><failure message="NameError: name 'replace' is not defined">tmp_path = PosixPath('/tmp/karajan-native-task-first/test_misbound_inputs_have_no_s3')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x713888056bd0&gt;
+fault = 'context_source'
+
+    @pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux runtime required")
+    @pytest.mark.parametrize(
+        "fault",
+        [
+            "native_source",
+            "runner_source",
+            "workspace",
+            "context_source",
+            "policy",
+            "context_limit",
+            "margin",
+            "credential_project",
+            "credential_generation",
+            "capability",
+            "revoked",
+        ],
+    )
+    def test_misbound_inputs_have_no_start_or_send_callback(tmp_path, accounting, fault):
+        runtime, task, credential, auth, context = prepared(tmp_path, accounting)
+        if fault == "native_source":
+            task = replace(task, native_source_sha256="0" * 64)
+        elif fault == "runner_source":
+            task = replace(task, runner_source_digest="0" * 64)
+        elif fault == "workspace":
+            task = replace(task, workspace_digest="0" * 64)
+        elif fault == "context_source":
+&gt;           context = replace(context, source_sha256="0" * 64)
+                      ^^^^^^^
+E           NameError: name 'replace' is not defined
+
+tests/isolation/test_go_task.py:234: NameError</failure></testcase><testcase classname="tests.isolation.test_go_task" name="test_misbound_inputs_have_no_start_or_send_callback[policy]" time="1.054"><failure message="NameError: name 'replace' is not defined">tmp_path = PosixPath('/tmp/karajan-native-task-first/test_misbound_inputs_have_no_s4')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x713888056bd0&gt;
+fault = 'policy'
+
+    @pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux runtime required")
+    @pytest.mark.parametrize(
+        "fault",
+        [
+            "native_source",
+            "runner_source",
+            "workspace",
+            "context_source",
+            "policy",
+            "context_limit",
+            "margin",
+            "credential_project",
+            "credential_generation",
+            "capability",
+            "revoked",
+        ],
+    )
+    def test_misbound_inputs_have_no_start_or_send_callback(tmp_path, accounting, fault):
+        runtime, task, credential, auth, context = prepared(tmp_path, accounting)
+        if fault == "native_source":
+            task = replace(task, native_source_sha256="0" * 64)
+        elif fault == "runner_source":
+            task = replace(task, runner_source_digest="0" * 64)
+        elif fault == "workspace":
+            task = replace(task, workspace_digest="0" * 64)
+        elif fault == "context_source":
+            context = replace(context, source_sha256="0" * 64)
+        elif fault == "policy":
+&gt;           context = replace(context, execution_policy_digest="0" * 64)
+                      ^^^^^^^
+E           NameError: name 'replace' is not defined
+
+tests/isolation/test_go_task.py:236: NameError</failure></testcase><testcase classname="tests.isolation.test_go_task" name="test_misbound_inputs_have_no_start_or_send_callback[context_limit]" time="1.047"><failure message="NameError: name 'replace' is not defined">tmp_path = PosixPath('/tmp/karajan-native-task-first/test_misbound_inputs_have_no_s5')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x713888056bd0&gt;
+fault = 'context_limit'
+
+    @pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux runtime required")
+    @pytest.mark.parametrize(
+        "fault",
+        [
+            "native_source",
+            "runner_source",
+            "workspace",
+            "context_source",
+            "policy",
+            "context_limit",
+            "margin",
+            "credential_project",
+            "credential_generation",
+            "capability",
+            "revoked",
+        ],
+    )
+    def test_misbound_inputs_have_no_start_or_send_callback(tmp_path, accounting, fault):
+        runtime, task, credential, auth, context = prepared(tmp_path, accounting)
+        if fault == "native_source":
+            task = replace(task, native_source_sha256="0" * 64)
+        elif fault == "runner_source":
+            task = replace(task, runner_source_digest="0" * 64)
+        elif fault == "workspace":
+            task = replace(task, workspace_digest="0" * 64)
+        elif fault == "context_source":
+            context = replace(context, source_sha256="0" * 64)
+        elif fault == "policy":
+            context = replace(context, execution_policy_digest="0" * 64)
+        elif fault == "context_limit":
+&gt;           context = replace(context, operating_context_tokens=32768)
+                      ^^^^^^^
+E           NameError: name 'replace' is not defined
+
+tests/isolation/test_go_task.py:238: NameError</failure></testcase><testcase classname="tests.isolation.test_go_task" name="test_misbound_inputs_have_no_start_or_send_callback[margin]" time="1.068"><failure message="NameError: name 'replace' is not defined">tmp_path = PosixPath('/tmp/karajan-native-task-first/test_misbound_inputs_have_no_s6')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x713888056bd0&gt;
+fault = 'margin'
+
+    @pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux runtime required")
+    @pytest.mark.parametrize(
+        "fault",
+        [
+            "native_source",
+            "runner_source",
+            "workspace",
+            "context_source",
+            "policy",
+            "context_limit",
+            "margin",
+            "credential_project",
+            "credential_generation",
+            "capability",
+            "revoked",
+        ],
+    )
+    def test_misbound_inputs_have_no_start_or_send_callback(tmp_path, accounting, fault):
+        runtime, task, credential, auth, context = prepared(tmp_path, accounting)
+        if fault == "native_source":
+            task = replace(task, native_source_sha256="0" * 64)
+        elif fault == "runner_source":
+            task = replace(task, runner_source_digest="0" * 64)
+        elif fault == "workspace":
+            task = replace(task, workspace_digest="0" * 64)
+        elif fault == "context_source":
+            context = replace(context, source_sha256="0" * 64)
+        elif fault == "policy":
+            context = replace(context, execution_policy_digest="0" * 64)
+        elif fault == "context_limit":
+            context = replace(context, operating_context_tokens=32768)
+        elif fault == "margin":
+&gt;           context = replace(context, fixed_margin=2047)
+                      ^^^^^^^
+E           NameError: name 'replace' is not defined
+
+tests/isolation/test_go_task.py:240: NameError</failure></testcase><testcase classname="tests.isolation.test_go_task" name="test_misbound_inputs_have_no_start_or_send_callback[credential_project]" time="1.075"><failure message="NameError: name 'replace' is not defined">tmp_path = PosixPath('/tmp/karajan-native-task-first/test_misbound_inputs_have_no_s7')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x713888056bd0&gt;
+fault = 'credential_project'
+
+    @pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux runtime required")
+    @pytest.mark.parametrize(
+        "fault",
+        [
+            "native_source",
+            "runner_source",
+            "workspace",
+            "context_source",
+            "policy",
+            "context_limit",
+            "margin",
+            "credential_project",
+            "credential_generation",
+            "capability",
+            "revoked",
+        ],
+    )
+    def test_misbound_inputs_have_no_start_or_send_callback(tmp_path, accounting, fault):
+        runtime, task, credential, auth, context = prepared(tmp_path, accounting)
+        if fault == "native_source":
+            task = replace(task, native_source_sha256="0" * 64)
+        elif fault == "runner_source":
+            task = replace(task, runner_source_digest="0" * 64)
+        elif fault == "workspace":
+            task = replace(task, workspace_digest="0" * 64)
+        elif fault == "context_source":
+            context = replace(context, source_sha256="0" * 64)
+        elif fault == "policy":
+            context = replace(context, execution_policy_digest="0" * 64)
+        elif fault == "context_limit":
+            context = replace(context, operating_context_tokens=32768)
+        elif fault == "margin":
+            context = replace(context, fixed_margin=2047)
+        elif fault == "credential_project":
+&gt;           credential = replace(credential, project_id="foreign")
+                         ^^^^^^^
+E           NameError: name 'replace' is not defined
+
+tests/isolation/test_go_task.py:242: NameError</failure></testcase><testcase classname="tests.isolation.test_go_task" name="test_misbound_inputs_have_no_start_or_send_callback[credential_generation]" time="1.061"><failure message="NameError: name 'replace' is not defined">tmp_path = PosixPath('/tmp/karajan-native-task-first/test_misbound_inputs_have_no_s8')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x713888056bd0&gt;
+fault = 'credential_generation'
+
+    @pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux runtime required")
+    @pytest.mark.parametrize(
+        "fault",
+        [
+            "native_source",
+            "runner_source",
+            "workspace",
+            "context_source",
+            "policy",
+            "context_limit",
+            "margin",
+            "credential_project",
+            "credential_generation",
+            "capability",
+            "revoked",
+        ],
+    )
+    def test_misbound_inputs_have_no_start_or_send_callback(tmp_path, accounting, fault):
+        runtime, task, credential, auth, context = prepared(tmp_path, accounting)
+        if fault == "native_source":
+            task = replace(task, native_source_sha256="0" * 64)
+        elif fault == "runner_source":
+            task = replace(task, runner_source_digest="0" * 64)
+        elif fault == "workspace":
+            task = replace(task, workspace_digest="0" * 64)
+        elif fault == "context_source":
+            context = replace(context, source_sha256="0" * 64)
+        elif fault == "policy":
+            context = replace(context, execution_policy_digest="0" * 64)
+        elif fault == "context_limit":
+            context = replace(context, operating_context_tokens=32768)
+        elif fault == "margin":
+            context = replace(context, fixed_margin=2047)
+        elif fault == "credential_project":
+            credential = replace(credential, project_id="foreign")
+        elif fault == "credential_generation":
+&gt;           credential = replace(credential, generation="other-generation")
+                         ^^^^^^^
+E           NameError: name 'replace' is not defined
+
+tests/isolation/test_go_task.py:244: NameError</failure></testcase><testcase classname="tests.isolation.test_go_task" name="test_misbound_inputs_have_no_start_or_send_callback[capability]" time="1.064"><failure message="NameError: name 'replace' is not defined">tmp_path = PosixPath('/tmp/karajan-native-task-first/test_misbound_inputs_have_no_s9')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x713888056bd0&gt;
+fault = 'capability'
+
+    @pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux runtime required")
+    @pytest.mark.parametrize(
+        "fault",
+        [
+            "native_source",
+            "runner_source",
+            "workspace",
+            "context_source",
+            "policy",
+            "context_limit",
+            "margin",
+            "credential_project",
+            "credential_generation",
+            "capability",
+            "revoked",
+        ],
+    )
+    def test_misbound_inputs_have_no_start_or_send_callback(tmp_path, accounting, fault):
+        runtime, task, credential, auth, context = prepared(tmp_path, accounting)
+        if fault == "native_source":
+            task = replace(task, native_source_sha256="0" * 64)
+        elif fault == "runner_source":
+            task = replace(task, runner_source_digest="0" * 64)
+        elif fault == "workspace":
+            task = replace(task, workspace_digest="0" * 64)
+        elif fault == "context_source":
+            context = replace(context, source_sha256="0" * 64)
+        elif fault == "policy":
+            context = replace(context, execution_policy_digest="0" * 64)
+        elif fault == "context_limit":
+            context = replace(context, operating_context_tokens=32768)
+        elif fault == "margin":
+            context = replace(context, fixed_margin=2047)
+        elif fault == "credential_project":
+            credential = replace(credential, project_id="foreign")
+        elif fault == "credential_generation":
+            credential = replace(credential, generation="other-generation")
+        elif fault == "capability":
+&gt;           auth = replace(auth, capability="wrong-capability")
+                   ^^^^^^^
+E           NameError: name 'replace' is not defined
+
+tests/isolation/test_go_task.py:246: NameError</failure></testcase><testcase classname="tests.isolation.test_go_task" name="test_misbound_inputs_have_no_start_or_send_callback[revoked]" time="2.096" /><testcase classname="tests.isolation.test_go_task" name="test_start_callback_cannot_manufacture_namespace_or_capture[deny]" time="3.071" /><testcase classname="tests.isolation.test_go_task" name="test_start_callback_cannot_manufacture_namespace_or_capture[fabricate]" time="3.005" /><testcase classname="tests.isolation.test_go_task" name="test_send_guard_withdrawal_after_first_response_cannot_send_second_call" time="13.065" /><testcase classname="tests.isolation.test_go_task" name="test_invalid_input_fails_before_runtime_construction[prompt_size]" time="0.001"><failure message="NameError: name 'replace' is not defined">fault = 'prompt_size'
+
+    @pytest.mark.parametrize(
+        "fault", ["prompt_size", "empty_prompt", "mutable_files", "bad_bytes", "path", "no_write"]
+    )
+    def test_invalid_input_fails_before_runtime_construction(fault):
+        task = GoTaskInput("a" * 64, "b" * 64, "c" * 64, "Task", (file("code.py", INITIAL, True),), 30)
+        with pytest.raises(ValueError):
+            if fault == "prompt_size":
+&gt;               replace(task, prompt="x" * 8193)
+                ^^^^^^^
+E               NameError: name 'replace' is not defined
+
+tests/isolation/test_go_task.py:346: NameError</failure></testcase><testcase classname="tests.isolation.test_go_task" name="test_invalid_input_fails_before_runtime_construction[empty_prompt]" time="0.000"><failure message="NameError: name 'replace' is not defined">fault = 'empty_prompt'
+
+    @pytest.mark.parametrize(
+        "fault", ["prompt_size", "empty_prompt", "mutable_files", "bad_bytes", "path", "no_write"]
+    )
+    def test_invalid_input_fails_before_runtime_construction(fault):
+        task = GoTaskInput("a" * 64, "b" * 64, "c" * 64, "Task", (file("code.py", INITIAL, True),), 30)
+        with pytest.raises(ValueError):
+            if fault == "prompt_size":
+                replace(task, prompt="x" * 8193)
+            elif fault == "empty_prompt":
+&gt;               replace(task, prompt=" ")
+                ^^^^^^^
+E               NameError: name 'replace' is not defined
+
+tests/isolation/test_go_task.py:348: NameError</failure></testcase><testcase classname="tests.isolation.test_go_task" name="test_invalid_input_fails_before_runtime_construction[mutable_files]" time="0.000"><failure message="NameError: name 'replace' is not defined">fault = 'mutable_files'
+
+    @pytest.mark.parametrize(
+        "fault", ["prompt_size", "empty_prompt", "mutable_files", "bad_bytes", "path", "no_write"]
+    )
+    def test_invalid_input_fails_before_runtime_construction(fault):
+        task = GoTaskInput("a" * 64, "b" * 64, "c" * 64, "Task", (file("code.py", INITIAL, True),), 30)
+        with pytest.raises(ValueError):
+            if fault == "prompt_size":
+                replace(task, prompt="x" * 8193)
+            elif fault == "empty_prompt":
+                replace(task, prompt=" ")
+            elif fault == "mutable_files":
+&gt;               replace(task, files=list(task.files))
+                ^^^^^^^
+E               NameError: name 'replace' is not defined
+
+tests/isolation/test_go_task.py:350: NameError</failure></testcase><testcase classname="tests.isolation.test_go_task" name="test_invalid_input_fails_before_runtime_construction[bad_bytes]" time="0.000"><failure message="NameError: name 'replace' is not defined">fault = 'bad_bytes'
+
+    @pytest.mark.parametrize(
+        "fault", ["prompt_size", "empty_prompt", "mutable_files", "bad_bytes", "path", "no_write"]
+    )
+    def test_invalid_input_fails_before_runtime_construction(fault):
+        task = GoTaskInput("a" * 64, "b" * 64, "c" * 64, "Task", (file("code.py", INITIAL, True),), 30)
+        with pytest.raises(ValueError):
+            if fault == "prompt_size":
+                replace(task, prompt="x" * 8193)
+            elif fault == "empty_prompt":
+                replace(task, prompt=" ")
+            elif fault == "mutable_files":
+                replace(task, files=list(task.files))
+            elif fault == "bad_bytes":
+&gt;               replace(task.files[0], content=b"changed")
+                ^^^^^^^
+E               NameError: name 'replace' is not defined
+
+tests/isolation/test_go_task.py:352: NameError</failure></testcase><testcase classname="tests.isolation.test_go_task" name="test_invalid_input_fails_before_runtime_construction[path]" time="0.000"><failure message="NameError: name 'replace' is not defined">fault = 'path'
+
+    @pytest.mark.parametrize(
+        "fault", ["prompt_size", "empty_prompt", "mutable_files", "bad_bytes", "path", "no_write"]
+    )
+    def test_invalid_input_fails_before_runtime_construction(fault):
+        task = GoTaskInput("a" * 64, "b" * 64, "c" * 64, "Task", (file("code.py", INITIAL, True),), 30)
+        with pytest.raises(ValueError):
+            if fault == "prompt_size":
+                replace(task, prompt="x" * 8193)
+            elif fault == "empty_prompt":
+                replace(task, prompt=" ")
+            elif fault == "mutable_files":
+                replace(task, files=list(task.files))
+            elif fault == "bad_bytes":
+                replace(task.files[0], content=b"changed")
+            elif fault == "path":
+&gt;               replace(task.files[0], path="../outside")
+                ^^^^^^^
+E               NameError: name 'replace' is not defined
+
+tests/isolation/test_go_task.py:354: NameError</failure></testcase><testcase classname="tests.isolation.test_go_task" name="test_invalid_input_fails_before_runtime_construction[no_write]" time="0.001"><failure message="NameError: name 'replace' is not defined">fault = 'no_write'
+
+    @pytest.mark.parametrize(
+        "fault", ["prompt_size", "empty_prompt", "mutable_files", "bad_bytes", "path", "no_write"]
+    )
+    def test_invalid_input_fails_before_runtime_construction(fault):
+        task = GoTaskInput("a" * 64, "b" * 64, "c" * 64, "Task", (file("code.py", INITIAL, True),), 30)
+        with pytest.raises(ValueError):
+            if fault == "prompt_size":
+                replace(task, prompt="x" * 8193)
+            elif fault == "empty_prompt":
+                replace(task, prompt=" ")
+            elif fault == "mutable_files":
+                replace(task, files=list(task.files))
+            elif fault == "bad_bytes":
+                replace(task.files[0], content=b"changed")
+            elif fault == "path":
+                replace(task.files[0], path="../outside")
+            else:
+&gt;               replace(task, files=(file("code.py", INITIAL, False),))
+                ^^^^^^^
+E               NameError: name 'replace' is not defined
+
+tests/isolation/test_go_task.py:356: NameError</failure></testcase></testsuite></testsuites>

@@ -1,0 +1,29 @@
+{
+  "schema_version": "karajan.author-freeze.v1",
+  "base": "f2d639559e738dfbb951163c6e8d83b460d758fb",
+  "frozen_at": "2026-09-06T12:48:25.824387+00:00",
+  "sources": {
+    "backend/karajan/orchestration/go_execution_intent.py": "f27910d3ca613a8e11c88cc780b6b038d9de8b421a2dfde9a8f2df3a4ebd1bc1",
+    "backend/karajan/orchestration/admission.py": "571394f63dcc4ef5f83194b4bac24fe265b33432d82bc98d2a5b296cd9014e74",
+    "tests/runs/test_go_execution_intent.py": "986e8952c58391744b1a27a8176785358b81412d03dbeace37afc3c3841a7a5b"
+  },
+  "checks": {
+    "intent_windows": {
+      "tests": 23,
+      "passed": 23,
+      "seconds": 22.2,
+      "report": "author-final.xml"
+    },
+    "admission_workspace_windows": {
+      "tests": 26,
+      "passed": 26,
+      "seconds": 16.13,
+      "report": "admission-workspace-regression.xml"
+    },
+    "ruff": "passed",
+    "mypy_owned_source_files": 2
+  },
+  "provider_calls": 0,
+  "real_credential_reads": 0,
+  "qualified_profile": false
+}

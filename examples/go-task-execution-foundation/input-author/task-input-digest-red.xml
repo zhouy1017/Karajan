@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="3" time="4.350" timestamp="2026-09-06T20:44:50.304325+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_go_task_input" name="test_input_comes_from_approved_text_and_cas_after_original_repository_disappears" time="1.108" /><testcase classname="tests.runs.test_go_task_input" name="test_workspace_both_digest_layers_are_required[outer]" time="1.103"><failure message="Failed: DID NOT RAISE RunError">workspace_case = ({'schema_version': 'karajan.approved-task-workspace.v1', 'run_id': '613639b5-1e0a-4674-b485-f18836cec49c', 'operation...mission object at 0x000001D6288DBC20&gt;, &lt;karajan.orchestration.routing.ApprovedRunRouting object at 0x000001D6288DAA50&gt;)
+fault = 'outer'
+
+    @pytest.mark.parametrize("fault", ["outer", "input"])
+    def test_workspace_both_digest_layers_are_required(workspace_case, fault):
+        workspace, candidates, *_ = workspace_case
+        changed = deepcopy(workspace)
+        if fault == "outer":
+            changed["write_paths"].append("src/reference.txt")
+        else:
+            changed["input_sha256"] = "0" * 64
+            changed["digest"] = digest({key: value for key, value in changed.items() if key != "digest"})
+&gt;       with pytest.raises(RunError, match="TASK_INPUT_WORKSPACE_DIGEST_MISMATCH"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE RunError
+
+tests\runs\test_go_task_input.py:81: Failed</failure></testcase><testcase classname="tests.runs.test_go_task_input" name="test_workspace_both_digest_layers_are_required[input]" time="1.050"><failure message="Failed: DID NOT RAISE RunError">workspace_case = ({'schema_version': 'karajan.approved-task-workspace.v1', 'run_id': '5f9144f8-d7ae-4a2f-875b-6fa356acfb51', 'operation...mission object at 0x000001D62883DC10&gt;, &lt;karajan.orchestration.routing.ApprovedRunRouting object at 0x000001D62883DBE0&gt;)
+fault = 'input'
+
+    @pytest.mark.parametrize("fault", ["outer", "input"])
+    def test_workspace_both_digest_layers_are_required(workspace_case, fault):
+        workspace, candidates, *_ = workspace_case
+        changed = deepcopy(workspace)
+        if fault == "outer":
+            changed["write_paths"].append("src/reference.txt")
+        else:
+            changed["input_sha256"] = "0" * 64
+            changed["digest"] = digest({key: value for key, value in changed.items() if key != "digest"})
+&gt;       with pytest.raises(RunError, match="TASK_INPUT_WORKSPACE_DIGEST_MISMATCH"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE RunError
+
+tests\runs\test_go_task_input.py:81: Failed</failure></testcase></testsuite></testsuites>

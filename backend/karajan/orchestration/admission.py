@@ -84,7 +84,7 @@ class ApprovedTaskAdmission:
         )
 
     def _refresh(self, db: sqlite3.Connection, operation: dict[str, Any]) -> dict[str, Any]:
-        if operation["state"] != "reserved":
+        if "execution" in operation or operation["state"] != "reserved":
             return operation
         facts = self.routing.capacity.routing_facts()
         admission_id = operation["capacity_receipt"]["admission_id"]
@@ -144,7 +144,7 @@ class ApprovedTaskAdmission:
             if db.execute(
                 "SELECT 1 FROM operations WHERE run_id=? AND task_id=? "
                 "AND state IN ('queued','reserved','cancellation_pending',"
-                "'reconciliation_required')",
+                "'reconciliation_required','execution_pending','executing','execution_unknown')",
                 (run_id, task_id),
             ).fetchone():
                 raise RunError("TASK_ADMISSION_PENDING")
@@ -233,6 +233,12 @@ class ApprovedTaskAdmission:
                 return operation
             operation["cancel_requested"] = True
             operation["state"] = "cancellation_pending"
+            if "execution" in operation:
+                # The execution controller must stop its owned grant and Host.
+                # Unactivated-only cancellation cannot prove those effects ended.
+                operation["execution"]["cancel_requested"] = True
+                self._save(db, operation)
+                return operation
             self._save(db, operation)
         with self._transaction() as db:
             operation = self._load(db, run_id, operation_id)

@@ -1,0 +1,56 @@
+{
+  "windows": "24 passed, 25.71 seconds",
+  "linux": "24 passed, 13.71 seconds",
+  "checks": "Ruff, mypy Windows/Linux passed",
+  "scope": "Author evidence; synthetic qualification and scripted planning admission",
+  "files": [
+    {
+      "path": "backend/karajan/orchestration/go_task_input.py",
+      "sha256": "062d86ed8b419e59142eb2b6506a9083962917be3e4886c25d3205fc84db7e8e"
+    },
+    {
+      "path": "tests/runs/test_go_task_input.py",
+      "sha256": "eac210652527b42336d44fb87535890c0e27f550410691152a927f44b45c6324"
+    },
+    {
+      "path": ".cache/task-input-red.xml",
+      "sha256": "93dd5fef4aaef7da8fda99e983c298f4c5a91ef7e373f3902e74084da35cfb14"
+    },
+    {
+      "path": ".cache/task-input-tracer.xml",
+      "sha256": "c214746e9184a6f79ef99939d59277b83fd0ab35dec4b98514ab479b1b774a60"
+    },
+    {
+      "path": ".cache/task-input-digest-red.xml",
+      "sha256": "492af9b95d8742bf7b8ebe166d2cf04e488a4b935eddd175f96df25197da2909"
+    },
+    {
+      "path": ".cache/task-input-digest-green.xml",
+      "sha256": "1017faa60aec892d671146b00bfb59395cc95b6b9d4bce50b1c22760a6fbfe45"
+    },
+    {
+      "path": ".cache/task-input-binding-red.xml",
+      "sha256": "a79fa78dcc5465b05f51b12bfb790c5c0099f5dccb49c0ca7427716793d5222b"
+    },
+    {
+      "path": ".cache/task-input-binding-green.xml",
+      "sha256": "a512a3af926e3594be16c6def3b3a645ac1e233821319cb0288fc26866577d4d"
+    },
+    {
+      "path": ".cache/task-input-requirement-red.xml",
+      "sha256": "9df7dcd1d5c02561af3dcd11fa1870441c38eed991d73eef28fca9bdd0514341"
+    },
+    {
+      "path": ".cache/task-input-final2-windows.xml",
+      "sha256": "6c6de70acddbdb1597cf489a319803e8a5cfc6b31e01f44bf3e05dd753984eae"
+    },
+    {
+      "path": ".cache/task-input-final-wsl.xml",
+      "sha256": "959032e6d17a0c5045d9e40bbc76ab7af19fbc296fe71fd0f9b90b5202239da1"
+    },
+    {
+      "path": ".cache/task-input-author/README.md",
+      "sha256": "adf72f2505dfdaf434049bd8cf5475d9454364a061df051c12036feafaa92dca"
+    }
+  ]
+}

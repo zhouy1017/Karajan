@@ -1,0 +1,9 @@
+{
+  "path": "backend\\karajan\\orchestration\\go_task_binding.py",
+  "sha256": "92e3421922bc8ab6d9710a9da285fc24ad9b2822ed1f0e074c90419e9973af57",
+  "tests": {
+    "passed": 1,
+    "failed": 3,
+    "report": "before.xml"
+  }
+}

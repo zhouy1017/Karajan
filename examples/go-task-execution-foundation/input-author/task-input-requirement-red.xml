@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="2.102" timestamp="2026-09-06T20:49:35.807807+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_go_task_input" name="test_incomplete_routing_task_requirements_are_not_a_valid_binding" time="1.046"><failure message="Failed: DID NOT RAISE RunError">workspace_case = ({'schema_version': 'karajan.approved-task-workspace.v1', 'run_id': 'a12db0d7-a73b-46b8-a870-70eaac102b17', 'operation...mission object at 0x000002718CA96F60&gt;, &lt;karajan.orchestration.routing.ApprovedRunRouting object at 0x000002718C014EC0&gt;)
+
+    def test_incomplete_routing_task_requirements_are_not_a_valid_binding(workspace_case):
+        workspace, candidates, *_ = workspace_case
+        changed = deepcopy(workspace)
+        changed["source_binding"]["plan"]["routing_binding"]["task_requirements"]["implement"] = {}
+&gt;       with pytest.raises(RunError, match="TASK_INPUT_TASK_BINDING_MISMATCH"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE RunError
+
+tests\runs\test_go_task_input.py:246: Failed</failure></testcase></testsuite></testsuites>

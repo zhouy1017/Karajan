@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="11" time="4.718" timestamp="2026-09-06T20:42:40.796345+08:00" hostname="ProArt-Zhou"><testcase classname="tests.execution.test_runner_identity_independent" name="test_same_group_grandchild_is_denied_both_registration_and_runner_authority" time="0.576"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.execution.test_runner_identity_independent" name="test_public_control_and_cancellation_wait_until_actual_child_guard_releases[disable]" time="0.623"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.execution.test_runner_identity_independent" name="test_public_control_and_cancellation_wait_until_actual_child_guard_releases[cancel]" time="0.601"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.execution.test_runner_identity_independent" name="test_exception_from_child_guard_releases_lock_without_mutating_control" time="0.425"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.execution.test_runner_identity_independent" name="test_direct_child_revalidates_public_control_after_registration[fence]" time="0.413"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.execution.test_runner_identity_independent" name="test_direct_child_revalidates_public_control_after_registration[authorization]" time="0.415"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.execution.test_runner_identity_independent" name="test_direct_child_revalidates_public_control_after_registration[disabled]" time="0.403"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.execution.test_runner_identity_independent" name="test_lost_live_supervisor_cannot_leave_a_child_authorized" time="0.423"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+supervisor_loss_result: registered child also observed exited
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.execution.test_runner_identity_independent" name="test_unprovable_supervisor_identity_is_rejected_by_live_registered_child" time="0.446"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.execution.test_runner_identity_independent" name="test_legacy_execution_schema_migration_preserves_accepted_start_without_respawn" time="0.275"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.execution.test_runner_identity_independent" name="test_missing_ledger_read_handshake_does_not_create_replacement_database" time="0.014"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase></testsuite></testsuites>

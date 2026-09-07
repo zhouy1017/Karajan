@@ -1,0 +1,36 @@
+{
+  "schema_version": "karajan.independent-spec-review.v1",
+  "base": "f2d639559e738dfbb951163c6e8d83b460d758fb",
+  "sources": {
+    "backend/karajan/execution/host.py": "a4079785e99711e069c9d146c6bc3399274271c9071d94cc9e1f7486f0162e58",
+    "backend/karajan/execution/_supervisor.py": "b0196157d8f0f60a52471dd073976e8eefa2107397af88c0542aed3a28cce86f",
+    "tests/execution/test_runner_identity_independent.py": "f4f8d0a0549d438e2b54cabc745a05807a4cbb22b470b27eafe3dd47826c6474"
+  },
+  "findings": [],
+  "results": {
+    "linux": {
+      "passed": 11,
+      "skipped": 0,
+      "seconds": 9.37
+    },
+    "windows": {
+      "passed": 11,
+      "skipped": 0,
+      "seconds": 4.79
+    }
+  },
+  "artifacts": {
+    "before-sources.json": "977aee602d6698a0fb286d7ea1bfb907958eb0ea64e552646543031f34092813",
+    "initial-windows.xml": "3a47783db6abe434e9dc24beeef315315c3acea413d3c63416a8fb450a1583ed",
+    "corrected-windows.xml": "ea62b3cce74e74de6d46b39e23e362f9657371ea80110ba59b2bfb97462213e2",
+    "final-windows.xml": "8a132b95636296e8532deb41049d34a8738a00216cc6e0932db9c8d1c358ec11",
+    "final-linux.xml": "3c4606f576b31f2082c894187017fa391092479e491da908d66c95866a488a35",
+    "review.md": "e04df79ec32312ec5b011ea8c1fafecc2c89bf6b9f7adb0b1590d8eb567d73b7"
+  },
+  "scope": "Public Host runner identity, cancellation serialization, containment loss and legacy schema replay",
+  "synthetic_ports": [
+    "Controlled local Python process fixture",
+    "Deliberate legacy schema and supervisor birth corruption"
+  ],
+  "provider_calls": 0
+}

@@ -1,0 +1,33 @@
+{
+  "base": "f2d639559e738dfbb951163c6e8d83b460d758fb",
+  "standards_findings": [],
+  "spec_findings": [],
+  "sources": {
+    "backend/karajan/orchestration/go_execution_intent.py": "f27910d3ca613a8e11c88cc780b6b038d9de8b421a2dfde9a8f2df3a4ebd1bc1",
+    "backend/karajan/orchestration/admission.py": "571394f63dcc4ef5f83194b4bac24fe265b33432d82bc98d2a5b296cd9014e74",
+    ".cache/go-intent-independent/test_independent.py": "f7908e640bccb354c1b06c465f2208e7c13c405e70232d6315c57d1c926ddd70"
+  },
+  "results": {
+    "windows": {
+      "passed": 9,
+      "skipped": 0,
+      "seconds": 8.74
+    },
+    "linux": {
+      "passed": 9,
+      "skipped": 0,
+      "seconds": 6.07
+    }
+  },
+  "artifacts": {
+    "before-sources.json": "8ee5d9092be66e51d069221130e55648ce759f98d54a19b90594771772d08cda",
+    "initial-windows.xml": "2cc48f65d693b8eab5f56ce7b672640b22b8661388aee8ffaea9ed87db11c459",
+    "final-windows.xml": "d4d521d209d86f6cc9052f4abbc9c6e9f822ad3f5180118c214653b64b4f72e1",
+    "final-linux.xml": "467b39d509ed3adc19a754d4769e58510e47e29f4b276ec211a45c63bdb6d385",
+    "review.md": "2731019898280aeb8fc2cc119f40aae0025e6b94b2c0a75cea1c0b5cc0a7e061"
+  },
+  "provider_calls": 0,
+  "native_starts": 0,
+  "qualification": "explicit synthetic producer",
+  "runner_identity": "explicit controller-port test value, not actual Host authority"
+}

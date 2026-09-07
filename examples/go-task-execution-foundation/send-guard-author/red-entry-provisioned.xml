@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="1.495" timestamp="2026-09-06T20:25:55.858548+08:00" hostname="ProArt-Zhou"><testcase classname="tests.adapters.opencode.test_go_send_guard" name="test_guard_rejection_spends_no_journal_slot_and_sends_no_request" time="0.423"><failure message="TypeError: GoRelay.__init__() got an unexpected keyword argument 'send_guard'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-767/test_guard_rejection_spends_no0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000001B97F344F50&gt;
+
+    def test_guard_rejection_spends_no_journal_slot_and_sends_no_request(tmp_path, accounting):
+        @contextmanager
+        def denied():
+            raise ValueError("private owner and credential details")
+            yield
+    
+&gt;       with guarded_relay(tmp_path, accounting, denied) as (relay, journal, upstream):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\adapters\opencode\test_go_send_guard.py:60: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-767/test_guard_rejection_spends_no0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000001B97F344F50&gt;
+guard = &lt;function test_guard_rejection_spends_no_journal_slot_and_sends_no_request.&lt;locals&gt;.denied at 0x000001B97F310B80&gt;
+receive = None
+
+    @contextmanager
+    def guarded_relay(tmp_path, accounting, guard, receive=None):
+        journal = GoCallJournal(tmp_path / "calls.sqlite", clock=lambda: 1000.0)
+        binding = task_binding()
+        grant = journal.create_grant(binding, grant_id="task")
+        upstream = []
+    
+        def respond(request):
+            upstream.append(request)
+            return metered_answer() if receive is None else receive(request)
+    
+&gt;       relay = GoRelay(
+            SECRET,
+            CANARY,
+            send_guard=guard,
+            authorization=GoRelayAuthorization(journal, "task", binding, grant["capability"]),
+            context=GoRelayContext(
+                accounting,
+                digest(accounting.source()),
+                binding["execution_policy_digest"],
+                4000,
+                4096,
+                8192,
+                100,
+                1000,
+            ),
+            client_factory=lambda: httpx.Client(
+                transport=httpx.MockTransport(respond), trust_env=False
+            ),
+        )
+E       TypeError: GoRelay.__init__() got an unexpected keyword argument 'send_guard'
+
+tests\adapters\opencode\test_go_send_guard.py:28: TypeError</failure></testcase></testsuite></testsuites>
