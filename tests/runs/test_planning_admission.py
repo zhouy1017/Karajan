@@ -1064,6 +1064,7 @@ def test_effect_guard_reobserves_material_sealed_commander_source_before_body(
         *,
         expected_request: dict[str, Any],
         before_effect: Callable[[], None] | None = None,
+        after_capacity_facts: Callable[[Any], None] | None = None,
     ) -> Any:
         # This wrapper is reached after #111 has retained the Run/Project
         # guards and before the real Capacity callback invokes its source
@@ -1073,6 +1074,7 @@ def test_effect_guard_reobserves_material_sealed_commander_source_before_body(
             admission_id,
             expected_request=expected_request,
             before_effect=before_effect,
+            after_capacity_facts=after_capacity_facts,
         ) as capacity:
             yield capacity
 
