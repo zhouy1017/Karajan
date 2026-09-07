@@ -1,0 +1,102 @@
+{
+  "rows": [
+    {
+      "report": "p-receipts\\test_active_old_namespace_bloc0\\active-subject-report.json",
+      "check_run_id": "check:886d87fe-8c10-41f3-b278-f9b8f5c2f6e7",
+      "execution_digest": "909f3e092e23b6b65afa823ec1fe74b96fa2bb58c8365ea60109b520b663b23f",
+      "phase": "observed",
+      "production_controller_count": 139,
+      "production_controller_exact_source_map": true,
+      "qualification": "explicit_test_double",
+      "fixture_files": [
+        {
+          "source": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/reviewer-validation-subject/tests/runs/subject_check_fixture.py",
+          "expected_sha256": "2f2247c961552ae6dc67b336798b569740e3b68174549829f6be01428f325329",
+          "working_bytes_match": true
+        }
+      ]
+    },
+    {
+      "report": "p-receipts\\test_active_old_namespace_bloc0\\active-subject-report.json",
+      "check_run_id": "check:0c47136a-ea94-4f61-b29b-f85d9f10c287",
+      "execution_digest": null,
+      "phase": "cancelled",
+      "production_controller_count": 139,
+      "production_controller_exact_source_map": true,
+      "qualification": "explicit_test_double",
+      "fixture_files": [
+        {
+          "source": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/reviewer-validation-subject/tests/runs/subject_check_fixture.py",
+          "expected_sha256": "2f2247c961552ae6dc67b336798b569740e3b68174549829f6be01428f325329",
+          "working_bytes_match": true
+        }
+      ]
+    },
+    {
+      "report": "p-receipts\\test_rebound_subject_reruns_al0\\subject-native-report.json",
+      "check_run_id": "check:8a91479a-31b3-4ffb-be6f-2280bf954944",
+      "execution_digest": "c9f45f45a5eadf4f972c0c8d319519c4ec4006af522bbb3a76be5d65c8201f83",
+      "phase": "recorded",
+      "production_controller_count": 139,
+      "production_controller_exact_source_map": true,
+      "qualification": "explicit_test_double",
+      "fixture_files": [
+        {
+          "source": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/reviewer-validation-subject/tests/runs/subject_check_fixture.py",
+          "expected_sha256": "2f2247c961552ae6dc67b336798b569740e3b68174549829f6be01428f325329",
+          "working_bytes_match": true
+        }
+      ]
+    },
+    {
+      "report": "p-receipts\\test_rebound_subject_reruns_al0\\subject-native-report.json",
+      "check_run_id": "check:68f78297-8ae1-4332-b22f-56364319c95e",
+      "execution_digest": "d4118d4b7ee4459bacb09d2bf1a358a09cf245c8a43273dde465da2c38165e9b",
+      "phase": "recorded",
+      "production_controller_count": 139,
+      "production_controller_exact_source_map": true,
+      "qualification": "explicit_test_double",
+      "fixture_files": [
+        {
+          "source": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/reviewer-validation-subject/tests/runs/subject_check_fixture.py",
+          "expected_sha256": "2f2247c961552ae6dc67b336798b569740e3b68174549829f6be01428f325329",
+          "working_bytes_match": true
+        }
+      ]
+    },
+    {
+      "report": "p-receipts\\test_rebound_subject_reruns_al0\\subject-native-report.json",
+      "check_run_id": "check:04f569db-ff34-44e5-b9cd-435d89c7bbc7",
+      "execution_digest": "828650f20a6a5be3a6bdbad9308e603e718f557fef385a077168324b57c30560",
+      "phase": "recorded",
+      "production_controller_count": 139,
+      "production_controller_exact_source_map": true,
+      "qualification": "explicit_test_double",
+      "fixture_files": [
+        {
+          "source": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/reviewer-validation-subject/tests/runs/subject_check_fixture.py",
+          "expected_sha256": "2f2247c961552ae6dc67b336798b569740e3b68174549829f6be01428f325329",
+          "working_bytes_match": true
+        }
+      ]
+    },
+    {
+      "report": "p-receipts\\test_rebound_subject_reruns_al0\\subject-native-report.json",
+      "check_run_id": "check:e264384b-cbd7-448a-8a19-9c465f087fac",
+      "execution_digest": "c9d7243b58ddf260ef954bc7fa3cb39d81e0d164c0f61bae9b1a27074f51be31",
+      "phase": "recorded",
+      "production_controller_count": 139,
+      "production_controller_exact_source_map": true,
+      "qualification": "explicit_test_double",
+      "fixture_files": [
+        {
+          "source": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/reviewer-validation-subject/tests/runs/subject_check_fixture.py",
+          "expected_sha256": "2f2247c961552ae6dc67b336798b569740e3b68174549829f6be01428f325329",
+          "working_bytes_match": true
+        }
+      ]
+    }
+  ],
+  "all_match": true,
+  "note": "Actual persisted Check execution source read from test-saved public validation receipts. A never-claimed cancelled row can lack execution_digest; it is not counted as a started Check."
+}

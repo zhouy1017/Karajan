@@ -1,0 +1,26 @@
+[
+  {
+    "phase": "c-win",
+    "tests": 89,
+    "passed": 89,
+    "failed": 0,
+    "errors": 0,
+    "skipped": [],
+    "junit_time": "148.423",
+    "exit_code": 0,
+    "source_before_after_equal": true,
+    "xml": "c-win.xml"
+  },
+  {
+    "phase": "p-linux",
+    "tests": 2,
+    "passed": 2,
+    "failed": 0,
+    "errors": 0,
+    "skipped": [],
+    "junit_time": "92.790",
+    "exit_code": 0,
+    "source_before_after_equal": true,
+    "xml": "p-linux.xml"
+  }
+]

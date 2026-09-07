@@ -1,0 +1,191 @@
+{
+  "copies": [
+    {
+      "source": "/tmp/karajan-common-downstream-subject-p-linux-20260907/test_active_old_namespace_bloc0/work/a43784330cfff87f061607a7a95771184b3bebcc175a901446a3ec86c3f37f19/result.json",
+      "target": "p-receipts/test_active_old_namespace_bloc0/a43784330cfff87f061607a7a95771184b3bebcc175a901446a3ec86c3f37f19/result.json",
+      "sha256": "ea5f8f6cef2c7db343bc2b061c54d9827b274b9338ddd75a34be01c30f1ea1c1",
+      "bytes": 532,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-subject-p-linux-20260907/test_active_old_namespace_bloc0/work/a43784330cfff87f061607a7a95771184b3bebcc175a901446a3ec86c3f37f19/namespace-init.json",
+      "target": "p-receipts/test_active_old_namespace_bloc0/a43784330cfff87f061607a7a95771184b3bebcc175a901446a3ec86c3f37f19/namespace-init.json",
+      "sha256": "be3196275ed0aede29bc3586d60e02f2c103688b6a42b1b0d6a61f869f86ed40",
+      "bytes": 161,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-subject-p-linux-20260907/test_active_old_namespace_bloc0/work/a43784330cfff87f061607a7a95771184b3bebcc175a901446a3ec86c3f37f19/started.json",
+      "target": "p-receipts/test_active_old_namespace_bloc0/a43784330cfff87f061607a7a95771184b3bebcc175a901446a3ec86c3f37f19/started.json",
+      "sha256": "3fa004ad732b649289f990ee93760c78bc3a0a62275388bf702fec488912676c",
+      "bytes": 73,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-subject-p-linux-20260907/test_active_old_namespace_bloc0/work/a43784330cfff87f061607a7a95771184b3bebcc175a901446a3ec86c3f37f19/output.log",
+      "target": "p-receipts/test_active_old_namespace_bloc0/a43784330cfff87f061607a7a95771184b3bebcc175a901446a3ec86c3f37f19/output.log",
+      "sha256": "cb5c20ffc25fec9cadf3176ab5488040fefff6b4f4102da3f413415b617f0951",
+      "bytes": 81,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-subject-p-linux-20260907/test_active_old_namespace_bloc0/active-subject-report.json",
+      "target": "p-receipts/test_active_old_namespace_bloc0/active-subject-report.json",
+      "sha256": "cc82adf863608b538bf3d7b2a0e96ad267ca29d4d82d5ccc8c317c894c650ade",
+      "bytes": 74621,
+      "byte_equal": true,
+      "scope": "test-saved public validation observation; all project/qualification data synthetic"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-subject-p-linux-20260907/test_rebound_subject_reruns_al0/work/26d2129d995fefda3c3f60090e78bec5fdc09e0a3b1c947da383dbba224df862/result.json",
+      "target": "p-receipts/test_rebound_subject_reruns_al0/26d2129d995fefda3c3f60090e78bec5fdc09e0a3b1c947da383dbba224df862/result.json",
+      "sha256": "3a7b8f0ef354a9298f216c935addaec5f5faf23a23d1b18436b6847b5751e8a7",
+      "bytes": 531,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-subject-p-linux-20260907/test_rebound_subject_reruns_al0/work/26d2129d995fefda3c3f60090e78bec5fdc09e0a3b1c947da383dbba224df862/namespace-init.json",
+      "target": "p-receipts/test_rebound_subject_reruns_al0/26d2129d995fefda3c3f60090e78bec5fdc09e0a3b1c947da383dbba224df862/namespace-init.json",
+      "sha256": "f883aae7408bc70b521940ca1688ebd28214c274ebc9274c9cf0e3d6316aa490",
+      "bytes": 161,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-subject-p-linux-20260907/test_rebound_subject_reruns_al0/work/26d2129d995fefda3c3f60090e78bec5fdc09e0a3b1c947da383dbba224df862/started.json",
+      "target": "p-receipts/test_rebound_subject_reruns_al0/26d2129d995fefda3c3f60090e78bec5fdc09e0a3b1c947da383dbba224df862/started.json",
+      "sha256": "7f80d50dd49e4b7600a82a876d70d399adb2eecaa70474bf892758d1355eaee5",
+      "bytes": 73,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-subject-p-linux-20260907/test_rebound_subject_reruns_al0/work/26d2129d995fefda3c3f60090e78bec5fdc09e0a3b1c947da383dbba224df862/output.log",
+      "target": "p-receipts/test_rebound_subject_reruns_al0/26d2129d995fefda3c3f60090e78bec5fdc09e0a3b1c947da383dbba224df862/output.log",
+      "sha256": "bcf80edb3dd154e8aa62f4b72b0e0f06c57c92044b9927a0e7d5319e1077763b",
+      "bytes": 55,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-subject-p-linux-20260907/test_rebound_subject_reruns_al0/work/536b5660d84c8c890b0992ff2194f78ae7a237cae966007c8dcf1b3f5e821b09/result.json",
+      "target": "p-receipts/test_rebound_subject_reruns_al0/536b5660d84c8c890b0992ff2194f78ae7a237cae966007c8dcf1b3f5e821b09/result.json",
+      "sha256": "a7028cdfecbae627aeaa56f02f689006e66ac4c0ff5f5047ac60ef581fdd8a2b",
+      "bytes": 531,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-subject-p-linux-20260907/test_rebound_subject_reruns_al0/work/536b5660d84c8c890b0992ff2194f78ae7a237cae966007c8dcf1b3f5e821b09/namespace-init.json",
+      "target": "p-receipts/test_rebound_subject_reruns_al0/536b5660d84c8c890b0992ff2194f78ae7a237cae966007c8dcf1b3f5e821b09/namespace-init.json",
+      "sha256": "207686d08a0b10f4a0b43594150af576e30ee9e41de7116d61bbed37b864fe71",
+      "bytes": 161,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-subject-p-linux-20260907/test_rebound_subject_reruns_al0/work/536b5660d84c8c890b0992ff2194f78ae7a237cae966007c8dcf1b3f5e821b09/started.json",
+      "target": "p-receipts/test_rebound_subject_reruns_al0/536b5660d84c8c890b0992ff2194f78ae7a237cae966007c8dcf1b3f5e821b09/started.json",
+      "sha256": "549310956225f20e09e4b30b6deb67a7f2f0a261e489fd0c6dfe9900db5b1e26",
+      "bytes": 73,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-subject-p-linux-20260907/test_rebound_subject_reruns_al0/work/536b5660d84c8c890b0992ff2194f78ae7a237cae966007c8dcf1b3f5e821b09/output.log",
+      "target": "p-receipts/test_rebound_subject_reruns_al0/536b5660d84c8c890b0992ff2194f78ae7a237cae966007c8dcf1b3f5e821b09/output.log",
+      "sha256": "0685788b240abf5fdab04d066d18a0e822a9fbcc791a40883c8286271a8cb947",
+      "bytes": 43,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-subject-p-linux-20260907/test_rebound_subject_reruns_al0/work/b4c2b3cb95c0032772d9042eb211f1761be19a77b6bc6e75e6ed1f815d8256de/result.json",
+      "target": "p-receipts/test_rebound_subject_reruns_al0/b4c2b3cb95c0032772d9042eb211f1761be19a77b6bc6e75e6ed1f815d8256de/result.json",
+      "sha256": "d3082e21941a7e2bb6139210d5289aeefde0eefb18d0e6859d110060f95f8572",
+      "bytes": 531,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-subject-p-linux-20260907/test_rebound_subject_reruns_al0/work/b4c2b3cb95c0032772d9042eb211f1761be19a77b6bc6e75e6ed1f815d8256de/namespace-init.json",
+      "target": "p-receipts/test_rebound_subject_reruns_al0/b4c2b3cb95c0032772d9042eb211f1761be19a77b6bc6e75e6ed1f815d8256de/namespace-init.json",
+      "sha256": "3cc6c03a64f0054de4d4eca0a7e928e2e00a909f6f5550d9e32525ab89b82f0e",
+      "bytes": 161,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-subject-p-linux-20260907/test_rebound_subject_reruns_al0/work/b4c2b3cb95c0032772d9042eb211f1761be19a77b6bc6e75e6ed1f815d8256de/started.json",
+      "target": "p-receipts/test_rebound_subject_reruns_al0/b4c2b3cb95c0032772d9042eb211f1761be19a77b6bc6e75e6ed1f815d8256de/started.json",
+      "sha256": "d9d1321c9b522648e70c08a527a61a668b228f3ef009f70e7fb626103bb21ce5",
+      "bytes": 73,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-subject-p-linux-20260907/test_rebound_subject_reruns_al0/work/b4c2b3cb95c0032772d9042eb211f1761be19a77b6bc6e75e6ed1f815d8256de/output.log",
+      "target": "p-receipts/test_rebound_subject_reruns_al0/b4c2b3cb95c0032772d9042eb211f1761be19a77b6bc6e75e6ed1f815d8256de/output.log",
+      "sha256": "0685788b240abf5fdab04d066d18a0e822a9fbcc791a40883c8286271a8cb947",
+      "bytes": 43,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-subject-p-linux-20260907/test_rebound_subject_reruns_al0/work/b72e1f5bbafc7ec1066d3b06cafb011b3fe1e6589cbfb7afae5251c45cb6bab7/result.json",
+      "target": "p-receipts/test_rebound_subject_reruns_al0/b72e1f5bbafc7ec1066d3b06cafb011b3fe1e6589cbfb7afae5251c45cb6bab7/result.json",
+      "sha256": "bc7c8ed2afbaf293290877cbefd86d5747460c22c0978f7ddceee63e369eec1f",
+      "bytes": 531,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-subject-p-linux-20260907/test_rebound_subject_reruns_al0/work/b72e1f5bbafc7ec1066d3b06cafb011b3fe1e6589cbfb7afae5251c45cb6bab7/namespace-init.json",
+      "target": "p-receipts/test_rebound_subject_reruns_al0/b72e1f5bbafc7ec1066d3b06cafb011b3fe1e6589cbfb7afae5251c45cb6bab7/namespace-init.json",
+      "sha256": "f7b57b3ed7ddb823ac32858d780716a6eda0c0c1d611f2ba5cbd5e5b479703b1",
+      "bytes": 161,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-subject-p-linux-20260907/test_rebound_subject_reruns_al0/work/b72e1f5bbafc7ec1066d3b06cafb011b3fe1e6589cbfb7afae5251c45cb6bab7/started.json",
+      "target": "p-receipts/test_rebound_subject_reruns_al0/b72e1f5bbafc7ec1066d3b06cafb011b3fe1e6589cbfb7afae5251c45cb6bab7/started.json",
+      "sha256": "0cf238caf8951cd4a84c1f36fb63601dc6532e13bc5092c23eca1e4d09a33b1d",
+      "bytes": 73,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-subject-p-linux-20260907/test_rebound_subject_reruns_al0/work/b72e1f5bbafc7ec1066d3b06cafb011b3fe1e6589cbfb7afae5251c45cb6bab7/output.log",
+      "target": "p-receipts/test_rebound_subject_reruns_al0/b72e1f5bbafc7ec1066d3b06cafb011b3fe1e6589cbfb7afae5251c45cb6bab7/output.log",
+      "sha256": "bcf80edb3dd154e8aa62f4b72b0e0f06c57c92044b9927a0e7d5319e1077763b",
+      "bytes": 55,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-subject-p-linux-20260907/test_rebound_subject_reruns_al0/subject-native-report.json",
+      "target": "p-receipts/test_rebound_subject_reruns_al0/subject-native-report.json",
+      "sha256": "5eec19d5d3aba57e6e55abeb1343476d2ef199298c0c0189757812b1e3209854",
+      "bytes": 180555,
+      "byte_equal": true,
+      "scope": "test-saved public validation observation; all project/qualification data synthetic"
+    }
+  ],
+  "copy_count": 22,
+  "actual_check_logs": 5,
+  "all_byte_equal": true,
+  "excluded": [
+    "SQLite databases",
+    "bootstrap files",
+    "environment images",
+    "host state",
+    "credentials",
+    "entire temp directories"
+  ]
+}
