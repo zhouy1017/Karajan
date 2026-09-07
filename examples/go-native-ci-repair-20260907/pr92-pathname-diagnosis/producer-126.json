@@ -1,0 +1,26 @@
+{
+  "case": "public_execute_go_task",
+  "socket_path_bytes": 126,
+  "status": "failed",
+  "reason_codes": [
+    "TASK_EXECUTION_FAILED",
+    "TASK_PROVIDER_PROTOCOL_INCOMPLETE",
+    "TASK_LOCAL_CLEANUP_INCOMPLETE"
+  ],
+  "error_type": "OSError",
+  "capture_present": false,
+  "native_cleanup": {
+    "local_stop": "not_started"
+  },
+  "relay_cleanup": {
+    "errors": [],
+    "status": "closed"
+  },
+  "grant_state": "revoked",
+  "request_count": 0,
+  "namespace_starts": 0,
+  "http_clients_created": 0,
+  "native_source_sha256": "4e96bcec10f250718e2d13061efa4c2da7902a136d4e8759f0efe03c6e08687f",
+  "runner_source_digest": "8ce82dd18d241c6ebe3447e2a3617b0bdedc74902a33cc83aaf71e81e0d61f83",
+  "observation_origin": "http_fixture"
+}

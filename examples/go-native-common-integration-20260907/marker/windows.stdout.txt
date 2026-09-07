@@ -1,0 +1,13 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Users\Chooo\Playground\Karajan\.cache\ci-spark-task-native
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 1 item
+
+tests\runs\test_go_task_execution.py s                                   [100%]
+
+- generated xml file: C:\Users\Chooo\Playground\Karajan\.cache\ci-spark-task-native\.cache\luna-native-cross-platform-windows.xml -
+=========================== short test summary info ===========================
+SKIPPED [1] tests\runs\test_go_task_execution.py:237: Fixed Linux runtime required
+============================= 1 skipped in 0.96s ==============================

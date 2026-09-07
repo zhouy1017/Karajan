@@ -1,0 +1,12 @@
+{
+  "backend/karajan/isolation/go_task.py": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+  "backend/karajan/adapters/opencode/go_relay.py": "c45f2784bff518407fc90c3f61d9adf0a92b69f701b77dde1aef86e6b0b5d2cd",
+  "backend/karajan/orchestration/go_execution_intent.py": "4e72794f6aae846d31788d136dbe47bf15aa6fde839731c57d14f5aa86c5a8e9",
+  "backend/karajan/orchestration/go_task_execution.py": "789e9945a698d6f519f65db35205460ad35a0babf35aee2fbb5c6f82ec095b4d",
+  "tests/runs/test_go_task_execution.py": "dc504c7cb1f360bd6632b7a8765ed5eb7ba71a68a04987f78a7446c9a54f011a",
+  "tests/runs/test_go_native_diagnostic_contract.py": "7a3f9dc8501152f6fd4e3a1ef9393028633d5c992e445cb8d5874c27a0a57c0e",
+  "tests/isolation/test_go_task.py": "0784cb488b333815da50270030c74cd29cce446c036a411071e63a83fa596f76",
+  "tests/adapters/opencode/test_go_unix_relay.py": "0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f",
+  "tests/adapters/opencode/test_go_relay.py": "580b428c9169a6ecfcc50c06cb81099b8d257fc69921e3c5164a55dddbc07d23",
+  "tests/adapters/opencode/test_go_relay_context.py": "ae7bac8042c44e28e4e5dca06d0d839a61ed187816d68930307c25fb45596135"
+}
