@@ -1,0 +1,56 @@
+{
+  "schema_version": "karajan.issue107-attempt4-final-readonly-state.v1",
+  "read_only": true,
+  "command": "issue107-official-go-reviewer-20260907-ordered-attempt4",
+  "observed_at_unix": 1788766617.0048356,
+  "start_present": true,
+  "start": {
+    "id_sha256": "0f447f0b13252f3a1c069b4adc83a6a14881d6481c94fd0d81f8a0c5ceefe27b",
+    "expires_at": 1788766446.7067192,
+    "expired_at_observation": true,
+    "record_present": true,
+    "revocation_present": false
+  },
+  "journal": [
+    {
+      "scenario": "clean_review",
+      "grant_sha256": "b97b7e8c9ebd6804d6a7246b15b4da5a048dc76eb2c85ec77f903f1782bf9753",
+      "request_count": 2,
+      "call_states": [
+        "response_received",
+        "response_received"
+      ],
+      "grant_revoked": true
+    },
+    {
+      "scenario": "defect_review",
+      "grant_sha256": "142af5e9be2d9ee8cefd3958320a2d56c7a828b603a1fad989ce7d86ce76c209",
+      "request_count": 2,
+      "call_states": [
+        "response_received",
+        "response_received"
+      ],
+      "grant_revoked": true
+    },
+    {
+      "scenario": "denied_read",
+      "grant_sha256": "955d5a98029d00d6b93dec85819567859c207588f93b65786c1a6d1fe8af8290",
+      "request_count": 2,
+      "call_states": [
+        "response_received",
+        "response_received"
+      ],
+      "grant_revoked": true
+    }
+  ],
+  "record": {
+    "status": "passed",
+    "reason_codes": [],
+    "sha256": "8e162b7af73b060e507a3c61677bfdc25cc16603abbec4bf7845acb4f2eeb58a"
+  },
+  "consumer_operation": {
+    "state": "controller_fixture_only",
+    "actual_reviewer_attempt": null,
+    "transition": null
+  }
+}

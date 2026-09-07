@@ -81,4 +81,4 @@ qualify_runtime_tools(project_id, profile_ref, *, principal, command_key,
 
 不复制真实 key、capability、私有数据库、个人认证文件、raw headers 或 reasoning / CoT；公开原生输出只按既有安全报告白名单保存。完整 text 在 parser 边界处理，报告不得靠截取片段隐藏失败。无法保存的原始事实明确其限制，不凭摘要补造。原失败、未执行场景、unknown 和修正前来源逐字保留；如需后续尝试，另外保存新 command 与新结果，不覆盖首轮，不自动刷绿。
 
-已完成：仅有本验收正文，尚无本票 S 记录。剩余：前置冻结 / C/P 通过后按一次有界 suite 验收，完成真实受限消费、重放、撤销及证据复核。阻塞：前置 106 的实际冻结与通过，以及届时的固定资产和当前真实 credential generation；缺失时保持 not_run，不通过更改 AC 解除。
+执行状态（2026-09-07）：前置来源与资产在 attempt4 effect 前已冻结。attempt4 的固定三场景官方 suite 实际完成，Journal 为每场景 2 次、总计 6 次 `response_received`，记录为 `passed`，并保留 suite own-grant revoke；这些只满足本票部分官方观察。该 start 在真实 `ApprovedReviewerBindings.advance/current_locked` 正控持久转移前中断，随后到期。持久 Store 显示 qualification record 未 revoke、consumer operation 仍为 controller fixture 初始状态，故正控、post-positive revoke、同 consumer 负控和历史消费为 **not_run / expired**。不能以旧 passed record 推导当前可用 Reviewer，不能重放其 command 或延长有效期。本票 S/C「受限事实真实消费」及整票验收仍未通过。逐次脱敏事实见 `examples/go-readonly-reviewer-qualification-20260907/ISSUE-107-ATTEMPT4-INTERRUPTED.md` 及相邻 JSON；既有 attempt1-3 失败、成功与 ordering gap 记录保持不变。

@@ -1,0 +1,22 @@
+{
+  "schema_version": "karajan.issue107-history-readback.v1",
+  "official_effect_started": true,
+  "start": {
+    "completed": true,
+    "id_sha256": "d2c7cf3e56f3246a7cd3b724ce552f2b01953e485a5febd9dbeb02049ccce6cb",
+    "scenario_order": [
+      "clean_review",
+      "defect_review",
+      "denied_read"
+    ]
+  },
+  "record": {
+    "status": "failed",
+    "reason_codes": [
+      "QUALIFICATION_EXECUTION_INCOMPLETE",
+      "READONLY_REVIEWER_EVIDENCE_INCOMPLETE"
+    ],
+    "record_sha256": "2aabdfdbd50e37aeb20298a5efdcc89fe736c966e3ddf8951a7861b75e219140"
+  },
+  "scenarios": []
+}

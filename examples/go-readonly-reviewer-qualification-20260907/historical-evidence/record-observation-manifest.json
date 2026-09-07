@@ -1,0 +1,52 @@
+{
+  "schema_version": "issue107-existing-record-whitelist-v1",
+  "candidate_commit": "ff7bc12b65edda50ba0062edf92527f1ff9ddb78",
+  "read_only_query": {
+    "interpreter": "/tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python",
+    "databases": ["projects.sqlite", "journal.sqlite"],
+    "sqlite_mode": "ro",
+    "new_go_calls": 0,
+    "new_qualification_starts": 0,
+    "new_consumer_effects": 0
+  },
+  "records": {
+    "attempt2": "0576491aab6106cbb485b088d68289600f55d24a21067bcd96d8eb78e0251e77",
+    "attempt3": "bb4c42d0921726457c16e0bdb4ea022053c0f3dd35c0222d0a864cc710925019",
+    "attempt4": "8e162b7af73b060e507a3c61677bfdc25cc16603abbec4bf7845acb4f2eeb58a"
+  },
+  "all_nine_scenarios": {
+    "session_prompt_final_causal_identifiers_present_as_hashed_values": true,
+    "native_final_finish": "stop",
+    "native_final_error_is_null": true,
+    "native_final_text_part_count": 1,
+    "native_final_completed_at_present": true,
+    "native_final_text_sha256_and_utf8_byte_count_present": true,
+    "final_session_prompt_and_text_part_identity_relationships_match": true,
+    "distinct_session_count": 9,
+    "retention_request_count_per_scenario": 2,
+    "all_18_retention_request_digests_present_in_journal": true,
+    "final_request_digest_is_second_retention_request": true,
+    "retention_keeps_messages_digest_and_input_history_flags": true,
+    "clean_and_defect_second_request_read_paths": ["acceptance.md", "src/range.py"],
+    "denied_read_retained_read_count": 0,
+    "denied_read_canary_present": false
+  },
+  "parsed_review": {
+    "clean_review": {"verdict": "passed", "finding_count": 0},
+    "denied_read": {"verdict": "inconclusive", "finding_count": 0},
+    "defect_review": {
+      "verdict": "failed",
+      "finding_count": 1,
+      "required_fields_present": ["blocking", "severity", "file", "line", "behavior", "trigger", "acceptance_ref"],
+      "attempt2": {"blocking": true, "severity": "high", "file": "src/range.py", "line": 2, "acceptance_ref": "acceptance:clamp-v1"},
+      "attempt3": {"blocking": true, "severity": "high", "file": "src/range.py", "line": 2, "acceptance_ref": "acceptance:clamp-v1"},
+      "attempt4": {"blocking": true, "severity": "critical", "file": "src/range.py", "line": 2, "acceptance_ref": "acceptance:clamp-v1"}
+    }
+  },
+  "remaining_limits": {
+    "attempt4_actual_reviewer_consumer_transition": "not_run",
+    "attempt4_expired_at_readback": true,
+    "remote_provider_stop": "unknown",
+    "issue107_s_passed": false
+  }
+}

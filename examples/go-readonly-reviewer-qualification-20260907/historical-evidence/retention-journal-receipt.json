@@ -1,0 +1,33 @@
+{
+  "schema_version": "issue107-retention-journal-projection-receipt-v1",
+  "candidate_commit": "ff7bc12b65edda50ba0062edf92527f1ff9ddb78",
+  "generator": "project_retention_journal_projection.py",
+  "generator_sha256": "c90e39b1c3a46523c3b159a6de2e40c141bbfc98030298424250f852b0f35ee3",
+  "output": "retention-journal-manifest.json",
+  "output_file_sha256": "debf2d0d3ed2e9243e1a841bb38572c8cd2ea36ed973720093fc71da4a4230f5",
+  "output_payload_sha256": "a38e84f729b9db7e81088dcdcc715bc1e885e210fb53dd1446794e7ef22f5ecd",
+  "query_command": [
+    "/tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python",
+    "project_retention_journal_projection.py",
+    "--controller-root",
+    "/home/chow/karajan-issue107-controller",
+    "--output",
+    "retention-journal-manifest.json"
+  ],
+  "database_access": {
+    "projects.sqlite": "SQLite URI mode=ro",
+    "journal.sqlite": "SQLite URI mode=ro"
+  },
+  "verification": {
+    "record_count": 3,
+    "scenario_count": 9,
+    "retention_request_count": 18,
+    "every_retention_row_has_exactly_one_same_grant_journal_match": true
+  },
+  "effects": {
+    "new_go_calls": 0,
+    "new_qualification_starts": 0,
+    "new_consumer_effects": 0,
+    "private_database_mutations": 0
+  }
+}

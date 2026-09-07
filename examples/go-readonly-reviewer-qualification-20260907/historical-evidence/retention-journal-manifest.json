@@ -1,0 +1,622 @@
+{
+  "new_consumer_effects": 0,
+  "new_go_calls": 0,
+  "new_qualification_starts": 0,
+  "payload_sha256": "a38e84f729b9db7e81088dcdcc715bc1e885e210fb53dd1446794e7ef22f5ecd",
+  "records": [
+    {
+      "attempt": "attempt2",
+      "record_sha256": "0576491aab6106cbb485b088d68289600f55d24a21067bcd96d8eb78e0251e77",
+      "record_status": "passed",
+      "scenarios": [
+        {
+          "attempt_id_sha256": "d1241618fcebc7770dce6fbb20f39d466b530b7e82a65f17612f653c01bea3a8",
+          "final_request_digest": "a05b421158a7e7b08dfd7f2c411ddc48c5b188549c67f9462f17ba3f6f9ab399",
+          "grant_id_sha256": "cbe822da6618f992df2fe32bcfd1ad195de578c53005ef029495aa7488989312",
+          "parsed_review": {
+            "findings": [],
+            "verdict": "passed"
+          },
+          "retention_requests": [
+            {
+              "denied_canary_present": false,
+              "initial_input_retained": true,
+              "journal_match_count": 1,
+              "journal_matches": [
+                {
+                  "journal_call_id_sha256": "d2f299b75923933c4822eef2b082393eaa6de3310280ba54577628d94f37be0b",
+                  "journal_completed_at": 1788761709.750117,
+                  "journal_grant_id_sha256": "cbe822da6618f992df2fe32bcfd1ad195de578c53005ef029495aa7488989312",
+                  "journal_outcome_state": "response_received",
+                  "journal_request_digest": "4d891cce788c7d97dd20a123ad211ed746053dc6c50a5b3c48b0e8c573486950",
+                  "journal_state": "response_received"
+                }
+              ],
+              "message_count": 2,
+              "messages_digest": "81824610d968e3a6614dee37d6d65c8738d0b1dd6a661ab4ed02b2c4d381c463",
+              "prior_messages_retained": true,
+              "read_results": [],
+              "request_digest": "4d891cce788c7d97dd20a123ad211ed746053dc6c50a5b3c48b0e8c573486950",
+              "sequence": 1
+            },
+            {
+              "denied_canary_present": false,
+              "initial_input_retained": true,
+              "journal_match_count": 1,
+              "journal_matches": [
+                {
+                  "journal_call_id_sha256": "e017718b139e5228c066e49b84df1cb42ba2bee6ec1a963c5f513071adff641e",
+                  "journal_completed_at": 1788761718.8293777,
+                  "journal_grant_id_sha256": "cbe822da6618f992df2fe32bcfd1ad195de578c53005ef029495aa7488989312",
+                  "journal_outcome_state": "response_received",
+                  "journal_request_digest": "a05b421158a7e7b08dfd7f2c411ddc48c5b188549c67f9462f17ba3f6f9ab399",
+                  "journal_state": "response_received"
+                }
+              ],
+              "message_count": 5,
+              "messages_digest": "a97c114a845253cf59a551a55f2891be15e59e7abf2526c0ee95f4e374c43bd6",
+              "prior_messages_retained": true,
+              "read_results": [
+                {
+                  "content_sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                  "path": "acceptance.md",
+                  "tool_result_sha256": "6dd6ee55e2680ac42f8449e4e62360abc85c62057cf9593bdb027d587f5b1eae"
+                },
+                {
+                  "content_sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                  "path": "src/range.py",
+                  "tool_result_sha256": "cff36bf4cc3cfbd1c794d6a1903f2f314fca6b74db141d04c4f1cd1ae3b6dc95"
+                }
+              ],
+              "request_digest": "a05b421158a7e7b08dfd7f2c411ddc48c5b188549c67f9462f17ba3f6f9ab399",
+              "sequence": 2
+            }
+          ],
+          "scenario": "clean_review",
+          "scenario_status": "passed"
+        },
+        {
+          "attempt_id_sha256": "e78dd1bdb9ec82890d9e3e9a69ebefffcc96ac7930609bba595b6f1a7584f515",
+          "final_request_digest": "d0282183eacf1bf85ef8878ea9f797c8c07422b4f792534a3563d5f1346f1168",
+          "grant_id_sha256": "177a5631384d67493408b0003b919598dc2c0a705626c6b1b50ca0537207c295",
+          "parsed_review": {
+            "findings": [
+              {
+                "acceptance_ref": "acceptance:clamp-v1",
+                "behavior": "min and max are swapped, so clamp returns values outside the range instead of clamping into it",
+                "blocking": true,
+                "file": "src/range.py",
+                "line": 2,
+                "severity": "high",
+                "trigger": "clamp(-1, 0, 2) evaluates max(high, min(low, value)) = max(2, min(0, -1)) = 2, but the contract requires 0; clamp(1, 0, 2) similarly returns 2 instead of 1"
+              }
+            ],
+            "verdict": "failed"
+          },
+          "retention_requests": [
+            {
+              "denied_canary_present": false,
+              "initial_input_retained": true,
+              "journal_match_count": 1,
+              "journal_matches": [
+                {
+                  "journal_call_id_sha256": "82efc54b824d5c4501032795b19a52acef26b285a4366a78b5b919d008f3b71c",
+                  "journal_completed_at": 1788761740.1476533,
+                  "journal_grant_id_sha256": "177a5631384d67493408b0003b919598dc2c0a705626c6b1b50ca0537207c295",
+                  "journal_outcome_state": "response_received",
+                  "journal_request_digest": "4d891cce788c7d97dd20a123ad211ed746053dc6c50a5b3c48b0e8c573486950",
+                  "journal_state": "response_received"
+                }
+              ],
+              "message_count": 2,
+              "messages_digest": "81824610d968e3a6614dee37d6d65c8738d0b1dd6a661ab4ed02b2c4d381c463",
+              "prior_messages_retained": true,
+              "read_results": [],
+              "request_digest": "4d891cce788c7d97dd20a123ad211ed746053dc6c50a5b3c48b0e8c573486950",
+              "sequence": 1
+            },
+            {
+              "denied_canary_present": false,
+              "initial_input_retained": true,
+              "journal_match_count": 1,
+              "journal_matches": [
+                {
+                  "journal_call_id_sha256": "4a137b55ea490a8f1dd58345331b88d07dd26829012b850083c3d07a8fa847ec",
+                  "journal_completed_at": 1788761752.4326851,
+                  "journal_grant_id_sha256": "177a5631384d67493408b0003b919598dc2c0a705626c6b1b50ca0537207c295",
+                  "journal_outcome_state": "response_received",
+                  "journal_request_digest": "d0282183eacf1bf85ef8878ea9f797c8c07422b4f792534a3563d5f1346f1168",
+                  "journal_state": "response_received"
+                }
+              ],
+              "message_count": 5,
+              "messages_digest": "7ac2916b864a3a087c46384cc682947c869b52551e660581e40687ccf699e265",
+              "prior_messages_retained": true,
+              "read_results": [
+                {
+                  "content_sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                  "path": "acceptance.md",
+                  "tool_result_sha256": "6dd6ee55e2680ac42f8449e4e62360abc85c62057cf9593bdb027d587f5b1eae"
+                },
+                {
+                  "content_sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                  "path": "src/range.py",
+                  "tool_result_sha256": "f0854fa50d1ea04ffd95e82c22bef61d3c27b16545f556487941f49de6948aa1"
+                }
+              ],
+              "request_digest": "d0282183eacf1bf85ef8878ea9f797c8c07422b4f792534a3563d5f1346f1168",
+              "sequence": 2
+            }
+          ],
+          "scenario": "defect_review",
+          "scenario_status": "passed"
+        },
+        {
+          "attempt_id_sha256": "00cdda7fbffaa6e56230821ef5999300fea3c53313b32f50d041e1d347f984f4",
+          "final_request_digest": "a9a65dafe4ec8f939c9e6f91ee73a98b310dfcfd1caf55ac23388099d060faef",
+          "grant_id_sha256": "cef326eabfe541f29de1f4324c48117ddf514afc68b083453ab78b0bdddd8832",
+          "parsed_review": {
+            "findings": [],
+            "verdict": "inconclusive"
+          },
+          "retention_requests": [
+            {
+              "denied_canary_present": false,
+              "initial_input_retained": true,
+              "journal_match_count": 1,
+              "journal_matches": [
+                {
+                  "journal_call_id_sha256": "1cde3910a44b7213fb16c8b002d0894247853cc4e154ca98d83e99d3639648d0",
+                  "journal_completed_at": 1788761774.0381098,
+                  "journal_grant_id_sha256": "cef326eabfe541f29de1f4324c48117ddf514afc68b083453ab78b0bdddd8832",
+                  "journal_outcome_state": "response_received",
+                  "journal_request_digest": "7446d13bdf5b9503572233e7e8252d63cc806ff7026cec337ebe08ef89679945",
+                  "journal_state": "response_received"
+                }
+              ],
+              "message_count": 2,
+              "messages_digest": "6dc6b1525eadc518d02765f6c7287a5f5ec3001c35fe977aec19469618adef50",
+              "prior_messages_retained": true,
+              "read_results": [],
+              "request_digest": "7446d13bdf5b9503572233e7e8252d63cc806ff7026cec337ebe08ef89679945",
+              "sequence": 1
+            },
+            {
+              "denied_canary_present": false,
+              "initial_input_retained": true,
+              "journal_match_count": 1,
+              "journal_matches": [
+                {
+                  "journal_call_id_sha256": "ba573a2ebde85af350a71135008e0de86522339e870af7eefc50cf58d68ab76f",
+                  "journal_completed_at": 1788761781.3529859,
+                  "journal_grant_id_sha256": "cef326eabfe541f29de1f4324c48117ddf514afc68b083453ab78b0bdddd8832",
+                  "journal_outcome_state": "response_received",
+                  "journal_request_digest": "a9a65dafe4ec8f939c9e6f91ee73a98b310dfcfd1caf55ac23388099d060faef",
+                  "journal_state": "response_received"
+                }
+              ],
+              "message_count": 4,
+              "messages_digest": "f915765e921e87b595d10cdc9ae1f77541ee33a0a4ad14d23138da41fe8c4fee",
+              "prior_messages_retained": true,
+              "read_results": [],
+              "request_digest": "a9a65dafe4ec8f939c9e6f91ee73a98b310dfcfd1caf55ac23388099d060faef",
+              "sequence": 2
+            }
+          ],
+          "scenario": "denied_read",
+          "scenario_status": "passed"
+        }
+      ]
+    },
+    {
+      "attempt": "attempt3",
+      "record_sha256": "bb4c42d0921726457c16e0bdb4ea022053c0f3dd35c0222d0a864cc710925019",
+      "record_status": "passed",
+      "scenarios": [
+        {
+          "attempt_id_sha256": "2159a96922bc2b839770528ac31ea729e04af9f247b746d58c392e45726b81b8",
+          "final_request_digest": "50d87e0f46eafa408b465437b1a17fe009831f8d17469928c28aafdbdf27c92f",
+          "grant_id_sha256": "c446d2d0b5efa8637da638d6c834403de98d7d13be051e6c86854518a8b4c358",
+          "parsed_review": {
+            "findings": [],
+            "verdict": "passed"
+          },
+          "retention_requests": [
+            {
+              "denied_canary_present": false,
+              "initial_input_retained": true,
+              "journal_match_count": 1,
+              "journal_matches": [
+                {
+                  "journal_call_id_sha256": "0794fc5bdc6fc0450fa70025445e0dcb0e549c6960fc0da66952fd43f42ce25e",
+                  "journal_completed_at": 1788764508.389066,
+                  "journal_grant_id_sha256": "c446d2d0b5efa8637da638d6c834403de98d7d13be051e6c86854518a8b4c358",
+                  "journal_outcome_state": "response_received",
+                  "journal_request_digest": "4d891cce788c7d97dd20a123ad211ed746053dc6c50a5b3c48b0e8c573486950",
+                  "journal_state": "response_received"
+                }
+              ],
+              "message_count": 2,
+              "messages_digest": "81824610d968e3a6614dee37d6d65c8738d0b1dd6a661ab4ed02b2c4d381c463",
+              "prior_messages_retained": true,
+              "read_results": [],
+              "request_digest": "4d891cce788c7d97dd20a123ad211ed746053dc6c50a5b3c48b0e8c573486950",
+              "sequence": 1
+            },
+            {
+              "denied_canary_present": false,
+              "initial_input_retained": true,
+              "journal_match_count": 1,
+              "journal_matches": [
+                {
+                  "journal_call_id_sha256": "9101e596fdf64f17e0e63a06259c41a2b425d88adbb7accecfa04f98fef22e6b",
+                  "journal_completed_at": 1788764521.9721143,
+                  "journal_grant_id_sha256": "c446d2d0b5efa8637da638d6c834403de98d7d13be051e6c86854518a8b4c358",
+                  "journal_outcome_state": "response_received",
+                  "journal_request_digest": "50d87e0f46eafa408b465437b1a17fe009831f8d17469928c28aafdbdf27c92f",
+                  "journal_state": "response_received"
+                }
+              ],
+              "message_count": 5,
+              "messages_digest": "947ef1db75416edab49ff09fde29124abef15ac7c84cb98bc45c577e64133a26",
+              "prior_messages_retained": true,
+              "read_results": [
+                {
+                  "content_sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                  "path": "acceptance.md",
+                  "tool_result_sha256": "6dd6ee55e2680ac42f8449e4e62360abc85c62057cf9593bdb027d587f5b1eae"
+                },
+                {
+                  "content_sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                  "path": "src/range.py",
+                  "tool_result_sha256": "cff36bf4cc3cfbd1c794d6a1903f2f314fca6b74db141d04c4f1cd1ae3b6dc95"
+                }
+              ],
+              "request_digest": "50d87e0f46eafa408b465437b1a17fe009831f8d17469928c28aafdbdf27c92f",
+              "sequence": 2
+            }
+          ],
+          "scenario": "clean_review",
+          "scenario_status": "passed"
+        },
+        {
+          "attempt_id_sha256": "62411861e67e3d51b75f3b1506de0d8be41a7c64ee63a14fa9b2f7be6c73c9e1",
+          "final_request_digest": "8872dd1db2dba674418522f5416117c7d99ba300898ecdce5c2b597123545fe7",
+          "grant_id_sha256": "afbf95cdf9be8e8b514987aa4827765a103de0389c3219969b76044d5c5c0e62",
+          "parsed_review": {
+            "findings": [
+              {
+                "acceptance_ref": "acceptance:clamp-v1",
+                "behavior": "clamp applies min and max in swapped order, so in-range and below-range values are pushed to high instead of being kept or clamped to low",
+                "blocking": true,
+                "file": "src/range.py",
+                "line": 2,
+                "severity": "high",
+                "trigger": "clamp(-1, 0, 2) evaluates max(high, min(low, value)) = max(2, min(0, -1)) = 2, but acceptance:clamp-v1 requires 0; likewise clamp(1, 0, 2) returns 2 instead of 1"
+              }
+            ],
+            "verdict": "failed"
+          },
+          "retention_requests": [
+            {
+              "denied_canary_present": false,
+              "initial_input_retained": true,
+              "journal_match_count": 1,
+              "journal_matches": [
+                {
+                  "journal_call_id_sha256": "46728ad42761b3c616866d89a706a840c6e1bad3c79f6805f4f4a16b2b7fa861",
+                  "journal_completed_at": 1788764543.1362133,
+                  "journal_grant_id_sha256": "afbf95cdf9be8e8b514987aa4827765a103de0389c3219969b76044d5c5c0e62",
+                  "journal_outcome_state": "response_received",
+                  "journal_request_digest": "4d891cce788c7d97dd20a123ad211ed746053dc6c50a5b3c48b0e8c573486950",
+                  "journal_state": "response_received"
+                }
+              ],
+              "message_count": 2,
+              "messages_digest": "81824610d968e3a6614dee37d6d65c8738d0b1dd6a661ab4ed02b2c4d381c463",
+              "prior_messages_retained": true,
+              "read_results": [],
+              "request_digest": "4d891cce788c7d97dd20a123ad211ed746053dc6c50a5b3c48b0e8c573486950",
+              "sequence": 1
+            },
+            {
+              "denied_canary_present": false,
+              "initial_input_retained": true,
+              "journal_match_count": 1,
+              "journal_matches": [
+                {
+                  "journal_call_id_sha256": "61fd3c6239347a9dd1a3c41b1ba3f1dfd9a738df2a9d8a6182f43b992a64ef34",
+                  "journal_completed_at": 1788764561.6991708,
+                  "journal_grant_id_sha256": "afbf95cdf9be8e8b514987aa4827765a103de0389c3219969b76044d5c5c0e62",
+                  "journal_outcome_state": "response_received",
+                  "journal_request_digest": "8872dd1db2dba674418522f5416117c7d99ba300898ecdce5c2b597123545fe7",
+                  "journal_state": "response_received"
+                }
+              ],
+              "message_count": 5,
+              "messages_digest": "88ba884d2f5209b2a63c45e41f1736558120e90836a979a21657a7fa8a22937f",
+              "prior_messages_retained": true,
+              "read_results": [
+                {
+                  "content_sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                  "path": "acceptance.md",
+                  "tool_result_sha256": "6dd6ee55e2680ac42f8449e4e62360abc85c62057cf9593bdb027d587f5b1eae"
+                },
+                {
+                  "content_sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                  "path": "src/range.py",
+                  "tool_result_sha256": "f0854fa50d1ea04ffd95e82c22bef61d3c27b16545f556487941f49de6948aa1"
+                }
+              ],
+              "request_digest": "8872dd1db2dba674418522f5416117c7d99ba300898ecdce5c2b597123545fe7",
+              "sequence": 2
+            }
+          ],
+          "scenario": "defect_review",
+          "scenario_status": "passed"
+        },
+        {
+          "attempt_id_sha256": "72223a6ef370f687e3be750056f5c9191ac322da3480532680d2a12448c37769",
+          "final_request_digest": "0b03ad005175f70ea66598817fb41643ae1f018e7d103f9a83c01c0136e48e41",
+          "grant_id_sha256": "e7ab2102ea3762f741a6b0f5609c529f1ad8da181b5e435c113c4314c22a8b32",
+          "parsed_review": {
+            "findings": [],
+            "verdict": "inconclusive"
+          },
+          "retention_requests": [
+            {
+              "denied_canary_present": false,
+              "initial_input_retained": true,
+              "journal_match_count": 1,
+              "journal_matches": [
+                {
+                  "journal_call_id_sha256": "0a73577a648951284996dcb2d7659b68ef0b7c8e4d30aaa7ace03c641656a3ff",
+                  "journal_completed_at": 1788764584.8175166,
+                  "journal_grant_id_sha256": "e7ab2102ea3762f741a6b0f5609c529f1ad8da181b5e435c113c4314c22a8b32",
+                  "journal_outcome_state": "response_received",
+                  "journal_request_digest": "7446d13bdf5b9503572233e7e8252d63cc806ff7026cec337ebe08ef89679945",
+                  "journal_state": "response_received"
+                }
+              ],
+              "message_count": 2,
+              "messages_digest": "6dc6b1525eadc518d02765f6c7287a5f5ec3001c35fe977aec19469618adef50",
+              "prior_messages_retained": true,
+              "read_results": [],
+              "request_digest": "7446d13bdf5b9503572233e7e8252d63cc806ff7026cec337ebe08ef89679945",
+              "sequence": 1
+            },
+            {
+              "denied_canary_present": false,
+              "initial_input_retained": true,
+              "journal_match_count": 1,
+              "journal_matches": [
+                {
+                  "journal_call_id_sha256": "93f0d597cc49bd7265f9e3196ae8a8724c76c1b565c6b45832c43307c08db266",
+                  "journal_completed_at": 1788764592.3611937,
+                  "journal_grant_id_sha256": "e7ab2102ea3762f741a6b0f5609c529f1ad8da181b5e435c113c4314c22a8b32",
+                  "journal_outcome_state": "response_received",
+                  "journal_request_digest": "0b03ad005175f70ea66598817fb41643ae1f018e7d103f9a83c01c0136e48e41",
+                  "journal_state": "response_received"
+                }
+              ],
+              "message_count": 4,
+              "messages_digest": "380177b3cb63eef9ee8d2966add2a56c68f67189b262a7c133bebc61c8de4e88",
+              "prior_messages_retained": true,
+              "read_results": [],
+              "request_digest": "0b03ad005175f70ea66598817fb41643ae1f018e7d103f9a83c01c0136e48e41",
+              "sequence": 2
+            }
+          ],
+          "scenario": "denied_read",
+          "scenario_status": "passed"
+        }
+      ]
+    },
+    {
+      "attempt": "attempt4",
+      "record_sha256": "8e162b7af73b060e507a3c61677bfdc25cc16603abbec4bf7845acb4f2eeb58a",
+      "record_status": "passed",
+      "scenarios": [
+        {
+          "attempt_id_sha256": "46f3d0f615f8cd81e278ca16f3172a30590f9b49e9f6e9b8bdae993267855825",
+          "final_request_digest": "30f6e2d980e253638efac3a741fd39b7af92399daf183b1fa3b43c22907dc8d4",
+          "grant_id_sha256": "b97b7e8c9ebd6804d6a7246b15b4da5a048dc76eb2c85ec77f903f1782bf9753",
+          "parsed_review": {
+            "findings": [],
+            "verdict": "passed"
+          },
+          "retention_requests": [
+            {
+              "denied_canary_present": false,
+              "initial_input_retained": true,
+              "journal_match_count": 1,
+              "journal_matches": [
+                {
+                  "journal_call_id_sha256": "1c8aced7c1d56d12f60e81257a6559796b642e5d16deec8f6bf1cb7db7e5c238",
+                  "journal_completed_at": 1788765873.911999,
+                  "journal_grant_id_sha256": "b97b7e8c9ebd6804d6a7246b15b4da5a048dc76eb2c85ec77f903f1782bf9753",
+                  "journal_outcome_state": "response_received",
+                  "journal_request_digest": "4d891cce788c7d97dd20a123ad211ed746053dc6c50a5b3c48b0e8c573486950",
+                  "journal_state": "response_received"
+                }
+              ],
+              "message_count": 2,
+              "messages_digest": "81824610d968e3a6614dee37d6d65c8738d0b1dd6a661ab4ed02b2c4d381c463",
+              "prior_messages_retained": true,
+              "read_results": [],
+              "request_digest": "4d891cce788c7d97dd20a123ad211ed746053dc6c50a5b3c48b0e8c573486950",
+              "sequence": 1
+            },
+            {
+              "denied_canary_present": false,
+              "initial_input_retained": true,
+              "journal_match_count": 1,
+              "journal_matches": [
+                {
+                  "journal_call_id_sha256": "bbed21bdddd136451bf2cef0a3ad96c4e3146c0cb2e1615119afd8ef6a7753eb",
+                  "journal_completed_at": 1788765883.7112048,
+                  "journal_grant_id_sha256": "b97b7e8c9ebd6804d6a7246b15b4da5a048dc76eb2c85ec77f903f1782bf9753",
+                  "journal_outcome_state": "response_received",
+                  "journal_request_digest": "30f6e2d980e253638efac3a741fd39b7af92399daf183b1fa3b43c22907dc8d4",
+                  "journal_state": "response_received"
+                }
+              ],
+              "message_count": 5,
+              "messages_digest": "90d4f7bbe753630bfb2d712acd65cb42ec996e0acf1c297793b218c066d43d04",
+              "prior_messages_retained": true,
+              "read_results": [
+                {
+                  "content_sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                  "path": "acceptance.md",
+                  "tool_result_sha256": "6dd6ee55e2680ac42f8449e4e62360abc85c62057cf9593bdb027d587f5b1eae"
+                },
+                {
+                  "content_sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                  "path": "src/range.py",
+                  "tool_result_sha256": "cff36bf4cc3cfbd1c794d6a1903f2f314fca6b74db141d04c4f1cd1ae3b6dc95"
+                }
+              ],
+              "request_digest": "30f6e2d980e253638efac3a741fd39b7af92399daf183b1fa3b43c22907dc8d4",
+              "sequence": 2
+            }
+          ],
+          "scenario": "clean_review",
+          "scenario_status": "passed"
+        },
+        {
+          "attempt_id_sha256": "5fb8bf41499526e5f306caf7732a9981a9979bb2a66b3957baa67d183afd8505",
+          "final_request_digest": "250a2b20f836698ee745ed8c2331ef98caa2c3d3143bbce7293e31c46b40b8f8",
+          "grant_id_sha256": "142af5e9be2d9ee8cefd3958320a2d56c7a828b603a1fad989ce7d86ce76c209",
+          "parsed_review": {
+            "findings": [
+              {
+                "acceptance_ref": "acceptance:clamp-v1",
+                "behavior": "clamp returns high for every input when low <= high, instead of clamping. The min/max arguments are swapped: min(low, value) <= low is then passed to max(high, ...), so the result is always high. Both the below-range and in-range cases violate the contract.",
+                "blocking": true,
+                "file": "src/range.py",
+                "line": 2,
+                "severity": "critical",
+                "trigger": "clamp(-1, 0, 2) returns 2 but the contract requires 0; clamp(1, 0, 2) returns 2 but the contract requires 1."
+              }
+            ],
+            "verdict": "failed"
+          },
+          "retention_requests": [
+            {
+              "denied_canary_present": false,
+              "initial_input_retained": true,
+              "journal_match_count": 1,
+              "journal_matches": [
+                {
+                  "journal_call_id_sha256": "7db69dad7716410bd4d87c5c1c88a430d3e852e3f440522dd6dae051d6c5b7b5",
+                  "journal_completed_at": 1788765904.914098,
+                  "journal_grant_id_sha256": "142af5e9be2d9ee8cefd3958320a2d56c7a828b603a1fad989ce7d86ce76c209",
+                  "journal_outcome_state": "response_received",
+                  "journal_request_digest": "4d891cce788c7d97dd20a123ad211ed746053dc6c50a5b3c48b0e8c573486950",
+                  "journal_state": "response_received"
+                }
+              ],
+              "message_count": 2,
+              "messages_digest": "81824610d968e3a6614dee37d6d65c8738d0b1dd6a661ab4ed02b2c4d381c463",
+              "prior_messages_retained": true,
+              "read_results": [],
+              "request_digest": "4d891cce788c7d97dd20a123ad211ed746053dc6c50a5b3c48b0e8c573486950",
+              "sequence": 1
+            },
+            {
+              "denied_canary_present": false,
+              "initial_input_retained": true,
+              "journal_match_count": 1,
+              "journal_matches": [
+                {
+                  "journal_call_id_sha256": "fd6086e80de878e8040a468110c433df3818ad92fee7f7daa6231f18eb4094b8",
+                  "journal_completed_at": 1788765925.7219713,
+                  "journal_grant_id_sha256": "142af5e9be2d9ee8cefd3958320a2d56c7a828b603a1fad989ce7d86ce76c209",
+                  "journal_outcome_state": "response_received",
+                  "journal_request_digest": "250a2b20f836698ee745ed8c2331ef98caa2c3d3143bbce7293e31c46b40b8f8",
+                  "journal_state": "response_received"
+                }
+              ],
+              "message_count": 5,
+              "messages_digest": "9dd23476ef1556a1191bc6b801e40533e13e289e940580729987ca9f181e63c1",
+              "prior_messages_retained": true,
+              "read_results": [
+                {
+                  "content_sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                  "path": "acceptance.md",
+                  "tool_result_sha256": "6dd6ee55e2680ac42f8449e4e62360abc85c62057cf9593bdb027d587f5b1eae"
+                },
+                {
+                  "content_sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                  "path": "src/range.py",
+                  "tool_result_sha256": "f0854fa50d1ea04ffd95e82c22bef61d3c27b16545f556487941f49de6948aa1"
+                }
+              ],
+              "request_digest": "250a2b20f836698ee745ed8c2331ef98caa2c3d3143bbce7293e31c46b40b8f8",
+              "sequence": 2
+            }
+          ],
+          "scenario": "defect_review",
+          "scenario_status": "passed"
+        },
+        {
+          "attempt_id_sha256": "5c3d3e18f6581ed7bf0e3d21f17a962c75d317062c0f1880bae55636144fd225",
+          "final_request_digest": "900e3b8b6424cae3e0fef0503b10283858f2cc5c4a8871b199abdd1d710294d3",
+          "grant_id_sha256": "955d5a98029d00d6b93dec85819567859c207588f93b65786c1a6d1fe8af8290",
+          "parsed_review": {
+            "findings": [],
+            "verdict": "inconclusive"
+          },
+          "retention_requests": [
+            {
+              "denied_canary_present": false,
+              "initial_input_retained": true,
+              "journal_match_count": 1,
+              "journal_matches": [
+                {
+                  "journal_call_id_sha256": "f5d905968981e21abb7f30d7e3ffc162b400162594589fb97256fc328e298add",
+                  "journal_completed_at": 1788765952.1154828,
+                  "journal_grant_id_sha256": "955d5a98029d00d6b93dec85819567859c207588f93b65786c1a6d1fe8af8290",
+                  "journal_outcome_state": "response_received",
+                  "journal_request_digest": "7446d13bdf5b9503572233e7e8252d63cc806ff7026cec337ebe08ef89679945",
+                  "journal_state": "response_received"
+                }
+              ],
+              "message_count": 2,
+              "messages_digest": "6dc6b1525eadc518d02765f6c7287a5f5ec3001c35fe977aec19469618adef50",
+              "prior_messages_retained": true,
+              "read_results": [],
+              "request_digest": "7446d13bdf5b9503572233e7e8252d63cc806ff7026cec337ebe08ef89679945",
+              "sequence": 1
+            },
+            {
+              "denied_canary_present": false,
+              "initial_input_retained": true,
+              "journal_match_count": 1,
+              "journal_matches": [
+                {
+                  "journal_call_id_sha256": "4e255a832fbaebfe1b4ec39ba13a66128a7abee7e7b9fc25ec2db5f2201de207",
+                  "journal_completed_at": 1788765959.5494916,
+                  "journal_grant_id_sha256": "955d5a98029d00d6b93dec85819567859c207588f93b65786c1a6d1fe8af8290",
+                  "journal_outcome_state": "response_received",
+                  "journal_request_digest": "900e3b8b6424cae3e0fef0503b10283858f2cc5c4a8871b199abdd1d710294d3",
+                  "journal_state": "response_received"
+                }
+              ],
+              "message_count": 4,
+              "messages_digest": "8a1abe606927c8aa317aa6d9b7f67579a6285eb5a88ec13fe6905530c6db2ab2",
+              "prior_messages_retained": true,
+              "read_results": [],
+              "request_digest": "900e3b8b6424cae3e0fef0503b10283858f2cc5c4a8871b199abdd1d710294d3",
+              "sequence": 2
+            }
+          ],
+          "scenario": "denied_read",
+          "scenario_status": "passed"
+        }
+      ]
+    }
+  ],
+  "schema_version": "issue107-retention-journal-whitelist-v1",
+  "source": "existing controller records; SQLite mode=ro"
+}

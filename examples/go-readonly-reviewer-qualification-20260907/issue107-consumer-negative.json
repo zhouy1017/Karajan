@@ -1,0 +1,63 @@
+{
+  "schema_version": "karajan.issue107-consumer-negative.v1",
+  "issue": 107,
+  "fixture": "controller_fixed_plan_candidate_only",
+  "no_commander_or_worker_execution": true,
+  "current_source": {
+    "origin": "official_go",
+    "suite_ref": {
+      "id": "opencode-go-readonly-review-linux",
+      "revision": 1
+    },
+    "source_digest": "058cf65d696eb87b6b9ee340c45caf1012f6decb1cea370f2eb9921ce613080e"
+  },
+  "result": {
+    "state": "blocked",
+    "reason_codes": [
+      "NO_ELIGIBLE_PROFILE",
+      "REVIEWER_QUALIFICATION_REQUIRED"
+    ],
+    "transition": null,
+    "actual_reviewer_attempt": null
+  },
+  "expected_revoke_reason_observed": true,
+  "qualification_issues": [
+    {
+      "profile": {
+        "id": "fixture-profile",
+        "revision": 1
+      },
+      "reason_code": "RUNTIME_TOOLS_NOT_QUALIFIED"
+    },
+    {
+      "profile": {
+        "id": "readonly-reviewer-107",
+        "revision": 1
+      },
+      "reason_code": "QUALIFICATION_REVOKED"
+    }
+  ],
+  "direct_consumer_diagnostic": {
+    "compiled": false,
+    "reason_codes": [
+      "REVIEWER_QUALIFICATION_REQUIRED",
+      "NO_ELIGIBLE_PROFILE"
+    ],
+    "qualification_issues": [
+      {
+        "profile": {
+          "id": "fixture-profile",
+          "revision": 1
+        },
+        "reason_code": "RUNTIME_TOOLS_NOT_QUALIFIED"
+      },
+      {
+        "profile": {
+          "id": "readonly-reviewer-107",
+          "revision": 1
+        },
+        "reason_code": "QUALIFICATION_REVOKED"
+      }
+    ]
+  }
+}

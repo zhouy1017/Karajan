@@ -1,0 +1,68 @@
+{
+  "schema_version": "karajan.issue107-ordered-driver-plan.v1",
+  "command": "issue107-official-go-reviewer-20260907-ordered-attempt4",
+  "effect_free": true,
+  "phases": [
+    {
+      "id": "qualification",
+      "call": "ProfileQualificationStore.qualify_runtime_tools",
+      "provider_effect": "fixed official three-scenario suite only",
+      "assertions": [
+        "passed record",
+        "three scenarios",
+        "each request_count <= 6",
+        "total <= 18"
+      ]
+    },
+    {
+      "id": "replay",
+      "call": "qualify_runtime_tools with same command",
+      "provider_effect": "none",
+      "assertions": [
+        "same record",
+        "zero new journal requests"
+      ]
+    },
+    {
+      "id": "positive_binding",
+      "call": "ApprovedReviewerBindings.advance twice",
+      "provider_effect": "none",
+      "assertions": [
+        "prepared then ready",
+        "internal current_locked consumed current Store facts",
+        "membership_only",
+        "actual_reviewer_attempt is null"
+      ]
+    },
+    {
+      "id": "revoke",
+      "call": "ProfileQualificationStore.revoke",
+      "provider_effect": "none",
+      "assertions": [
+        "qualification record is revoked only after positive binding"
+      ]
+    },
+    {
+      "id": "negative_and_history",
+      "call": "ApprovedReviewerBindings.advance; get; same-key replay",
+      "provider_effect": "none",
+      "assertions": [
+        "QUALIFICATION_REVOKED",
+        "historical record readable",
+        "same key has zero new requests"
+      ]
+    }
+  ],
+  "separation": {
+    "suite_grant_cleanup": "owned by FixedGoReviewerSuite during qualification",
+    "qualification_record_revoke": "this driver invokes it only after positive_binding"
+  },
+  "static_order_assertions": {
+    "record = store.qualify_runtime_tools(": 560,
+    "replay = store.qualify_runtime_tools(": 1234,
+    "positive = consumer.positive_result(private_root)": 1737,
+    "revocation = store.revoke(": 1791,
+    "consumer.negative(private_root, negative_path)": 2035,
+    "replay_after_revoke = store.qualify_runtime_tools(": 2367
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "schema_version": "karajan.issue107-attempt4-consumer-readonly-trace.v1",
+  "read_only": true,
+  "runs.sqlite": {
+    "runs": [
+      {
+        "id": "a150b219-02ca-41d2-adec-e6c48f8599e1",
+        "snapshot": {
+          "state": "executing",
+          "id": "a150b219-02ca-41d2-adec-e6c48f8599e1",
+          "revision": 5
+        }
+      }
+    ],
+    "events": [
+      {
+        "sequence": 1,
+        "kind": "create",
+        "principal": "issue107-controller",
+        "command_key": "issue107-fixed-consumer-run-v1"
+      },
+      {
+        "sequence": 2,
+        "kind": "planning_intent",
+        "principal": "issue107-fixed-plan-author",
+        "command_key": "issue107-fixed-plan-intent-v1"
+      },
+      {
+        "sequence": 3,
+        "kind": "attach_receipt",
+        "principal": "issue107-controller",
+        "command_key": "issue107-fixed-plan-receipt-v2"
+      },
+      {
+        "sequence": 4,
+        "kind": "submit_plan",
+        "principal": "issue107-fixed-plan-author",
+        "command_key": "issue107-fixed-plan-submit-v1"
+      },
+      {
+        "sequence": 5,
+        "kind": "approve_plan",
+        "principal": "issue107-controller",
+        "command_key": "issue107-fixed-plan-approve-v1"
+      }
+    ]
+  },
+  "admission.sqlite": {
+    "operations": [
+      {
+        "id": "issue107-fixed-consumer-operation",
+        "run_id": "a150b219-02ca-41d2-adec-e6c48f8599e1",
+        "task_id": "fixture-worker",
+        "state": "controller_fixture_only",
+        "data": {
+          "state": "controller_fixture_only",
+          "id": "issue107-fixed-consumer-operation",
+          "assessment": {
+            "route": {
+              "snapshots": {
+                "task": {
+                  "root_task_id": "fixture-worker"
+                }
+              }
+            },
+            "sources": {
+              "approval": {
+                "approved_at": 1788763263.877981,
+                "approved_by": "issue107-controller",
+                "authorization_digest": "208e38b7599c6c46a6d51380722a5b8f5543c079fb00435af92bf290ba5bbe73",
+                "configuration_digest": "69d3f6dec21e997a595c5b4e4bab594d6e50f11e88c9cd2b8d7c430c0a839781",
+                "dispatch_enabled": false,
+                "id": "52f6e007-ed7d-4a06-864b-4585c35aa833",
+                "plan_digest": "0073af3b99e6787d4abb492b22e376a2063eb06009eeae6c0bb50f6e9a0cc311",
+                "plan_revision": 1,
+                "routing_digest": "c3a363d88b564da9832da2f217b44f91dc253302273db57250892e7992465961",
+                "run_id": "a150b219-02ca-41d2-adec-e6c48f8599e1",
+                "schema_version": "karajan.approve-plan.v2",
+                "term": 1
+              },
+              "execution_policy_digest": "33c865c5b873e42c7a036849469404eee243e67adc2f027320660bf3f9aa5136",
+              "routing_digest": "c3a363d88b564da9832da2f217b44f91dc253302273db57250892e7992465961"
+            }
+          }
+        }
+      }
+    ],
+    "commands": []
+  }
+}
