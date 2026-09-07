@@ -13,6 +13,7 @@ from pathlib import Path
 from threading import Barrier
 from typing import Any
 
+import karajan.capacity.store as capacity_store
 import karajan.orchestration.planning_admission as planning_admission
 import pytest
 from karajan.capacity import CapacityStore
@@ -794,6 +795,142 @@ def test_final_reservation_hook_rechecks_original_budget_after_fact_capture(
     denied = authority.advance(execution["id"], "owner", "late-facts-budget")
     assert denied["reason_codes"] == ["PLANNING_BUDGET_EXPIRED"]
     assert authority.capacity.snapshot()["reservations"] == []
+
+
+def _advance_after_reservation_encoding_crosses(
+    authority: PlanningAdmissionAuthority,
+    execution: dict[str, Any],
+    now: list[float],
+    target: float,
+    monkeypatch: pytest.MonkeyPatch,
+) -> dict[str, Any]:
+    """Advance the shared clock only after Capacity encoded its reservation."""
+    original = capacity_store.encoded
+    encoded_reservation = False
+
+    def encode_then_cross(value: Any) -> str:
+        nonlocal encoded_reservation
+        result = original(value)
+        if isinstance(value, dict) and value.get("state") == "reserved":
+            encoded_reservation = True
+            now[0] = target
+        return result
+
+    monkeypatch.setattr(capacity_store, "encoded", encode_then_cross)
+    result = authority.advance(execution["id"], "owner", "encoded-final-boundary")
+    assert encoded_reservation
+    return result
+
+
+def test_final_reservation_closure_rechecks_conservative_age_after_encoding(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The deferred controller tail rejects age crossed by Capacity encoding."""
+    now = [1004.0]
+    _, authority, _, execution = _case(
+        tmp_path,
+        configured,
+        clock=lambda: now[0],
+        conservative_observation_max_age_seconds=5,
+    )
+
+    denied = _advance_after_reservation_encoding_crosses(
+        authority, execution, now, 1006.0, monkeypatch
+    )
+
+    assert denied["reason_codes"] == ["PLANNING_BOUNDARY_ROUTE_REJECTED"]
+    assert authority.capacity.snapshot()["reservations"] == []
+
+
+def test_final_reservation_closure_rechecks_commander_expiry_after_encoding(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The deferred controller tail retains the original Commander deadline."""
+    now = [1000.0]
+    _, authority, _, execution = _case(tmp_path, configured, clock=lambda: now[0])
+    commander = authority.qualifications
+    assert isinstance(commander, FixtureCommander)
+    commander.valid_until = 1001.0
+
+    denied = _advance_after_reservation_encoding_crosses(
+        authority, execution, now, 1001.0, monkeypatch
+    )
+
+    assert denied["reason_codes"] == ["COMMANDER_QUALIFICATION_EXPIRED"]
+    assert authority.capacity.snapshot()["reservations"] == []
+
+
+def test_final_reservation_closure_rechecks_original_budget_after_encoding(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The deferred controller tail cannot outlive the first planning claim."""
+    now = [1000.0]
+    _, authority, _, execution = _case(
+        tmp_path,
+        configured,
+        clock=lambda: now[0],
+        observation_max_age_seconds=1000,
+        conservative_observation_max_age_seconds=1000,
+        max_attempt_duration_seconds=500,
+    )
+
+    denied = _advance_after_reservation_encoding_crosses(
+        authority, execution, now, 1301.0, monkeypatch
+    )
+
+    assert denied["reason_codes"] == ["PLANNING_BUDGET_EXPIRED"]
+    assert authority.capacity.snapshot()["reservations"] == []
+
+def test_final_effect_closure_rechecks_commander_expiry_after_capacity_preparation(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The effect consumer supplies a deferred O(1) closure to Capacity."""
+    now = [1000.0]
+    _, authority, _, execution = _case(tmp_path, configured, clock=lambda: now[0])
+    commander = authority.qualifications
+    assert isinstance(commander, FixtureCommander)
+    commander.valid_until = 1001.0
+    assert authority.advance(execution["id"], "owner", "admit")["phase"] == "admitted"
+    original = authority.capacity.pre_effect_guard
+    callbacks: list[str] = []
+
+    @contextmanager
+    def after_capacity_preparation(
+        admission_id: str,
+        *,
+        expected_request: dict[str, Any],
+        before_effect: Callable[[], None] | None = None,
+        after_capacity_facts: Callable[[Any], None] | None = None,
+        before_effect_yield: Callable[[], Callable[[], None] | None] | None = None,
+    ) -> Any:
+        def prepare_final() -> Callable[[], None] | None:
+            assert before_effect_yield is not None
+            deferred = before_effect_yield()
+            assert callable(deferred)
+
+            def final() -> None:
+                callbacks.append("final")
+                now[0] = 1001.0
+                deferred()
+
+            return final
+
+        with original(
+            admission_id,
+            expected_request=expected_request,
+            before_effect=before_effect,
+            after_capacity_facts=after_capacity_facts,
+            before_effect_yield=prepare_final,
+        ) as capacity:
+            yield capacity
+
+    monkeypatch.setattr(authority.capacity, "pre_effect_guard", after_capacity_preparation)
+    entered = False
+    with pytest.raises(RunError, match="^COMMANDER_QUALIFICATION_EXPIRED$"):
+        with authority.effect_guard(execution["id"], "owner", "encoded-effect-boundary"):
+            entered = True
+    assert callbacks == ["final"]
+    assert not entered
 
 
 def test_final_effect_hook_rechecks_nested_fact_expiry_after_fact_capture(

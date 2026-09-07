@@ -1447,25 +1447,27 @@ class PlanningAdmissionAuthority:
                     def after_capacity_facts(facts: CapacityBoundaryFacts) -> None:
                         boundary.append(facts)
 
-                    def before_reservation_write() -> None:
+                    def before_reservation_write() -> Callable[[], None]:
                         if len(boundary) != 1:
                             raise RunError("PLANNING_BOUNDARY_FACTS_REQUIRED")
+                        # Finish every parsing, binding comparison, and shared
+                        # route calculation before Capacity serializes its write
+                        # payload. The returned tail contains only the captured
+                        # scalar deadlines and quota temporal fence.
                         final_boundary = self._capture_final_boundary(
                             record, qualification, held_run
                         )
-                        # Preserve the precise Commander/budget diagnostic for
-                        # facts already expired before the route calculation.
                         self._assert_final_boundary_temporal(final_boundary)
-                        # Capacity's clock is the authority for quota age. This
-                        # private, no-I/O clock read is safe inside Capacity's
-                        # held transaction and does not reopen a Capacity view.
                         fence = self._revalidate_boundary_route(
                             boundary[0], record, binding, as_of=self.capacity._now()
                         )
                         self._assert_quota_fence_current(fence)
-                        # Route construction can consume wall time.  The tail
-                        # intentionally reads only immutable scalar deadlines.
-                        self._assert_final_boundary_temporal(final_boundary)
+
+                        def final_validator() -> None:
+                            self._assert_quota_fence_current(fence)
+                            self._assert_final_boundary_temporal(final_boundary)
+
+                        return final_validator
 
                     receipt = self.capacity.command_receipt(
                         "admit", request, command_key=record["capacity_command_key"]
@@ -1587,9 +1589,11 @@ class PlanningAdmissionAuthority:
                     def after_capacity_facts(facts: CapacityBoundaryFacts) -> None:
                         boundary.append(facts)
 
-                    def before_effect_yield() -> None:
+                    def before_effect_yield() -> Callable[[], None]:
                         if len(boundary) != 1:
                             raise RunError("PLANNING_BOUNDARY_FACTS_REQUIRED")
+                        # Complete all source/binding and shared routing work
+                        # before Capacity starts its final yield preparation.
                         final_boundary = self._capture_final_boundary(
                             record, qualification, held_run
                         )
@@ -1598,7 +1602,12 @@ class PlanningAdmissionAuthority:
                             boundary[0], record, binding, as_of=self.capacity._now()
                         )
                         self._assert_quota_fence_current(fence)
-                        self._assert_final_boundary_temporal(final_boundary)
+
+                        def final_validator() -> None:
+                            self._assert_quota_fence_current(fence)
+                            self._assert_final_boundary_temporal(final_boundary)
+
+                        return final_validator
 
                     # Project qualification remains held until Capacity has
                     # revalidated the reservation and the caller's effect
