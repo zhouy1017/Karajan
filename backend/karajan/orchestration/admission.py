@@ -167,6 +167,29 @@ class ApprovedTaskAdmission:
             ),
         )
 
+    def _reviewer_activation_identity(
+        self, db: sqlite3.Connection, operation: dict[str, Any]
+    ) -> None:
+        """Require the persisted Reviewer lineage before making an activation intent."""
+        request = operation.get("request")
+        assessment = operation.get("assessment")
+        lineage = assessment.get("reviewer_lineage") if isinstance(assessment, dict) else None
+        worker_operation_id = operation.get("depends_on_operation_id")
+        if (
+            not isinstance(request, dict)
+            or request.get("role") != "reviewer"
+            or not isinstance(lineage, dict)
+            or not isinstance(worker_operation_id, str)
+            or lineage.get("worker_operation_id") != worker_operation_id
+        ):
+            raise RunError("REVIEWER_OPERATION_REQUIRED")
+        worker = self._load(db, operation["run_id"], worker_operation_id)
+        if (
+            worker["id"] == operation["id"]
+            or worker.get("task_id") != lineage.get("worker_task_id")
+        ):
+            raise RunError("REVIEWER_OPERATION_REQUIRED")
+
     def _refresh(self, db: sqlite3.Connection, operation: dict[str, Any]) -> dict[str, Any]:
         if "execution" in operation or operation["state"] != "reserved":
             return operation
@@ -368,13 +391,13 @@ class ApprovedTaskAdmission:
                                 return operation
 
                             def check_budget_at_reservation() -> None:
-                                admission_allowed(db, run, now=self.routing.planner.clock())
                                 self.routing.reviewer_boundary_guard(
                                     current,
                                     worker_operation=reviewer_worker,
                                     candidates=bindings.candidates,
-                                    now=self.routing.capacity.clock(),
+                                    clock=lambda: self.routing.capacity.clock(),
                                 )
+                                admission_allowed(db, run, now=self.routing.planner.clock())
 
                             try:
                                 receipt = self.routing.capacity.admit(
@@ -426,9 +449,9 @@ class ApprovedTaskAdmission:
             identifier(value)
         self._owner(run_id, principal)
         with self._transaction() as db:
-            operation = self._refresh(db, self._load(db, run_id, operation_id))
-            if operation.get("reviewer_activation") == "not_applicable":
-                raise RunError("REVIEWER_OPERATION_REQUIRED")
+            operation = self._load(db, run_id, operation_id)
+            self._reviewer_activation_identity(db, operation)
+            operation = self._refresh(db, operation)
             if operation.get("cancel_requested"):
                 raise RunError("REVIEWER_OPERATION_CANCELLED")
             if operation.get("state") != "reserved" or not operation.get("capacity_receipt"):
@@ -593,16 +616,20 @@ class ApprovedTaskAdmission:
                         raise RunError("REVIEWER_RESERVED_ROUTE_NOT_CURRENT")
                     # This is the existing Reviewer admission's Capacity transaction;
                     # it excludes only its own hold and cannot issue another claim.
-                    with self.routing.capacity.pre_effect_guard(
-                        capacity_receipt["admission_id"], expected_request=request
-                    ) as capacity:
-                        now = self.routing.planner.clock()
+                    def check_reviewer_effect_boundary() -> None:
                         self.routing.reviewer_boundary_guard(
                             current,
                             worker_operation=worker_operation,
                             candidates=bindings.candidates,
-                            now=capacity["checked_at"],
+                            clock=lambda: self.routing.capacity.clock(),
                         )
+
+                    with self.routing.capacity.pre_effect_guard(
+                        capacity_receipt["admission_id"],
+                        expected_request=request,
+                        before_effect=check_reviewer_effect_boundary,
+                    ) as capacity:
+                        now = self.routing.planner.clock()
                         try:
                             current_process(
                                 db,

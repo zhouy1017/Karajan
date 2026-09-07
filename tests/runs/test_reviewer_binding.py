@@ -504,6 +504,54 @@ def test_reviewer_admission_rechecks_run_deadline_after_capacity_lock_wait(
     assert capacity.path.read_bytes() == before
 
 
+@pytest.mark.parametrize(
+    ("expired", "reason"),
+    [
+        ("qualification", "REVIEWER_QUALIFICATION_EXPIRED"),
+        ("run", "RUN_DURATION_LIMIT"),
+    ],
+)
+def test_reviewer_boundary_samples_time_only_after_blocking_check_artifact_read(
+    binding_case, monkeypatch, expired, reason
+):
+    _, qualification, intents, (run_id, _), candidates, _, _ = binding_case
+    _passed_reviewer_subject(binding_case)
+    if expired == "qualification":
+        qualification.mutate = lambda observed: observed["facts"].update(valid_until=1001.0)
+    else:
+        with sqlite3.connect(intents.admissions.database) as db:
+            row = db.execute(
+                "SELECT data FROM run_execution_budgets WHERE run_id=?", (run_id,)
+            ).fetchone()
+            budget = json.loads(row[0])
+            budget.update(started_at=0.0, max_duration_seconds=1001)
+            db.execute(
+                "UPDATE run_execution_budgets SET data=? WHERE run_id=?",
+                (json.dumps(budget), run_id),
+            )
+    queued = intents.admissions.enqueue(
+        run_id, "review", principal="owner", command_key="artifact-time-" + expired
+    )
+    routing, capacity = intents.admissions.routing, intents.admissions.routing.capacity
+    original = candidates.gate
+    calls: list[str] = []
+
+    def delayed_gate(*args, **kwargs):
+        result = original(*args, **kwargs)
+        calls.append("gate")
+        capacity.clock = lambda: 1001.0
+        routing.planner.clock = lambda: 1001.0
+        return result
+
+    monkeypatch.setattr(candidates, "gate", delayed_gate)
+    before = capacity.path.read_bytes()
+    blocked = intents.admissions.advance(run_id, queued["id"], principal="owner")
+    assert calls == ["gate"]
+    assert blocked["state"] == "blocked"
+    assert blocked["reason_codes"] == [reason]
+    assert capacity.path.read_bytes() == before
+
+
 def test_reviewer_admission_holds_project_binding_until_capacity_reserve_boundary(
     binding_case, monkeypatch
 ):
@@ -672,6 +720,36 @@ def test_rejected_reviewer_activation_does_not_mask_later_reservation_expiry(bin
     assert reopened["state"] == "queued"
 
 
+def test_legacy_reserved_worker_cannot_use_reviewer_activation_port(binding_case):
+    intents, (run_id, worker_operation_id), _, _, _ = _passed_reviewer_subject(binding_case)
+    capacity = intents.admissions.routing.capacity
+    with intents.admissions._transaction() as db:
+        worker = intents.admissions._load(db, run_id, worker_operation_id)
+        assert worker["request"]["role"] == "worker"
+        legacy = deepcopy(worker)
+        legacy["id"] = "legacy-reserved-worker"
+        legacy["state"] = "reserved"
+        legacy["planned_attempt_id"] = "legacy-worker-attempt"
+        legacy["request"]["attempt_id"] = legacy["planned_attempt_id"]
+        legacy["capacity_receipt"] = capacity.admit(
+            legacy["request"], command_key="legacy-worker-reservation"
+        )
+        legacy.pop("reviewer_activation", None)
+        intents.admissions._save(db, legacy)
+    before_capacity = capacity.snapshot()
+    before_operation = intents.admissions.database.read_bytes()
+    with pytest.raises(RunError, match="^REVIEWER_OPERATION_REQUIRED$"):
+        intents.admissions.activate_reviewer(run_id, legacy["id"], principal="owner")
+    assert capacity.snapshot() == before_capacity
+    assert intents.admissions.database.read_bytes() == before_operation
+    # Its original Worker activation key remains free after the rejected
+    # Reviewer-port call; #115 must not consume that Capacity command.
+    assert capacity.activate(
+        legacy["capacity_receipt"]["admission_id"],
+        command_key="go-task-activate:" + legacy["id"],
+    )["decision"] == "capacity_revalidated"
+
+
 @pytest.mark.parametrize(
     ("source", "reason"),
     [
@@ -720,6 +798,41 @@ def test_reviewer_elapsed_source_expiry_after_capacity_effect_lock_blocks_execut
             run_id, reviewer["id"], principal="owner"
         ):
             pytest.fail("expired source entered the Reviewer effect guard")
+    assert capacity.snapshot() == before
+
+
+def test_reviewer_effect_boundary_samples_after_blocking_check_artifact_read(
+    binding_case, monkeypatch
+):
+    _, qualification, intents, (run_id, _), candidates, _, _ = binding_case
+    _passed_reviewer_subject(binding_case)
+    qualification.mutate = lambda observed: observed["facts"].update(valid_until=1001.0)
+    reviewer = intents.admissions.advance(
+        run_id,
+        intents.admissions.enqueue(
+            run_id, "review", principal="owner", command_key="effect-artifact-time"
+        )["id"],
+        principal="owner",
+    )
+    _activate_reviewer_reservation(intents, run_id, reviewer)
+    capacity = intents.admissions.routing.capacity
+    original = candidates.gate
+    calls: list[str] = []
+
+    def delayed_gate(*args, **kwargs):
+        result = original(*args, **kwargs)
+        calls.append("gate")
+        capacity.clock = lambda: 1001.0
+        return result
+
+    monkeypatch.setattr(candidates, "gate", delayed_gate)
+    before = capacity.snapshot()
+    with pytest.raises(RunError, match="^REVIEWER_QUALIFICATION_EXPIRED$"):
+        with intents.admissions.reviewer_reserved_effect_guard(
+            run_id, reviewer["id"], principal="owner"
+        ):
+            pytest.fail("expired source entered the Reviewer effect guard")
+    assert calls == ["gate"]
     assert capacity.snapshot() == before
 
 

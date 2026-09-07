@@ -6,7 +6,7 @@ or enable execution. A later consumer must recheck authority and acquire admissi
 
 import json
 import uuid
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import ExitStack, contextmanager
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any
@@ -496,7 +496,7 @@ class ApprovedRunRouting:
         *,
         worker_operation: dict[str, Any],
         candidates: Any,
-        now: float,
+        clock: Callable[[], float],
     ) -> None:
         """Recheck elapsed Reviewer facts while the caller still holds Project and Capacity.
 
@@ -514,6 +514,11 @@ class ApprovedRunRouting:
         selected = route.get("selected_profile")
         if not isinstance(selected, dict):
             raise RunError("RESERVED_REVIEWER_ROUTE_NOT_CURRENT")
+        # CandidateStore may read and hash a final Check artifact.  It is the
+        # only potentially blocking read in this guard, so complete it before
+        # taking the temporal sample used for every source below.
+        _current_reviewer_check_artifacts(worker_operation, candidates)
+        now = clock()
         if type(now) not in (int, float):
             raise RunError("REVIEWER_BOUNDARY_CLOCK_INVALID")
         profile = next(
@@ -543,7 +548,6 @@ class ApprovedRunRouting:
             or not estimate.get("created_at", now + 1) <= now < estimate.get("valid_until", now)
         ):
             raise RunError("REVIEWER_ESTIMATE_EXPIRED")
-        _current_reviewer_check_artifacts(worker_operation, candidates)
 
     def _build(
         self,
