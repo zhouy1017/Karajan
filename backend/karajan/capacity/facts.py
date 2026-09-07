@@ -52,6 +52,71 @@ class CapacityBoundaryFacts:
     owned_admission_id: str | None
 
 
+def derive_capacity_boundary_facts(
+    boundary: CapacityBoundaryFacts, *, expected_request: dict[str, Any]
+) -> dict[str, Any]:
+    """Derive a quota view that excludes only a Store-proved existing claim.
+
+    The immutable source facts are intentionally complete.  This helper changes
+    only the numeric view consumed by a pure routing evaluator: an active,
+    effective, exact-request admission may be omitted once from held attempts
+    and its *unconsumed* planned demand from future reservations.  It never
+    removes observed usage, source provenance, or another Run's hold.
+    """
+    from .store import CapacityError
+
+    facts = boundary.facts.as_dict()
+    owned = boundary.owned_admission_id
+    if owned is None:
+        return facts
+    try:
+        matches = [
+            (account, admission)
+            for account in facts["accounts"]
+            for admission in account["admissions"]
+            if admission["admission_id"] == owned
+        ]
+        if len(matches) != 1:
+            raise ValueError
+        account, admission = matches[0]
+        reservation = admission["reservation"]
+        if (
+            admission["stored_state"] != "active"
+            or not admission["effective_held"]
+            or reservation["id"] != owned
+            or reservation["request"] != expected_request
+            or owned not in account["held_admission_ids"]
+            or account["held_attempts"] <= 0
+        ):
+            raise ValueError
+        account["held_attempts"] -= 1
+        account["held_admission_ids"].remove(owned)
+        consumed: dict[str, int] = {}
+        for usage in account["usage"]:
+            receipt = usage["receipt"]
+            if receipt["admission_id"] != owned:
+                continue
+            for pool_id, amount in receipt["amounts"].items():
+                consumed[pool_id] = consumed.get(pool_id, 0) + units(amount)
+        pools = {pool["id"]: pool for pool in account["pools"]}
+        for pool_id, amount in reservation["request"]["demand"].items():
+            pool = pools.get(pool_id)
+            if pool is None:
+                raise ValueError
+            remaining = max(0, units(amount) - consumed.get(pool_id, 0))
+            future = units(pool["future_reserved"])
+            if future < remaining:
+                raise ValueError
+            pool["future_reserved"] = money(future - remaining)
+    except (KeyError, TypeError, ValueError):
+        raise CapacityError("CAPACITY_BOUNDARY_OWNERSHIP_INVALID") from None
+    facts["derived_capacity_boundary"] = {
+        "from_capacity_facts_sha256": boundary.facts.sha256,
+        "excluded_owned_admission_id": owned,
+    }
+    return facts
+
+
 def _selection(account_ids: tuple[str, ...] | None) -> tuple[str, ...] | None:
     from .store import CapacityError
 
