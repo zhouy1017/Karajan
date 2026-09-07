@@ -105,10 +105,13 @@ def _commander_start(
     identity: str,
     source: dict,
     provenance: str | None,
+    profile_binding: dict | None = None,
 ) -> None:
     """Persist a sealed synthetic #113-shaped record only for reader C negatives."""
     with store._owned(case["project_id"], "owner") as db:
-        bound = store._binding(db, case["project_id"], {"id": "fixture-profile", "revision": 1})
+        bound = profile_binding or store._binding(
+            db, case["project_id"], {"id": "fixture-profile", "revision": 1}
+        )
         start = {
             "qualification_scope": "commander_planning.v1",
             "profile_binding": bound,
@@ -191,6 +194,40 @@ def test_commander_reader_uses_latest_sealed_record_and_never_upgrades_fixture(c
     with store.commander_facts_guard(
         case["project_id"], case["registration"], principal="owner",
         scope="commander_planning.v1", reader_version="karajan.commander-qualification-reader.v1"
+    ) as current:
+        assert current is None
+
+
+def test_commander_reader_latest_same_profile_binding_mismatch_blocks_old_pass(case: dict) -> None:
+    source = {"schema_version": "synthetic-source.v1", "generation": "one"}
+    store = ProfileQualificationStore(
+        case["projects"],
+        clock=lambda: case["clock"][0],
+        commander_source=lambda _db, _project, _current, _principal: source,
+    )
+    _commander_start(store, case, identity="commander-a-pass", source=source, provenance="official")
+    with store._owned(case["project_id"], "owner") as db:
+        changed = copy.deepcopy(
+            store._binding(db, case["project_id"], {"id": "fixture-profile", "revision": 1})
+        )
+    # This is a real same scope/Profile identity with a newer, incompatible
+    # repository binding. It is intentionally incomplete, then the catalog is
+    # still on A when the reader runs: no older A pass may be recovered.
+    changed["registration"]["profile"]["binding"]["channel_id"] = "fixture-channel-b"
+    _commander_start(
+        store,
+        case,
+        identity="commander-b-incomplete",
+        source=source,
+        provenance=None,
+        profile_binding=changed,
+    )
+    with store.commander_facts_guard(
+        case["project_id"],
+        case["registration"],
+        principal="owner",
+        scope="commander_planning.v1",
+        reader_version="karajan.commander-qualification-reader.v1",
     ) as current:
         assert current is None
 

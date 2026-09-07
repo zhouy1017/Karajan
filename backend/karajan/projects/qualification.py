@@ -1050,13 +1050,18 @@ class ProfileQualificationStore:
             "SELECT * FROM profile_qualification_starts WHERE project_id=? ORDER BY rowid DESC",
             (project_id,),
         ).fetchall()
+        profile_ref = {"id": frozen["id"], "revision": frozen["revision"]}
         latest = next(
             (
                 row
                 for row in starts
                 if (
                     (candidate := self._checked_start(db, row)).get("qualification_scope") == scope
-                    and candidate.get("profile_binding") == current
+                    and isinstance(candidate.get("profile_binding"), dict)
+                    and candidate["profile_binding"].get("registration", {}).get("id")
+                    == profile_ref["id"]
+                    and candidate["profile_binding"].get("registration", {}).get("revision")
+                    == profile_ref["revision"]
                 )
             ),
             None,
@@ -1067,7 +1072,7 @@ class ProfileQualificationStore:
         # A newer start for this Commander scope/profile supersedes every older
         # result even when its source changed, failed, expired or was revoked.
         # Never fall back to an old pass.
-        if start.get("source") != current_source:
+        if start.get("profile_binding") != current or start.get("source") != current_source:
             return None
         try:
             record = self._record(db, latest["id"])
