@@ -37,6 +37,11 @@ observer reopens the original fixture stores in `existing_only` mode and checks
 the current consumer guard under its operation, Run, and Project locks. A ready
 history alone is never a revoke refusal.
 
+The fixed start's `expires_at` bounds the suite call window. A completed record
+is consumed only through its own `valid_until`; recovery does not extend either
+deadline. Its membership receipt is compared through the canonical Candidate
+identity, and qualification ownership is persisted before the membership effect.
+
 ## C/P acceptance matrix
 
 | Boundary | Local evidence | Result | Scope |
@@ -46,7 +51,7 @@ history alone is never a revoke refusal.
 | Revoke commits but reply is lost | exact Store revoke readback is persisted as `recovered`; no second revoke | passed | C/P |
 | Public Store revoke reply loss | real `ProfileQualificationStore` / SQLite local-fixture record commits revoke before injected reply loss; resume reads it once | passed | C/P |
 | Qualification reply loss | fixed command is read back and resumed; no second qualification call | passed | C/P |
-| Receipt publication failure | `os.replace` failure leaves no partial stage receipt | passed | C/P |
+| Receipt publication failure | injected `os.link` publication failure leaves the already committed SQLite stage readable | passed | C/P |
 | Ambiguous membership positive | durable `positive_claimed` and a two-process resume race observe exactly one consumer callback | passed | C/P |
 | Legacy receipt migration | an old JSON `unknown` is imported before SQLite and rejects a conflicting `passed` write | passed | C/P |
 | Expired or unknown original state | no consumer or revoke call; status remains expired/unknown | passed | C/P |
@@ -55,6 +60,8 @@ Run the local evidence without a Go suite:
 
 ```text
 PYTHONPATH=backend C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m pytest tests/tools/test_issue107_qualification_recovery_driver.py -q
+
+$env:PYTHONPATH='backend;tests/runs;tests/projects'; C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m pytest tests -q -k test_issue107_identity_precedes_real_ready_reply_loss
 ```
 
 The local tests use controlled Store adapters where an effect must be injected,
