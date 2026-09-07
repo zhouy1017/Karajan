@@ -56,74 +56,6 @@ class _CapacityTemporalFence:
         )
 
 
-@dataclass(frozen=True)
-class _ReservationPayload:
-    """Static reservation encoding prepared before the final time boundary."""
-
-    identity: str
-    account_id: str
-    request: dict[str, Any]
-    observations: dict[str, Any]
-    policy_revision: int
-    duration_seconds: int
-    account_json: str
-    identity_json: str
-    observations_json: str
-    policy_revision_json: str
-    request_json: str
-
-    @classmethod
-    def prepare(
-        cls,
-        *,
-        identity: str,
-        account_id: str,
-        request: dict[str, Any],
-        observations: dict[str, Any],
-        policy_revision: int,
-    ) -> "_ReservationPayload":
-        return cls(
-            identity=identity,
-            account_id=account_id,
-            request=request,
-            observations=observations,
-            policy_revision=policy_revision,
-            duration_seconds=request["duration_seconds"],
-            account_json=encoded(account_id),
-            identity_json=encoded(identity),
-            observations_json=encoded(observations),
-            policy_revision_json=encoded(policy_revision),
-            request_json=encoded(request),
-        )
-
-    def at(self, now: float) -> str:
-        expires_at = now + self.duration_seconds
-        if not math.isfinite(expires_at):
-            raise CapacityError("CLOCK_UNAVAILABLE")
-        # ``encoded`` sorts these names lexically.  Every non-time fragment
-        # was serialized before the final fence, so the tail only formats two
-        # finite scalar timestamps and concatenates fixed fragments.  ``repr``
-        # is valid JSON for finite Python floats and avoids another JSON pass.
-        payload = (
-            "{\"account_id\":"
-            + self.account_json
-            + ",\"created_at\":"
-            + repr(now)
-            + ",\"expires_at\":"
-            + repr(expires_at)
-            + ",\"id\":"
-            + self.identity_json
-            + ",\"observations\":"
-            + self.observations_json
-            + ",\"policy_revision\":"
-            + self.policy_revision_json
-            + ",\"request\":"
-            + self.request_json
-            + ",\"state\":\"reserved\"}"
-        )
-        return payload
-
-
 class _UnactivatedCancellation(AdmissionRef):
     evidence_ref: Identifier
 
@@ -560,31 +492,42 @@ class CapacityStore:
                     )
                 now = final_now
             identity: str | None = None
-            reservation_payload: _ReservationPayload | None = None
+            reservation: dict[str, Any] | None = None
+            reservation_data: str | None = None
             if not reasons:
-                # UUID generation and all non-time JSON serialization happen
-                # before the trusted final callback.  ``created_at`` remains
-                # deliberately unset until its post-callback clock sample.
+                # UUID generation happens before the trusted final callback.
+                # ``created_at`` remains deliberately unset until every
+                # controller calculation has returned.
                 identity = str(uuid4())
-                reservation_payload = _ReservationPayload.prepare(
-                    identity=identity,
-                    account_id=profile["account_id"],
-                    request=value,
-                    observations=observations,
-                    policy_revision=policy_revision,
-                )
             if not reasons and before_reservation_write is not None:
                 final_check = _final_boundary_check(before_reservation_write())
             if not reasons:
-                if temporal_fence is None or reservation_payload is None or identity is None:
+                if temporal_fence is None or identity is None:
                     raise CapacityError("CAPACITY_TEMPORAL_FACTS_INVALID")
+                # Complete the standard, potentially expensive JSON encoding
+                # before either final scalar check.  Its creation timestamp is
+                # after every source/controller calculation, but the later
+                # boundary can still reject if encoding consumed its lifetime.
+                created_at = self._now()
+                reservation = {
+                    "id": identity,
+                    "request": value,
+                    "state": "reserved",
+                    "account_id": profile["account_id"],
+                    "created_at": created_at,
+                    "expires_at": created_at + value["duration_seconds"],
+                    "policy_revision": policy_revision,
+                    "observations": observations,
+                }
+                reservation_data = encoded(reservation)
                 # The controller closure must be constant-time and source-free.
-                # It runs after all Capacity payload work, then a fresh time is
-                # sampled for the persisted reservation and Capacity's own
-                # O(1) fence immediately adjacent to INSERT.
+                # It and Capacity's scalar fence are immediately adjacent to
+                # INSERT; no JSON work or collection traversal follows.
                 if final_check is not None:
                     final_check()
                 final_now = self._now()
+                if reservation["expires_at"] <= final_now:
+                    reasons = ["RESERVATION_EXPIRED"]
                 if not temporal_fence.current(final_now):
                     reasons = self._final_temporal_reasons(
                         value,
@@ -608,9 +551,8 @@ class CapacityStore:
                 "live_qualification": "not_run",
             }
             if not reasons:
-                if reservation_payload is None or identity is None:
+                if reservation is None or reservation_data is None or identity is None:
                     raise CapacityError("CAPACITY_TEMPORAL_FACTS_INVALID")
-                reservation_data = reservation_payload.at(now)
                 db.execute(
                     "INSERT INTO reservations VALUES (?, ?, ?, ?)",
                     (identity, value["attempt_id"], profile["account_id"], reservation_data),
