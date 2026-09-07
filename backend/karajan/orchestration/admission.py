@@ -202,8 +202,13 @@ class ApprovedTaskAdmission:
             and activation.get("admission_id")
             == operation["capacity_receipt"].get("admission_id")
             and isinstance(activation.get("command_key"), str)
-            and isinstance(activation.get("receipt"), dict)
-            and activation["receipt"].get("decision") == "capacity_revalidated"
+            and (
+                ("receipt" in activation and activation["receipt"] is None)
+                or (
+                    isinstance(activation.get("receipt"), dict)
+                    and activation["receipt"].get("decision") == "capacity_revalidated"
+                )
+            )
         )
         if "execution" in operation or (
             operation["state"] != "reserved" and not reviewer_recovery

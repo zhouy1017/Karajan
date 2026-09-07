@@ -1,5 +1,8 @@
 """Focused durable Reviewer Capacity recovery regression coverage."""
 
+import json
+import sqlite3
+
 import pytest
 from karajan.runs import RunError
 from test_reviewer_binding import (
@@ -128,4 +131,68 @@ def test_generic_worker_reconciliation_does_not_use_reviewer_refresh(prepared):
         command_key="worker-released",
     )
     assert service.get(run["id"], queued["id"], principal="owner") == pending
+
+
+
+def test_cancel_after_lost_reviewer_activation_reply_recovers_exact_receipt(
+    binding_case, monkeypatch
+):
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
+    queued = intents.admissions.enqueue(
+        run_id, "review", principal="owner", command_key="cancel-lost-activation"
+    )
+    reserved = intents.admissions.advance(run_id, queued["id"], principal="owner")
+    capacity = intents.admissions.routing.capacity
+    actual = capacity.activate
+    calls = []
+
+    def activate_then_lose(admission_id, *, command_key):
+        calls.append((admission_id, command_key))
+        actual(admission_id, command_key=command_key)
+        raise ConnectionResetError("fixture activate response lost after Capacity commit")
+
+    monkeypatch.setattr(capacity, "activate", activate_then_lose)
+    with pytest.raises(ConnectionResetError, match="activate response lost"):
+        intents.admissions.activate_reviewer(run_id, queued["id"], principal="owner")
+
+    with sqlite3.connect(intents.admissions.database) as db:
+        operation = json.loads(
+            db.execute("SELECT data FROM operations WHERE id=?", (queued["id"],)).fetchone()[0]
+        )
+    assert operation["reviewer_activation"]["receipt"] is None
+
+    cancelled = intents.admissions.cancel(run_id, queued["id"], principal="owner")
+    assert cancelled["state"] == "reconciliation_required"
+    assert cancelled["cancel_requested"] is True
+    assert cancelled["reviewer_activation"]["receipt"] is None
+    assert capacity.snapshot()["reservations"][0]["state"] == "active"
+
+    recovered = intents.admissions.get(run_id, queued["id"], principal="owner")
+    command_key = "reviewer-activate:" + queued["id"]
+    exact = capacity.command_receipt(
+        "activate",
+        {"admission_id": reserved["capacity_receipt"]["admission_id"]},
+        command_key=command_key,
+    )
+    assert exact is not None
+    assert recovered["reviewer_activation"]["receipt"] == exact
+    assert recovered["cancel_requested"] is True
+    assert calls == [(reserved["capacity_receipt"]["admission_id"], command_key)]
+
+    capacity.reconcile(
+        reserved["capacity_receipt"]["admission_id"],
+        local_ended=True,
+        remote_ended=True,
+        usage_complete=False,
+        not_sent=True,
+        evidence_ref="fixture:cancel-lost-activation-released",
+        command_key="cancel-lost-activation-released",
+    )
+    released = intents.admissions.reconcile_reviewer(run_id, queued["id"], principal="owner")
+    assert released["state"] == "released"
+    assert released["reason_codes"] == ["RESERVATION_RELEASED"]
+    assert released["cancel_requested"] is True
+    assert released["reviewer_activation"]["receipt"] == exact
+    with pytest.raises(RunError, match="REVIEWER_OPERATION_CANCELLED"):
+        intents.admissions.activate_reviewer(run_id, queued["id"], principal="owner")
 
