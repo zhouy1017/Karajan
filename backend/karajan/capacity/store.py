@@ -7,8 +7,9 @@ import sqlite3
 import time
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from uuid import uuid4
 
 from pydantic import BaseModel, ValidationError
@@ -33,6 +34,94 @@ from .models import (
 
 class CapacityError(ValueError):
     """Stable boundary failure; no caller contents are echoed."""
+
+
+FinalBoundaryCheck = Callable[[], None]
+BoundaryCallback = Callable[[], FinalBoundaryCheck | None]
+
+
+@dataclass(frozen=True)
+class _CapacityTemporalFence:
+    """Precomputed O(1) Capacity time limits from one completed evaluation."""
+
+    floor: float
+    inclusive_until: float
+    exclusive_until: float | None
+
+    def current(self, now: float) -> bool:
+        return (
+            now >= self.floor
+            and now <= self.inclusive_until
+            and (self.exclusive_until is None or now < self.exclusive_until)
+        )
+
+
+@dataclass(frozen=True)
+class _ReservationPayload:
+    """Static reservation encoding prepared before the final time boundary."""
+
+    identity: str
+    account_id: str
+    request: dict[str, Any]
+    observations: dict[str, Any]
+    policy_revision: int
+    duration_seconds: int
+    account_json: str
+    identity_json: str
+    observations_json: str
+    policy_revision_json: str
+    request_json: str
+
+    @classmethod
+    def prepare(
+        cls,
+        *,
+        identity: str,
+        account_id: str,
+        request: dict[str, Any],
+        observations: dict[str, Any],
+        policy_revision: int,
+    ) -> "_ReservationPayload":
+        return cls(
+            identity=identity,
+            account_id=account_id,
+            request=request,
+            observations=observations,
+            policy_revision=policy_revision,
+            duration_seconds=request["duration_seconds"],
+            account_json=encoded(account_id),
+            identity_json=encoded(identity),
+            observations_json=encoded(observations),
+            policy_revision_json=encoded(policy_revision),
+            request_json=encoded(request),
+        )
+
+    def at(self, now: float) -> str:
+        expires_at = now + self.duration_seconds
+        if not math.isfinite(expires_at):
+            raise CapacityError("CLOCK_UNAVAILABLE")
+        # ``encoded`` sorts these names lexically.  Every non-time fragment
+        # was serialized before the final fence, so the tail only formats two
+        # finite scalar timestamps and concatenates fixed fragments.  ``repr``
+        # is valid JSON for finite Python floats and avoids another JSON pass.
+        payload = (
+            "{\"account_id\":"
+            + self.account_json
+            + ",\"created_at\":"
+            + repr(now)
+            + ",\"expires_at\":"
+            + repr(expires_at)
+            + ",\"id\":"
+            + self.identity_json
+            + ",\"observations\":"
+            + self.observations_json
+            + ",\"policy_revision\":"
+            + self.policy_revision_json
+            + ",\"request\":"
+            + self.request_json
+            + ",\"state\":\"reserved\"}"
+        )
+        return payload
 
 
 class _UnactivatedCancellation(AdmissionRef):
@@ -82,6 +171,12 @@ def _stored_receipt(db: sqlite3.Connection, command_key: str, digest: str) -> di
     if original["digest"] != digest:
         raise CapacityError("IDEMPOTENCY_CONFLICT")
     return dict(json.loads(original["result"]))
+
+
+def _final_boundary_check(result: FinalBoundaryCheck | None) -> FinalBoundaryCheck | None:
+    if result is not None and not callable(result):
+        raise CapacityError("CAPACITY_FINAL_CALLBACK_INVALID")
+    return result
 
 
 class CapacityStore:
@@ -400,7 +495,7 @@ class CapacityStore:
         command_key: str,
         before_reserve: Callable[[], None] | None = None,
         after_capacity_facts: Callable[[CapacityBoundaryFacts], None] | None = None,
-        before_reservation_write: Callable[[], None] | None = None,
+        before_reservation_write: BoundaryCallback | None = None,
     ) -> dict[str, Any]:
         """Admit a request, optionally rechecking a controller fact at the lock boundary.
 
@@ -416,13 +511,18 @@ class CapacityStore:
         Capacity.  A new admission has no owned claim to exclude.
 
         ``before_reservation_write`` is the final trusted pure-time boundary.
-        It runs only after Capacity has completed its final source evaluation
-        and temporal recheck, immediately before a reservation can be written.
+        It runs only after Capacity has completed its final source evaluation.
+        It may return one O(1) final validator, invoked after Capacity has
+        prepared its immutable write payload and immediately before its own
+        scalar temporal fence and the reservation insert.  Existing callbacks
+        returning ``None`` retain their original behavior.
         """
         value = _admission_payload(request)
 
         def apply(db: sqlite3.Connection) -> dict[str, Any]:
             captured_at: float | None = None
+            temporal_fence: _CapacityTemporalFence | None = None
+            final_check: FinalBoundaryCheck | None = None
             profile, policy, policy_revision, now, held, reasons, observations, availability = (
                 self._admission_evaluation(db, value)
             )
@@ -449,30 +549,51 @@ class CapacityStore:
                     self._admission_evaluation(db, value)
                 )
             if not reasons:
-                final_now = self._now()
-                reasons = self._final_temporal_reasons(
-                    value,
-                    policy,
-                    held,
-                    observations,
-                    final_now,
-                    evaluated_at=max(now, captured_at) if captured_at is not None else now,
+                evaluated_at = max(now, captured_at) if captured_at is not None else now
+                temporal_fence = self._temporal_fence(
+                    policy, observations, evaluated_at=evaluated_at
                 )
+                final_now = self._now()
+                if not temporal_fence.current(final_now):
+                    reasons = self._final_temporal_reasons(
+                        value, policy, held, observations, final_now, evaluated_at=evaluated_at
+                    )
                 now = final_now
-            if not reasons and before_reservation_write is not None:
-                before_reservation_write()
-                # The callback is pure, but its time check can be the instant a
-                # window crosses. Reuse the already-read facts; do not reopen a
-                # Capacity getter or alter the immutable captured fragment.
-                final_now = self._now()
-                reasons = self._final_temporal_reasons(
-                    value,
-                    policy,
-                    held,
-                    observations,
-                    final_now,
-                    evaluated_at=max(now, captured_at) if captured_at is not None else now,
+            identity: str | None = None
+            reservation_payload: _ReservationPayload | None = None
+            if not reasons:
+                # UUID generation and all non-time JSON serialization happen
+                # before the trusted final callback.  ``created_at`` remains
+                # deliberately unset until its post-callback clock sample.
+                identity = str(uuid4())
+                reservation_payload = _ReservationPayload.prepare(
+                    identity=identity,
+                    account_id=profile["account_id"],
+                    request=value,
+                    observations=observations,
+                    policy_revision=policy_revision,
                 )
+            if not reasons and before_reservation_write is not None:
+                final_check = _final_boundary_check(before_reservation_write())
+            if not reasons:
+                if temporal_fence is None or reservation_payload is None or identity is None:
+                    raise CapacityError("CAPACITY_TEMPORAL_FACTS_INVALID")
+                # The controller closure must be constant-time and source-free.
+                # It runs after all Capacity payload work, then a fresh time is
+                # sampled for the persisted reservation and Capacity's own
+                # O(1) fence immediately adjacent to INSERT.
+                if final_check is not None:
+                    final_check()
+                final_now = self._now()
+                if not temporal_fence.current(final_now):
+                    reasons = self._final_temporal_reasons(
+                        value,
+                        policy,
+                        held,
+                        observations,
+                        final_now,
+                        evaluated_at=temporal_fence.floor,
+                    )
                 now = final_now
             decision: dict[str, Any] = {
                 "decision": "rejected" if reasons else "admitted",
@@ -487,20 +608,12 @@ class CapacityStore:
                 "live_qualification": "not_run",
             }
             if not reasons:
-                identity = str(uuid4())
-                reservation = {
-                    "id": identity,
-                    "request": value,
-                    "state": "reserved",
-                    "account_id": profile["account_id"],
-                    "created_at": now,
-                    "expires_at": now + value["duration_seconds"],
-                    "policy_revision": policy_revision,
-                    "observations": observations,
-                }
+                if reservation_payload is None or identity is None:
+                    raise CapacityError("CAPACITY_TEMPORAL_FACTS_INVALID")
+                reservation_data = reservation_payload.at(now)
                 db.execute(
                     "INSERT INTO reservations VALUES (?, ?, ?, ?)",
-                    (identity, value["attempt_id"], profile["account_id"], encoded(reservation)),
+                    (identity, value["attempt_id"], profile["account_id"], reservation_data),
                 )
                 decision["admission_id"] = identity
             return decision
@@ -555,6 +668,44 @@ class CapacityStore:
             reasons,
             observations,
             availability,
+        )
+
+    @staticmethod
+    def _temporal_fence(
+        policy: dict[str, Any], observations: dict[str, Any], *, evaluated_at: float
+    ) -> _CapacityTemporalFence:
+        """Retain every time condition whose later passage can invalidate Capacity."""
+        inclusive: list[float] = []
+        exclusive: list[float] = []
+        for observed in observations.values():
+            if not isinstance(observed, dict):
+                raise CapacityError("CAPACITY_TEMPORAL_FACTS_INVALID")
+            observed_at: object = observed.get("observed_at")
+            if type(observed_at) not in (int, float):
+                raise CapacityError("CAPACITY_TEMPORAL_FACTS_INVALID")
+            observed_number = cast(int | float, observed_at)
+            inclusive.append(float(observed_number) + policy["observation_max_age_seconds"])
+            reset_at: object = observed.get("reset_at")
+            if reset_at is not None:
+                if type(reset_at) not in (int, float):
+                    raise CapacityError("CAPACITY_TEMPORAL_FACTS_INVALID")
+                exclusive.append(float(cast(int | float, reset_at)))
+            if (
+                observed.get("metric") == "unknown"
+                or observed.get("amount") is None
+                or (observed.get("metric") == "used" and observed.get("limit") is None)
+            ):
+                mode = policy.get("conservative_mode")
+                age = mode.get("observation_max_age_seconds") if isinstance(mode, dict) else None
+                if type(age) is not int:
+                    raise CapacityError("CAPACITY_TEMPORAL_FACTS_INVALID")
+                inclusive.append(float(observed_number) + age)
+        if not inclusive:
+            raise CapacityError("CAPACITY_TEMPORAL_FACTS_INVALID")
+        return _CapacityTemporalFence(
+            floor=evaluated_at,
+            inclusive_until=min(inclusive),
+            exclusive_until=min(exclusive) if exclusive else None,
         )
 
     def _final_temporal_reasons(
@@ -700,7 +851,7 @@ class CapacityStore:
         expected_request: dict[str, Any],
         before_effect: Callable[[], None] | None = None,
         after_capacity_facts: Callable[[CapacityBoundaryFacts], None] | None = None,
-        before_effect_yield: Callable[[], None] | None = None,
+        before_effect_yield: BoundaryCallback | None = None,
     ) -> Iterator[dict[str, Any]]:
         """Hold a fresh capacity check across the caller's bounded effect boundary.
 
@@ -737,13 +888,14 @@ class CapacityStore:
             now = self._now()
             if item["expires_at"] <= now:
                 raise CapacityError("RESERVATION_EXPIRED")
-            policy = db.execute(
+            policy_row = db.execute(
                 "SELECT revision,data FROM policies WHERE account_id=? "
                 "ORDER BY revision DESC LIMIT 1",
                 (item["account_id"],),
             ).fetchone()
-            if policy is None:
+            if policy_row is None:
                 raise CapacityError("CAPACITY_POLICY_REQUIRED")
+            policy = json.loads(policy_row["data"])
             profile = db.execute(
                 "SELECT data FROM profiles WHERE id=? AND revision=?",
                 (expected["profile_id"], expected["profile_revision"]),
@@ -767,51 +919,64 @@ class CapacityStore:
                 db,
                 expected,
                 json.loads(profile[0]),
-                json.loads(policy["data"]),
+                policy,
                 held,
                 now,
-                policy_revision=policy["revision"],
+                policy_revision=policy_row["revision"],
             )
             if reasons:
                 raise CapacityError(reasons[0])
-            now = self._now()
-            temporal = self._final_temporal_reasons(
-                expected,
-                json.loads(policy["data"]),
-                held,
+            temporal_fence = self._temporal_fence(
+                policy,
                 observations,
-                now,
                 evaluated_at=max(evaluated_at, captured_at)
                 if captured_at is not None
                 else evaluated_at,
+            )
+            now = self._now()
+            temporal = (
+                []
+                if temporal_fence.current(now)
+                else self._final_temporal_reasons(
+                    expected,
+                    policy,
+                    held,
+                    observations,
+                    now,
+                    evaluated_at=temporal_fence.floor,
+                )
             )
             if temporal:
                 raise CapacityError(temporal[0])
             if item["expires_at"] <= now:
                 raise CapacityError("RESERVATION_EXPIRED")
+            final_check: FinalBoundaryCheck | None = None
             if before_effect_yield is not None:
-                before_effect_yield()
-                now = self._now()
-                if item["expires_at"] <= now:
-                    raise CapacityError("RESERVATION_EXPIRED")
+                final_check = _final_boundary_check(before_effect_yield())
+            # No JSON parsing, database scanning, or temporal iteration may
+            # follow this point on a successful effect path.  Controller's
+            # optional closure is itself constrained to O(1) checks.
+            if final_check is not None:
+                final_check()
+            now = self._now()
+            if item["expires_at"] <= now:
+                raise CapacityError("RESERVATION_EXPIRED")
+            if not temporal_fence.current(now):
                 temporal = self._final_temporal_reasons(
                     expected,
-                    json.loads(policy["data"]),
+                    policy,
                     held,
                     observations,
                     now,
-                    evaluated_at=max(evaluated_at, captured_at)
-                    if captured_at is not None
-                    else evaluated_at,
+                    evaluated_at=temporal_fence.floor,
                 )
-                if temporal:
-                    raise CapacityError(temporal[0])
+                raise CapacityError(temporal[0])
             yield {
                 "decision": "capacity_revalidated",
                 "reason_codes": [],
                 "state": "active",
                 "checked_at": now,
-                "policy_revision": policy["revision"],
+                "policy_revision": policy_row["revision"],
                 "admission_id": identity,
                 "expires_at": item["expires_at"],
                 "request": expected,
