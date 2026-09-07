@@ -163,6 +163,7 @@ def _case(
     available: bool = True,
     clock: Callable[[], float] | None = None,
     conservative_observation_max_age_seconds: int = 30,
+    register_estimate: bool = True,
 ) -> tuple[PlanningExecution, PlanningAdmissionAuthority, dict, Any]:
     planner = RunPlanner(tmp_path / "runs.sqlite", configured["registry"], clock=clock or time.time)
     fixed = configured["registry"].register_execution_policy(
@@ -217,24 +218,25 @@ def _case(
         ),
         authority_kind="fixture",
     )
-    authority.register_estimate(
-        run["id"],
-        binding["budget_ref"],
-        binding["profile"],
-        demand={"service-fixture": "5"},
-        expected_capacity={
-            "policy_revision": 1,
-            "pool_windows": {
-                "service-fixture": "fixture-window",
+    if register_estimate:
+        authority.register_estimate(
+            run["id"],
+            binding["budget_ref"],
+            binding["profile"],
+            demand={"service-fixture": "5"},
+            expected_capacity={
+                "policy_revision": 1,
+                "pool_windows": {
+                    "service-fixture": "fixture-window",
+                },
+                "lead_reserve_access": True,
             },
-            "lead_reserve_access": True,
-        },
-        duration_seconds=25,
-        max_requests=5,
-        max_duration_seconds=100,
-        principal="owner",
-        command_key="estimate",
-    )
+            duration_seconds=25,
+            max_requests=5,
+            max_duration_seconds=100,
+            principal="owner",
+            command_key="estimate",
+        )
     return PlanningExecution(tmp_path / "planning.sqlite", planner), authority, run, execution
 
 
@@ -428,6 +430,20 @@ def test_missing_commander_fact_is_a_production_zero_reservation_denial(
     assert denied["reason_codes"] == ["COMMANDER_QUALIFICATION_REQUIRED"]
     assert authority.capacity.snapshot()["reservations"] == []
     assert COMMANDER_QUALIFICATION_SCOPE == "commander_planning.v1"
+
+
+def test_missing_estimate_is_a_public_idempotent_zero_reservation_denial(
+    configured: dict, tmp_path: Path
+) -> None:
+    _, authority, _, execution = _case(tmp_path, configured, register_estimate=False)
+
+    denied = authority.advance(execution["id"], "owner", "estimate-missing")
+    replay = authority.advance(execution["id"], "owner", "estimate-missing")
+
+    assert denied["phase"] == "denied"
+    assert denied["reason_codes"] == ["PLANNING_ESTIMATE_MISSING"]
+    assert replay == denied
+    assert authority.capacity.snapshot()["reservations"] == []
 
 
 def test_estimate_cannot_widen_selected_rule_reserve_access(

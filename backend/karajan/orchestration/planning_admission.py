@@ -1117,6 +1117,17 @@ class PlanningAdmissionAuthority:
                 command_key,
                 payload,
             )
+        # Route construction needs the concrete demand and duration.  Deny it
+        # before dereferencing the estimate so a provisioner omission is an
+        # idempotent, zero-effect command outcome rather than a claimed-key
+        # placeholder that cannot be replayed.
+        if not isinstance(record.get("estimate"), dict):
+            return self._finish_command(
+                self._deny(record, "PLANNING_ESTIMATE_MISSING"),
+                principal,
+                command_key,
+                payload,
+            )
         profile = binding["profile"]
         registration = next(
             (
