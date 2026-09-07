@@ -1,0 +1,135 @@
+{
+  "base_commit": "2e587d1773c514361689e13ebbd16ba62f1cd219",
+  "implementation_commit": "3a8cc5875b075285ab18796d1ab4bc36303192a1",
+  "scope": "C only; no qualification/admission/S claim",
+  "files": [
+    {
+      "path": "author/boundaries.xml",
+      "sha256": "fb44913eb1c94b6ee2818079caab28eff819b83afc07cb8ed240b420791a4961",
+      "bytes": 5433
+    },
+    {
+      "path": "author/evaluator-before.py.txt",
+      "sha256": "6061dad8118d0166c289e099132447709692171c10ba244e06c654f8ff938a32",
+      "bytes": 15076
+    },
+    {
+      "path": "author/final-complete-windows.xml",
+      "sha256": "6f76194808672261f2598ee48c550c0fcb71e29c76256c6c07abf31083d8d230",
+      "bytes": 24545
+    },
+    {
+      "path": "author/final-linux.xml",
+      "sha256": "47e841805d0831a5bb4c7da42215640c2af645f58deade772ece71a77e1cfc34",
+      "bytes": 24545
+    },
+    {
+      "path": "author/final-windows.xml",
+      "sha256": "34c0103c175f4b206af0e523f554aef6efd3eff23221ae024ed20c64e8395676",
+      "bytes": 24391
+    },
+    {
+      "path": "author/first-green.xml",
+      "sha256": "d85ccda6eaf7535ed20b70705cb01b67abfd7cf8055613ba24a0e3bce2a5b765",
+      "bytes": 396
+    },
+    {
+      "path": "author/first-red.xml",
+      "sha256": "dd0fa4ded4efa0842ec9ff35245e7c2a6638cb262896b693b71b91d869ce92dc",
+      "bytes": 1207
+    },
+    {
+      "path": "author/first-routing-regression.xml",
+      "sha256": "ff6e5c5a8a6ef9e466ff3ef1bf6f1ea9c712f64e5ddb0cab8a05f08d655d2f5d",
+      "bytes": 19355
+    },
+    {
+      "path": "author/freeze.json",
+      "sha256": "fca88e2b93c2ddf8ed0a298c6752d455ef47133ded6cc8b766b830b7a2635646",
+      "bytes": 5046
+    },
+    {
+      "path": "author/history-crlf/__init__.py.txt",
+      "sha256": "55e8b3282ac94ca19ffb81e8628be3c784b87b93067c2462f02b4b8934058019",
+      "bytes": 535
+    },
+    {
+      "path": "author/history-crlf/evaluator.py.txt",
+      "sha256": "002b2e16a91ffe11e9f3f11b74ca141ced721cf49b6e35f701901615c8325b3f",
+      "bytes": 18907
+    },
+    {
+      "path": "author/history-crlf/test_profile_membership.py.txt",
+      "sha256": "28d1477a758eb7302c624d44af3eed09ff50edc114cfc6e81ca6e58ae5dd6a0f",
+      "bytes": 10182
+    },
+    {
+      "path": "author/legacy-comparison.json",
+      "sha256": "576b874489d3f74fa4ea3794f4bdf8d51669578df1a446e3f11e324ab0a94ee6",
+      "bytes": 36
+    },
+    {
+      "path": "author/legacy-results-before.json",
+      "sha256": "9456aebb558374412231284f0bec7a4b4d932124e69198e83b185438e7ae4307",
+      "bytes": 623902
+    },
+    {
+      "path": "author/lf-conversion.json",
+      "sha256": "7fee4d753a3ddc3fa5696deca5e786dec5dec2348e5e3ec5d81d107e881a594d",
+      "bytes": 1984
+    },
+    {
+      "path": "author/membership-example.json",
+      "sha256": "140e4d0f7892eabddecf3249297d5467d1b825267122def2ec0d9abfa1b45e1c",
+      "bytes": 23625
+    },
+    {
+      "path": "author/README.md",
+      "sha256": "0b60d3a7e33fa32f6e3632b2eadd033c4b49e211b72c21e56152e30c7e7eb9ac",
+      "bytes": 5574
+    },
+    {
+      "path": "author/test-first.py.txt",
+      "sha256": "296cc5108936b841ffaeaa244e8559f6bc6a39475e4f3561aaa54b799bb4acfa",
+      "bytes": 1218
+    },
+    {
+      "path": "independent/legacy-comparison.json",
+      "sha256": "263ffb00d011b9fdee4d36f77c45bb947883fcdd6230a97215b2d4a558e08bc2",
+      "bytes": 925
+    },
+    {
+      "path": "independent/linux.xml",
+      "sha256": "bfb9cb2066534d2e48415bad195fb6da79c14728d8416a03a7ab911e3852ce68",
+      "bytes": 24545
+    },
+    {
+      "path": "independent/README.md",
+      "sha256": "a2527d7b10156b3a4b230a5b43814e8b44a1080aefd76ba5a29471f4be2e4f61",
+      "bytes": 1983
+    },
+    {
+      "path": "independent/windows.xml",
+      "sha256": "ef93e246b2c3939ca457de0b01ba2134fb034aeda6bd0d6cb6bcf56b31c052ff",
+      "bytes": 24545
+    }
+  ],
+  "owned_code_blobs_verified": [
+    {
+      "path": "backend/karajan/routing/evaluator.py",
+      "sha256": "4a7b320ee0a8e9c8a40ab4dffaa524ac9130b2665a0e532065679b59353f1b59",
+      "bytes": 18473
+    },
+    {
+      "path": "backend/karajan/routing/__init__.py",
+      "sha256": "1a11ca32e11f0a542337b6facf58473644626199549a9465975aea7d3297650b",
+      "bytes": 519
+    },
+    {
+      "path": "tests/routing/test_profile_membership.py",
+      "sha256": "28d1477a758eb7302c624d44af3eed09ff50edc114cfc6e81ca6e58ae5dd6a0f",
+      "bytes": 10182
+    }
+  ],
+  "original_author_scope": "Original freeze and CRLF bytes retained; independent results use final LF source on dev"
+}
