@@ -124,6 +124,87 @@ def _set_response_timeout(response: BinaryIO, timeout: float) -> None:
         raise ProvisionError("TOKENIZER_TRANSPORT_UNAVAILABLE") from None
 
 
+class _ResponseReader:
+    """Read an HTTP body without allowing chunk framing to outrun its deadline."""
+
+    _MAX_LINE_BYTES = 65_536
+
+    def __init__(self, response: BinaryIO) -> None:
+        self.response = response
+        self.chunked = isinstance(response, HTTPResponse) and response.chunked
+        self.chunk_remaining = 0
+        self.finished = False
+
+    def _raw_read(self, amount: int, deadline: float) -> bytes:
+        if isinstance(self.response, HTTPResponse):
+            if self.response.fp is None:
+                if self.response.length == 0:
+                    return b""
+                raise ProvisionError("TOKENIZER_TRANSPORT_UNAVAILABLE")
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise ProvisionError("TOKENIZER_DOWNLOAD_TIMEOUT")
+            _set_response_timeout(self.response, remaining)
+            read1 = getattr(self.response.fp, "read1", None)
+            chunk = read1(amount) if callable(read1) else self.response.fp.read(amount)
+            if time.monotonic() >= deadline:
+                raise ProvisionError("TOKENIZER_DOWNLOAD_TIMEOUT")
+            return chunk
+        return self.response.read(amount)
+
+    def _line(self, deadline: float) -> bytes:
+        line = bytearray()
+        while len(line) < self._MAX_LINE_BYTES:
+            part = self._raw_read(1, deadline)
+            if not part:
+                raise ProvisionError("TOKENIZER_LENGTH_MISMATCH")
+            line.extend(part)
+            if part == b"\n":
+                return bytes(line)
+        raise ProvisionError("TOKENIZER_LENGTH_MISMATCH")
+
+    def _exact(self, amount: int, deadline: float) -> bytes:
+        value = bytearray()
+        while len(value) < amount:
+            part = self._raw_read(amount - len(value), deadline)
+            if not part:
+                raise ProvisionError("TOKENIZER_LENGTH_MISMATCH")
+            value.extend(part)
+        return bytes(value)
+
+    def _chunked_read(self, amount: int, deadline: float) -> bytes:
+        if self.finished:
+            return b""
+        while self.chunk_remaining == 0:
+            line = self._line(deadline)
+            size_text = line.split(b";", 1)[0].strip()
+            try:
+                self.chunk_remaining = int(size_text, 16)
+            except ValueError:
+                raise ProvisionError("TOKENIZER_LENGTH_MISMATCH") from None
+            if self.chunk_remaining < 0:
+                raise ProvisionError("TOKENIZER_LENGTH_MISMATCH")
+            if self.chunk_remaining == 0:
+                while self._line(deadline) not in (b"\r\n", b"\n"):
+                    pass
+                self.finished = True
+                return b""
+        value = self._raw_read(min(amount, self.chunk_remaining), deadline)
+        if not value:
+            raise ProvisionError("TOKENIZER_LENGTH_MISMATCH")
+        self.chunk_remaining -= len(value)
+        if self.chunk_remaining == 0 and self._exact(2, deadline) != b"\r\n":
+            raise ProvisionError("TOKENIZER_LENGTH_MISMATCH")
+        return value
+
+    def read(self, amount: int, deadline: float) -> bytes:
+        if self.chunked:
+            return self._chunked_read(amount, deadline)
+        if isinstance(self.response, HTTPResponse):
+            return self._raw_read(amount, deadline)
+        return self.response.read(amount)
+
+
 def provision(directory: Path, *, open_url: OpenURL | None = None) -> dict[str, object]:
     """Verify/reuse or atomically publish each artifact; injection is only for offline tests."""
     directory = directory.resolve()
@@ -155,33 +236,13 @@ def provision(directory: Path, *, open_url: OpenURL | None = None) -> dict[str, 
                             else:
                                 response_context = open_url(url)
                             with response_context as response:
+                                reader = _ResponseReader(response)
                                 while True:
-                                    remaining = deadline - time.monotonic()
-                                    if remaining <= 0:
+                                    if deadline - time.monotonic() <= 0:
                                         raise ProvisionError("TOKENIZER_DOWNLOAD_TIMEOUT")
-                                    _set_response_timeout(response, remaining)
                                     try:
                                         amount = min(65_536, size + 1 - count)
-                                        if (
-                                            isinstance(response, HTTPResponse)
-                                            and response.fp is None
-                                        ):
-                                            if response.length == 0:
-                                                chunk = b""
-                                            else:
-                                                raise ProvisionError(
-                                                    "TOKENIZER_TRANSPORT_UNAVAILABLE"
-                                                )
-                                        else:
-                                            read1 = (
-                                                getattr(response, "read1", None)
-                                                if isinstance(response, HTTPResponse)
-                                                else None
-                                            )
-                                            if callable(read1):
-                                                chunk = read1(amount)
-                                            else:
-                                                chunk = response.read(amount)
+                                        chunk = reader.read(amount, deadline)
                                     except (ConnectionError, TimeoutError) as error:
                                         raise _RetryableDownloadError(
                                             "TOKENIZER_NETWORK_ERROR"

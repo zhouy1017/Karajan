@@ -16,7 +16,10 @@ The default HTTP transport receives the remaining budget on connection and
 updates its owned socket timeout before every read. `HTTPResponse.read1` is
 used where available so a slow stream cannot extend the deadline by waiting
 for a full buffer. EOF, digest completion, and publication each recheck the
-same deadline.
+same deadline. For chunked HTTP responses, the bounded reader consumes chunk
+size lines, payload bytes, CRLF separators, and trailers one raw byte at a
+time under the same socket timeout; framing delays therefore cannot extend
+the budget.
 
 The command line reports only stable, redacted categories. HTTP failures may
 include the numeric status (`TOKENIZER_HTTP_STATUS_429`); transport failures

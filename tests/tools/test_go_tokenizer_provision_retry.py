@@ -36,11 +36,17 @@ def response(data: bytes | BinaryIO) -> Iterator[BinaryIO]:
 
 
 @contextmanager
-def local_server(writer: Callable[[IO[bytes]], None], content_length: int) -> Iterator[str]:
+def local_server(
+    writer: Callable[[IO[bytes]], None], content_length: int | None, *, chunked: bool = False
+) -> Iterator[str]:
     class Handler(http.server.BaseHTTPRequestHandler):
         def do_GET(self) -> None:
             self.send_response(200)
-            self.send_header("Content-Length", str(content_length))
+            if chunked:
+                self.send_header("Transfer-Encoding", "chunked")
+            else:
+                assert content_length is not None
+                self.send_header("Content-Length", str(content_length))
             self.end_headers()
             writer(cast(IO[bytes], self.wfile))
 
@@ -296,6 +302,40 @@ def test_loopback_delayed_byte_cannot_extend_budget(
     assert isinstance(failure[0], SCRIPT.ProvisionError)
     assert str(failure[0]) == "TOKENIZER_DOWNLOAD_TIMEOUT"
     assert elapsed < 1.40
+    assert not (tmp_path / "fixture.bin").exists()
+
+
+def test_loopback_chunk_size_framing_cannot_extend_budget(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, small_artifact: bytes
+) -> None:
+    stop = threading.Event()
+
+    def writer(stream: IO[bytes]) -> None:
+        try:
+            for byte in b"00000000000010\r\n":
+                if stop.wait(0.07):
+                    return
+                stream.write(bytes((byte,)))
+                stream.flush()
+            stream.write(small_artifact + b"\r\n0\r\n\r\n")
+            stream.flush()
+        except (BrokenPipeError, ConnectionResetError):
+            return
+
+    monkeypatch.setattr(SCRIPT, "DOWNLOAD_BUDGET_SECONDS", 0.30)
+    with local_server(writer, None, chunked=True) as url:
+        monkeypatch.setattr(
+            SCRIPT,
+            "_open",
+            lambda _, *, timeout=30.0: urlopen(url, timeout=timeout),
+        )
+        started = time.perf_counter()
+        with pytest.raises(SCRIPT.ProvisionError, match="^TOKENIZER_DOWNLOAD_TIMEOUT$"):
+            SCRIPT.provision(tmp_path)
+        elapsed = time.perf_counter() - started
+        stop.set()
+
+    assert elapsed < 0.90
     assert not (tmp_path / "fixture.bin").exists()
 
 
