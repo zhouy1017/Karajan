@@ -15,6 +15,8 @@ request/key 分别只读重开 `admit` 和 `activate` receipt，并逐字段比�
 都不能缺失或用无关命令替代。它会从内部 output authority 封存来源 SHA-256；
 `submit` 只按 execution ID 读取完整 bytes、大小、SHA-256、完成身份和来源摘要，并要求来源等于封存值。
 提交前还会再次读取当前 source；冻结来源匹配但当前来源已改变的迟到旧输出同样拒绝。
+这个检查同时位于新输出捕获和从 `output_captured` 重开时的首次 claim 之前；只有已有 Run receipt 的
+`submit_claimed`/`submission_unknown` 恢复可以只读历史而不要求 live authority。
 控制器校验摘要后调用 `parse_planning_output`；成功内容仍由现有 `RunPlanner`
 复查 term、lead、授权 ceiling、配置和 v1/v2 routing。owner 的精确批准继续是原有入口，控制器
 不替代该决定。

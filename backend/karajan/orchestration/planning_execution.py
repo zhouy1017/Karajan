@@ -542,6 +542,26 @@ class PlanningExecution:
     def _claim_submission(
         self, execution_id: str, principal: str, command_key: str
     ) -> dict[str, Any]:
+        execution = self.get(execution_id, principal=principal)
+        if self.outputs is None:
+            return self._blocked(execution_id, principal, "PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE")
+        try:
+            source = PlanningOutputSource.model_validate(
+                self.outputs.read_source(execution["binding"])
+            ).model_dump()
+        except (ValidationError, TypeError, ValueError):
+            return self._blocked(execution_id, principal, "PLANNING_OUTPUT_SOURCE_INVALID")
+        if source["authority_kind"] == "fixture" and not self.allow_fixture_authorities:
+            return self._blocked(execution_id, principal, "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN")
+        if source["authority_kind"] == "production":
+            return self._blocked(
+                execution_id, principal, "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE"
+            )
+        if (
+            source["binding_sha256"] != execution["binding_sha256"]
+            or source["source_sha256"] != execution.get("output_source_sha256")
+        ):
+            return self._blocked(execution_id, principal, "PLANNING_OUTPUT_SOURCE_CHANGED")
         with self._transaction() as db:
             current = self._load(db, execution_id)
             self._owner_run(current["run_id"], principal)

@@ -415,6 +415,35 @@ def test_cancellation_observed_before_run_submit_prevents_plan(
     assert service.planner.get(run["id"], principal="owner")["plans"] == []
 
 
+def test_source_drift_after_capture_blocks_reopened_claim(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authorities)
+    authorities.activate()
+
+    def stop_before_claim(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        raise SystemExit("output captured")
+
+    monkeypatch.setattr(service, "_claim_submission", stop_before_claim)
+    with pytest.raises(SystemExit, match="output captured"):
+        service.submit(execution["id"], principal="owner", command_key="submit")
+    assert service.get(execution["id"], principal="owner")["state"] == "output_captured"
+    authorities.output_source = "c" * 64
+    reopened = PlanningExecution(
+        service.database,
+        service.planner,
+        admissions=authorities,
+        outputs=authorities,
+        capacity=authorities.capacity,
+        allow_fixture_authorities=True,
+    )
+    result = reopened.submit(execution["id"], principal="owner", command_key="submit")
+    assert result["submission"] is None
+    assert result["reason_codes"] == ["PLANNING_OUTPUT_SOURCE_CHANGED"]
+    assert reopened.planner.get(run["id"], principal="owner")["plans"] == []
+
+
 def test_begin_replay_survives_original_intent_state_change(
     configured: dict, tmp_path: Path
 ) -> None:
