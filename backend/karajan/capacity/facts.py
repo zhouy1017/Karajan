@@ -38,6 +38,20 @@ class CapacityFacts:
         return dict(json.loads(self.canonical_json))
 
 
+@dataclass(frozen=True, slots=True)
+class CapacityBoundaryFacts:
+    """Full immutable account facts captured inside one Capacity boundary.
+
+    ``owned_admission_id`` is set only for an active effect boundary after the
+    store has checked the exact persisted request.  Consumers may derive a
+    quota view that excludes that one already-held claim, but the facts and
+    their provenance always retain the complete account source set.
+    """
+
+    facts: CapacityFacts
+    owned_admission_id: str | None
+
+
 def _selection(account_ids: tuple[str, ...] | None) -> tuple[str, ...] | None:
     from .store import CapacityError
 
