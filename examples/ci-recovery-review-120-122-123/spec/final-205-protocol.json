@@ -1,0 +1,51 @@
+{
+  "candidate": "205cd9063e14ad516c1a21cb1d62f674bda75885",
+  "external_traffic": false,
+  "results": [
+    {
+      "case": "malformed_json",
+      "child_count": 1,
+      "elapsed_seconds": 0.046999999991385266,
+      "stdout": "{\"status\": \"failed\", \"reason\": \"TOKENIZER_NETWORK_ERROR\"}",
+      "all_reaped": true,
+      "temp_clean": true,
+      "passed": true
+    },
+    {
+      "case": "unknown_status",
+      "child_count": 1,
+      "elapsed_seconds": 0.046000000002095476,
+      "stdout": "{\"status\": \"failed\", \"reason\": \"TOKENIZER_NETWORK_ERROR\"}",
+      "all_reaped": true,
+      "temp_clean": true,
+      "passed": true
+    },
+    {
+      "case": "arbitrary_error_code",
+      "child_count": 1,
+      "elapsed_seconds": 0.046999999991385266,
+      "stdout": "{\"status\": \"failed\", \"reason\": \"TOKENIZER_NETWORK_ERROR\"}",
+      "all_reaped": true,
+      "temp_clean": true,
+      "passed": true
+    },
+    {
+      "case": "invalid_address_shape",
+      "child_count": 1,
+      "elapsed_seconds": 0.03200000000651926,
+      "stdout": "{\"status\": \"failed\", \"reason\": \"TOKENIZER_NETWORK_ERROR\"}",
+      "all_reaped": true,
+      "temp_clean": true,
+      "passed": true
+    },
+    {
+      "case": "slow_EAI_AGAIN",
+      "child_count": 2,
+      "elapsed_seconds": 0.32800000000861473,
+      "stdout": "{\"status\": \"failed\", \"reason\": \"TOKENIZER_DOWNLOAD_TIMEOUT\"}",
+      "all_reaped": true,
+      "temp_clean": true,
+      "passed": true
+    }
+  ]
+}

@@ -208,6 +208,16 @@ class FixedCheckRunner:
             value = json.loads(regular(directory / "namespace-init.json"))
         except FileNotFoundError:
             return None
+        except ValueError as error:
+            # The namespace child owns this one-shot receipt and publishes it
+            # after Popen has been accepted.  regular() must still reject a
+            # changed inode, but a change while that owner is finishing its
+            # first write means the receipt is not observable yet.  Callers
+            # either poll it for their bounded recovery window or preserve an
+            # unknown outcome; do not treat any other asset failure as ready.
+            if str(error) == "CHECK_ASSET_CHANGED":
+                return None
+            raise
         if value["execution_digest"] != digest(execution):
             raise ValueError("CHECK_NAMESPACE_IDENTITY_CONFLICT")
         return ProcessIdentity(value["pid"], value["birth"])
