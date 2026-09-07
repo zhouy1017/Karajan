@@ -60,7 +60,7 @@ class RunBudgetBoundary:
     deadline: float
     maximum: int
     claim_count: int
-    claims: tuple[dict[str, Any], ...]
+    owns_expected_claim: bool
 
     def _assert_clock(self, now: float) -> None:
         if type(now) not in (int, float) or not math.isfinite(now) or now < self.started_at:
@@ -75,16 +75,10 @@ class RunBudgetBoundary:
             raise RunError("RUN_DURATION_LIMIT")
         return self.deadline
 
-    def assert_current_or_new_admission_allowed(
-        self, *, operation_id: str, attempt_id: str, now: float
-    ) -> float:
+    def assert_current_or_new_admission_allowed(self, *, now: float) -> float:
         """Keep one exact existing claim legal without granting a new one."""
         self._assert_clock(now)
-        owned = any(
-            row.get("attempt_id") == attempt_id and row.get("operation_id") == operation_id
-            for row in self.claims
-        )
-        if owned:
+        if self.owns_expected_claim:
             if self.claim_count > self.maximum:
                 raise RunError("RUN_ATTEMPT_LIMIT")
         elif self.claim_count >= self.maximum:
@@ -94,7 +88,9 @@ class RunBudgetBoundary:
         return self.deadline
 
 
-def capture_run_budget_boundary(db: sqlite3.Connection, run: dict[str, Any]) -> RunBudgetBoundary:
+def capture_run_budget_boundary(
+    db: sqlite3.Connection, run: dict[str, Any], *, operation_id: str, attempt_id: str
+) -> RunBudgetBoundary:
     """Read the original Run budget before a later pure boundary check."""
     if not _has_table(db) or (budget := _read(db, run["id"])) is None:
         raise RunError("RUN_EXECUTION_HISTORY_RECONCILIATION_REQUIRED")
@@ -113,7 +109,10 @@ def capture_run_budget_boundary(db: sqlite3.Connection, run: dict[str, Any]) -> 
         deadline=deadline,
         maximum=maximum,
         claim_count=len(budget["claims"]),
-        claims=tuple(deepcopy(budget["claims"])),
+        owns_expected_claim=any(
+            row.get("attempt_id") == attempt_id and row.get("operation_id") == operation_id
+            for row in budget["claims"]
+        ),
     )
 
 
