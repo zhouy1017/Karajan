@@ -12,6 +12,7 @@ import sqlite3
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager, nullcontext
 from copy import deepcopy
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol, cast
 
@@ -43,6 +44,16 @@ from .routing import _capacity_snapshot
 
 COMMANDER_QUALIFICATION_SCOPE = "commander_planning.v1"
 COMMANDER_QUALIFICATION_READER_VERSION = "karajan.commander-qualification-reader.v1"
+
+
+@dataclass(frozen=True)
+class _FinalBoundary:
+    """Only constant-time values needed at Capacity's final controller edge."""
+
+    qualification_valid_until: float
+    profile_facts_valid_until: float
+    budget_started_at: float
+    budget_duration_seconds: int
 
 
 class _CurrentCommanderQualification(dict[str, Any]):
@@ -906,30 +917,45 @@ class PlanningAdmissionAuthority:
         now: float | None = None,
     ) -> dict[str, Any]:
         """Reject source/fact drift or expiry at the actual Capacity boundary."""
+        current = self._assert_qualification_binding(record, current, reobserve=reobserve)
+        observed = self.planner.clock() if now is None else now
+        valid_until, facts_valid_until = self._qualification_deadlines(current)
+        if type(observed) not in (int, float):
+            raise RunError("COMMANDER_QUALIFICATION_EXPIRED")
+        observed_at = observed
+        if (
+            not math.isfinite(observed_at)
+            or not math.isfinite(valid_until)
+            or valid_until <= observed_at
+        ):
+            raise RunError("COMMANDER_QUALIFICATION_EXPIRED")
+        if not math.isfinite(facts_valid_until) or facts_valid_until <= observed_at:
+            raise RunError("COMMANDER_PROFILE_FACTS_EXPIRED")
+        return current
+
+    @staticmethod
+    def _qualification_deadlines(current: dict[str, Any]) -> tuple[float, float]:
+        """Extract the two frozen Commander deadlines before a final time tail."""
+        valid_until = current.get("valid_until")
+        if type(valid_until) not in (int, float):
+            raise RunError("COMMANDER_QUALIFICATION_EXPIRED")
+        facts = current.get("profile_facts")
+        facts_valid_until = facts.get("valid_until") if isinstance(facts, dict) else None
+        if type(facts_valid_until) not in (int, float):
+            raise RunError("COMMANDER_PROFILE_FACTS_EXPIRED")
+        return cast(float, valid_until), cast(float, facts_valid_until)
+
+    @staticmethod
+    def _assert_qualification_binding(
+        record: dict[str, Any], current: object, *, reobserve: bool = False
+    ) -> dict[str, Any]:
+        """Complete source and fact comparison, without sampling a clock."""
         if reobserve:
             refresh = getattr(current, "recheck", None)
             if callable(refresh):
                 current = refresh()
         if not isinstance(current, dict) or current != record.get("qualification"):
             raise RunError("COMMANDER_QUALIFICATION_CHANGED")
-        observed = self.planner.clock() if now is None else now
-        valid_until = current.get("valid_until")
-        if type(observed) not in (int, float) or type(valid_until) not in (int, float):
-            raise RunError("COMMANDER_QUALIFICATION_EXPIRED")
-        observed_at, qualification_until = observed, cast(float, valid_until)
-        if (
-            not math.isfinite(observed_at)
-            or not math.isfinite(qualification_until)
-            or qualification_until <= observed_at
-        ):
-            raise RunError("COMMANDER_QUALIFICATION_EXPIRED")
-        facts = current.get("profile_facts")
-        facts_valid_until = facts.get("valid_until") if isinstance(facts, dict) else None
-        if type(facts_valid_until) not in (int, float):
-            raise RunError("COMMANDER_PROFILE_FACTS_EXPIRED")
-        facts_until = cast(float, facts_valid_until)
-        if not math.isfinite(facts_until) or facts_until <= observed_at:
-            raise RunError("COMMANDER_PROFILE_FACTS_EXPIRED")
         return current
 
     def _assert_estimate_live(self, record: dict[str, Any], held_run: dict[str, Any]) -> None:
@@ -954,14 +980,55 @@ class PlanningAdmissionAuthority:
         ):
             raise RunError("PLANNING_ESTIMATE_INVALID")
 
-    def _assert_final_boundary_live(
+    def _capture_final_boundary(
         self, record: dict[str, Any], qualification: object, held_run: dict[str, Any]
-    ) -> None:
-        """Pure final check after all Capacity reads and route evaluation."""
-        observed = self.planner.clock()
+    ) -> _FinalBoundary:
+        """Finish comparison and parsing before Capacity's constant-time tail."""
         self._assert_estimate_live(record, held_run)
-        self._assert_qualification_live(record, qualification, now=observed)
-        self._assert_budget_deadline(record, record["budget_usage"], now=observed)
+        current = self._assert_qualification_binding(record, qualification)
+        qualification_until, facts_until = self._qualification_deadlines(current)
+        usage = record.get("budget_usage")
+        budget = record.get("budget")
+        started = usage.get("started_at") if isinstance(usage, dict) else None
+        duration = budget.get("max_duration_seconds") if isinstance(budget, dict) else None
+        if (
+            not isinstance(started, (int, float))
+            or isinstance(started, bool)
+            or type(duration) is not int
+            or duration <= 0
+        ):
+            raise RunError("PLANNING_BUDGET_USAGE_INVALID")
+        return _FinalBoundary(
+            qualification_valid_until=qualification_until,
+            profile_facts_valid_until=facts_until,
+            budget_started_at=float(started),
+            budget_duration_seconds=duration,
+        )
+
+    def _assert_final_boundary_temporal(self, boundary: _FinalBoundary) -> None:
+        """Perform no parsing, hashing, comparison, or I/O after route evaluation."""
+        observed = self.planner.clock()
+        if type(observed) not in (int, float):
+            raise RunError("COMMANDER_QUALIFICATION_EXPIRED")
+        observed_at = observed
+        if (
+            not math.isfinite(observed_at)
+            or not math.isfinite(boundary.qualification_valid_until)
+            or boundary.qualification_valid_until <= observed_at
+        ):
+            raise RunError("COMMANDER_QUALIFICATION_EXPIRED")
+        if (
+            not math.isfinite(boundary.profile_facts_valid_until)
+            or boundary.profile_facts_valid_until <= observed_at
+        ):
+            raise RunError("COMMANDER_PROFILE_FACTS_EXPIRED")
+        started = boundary.budget_started_at
+        if not math.isfinite(started):
+            raise RunError("PLANNING_BUDGET_EXPIRED")
+        if observed_at < started:
+            raise RunError("RUN_EXECUTION_CLOCK_REGRESSED")
+        if observed_at - started >= boundary.budget_duration_seconds:
+            raise RunError("PLANNING_BUDGET_EXPIRED")
 
     def _assert_quota_fence_current(self, fence: QuotaTemporalFence) -> None:
         try:
@@ -1383,18 +1450,22 @@ class PlanningAdmissionAuthority:
                     def before_reservation_write() -> None:
                         if len(boundary) != 1:
                             raise RunError("PLANNING_BOUNDARY_FACTS_REQUIRED")
+                        final_boundary = self._capture_final_boundary(
+                            record, qualification, held_run
+                        )
+                        # Preserve the precise Commander/budget diagnostic for
+                        # facts already expired before the route calculation.
+                        self._assert_final_boundary_temporal(final_boundary)
                         # Capacity's clock is the authority for quota age. This
                         # private, no-I/O clock read is safe inside Capacity's
                         # held transaction and does not reopen a Capacity view.
-                        self._assert_final_boundary_live(record, qualification, held_run)
                         fence = self._revalidate_boundary_route(
                             boundary[0], record, binding, as_of=self.capacity._now()
                         )
                         self._assert_quota_fence_current(fence)
-                        # Route construction is pure but can consume wall time.
-                        # Recheck the independently frozen Run/Commander facts
-                        # at the last possible controller boundary.
-                        self._assert_final_boundary_live(record, qualification, held_run)
+                        # Route construction can consume wall time.  The tail
+                        # intentionally reads only immutable scalar deadlines.
+                        self._assert_final_boundary_temporal(final_boundary)
 
                     receipt = self.capacity.command_receipt(
                         "admit", request, command_key=record["capacity_command_key"]
@@ -1519,12 +1590,15 @@ class PlanningAdmissionAuthority:
                     def before_effect_yield() -> None:
                         if len(boundary) != 1:
                             raise RunError("PLANNING_BOUNDARY_FACTS_REQUIRED")
-                        self._assert_final_boundary_live(record, qualification, held_run)
+                        final_boundary = self._capture_final_boundary(
+                            record, qualification, held_run
+                        )
+                        self._assert_final_boundary_temporal(final_boundary)
                         fence = self._revalidate_boundary_route(
                             boundary[0], record, binding, as_of=self.capacity._now()
                         )
                         self._assert_quota_fence_current(fence)
-                        self._assert_final_boundary_live(record, qualification, held_run)
+                        self._assert_final_boundary_temporal(final_boundary)
 
                     # Project qualification remains held until Capacity has
                     # revalidated the reservation and the caller's effect

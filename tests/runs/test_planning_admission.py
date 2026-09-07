@@ -13,6 +13,7 @@ from pathlib import Path
 from threading import Barrier
 from typing import Any
 
+import karajan.orchestration.planning_admission as planning_admission
 import pytest
 from karajan.capacity import CapacityStore
 from karajan.orchestration.go_task_runtime import (
@@ -672,6 +673,81 @@ def test_final_quota_fence_rejects_conservative_age_crossed_during_pure_route(
 
     monkeypatch.setattr(authority, "_revalidate_boundary_route", finish_after_conservative_age)
     denied = authority.advance(execution["id"], "owner", "pure-route-age")
+    assert denied["reason_codes"] == ["PLANNING_BOUNDARY_ROUTE_REJECTED"]
+    assert authority.capacity.snapshot()["reservations"] == []
+
+
+def test_final_route_observes_conservative_age_after_sealed_estimate_digest(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A real final estimate digest finishes before the quota evaluation samples time."""
+    now = [1004.0]
+    _, authority, _, execution = _case(
+        tmp_path,
+        configured,
+        clock=lambda: now[0],
+        conservative_observation_max_age_seconds=5,
+    )
+    original_capture = authority._capture_final_boundary
+    original_digest = planning_admission.digest
+    inside_capture = [False]
+
+    def capture(*args: Any, **kwargs: Any) -> Any:
+        inside_capture[0] = True
+        try:
+            return original_capture(*args, **kwargs)
+        finally:
+            inside_capture[0] = False
+
+    def digest_after_estimate_hash(value: object) -> str:
+        result = original_digest(value)
+        if (
+            inside_capture[0]
+            and isinstance(value, dict)
+            and value.get("schema_version") == "karajan.planning-estimate.v1"
+            and "digest" not in value
+        ):
+            now[0] = 1006.0
+        return result
+
+    monkeypatch.setattr(authority, "_capture_final_boundary", capture)
+    monkeypatch.setattr(planning_admission, "digest", digest_after_estimate_hash)
+    denied = authority.advance(execution["id"], "owner", "estimate-digest-age")
+    assert denied["reason_codes"] == ["PLANNING_BOUNDARY_ROUTE_REJECTED"]
+    assert authority.capacity.snapshot()["reservations"] == []
+
+
+def test_final_route_observes_conservative_age_after_qualification_comparison(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The complete Commander dictionary comparison also precedes quota time."""
+    now = [1004.0]
+    _, authority, _, execution = _case(
+        tmp_path,
+        configured,
+        clock=lambda: now[0],
+        conservative_observation_max_age_seconds=5,
+    )
+    original_capture = authority._capture_final_boundary
+    original_binding = authority._assert_qualification_binding
+    inside_capture = [False]
+
+    def capture(*args: Any, **kwargs: Any) -> Any:
+        inside_capture[0] = True
+        try:
+            return original_capture(*args, **kwargs)
+        finally:
+            inside_capture[0] = False
+
+    def compare_then_cross(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        value = original_binding(*args, **kwargs)
+        if inside_capture[0]:
+            now[0] = 1006.0
+        return value
+
+    monkeypatch.setattr(authority, "_capture_final_boundary", capture)
+    monkeypatch.setattr(authority, "_assert_qualification_binding", compare_then_cross)
+    denied = authority.advance(execution["id"], "owner", "qualification-compare-age")
     assert denied["reason_codes"] == ["PLANNING_BOUNDARY_ROUTE_REJECTED"]
     assert authority.capacity.snapshot()["reservations"] == []
 
