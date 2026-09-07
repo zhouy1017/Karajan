@@ -1,0 +1,142 @@
+"""Offline Candidate integration regression; evidence only, no product writes."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import platform
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+ROOT = Path.cwd().resolve()
+EXPECTED_HEAD = "f7d42455752a5fe040d6670361ec6d18de0f9051"
+LABEL = "windows" if sys.platform == "win32" else "linux"
+OUT = ROOT / ".cache" / "common-repair-downstream" / LABEL
+
+
+def git(*arguments: str) -> str:
+    return subprocess.check_output(
+        ["git", "-C", str(ROOT), *arguments], encoding="utf-8", errors="strict"
+    ).strip()
+
+
+def snapshot() -> dict[str, str]:
+    paths = git("ls-files", "backend", "tests/candidates").splitlines()
+    paths = [path for path in paths if path.endswith(".py")]
+    paths.extend(["pyproject.toml", "uv.lock"])
+    return {
+        path: hashlib.sha256((ROOT / path).read_bytes()).hexdigest()
+        for path in sorted(paths)
+    }
+
+
+def write(name: str, value: object) -> None:
+    (OUT / name).write_text(
+        json.dumps(value, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+
+def main() -> None:
+    if git("rev-parse", "HEAD") != EXPECTED_HEAD:
+        raise RuntimeError("TESTED_HEAD_CHANGED")
+    OUT.mkdir(parents=True, exist_ok=False)
+    before = snapshot()
+    write("source-before.json", before)
+    env = dict(os.environ)
+    env["PYTHONPATH"] = str(ROOT / "backend")
+    env["HF_HUB_OFFLINE"] = "1"
+    env["TRANSFORMERS_OFFLINE"] = "1"
+    env["PIP_NO_INDEX"] = "1"
+    commands = [
+        (
+            "pytest",
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "tests/candidates",
+                "-q",
+                "-p",
+                "no:cacheprovider",
+                "-o",
+                "pythonpath=backend tests/candidates",
+                "--basetemp=" + str(OUT / "tmp"),
+                "--junitxml=" + str(OUT / "tests.xml"),
+            ],
+        ),
+        (
+            "ruff",
+            [
+                sys.executable,
+                "-m",
+                "ruff",
+                "check",
+                "backend/karajan/candidates",
+                "tests/candidates",
+            ],
+        ),
+        (
+            "mypy",
+            [
+                sys.executable,
+                "-m",
+                "mypy",
+                "--platform",
+                sys.platform,
+                "--cache-dir",
+                str(OUT / "mypy-cache"),
+                "backend/karajan/candidates",
+            ],
+        ),
+    ]
+    write(
+        "commands.json",
+        {
+            "head": EXPECTED_HEAD,
+            "platform": platform.platform(),
+            "python": sys.version,
+            "cwd": str(ROOT),
+            "PYTHONPATH": env["PYTHONPATH"],
+            "offline": True,
+            "commands": dict(commands),
+            "scope": "Candidate CAS integration only; no native runtime/provider calls",
+        },
+    )
+    results = []
+    for name, argv in commands:
+        started = datetime.now(timezone.utc).isoformat()
+        with (OUT / (name + ".stdout.txt")).open("wb") as stream:
+            process = subprocess.run(
+                argv, cwd=ROOT, env=env, stdout=stream, stderr=subprocess.STDOUT
+            )
+        result = {
+            "command": name,
+            "exit_code": process.returncode,
+            "started_at": started,
+            "finished_at": datetime.now(timezone.utc).isoformat(),
+        }
+        results.append(result)
+        print(json.dumps(result), flush=True)
+    after = snapshot()
+    write("source-after.json", after)
+    write(
+        "result.json",
+        {
+            "head": git("rev-parse", "HEAD"),
+            "results": results,
+            "sources_equal": before == after,
+            "source_count": len(before),
+        },
+    )
+    if before != after or any(row["exit_code"] for row in results):
+        raise SystemExit(1)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,62 @@
+{
+  "schema_version": "karajan.rebind-common-publication-freeze.v1",
+  "implementation_commit": "f7d42455752a5fe040d6670361ec6d18de0f9051",
+  "files": {
+    ".gitattributes": "cd31350619929786e8452bdb2dc2f7d6fd37626ff04b228b5fbc4e0b10f470c8",
+    "history/interrupt_linux_pytest.py.txt": "bcd877644ff66de8267402f516e4a746843442b49dc04b2261d986eb3ef7c999",
+    "history/linux-drvfs/commands.json": "aa9e39ddc4293266677d84bc7d4ed2bee722007b578bf8cce5c0261edad9db07",
+    "history/linux-drvfs/interrupt.json": "0c8cf640597a4a05ee4f554636c6aef4eb606f479ea4aaaaae9ab732c8824945",
+    "history/linux-drvfs/mypy.stdout.txt": "b8a07cc66107cc9b89d19af63fde1fa203a2aa63ea777b3d6a48097c2009bde7",
+    "history/linux-drvfs/pytest.stdout.txt": "c6fbc5ebbf8123ea8756d8aea13cd6ec14e643ff21e0e6bfaed46f178043611d",
+    "history/linux-drvfs/result.json": "2644e83a63af911c19c98761ca9e66c30504aa459bb16406a2b5b715f71b9060",
+    "history/linux-drvfs/ruff.stdout.txt": "7337a659da4e48c8a01371bf21417418ff6658d8c10c53d5f6b2774070ab8de0",
+    "history/linux-drvfs/source-after.json": "20bc60491735555564056fb7428512dab5931e636891e24f35f1c34a4ddd0e4f",
+    "history/linux-drvfs/source-before.json": "20bc60491735555564056fb7428512dab5931e636891e24f35f1c34a4ddd0e4f",
+    "history/linux-drvfs/tests.xml": "06fa64d1650c8cd28b94135d2a7b2def86a635b78d67e77b7a3b3e75bbc24f3d",
+    "history/linux-initial-harness-note.txt": "23a0a228885a6effd6a1aab2148155e451d00e16364c98acf4940543fdafc99e",
+    "history/run_drvfs.py.txt": "e86aa031f7e9f7f5e623d977b558d878a3a1638d26b4faaca73f9662ced2f17b",
+    "linux-posix/commands.json": "00815aaddbf6cfa82ac1348750b0108769054516b6999b80075ab1e07f5a7e24",
+    "linux-posix/pytest.stdout.txt": "2dbec40a5eecff605d9d9bae02a8827d7eab2635d48da390feb6d85a210d940a",
+    "linux-posix/result.json": "2c8d9514e91ac40e58d567bc34d46ab73cc64b9b38f4de6e927aea81523ca161",
+    "linux-posix/source-after.json": "20bc60491735555564056fb7428512dab5931e636891e24f35f1c34a4ddd0e4f",
+    "linux-posix/source-before.json": "20bc60491735555564056fb7428512dab5931e636891e24f35f1c34a4ddd0e4f",
+    "linux-posix/tests.xml": "2284ba38934440f8144df035c087181e79ec32dffba23007349a3374eb8a2dcf",
+    "linux-static/mypy.stdout.txt": "90377c8fd97127580c93ac5740d596c9ebc9db94dafa6560ee11fe16b4460c62",
+    "linux-static/result.json": "436b63b8ee16752d7a326ca41b4ddb92e15f3133cd73b12fef942d2a01f1d1ac",
+    "publication-check.json": "97c15e7bba35adcb9a92d3d7db3117353d36d566595cc54fd290fbc88be29ec6",
+    "publication-map.json": "3e92825a73487df9f209f9f57548b5a26a880a5bbeeeb5f5b9b86961b14559e3",
+    "README.md": "bc2dff6471c812f994fed9b652ec4c9e05e96441de030392e9804a268dcf66d2",
+    "scope-and-results.json": "79ea3ad499305a3895c0a4916ace134fa2fa6c5fc4ba91fb08881ff84f1d709d",
+    "scripts/run_linux_posix.py.txt": "aa826a470540d29f00bfe105086aa7b9e63f4946536bf577dca3f5a9f5b67ffa",
+    "scripts/run_windows.py.txt": "9a89c207fced50e5ed7f850a4f7e7e0bde8270a9a89483a00d1e4966c07e55ad",
+    "windows/commands.json": "473644f879c434cc1f27f0228817c56d5d0cfec265683ecbbff65524f30d2ee6",
+    "windows/mypy.stdout.txt": "90377c8fd97127580c93ac5740d596c9ebc9db94dafa6560ee11fe16b4460c62",
+    "windows/pytest.stdout.txt": "14cd133ee2d02011feb5841dc92a4fa6153c07c76a1a9acf1e6b8a4e446ed8d4",
+    "windows/result.json": "7f0985443e5bd7587e7dc5924cad85672e7a2a8fe66d230251b2c3a60d4afacb",
+    "windows/ruff.stdout.txt": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "windows/source-after.json": "20bc60491735555564056fb7428512dab5931e636891e24f35f1c34a4ddd0e4f",
+    "windows/source-before.json": "20bc60491735555564056fb7428512dab5931e636891e24f35f1c34a4ddd0e4f",
+    "windows/tests.xml": "da201188deee78357b18e5a097d3d1e0a619815c1a7e8ecce619c9253347f708"
+  },
+  "result": {
+    "windows": {
+      "passed": 164,
+      "skipped": 3,
+      "failed": 0
+    },
+    "linux_posix": {
+      "passed": 167,
+      "skipped": 0,
+      "failed": 0
+    },
+    "review_rebind_cases_each_platform": 42,
+    "ruff": "passed",
+    "mypy_win32": "passed",
+    "mypy_linux_target": "passed",
+    "sources_unchanged": true,
+    "source_count": 136,
+    "product_findings": 0
+  },
+  "history": "Initial DrvFs50failed/interrupted and missing Linux Ruff/mypy remain separately recorded; not classified as passing.",
+  "git_operations_by_this_reviewer": "read-only; no stage/commit/push"
+}

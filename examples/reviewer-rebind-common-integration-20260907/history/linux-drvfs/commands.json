@@ -1,0 +1,42 @@
+{
+  "head": "f7d42455752a5fe040d6670361ec6d18de0f9051",
+  "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+  "cwd": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/reviewer-candidate-rebind",
+  "PYTHONPATH": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/reviewer-candidate-rebind/backend",
+  "offline": true,
+  "commands": {
+    "pytest": [
+      "/tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/candidates",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "-o",
+      "pythonpath=backend tests/candidates",
+      "--basetemp=/mnt/c/Users/Chooo/Playground/Karajan/.cache/reviewer-candidate-rebind/.cache/common-repair-downstream/linux/tmp",
+      "--junitxml=/mnt/c/Users/Chooo/Playground/Karajan/.cache/reviewer-candidate-rebind/.cache/common-repair-downstream/linux/tests.xml"
+    ],
+    "ruff": [
+      "/tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python",
+      "-m",
+      "ruff",
+      "check",
+      "backend/karajan/candidates",
+      "tests/candidates"
+    ],
+    "mypy": [
+      "/tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python",
+      "-m",
+      "mypy",
+      "--platform",
+      "linux",
+      "--cache-dir",
+      "/mnt/c/Users/Chooo/Playground/Karajan/.cache/reviewer-candidate-rebind/.cache/common-repair-downstream/linux/mypy-cache",
+      "backend/karajan/candidates"
+    ]
+  },
+  "scope": "Candidate CAS integration only; no native runtime/provider calls"
+}
