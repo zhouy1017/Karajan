@@ -1,0 +1,267 @@
+{
+  "schema_version": "karajan.relay-dev-merge-independent-review.v1",
+  "reviewed_at": "2026-09-07T02:14:23.654931+00:00",
+  "reviewer": "qualification_integration",
+  "scope": "Read-only bounded Standards and Spec review of Relay dev merge, plus independent verification of existing author/root evidence. No new test executions.",
+  "implementation_commit_observed": "046045f2d9573c3cae6375c38c8de2f6b4190d70",
+  "parents": [
+    "9e092f868db3cdcf6c215de08f3a1a1eacd833ec",
+    "2e587d1773c514361689e13ebbd16ba62f1cd219"
+  ],
+  "relay": {
+    "path": "backend/karajan/adapters/opencode/go_relay.py",
+    "sha256": "b79f1e08afa5aa0931e4b1056dbce7f674014d04606ce64a9d3cd48ced723881",
+    "index_sha256": "b79f1e08afa5aa0931e4b1056dbce7f674014d04606ce64a9d3cd48ced723881",
+    "commit_sha256": "b79f1e08afa5aa0931e4b1056dbce7f674014d04606ce64a9d3cd48ced723881",
+    "blob": "c5cfae045c22d8aa0534346d4e654e7ac9dcfd04"
+  },
+  "ast_preservation_checks": {
+    "_drain_request_body": true,
+    "_set_request_body_budget": true,
+    "_read_request": true,
+    "_recover_context_call": true,
+    "_withdraw_context_sends": true,
+    "_persist_receipt": true,
+    "_error": true,
+    "_guard_send_from_dev": true
+  },
+  "gitattributes_parent_rules_missing": {
+    "9e092f8": [],
+    "2e587d1": []
+  },
+  "future_feature_paths_present": [],
+  "source_maps": [
+    {
+      "platform": "win32",
+      "count": 229,
+      "before_after_equal": true,
+      "current_missing": [],
+      "current_hash_mismatch": []
+    },
+    {
+      "platform": "linux",
+      "count": 229,
+      "before_after_equal": true,
+      "current_missing": [],
+      "current_hash_mismatch": []
+    }
+  ],
+  "root_runs": [
+    {
+      "executor": "Codex root; independently inspected records, not rerun by this reviewer",
+      "platform": "win32",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "205",
+          "time": "19.652",
+          "timestamp": "2026-09-07T10:02:32.359925+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ],
+      "test_cases": 205
+    },
+    {
+      "executor": "Codex root; independently inspected records, not rerun by this reviewer",
+      "platform": "linux",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "232",
+          "time": "78.950",
+          "timestamp": "2026-09-07T10:02:36.703270+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ],
+      "test_cases": 232
+    },
+    {
+      "executor": "Codex root; independently inspected records, not rerun by this reviewer",
+      "platform": "boundaries-win32",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "13",
+          "time": "2.753",
+          "timestamp": "2026-09-07T10:09:54.750893+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ],
+      "test_cases": 13
+    }
+  ],
+  "boundary_input_checks": [
+    {
+      "original": ".cache/spark-independent/final/test_final_publication.py",
+      "copy": ".cache/relay-dev-merge-root/boundaries-win32/test_final_publication.py",
+      "expected_sha256": "be4a64a791c6e5dd82019647b448d62f6f60d069da58d079bc3bc685241f6cb3",
+      "copy_matches": true,
+      "original_exists": true,
+      "original_matches": true
+    },
+    {
+      "original": ".cache/relay-resume-independent/test_rejection_boundary.py",
+      "copy": ".cache/relay-dev-merge-root/boundaries-win32/test_rejection_boundary.py",
+      "expected_sha256": "78792f8df5a199d892c7217de54a2d31dae7f66c8b9c6ba46d9cb318854981a7",
+      "copy_matches": true,
+      "original_exists": true,
+      "original_matches": true
+    },
+    {
+      "original": ".cache/relay-resume-independent/test_followup_boundaries.py",
+      "copy": ".cache/relay-dev-merge-root/boundaries-win32/test_followup_boundaries.py",
+      "expected_sha256": "7a8853d2002badaa4eb2a36ce0e54a9307c96dc04d572c5906afa443fd2dcab1",
+      "copy_matches": true,
+      "original_exists": true,
+      "original_matches": true
+    },
+    {
+      "original": ".cache/relay-resume-independent/test_framing_boundaries.py",
+      "copy": ".cache/relay-dev-merge-root/boundaries-win32/test_framing_boundaries.py",
+      "expected_sha256": "52cfe113e3679511e3464a9bd1c8d95339c7c1670a5705cddbb19c7ed1d45aeb",
+      "copy_matches": true,
+      "original_exists": true,
+      "original_matches": true
+    }
+  ],
+  "reviewed_evidence": [
+    {
+      "path": ".cache\\relay-dev-merge-root\\win32\\command.json",
+      "sha256": "c606c4e6f42e069a9bf3042c0c6410228610957baf1805ad50220e45c1b9b27f",
+      "bytes": 1128
+    },
+    {
+      "path": ".cache\\relay-dev-merge-root\\win32\\result.json",
+      "sha256": "58c277b0dc43652a7facf8235b984ea3a60c8d786372fd12d1798baaf2968960",
+      "bytes": 74
+    },
+    {
+      "path": ".cache\\relay-dev-merge-root\\win32\\source-before.json",
+      "sha256": "d0ca4425607acc0d2c3f3ce68a47c4cf174cc70cebcb69c29689e83837f7b599",
+      "bytes": 26142
+    },
+    {
+      "path": ".cache\\relay-dev-merge-root\\win32\\source-after.json",
+      "sha256": "d0ca4425607acc0d2c3f3ce68a47c4cf174cc70cebcb69c29689e83837f7b599",
+      "bytes": 26142
+    },
+    {
+      "path": ".cache\\relay-dev-merge-root\\win32\\tests.xml",
+      "sha256": "b76b0392afdc74ad3b81f274863ad4a174d6d39d499ff24007eafb879cc7c084",
+      "bytes": 34455
+    },
+    {
+      "path": ".cache\\relay-dev-merge-root\\win32\\stdout.txt",
+      "sha256": "2c227cb729a4366b371ef1f21fa7f8fba3ce8cf4bf295c4c1070052dd85a4a94",
+      "bytes": 265
+    },
+    {
+      "path": ".cache\\relay-dev-merge-root\\linux\\command.json",
+      "sha256": "d61d2ac2e69a47f5f3da9c5ece11be883d9d17a4c576cc89e8745311ce5aa21b",
+      "bytes": 1220
+    },
+    {
+      "path": ".cache\\relay-dev-merge-root\\linux\\result.json",
+      "sha256": "4667ff9fb755edb2a424f6c7651dcb4e1c859ff6502321d05fb02ef81c903991",
+      "bytes": 69
+    },
+    {
+      "path": ".cache\\relay-dev-merge-root\\linux\\source-before.json",
+      "sha256": "dfffe029af69fc1a329e2d794a17ea64daa4dcb9cbf230f28b36e37cb2d6a650",
+      "bytes": 25911
+    },
+    {
+      "path": ".cache\\relay-dev-merge-root\\linux\\source-after.json",
+      "sha256": "dfffe029af69fc1a329e2d794a17ea64daa4dcb9cbf230f28b36e37cb2d6a650",
+      "bytes": 25911
+    },
+    {
+      "path": ".cache\\relay-dev-merge-root\\linux\\tests.xml",
+      "sha256": "70c5941378a0e83c488f5d10d4919b7b43efc91a3a100d91cb297d8a3051cb1e",
+      "bytes": 38290
+    },
+    {
+      "path": ".cache\\relay-dev-merge-root\\linux\\stdout.txt",
+      "sha256": "aec465e4dc8434a3a92943172a502d5a4e0dc478605b906c876667fde8a3dc99",
+      "bytes": 351
+    },
+    {
+      "path": ".cache\\relay-dev-merge-root\\boundaries-win32\\result.json",
+      "sha256": "e1cb6d6c8a051b907d22dd8709628e7b70614a92fe2604c6b94cd33c0d3c5281",
+      "bytes": 2276
+    },
+    {
+      "path": ".cache\\relay-dev-merge-root\\boundaries-win32\\tests.xml",
+      "sha256": "cf06e51d80ab2e25b2dd2f3a82230d8daaf54b85a9ce8c9233211b6d12cd588d",
+      "bytes": 2609
+    },
+    {
+      "path": ".cache\\relay-dev-merge-root\\boundaries-win32\\stdout.txt",
+      "sha256": "db62524aa7b1190624b92df1c9c2f4aff5299d775c3bab341c5f0a9967357031",
+      "bytes": 101
+    },
+    {
+      "path": ".cache\\relay-dev-merge-author\\sourcehash-and-command.txt",
+      "sha256": "5c27e3dc59ec05a9d091e1b5e47fdd2e58e359978b77e3445eae6b8b87f873e9",
+      "bytes": 745
+    },
+    {
+      "path": ".cache\\relay-dev-merge-author\\ruff.stdout.txt",
+      "sha256": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0",
+      "bytes": 20
+    },
+    {
+      "path": ".cache\\relay-dev-merge-author\\mypy.stdout.txt",
+      "sha256": "fc0ea8be9e617cf939f9fa1095a65bf7b0c98ecb380844796bb8efb6b2abf4f7",
+      "bytes": 46
+    },
+    {
+      "path": ".cache\\relay-dev-merge-author\\relay-windows.junit.xml",
+      "sha256": "c547cfef89e2d8a7b6dbccb0165fb3bbf32e6eca2c02bdd850482272a7547c2c",
+      "bytes": 52558
+    },
+    {
+      "path": ".cache\\relay-dev-merge-author\\relay-windows.stdout.txt",
+      "sha256": "4d662ff2eb0635a0a1ebb7a0ea2a60b4919c80451916f1088fb4351b34d00cc8",
+      "bytes": 4715
+    }
+  ],
+  "standards": {
+    "confirmed_findings": [],
+    "notes": [
+      "Existing helper redundancy was previously nonblocking; no new abstraction or authority seam added by this merge.",
+      "Both parent historical byte-preservation rule sets remain."
+    ]
+  },
+  "spec": {
+    "confirmed_findings": [],
+    "verified": [
+      "Valid declared-body bound and monotonic total rejection drain deadline preserved.",
+      "Protocol receipt persisted before successful response; relay_completed only after write; failure flags reset.",
+      "Original call_id passed on both begin exception paths; recovery remains read-only and does not regrant send.",
+      "Dev send_guard/ExitStack retained; business guard covers begin through stream entry, not response-body consumption.",
+      "No #90 entry/Collector, Checks or Reviewer backflow."
+    ]
+  },
+  "static_evidence": {
+    "executor": "Luna author",
+    "ruff": "All checks passed!",
+    "mypy": "Success: no issues found in 122 source files",
+    "initial_windows_tests": "145 passed, 60 tokenizer-unavailable skips; retained historical limitation, superseded for coverage by root configured 205 pass/0 skip, not rewritten"
+  },
+  "limits": [
+    "The current worktree may receive documentation/evidence commits; this review binds the specified Relay bytes and two-parent integration, not a claim that every worktree artifact is frozen.",
+    "Old 9e CI success is not G evidence for this merge. New merged-head CI was not queried or asserted in this review.",
+    "Root native P uses actual Linux runtime with local HTTP fixture; no official provider qualification S or complete #90 Task-to-Candidate claim.",
+    "No product/Git/GitHub changes or paid calls by this reviewer."
+  ]
+}

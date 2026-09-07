@@ -1,0 +1,5 @@
+relay_sha256=b79f1e08afa5aa0931e4b1056dbce7f674014d04606ce64a9d3cd48ced723881
+HEAD=9e092f868db3cdcf6c215de08f3a1a1eacd833ec
+MERGE_HEAD=2e587d1773c514361689e13ebbd16ba62f1cd219
+pytest_command=C:\Users\Chooo\Playground\Karajan\.venv\Scripts\python.exe -m pytest -o "pythonpath=backend tests/adapters/opencode" tests/adapters/opencode/test_go_relay.py tests/adapters/opencode/test_go_relay_context.py tests/adapters/opencode/test_go_relay_nullable_names.py tests/adapters/opencode/test_go_relay_journal.py tests/adapters/opencode/test_go_context.py tests/adapters/opencode/test_go_journal.py tests/adapters/opencode/test_go_send_guard.py --junitxml=.cache/relay-dev-merge-author/relay-windows.junit.xml
+result=145 passed, 60 skipped, 0 failed

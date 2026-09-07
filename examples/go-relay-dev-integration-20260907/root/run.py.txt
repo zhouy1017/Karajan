@@ -1,0 +1,53 @@
+"""Read-only behavioral validation of the actual relay + dev merge tree."""
+import hashlib
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+WORK = HERE.parents[1]
+ROOT = HERE.parents[3]
+OUT = HERE / sys.platform
+OUT.mkdir(exist_ok=False)
+
+def sources():
+    return {p.relative_to(WORK).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+            for group in ('backend', 'tests') for p in sorted((WORK / group).rglob('*.py'))}
+
+def save(name, value):
+    (OUT / name).write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8')
+
+before = sources()
+save('source-before.json', before)
+files = [
+    'tests/adapters/opencode/test_go_relay.py',
+    'tests/adapters/opencode/test_go_relay_context.py',
+    'tests/adapters/opencode/test_go_relay_nullable_names.py',
+    'tests/adapters/opencode/test_go_relay_journal.py',
+    'tests/adapters/opencode/test_go_context.py',
+    'tests/adapters/opencode/test_go_journal.py',
+    'tests/adapters/opencode/test_go_send_guard.py',
+]
+if sys.platform == 'linux':
+    files += ['tests/adapters/opencode/test_go_unix_relay.py',
+              'tests/isolation/test_go_task.py', 'tests/runs/test_go_task_binding_source.py']
+env = os.environ.copy()
+env.update(KARAJAN_GO_TOKENIZER_DIRECTORY=str(ROOT / '.cache/go-task-execution/.cache/go-context-artifacts'),
+           KARAJAN_REQUIRE_GO_TOKENIZER='1', HF_HUB_OFFLINE='1', TRANSFORMERS_OFFLINE='1', PYTHONUTF8='1')
+if sys.platform == 'linux':
+    env.update(KARAJAN_OPENCODE_LINUX_BINARY=str(ROOT / '.cache/go-linux-runtime/package/bin/opencode'),
+               KARAJAN_REQUIRE_OPENCODE_ISOLATION='1')
+command = [sys.executable, '-m', 'pytest', *files, '-q', '-p', 'no:cacheprovider',
+           '-o', 'pythonpath=backend tests/projects tests/runs tests/web tests/isolation tests/adapters/opencode tests/candidates tests/execution',
+           '--junitxml=' + str(OUT / 'tests.xml')]
+save('command.json', {'argv': command, 'cwd': str(WORK), 'tokenizer': env['KARAJAN_GO_TOKENIZER_DIRECTORY'],
+                      'platform': sys.platform, 'scope': 'Local C/P; synthetic credentials and HTTP; no official provider calls.'})
+with (OUT / 'stdout.txt').open('wb') as output:
+    result = subprocess.run(command, cwd=WORK, env=env, stdout=output, stderr=subprocess.STDOUT, check=False)
+after = sources()
+save('source-after.json', after)
+save('result.json', {'exit_code': result.returncode, 'sources_equal': before == after, 'source_count': len(after)})
+print(json.dumps({'platform': sys.platform, 'exit_code': result.returncode, 'sources_equal': before == after, 'output': str(OUT)}))
+raise SystemExit(result.returncode or (0 if before == after else 2))

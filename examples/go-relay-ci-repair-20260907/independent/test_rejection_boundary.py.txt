@@ -1,0 +1,133 @@
+"""Independent real TCP rejection checks; only upstream HTTP is synthetic."""
+
+import json
+import socket
+import threading
+import time
+from contextlib import contextmanager
+from urllib.parse import urlsplit
+
+import httpx
+from karajan.adapters.opencode.go_relay import GoRelay
+from test_go_relay import CANARY, SECRET, answer, payload, post
+from test_go_relay_journal import authorization
+
+
+@contextmanager
+def journaled(tmp_path):
+    auth = authorization(tmp_path)
+    upstream = []
+
+    def respond(request):
+        upstream.append(request)
+        return answer()
+
+    relay = GoRelay(
+        SECRET,
+        CANARY,
+        authorization=auth,
+        client_factory=lambda: httpx.Client(
+            transport=httpx.MockTransport(respond), trust_env=False
+        ),
+    )
+    before = (tmp_path / "calls.sqlite").read_bytes()
+    relay.start()
+    try:
+        yield relay, auth, upstream
+    finally:
+        assert relay.close()["status"] == "closed"
+        assert not upstream
+        assert relay.receipts == []
+        assert auth.journal.snapshot("grant")["request_count"] == 0
+        assert (tmp_path / "calls.sqlite").read_bytes() == before
+
+
+def headers(relay, length, *, valid=False):
+    capability = relay.capability if valid else SECRET
+    return (
+        "POST /v1/chat/completions HTTP/1.1\r\n"
+        "Host: localhost\r\n"
+        f"Authorization: Bearer {capability}\r\n"
+        "x-opencode-session: ses_independent\r\n"
+        f"Content-Length: {length}\r\n\r\n"
+    ).encode()
+
+
+def test_original_httpx_wrong_capability_still_returns_403_without_slot(tmp_path):
+    with journaled(tmp_path) as (relay, _, _):
+        response = post(relay, headers={"Authorization": "Bearer " + SECRET})
+        assert response.status_code == 403
+        assert response.json() == {"error": {"type": "INVALID_CAPABILITY"}}
+
+
+def test_rejection_drain_has_a_total_deadline_under_slow_trickle(tmp_path):
+    with journaled(tmp_path) as (relay, _, _):
+        with socket.create_connection(("127.0.0.1", urlsplit(relay.url).port)) as peer:
+            peer.sendall(headers(relay, 4096))
+            stopped = threading.Event()
+
+            def trickle():
+                for _ in range(25):
+                    if stopped.is_set():
+                        return
+                    try:
+                        peer.sendall(b"x")
+                    except OSError:
+                        return
+                    stopped.wait(0.1)
+
+            sender = threading.Thread(target=trickle)
+            sender.start()
+            peer.settimeout(1.2)  # More than twice the proposed 0.5s drain budget.
+            started = time.monotonic()
+            try:
+                response = peer.recv(2048)
+                assert b" 403 " in response.split(b"\r\n", 1)[0]
+                assert time.monotonic() - started < 1.2
+            finally:
+                stopped.set()
+                sender.join(timeout=1)
+                peer.shutdown(socket.SHUT_WR)
+
+
+def test_fully_consumed_invalid_body_is_not_read_a_second_time(tmp_path, monkeypatch):
+    reads = []
+    original = GoRelay._read_request
+
+    class ObservedReader:
+        def __init__(self, reader):
+            self.reader = reader
+
+        def read(self, count=-1):
+            result = self.reader.read(count)
+            reads.append((count, len(result)))
+            return result
+
+        def __getattr__(self, name):
+            return getattr(self.reader, name)
+
+    def observe(self, handler):
+        handler.rfile = ObservedReader(handler.rfile)
+        return original(self, handler)
+
+    monkeypatch.setattr(GoRelay, "_read_request", observe)
+    body = json.dumps({**payload(), "model": "unsupported-model"}).encode()
+    with journaled(tmp_path) as (relay, _, _):
+        with socket.create_connection(("127.0.0.1", urlsplit(relay.url).port)) as peer:
+            peer.sendall(headers(relay, len(body), valid=True) + body)
+            peer.shutdown(socket.SHUT_WR)
+            peer.settimeout(2)
+            response = peer.recv(2048)
+            assert b" 422 " in response.split(b"\r\n", 1)[0]
+        assert reads == [(len(body), len(body))]
+
+
+def test_split_body_negative_control_finishes_403_without_effects(tmp_path):
+    with journaled(tmp_path) as (relay, _, _):
+        with socket.create_connection(("127.0.0.1", urlsplit(relay.url).port)) as peer:
+            peer.sendall(headers(relay, 20000) + b"x" * 10000)
+            time.sleep(0.02)
+            peer.sendall(b"x" * 10000)
+            peer.settimeout(2)
+            response = peer.recv(2048)
+            assert b" 403 " in response.split(b"\r\n", 1)[0]

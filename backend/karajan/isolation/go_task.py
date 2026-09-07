@@ -8,8 +8,12 @@ Candidate acceptance, validation success, Profile qualification or a cash cap.
 
 import hashlib
 import json
+import os
 import re
 import secrets
+import stat
+import sys
+import tempfile
 import time
 from collections.abc import Callable
 from contextlib import AbstractContextManager
@@ -36,6 +40,112 @@ def _sha(data: bytes) -> str:
 
 def _digest(value: object) -> bool:
     return type(value) is str and re.fullmatch(r"[0-9a-f]{64}", value) is not None
+
+
+@dataclass(frozen=True, slots=True)
+class _RelaySocketRoot:
+    path: Path
+    st_dev: int
+    st_ino: int
+    st_uid: int
+    st_mode: int
+
+
+def _relay_socket_root() -> _RelaySocketRoot:
+    if sys.platform != "linux":
+        raise RuntimeError("TASK_RELAY_SOCKET_ROOT_PLATFORM_INVALID")
+    root = Path(tempfile.mkdtemp(prefix="karajan-go-relay-", dir="/tmp"))
+    os.chmod(root, 0o700)
+    identity = root.lstat()
+    current_uid = _current_uid()
+    if (
+        not stat.S_ISDIR(identity.st_mode)
+        or identity.st_uid != current_uid
+        or stat.S_IMODE(identity.st_mode) != 0o700
+    ):
+        raise RuntimeError("TASK_RELAY_SOCKET_ROOT_OWNERSHIP_INVALID")
+    return _RelaySocketRoot(
+        root,
+        identity.st_dev,
+        identity.st_ino,
+        identity.st_uid,
+        stat.S_IMODE(identity.st_mode),
+    )
+
+
+def _current_uid() -> int:
+    getter = getattr(os, "geteuid", None)
+    if not callable(getter):
+        raise RuntimeError("TASK_RELAY_SOCKET_ROOT_PLATFORM_INVALID")
+    uid = getter()
+    if type(uid) is not int:
+        raise RuntimeError("TASK_RELAY_SOCKET_ROOT_PLATFORM_INVALID")
+    return uid
+
+
+def _cleanup_relay_socket_root(root: _RelaySocketRoot | None) -> None:
+    if root is None:
+        return
+    try:
+        identity = root.path.lstat()
+    except FileNotFoundError:
+        return
+    if (
+        not stat.S_ISDIR(identity.st_mode)
+        or identity.st_dev != root.st_dev
+        or identity.st_ino != root.st_ino
+        or identity.st_uid != root.st_uid
+        or stat.S_IMODE(identity.st_mode) != root.st_mode
+        or root.st_uid != _current_uid()
+    ):
+        raise RuntimeError("TASK_RELAY_SOCKET_ROOT_IDENTITY_CHANGED")
+    with os.scandir(root.path) as entries:
+        if next(entries, None) is not None:
+            raise RuntimeError("TASK_RELAY_SOCKET_ROOT_CONTENTS_PRESENT")
+    root.path.rmdir()
+
+
+def _safe_failure_code(error: BaseException, fallback: str) -> str:
+    reason = str(error)
+    return reason if reason in _STABLE_FAILURE_CODES else fallback
+
+
+_STABLE_FAILURE_CODES = frozenset(
+    {
+        "TASK_CAPTURE_NO_SUCCESSFUL_START",
+        "TASK_EXECUTION_TIMEOUT",
+        "TASK_NATIVE_CONFIGURATION_MISMATCH",
+        "TASK_NATIVE_START_NOT_OBSERVED",
+        "TASK_NATIVE_EXECUTION_INCOMPLETE",
+        "TASK_NATIVE_TOOL_INCOMPLETE",
+        "TASK_RELAY_REJECTED",
+        "TASK_SEND_GUARD_REJECTED",
+        "TASK_STOPPED_CAPTURE_UNAVAILABLE",
+        "TASK_PROVIDER_PROTOCOL_INCOMPLETE",
+        "TASK_LOCAL_CLEANUP_INCOMPLETE",
+        "UNIX_RELAY_PATH_TOO_LONG",
+    }
+)
+
+
+def _failure_diagnostic(
+    error: BaseException, *, native: IsolatedOpenCode | None, report: dict[str, Any]
+) -> dict[str, Any]:
+    runtime = report.get("runtime", {})
+    exception_type = type(error).__name__
+    return {
+        "exception_type": (
+            exception_type
+            if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,63}", exception_type)
+            else "Exception"
+        ),
+        "reason_code": _safe_failure_code(error, "UNCLASSIFIED_NATIVE_FAILURE"),
+        "identity": {
+            "native_started": native is not None,
+            "runtime_state": runtime.get("state", "not_started"),
+            "local_stop": report.get("native_cleanup", {}).get("local_stop", "unknown"),
+        },
+    }
 
 
 @dataclass(frozen=True)
@@ -212,6 +322,8 @@ def execute_go_task(
     native: IsolatedOpenCode | None = None
     capture: StoppedProjection | None = None
     reasons: list[str] = []
+    relay_socket_root: _RelaySocketRoot | None = None
+    relay_socket: Path | None = None
     descriptor = task.descriptor()
     report: dict[str, Any] = {
         "schema_version": "karajan.go-native-task-observation.v1",
@@ -235,12 +347,14 @@ def execute_go_task(
     deadline = time.monotonic() + task.timeout_seconds
     try:
         directory.mkdir(mode=0o700)
-        relay.start(unix_socket=directory / "inference.sock")
+        relay_socket_root = _relay_socket_root()
+        relay_socket = relay_socket_root.path / "inference.sock"
+        relay.start(unix_socket=relay_socket)
         projection = [row.projection() for row in task.files]
         native = IsolatedOpenCode(
             runtime,
             directory / "native",
-            directory / "inference.sock",
+            relay_socket,
             relay.capability,
             projection=projection,
         )
@@ -310,6 +424,7 @@ def execute_go_task(
             reasons.append("TASK_NATIVE_TOOL_INCOMPLETE")
     except Exception as error:
         report["error_type"] = type(error).__name__
+        report["error_reason_code"] = _safe_failure_code(error, "UNCLASSIFIED_NATIVE_FAILURE")
         reasons.append("TASK_EXECUTION_FAILED")
     finally:
         try:
@@ -322,18 +437,38 @@ def execute_go_task(
             try:
                 capture = native.capture_projection()
                 report["native_cleanup"] = capture.stop_evidence
-            except Exception:
+            except Exception as error:
                 reasons.append("TASK_STOPPED_CAPTURE_UNAVAILABLE")
+                report["native_capture_diagnostic"] = _failure_diagnostic(
+                    error, native=native, report=report
+                )
                 try:
                     report["native_cleanup"] = native.close()
-                except Exception:
+                except Exception as stop_error:
                     report["native_cleanup"] = {"local_stop": "unknown"}
+                    report["native_capture_diagnostic"]["stop_error"] = {
+                        "exception_type": type(stop_error).__name__,
+                        "reason_code": _safe_failure_code(
+                            stop_error, "UNCLASSIFIED_NATIVE_STOP_FAILURE"
+                        ),
+                    }
+                report["native_capture_diagnostic"]["identity"]["local_stop"] = report[
+                    "native_cleanup"
+                ].get("local_stop", "unknown")
         else:
             report["native_cleanup"] = {"local_stop": "not_started"}
         try:
             report["relay_cleanup"] = relay.close()
         except Exception:
             report["relay_cleanup"] = {"status": "unknown"}
+        if (
+            report["native_cleanup"].get("local_stop") in {"confirmed", "not_started"}
+            and report["relay_cleanup"].get("status") == "closed"
+        ):
+            try:
+                _cleanup_relay_socket_root(relay_socket_root)
+            except Exception:
+                reasons.append("TASK_RELAY_SOCKET_ROOT_NOT_CLEANED")
     report["requests"] = relay.receipts
     try:
         report["journal"] = owned.journal.snapshot(owned.grant_id)
