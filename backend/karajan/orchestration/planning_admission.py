@@ -14,7 +14,12 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Protocol
 
-from karajan.capacity import CapacityBoundaryFacts, CapacityError, CapacityStore
+from karajan.capacity import (
+    CapacityBoundaryFacts,
+    CapacityError,
+    CapacityStore,
+    derive_capacity_boundary_facts,
+)
 from karajan.projects import ProjectRegistry
 from karajan.projects.credential_sources import (
     CredentialSourceError,
@@ -22,7 +27,7 @@ from karajan.projects.credential_sources import (
     LocalKeyFile,
 )
 from karajan.projects.qualification import ProfileQualificationStore
-from karajan.resources.broker import money, units
+from karajan.resources.broker import units
 from karajan.routing import RoutingError, evaluate_reserved_profile, evaluate_route
 from karajan.runs import RunError, RunPlanner
 from karajan.runs.planning import digest, encoded, identifier
@@ -652,47 +657,6 @@ class PlanningAdmissionAuthority:
             "capacity_sha256": digest(capacity),
         }
 
-    def _boundary_capacity_facts(
-        self, boundary: CapacityBoundaryFacts, record: dict[str, Any]
-    ) -> dict[str, Any]:
-        """Derive a pure routing view, excluding only this already-active hold."""
-        facts = boundary.facts.as_dict()
-        owned = boundary.owned_admission_id
-        if owned is None:
-            return facts
-        matched: list[tuple[dict[str, Any], dict[str, Any]]] = []
-        for account in facts["accounts"]:
-            for admission in account["admissions"]:
-                if admission["admission_id"] == owned:
-                    matched.append((account, admission))
-        if len(matched) != 1:
-            raise RunError("PLANNING_OWN_CAPACITY_HOLD_INVALID")
-        account, admission = matched[0]
-        reservation = admission.get("reservation")
-        request = record["capacity_request"]
-        if (
-            not admission.get("effective_held")
-            or not isinstance(reservation, dict)
-            or reservation.get("state") != "active"
-            or reservation.get("request") != request
-            or account["held_attempts"] < 1
-        ):
-            raise RunError("PLANNING_OWN_CAPACITY_HOLD_INVALID")
-        account["held_attempts"] -= 1
-        account["held_admission_ids"] = [
-            item for item in account["held_admission_ids"] if item != owned
-        ]
-        demand = request["demand"]
-        for pool in account["pools"]:
-            amount = demand.get(pool["id"])
-            if amount is None:
-                continue
-            remaining = units(pool["future_reserved"]) - units(amount)
-            if remaining < 0:
-                raise RunError("PLANNING_OWN_CAPACITY_HOLD_INVALID")
-            pool["future_reserved"] = money(remaining)
-        return facts
-
     def _revalidate_boundary_route(
         self, boundary: CapacityBoundaryFacts, record: dict[str, Any], binding: dict[str, Any]
     ) -> None:
@@ -700,13 +664,11 @@ class PlanningAdmissionAuthority:
         route = record["route_sources"]["route"]
         task, policy = route["snapshots"]["task"], route["snapshots"]["policy"]
         resources = deepcopy(policy["resources"])
-        capacity, _ = _capacity_snapshot(self._boundary_capacity_facts(boundary, record), resources)
-        estimate = record["estimate"]
-        registration = next(
-            row
-            for row in resources["profiles"]
-            if {"id": row["id"], "revision": row["revision"]} == binding["profile"]
+        capacity, _ = _capacity_snapshot(
+            derive_capacity_boundary_facts(boundary, expected_request=record["capacity_request"]),
+            resources,
         )
+        estimate = record["estimate"]
         capacity["estimates"] = [
             {
                 "profile": binding["profile"],

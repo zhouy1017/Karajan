@@ -99,10 +99,12 @@ def planning_capacity(
     pools: tuple[str, ...] = ("service-fixture",),
     remaining: str = "10",
     lead_reserve: dict[str, str] | None = None,
+    clock: Callable[[], float] = lambda: 1000.0,
+    conservative_observation_max_age_seconds: int = 30,
 ) -> CapacityStore:
     """Real SQLite Capacity facts matching the frozen fixture configuration."""
     directory.mkdir()
-    store = CapacityStore(directory / "capacity.sqlite", clock=lambda: 1000.0)
+    store = CapacityStore(directory / "capacity.sqlite", clock=clock)
     for pool in pools:
         window = "fixture-window" if pools == ("service-fixture",) else "fixture-window-" + pool
         store.register_pool(
@@ -144,7 +146,7 @@ def planning_capacity(
                 "enabled": True,
                 "max_local_active_attempts": 4,
                 "max_attempt_duration_seconds": 60,
-                "observation_max_age_seconds": 30,
+                "observation_max_age_seconds": conservative_observation_max_age_seconds,
                 "cooldown_seconds": 10,
             },
         },
@@ -160,6 +162,7 @@ def _case(
     *,
     available: bool = True,
     clock: Callable[[], float] | None = None,
+    conservative_observation_max_age_seconds: int = 30,
 ) -> tuple[PlanningExecution, PlanningAdmissionAuthority, dict, Any]:
     planner = RunPlanner(tmp_path / "runs.sqlite", configured["registry"], clock=clock or time.time)
     fixed = configured["registry"].register_execution_policy(
@@ -171,7 +174,11 @@ def _case(
     execution = PlanningExecution(tmp_path / "planning.sqlite", planner).begin(
         run["id"], intent["id"], principal="owner", command_key="begin-1"
     )
-    capacity = planning_capacity(tmp_path / "capacity")
+    capacity = planning_capacity(
+        tmp_path / "capacity",
+        clock=clock or (lambda: 1000.0),
+        conservative_observation_max_age_seconds=conservative_observation_max_age_seconds,
+    )
     binding = execution["binding"]
     capacity.register_profile(
         {
@@ -572,6 +579,47 @@ def test_capacity_boundary_rechecks_nested_commander_profile_facts_expiry(
     monkeypatch.setattr(authority.capacity, "admit", expire_while_capacity_is_held)
     denied = authority.advance(execution["id"], "owner", "advance")
     assert denied["reason_codes"] == ["COMMANDER_PROFILE_FACTS_EXPIRED"]
+    assert authority.capacity.snapshot()["reservations"] == []
+
+
+def test_capacity_boundary_retains_unknown_estimate_conservative_age(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    now = [1000.0]
+    _, authority, _, execution = _case(
+        tmp_path,
+        configured,
+        clock=lambda: now[0],
+        conservative_observation_max_age_seconds=5,
+    )
+    original = authority.capacity.admit
+
+    def cross_conservative_age(
+        request: dict[str, Any],
+        *,
+        command_key: str,
+        before_reserve: Callable[[], None] | None = None,
+        after_capacity_facts: Callable[[Any], None] | None = None,
+    ) -> dict[str, Any]:
+        def waited_before_facts() -> None:
+            now[0] = 1006.0
+            assert before_reserve is not None
+            before_reserve()
+
+        def facts_after_wait(boundary: Any) -> None:
+            assert after_capacity_facts is not None
+            after_capacity_facts(boundary)
+
+        return original(
+            request,
+            command_key=command_key,
+            before_reserve=waited_before_facts,
+            after_capacity_facts=facts_after_wait,
+        )
+
+    monkeypatch.setattr(authority.capacity, "admit", cross_conservative_age)
+    denied = authority.advance(execution["id"], "owner", "conservative-age")
+    assert denied["reason_codes"] == ["PLANNING_BOUNDARY_ROUTE_REJECTED"]
     assert authority.capacity.snapshot()["reservations"] == []
 
 
