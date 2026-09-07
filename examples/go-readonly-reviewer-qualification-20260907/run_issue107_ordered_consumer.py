@@ -11,25 +11,22 @@ import argparse
 import hashlib
 import inspect
 import json
-import sys
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "backend"))
-sys.path.insert(0, str(Path(__file__).parent))
-
-from karajan.projects.qualification import QualificationError
-
 import prepare_issue107_consumer as consumer
 import run_official_issue107 as controller
+from karajan.projects.qualification import QualificationError
 
+ROOT = Path(__file__).resolve().parents[2]
 
 COMMAND = "issue107-official-go-reviewer-20260907-ordered-attempt4"
 
 
 def sha(value: object) -> str:
-    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    return hashlib.sha256(
+        json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
 
 
 def plan() -> dict[str, Any]:
@@ -39,23 +36,50 @@ def plan() -> dict[str, Any]:
         "command": COMMAND,
         "effect_free": True,
         "phases": [
-            {"id": "qualification", "call": "ProfileQualificationStore.qualify_runtime_tools",
-             "provider_effect": "fixed official three-scenario suite only", "assertions": [
-                 "passed record", "three scenarios", "each request_count <= 6", "total <= 18",
-             ]},
-            {"id": "replay", "call": "qualify_runtime_tools with same command",
-             "provider_effect": "none", "assertions": ["same record", "zero new journal requests"]},
-            {"id": "positive_binding", "call": "ApprovedReviewerBindings.advance twice",
-             "provider_effect": "none", "assertions": [
-                 "prepared then ready", "internal current_locked consumed current Store facts",
-                 "membership_only", "actual_reviewer_attempt is null",
-             ]},
-            {"id": "revoke", "call": "ProfileQualificationStore.revoke",
-             "provider_effect": "none", "assertions": ["qualification record is revoked only after positive binding"]},
-            {"id": "negative_and_history", "call": "ApprovedReviewerBindings.advance; get; same-key replay",
-             "provider_effect": "none", "assertions": [
-                 "QUALIFICATION_REVOKED", "historical record readable", "same key has zero new requests",
-             ]},
+            {
+                "id": "qualification",
+                "call": "ProfileQualificationStore.qualify_runtime_tools",
+                "provider_effect": "fixed official three-scenario suite only",
+                "assertions": [
+                    "passed record",
+                    "three scenarios",
+                    "each request_count <= 6",
+                    "total <= 18",
+                ],
+            },
+            {
+                "id": "replay",
+                "call": "qualify_runtime_tools with same command",
+                "provider_effect": "none",
+                "assertions": ["same record", "zero new journal requests"],
+            },
+            {
+                "id": "positive_binding",
+                "call": "ApprovedReviewerBindings.advance twice",
+                "provider_effect": "none",
+                "assertions": [
+                    "prepared then ready",
+                    "internal current_locked consumed current Store facts",
+                    "membership_only",
+                    "actual_reviewer_attempt is null",
+                ],
+            },
+            {
+                "id": "revoke",
+                "call": "ProfileQualificationStore.revoke",
+                "provider_effect": "none",
+                "assertions": ["qualification record is revoked only after positive binding"],
+            },
+            {
+                "id": "negative_and_history",
+                "call": "ApprovedReviewerBindings.advance; get; same-key replay",
+                "provider_effect": "none",
+                "assertions": [
+                    "QUALIFICATION_REVOKED",
+                    "historical record readable",
+                    "same key has zero new requests",
+                ],
+            },
         ],
         "separation": {
             "suite_grant_cleanup": "owned by FixedGoReviewerSuite during qualification",
@@ -84,7 +108,9 @@ def verify_static_order() -> dict[str, int]:
 def _counts(start: dict[str, Any], journal: Any) -> dict[str, int]:
     result = {}
     for row in start["binding"]["execution_start"]["scenarios"]:
-        result[hashlib.sha256(row["grant_id"].encode()).hexdigest()] = journal.snapshot(row["grant_id"])["request_count"]
+        result[hashlib.sha256(row["grant_id"].encode()).hexdigest()] = journal.snapshot(
+            row["grant_id"]
+        )["request_count"]
     return result
 
 
@@ -103,8 +129,11 @@ def execute(private_root: Path, report: Path) -> None:
 
     source = store.reviewer_suite.source()
     record = store.qualify_runtime_tools(
-        project_id, {"id": reviewer["id"], "revision": reviewer["revision"]},
-        principal=controller.PRINCIPAL, command_key=COMMAND, suite_ref=controller.SUITE,
+        project_id,
+        {"id": reviewer["id"], "revision": reviewer["revision"]},
+        principal=controller.PRINCIPAL,
+        command_key=COMMAND,
+        suite_ref=controller.SUITE,
         validity_seconds=600,
     )
     start = store.get_command_start(project_id, COMMAND, principal=controller.PRINCIPAL)
@@ -118,8 +147,11 @@ def execute(private_root: Path, report: Path) -> None:
         raise RuntimeError("ISSUE107_ORDERED_QUALIFICATION_INCOMPLETE")
 
     replay = store.qualify_runtime_tools(
-        project_id, {"id": reviewer["id"], "revision": reviewer["revision"]},
-        principal=controller.PRINCIPAL, command_key=COMMAND, suite_ref=controller.SUITE,
+        project_id,
+        {"id": reviewer["id"], "revision": reviewer["revision"]},
+        principal=controller.PRINCIPAL,
+        command_key=COMMAND,
+        suite_ref=controller.SUITE,
         validity_seconds=600,
     )
     counts_after_replay = _counts(start, journal)
@@ -128,8 +160,12 @@ def execute(private_root: Path, report: Path) -> None:
 
     # This is the required real consumer positive control. It has no model port.
     positive = consumer.positive_result(private_root)
-    revocation = store.revoke(project_id, record["id"], principal=controller.PRINCIPAL,
-                              reason="issue107-ordered-post-positive-revoke")
+    revocation = store.revoke(
+        project_id,
+        record["id"],
+        principal=controller.PRINCIPAL,
+        reason="issue107-ordered-post-positive-revoke",
+    )
     negative_path = report.with_name(report.stem + "-consumer-negative.json")
     consumer.negative(private_root, negative_path)
     negative = json.loads(negative_path.read_text(encoding="utf-8"))
@@ -137,23 +173,48 @@ def execute(private_root: Path, report: Path) -> None:
         raise RuntimeError("ISSUE107_ORDERED_REVOKE_NEGATIVE_MISSING")
     historical = store.get(project_id, record["id"], principal=controller.PRINCIPAL)
     replay_after_revoke = store.qualify_runtime_tools(
-        project_id, {"id": reviewer["id"], "revision": reviewer["revision"]},
-        principal=controller.PRINCIPAL, command_key=COMMAND, suite_ref=controller.SUITE,
+        project_id,
+        {"id": reviewer["id"], "revision": reviewer["revision"]},
+        principal=controller.PRINCIPAL,
+        command_key=COMMAND,
+        suite_ref=controller.SUITE,
         validity_seconds=600,
     )
     counts_final = _counts(start, journal)
-    if historical["record"] != record or replay_after_revoke != record or counts_final != counts_before:
+    if (
+        historical["record"] != record
+        or replay_after_revoke != record
+        or counts_final != counts_before
+    ):
         raise RuntimeError("ISSUE107_ORDERED_HISTORY_OR_REPLAY_CHANGED")
-    report.write_text(json.dumps({
-        "schema_version": "karajan.issue107-ordered-driver-evidence.v1", "command": COMMAND,
-        "source_digest": controller.digest(source), "record_sha256": sha(record),
-        "counts": {"after_qualification": counts_before, "after_same_key_replay": counts_after_replay,
-                   "after_revoke_replay": counts_final},
-        "positive_binding": positive,
-        "revocation": {"reason": revocation["reason"], "history_readable": historical["record"] == record},
-        "negative": {"expected_revoke_reason_observed": negative["expected_revoke_reason_observed"],
-                     "reason_codes": negative["result"]["reason_codes"]},
-    }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    report.write_text(
+        json.dumps(
+            {
+                "schema_version": "karajan.issue107-ordered-driver-evidence.v1",
+                "command": COMMAND,
+                "source_digest": controller.digest(source),
+                "record_sha256": sha(record),
+                "counts": {
+                    "after_qualification": counts_before,
+                    "after_same_key_replay": counts_after_replay,
+                    "after_revoke_replay": counts_final,
+                },
+                "positive_binding": positive,
+                "revocation": {
+                    "reason": revocation["reason"],
+                    "history_readable": historical["record"] == record,
+                },
+                "negative": {
+                    "expected_revoke_reason_observed": negative["expected_revoke_reason_observed"],
+                    "reason_codes": negative["result"]["reason_codes"],
+                },
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
 
 def main() -> None:
@@ -165,7 +226,9 @@ def main() -> None:
     if args.mode == "dry-run":
         document = plan()
         document["static_order_assertions"] = verify_static_order()
-        args.report.write_text(json.dumps(document, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        args.report.write_text(
+            json.dumps(document, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
     else:
         execute(args.private_root, args.report)
 
