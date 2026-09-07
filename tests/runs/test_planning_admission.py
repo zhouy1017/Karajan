@@ -1,6 +1,8 @@
 """C evidence for durable planning admission; no provider is contacted."""
 
 import json
+import shutil
+import sys
 import time
 from collections.abc import Callable
 from copy import deepcopy
@@ -11,9 +13,9 @@ import pytest
 from karajan.capacity import CapacityStore
 from karajan.orchestration.planning_admission import (
     COMMANDER_QUALIFICATION_SCOPE,
-    PLANNING_ADMISSION_BOOTSTRAP,
     PlanningAdmissionAuthority,
 )
+from karajan.orchestration.planning_bootstrap import PLANNING_ADMISSION_BOOTSTRAP
 from karajan.orchestration.planning_execution import PlanningExecution
 from karajan.runs import RunError, RunPlanner
 from karajan.runs.planning import digest
@@ -444,26 +446,54 @@ def test_controller_accepts_exact_unknown_receipt_completion(
     assert completed["reason_codes"] == ["PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE"]
 
 
+def _protected_factory_control(tmp_path: Path, authority: PlanningAdmissionAuthority) -> Path:
+    """Copy complete existing stores into a Linux-private controller deployment."""
+    state = tmp_path / "protected-state"
+    state.mkdir(mode=0o700)
+    for source, name in (
+        (authority.planner.database, "runs.sqlite"),
+        (authority.execution_database, "planning-execution.sqlite"),
+        (authority.database, "planning-admission.sqlite"),
+        (authority.capacity.path, "capacity.sqlite"),
+        (authority.planner.projects.database, "projects.sqlite"),
+    ):
+        destination = state / name
+        shutil.copy2(source, destination)
+        destination.chmod(0o600)
+    control = tmp_path / "protected-control"
+    control.mkdir(mode=0o700)
+    descriptor = {
+        "schema_version": "karajan.planning-admission-bootstrap.v1",
+        "state_directory": str(state),
+        "planning_execution_database": str(state / "planning-execution.sqlite"),
+        "planning_admission_database": str(state / "planning-admission.sqlite"),
+        "capacity_database": str(state / "capacity.sqlite"),
+        "projects_database": str(state / "projects.sqlite"),
+        "allowed_roots": [str(tmp_path)],
+    }
+    path = control / PLANNING_ADMISSION_BOOTSTRAP
+    path.write_text(json.dumps(descriptor), encoding="utf-8")
+    path.chmod(0o600)
+    return control
+
+
+def test_persistent_factory_missing_descriptor_rejects_without_creating_stores(
+    tmp_path: Path,
+) -> None:
+    control = tmp_path / "empty-control"
+    control.mkdir()
+    with pytest.raises(RunError, match="^PLANNING_ADMISSION_BOOTSTRAP_INVALID$"):
+        PlanningExecution.from_trusted_factory(control)
+    assert list(control.iterdir()) == []
+    assert not list(tmp_path.glob("*.sqlite"))
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
 def test_persistent_factory_rebuilds_production_reader_and_reserves_nothing_without_commander(
     configured: dict, tmp_path: Path
 ) -> None:
     _, authority, _, execution = _case(tmp_path, configured)
-    control = tmp_path / "control"
-    control.mkdir()
-    (control / PLANNING_ADMISSION_BOOTSTRAP).write_text(
-        json.dumps(
-            {
-                "schema_version": "karajan.planning-admission-bootstrap.v1",
-                "state_directory": str(tmp_path),
-                "planning_execution_database": str(authority.execution_database),
-                "planning_admission_database": str(authority.database),
-                "capacity_database": str(authority.capacity.path),
-                "projects_database": str(authority.planner.projects.database),
-                "allowed_roots": [str(tmp_path)],
-            }
-        ),
-        encoding="utf-8",
-    )
+    control = _protected_factory_control(tmp_path, authority)
     service = PlanningExecution.from_trusted_factory(control)
     assert service.admissions is not None
     production = service.admissions.advance(execution["id"], "owner", "factory-admit")
@@ -472,6 +502,20 @@ def test_persistent_factory_rebuilds_production_reader_and_reserves_nothing_with
     assert authority.capacity.snapshot()["reservations"] == []
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
+def test_persistent_factory_requires_complete_existing_store_set(
+    configured: dict, tmp_path: Path
+) -> None:
+    _, authority, _, _ = _case(tmp_path, configured)
+    control = _protected_factory_control(tmp_path, authority)
+    missing = tmp_path / "protected-state" / "planning-execution.sqlite"
+    missing.unlink()
+    with pytest.raises(RunError, match="^PLANNING_ADMISSION_BOOTSTRAP_INVALID$"):
+        PlanningExecution.from_trusted_factory(control)
+    assert not missing.exists()
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
 def test_fixture_admission_cannot_be_relabelled_after_production_reopen(
     configured: dict, tmp_path: Path
 ) -> None:
@@ -479,22 +523,7 @@ def test_fixture_admission_cannot_be_relabelled_after_production_reopen(
     admitted = authority.advance(execution["id"], "owner", "fixture-admit")
     assert admitted["phase"] == "admitted"
     assert authority.read_admission(execution["binding"])["authority_kind"] == "fixture"
-    control = tmp_path / "control"
-    control.mkdir()
-    (control / PLANNING_ADMISSION_BOOTSTRAP).write_text(
-        json.dumps(
-            {
-                "schema_version": "karajan.planning-admission-bootstrap.v1",
-                "state_directory": str(tmp_path),
-                "planning_execution_database": str(authority.execution_database),
-                "planning_admission_database": str(authority.database),
-                "capacity_database": str(authority.capacity.path),
-                "projects_database": str(authority.planner.projects.database),
-                "allowed_roots": [str(tmp_path)],
-            }
-        ),
-        encoding="utf-8",
-    )
+    control = _protected_factory_control(tmp_path, authority)
     production = PlanningExecution.from_trusted_factory(control)
     assert production.admissions is not None
     with pytest.raises(RunError, match="PLANNING_ADMISSION_PROVENANCE_FORBIDDEN"):

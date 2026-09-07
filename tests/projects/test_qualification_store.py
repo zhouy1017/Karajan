@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 from karajan.projects import ProjectError, ProjectRegistry
 from karajan.projects.qualification import ProfileQualificationStore, QualificationError
+from karajan.runs.planning import digest
 
 
 @pytest.fixture
@@ -95,6 +96,103 @@ def facts(case: dict, **kwargs: object) -> dict:
         fixture_root=case["root"],
         **kwargs,
     )
+
+
+def _commander_start(
+    store: ProfileQualificationStore,
+    case: dict,
+    *,
+    identity: str,
+    source: dict,
+    provenance: str | None,
+) -> None:
+    """Persist a sealed synthetic #113-shaped record only for reader C negatives."""
+    with store._owned(case["project_id"], "owner") as db:
+        bound = store._binding(db, case["project_id"], {"id": "fixture-profile", "revision": 1})
+        start = {
+            "qualification_scope": "commander_planning.v1",
+            "profile_binding": bound,
+            "source": source,
+            "execution_start": {"synthetic": identity},
+        }
+        db.execute(
+            "INSERT INTO profile_qualification_starts VALUES (?,?,?,?,?,?)",
+            (
+                identity,
+                case["project_id"],
+                "owner",
+                "commander-" + identity,
+                identity,
+                json.dumps(start),
+            ),
+        )
+        db.execute(
+            "INSERT INTO profile_qualification_start_seals VALUES (?,?)", (identity, digest(start))
+        )
+        if provenance is None:
+            return
+        profile = bound["registration"]["profile"]
+        facts = {
+            "profile": {"id": profile["id"], "revision": profile["revision"]},
+            "profile_digest": digest(profile),
+            "runtime_version": "synthetic",
+            "roles": ["commander"],
+            "tools": ["fixture-tools"],
+            "context_tokens": 8192,
+            "data_destination": "local-fixture",
+            "budget_enforcement": "bounded_calls",
+            "provenance": "fixture",
+            "evidence_ref": "fixture:commander",
+            "observed_at": 1000.0,
+            "valid_until": 2000.0,
+        }
+        record = {
+            "id": identity,
+            "binding": start,
+            "qualification_scope": "commander_planning.v1",
+            "status": "passed",
+            "provenance": provenance,
+            "observed_at": 1000.0,
+            "valid_until": 2000.0,
+            "commander_facts": {
+                "profile_facts": facts,
+                "capability_evidence": [],
+                "source_generation_sha256": digest(source),
+            },
+        }
+        db.execute(
+            "INSERT INTO profile_qualification_records VALUES (?,?,?)",
+            (identity, json.dumps(record), digest(record)),
+        )
+
+
+def test_commander_reader_uses_latest_sealed_record_and_never_upgrades_fixture(case: dict) -> None:
+    source = {"schema_version": "synthetic-source.v1", "generation": "one"}
+    store = ProfileQualificationStore(
+        case["projects"],
+        clock=lambda: case["clock"][0],
+        commander_source=lambda _db, _project, _current, _principal: source,
+    )
+    # An older qualifying-looking official record exists. A newer incomplete
+    # start must block it, proving the reader does not fall back to a pass.
+    _commander_start(store, case, identity="commander-old", source=source, provenance="official")
+    _commander_start(store, case, identity="commander-new", source=source, provenance=None)
+    with store.commander_facts_guard(
+        case["project_id"], case["registration"], principal="owner",
+        scope="commander_planning.v1", reader_version="karajan.commander-qualification-reader.v1"
+    ) as current:
+        assert current is None
+
+    # A completed fixture observation remains a fixture on persistent reread;
+    # it cannot be relabelled by a production reader or descriptor.
+    other = {"schema_version": "synthetic-source.v1", "generation": "two"}
+    store.commander_source = lambda _db, _project, _current, _principal: other
+    _commander_start(store, case, identity="commander-fixture", source=other, provenance="fixture")
+    with store.commander_facts_guard(
+        case["project_id"], case["registration"], principal="owner",
+        scope="commander_planning.v1", reader_version="karajan.commander-qualification-reader.v1"
+    ) as current:
+        assert current is None
 
 
 def test_public_qualification_persists_real_process_observation_and_revocation(case: dict) -> None:

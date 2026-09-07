@@ -9,7 +9,7 @@ frozen planning budget, never to a Plan, an intent, or a transport grant.
 import json
 import sqlite3
 from collections.abc import Iterator
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from copy import deepcopy
 from pathlib import Path
 from typing import Any, Protocol
@@ -25,7 +25,6 @@ from karajan.runs.planning import digest, encoded, identifier
 from karajan.storage import open_database, require_schema
 
 from .planning_bootstrap import (
-    PLANNING_ADMISSION_BOOTSTRAP,
     assert_planning_bootstrap_current,
     read_planning_bootstrap,
 )
@@ -102,14 +101,12 @@ class PersistentCommanderQualificationReader:
             "runtime": runtime,
         }
 
-    def read_commander(
-        self, binding: dict[str, Any], *, scope: str, reader_version: str
+    @staticmethod
+    def _registration(
+        run: dict[str, Any], binding: dict[str, Any]
     ) -> dict[str, Any] | None:
-        # The reader opens the existing Project qualification ledger. A missing
-        # #113 source/record is an explicit no-fact result, never a conversion
-        # of frozen declaration or Worker/Reviewer observations.
-        run = self.planner.get(binding["run_id"], principal=binding["owner"])
-        registration = next(
+        """Resolve the frozen Commander profile without inventing a Plan."""
+        return next(
             (
                 row
                 for row in run["configuration_snapshot"]["configuration"]["resources"]["profiles"]
@@ -117,8 +114,26 @@ class PersistentCommanderQualificationReader:
             ),
             None,
         )
+
+    @contextmanager
+    def current_guard_locked(
+        self,
+        binding: dict[str, Any],
+        run: dict[str, Any],
+        *,
+        scope: str,
+        reader_version: str,
+    ) -> Iterator[dict[str, Any] | None]:
+        """Hold current Project qualification facts through one actual effect.
+
+        ``run`` comes only from the caller's already-held activation guard.  It
+        is intentionally a private locked seam: public callers continue to
+        provide IDs only and can never substitute an authority snapshot.
+        """
+        registration = self._registration(run, binding)
         if registration is None:
-            return None
+            yield None
+            return
         with self.qualifications.commander_facts_guard(
             run["project_id"],
             registration,
@@ -127,14 +142,30 @@ class PersistentCommanderQualificationReader:
             reader_version=reader_version,
         ) as current:
             if current is None:
-                return None
-            return {
+                yield None
+                return
+            yield {
                 "schema_version": "karajan.commander-qualification.v1",
                 "scope": scope,
                 "reader_version": reader_version,
                 "binding_sha256": digest(binding),
                 **current,
             }
+
+    def read_commander(
+        self, binding: dict[str, Any], *, scope: str, reader_version: str
+    ) -> dict[str, Any] | None:
+        # The reader opens the existing Project qualification ledger. A missing
+        # #113 source/record is an explicit no-fact result, never a conversion
+        # of frozen declaration or Worker/Reviewer observations.
+        run = self.planner.get(binding["run_id"], principal=binding["owner"])
+        with self.current_guard_locked(
+            binding,
+            run,
+            scope=scope,
+            reader_version=reader_version,
+        ) as current:
+            return current
 
 
 def open_persistent_planning_admission(control_directory: Path) -> "PlanningAdmissionAuthority":
@@ -145,6 +176,13 @@ def open_persistent_planning_admission(control_directory: Path) -> "PlanningAdmi
     )
     planner = RunPlanner(settings.state_directory / "runs.sqlite", projects, existing_only=True)
     capacity = CapacityStore(settings.capacity_database, existing_only=True)
+    require_schema(
+        settings.planning_execution_database,
+        {
+            "executions": ["id", "run_id", "intent_id", "state", "data"],
+            "commands": ["principal", "key", "payload", "result"],
+        },
+    )
     qualifications = ProfileQualificationStore(projects, commander_reader_only=True)
     reader = PersistentCommanderQualificationReader(
         planner, qualifications, control_directory=settings.control_directory
@@ -248,7 +286,9 @@ class PlanningAdmissionAuthority:
 
     def _assert_bootstrap_current(self) -> None:
         if self.bootstrap_sha256 is not None and self.bootstrap_control_directory is not None:
-            assert_planning_bootstrap_current(self.bootstrap_control_directory, self.bootstrap_sha256)
+            assert_planning_bootstrap_current(
+                self.bootstrap_control_directory, self.bootstrap_sha256
+            )
 
     @contextmanager
     def _transaction(self) -> Iterator[sqlite3.Connection]:
@@ -689,7 +729,20 @@ class PlanningAdmissionAuthority:
         if row is None:
             raise RunError("PLANNING_BUDGET_USAGE_MISSING")
         usage = dict(json.loads(row["data"]))
-        if self.planner.clock() >= usage["started_at"] + record["budget"]["max_duration_seconds"]:
+        self._assert_budget_deadline(record, usage)
+
+    def _assert_budget_deadline(self, record: dict[str, Any], usage: dict[str, Any]) -> None:
+        """Check the durable first-claim clock without opening a nested store.
+
+        Capacity invokes this while it already owns its write transaction.  The
+        usage is the sealed claim recorded before the Capacity request; only
+        its immutable first-claim clock is needed at that narrow boundary.
+        """
+        if (
+            not isinstance(usage.get("started_at"), (int, float))
+            or self.planner.clock()
+            >= usage["started_at"] + record["budget"]["max_duration_seconds"]
+        ):
             raise RunError("PLANNING_BUDGET_EXPIRED")
 
     @staticmethod
@@ -844,6 +897,7 @@ class PlanningAdmissionAuthority:
         """Recover exactly one original request; no receipt can be caller-supplied."""
         for value in (execution_id, principal, command_key):
             identifier(value)
+        self._assert_bootstrap_current()
         binding = self._execution_binding(execution_id, principal)
         run = self.planner.get(binding["run_id"], principal=principal)
         payload = encoded([execution_id, digest(binding)])
@@ -1046,10 +1100,23 @@ class PlanningAdmissionAuthority:
         if not dispatch_admit:
             return self._finish_command(record, principal, command_key, payload)
         try:
-            receipt = self.capacity.command_receipt(
-                "admit", request, command_key=record["capacity_command_key"]
-            ) or self.capacity.admit(request, command_key=record["capacity_command_key"])
-        except CapacityError as error:
+            # Run stays held before Capacity.  The callback runs after Capacity
+            # accepts the exact request but before it writes a reservation, so
+            # a clock that crossed the original Run's first-claim deadline
+            # cannot create a late reservation.
+            with self.planner.activation_guard(binding["run_id"]) as held_run:
+                self._run_intent_from_run(held_run, binding, principal)
+                self._budget_live(record)
+                receipt = self.capacity.command_receipt(
+                    "admit", request, command_key=record["capacity_command_key"]
+                ) or self.capacity.admit(
+                    request,
+                    command_key=record["capacity_command_key"],
+                    before_reserve=lambda: self._assert_budget_deadline(
+                        record, record["budget_usage"]
+                    ),
+                )
+        except (CapacityError, RunError) as error:
             return self._finish_command(
                 self._deny(record, str(error)), principal, command_key, payload
             )
@@ -1131,6 +1198,7 @@ class PlanningAdmissionAuthority:
         for value in (execution_id, principal, effect_id):
             identifier(value)
         with self._execution_guard(execution_id, principal) as binding:
+            self._assert_bootstrap_current()
             record = self.advance(execution_id, principal, "planning-guard:" + effect_id)
             if record["phase"] != "admitted" or record["binding"] != binding:
                 raise RunError("PLANNING_EFFECT_NOT_ADMITTED")
@@ -1139,26 +1207,46 @@ class PlanningAdmissionAuthority:
             # guard supplies its snapshot so no public getter re-enters it.
             with self.planner.activation_guard(binding["run_id"]) as held_run:
                 self._run_intent_from_run(held_run, binding, principal)
-                self._budget_live(record)
-                qualification = self.qualifications.read_commander(
-                    binding,
-                    scope=COMMANDER_QUALIFICATION_SCOPE,
-                    reader_version=COMMANDER_QUALIFICATION_READER_VERSION,
+                reader_guard = getattr(self.qualifications, "current_guard_locked", None)
+                qualification_guard = (
+                    reader_guard(
+                        binding,
+                        held_run,
+                        scope=COMMANDER_QUALIFICATION_SCOPE,
+                        reader_version=COMMANDER_QUALIFICATION_READER_VERSION,
+                    )
+                    if callable(reader_guard)
+                    else nullcontext(
+                        self.qualifications.read_commander(
+                            binding,
+                            scope=COMMANDER_QUALIFICATION_SCOPE,
+                            reader_version=COMMANDER_QUALIFICATION_READER_VERSION,
+                        )
+                    )
                 )
-                if not isinstance(qualification, dict) or qualification != record["qualification"]:
-                    raise RunError("COMMANDER_QUALIFICATION_CHANGED")
-                if qualification["valid_until"] <= self.planner.clock():
-                    raise RunError("COMMANDER_QUALIFICATION_EXPIRED")
-                with self.capacity.pre_effect_guard(
-                    record["capacity_receipt"]["admission_id"],
-                    expected_request=record["capacity_request"],
-                ) as capacity:
-                    yield {
-                        "execution_id": execution_id,
-                        "binding_sha256": record["binding_sha256"],
-                        "attempt_id": binding["attempt_id"],
-                        "fence": binding["fence"],
-                        "source_generation_sha256": qualification["source_generation_sha256"],
-                        "budget_identity": record["budget_identity"],
-                        "capacity": capacity,
-                    }
+                with qualification_guard as qualification:
+                    if (
+                        not isinstance(qualification, dict)
+                        or qualification != record["qualification"]
+                    ):
+                        raise RunError("COMMANDER_QUALIFICATION_CHANGED")
+                    if qualification["valid_until"] <= self.planner.clock():
+                        raise RunError("COMMANDER_QUALIFICATION_EXPIRED")
+                    # Project qualification remains held until Capacity has
+                    # revalidated the reservation and the caller's effect
+                    # exits. The deadline is deliberately checked after the
+                    # Capacity transaction has acquired its effect lock.
+                    with self.capacity.pre_effect_guard(
+                        record["capacity_receipt"]["admission_id"],
+                        expected_request=record["capacity_request"],
+                    ) as capacity:
+                        self._assert_budget_deadline(record, record["budget_usage"])
+                        yield {
+                            "execution_id": execution_id,
+                            "binding_sha256": record["binding_sha256"],
+                            "attempt_id": binding["attempt_id"],
+                            "fence": binding["fence"],
+                            "source_generation_sha256": qualification["source_generation_sha256"],
+                            "budget_identity": record["budget_identity"],
+                            "capacity": capacity,
+                        }
