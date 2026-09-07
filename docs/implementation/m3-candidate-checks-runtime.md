@@ -34,3 +34,33 @@ Host 运行固定的 `_candidate_check_runner.py`，采用 controller Python 的
 139 份实际 backend 来源在执行前后及五份持久执行描述中一致。
 
 规划/作者/资格替身只证明相应 C/P 边界；真实 Commander 桥属于 [#93](https://github.com/zhouy1017/Karajan/issues/93)，真实只读 Reviewer 及其 Review Evidence 属于 [#95](https://github.com/zhouy1017/Karajan/issues/95)，生产 GitHub 交付仍属于 #14。不能把固定测试部署提升为正式正向资格或用本地报告宣布当前 PR CI/G 完成。本票不调用推理服务。
+
+## #123：丢失 Popen 回复期间的 init receipt（P，2026-09-07）
+
+实现候选为 `450339b492ba3fb9f9c1ff7fa7b852a8ccd0e465`，基线为
+`6cf89abc1a6ca8cb99d76f82191dc7d82efeb05b`。原始失败是
+[PR #121 的 Ubuntu job 101641094674](https://github.com/zhouy1017/Karajan/actions/runs/34089902981/job/101641094674)：真实
+`Popen` 已启动而回复丢失后，namespace child 在原地写
+`namespace-init.json`，controller 的 `regular()` 在读前/后元数据变化时正确报
+`CHECK_ASSET_CHANGED`，但恢复轮询曾让该错误逃出。相同 SHA 的另一运行通过，故该
+记录证明时序竞态，并不表示每个环境都必现。
+
+`FixedCheckRunner._init()` 现在只把这个精确的变化错误视为 receipt 尚未可观测；丢失
+回复路径最多轮询一秒，然后保留 `unknown`。它不会再次 `Popen`，也不会给出
+`not_started` 或退款语义。其他 `regular()` 错误、JSON/身份冲突仍按原有拒绝路径处理；
+文件类型、symlink、hardlink、inode、尺寸和哈希守卫没有改变。
+
+在现有离线 WSL Linux venv 和真实 `unshare` namespace 中运行：
+
+```text
+PYTHONPATH=backend .../venv/bin/python -m pytest \
+  tests/isolation/test_check_runner.py -q \
+  -k "lost_actual_popen_reply or init_keeps_nontransient_asset_guard"
+2 passed, 18 deselected
+```
+
+该反例实际创建 namespace child、合成丢失的 `Popen` 回复，并在首次 receipt 读取精确
+注入 `CHECK_ASSET_CHANGED`：移除本候选处理时它稳定失败，恢复后通过且只观察到一次
+`Popen`。相邻反例以 symlink receipt 断言 `CHECK_ASSET_NOT_REGULAR` 仍然抛出。Windows
+不能替代该 P 证据；Windows Python 仅运行 `ruff` 和 `mypy`（均通过）。本地 P 结果不构成
+新的 G 或真实来源 S 资格；当前候选仍须独立审查和新候选 GitHub CI。

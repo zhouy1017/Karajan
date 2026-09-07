@@ -1,0 +1,68 @@
+{
+  "candidate": "205cd9063e14ad516c1a21cb1d62f674bda75885",
+  "base": "6cf89abc1a6ca8cb99d76f82191dc7d82efeb05b",
+  "inheritance": [
+    {
+      "path": "backend/karajan/isolation/check_runner.py",
+      "reviewed_source": "88dcd37a851c743ec0f18788ff8e6934fee9583a",
+      "byte_identical": true,
+      "sha256": "b4686a942506515d8c64cfb05c4817d6c38c9f6cb8878493b6eaf2101de11847"
+    },
+    {
+      "path": "tests/isolation/test_check_runner.py",
+      "reviewed_source": "88dcd37a851c743ec0f18788ff8e6934fee9583a",
+      "byte_identical": true,
+      "sha256": "c546d08d19f4aaecd348af4000e2b80848184a8dd29301fa7eabe3ffac99b35f"
+    },
+    {
+      "path": "docs/implementation/m3-candidate-checks-runtime.md",
+      "reviewed_source": "88dcd37a851c743ec0f18788ff8e6934fee9583a",
+      "byte_identical": true,
+      "sha256": "2bd59e23e2eefe9b03412ed3c7afccdfcf2fedb893d36fbf783f5faca1776279"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "reviewed_source": "e0a3f35e7e601d0666962e7065b77c360893d37b",
+      "byte_identical": true,
+      "sha256": "e846b2aac080a4825a4845812176bfe5adc06ae2d9b73b661e9088c311ff0fea"
+    },
+    {
+      "path": "docs/implementation/ci-quality-budget.md",
+      "reviewed_source": "e0a3f35e7e601d0666962e7065b77c360893d37b",
+      "byte_identical": true,
+      "sha256": "d45e805b88a33631cc9884b0d0a6ebe7c6f2297c73d8325028810642c0b94015"
+    },
+    {
+      "path": "docs/planning/ci-recovery-20260907/.gitattributes",
+      "reviewed_source": "e0a3f35e7e601d0666962e7065b77c360893d37b",
+      "byte_identical": true,
+      "sha256": "95718e04018526bd65c4289f0d4302509e4dfe5b50b1d03e67ad0e17f680bce9"
+    },
+    {
+      "path": "docs/planning/ci-recovery-20260907/publication.json",
+      "reviewed_source": "e0a3f35e7e601d0666962e7065b77c360893d37b",
+      "byte_identical": true,
+      "sha256": "23beb4e44aad8866cdfc28db7f8faa6f9beab1eac6f7cab979f0cce5d563e17c"
+    },
+    {
+      "path": "docs/planning/ci-recovery-20260907/issue-122.md",
+      "reviewed_source": "e0a3f35e7e601d0666962e7065b77c360893d37b",
+      "byte_identical": true,
+      "sha256": "9e10ff664751bc559e0ba85c6b5d20b804018fa421dfd10e5e2821ff89cebbb7"
+    },
+    {
+      "path": "docs/planning/ci-recovery-20260907/issue-123.md",
+      "reviewed_source": "e0a3f35e7e601d0666962e7065b77c360893d37b",
+      "byte_identical": true,
+      "sha256": "905837829616b9ba2ac68aa77b5686d358356a4dd68a62e1632be079f480908a"
+    }
+  ],
+  "changed_since_previous_review": [
+    ".github/scripts/provision_go_tokenizer.py",
+    "docs/implementation/go-tokenizer-provision.md",
+    "tests/tools/test_go_tokenizer_provision_retry.py"
+  ],
+  "unreviewed_extra_paths": [],
+  "head_verified": "205cd9063e14ad516c1a21cb1d62f674bda75885",
+  "reviewed_doc_delta": "go-tokenizer-provision.md accurately describes numeric gaierror protocol, EAI_AGAIN retry and deterministic other errors"
+}

@@ -1,0 +1,108 @@
+{
+  "candidate": "205cd9063e14ad516c1a21cb1d62f674bda75885",
+  "base": "6cf89abc1a6ca8cb99d76f82191dc7d82efeb05b",
+  "result": "Spec passed for 120/122/123; zero unresolved findings; CI/merge separate",
+  "current_independent_checks": 10,
+  "current_regression_passed": 31,
+  "inherited_real_HTTPS_passed": 12,
+  "files": [
+    {
+      "original": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-120\\review_205_dns.py",
+      "file": "review_205_dns.py.txt",
+      "bytes": 4020,
+      "sha256": "2ad5fd3cbc186096b03076073b300211badadab915bd337872f163e945780d5c",
+      "applicability": "current candidate"
+    },
+    {
+      "original": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-120\\review_205_protocol.py",
+      "file": "review_205_protocol.py.txt",
+      "bytes": 2645,
+      "sha256": "9830490a04fd10bd9e10562feddfdf2b7108058bb50868aae913b68d81a4abb2",
+      "applicability": "current candidate"
+    },
+    {
+      "original": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-120\\test_spec_boundaries.py",
+      "file": "test_spec_boundaries.py.txt",
+      "bytes": 2289,
+      "sha256": "a76e54460561ebcb6f3d1f756ba98e118c5cd24b093cfcb4eafb74590b8d8b7b",
+      "applicability": "current candidate"
+    },
+    {
+      "original": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-120\\final-205-dns.json",
+      "file": "final-205-dns.json",
+      "bytes": 1580,
+      "sha256": "b68a557c19281dd2d921960f9d6ee7a8dc6f806161b9e4f496821b9e459e8b65",
+      "applicability": "current candidate"
+    },
+    {
+      "original": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-120\\final-205-dns.stderr.txt",
+      "file": "final-205-dns.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "applicability": "current candidate"
+    },
+    {
+      "original": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-120\\final-205-protocol.json",
+      "file": "final-205-protocol.json",
+      "bytes": 1545,
+      "sha256": "bd19a7c96d322ff01fd8ac145d395d4f247d376dac3dff56fa3114491434e404",
+      "applicability": "current candidate"
+    },
+    {
+      "original": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-120\\final-205-protocol.stderr.txt",
+      "file": "final-205-protocol.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "applicability": "current candidate"
+    },
+    {
+      "original": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-120\\final-205-regression.txt",
+      "file": "final-205-regression.txt",
+      "bytes": 101,
+      "sha256": "315d23cdb170fdfabe066e6123c08bef15c8edbb9507739e423fe69a56ae34cb",
+      "applicability": "current candidate"
+    },
+    {
+      "original": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-120\\final-205-regression.xml",
+      "file": "final-205-regression.xml",
+      "bytes": 5625,
+      "sha256": "f3beff110a5640b75bf8bd89327688a6942deefc8ed7ba1496e434728b784fff",
+      "applicability": "current candidate"
+    },
+    {
+      "original": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-120\\final-205-inheritance.json",
+      "file": "final-205-inheritance.json",
+      "bytes": 2951,
+      "sha256": "a1935164eb9390d2f6f7af02c5e7a4e451e24b846cf7e2750ce90ee00b075671",
+      "applicability": "current candidate"
+    },
+    {
+      "original": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-120\\final-205-review.md",
+      "file": "final-205-review.md",
+      "bytes": 4590,
+      "sha256": "502d85b3dac728b9289b9170a4271b5ace2e556b3153867f09799e52f5d62b63",
+      "applicability": "current candidate"
+    },
+    {
+      "original": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-120\\final_aee_loopback.py",
+      "file": "final_aee_loopback.py.txt",
+      "bytes": 6875,
+      "sha256": "95a21f900b7f32ba93bcbcab087b599b44e058efe615408696227d42e2d154ae",
+      "applicability": "inherited aee3 HTTPS unchanged transport"
+    },
+    {
+      "original": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-120\\final-aee-loopback.json",
+      "file": "final-aee-loopback.json",
+      "bytes": 4115,
+      "sha256": "979c234a06a48793716e88ab733e8649a48fde87859cfc8c5544b54d7454aa24",
+      "applicability": "inherited aee3 HTTPS unchanged transport"
+    },
+    {
+      "original": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-120\\final-aee-loopback.stderr.txt",
+      "file": "final-aee-loopback.stderr.txt",
+      "bytes": 4245,
+      "sha256": "58b4f6a58b394f04354982e38ca7a0b7276640c30754fff13e8e7ab432667155",
+      "applicability": "inherited aee3 HTTPS unchanged transport"
+    }
+  ]
+}

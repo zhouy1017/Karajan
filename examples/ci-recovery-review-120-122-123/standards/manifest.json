@@ -1,0 +1,65 @@
+{
+  "candidate": "205cd9063e14ad516c1a21cb1d62f674bda75885",
+  "files": [
+    {
+      "path": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\dispatch-tokenizer-ci\\.cache\\standards-205cd90\\linux-execution.json",
+      "bytes": 526,
+      "sha256": "c32556c6c640d5dc4dcf65e0bd05883461f2815eca89e4a98ad6896a613eb8c8"
+    },
+    {
+      "path": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\dispatch-tokenizer-ci\\.cache\\standards-205cd90\\linux.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\dispatch-tokenizer-ci\\.cache\\standards-205cd90\\linux.stdout.log",
+      "bytes": 98,
+      "sha256": "74c59642f4da8a65cb8c00a18e7314216212062e43e1d3a90a5bc51b2df6ef20"
+    },
+    {
+      "path": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\dispatch-tokenizer-ci\\.cache\\standards-205cd90\\review.md",
+      "bytes": 1964,
+      "sha256": "f207c161617285e33c84d8fe8a7e85d74d5864c657501dbc1b9e5098419ede90"
+    },
+    {
+      "path": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\dispatch-tokenizer-ci\\.cache\\standards-205cd90\\test_dns_protocol.py",
+      "bytes": 2227,
+      "sha256": "98fffb71f5ced19a2e73c16d6820525d80c37b54b4077821be68f2e259211fd4"
+    },
+    {
+      "path": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\dispatch-tokenizer-ci\\.cache\\standards-205cd90\\unchanged-execution.json",
+      "bytes": 621,
+      "sha256": "92b63edcb090ad5b5f6d5257f495da81d54e1eea9278809ed388208afb783de7"
+    },
+    {
+      "path": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\dispatch-tokenizer-ci\\.cache\\standards-205cd90\\unchanged.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\dispatch-tokenizer-ci\\.cache\\standards-205cd90\\unchanged.stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\dispatch-tokenizer-ci\\.cache\\standards-205cd90\\windows-execution.json",
+      "bytes": 565,
+      "sha256": "8001d53e75ea22f7572bf7f72fa99cb751050390b387776f8de92a19dedf0d4e"
+    },
+    {
+      "path": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\dispatch-tokenizer-ci\\.cache\\standards-205cd90\\windows.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\dispatch-tokenizer-ci\\.cache\\standards-205cd90\\windows.stdout.log",
+      "bytes": 101,
+      "sha256": "1f82f4c2174af7dd6d95c23bda37e9594b9c3339fa99a85cff0de7c17be1a10e"
+    },
+    {
+      "path": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\dispatch-tokenizer-ci\\.cache\\standards-aee3ca\\test_connection_boundaries.py",
+      "bytes": 1963,
+      "sha256": "fcd0012f3d8a84b2f957632fafb8f1484213fcca59620bac8418d80ba5435376"
+    }
+  ]
+}

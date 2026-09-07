@@ -1,0 +1,56 @@
+import importlib.util
+import json
+import socket
+import time
+from pathlib import Path
+
+import pytest
+
+spec = importlib.util.spec_from_file_location('provision_dns_review', Path('.github/scripts/provision_go_tokenizer.py'))
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+
+
+@pytest.mark.parametrize('code,attempts', [(socket.EAI_AGAIN, 3), (socket.EAI_NONAME, 1)])
+def test_actual_helper_and_cli_error_boundary(monkeypatch, tmp_path, capsys, code, attempts):
+    original_popen = module.subprocess.Popen
+    children = []
+    prefix = (
+        'import socket\n'
+        'def fail(*args, **kwargs):\n'
+        f'    raise socket.gaierror({code!r}, "synthetic-private-host-and-diagnostic")\n'
+        'socket.getaddrinfo = fail\n'
+    )
+
+    def popen(args, **kwargs):
+        assert kwargs['stderr'] == module.subprocess.DEVNULL
+        args = list(args)
+        args[2] = prefix + args[2]
+        child = original_popen(args, **kwargs)
+        children.append(child)
+        return child
+
+    monkeypatch.setattr(module.subprocess, 'Popen', popen)
+    monkeypatch.setattr(module, 'ARTIFACTS', {'fixture.bin': (1, '0' * 64)})
+    monkeypatch.setattr(module.sys, 'argv', ['provision', '--directory', str(tmp_path)])
+    assert module.main() == 1
+    assert len(children) == attempts
+    assert all(child.poll() is not None for child in children)
+    output = capsys.readouterr()
+    assert json.loads(output.out) == {'status': 'failed', 'reason': 'TOKENIZER_NETWORK_ERROR'}
+    assert output.err == ''
+    assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize('payload', [
+    {'status': 'synthetic-private-diagnostic'},
+    {'status': 'gaierror', 'code': 'synthetic-private-diagnostic'},
+    {'status': 'gaierror', 'code': None},
+    {'status': 'gaierror'},
+    {'status': 'ok', 'addresses': None},
+])
+def test_unrecognized_protocol_is_constant_deterministic_failure(monkeypatch, payload):
+    monkeypatch.setattr(module, '_RESOLVE_PROGRAM', 'print(' + repr(json.dumps(payload)) + ')')
+    with pytest.raises(OSError, match='^resolver failed$') as result:
+        module._resolve_addresses('localhost', 443, time.monotonic() + 5)
+    assert not isinstance(result.value, ConnectionError)

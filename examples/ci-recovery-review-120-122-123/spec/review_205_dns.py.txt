@@ -1,0 +1,67 @@
+"""Independent actual resolver-child and local TCP checks; no external traffic."""
+import hashlib
+import json
+from pathlib import Path
+import socket
+import subprocess
+import tempfile
+import time
+import types
+
+ROOT=Path(__file__).resolve().parents[2]
+SHA='205cd9063e14ad516c1a21cb1d62f674bda75885'
+source=subprocess.check_output(['git','show',SHA+':.github/scripts/provision_go_tokenizer.py'],cwd=ROOT)
+def module():
+    m=types.ModuleType('provision_review'); exec(compile(source,SHA,'exec'),m.__dict__); return m
+results=[]
+m=module(); started=time.monotonic()
+addresses=m._resolve_addresses('localhost',443,started+2)
+results.append({'case':'actual_localhost_child_resolution','elapsed':time.monotonic()-started,'addresses':addresses,'passed':bool(addresses) and all(socket.inet_pton(a[0],a[4][0]) for a in addresses)})
+
+m=module(); processes=[]; original=subprocess.Popen
+def observed(*args,**kwargs):
+    process=original(*args,**kwargs); processes.append(process); return process
+m.subprocess.Popen=observed
+m._RESOLVE_PROGRAM='import time; time.sleep(10)'
+started=time.monotonic(); reason=None
+try: m._resolve_addresses('localhost',443,started+0.15)
+except Exception as error: reason=type(error).__name__
+elapsed=time.monotonic()-started
+results.append({'case':'blocked_child_deadline_reap','elapsed':elapsed,'reason':reason,'process_count':len(processes),'all_reaped':all(p.poll() is not None for p in processes),'passed':reason=='TimeoutError' and elapsed<0.35 and all(p.poll() is not None for p in processes)})
+m.subprocess.Popen=original
+
+for transient in (True,False):
+    m=module(); processes=[]
+    # Real child exits with the platform's exact EAI_AGAIN / EAI_NONAME error;
+    # patching the fixed child source replaces external DNS with a controlled error.
+    name='EAI_AGAIN' if transient else 'EAI_NONAME'
+    m._RESOLVE_PROGRAM='import socket\ndef controlled(*args,**kwargs): raise socket.gaierror(socket.'+name+', "synthetic DNS result")\nsocket.getaddrinfo=controlled\n'+m._RESOLVE_PROGRAM
+    m.subprocess.Popen=observed
+    m.ARTIFACTS={'fixture.bin':(1,hashlib.sha256(b'x').hexdigest())}
+    m.DOWNLOAD_BUDGET_SECONDS=2
+    reason=None
+    with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as folder:
+        target=Path(folder); (target/'fixture.bin').write_bytes(b'old')
+        try: m.provision(target)
+        except Exception as error: reason=type(error).__name__+':'+str(error)
+        old=(target/'fixture.bin').read_bytes()==b'old'; clean=not list(target.glob('*.tmp'))
+    m.subprocess.Popen=original
+    results.append({'case':'dns_'+name,'actual_child_attempts':len(processes),'expected_child_attempts':3 if transient else 1,'reason':reason,'old_preserved':old,'temp_clean':clean,'passed':len(processes)==(3 if transient else 1) and old and clean})
+
+m=module()
+with socket.socket() as refused:
+    refused.bind(('127.0.0.1',0)); refused_address=refused.getsockname()
+with socket.socket() as listener:
+    listener.bind(('127.0.0.1',0)); listener.listen()
+    success_address=listener.getsockname()
+    m._resolve_addresses=lambda *args:[(socket.AF_INET,socket.SOCK_STREAM,socket.IPPROTO_TCP,'',refused_address),(socket.AF_INET,socket.SOCK_STREAM,socket.IPPROTO_TCP,'',success_address)]
+    connection=m._DeadlineHTTPConnection('localhost',timeout=1,deadline=time.monotonic()+0.3)
+    started=time.monotonic()
+    connected=None; reason=None
+    try: connected=connection._deadline_create_connection(('localhost',443))
+    except TimeoutError: reason='TimeoutError'
+    elapsed=time.monotonic()-started
+    if connected is not None:
+        accepted,_=listener.accept(); accepted.close(); connected.close()
+    results.append({'case':'real_TCP_multiple_addresses_shared_budget','elapsed':elapsed,'reason':reason,'passed':elapsed<0.4})
+print(json.dumps({'candidate':SHA,'external_traffic':False,'scope':'actual localhost DNS child, controlled DNS error child, real TCP loopback','results':results},indent=2))
