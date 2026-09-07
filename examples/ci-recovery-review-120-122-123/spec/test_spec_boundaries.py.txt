@@ -1,0 +1,57 @@
+import hashlib
+import importlib.util
+import io
+from pathlib import Path
+import ssl
+from urllib.error import URLError
+
+import pytest
+
+CANDIDATE = Path(__file__).resolve().parents[1] / 'dispatch-tokenizer-ci'
+spec = importlib.util.spec_from_file_location('review_tokenizer_provision', CANDIDATE / '.github/scripts/provision_go_tokenizer.py')
+script = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(script)
+
+@pytest.fixture
+def small(monkeypatch):
+    data = b'fixed bytes'
+    monkeypatch.setattr(script, 'ARTIFACTS', {'fixture.bin': (len(data), hashlib.sha256(data).hexdigest())})
+    return data
+
+def test_final_read_crossing_deadline_must_not_publish(monkeypatch, tmp_path, small):
+    clock = [0.0]
+    monkeypatch.setattr(script.time, 'monotonic', lambda: clock[0])
+    class LateEOF(io.BytesIO):
+        def read(self, amount=-1):
+            if self.tell():
+                clock[0] = 181.0
+                return b''
+            clock[0] = 179.0
+            return super().read(amount)
+    with pytest.raises(script.ProvisionError, match='TOKENIZER_DOWNLOAD_TIMEOUT'):
+        script.provision(tmp_path, open_url=lambda _: LateEOF(small))
+    assert not (tmp_path / 'fixture.bin').exists()
+
+def test_production_connect_uses_remaining_shared_budget(monkeypatch, tmp_path, small):
+    clock = [0.0]
+    monkeypatch.setattr(script.time, 'monotonic', lambda: clock[0])
+    timeouts = []
+    class Opener:
+        def open(self, request, timeout):
+            timeouts.append(timeout)
+            if len(timeouts) == 1:
+                clock[0] = 179.0
+                raise TimeoutError('first attempt consumed shared time')
+            assert timeout <= 1.0, {'remaining_seconds': 1.0, 'actual_timeout': timeout}
+            return io.BytesIO(small)
+    monkeypatch.setattr(script, 'build_opener', lambda *args: Opener())
+    script.provision(tmp_path)
+
+def test_permanent_certificate_verification_failure_is_not_retried(tmp_path, small):
+    calls = []
+    def connect(url):
+        calls.append(url)
+        raise URLError(ssl.SSLCertVerificationError(1, 'CERTIFICATE_VERIFY_FAILED'))
+    with pytest.raises(script.ProvisionError):
+        script.provision(tmp_path, open_url=connect)
+    assert len(calls) == 1, {'actual_attempts': len(calls), 'expected_attempts': 1}

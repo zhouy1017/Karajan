@@ -1,0 +1,9 @@
+# Independent review of CI recovery (#120, #122, #123)
+
+GPT-6 high Standards and Spec both reported zero unresolved findings at product candidate 205cd9063e14ad516c1a21cb1d62f674bda75885, based on dev 6cf89abc1a6ca8cb99d76f82191dc7d82efeb05b. Luna implemented tokenizer download recovery (#120) and the finite Windows CI budget (#122); Terra implemented the CheckRunner initialization-read race repair (#123).
+
+Spec recorded ten current independent checks and 31 targeted regressions passing. Its twelve actual verified HTTPS cases were run on aee3ca8 and inherited only where transport code remained unchanged; the report and inheritance manifest state the precise scope. Standards recorded 43 Windows and seven Linux checks passing. These totals overlap author regressions and must not be summed as distinct cases. CheckRunner and workflow inheritance is documented with exact source hashes. Full current GitHub CI remains a separate gate.
+
+The evidence here is copied byte for byte. publication.json records original source, SHA-256 and byte count; directory attributes preserve raw line endings. Scripts use .py.txt so forensic evidence is not silently added to product test collection. Recorded commands use the original local checkout, interpreter and fixture paths. Reproduction requires that layout at the fixed candidate or an explicit path adaptation; these are not portable production commands.
+
+Earlier failures remain in PR and Issue history and in the original reviewer evidence. The bundled HTTPS stderr contains actual deliberate loopback-disconnect errors; it is not a provider failure or model traffic. Current success does not erase earlier failures. No model requests or qualification S claims are made by this archive. PR #121 and GitHub Issues carry current delivery status; merge is an owner decision.
