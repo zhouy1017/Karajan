@@ -1,0 +1,115 @@
+"""Narrow follow-up regressions discovered in the complete second patch diff."""
+
+import json
+import socket
+from pathlib import Path
+from urllib.parse import urlsplit
+
+import httpx
+from karajan.adapters.opencode.go_journal import GoCallJournal
+from karajan.adapters.opencode.go_relay import GoRelay, GoRelayAuthorization, GoRelayContext
+from karajan.routing.compiler import digest
+from test_go_context import accounting as accounting
+from test_go_context import artifacts as artifacts
+from test_go_relay import CANARY, SECRET, post
+from test_go_relay_context import metered_answer
+from test_go_task_grants import task_binding
+from test_rejection_boundary import headers, journaled
+
+
+def test_wrong_capability_drain_stops_at_declared_body_end(tmp_path, monkeypatch):
+    reads = []
+    original = GoRelay._read_request
+
+    class ObservedReader:
+        def __init__(self, reader):
+            self.reader = reader
+
+        def read1(self, count=-1):
+            result = self.reader.read1(count)
+            reads.append((count, len(result)))
+            return result
+
+        def __getattr__(self, name):
+            return getattr(self.reader, name)
+
+    def observe(self, handler):
+        handler.rfile = ObservedReader(handler.rfile)
+        return original(self, handler)
+
+    monkeypatch.setattr(GoRelay, "_read_request", observe)
+    with journaled(tmp_path) as (relay, _, _):
+        with socket.create_connection(("127.0.0.1", urlsplit(relay.url).port)) as peer:
+            peer.sendall(headers(relay, 20) + b"x" * 20)
+            peer.shutdown(socket.SHUT_WR)
+            peer.settimeout(2)
+            response = peer.recv(2048)
+            assert b" 403 " in response.split(b"\r\n", 1)[0]
+        assert reads == [(20, 20)]
+
+
+def test_lost_metered_begin_reply_revokes_original_grant_and_blocks_next_send(
+    tmp_path, accounting, monkeypatch
+):
+    journal = GoCallJournal(tmp_path / "calls.sqlite", clock=lambda: 1000.0)
+    binding = task_binding()
+    grant = journal.create_grant(binding, grant_id="task")
+    upstream = []
+
+    def receive(request):
+        upstream.append(True)
+        return metered_answer()
+
+    original = journal.begin_call
+
+    def commit_then_lose(*args, **kwargs):
+        original(*args, **kwargs)
+        raise OSError("synthetic lost committed begin result")
+
+    monkeypatch.setattr(journal, "begin_call", commit_then_lose)
+    relay = GoRelay(
+        SECRET,
+        CANARY,
+        context=GoRelayContext(
+            accounting,
+            digest(accounting.source()),
+            binding["execution_policy_digest"],
+            4000,
+            4096,
+            8192,
+            100,
+            1000,
+        ),
+        authorization=GoRelayAuthorization(journal, "task", binding, grant["capability"]),
+        client_factory=lambda: httpx.Client(
+            transport=httpx.MockTransport(receive), trust_env=False
+        ),
+    )
+    relay.start()
+    try:
+        first_status = post(relay).status_code
+        first = journal.snapshot("task")
+        monkeypatch.setattr(journal, "begin_call", original)
+        second_status = post(relay).status_code
+        final = journal.snapshot("task")
+        facts = {
+            "first_http_status": first_status,
+            "first_grant_state": first["state"],
+            "first_call_state": first["calls"][0]["state"],
+            "second_http_status": second_status,
+            "request_count": final["request_count"],
+            "upstream_count": len(upstream),
+        }
+        (Path(__file__).parent / "lost-begin-observation.json").write_text(
+            json.dumps(facts, indent=2) + "\n", encoding="utf-8"
+        )
+        assert facts == {
+            "first_http_status": 502,
+            "first_grant_state": "revoked",
+            "first_call_state": "send_unknown",
+            "second_http_status": 503,
+            "request_count": 1,
+            "upstream_count": 0,
+        }
+    finally:
+        assert relay.close()["status"] == "closed"

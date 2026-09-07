@@ -1,0 +1,299 @@
+{
+  "implementation": "046045f2d9573c3cae6375c38c8de2f6b4190d70",
+  "raw_count": 34,
+  "all_originals_and_copies_match": true,
+  "source_count_matched_to_commit": 229,
+  "raw_checks": [
+    {
+      "target": "root/run.py.txt",
+      "sha256": "58553081263bb5bae19f08eba293a6f27e699a213910a7872c07af5f97e8ec0e",
+      "bytes": 2713,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "root/boundaries.py.txt",
+      "sha256": "bef7e76a635b7a39729369f40f7921b004cb4c1fd664c95fece6a081890a9232",
+      "bytes": 2000,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "root/win32/command.json",
+      "sha256": "c606c4e6f42e069a9bf3042c0c6410228610957baf1805ad50220e45c1b9b27f",
+      "bytes": 1128,
+      "exact_original_match": true,
+      "crlf_count": 24,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "root/win32/result.json",
+      "sha256": "58c277b0dc43652a7facf8235b984ea3a60c8d786372fd12d1798baaf2968960",
+      "bytes": 74,
+      "exact_original_match": true,
+      "crlf_count": 5,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "root/win32/source-before.json",
+      "sha256": "d0ca4425607acc0d2c3f3ce68a47c4cf174cc70cebcb69c29689e83837f7b599",
+      "bytes": 26142,
+      "exact_original_match": true,
+      "crlf_count": 231,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "root/win32/source-after.json",
+      "sha256": "d0ca4425607acc0d2c3f3ce68a47c4cf174cc70cebcb69c29689e83837f7b599",
+      "bytes": 26142,
+      "exact_original_match": true,
+      "crlf_count": 231,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "root/win32/tests.xml",
+      "sha256": "b76b0392afdc74ad3b81f274863ad4a174d6d39d499ff24007eafb879cc7c084",
+      "bytes": 34455,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "root/win32/stdout.txt",
+      "sha256": "2c227cb729a4366b371ef1f21fa7f8fba3ce8cf4bf295c4c1070052dd85a4a94",
+      "bytes": 265,
+      "exact_original_match": true,
+      "crlf_count": 4,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "root/linux/command.json",
+      "sha256": "d61d2ac2e69a47f5f3da9c5ece11be883d9d17a4c576cc89e8745311ce5aa21b",
+      "bytes": 1220,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "root/linux/result.json",
+      "sha256": "4667ff9fb755edb2a424f6c7651dcb4e1c859ff6502321d05fb02ef81c903991",
+      "bytes": 69,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "root/linux/source-before.json",
+      "sha256": "dfffe029af69fc1a329e2d794a17ea64daa4dcb9cbf230f28b36e37cb2d6a650",
+      "bytes": 25911,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "root/linux/source-after.json",
+      "sha256": "dfffe029af69fc1a329e2d794a17ea64daa4dcb9cbf230f28b36e37cb2d6a650",
+      "bytes": 25911,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "root/linux/tests.xml",
+      "sha256": "70c5941378a0e83c488f5d10d4919b7b43efc91a3a100d91cb297d8a3051cb1e",
+      "bytes": 38290,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "root/linux/stdout.txt",
+      "sha256": "aec465e4dc8434a3a92943172a502d5a4e0dc478605b906c876667fde8a3dc99",
+      "bytes": 351,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "root/boundaries-win32/completion-lag-observed.json",
+      "sha256": "0b0977da9873a59f533f79d6a9dc751cf00745946855c4bafab3553a3abf5a93",
+      "bytes": 304,
+      "exact_original_match": true,
+      "crlf_count": 10,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "root/boundaries-win32/lost-begin-observation.json",
+      "sha256": "ebf3e02d221cb359d24e196034c42a74f62639f5572b6e146834167ff9114103",
+      "bytes": 185,
+      "exact_original_match": true,
+      "crlf_count": 8,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "root/boundaries-win32/publication-observed.json",
+      "sha256": "fcc0d6c7d39dc8d3433cf6e14239ea44d2dc8bb8796e0b7b2eb4bb00293e571d",
+      "bytes": 273,
+      "exact_original_match": true,
+      "crlf_count": 11,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "root/boundaries-win32/write-reset-observed.json",
+      "sha256": "5a25d35f75bce5d19ec376c1c3cbe1b3533032fcfaf7d049dbdcecd4a472b362",
+      "bytes": 621,
+      "exact_original_match": true,
+      "crlf_count": 26,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "root/boundaries-win32/result.json",
+      "sha256": "e1cb6d6c8a051b907d22dd8709628e7b70614a92fe2604c6b94cd33c0d3c5281",
+      "bytes": 2276,
+      "exact_original_match": true,
+      "crlf_count": 43,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "root/boundaries-win32/stdout.txt",
+      "sha256": "db62524aa7b1190624b92df1c9c2f4aff5299d775c3bab341c5f0a9967357031",
+      "bytes": 101,
+      "exact_original_match": true,
+      "crlf_count": 2,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "root/boundaries-win32/tests.xml",
+      "sha256": "cf06e51d80ab2e25b2dd2f3a82230d8daaf54b85a9ce8c9233211b6d12cd588d",
+      "bytes": 2609,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "root/boundaries-win32/test_final_publication.py.txt",
+      "sha256": "be4a64a791c6e5dd82019647b448d62f6f60d069da58d079bc3bc685241f6cb3",
+      "bytes": 8230,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "root/boundaries-win32/test_followup_boundaries.py.txt",
+      "sha256": "7a8853d2002badaa4eb2a36ce0e54a9307c96dc04d572c5906afa443fd2dcab1",
+      "bytes": 3975,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "root/boundaries-win32/test_framing_boundaries.py.txt",
+      "sha256": "52cfe113e3679511e3464a9bd1c8d95339c7c1670a5705cddbb19c7ed1d45aeb",
+      "bytes": 3205,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "root/boundaries-win32/test_rejection_boundary.py.txt",
+      "sha256": "78792f8df5a199d892c7217de54a2d31dae7f66c8b9c6ba46d9cb318854981a7",
+      "bytes": 4610,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-history/sourcehash-and-command.txt",
+      "sha256": "5c27e3dc59ec05a9d091e1b5e47fdd2e58e359978b77e3445eae6b8b87f873e9",
+      "bytes": 745,
+      "exact_original_match": true,
+      "crlf_count": 5,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-history/relay-windows.junit.xml",
+      "sha256": "c547cfef89e2d8a7b6dbccb0165fb3bbf32e6eca2c02bdd850482272a7547c2c",
+      "bytes": 52558,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-history/relay-windows.stdout.txt",
+      "sha256": "4d662ff2eb0635a0a1ebb7a0ea2a60b4919c80451916f1088fb4351b34d00cc8",
+      "bytes": 4715,
+      "exact_original_match": true,
+      "crlf_count": 46,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-history/ruff.stdout.txt",
+      "sha256": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0",
+      "bytes": 20,
+      "exact_original_match": true,
+      "crlf_count": 1,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-history/mypy.stdout.txt",
+      "sha256": "fc0ea8be9e617cf939f9fa1095a65bf7b0c98ecb380844796bb8efb6b2abf4f7",
+      "bytes": 46,
+      "exact_original_match": true,
+      "crlf_count": 1,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent/README.md",
+      "sha256": "62499a84e14b542713f9f71150dd23e29cb260659c0458ac221b7092d644e279",
+      "bytes": 3315,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent/review.json",
+      "sha256": "bd98924c130e9f4f9388b69bfd42de10cab8693db540480b9ad8e645fab65a48",
+      "bytes": 10063,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent/SHA256SUMS",
+      "sha256": "cd638a483b663ceb6f45e1bb21a4b412083a3f53c6971b4c23d1a3d7a40dfccb",
+      "bytes": 154,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "implementation/go_relay.py.txt",
+      "sha256": "b79f1e08afa5aa0931e4b1056dbce7f674014d04606ce64a9d3cd48ced723881",
+      "bytes": 42077,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    }
+  ],
+  "new_text_checks": {
+    "README.md": {
+      "sha256": "c9ee5e159e1f94b25242d200da2330f7b66173c47be2c95a9e3c8aa8dd0f2ee4",
+      "lf_no_bom_no_trailing_whitespace": true
+    },
+    "publication-map.json": {
+      "sha256": "33a5a03a2d415352dc3166c6a68e7e0cc334866106f247b36337e6ec730abd06",
+      "lf_no_bom_no_trailing_whitespace": true
+    },
+    ".gitattributes": {
+      "sha256": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da",
+      "lf_no_bom_no_trailing_whitespace": true
+    }
+  },
+  "raw_files_with_CRLF": 15,
+  "raw_files_with_trailing_whitespace": 0,
+  "bytecheck_written_LF": true,
+  "staged_diff_check": "not_run",
+  "behavior_tests_run": 0
+}
