@@ -100,7 +100,9 @@ def planning_capacity(
     remaining: str = "10",
     lead_reserve: dict[str, str] | None = None,
     clock: Callable[[], float] = lambda: 1000.0,
+    observation_max_age_seconds: int = 30,
     conservative_observation_max_age_seconds: int = 30,
+    max_attempt_duration_seconds: int = 60,
 ) -> CapacityStore:
     """Real SQLite Capacity facts matching the frozen fixture configuration."""
     directory.mkdir()
@@ -136,8 +138,8 @@ def planning_capacity(
         {
             "account_id": "fixture-account",
             "max_active_attempts": 4,
-            "max_attempt_duration_seconds": 60,
-            "observation_max_age_seconds": 30,
+            "max_attempt_duration_seconds": max_attempt_duration_seconds,
+            "observation_max_age_seconds": observation_max_age_seconds,
             "require_official_observation": False,
             "safety_margin": {},
             "lead_reserve": lead_reserve or {},
@@ -162,7 +164,9 @@ def _case(
     *,
     available: bool = True,
     clock: Callable[[], float] | None = None,
+    observation_max_age_seconds: int = 30,
     conservative_observation_max_age_seconds: int = 30,
+    max_attempt_duration_seconds: int = 60,
     register_estimate: bool = True,
 ) -> tuple[PlanningExecution, PlanningAdmissionAuthority, dict, Any]:
     planner = RunPlanner(tmp_path / "runs.sqlite", configured["registry"], clock=clock or time.time)
@@ -178,7 +182,9 @@ def _case(
     capacity = planning_capacity(
         tmp_path / "capacity",
         clock=clock or (lambda: 1000.0),
+        observation_max_age_seconds=observation_max_age_seconds,
         conservative_observation_max_age_seconds=conservative_observation_max_age_seconds,
+        max_attempt_duration_seconds=max_attempt_duration_seconds,
     )
     binding = execution["binding"]
     capacity.register_profile(
@@ -543,6 +549,7 @@ def test_capacity_boundary_rechecks_commander_expiry_before_reservation(
         command_key: str,
         before_reserve: Callable[[], None] | None = None,
         after_capacity_facts: Callable[[Any], None] | None = None,
+        before_reservation_write: Callable[[], None] | None = None,
     ) -> dict[str, Any]:
         def expired_callback() -> None:
             now[0] = 1001.0
@@ -554,6 +561,7 @@ def test_capacity_boundary_rechecks_commander_expiry_before_reservation(
             command_key=command_key,
             before_reserve=expired_callback,
             after_capacity_facts=after_capacity_facts,
+            before_reservation_write=before_reservation_write,
         )
 
     monkeypatch.setattr(authority.capacity, "admit", expire_while_capacity_is_held)
@@ -579,6 +587,7 @@ def test_capacity_boundary_rechecks_nested_commander_profile_facts_expiry(
         command_key: str,
         before_reserve: Callable[[], None] | None = None,
         after_capacity_facts: Callable[[Any], None] | None = None,
+        before_reservation_write: Callable[[], None] | None = None,
     ) -> dict[str, Any]:
         def expired_callback() -> None:
             now[0] = 1002.0
@@ -590,6 +599,7 @@ def test_capacity_boundary_rechecks_nested_commander_profile_facts_expiry(
             command_key=command_key,
             before_reserve=expired_callback,
             after_capacity_facts=after_capacity_facts,
+            before_reservation_write=before_reservation_write,
         )
 
     monkeypatch.setattr(authority.capacity, "admit", expire_while_capacity_is_held)
@@ -616,6 +626,7 @@ def test_capacity_boundary_retains_unknown_estimate_conservative_age(
         command_key: str,
         before_reserve: Callable[[], None] | None = None,
         after_capacity_facts: Callable[[Any], None] | None = None,
+        before_reservation_write: Callable[[], None] | None = None,
     ) -> dict[str, Any]:
         def waited_before_facts() -> None:
             now[0] = 1006.0
@@ -631,12 +642,101 @@ def test_capacity_boundary_retains_unknown_estimate_conservative_age(
             command_key=command_key,
             before_reserve=waited_before_facts,
             after_capacity_facts=facts_after_wait,
+            before_reservation_write=before_reservation_write,
         )
 
     monkeypatch.setattr(authority.capacity, "admit", cross_conservative_age)
     denied = authority.advance(execution["id"], "owner", "conservative-age")
     assert denied["reason_codes"] == ["PLANNING_BOUNDARY_ROUTE_REJECTED"]
     assert authority.capacity.snapshot()["reservations"] == []
+
+
+def test_final_reservation_hook_rechecks_original_budget_after_fact_capture(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A pure route-facts scan cannot outlive the original first-claim clock."""
+    now = [1000.0]
+    _, authority, _, execution = _case(
+        tmp_path,
+        configured,
+        clock=lambda: now[0],
+        observation_max_age_seconds=1000,
+        conservative_observation_max_age_seconds=1000,
+        max_attempt_duration_seconds=500,
+    )
+    original = authority.capacity.admit
+
+    def cross_budget_after_facts(
+        request: dict[str, Any],
+        *,
+        command_key: str,
+        before_reserve: Callable[[], None] | None = None,
+        after_capacity_facts: Callable[[Any], None] | None = None,
+        before_reservation_write: Callable[[], None] | None = None,
+    ) -> dict[str, Any]:
+        def captured(boundary: Any) -> None:
+            assert after_capacity_facts is not None
+            after_capacity_facts(boundary)
+            # Simulate the pure facts/hash/route work finishing after the
+            # original Run's first-claim deadline, while Capacity remains valid.
+            now[0] = 1301.0
+
+        return original(
+            request,
+            command_key=command_key,
+            before_reserve=before_reserve,
+            after_capacity_facts=captured,
+            before_reservation_write=before_reservation_write,
+        )
+
+    monkeypatch.setattr(authority.capacity, "admit", cross_budget_after_facts)
+    denied = authority.advance(execution["id"], "owner", "late-facts-budget")
+    assert denied["reason_codes"] == ["PLANNING_BUDGET_EXPIRED"]
+    assert authority.capacity.snapshot()["reservations"] == []
+
+
+def test_final_effect_hook_rechecks_nested_fact_expiry_after_fact_capture(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """No effect body is entered when held Commander facts expire after capture."""
+    now = [1000.0]
+    _, authority, _, execution = _case(tmp_path, configured, clock=lambda: now[0])
+    commander = authority.qualifications
+    assert isinstance(commander, FixtureCommander)
+    commander.valid_until = 1001.0
+    commander.profile_facts["valid_until"] = 1100.0
+    assert authority.advance(execution["id"], "owner", "admit")["phase"] == "admitted"
+    original = authority.capacity.pre_effect_guard
+
+    @contextmanager
+    def expire_after_facts(
+        admission_id: str,
+        *,
+        expected_request: dict[str, Any],
+        before_effect: Callable[[], None] | None = None,
+        after_capacity_facts: Callable[[Any], None] | None = None,
+        before_effect_yield: Callable[[], None] | None = None,
+    ) -> Any:
+        def captured(boundary: Any) -> None:
+            assert after_capacity_facts is not None
+            after_capacity_facts(boundary)
+            now[0] = 1002.0
+
+        with original(
+            admission_id,
+            expected_request=expected_request,
+            before_effect=before_effect,
+            after_capacity_facts=captured,
+            before_effect_yield=before_effect_yield,
+        ) as capacity:
+            yield capacity
+
+    monkeypatch.setattr(authority.capacity, "pre_effect_guard", expire_after_facts)
+    entered = False
+    with pytest.raises(RunError, match="^COMMANDER_QUALIFICATION_EXPIRED$"):
+        with authority.effect_guard(execution["id"], "owner", "late-facts-effect"):
+            entered = True
+    assert not entered
 
 
 def test_lost_activation_reply_reopens_the_original_capacity_command(
@@ -1081,6 +1181,7 @@ def test_effect_guard_reobserves_material_sealed_commander_source_before_body(
         expected_request: dict[str, Any],
         before_effect: Callable[[], None] | None = None,
         after_capacity_facts: Callable[[Any], None] | None = None,
+        before_effect_yield: Callable[[], None] | None = None,
     ) -> Any:
         # This wrapper is reached after #111 has retained the Run/Project
         # guards and before the real Capacity callback invokes its source
@@ -1091,6 +1192,7 @@ def test_effect_guard_reobserves_material_sealed_commander_source_before_body(
             expected_request=expected_request,
             before_effect=before_effect,
             after_capacity_facts=after_capacity_facts,
+            before_effect_yield=before_effect_yield,
         ) as capacity:
             yield capacity
 
