@@ -1,0 +1,16 @@
+{
+  "candidate": "66cff1de755e488af8aa755fe2664632050f5400",
+  "cwd": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\dispatch-planning-execution",
+  "started_at_utc": "2026-09-07T07:04:00.498128+00:00",
+  "command": [
+    "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+    "-m",
+    "pytest",
+    "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\dispatch-planning-execution\\.cache\\standards-66c3d48\\test_current_boundaries.py",
+    "-q",
+    "--basetemp=.cache/standards-110-final-bundle/pytest-original-output"
+  ],
+  "exit_code": 0,
+  "test_sha256": "3924830fc67bcaae8defe8421a9e7cc7f805031e0bb42e515730cd9b478c9faa",
+  "capture": "Fresh execution; raw subprocess stdout/stderr bytes, not reconstructed earlier output."
+}

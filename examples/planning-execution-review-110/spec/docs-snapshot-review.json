@@ -1,0 +1,96 @@
+{
+  "candidate": "66c3d483ec4811cf3a3eeb116c33cd970add56ae",
+  "scope": "snapshot consistency and original responsibility mapping; not current remote state or functional acceptance",
+  "rows": [
+    {
+      "issue": 109,
+      "sha256_matches": true,
+      "dependencies_match": true,
+      "parent_match": true,
+      "model": "gpt-5.6-luna",
+      "reviewer": "gpt-6-astra",
+      "reviewer_effort": "high"
+    },
+    {
+      "issue": 110,
+      "sha256_matches": true,
+      "dependencies_match": true,
+      "parent_match": true,
+      "model": "gpt-5.6-terra",
+      "reviewer": "gpt-6-astra",
+      "reviewer_effort": "high"
+    },
+    {
+      "issue": 111,
+      "sha256_matches": true,
+      "dependencies_match": true,
+      "parent_match": true,
+      "model": "gpt-5.6-terra",
+      "reviewer": "gpt-6-astra",
+      "reviewer_effort": "high"
+    },
+    {
+      "issue": 112,
+      "sha256_matches": true,
+      "dependencies_match": true,
+      "parent_match": true,
+      "model": "gpt-5.6-terra",
+      "reviewer": "gpt-6-astra",
+      "reviewer_effort": "high"
+    },
+    {
+      "issue": 113,
+      "sha256_matches": true,
+      "dependencies_match": true,
+      "parent_match": true,
+      "model": "gpt-5.6-terra",
+      "reviewer": "gpt-6-astra",
+      "reviewer_effort": "high"
+    },
+    {
+      "issue": 114,
+      "sha256_matches": true,
+      "dependencies_match": true,
+      "parent_match": true,
+      "model": "gpt-5.6-luna",
+      "reviewer": "gpt-6-astra",
+      "reviewer_effort": "high"
+    },
+    {
+      "issue": 115,
+      "sha256_matches": true,
+      "dependencies_match": true,
+      "parent_match": true,
+      "model": "gpt-5.6-terra",
+      "reviewer": "gpt-6-astra",
+      "reviewer_effort": "high"
+    },
+    {
+      "issue": 116,
+      "sha256_matches": true,
+      "dependencies_match": true,
+      "parent_match": true,
+      "model": "gpt-5.6-terra",
+      "reviewer": "gpt-6-astra",
+      "reviewer_effort": "high"
+    },
+    {
+      "issue": 117,
+      "sha256_matches": true,
+      "dependencies_match": true,
+      "parent_match": true,
+      "model": "gpt-5.6-terra",
+      "reviewer": "gpt-6-astra",
+      "reviewer_effort": "high"
+    },
+    {
+      "issue": 120,
+      "sha256_matches": true,
+      "dependencies_match": true,
+      "parent_match": true,
+      "model": "gpt-5.6-luna",
+      "reviewer": "gpt-6-astra",
+      "reviewer_effort": "high"
+    }
+  ]
+}
