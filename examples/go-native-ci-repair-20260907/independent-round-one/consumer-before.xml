@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="31.099" timestamp="2026-09-07T09:10:26.718747+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.native-resume-independent.test_native_boundaries" name="test_public_consume_preserves_native_failure_when_collector_rejects_capture" time="27.509"><failure message="AssertionError: Public state discarded the native failure diagnostic&#10;assert 'UNIX_RELAY_PATH_TOO_LONG' in '{&quot;activation_allowed&quot;: false, &quot;assessment&quot;: {&quot;activation_allowed&quot;: false, &quot;admission_expectations&quot;: [{&quot;estimate_sha25...lected_profile&quot;: {&quot;id&quot;: &quot;fixture-profile&quot;, &quot;revision&quot;: 1}}, &quot;task_id&quot;: &quot;implement&quot;, &quot;write_paths&quot;: [&quot;src/report.py&quot;]}}'&#10; +  where '{&quot;activation_allowed&quot;: false, &quot;assessment&quot;: {&quot;activation_allowed&quot;: false, &quot;admission_expectations&quot;: [{&quot;estimate_sha25...lected_profile&quot;: {&quot;id&quot;: &quot;fixture-profile&quot;, &quot;revision&quot;: 1}}, &quot;task_id&quot;: &quot;implement&quot;, &quot;write_paths&quot;: [&quot;src/report.py&quot;]}}' = &lt;function dumps at 0x79bd8ee4b6a0&gt;({'activation_allowed': False, 'assessment': {'activation_allowed': False, 'admission_expectations': [{'estimate_sha256...9b85602f629d5f49886e58', 'dispatch_enabled': False, ...}, 'cancel_requested': False, 'cancellation_receipt': None, ...})&#10; +    where &lt;function dumps at 0x79bd8ee4b6a0&gt; = json.dumps">projected = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x79bd393cb800&gt;, 'project_id': '047ecf6e-f7f9-49f1-8...re'), 'repository': PosixPath('/tmp/pytest-of-chow/pytest-69/test_public_consume_preserves_0/fixture/repository'), ...}
+tmp_path = PosixPath('/tmp/pytest-of-chow/pytest-69/test_public_consume_preserves_0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x79bd392d96d0&gt;
+artifacts = PosixPath('/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-artifacts')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x79bd392dadb0&gt;
+
+    def test_public_consume_preserves_native_failure_when_collector_rejects_capture(
+        projected, tmp_path, accounting, artifacts, monkeypatch
+    ):
+        from task_execution_fixture import approved_fixture
+        from test_task_workspace import git
+        from karajan.orchestration import go_task_execution as consumer
+    
+        repository = projected["repository"]
+        for name, data in {
+            "src/report.py": b"print('approved task')\n",
+            "tests/test_report.py": b"assert True\n",
+        }.items():
+            path = repository / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+        git(repository, "add", ".")
+        git(repository, "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "commit", "-qm", "independent task baseline")
+        projects = projected["projects"]
+        current = projects.get(projected["project_id"])
+        projects.update(current["id"], {
+            "name": current["name"], "base_ref": "main", "target_branch": "main",
+            "allowed_target_branches": ["main"],
+        }, expected_revision=current["revision"], principal="owner", command_key="baseline-refresh")
+        services, run_id, op_id = approved_fixture(
+            projected, tmp_path, runtime_artifact(), accounting, artifacts, 1,
+        )
+        spec = ProcessSpec((sys.executable, "-c", "pass"), tmp_path)
+        services.intents.launch_compiler = lambda op: GoLaunchSpec(spec, "c" * 64)
+        identity = ProcessIdentity(42, "explicit-independent-child-boundary")
+        monkeypatch.setattr(services.intents.host, "wait_for_runner_registration", lambda *a, **k: identity)
+    
+        @contextmanager
+        def current_runner(*args, **kwargs):
+            yield identity
+    
+        monkeypatch.setattr(services.intents.host, "current_runner_guard", current_runner)
+        facade = ApprovedGoTaskExecution(services)
+        facade.advance(run_id, op_id, principal="owner")
+        calls = []
+    
+        def failed_native(*args, **kwargs):
+            calls.append(1)
+            return go_task.GoTaskResult(None, json.dumps({
+                "schema_version": "karajan.go-native-task-observation.v1",
+                "status": "failed", "reason_codes": ["TASK_EXECUTION_FAILED"],
+                "error_type": "RuntimeError", "error_reason_code": "UNIX_RELAY_PATH_TOO_LONG",
+                "native_cleanup": {"local_stop": "not_started"},
+                "relay_cleanup": {"status": "closed"},
+            }))
+    
+        monkeypatch.setattr(consumer, "execute_go_task", failed_native)
+        with pytest.raises(RunError, match="TASK_STOPPED_CAPTURE_REQUIRED"):
+            consume_go_task(services, run_id, op_id, principal="owner")
+        current = facade.get(run_id, op_id, principal="owner")
+        assert len(calls) == 1 and current["execution"]["effect_claim"] is not None
+&gt;       assert "UNIX_RELAY_PATH_TOO_LONG" in json.dumps(current), "Public state discarded the native failure diagnostic"
+E       AssertionError: Public state discarded the native failure diagnostic
+E       assert 'UNIX_RELAY_PATH_TOO_LONG' in '{"activation_allowed": false, "assessment": {"activation_allowed": false, "admission_expectations": [{"estimate_sha25...lected_profile": {"id": "fixture-profile", "revision": 1}}, "task_id": "implement", "write_paths": ["src/report.py"]}}'
+E        +  where '{"activation_allowed": false, "assessment": {"activation_allowed": false, "admission_expectations": [{"estimate_sha25...lected_profile": {"id": "fixture-profile", "revision": 1}}, "task_id": "implement", "write_paths": ["src/report.py"]}}' = &lt;function dumps at 0x79bd8ee4b6a0&gt;({'activation_allowed': False, 'assessment': {'activation_allowed': False, 'admission_expectations': [{'estimate_sha256...9b85602f629d5f49886e58', 'dispatch_enabled': False, ...}, 'cancel_requested': False, 'cancellation_receipt': None, ...})
+E        +    where &lt;function dumps at 0x79bd8ee4b6a0&gt; = json.dumps
+
+.cache/native-resume-independent/test_native_boundaries.py:153: AssertionError</failure></testcase></testsuite></testsuites>

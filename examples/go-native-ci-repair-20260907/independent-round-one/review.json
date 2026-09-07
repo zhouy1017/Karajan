@@ -1,0 +1,112 @@
+{
+  "schema_version": "karajan.independent-native-ci-review.v1",
+  "reviewer": "capacity_facts",
+  "baseline": "825248a29c4dcdb4f432157fdf0979f26ed9c9b9",
+  "findings": {
+    "spec": [
+      {
+        "id": "NATIVE-001",
+        "priority": 2,
+        "reason": "unknown native stop deletes socket root"
+      },
+      {
+        "id": "NATIVE-002",
+        "priority": 2,
+        "reason": "uppercase private error text escapes diagnostic filtering"
+      },
+      {
+        "id": "NATIVE-003",
+        "priority": 2,
+        "reason": "native failure absent from public operation after Collector rejection"
+      }
+    ],
+    "standards": [
+      {
+        "id": "NATIVE-STATIC",
+        "blocking": true,
+        "reason": "required Ruff and default Windows mypy fail"
+      }
+    ]
+  },
+  "source_current": {
+    "backend/karajan/isolation/go_task.py": {
+      "sha256": "daf8cadd27f89f85f4842f51f11839990bdec9d7711705abeb89948766935a62",
+      "bytes": 21376
+    },
+    "backend/karajan/adapters/opencode/go_relay.py": {
+      "sha256": "088c335d1bfeedc2b69bc2395acc704ea6b32f71b6addcc74c06d87b2400170b",
+      "bytes": 40505
+    },
+    "backend/karajan/orchestration/go_task_execution.py": {
+      "sha256": "3bca8ad44860e11815e9ecb9dedae1edd9d9d556f4940f4fd6694af30cb30cf9",
+      "bytes": 19647
+    },
+    "backend/karajan/orchestration/go_execution_intent.py": {
+      "sha256": "3416c3f324d6653f246b2317de257e362f410980dda458756dab1e029d6082f1",
+      "bytes": 41126
+    },
+    "backend/karajan/orchestration/_go_task_runner.py": {
+      "sha256": "0a43cf7b1924b40a66ea35e354e15a6cce697b954c243c8808a7bf7500343822",
+      "bytes": 1915
+    },
+    "tests/isolation/test_go_task.py": {
+      "sha256": "bbb9d6242e1214097f0e043b211a48a917e589738dba3eb445c3687d3c2b6288",
+      "bytes": 19533
+    },
+    "tests/adapters/opencode/test_go_unix_relay.py": {
+      "sha256": "0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f",
+      "bytes": 5017
+    },
+    ".cache/native-resume-independent/test_native_boundaries.py": {
+      "sha256": "b3d7d779d6676c2f9c1ff16a43f66885ff9ce757c958d5b9141c963b495f46eb",
+      "bytes": 7025
+    }
+  },
+  "source_changes_since_first_snapshot": [
+    ".cache/native-resume-independent/test_native_boundaries.py"
+  ],
+  "checks": {
+    "ruff": {
+      "argv": [
+        "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "backend/karajan/isolation/go_task.py",
+        "backend/karajan/adapters/opencode/go_relay.py",
+        "tests/isolation/test_go_task.py",
+        "tests/adapters/opencode/test_go_unix_relay.py"
+      ],
+      "returncode": 1,
+      "output": "ruff.txt"
+    },
+    "mypy": {
+      "argv": [
+        "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "backend/karajan"
+      ],
+      "returncode": 1,
+      "output": "mypy.txt"
+    }
+  },
+  "native_P": "not_run_by_reviewer",
+  "provider_calls": 0,
+  "artifact_hashes": {
+    "consumer-before.xml": "c3896769d2c937bdbee951e16ccd07dd5a3c991484340e75ca8ee6fdddb61e83",
+    "first.xml": "70dd7c0793431d63c191867e57ceff7f5bd5ce8776f4b81884e690ba2e58cf36",
+    "go_execution_intent.py.before.py.txt": "3416c3f324d6653f246b2317de257e362f410980dda458756dab1e029d6082f1",
+    "go_relay.py.before.py.txt": "088c335d1bfeedc2b69bc2395acc704ea6b32f71b6addcc74c06d87b2400170b",
+    "go_task.py.before.py.txt": "daf8cadd27f89f85f4842f51f11839990bdec9d7711705abeb89948766935a62",
+    "go_task_execution.py.before.py.txt": "3bca8ad44860e11815e9ecb9dedae1edd9d9d556f4940f4fd6694af30cb30cf9",
+    "mypy.txt": "a6e87d7e2356462aedf347f1b3db6dddbafa245e9f081c211e0bcca773c6190a",
+    "README.md": "b5fafe89115de570d3c7c124a8228fb8b5e8cf1e02d9219daa572babef496aa2",
+    "ruff.txt": "2f973dd26247a48cd75ab10dae7319b193b8aa08d01062054afe492b5f6034a6",
+    "semantic-before.xml": "ef4f725e3bece35ef2dd33a6d73662f2339d67b38c71c8f223563c38b524c93e",
+    "source-before.json": "3e1b2bc2e10b95debf512387461cbd6e9a4f3cd9063c2297f2a23e651fd4c9bc",
+    "test-first-baseline-missing.py.txt": "bb4272b3cb9a40d8f66cfc7df44900b154a5f99e76eb49f9609ec40835e9a071",
+    "test_native_boundaries.py": "b3d7d779d6676c2f9c1ff16a43f66885ff9ce757c958d5b9141c963b495f46eb",
+    "_go_task_runner.py.before.py.txt": "0a43cf7b1924b40a66ea35e354e15a6cce697b954c243c8808a7bf7500343822"
+  }
+}

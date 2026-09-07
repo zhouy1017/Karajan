@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="72.133" timestamp="2026-09-06T23:07:58.350054+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_go_task_execution_native" name="test_actual_host_child_native_candidate_and_replay[none]" time="34.740"><failure message="AssertionError: {&quot;code&quot;: &quot;TASK_STOPPED_CAPTURE_REQUIRED&quot;}&#10;assert 'effect_claimed' == 'candidate_recorded'&#10;  &#10;  - candidate_recorded&#10;  + effect_claimed">tests/runs/test_go_task_execution_native.py:202: in test_actual_host_child_native_candidate_and_replay
+    assert result["execution"]["phase"] == "candidate_recorded", (
+E   AssertionError: {"code": "TASK_STOPPED_CAPTURE_REQUIRED"}
+E   assert 'effect_claimed' == 'candidate_recorded'
+E     
+E     - candidate_recorded
+E     + effect_claimed</failure></testcase><testcase classname="tests.runs.test_go_task_execution_native" name="test_actual_host_child_native_candidate_and_replay[cancel_after_send]" time="33.833"><failure message="assert 0 == 1">tests/runs/test_go_task_execution_native.py:188: in test_actual_host_child_native_candidate_and_replay
+    assert grant["request_count"] == (1 if fault == "cancel_after_send" else 0)
+E   assert 0 == 1</failure></testcase></testsuite></testsuites>

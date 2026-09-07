@@ -1,0 +1,32 @@
+[
+  {
+    "pr": 103,
+    "run": 34050185708,
+    "job": 101532317939,
+    "name": "python-quality (ubuntu-24.04, Python 3.12)",
+    "head": "c80e41abfdc13b13034f6c82ea3fe47eb71a3b72",
+    "event": "pull_request",
+    "exit_code": 0,
+    "path": "pr-103-job-101532317939.log",
+    "bytes": 135693,
+    "sha256": "0ddba2f32f4400a830301327f9daa2e60a8f38e794e12ff38bd882dc75730509",
+    "failed_steps": [
+      "Run tests, including contract tests"
+    ]
+  },
+  {
+    "pr": 103,
+    "run": 34050183894,
+    "job": 101532317245,
+    "name": "python-quality (ubuntu-24.04, Python 3.12)",
+    "head": "c80e41abfdc13b13034f6c82ea3fe47eb71a3b72",
+    "event": "push",
+    "exit_code": 0,
+    "path": "pr-103-job-101532317245.log",
+    "bytes": 134559,
+    "sha256": "a833eb6e1f2236dc30be8ed866bc312d481566a63337993bd7e5cd309f2acad4",
+    "failed_steps": [
+      "Run tests, including contract tests"
+    ]
+  }
+]

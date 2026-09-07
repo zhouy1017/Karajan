@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="26" time="30.587" timestamp="2026-09-06T21:37:13.698566+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_go_lifecycle" name="test_activation_guard_holds_original_prepared_intent" time="1.002" /><testcase classname="tests.runs.test_go_lifecycle" name="test_launch_replay_freezes_original_expiry_and_does_not_touch_resource_ledgers" time="1.047" /><testcase classname="tests.runs.test_go_lifecycle" name="test_launch_cannot_change_controller_compiler_after_freeze" time="1.040" /><testcase classname="tests.runs.test_go_lifecycle" name="test_launch_preparation_serializes_cancel_then_cannot_rearm" time="1.020" /><testcase classname="tests.runs.test_go_lifecycle" name="test_cancelled_operation_blocks_both_pre_effect_stages[activation_guard]" time="1.003" /><testcase classname="tests.runs.test_go_lifecycle" name="test_cancelled_operation_blocks_both_pre_effect_stages[launch_preparation_guard]" time="0.927" /><testcase classname="tests.runs.test_go_lifecycle" name="test_prepared_host_stage_needs_activation_and_frozen_launch" time="0.981" /><testcase classname="tests.runs.test_go_lifecycle" name="test_cleanup_uses_original_history_after_cancel_and_source_change" time="1.088" /><testcase classname="tests.runs.test_go_lifecycle" name="test_existing_reconstruction_does_not_call_fresh_source_and_retains_owner_gate" time="0.997" /><testcase classname="tests.runs.test_go_lifecycle" name="test_unprepared_reconstruction_calls_lazy_source_once_and_does_not_prepare" time="0.995" /><testcase classname="tests.runs.test_go_lifecycle" name="test_observation_keeps_send_unknown_and_never_revokes_or_refunds" time="1.032" /><testcase classname="tests.runs.test_go_lifecycle" name="test_cleanup_observation_distinguishes_unowned_or_unavailable_grant[missing]" time="1.001" /><testcase classname="tests.runs.test_go_lifecycle" name="test_cleanup_observation_distinguishes_unowned_or_unavailable_grant[mismatch]" time="0.980" /><testcase classname="tests.runs.test_go_lifecycle" name="test_cleanup_observation_distinguishes_unowned_or_unavailable_grant[unavailable]" time="1.159" /><testcase classname="tests.runs.test_go_lifecycle" name="test_existing_corrupt_source_never_falls_back_to_fresh_source" time="0.921" /><testcase classname="tests.runs.test_go_lifecycle" name="test_capture_commit_lost_reply_is_exact_and_detached_without_candidate_effects" time="1.234"><failure message="AttributeError: 'CandidateStore' object has no attribute 'database'">collection_case = (&lt;karajan.orchestration.go_execution_intent.GoExecutionIntents object at 0x0000021E32092E70&gt;, ('811c23c6-17a1-4b8b-87e...0x0000021E3213BDA0&gt;, &lt;karajan.adapters.opencode.go_journal.GoCallJournal object at 0x0000021E321A6150&gt;, GoTaskResult())
+
+    def test_capture_commit_lost_reply_is_exact_and_detached_without_candidate_effects(collection_case):
+        service, args, candidates, journal, _ = collection_case
+        receipt = capture_receipt(collection_case)
+&gt;       untouched = {p: p.read_bytes() for p in (candidates.database, journal.path)}
+                                                 ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'CandidateStore' object has no attribute 'database'
+
+tests\runs\test_go_lifecycle.py:262: AttributeError</failure></testcase><testcase classname="tests.runs.test_go_lifecycle" name="test_capture_first_commit_requires_current_exact_identity[runner]" time="1.209" /><testcase classname="tests.runs.test_go_lifecycle" name="test_capture_first_commit_requires_current_exact_identity[series]" time="1.209" /><testcase classname="tests.runs.test_go_lifecycle" name="test_capture_first_commit_requires_current_exact_identity[operation]" time="1.228" /><testcase classname="tests.runs.test_go_lifecycle" name="test_capture_first_commit_requires_current_exact_identity[source]" time="1.274" /><testcase classname="tests.runs.test_go_lifecycle" name="test_capture_first_commit_requires_current_exact_identity[cancel]" time="1.347" /><testcase classname="tests.runs.test_go_lifecycle" name="test_same_capture_replay_after_cancel_is_history_but_collection_guard_denies" time="1.438" /><testcase classname="tests.runs.test_go_lifecycle" name="test_collection_guard_holds_exact_receipt_and_wrong_digest_has_no_effect" time="1.287" /><testcase classname="tests.runs.test_go_lifecycle" name="test_candidate_late_link_uses_exact_owned_history_and_preserves_cancellation" time="1.495"><failure message="AttributeError: 'CandidateStore' object has no attribute 'database'">collection_case = (&lt;karajan.orchestration.go_execution_intent.GoExecutionIntents object at 0x0000021E0210C0B0&gt;, ('3fbdc74c-022c-4b29-966...0x0000021E31CDB8C0&gt;, &lt;karajan.adapters.opencode.go_journal.GoCallJournal object at 0x0000021E3221E9C0&gt;, GoTaskResult())
+
+    def test_candidate_late_link_uses_exact_owned_history_and_preserves_cancellation(collection_case):
+        service, args, candidates, journal, result = collection_case
+        receipt = capture_receipt(collection_case)
+        capture = receipt.as_dict()
+        service.capture_recorded(*args, principal="owner", runner=service.host.runner, capture=receipt)
+        candidate = candidates.freeze_projection(capture["projection"], dict(result.capture.files),
+                                                 capture["freeze_request"])
+        # Simulate lost Candidate commit response followed by controller cancellation
+        # and code deployment. The original immutable candidate is still linkable.
+        service.cancel_intent(*args, principal="owner")
+        service.source = GoExecutionSource("e" * 64, "f" * 64)
+&gt;       paths = (candidates.database, journal.path, service.admissions.routing.capacity.path)
+                 ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'CandidateStore' object has no attribute 'database'
+
+tests\runs\test_go_lifecycle.py:352: AttributeError</failure></testcase><testcase classname="tests.runs.test_go_lifecycle" name="test_candidate_id_cannot_substitute_an_unrelated_candidate_or_create_one" time="1.269"><failure message="AttributeError: 'CandidateStore' object has no attribute 'database'">collection_case = (&lt;karajan.orchestration.go_execution_intent.GoExecutionIntents object at 0x0000021E020EEDB0&gt;, ('270fd31d-9e2b-4490-9ad...0x0000021E3219FDD0&gt;, &lt;karajan.adapters.opencode.go_journal.GoCallJournal object at 0x0000021E32122BD0&gt;, GoTaskResult())
+
+    def test_candidate_id_cannot_substitute_an_unrelated_candidate_or_create_one(collection_case):
+        service, args, candidates, _, _ = collection_case
+        receipt = capture_receipt(collection_case)
+        service.capture_recorded(*args, principal="owner", runner=service.host.runner, capture=receipt)
+&gt;       before = {p: p.read_bytes() for p in (service.admissions.database, candidates.database)}
+                                                                           ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'CandidateStore' object has no attribute 'database'
+
+tests\runs\test_go_lifecycle.py:370: AttributeError</failure></testcase><testcase classname="tests.runs.test_go_lifecycle" name="test_capture_dto_freezes_nested_input_and_rejects_unbounded_extra_content" time="1.246" /></testsuite></testsuites>

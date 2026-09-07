@@ -1,0 +1,73 @@
+{
+  "scope": "Unaccepted first Luna native repair; three independent semantic findings and required static failures remain",
+  "files": [
+    {
+      "path": "backend/karajan/adapters/opencode/go_relay.py",
+      "snapshot": "backend__karajan__adapters__opencode__go_relay.py.txt",
+      "sha256": "088c335d1bfeedc2b69bc2395acc704ea6b32f71b6addcc74c06d87b2400170b",
+      "bytes": 40505
+    },
+    {
+      "path": "backend/karajan/isolation/go_task.py",
+      "snapshot": "backend__karajan__isolation__go_task.py.txt",
+      "sha256": "daf8cadd27f89f85f4842f51f11839990bdec9d7711705abeb89948766935a62",
+      "bytes": 21376
+    },
+    {
+      "path": "tests/adapters/opencode/test_go_unix_relay.py",
+      "snapshot": "tests__adapters__opencode__test_go_unix_relay.py.txt",
+      "sha256": "0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f",
+      "bytes": 5017
+    },
+    {
+      "path": "tests/isolation/test_go_task.py",
+      "snapshot": "tests__isolation__test_go_task.py.txt",
+      "sha256": "bbb9d6242e1214097f0e043b211a48a917e589738dba3eb445c3687d3c2b6288",
+      "bytes": 19533
+    },
+    {
+      "path": ".cache/luna-native-author/verification.md",
+      "snapshot": ".cache__luna-native-author__verification.md.txt",
+      "sha256": "d689d4478c4280d229024b6b837f1e516c6e61953f4207ff520b4f63a6375f76",
+      "bytes": 3106
+    }
+  ],
+  "pytest_commands": [
+    {
+      "command": "\"C:\\\\Program Files\\\\PowerShell\\\\7\\\\pwsh.exe\" -Command \"& 'C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe' -m pytest -q tests/adapters/opencode/test_go_unix_relay.py tests/isolation/test_go_task.py -o \\\"pythonpath=backend tests/projects tests/runs tests/web tests/isolation tests/adapters/opencode tests/candidates tests/execution\\\"\"",
+      "exit_code": 0,
+      "output": "pytest-01.log",
+      "sha256": "f8b4cfe4842b8eb10dda9dd3d84007614db3b294e24619d01f8e27131adca252"
+    },
+    {
+      "command": "\"C:\\\\Program Files\\\\PowerShell\\\\7\\\\pwsh.exe\" -Command \"wsl.exe -e bash -lc 'cd /mnt/c/Users/Chooo/Playground/Karajan/.cache/ci-spark-task-native && export KARAJAN_GO_TOKENIZER_DIRECTORY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-artifacts KARAJAN_REQUIRE_GO_TOKENIZER=1 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 KARAJAN_GO_RUNTIME=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode && /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest -q tests/adapters/opencode/test_go_unix_relay.py tests/isolation/test_go_task.py -o \\\"pythonpath=backend tests/projects tests/runs tests/web tests/isolation tests/adapters/opencode tests/candidates tests/execution\\\"'\"",
+      "exit_code": 0,
+      "output": "pytest-02.log",
+      "sha256": "cc0672eaa12ac6524af669bd3f0ffd58702212b95c4c08ef44b74e3683160fe7"
+    },
+    {
+      "command": "\"C:\\\\Program Files\\\\PowerShell\\\\7\\\\pwsh.exe\" -Command \"wsl.exe -e bash -lc 'cd /mnt/c/Users/Chooo/Playground/Karajan/.cache/ci-spark-task-native && export KARAJAN_OPENCODE_LINUX_BINARY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode KARAJAN_GO_TOKENIZER_DIRECTORY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-artifacts KARAJAN_REQUIRE_GO_TOKENIZER=1 KARAJAN_REQUIRE_OPENCODE_ISOLATION=1 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 && /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest -q tests/runs/test_go_task_execution_native.py -o \\\"pythonpath=backend tests/projects tests/runs tests/web tests/isolation tests/adapters/opencode tests/candidates tests/execution\\\"'\"",
+      "exit_code": 0,
+      "output": "pytest-03.log",
+      "sha256": "c858b2af8e048e82c4a1c83cab8c0afeb69da51906c73807ba1a6b20180d7421"
+    },
+    {
+      "command": "\"C:\\\\Program Files\\\\PowerShell\\\\7\\\\pwsh.exe\" -Command \"wsl.exe -e bash -lc 'cd /mnt/c/Users/Chooo/Playground/Karajan/.cache/ci-spark-task-native && export KARAJAN_OPENCODE_LINUX_BINARY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode KARAJAN_GO_TOKENIZER_DIRECTORY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-artifacts KARAJAN_REQUIRE_GO_TOKENIZER=1 KARAJAN_REQUIRE_OPENCODE_ISOLATION=1 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 && /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest -q tests/adapters/opencode/test_go_unix_relay.py tests/isolation/test_go_task.py -k \\\"path_length or relay_socket_root or failure_diagnostic\\\" -o \\\"pythonpath=backend tests/projects tests/runs tests/web tests/isolation tests/adapters/opencode tests/candidates tests/execution\\\"'\"",
+      "exit_code": 0,
+      "output": "pytest-04.log",
+      "sha256": "18296ce90e2364bfda6835ed8aa8add1dfec3460f3112df698d1f131ef1c59ab"
+    },
+    {
+      "command": "\"C:\\\\Program Files\\\\PowerShell\\\\7\\\\pwsh.exe\" -Command \"& 'C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe' -m pytest -q tests/isolation/test_go_task.py -k native_failure_diagnostic -o \\\"pythonpath=backend tests/projects tests/runs tests/web tests/isolation tests/adapters/opencode tests/candidates tests/execution\\\"; if (\"'$LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; git diff --check; & '\"'C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe' -m compileall -q backend tests\"",
+      "exit_code": 0,
+      "output": "pytest-05.log",
+      "sha256": "15dc82dee23c84130bcb0e62e9c9c5e7543c952378559196cc197cc43dfbb4d0"
+    },
+    {
+      "command": "\"C:\\\\Program Files\\\\PowerShell\\\\7\\\\pwsh.exe\" -Command \"wsl.exe -e bash -lc 'cd /mnt/c/Users/Chooo/Playground/Karajan/.cache/ci-spark-task-native && export KARAJAN_OPENCODE_LINUX_BINARY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode KARAJAN_GO_TOKENIZER_DIRECTORY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-artifacts KARAJAN_REQUIRE_GO_TOKENIZER=1 KARAJAN_REQUIRE_OPENCODE_ISOLATION=1 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 && /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest -q tests/runs/test_go_task_execution_native.py -o \\\"pythonpath=backend tests/projects tests/runs tests/web tests/isolation tests/adapters/opencode tests/candidates tests/execution\\\"'\"",
+      "exit_code": 0,
+      "output": "pytest-06.log",
+      "sha256": "7806f4375d0644b982e6a941113aecbbabe8c1f36639f0eb17eeb0738556f5a3"
+    }
+  ]
+}

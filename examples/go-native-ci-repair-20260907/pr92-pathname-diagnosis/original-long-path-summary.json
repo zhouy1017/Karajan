@@ -1,0 +1,42 @@
+[
+  {
+    "scenario": "none",
+    "public_operation_sha256": "11c48ac191f7c267486bf7ab2f9109693431391c467c7e9e1231614506fe14d3",
+    "operation_id": "d8255f4f-0899-43bb-89d7-2c47c5336b67",
+    "socket_path": "/tmp/pytest-of-review/pytest-1/test_actual_host_child_native_0/w/operation-d8255f4f-0899-43bb-89d7-2c47c5336b67/inference.sock",
+    "socket_path_bytes": 126,
+    "phase": "effect_claimed",
+    "reason_codes": [],
+    "cancel_requested_before_test_finalizer": false,
+    "effect_claim_present": true,
+    "collection_present": false,
+    "operation_directory_exists": true,
+    "native_directory_exists": false,
+    "socket_exists": false,
+    "fixture_error": {
+      "code": "TASK_STOPPED_CAPTURE_REQUIRED"
+    },
+    "intent_runner_source_sha256": "151a81cf821acfc764c35f5de7950ab02a7aba2b793ad041900446ee8c93b4cf",
+    "intent_native_source_sha256": "4e96bcec10f250718e2d13061efa4c2da7902a136d4e8759f0efe03c6e08687f"
+  },
+  {
+    "scenario": "cancel_after_send",
+    "public_operation_sha256": "e77122361a530178cfbf9e44561e1628c1837b37517e6b9a50e92ee266c14585",
+    "operation_id": "7f8fcc9f-cb3d-465b-a2d7-fc2880af4b4a",
+    "socket_path": "/tmp/pytest-of-review/pytest-1/test_actual_host_child_native_1/w/operation-7f8fcc9f-cb3d-465b-a2d7-fc2880af4b4a/inference.sock",
+    "socket_path_bytes": 126,
+    "phase": "effect_claimed",
+    "reason_codes": [],
+    "cancel_requested_before_test_finalizer": false,
+    "effect_claim_present": true,
+    "collection_present": false,
+    "operation_directory_exists": true,
+    "native_directory_exists": false,
+    "socket_exists": false,
+    "fixture_error": {
+      "code": "TASK_STOPPED_CAPTURE_REQUIRED"
+    },
+    "intent_runner_source_sha256": "c5b17ddaf58203f9d3ce24f8d7c9cc62bed2cd377a57e2a53f12666e768cda40",
+    "intent_native_source_sha256": "4e96bcec10f250718e2d13061efa4c2da7902a136d4e8759f0efe03c6e08687f"
+  }
+]

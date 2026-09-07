@@ -15,7 +15,7 @@ from .host import RunnerHost
 def supervise(database: Path, start_key: str) -> None:
     import json
 
-    host = RunnerHost(database.parent)
+    host = RunnerHost(database.parent, existing_only=True)
     with host._connect() as connection:
         row = connection.execute(
             "SELECT * FROM executions WHERE start_key = ?", (start_key,)

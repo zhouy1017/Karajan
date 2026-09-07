@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="2.370" timestamp="2026-09-06T21:26:18.385722+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_go_task_collector" name="test_capture_compiler_uses_original_validation_authors_and_full_baseline" time="1.193"><failure message="ModuleNotFoundError: No module named 'karajan.orchestration.go_task_collector'">captured_case = (&lt;karajan.orchestration.go_execution_intent.GoExecutionIntents object at 0x00000204D1C546B0&gt;, ('6bbd0079-b2bc-4067-acb...0x00000204D1CAEF30&gt;, &lt;karajan.adapters.opencode.go_journal.GoCallJournal object at 0x00000204D1E4F1D0&gt;, GoTaskResult())
+
+    def test_capture_compiler_uses_original_validation_authors_and_full_baseline(captured_case):
+&gt;       from karajan.orchestration.go_task_collector import compile_go_capture
+E       ModuleNotFoundError: No module named 'karajan.orchestration.go_task_collector'
+
+tests\runs\test_go_task_collector.py:78: ModuleNotFoundError</failure></testcase></testsuite></testsuites>

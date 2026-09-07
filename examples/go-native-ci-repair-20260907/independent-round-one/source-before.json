@@ -1,0 +1,34 @@
+{
+  "backend/karajan/isolation/go_task.py": {
+    "sha256": "daf8cadd27f89f85f4842f51f11839990bdec9d7711705abeb89948766935a62",
+    "bytes": 21376
+  },
+  "backend/karajan/adapters/opencode/go_relay.py": {
+    "sha256": "088c335d1bfeedc2b69bc2395acc704ea6b32f71b6addcc74c06d87b2400170b",
+    "bytes": 40505
+  },
+  "backend/karajan/orchestration/go_task_execution.py": {
+    "sha256": "3bca8ad44860e11815e9ecb9dedae1edd9d9d556f4940f4fd6694af30cb30cf9",
+    "bytes": 19647
+  },
+  "backend/karajan/orchestration/go_execution_intent.py": {
+    "sha256": "3416c3f324d6653f246b2317de257e362f410980dda458756dab1e029d6082f1",
+    "bytes": 41126
+  },
+  "backend/karajan/orchestration/_go_task_runner.py": {
+    "sha256": "0a43cf7b1924b40a66ea35e354e15a6cce697b954c243c8808a7bf7500343822",
+    "bytes": 1915
+  },
+  "tests/isolation/test_go_task.py": {
+    "sha256": "bbb9d6242e1214097f0e043b211a48a917e589738dba3eb445c3687d3c2b6288",
+    "bytes": 19533
+  },
+  "tests/adapters/opencode/test_go_unix_relay.py": {
+    "sha256": "0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f",
+    "bytes": 5017
+  },
+  ".cache/native-resume-independent/test_native_boundaries.py": {
+    "sha256": "bb4272b3cb9a40d8f66cfc7df44900b154a5f99e76eb49f9609ec40835e9a071",
+    "bytes": 6167
+  }
+}

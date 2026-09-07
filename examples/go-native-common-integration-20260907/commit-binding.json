@@ -1,0 +1,148 @@
+{
+  "code_commit": "aa384798fb49797cdc5b140130dae93ee8f651b4",
+  "evidence_merge_head": "ef440f4e7902bc1d3a262afa9112154cd9690a4a",
+  "all_10_sources_identical_to_both_commits": true,
+  "sources": {
+    "backend/karajan/isolation/go_task.py": {
+      "aa384798fb49797cdc5b140130dae93ee8f651b4": {
+        "git_blob": "f9a7b95fa686aef41e566ad2201809b1e5088104",
+        "sha256": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+        "bytes": 22507,
+        "working_bytes_equal": true
+      },
+      "ef440f4e7902bc1d3a262afa9112154cd9690a4a": {
+        "git_blob": "f9a7b95fa686aef41e566ad2201809b1e5088104",
+        "sha256": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+        "bytes": 22507,
+        "working_bytes_equal": true
+      }
+    },
+    "backend/karajan/adapters/opencode/go_relay.py": {
+      "aa384798fb49797cdc5b140130dae93ee8f651b4": {
+        "git_blob": "3e8b388e8541b5c546311442801f48beb236782c",
+        "sha256": "c45f2784bff518407fc90c3f61d9adf0a92b69f701b77dde1aef86e6b0b5d2cd",
+        "bytes": 42484,
+        "working_bytes_equal": true
+      },
+      "ef440f4e7902bc1d3a262afa9112154cd9690a4a": {
+        "git_blob": "3e8b388e8541b5c546311442801f48beb236782c",
+        "sha256": "c45f2784bff518407fc90c3f61d9adf0a92b69f701b77dde1aef86e6b0b5d2cd",
+        "bytes": 42484,
+        "working_bytes_equal": true
+      }
+    },
+    "backend/karajan/orchestration/go_execution_intent.py": {
+      "aa384798fb49797cdc5b140130dae93ee8f651b4": {
+        "git_blob": "3740a26430a3978b0296d47322a8fcd8a98d42af",
+        "sha256": "4e72794f6aae846d31788d136dbe47bf15aa6fde839731c57d14f5aa86c5a8e9",
+        "bytes": 43782,
+        "working_bytes_equal": true
+      },
+      "ef440f4e7902bc1d3a262afa9112154cd9690a4a": {
+        "git_blob": "3740a26430a3978b0296d47322a8fcd8a98d42af",
+        "sha256": "4e72794f6aae846d31788d136dbe47bf15aa6fde839731c57d14f5aa86c5a8e9",
+        "bytes": 43782,
+        "working_bytes_equal": true
+      }
+    },
+    "backend/karajan/orchestration/go_task_execution.py": {
+      "aa384798fb49797cdc5b140130dae93ee8f651b4": {
+        "git_blob": "2318f4ba29e03410b7e8633dbdf56193182058da",
+        "sha256": "789e9945a698d6f519f65db35205460ad35a0babf35aee2fbb5c6f82ec095b4d",
+        "bytes": 21077,
+        "working_bytes_equal": true
+      },
+      "ef440f4e7902bc1d3a262afa9112154cd9690a4a": {
+        "git_blob": "2318f4ba29e03410b7e8633dbdf56193182058da",
+        "sha256": "789e9945a698d6f519f65db35205460ad35a0babf35aee2fbb5c6f82ec095b4d",
+        "bytes": 21077,
+        "working_bytes_equal": true
+      }
+    },
+    "tests/runs/test_go_task_execution.py": {
+      "aa384798fb49797cdc5b140130dae93ee8f651b4": {
+        "git_blob": "49cc66f6f79bd0156fdf977dcdbfa73fb4ab5cdf",
+        "sha256": "dc504c7cb1f360bd6632b7a8765ed5eb7ba71a68a04987f78a7446c9a54f011a",
+        "bytes": 14464,
+        "working_bytes_equal": true
+      },
+      "ef440f4e7902bc1d3a262afa9112154cd9690a4a": {
+        "git_blob": "49cc66f6f79bd0156fdf977dcdbfa73fb4ab5cdf",
+        "sha256": "dc504c7cb1f360bd6632b7a8765ed5eb7ba71a68a04987f78a7446c9a54f011a",
+        "bytes": 14464,
+        "working_bytes_equal": true
+      }
+    },
+    "tests/runs/test_go_native_diagnostic_contract.py": {
+      "aa384798fb49797cdc5b140130dae93ee8f651b4": {
+        "git_blob": "07a075d33e2e4282462990223684d8d4bde76655",
+        "sha256": "7a3f9dc8501152f6fd4e3a1ef9393028633d5c992e445cb8d5874c27a0a57c0e",
+        "bytes": 3172,
+        "working_bytes_equal": true
+      },
+      "ef440f4e7902bc1d3a262afa9112154cd9690a4a": {
+        "git_blob": "07a075d33e2e4282462990223684d8d4bde76655",
+        "sha256": "7a3f9dc8501152f6fd4e3a1ef9393028633d5c992e445cb8d5874c27a0a57c0e",
+        "bytes": 3172,
+        "working_bytes_equal": true
+      }
+    },
+    "tests/isolation/test_go_task.py": {
+      "aa384798fb49797cdc5b140130dae93ee8f651b4": {
+        "git_blob": "f6fc35152ef8d572d663bcb1e2b68b6d1369e216",
+        "sha256": "0784cb488b333815da50270030c74cd29cce446c036a411071e63a83fa596f76",
+        "bytes": 23424,
+        "working_bytes_equal": true
+      },
+      "ef440f4e7902bc1d3a262afa9112154cd9690a4a": {
+        "git_blob": "f6fc35152ef8d572d663bcb1e2b68b6d1369e216",
+        "sha256": "0784cb488b333815da50270030c74cd29cce446c036a411071e63a83fa596f76",
+        "bytes": 23424,
+        "working_bytes_equal": true
+      }
+    },
+    "tests/adapters/opencode/test_go_unix_relay.py": {
+      "aa384798fb49797cdc5b140130dae93ee8f651b4": {
+        "git_blob": "bd9de80858be9ee8de2ffa8c7a363462a721e2dc",
+        "sha256": "0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f",
+        "bytes": 5017,
+        "working_bytes_equal": true
+      },
+      "ef440f4e7902bc1d3a262afa9112154cd9690a4a": {
+        "git_blob": "bd9de80858be9ee8de2ffa8c7a363462a721e2dc",
+        "sha256": "0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f",
+        "bytes": 5017,
+        "working_bytes_equal": true
+      }
+    },
+    "tests/adapters/opencode/test_go_relay.py": {
+      "aa384798fb49797cdc5b140130dae93ee8f651b4": {
+        "git_blob": "98ef93bbc34b170cf51c103d68d368732b823d3d",
+        "sha256": "580b428c9169a6ecfcc50c06cb81099b8d257fc69921e3c5164a55dddbc07d23",
+        "bytes": 30879,
+        "working_bytes_equal": true
+      },
+      "ef440f4e7902bc1d3a262afa9112154cd9690a4a": {
+        "git_blob": "98ef93bbc34b170cf51c103d68d368732b823d3d",
+        "sha256": "580b428c9169a6ecfcc50c06cb81099b8d257fc69921e3c5164a55dddbc07d23",
+        "bytes": 30879,
+        "working_bytes_equal": true
+      }
+    },
+    "tests/adapters/opencode/test_go_relay_context.py": {
+      "aa384798fb49797cdc5b140130dae93ee8f651b4": {
+        "git_blob": "21ef6e16a581273aa18a147029a560d4a9e783d6",
+        "sha256": "ae7bac8042c44e28e4e5dca06d0d839a61ed187816d68930307c25fb45596135",
+        "bytes": 11292,
+        "working_bytes_equal": true
+      },
+      "ef440f4e7902bc1d3a262afa9112154cd9690a4a": {
+        "git_blob": "21ef6e16a581273aa18a147029a560d4a9e783d6",
+        "sha256": "ae7bac8042c44e28e4e5dca06d0d839a61ed187816d68930307c25fb45596135",
+        "bytes": 11292,
+        "working_bytes_equal": true
+      }
+    }
+  },
+  "impact": "Only Linux-specific marker changed after common runs; test body AST unchanged; exact marker target Windows skip/Linux passed retained."
+}

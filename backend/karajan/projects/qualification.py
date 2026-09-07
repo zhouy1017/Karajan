@@ -25,6 +25,8 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import ValidationError
 
+from karajan.storage import require_schema
+
 from .models import ProfileRef, RegisteredProfile
 from .publication import digest, effective_catalog
 from .registry import ProjectRegistry, encoded, identifier
@@ -109,6 +111,24 @@ class ProfileQualificationStore:
             raise QualificationError("CREDENTIAL_PROJECT_STORE_MISMATCH")
         self.credentials = credentials
         self.go_suite = go_suite
+        if projects.existing_only:
+            require_schema(
+                projects.database,
+                {
+                    "profile_qualification_starts": [
+                        "id",
+                        "project_id",
+                        "principal",
+                        "command_key",
+                        "request_digest",
+                        "binding",
+                    ],
+                    "profile_qualification_records": ["id", "record", "digest"],
+                    "profile_qualification_revocations": ["id", "record"],
+                    "profile_qualification_start_seals": ["id", "digest"],
+                },
+            )
+            return
         with projects._transaction() as db:
             db.execute(
                 "CREATE TABLE IF NOT EXISTS profile_qualification_starts ("

@@ -1,0 +1,2 @@
+backend\karajan\isolation\go_task.py:88: error: Module has no attribute "geteuid"; maybe "getpid"?  [attr-defined]
+Found 1 error in 1 file (checked 128 source files)

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="4" time="4.549" timestamp="2026-09-06T21:50:36.555362+08:00" hostname="ProArt-Zhou"><testcase classname="tests.candidates.test_capture_recovery" name="test_historical_reopen_separates_commit_facts_from_current_storage_availability[artifacts]" time="1.089"><failure message="karajan.candidates.store.CandidateError: CANDIDATE_STORAGE_UNAVAILABLE">registered = (&lt;karajan.candidates.store.CandidateStore object at 0x000001D159A6B0E0&gt;, {'repository_identity': 'baseline-fixture', '... 'docs/untouched.md': b'Preserve this unprojected file.\n', 'data/bytes.bin': b'\x00\xff\x80\r\n', '.empty': b'', ...})
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-832/test_historical_reopen_separat0')
+missing = 'artifacts'
+
+    @pytest.mark.parametrize("missing", ["artifacts", "git", "both"])
+    def test_historical_reopen_separates_commit_facts_from_current_storage_availability(registered, tmp_path, missing):
+        store, baseline, files = registered
+        projection, contents, request = inputs(baseline, files)
+        candidate = store.freeze_projection(projection, contents, request)
+        unavailable = ([store.objects] if missing == "artifacts" else [store.git_directory]
+                       if missing == "git" else [store.objects, store.git_directory])
+        for path in unavailable:
+            path.rename(path.with_name("retained-" + path.name))
+        before = (store.directory / "candidates.sqlite").read_bytes()
+&gt;       reopened = CandidateStore(store.directory, existing_only=True)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\candidates\test_capture_recovery.py:109: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.candidates.store.CandidateStore object at 0x000001D159BCD070&gt;
+state_directory = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-832/test_historical_reopen_separat0/state')
+existing_only = True
+
+    def __init__(self, state_directory: Path, *, existing_only: bool = False) -&gt; None:
+        if existing_only:
+            self._reject_links(Path(state_directory).absolute(), "CANDIDATE_STORAGE_UNAVAILABLE")
+        self.directory = Path(state_directory).resolve()
+        self.objects = self.directory / "artifacts"
+        self.git_directory = self.directory / "objects.git"
+        self._bootstrap = False
+        if existing_only:
+            if not self.objects.is_dir() or not self.git_directory.is_dir():
+&gt;               raise CandidateError("CANDIDATE_STORAGE_UNAVAILABLE")
+E               karajan.candidates.store.CandidateError: CANDIDATE_STORAGE_UNAVAILABLE
+
+backend\karajan\candidates\store.py:87: CandidateError</failure></testcase><testcase classname="tests.candidates.test_capture_recovery" name="test_historical_reopen_separates_commit_facts_from_current_storage_availability[git]" time="1.052"><failure message="karajan.candidates.store.CandidateError: CANDIDATE_STORAGE_UNAVAILABLE">registered = (&lt;karajan.candidates.store.CandidateStore object at 0x000001D159BE2D50&gt;, {'repository_identity': 'baseline-fixture', '... 'docs/untouched.md': b'Preserve this unprojected file.\n', 'data/bytes.bin': b'\x00\xff\x80\r\n', '.empty': b'', ...})
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-832/test_historical_reopen_separat1')
+missing = 'git'
+
+    @pytest.mark.parametrize("missing", ["artifacts", "git", "both"])
+    def test_historical_reopen_separates_commit_facts_from_current_storage_availability(registered, tmp_path, missing):
+        store, baseline, files = registered
+        projection, contents, request = inputs(baseline, files)
+        candidate = store.freeze_projection(projection, contents, request)
+        unavailable = ([store.objects] if missing == "artifacts" else [store.git_directory]
+                       if missing == "git" else [store.objects, store.git_directory])
+        for path in unavailable:
+            path.rename(path.with_name("retained-" + path.name))
+        before = (store.directory / "candidates.sqlite").read_bytes()
+&gt;       reopened = CandidateStore(store.directory, existing_only=True)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\candidates\test_capture_recovery.py:109: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.candidates.store.CandidateStore object at 0x000001D159B75550&gt;
+state_directory = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-832/test_historical_reopen_separat1/state')
+existing_only = True
+
+    def __init__(self, state_directory: Path, *, existing_only: bool = False) -&gt; None:
+        if existing_only:
+            self._reject_links(Path(state_directory).absolute(), "CANDIDATE_STORAGE_UNAVAILABLE")
+        self.directory = Path(state_directory).resolve()
+        self.objects = self.directory / "artifacts"
+        self.git_directory = self.directory / "objects.git"
+        self._bootstrap = False
+        if existing_only:
+            if not self.objects.is_dir() or not self.git_directory.is_dir():
+&gt;               raise CandidateError("CANDIDATE_STORAGE_UNAVAILABLE")
+E               karajan.candidates.store.CandidateError: CANDIDATE_STORAGE_UNAVAILABLE
+
+backend\karajan\candidates\store.py:87: CandidateError</failure></testcase><testcase classname="tests.candidates.test_capture_recovery" name="test_historical_reopen_separates_commit_facts_from_current_storage_availability[both]" time="1.050"><failure message="karajan.candidates.store.CandidateError: CANDIDATE_STORAGE_UNAVAILABLE">registered = (&lt;karajan.candidates.store.CandidateStore object at 0x000001D159BE2BD0&gt;, {'repository_identity': 'baseline-fixture', '... 'docs/untouched.md': b'Preserve this unprojected file.\n', 'data/bytes.bin': b'\x00\xff\x80\r\n', '.empty': b'', ...})
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-832/test_historical_reopen_separat2')
+missing = 'both'
+
+    @pytest.mark.parametrize("missing", ["artifacts", "git", "both"])
+    def test_historical_reopen_separates_commit_facts_from_current_storage_availability(registered, tmp_path, missing):
+        store, baseline, files = registered
+        projection, contents, request = inputs(baseline, files)
+        candidate = store.freeze_projection(projection, contents, request)
+        unavailable = ([store.objects] if missing == "artifacts" else [store.git_directory]
+                       if missing == "git" else [store.objects, store.git_directory])
+        for path in unavailable:
+            path.rename(path.with_name("retained-" + path.name))
+        before = (store.directory / "candidates.sqlite").read_bytes()
+&gt;       reopened = CandidateStore(store.directory, existing_only=True)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\candidates\test_capture_recovery.py:109: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.candidates.store.CandidateStore object at 0x000001D159BE38F0&gt;
+state_directory = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-832/test_historical_reopen_separat2/state')
+existing_only = True
+
+    def __init__(self, state_directory: Path, *, existing_only: bool = False) -&gt; None:
+        if existing_only:
+            self._reject_links(Path(state_directory).absolute(), "CANDIDATE_STORAGE_UNAVAILABLE")
+        self.directory = Path(state_directory).resolve()
+        self.objects = self.directory / "artifacts"
+        self.git_directory = self.directory / "objects.git"
+        self._bootstrap = False
+        if existing_only:
+            if not self.objects.is_dir() or not self.git_directory.is_dir():
+&gt;               raise CandidateError("CANDIDATE_STORAGE_UNAVAILABLE")
+E               karajan.candidates.store.CandidateError: CANDIDATE_STORAGE_UNAVAILABLE
+
+backend\karajan\candidates\store.py:87: CandidateError</failure></testcase><testcase classname="tests.candidates.test_capture_recovery" name="test_duplicate_projection_allowlist_is_rejected_before_any_candidate_write" time="1.189"><failure message="Failed: DID NOT RAISE CandidateError">registered = (&lt;karajan.candidates.store.CandidateStore object at 0x000001D159C54290&gt;, {'repository_identity': 'baseline-fixture', '... 'docs/untouched.md': b'Preserve this unprojected file.\n', 'data/bytes.bin': b'\x00\xff\x80\r\n', '.empty': b'', ...})
+
+    def test_duplicate_projection_allowlist_is_rejected_before_any_candidate_write(registered):
+        store, baseline, files = registered
+        projection, contents, request = inputs(baseline, files)
+        request["allowed_paths"].append(request["allowed_paths"][0])
+        before = {p.relative_to(store.directory): p.read_bytes() for p in store.directory.rglob("*") if p.is_file()}
+&gt;       with pytest.raises(CandidateError, match="PROJECTION_WRITE_SCOPE_MISMATCH"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE CandidateError
+
+tests\candidates\test_capture_recovery.py:128: Failed</failure></testcase></testsuite></testsuites>

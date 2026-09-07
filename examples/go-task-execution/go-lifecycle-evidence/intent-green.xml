@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="1.284" timestamp="2026-09-06T21:28:21.111318+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_go_lifecycle" name="test_activation_guard_holds_original_prepared_intent" time="1.055" /></testsuite></testsuites>

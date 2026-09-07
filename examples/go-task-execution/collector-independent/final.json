@@ -1,0 +1,20 @@
+{
+  "issue": 90,
+  "reviewer": "capacity_facts",
+  "scope": "Collector and Candidate capture recovery only; not reviewer-authored intent persistence",
+  "findings": [
+    {"id": "COLLECTOR-001", "priority": 2, "status": "closed"},
+    {"id": "COLLECTOR-002", "priority": 2, "status": "closed"}
+  ],
+  "source_sha256": {
+    "backend/karajan/orchestration/go_task_collector.py": "a9d3149f33ae026ae4e4dbc5e74a5daed9aaebac75066005da57d84c07f699bc",
+    "backend/karajan/candidates/_capture_lookup.py": "ea524d6973801a7583648357252070ff28657f2454730a4c063240daab3cd608",
+    "backend/karajan/candidates/store.py": "011aa22ba030564f1ef511fe923a47f75c48488ace40572d95c07503b9bc6da6"
+  },
+  "test_sha256": "8906838bb753238728ae6d45b3bfc4a3fa5c1ba76a82599851c55bc854997ee1",
+  "before": {"failed": 2, "passed": 9, "seconds": 13.62, "evidence": "before.xml"},
+  "windows": {"passed": 11, "seconds": 16.08, "evidence": "windows-final.xml"},
+  "wsl_linux": {"passed": 11, "seconds": 6.23, "evidence": "wsl-final.xml"},
+  "provider_calls": 0,
+  "live_qualification": "not_run"
+}

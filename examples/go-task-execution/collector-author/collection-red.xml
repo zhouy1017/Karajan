@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="2.102" timestamp="2026-09-06T21:31:04.072766+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_go_task_collector" name="test_trusted_collection_commits_full_tree_and_waits_for_checks_review" time="1.047"><failure message="ImportError: cannot import name 'ApprovedGoCollector' from 'karajan.orchestration.go_task_collector' (C:\Users\Chooo\Playground\Karajan\.cache\go-task-execution-v2\backend\karajan\orchestration\go_task_collector.py)">collection_case = (&lt;karajan.orchestration.go_execution_intent.GoExecutionIntents object at 0x0000021E7B799790&gt;, ('b0eea518-899a-4761-a57...0x0000021E7B4F71D0&gt;, &lt;karajan.adapters.opencode.go_journal.GoCallJournal object at 0x0000021E7B7283E0&gt;, GoTaskResult())
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-811/test_trusted_collection_commit0')
+
+    def test_trusted_collection_commits_full_tree_and_waits_for_checks_review(collection_case, tmp_path):
+&gt;       from karajan.orchestration.go_task_collector import ApprovedGoCollector
+E       ImportError: cannot import name 'ApprovedGoCollector' from 'karajan.orchestration.go_task_collector' (C:\Users\Chooo\Playground\Karajan\.cache\go-task-execution-v2\backend\karajan\orchestration\go_task_collector.py)
+
+tests\runs\test_go_task_collector.py:174: ImportError</failure></testcase></testsuite></testsuites>

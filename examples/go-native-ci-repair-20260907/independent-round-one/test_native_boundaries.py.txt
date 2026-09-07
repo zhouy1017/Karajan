@@ -1,0 +1,157 @@
+"""Independent native repair C faults; no real provider or native namespace."""
+
+import json
+import sys
+from contextlib import contextmanager
+from dataclasses import replace
+
+import httpx
+import pytest
+from karajan.execution import ProcessIdentity, ProcessSpec
+from karajan.isolation import go_task
+from karajan.orchestration.go_execution_intent import GoLaunchSpec
+from karajan.orchestration.go_task_execution import ApprovedGoTaskExecution, consume_go_task
+from karajan.runs import RunError
+from test_go_context import accounting, artifacts
+from test_go_execution_intent import case, projected
+from test_go_task import permitted, prepared
+from test_opencode_go_composition import runtime_artifact
+
+__all__ = ["accounting", "artifacts", "case", "projected"]
+pytestmark = pytest.mark.skipif(sys.platform != "linux", reason="Linux UDS/runtime assets")
+
+
+class NativeStartFailure:
+    """Explicit native process boundary failure before namespace effects."""
+
+    stop = "confirmed"
+
+    def __init__(self, runtime, directory, socket_path, capability, *, projection):
+        self.workspace = directory / "workspace"
+        self.workspace.mkdir(parents=True)
+        self.socket_path = socket_path
+
+    def capture_projection(self):
+        raise RuntimeError("TASK_CAPTURE_NO_SUCCESSFUL_START")
+
+    def close(self):
+        return {"local_stop": self.stop}
+
+
+def fixture_request_forbidden(request):
+    pytest.fail("No provider request is part of this independent test")
+
+
+def test_unknown_native_stop_retains_original_empty_socket_lease(tmp_path, accounting, monkeypatch):
+    runtime, task, credential, auth, context = prepared(tmp_path, accounting)
+    leases = []
+    allocate = go_task._relay_socket_root
+
+    def allocated():
+        lease = allocate()
+        leases.append(lease)
+        return lease
+
+    def stop_unknown(native):
+        raise RuntimeError("TASK_NATIVE_START_RESPONSE_UNKNOWN")
+
+    monkeypatch.setattr(go_task, "_relay_socket_root", allocated)
+    monkeypatch.setattr(go_task, "IsolatedOpenCode", NativeStartFailure)
+    monkeypatch.setattr(NativeStartFailure, "stop", "unknown")
+    try:
+        result = go_task.execute_go_task(
+            runtime, tmp_path / "operation", task, credential, auth, context,
+            start_native=stop_unknown, send_guard=permitted,
+            client_factory=lambda: httpx.Client(transport=httpx.MockTransport(fixture_request_forbidden)),
+        )
+        assert result.capture is None
+        assert result.report["native_cleanup"]["local_stop"] == "unknown"
+        assert result.report["relay_cleanup"]["status"] == "closed"
+        assert result.report["journal"]["request_count"] == 0
+        assert len(leases) == 1
+        assert leases[0].path.exists(), "Unknown native stop must retain its original socket root"
+    finally:
+        # Test has no process; only remove the original empty lease if still present.
+        for lease in leases:
+            go_task._cleanup_relay_socket_root(lease)
+
+
+def test_arbitrary_uppercase_private_text_is_not_a_diagnostic_code(tmp_path, accounting, monkeypatch):
+    runtime, task, credential, auth, context = prepared(tmp_path, accounting)
+    private_text = "PRIVATE_CUSTOMER_CASE_ACME_INTERNAL_2026"
+    task = replace(task, prompt=private_text)
+    monkeypatch.setattr(go_task, "IsolatedOpenCode", NativeStartFailure)
+
+    def exception_with_task_text(native):
+        raise RuntimeError(task.prompt)
+
+    result = go_task.execute_go_task(
+        runtime, tmp_path / "operation", task, credential, auth, context,
+        start_native=exception_with_task_text, send_guard=permitted,
+        client_factory=lambda: httpx.Client(transport=httpx.MockTransport(fixture_request_forbidden)),
+    )
+    assert private_text not in json.dumps(result.report), "Raw private error text is not an allowlisted domain code"
+    assert result.report["error_reason_code"] == "UNCLASSIFIED_NATIVE_FAILURE"
+    assert result.report["journal"]["request_count"] == 0
+
+
+def test_public_consume_preserves_native_failure_when_collector_rejects_capture(
+    projected, tmp_path, accounting, artifacts, monkeypatch
+):
+    from task_execution_fixture import approved_fixture
+    from test_task_workspace import git
+    from karajan.orchestration import go_task_execution as consumer
+
+    repository = projected["repository"]
+    for name, data in {
+        "src/report.py": b"print('approved task')\n",
+        "tests/test_report.py": b"assert True\n",
+    }.items():
+        path = repository / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+    git(repository, "add", ".")
+    git(repository, "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "commit", "-qm", "independent task baseline")
+    projects = projected["projects"]
+    current = projects.get(projected["project_id"])
+    projects.update(current["id"], {
+        "name": current["name"], "base_ref": "main", "target_branch": "main",
+        "allowed_target_branches": ["main"],
+    }, expected_revision=current["revision"], principal="owner", command_key="baseline-refresh")
+    services, run_id, op_id = approved_fixture(
+        projected, tmp_path, runtime_artifact(), accounting, artifacts, 1,
+    )
+    spec = ProcessSpec((sys.executable, "-c", "pass"), tmp_path)
+    services.intents.launch_compiler = lambda op: GoLaunchSpec(spec, "c" * 64)
+    identity = ProcessIdentity(42, "explicit-independent-child-boundary")
+    monkeypatch.setattr(services.intents.host, "wait_for_runner_registration", lambda *a, **k: identity)
+
+    @contextmanager
+    def current_runner(*args, **kwargs):
+        yield identity
+
+    monkeypatch.setattr(services.intents.host, "current_runner_guard", current_runner)
+    facade = ApprovedGoTaskExecution(services)
+    facade.advance(run_id, op_id, principal="owner")
+    calls = []
+
+    def failed_native(*args, **kwargs):
+        calls.append(1)
+        return go_task.GoTaskResult(None, json.dumps({
+            "schema_version": "karajan.go-native-task-observation.v1",
+            "status": "failed", "reason_codes": ["TASK_EXECUTION_FAILED"],
+            "error_type": "RuntimeError", "error_reason_code": "UNIX_RELAY_PATH_TOO_LONG",
+            "native_cleanup": {"local_stop": "not_started"},
+            "relay_cleanup": {"status": "closed"},
+        }))
+
+    monkeypatch.setattr(consumer, "execute_go_task", failed_native)
+    with pytest.raises(RunError, match="TASK_STOPPED_CAPTURE_REQUIRED"):
+        consume_go_task(services, run_id, op_id, principal="owner")
+    current = facade.get(run_id, op_id, principal="owner")
+    assert len(calls) == 1 and current["execution"]["effect_claim"] is not None
+    assert "UNIX_RELAY_PATH_TOO_LONG" in json.dumps(current), "Public state discarded the native failure diagnostic"
+    before = services.journal.snapshot(current["execution"]["intent"]["grant_id"])
+    assert before["state"] == "revoked" and before["request_count"] == 0
+    consume_go_task(services, run_id, op_id, principal="owner")
+    assert len(calls) == 1
