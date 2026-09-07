@@ -43,8 +43,25 @@ request/key；已 claim 且 receipt 缺失不会再次提交。取消在 claim �
 
 ```powershell
 $env:PYTHONPATH='backend'
-& 'C:\Users\Chooo\Playground\Karajan\.venv\Scripts\python.exe' -m pytest --basetemp .pytest-planning-execution tests/runs/test_planning_output.py tests/orchestration/test_planning_execution.py -q
-& 'C:\Users\Chooo\Playground\Karajan\.venv\Scripts\python.exe' -m pytest tests --collect-only -q
-& 'C:\Users\Chooo\Playground\Karajan\.venv\Scripts\python.exe' -m ruff check backend/karajan/orchestration/planning_execution.py backend/karajan/runs/planning.py backend/karajan/runs/models.py tests/orchestration/test_planning_execution.py
-& 'C:\Users\Chooo\Playground\Karajan\.venv\Scripts\python.exe' -m mypy backend/karajan/orchestration/planning_execution.py backend/karajan/runs/planning.py
+& 'C:\Users\Chooo\Playground\Karajan\.venv\Scripts\pytest.exe' --basetemp .cache\terra-planning-execution-pytest-windows tests/runs/test_planning_execution.py tests/runs/test_routing_authorization.py -q
+& 'C:\Users\Chooo\Playground\Karajan\.venv\Scripts\pytest.exe' tests --collect-only -q
+& 'C:\Users\Chooo\Playground\Karajan\.venv\Scripts\ruff.exe' check backend tests
+& 'C:\Users\Chooo\Playground\Karajan\.venv\Scripts\mypy.exe' backend/karajan
 ```
+
+## PR #119 测试收集修复证据（2026-09-07）
+
+候选 `9911f1a0a0cd20246adc53cd3be29b31f0da5daf` 的 Windows 和 Linux CI
+(`34097329556`、`34097326425`) 都以 `uv run --frozen --extra dev pytest tests`
+进入收集，得到 2,368 项和 31 个 `ModuleNotFoundError: No module named 'tests'`。
+失败来自控制器测试跨目录使用 `tests.runs.*`，以及它把 `test_routing_authorization`
+连带改为该包导入。`python -m pytest` 会把当前目录加入 `sys.path`，所以其本地成功不能证明
+CI 的 console-script 入口。
+
+修复候选 `ca0366fc1c822d9c6f797fc20f6ea20bc7f33eeb` 将控制器测试移到已有的
+`tests/runs/` fixture 域，恢复 `test_planning` 和 `test_routing_authorization` 的扁平导入。
+没有把 `tests` 变成包，也没有修改 CI、产品代码或既有独立审查 archive。Windows 与 WSL 的
+同一 `pytest` console launcher 全库收集均为 2,748 项、零错误；Windows 定向回归 49 passed；
+`ruff check backend tests` 与 `mypy backend/karajan` 通过。工作机没有 `uv`，所以记录的是 CI 中
+`uv` 最终执行的同一 console launcher；完整命令和 stdout 摘要见
+[`examples/planning-execution-ci-repair-119/README.md`](../../examples/planning-execution-ci-repair-119/README.md)。
