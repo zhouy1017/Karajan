@@ -58,6 +58,8 @@ C:\Users\Chooo\Playground\Karajan\.venv\Scripts\mypy.exe backend/karajan
 ```
 
 A full `pytest.exe -q tests --basetemp .cache\pytest-115-full` was started
-against this candidate and is still running while this manifest is written; it
-is not recorded as a pass. No remote CI, provider call, native Reviewer process,
-or real account qualification was run locally.
+against this candidate but did not produce a terminal pytest summary (the
+separate process exited after progress output containing early failures). It is
+incomplete, not a pass; its diagnostics were not used as #115 evidence. No
+remote CI, provider call, native Reviewer process, or real account qualification
+was run locally.
