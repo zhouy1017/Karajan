@@ -1,0 +1,18 @@
+{
+  "schema_version": "karajan.qualification-driver-publication.v1",
+  "captured_at_utc": "2026-09-07T07:53:21.877998+00:00",
+  "number": 124,
+  "url": "https://github.com/zhouy1017/Karajan/issues/124",
+  "title": "编码切片｜Terra 官方资格驱动的持久阶段与原记录恢复",
+  "body_file": "issue-124.md",
+  "body_sha256": "6e383bf807b84d09c835bca84b4dcc1d50ed1c343e6c3036292643a864ee4bc4",
+  "native_parent_observed": 107,
+  "parent_blocked_by_observed": [
+    106,
+    124
+  ],
+  "blocked_by_observed": [],
+  "worker": "gpt-5.6-terra",
+  "reviewer": "gpt-6-astra high",
+  "scope": "C/P qualification driver durability only; no model calls, new qualification start or replacement of #107 actual consumer S. GitHub Issues are current status authority."
+}

@@ -1,0 +1,82 @@
+{
+  "schema_version": "karajan.issue107-attempt4-readonly-reconciliation.v1",
+  "command": "issue107-official-go-reviewer-20260907-ordered-attempt4",
+  "read_only": true,
+  "start_present": true,
+  "start": {
+    "id_sha256": "0f447f0b13252f3a1c069b4adc83a6a14881d6481c94fd0d81f8a0c5ceefe27b",
+    "record_present": true,
+    "revocation_present": false,
+    "limits": {
+      "started_at": 1788765846.7067192,
+      "expires_at": 1788766446.7067192,
+      "per_scenario_requests": null,
+      "max_total_requests": null
+    }
+  },
+  "scenarios": [
+    {
+      "scenario": "clean_review",
+      "grant_sha256": "b97b7e8c9ebd6804d6a7246b15b4da5a048dc76eb2c85ec77f903f1782bf9753",
+      "request_count": 2,
+      "grant_present": true,
+      "grant_revoked": true,
+      "calls": [
+        {
+          "state": "response_received",
+          "outcome_state": "response_received",
+          "reason_codes": []
+        },
+        {
+          "state": "response_received",
+          "outcome_state": "response_received",
+          "reason_codes": []
+        }
+      ]
+    },
+    {
+      "scenario": "defect_review",
+      "grant_sha256": "142af5e9be2d9ee8cefd3958320a2d56c7a828b603a1fad989ce7d86ce76c209",
+      "request_count": 2,
+      "grant_present": true,
+      "grant_revoked": true,
+      "calls": [
+        {
+          "state": "response_received",
+          "outcome_state": "response_received",
+          "reason_codes": []
+        },
+        {
+          "state": "response_received",
+          "outcome_state": "response_received",
+          "reason_codes": []
+        }
+      ]
+    },
+    {
+      "scenario": "denied_read",
+      "grant_sha256": "955d5a98029d00d6b93dec85819567859c207588f93b65786c1a6d1fe8af8290",
+      "request_count": 2,
+      "grant_present": true,
+      "grant_revoked": true,
+      "calls": [
+        {
+          "state": "response_received",
+          "outcome_state": "response_received",
+          "reason_codes": []
+        },
+        {
+          "state": "response_received",
+          "outcome_state": "response_received",
+          "reason_codes": []
+        }
+      ]
+    }
+  ],
+  "record": {
+    "status": "passed",
+    "reason_codes": [],
+    "scenario_count": 3,
+    "sha256": "8e162b7af73b060e507a3c61677bfdc25cc16603abbec4bf7845acb4f2eeb58a"
+  }
+}

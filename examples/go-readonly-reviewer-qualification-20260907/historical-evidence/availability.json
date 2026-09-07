@@ -1,0 +1,89 @@
+{
+  "schema_version": "issue107-historical-evidence-availability-v1",
+  "issue": 107,
+  "candidate_commit": "ff7bc12b65edda50ba0062edf92527f1ff9ddb78",
+  "investigation": {
+    "kind": "bounded_read_only_historical_availability_audit",
+    "new_provider_calls": 0,
+    "new_go_calls": 0,
+    "new_qualification_starts": 0,
+    "new_consumer_effects": 0,
+    "private_database_mutations": 0,
+    "controller_access": "existing Store / Journal SQLite connections opened with mode=ro using /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python",
+    "publication_rule": "only allowlisted aggregate counts, field-presence booleans, and public-archive facts were inspected"
+  },
+  "sources": [
+    "../issue107-official-evidence.json",
+    "../issue107-attempt3-official-evidence.json",
+    "../issue107-attempt4-readonly-reconciliation.json",
+    "../issue107-attempt4-final-readonly-state.json",
+    "../issue107-attempt4-consumer-readonly-trace.json",
+    "controller Journal and Store records already present under the private controller root"
+  ],
+  "controller_journal_allowlisted_observation": {
+    "grant_count": 9,
+    "call_count": 18,
+    "calls_per_grant": [2, 2, 2, 2, 2, 2, 2, 2, 2],
+    "receipt_fields_present": [
+      "call_id",
+      "completed_at",
+      "grant_id",
+      "outcome.state",
+      "outcome.response_bytes",
+      "outcome.usage",
+      "request_context.request_digest",
+      "send_intent_at",
+      "sequence",
+      "state"
+    ],
+    "completed_at_present_for_all_calls": true,
+    "response_bytes_field_present_for_all_calls": true,
+    "native_session_identity_present": false,
+    "prompt_causal_identity_present": false,
+    "complete_final_or_text_digest_present": false,
+    "read_or_tool_history_digest_present": false
+  },
+  "public_archive_preserved_facts": {
+    "attempt2": {
+      "source": "../issue107-official-evidence.json",
+      "scenario_count": 3,
+      "requests_per_scenario": 2,
+      "final_completed": null,
+      "final_text_bytes": null,
+      "parsed_verdict_and_finding_count_only": true
+    },
+    "attempt3": {
+      "source": "../issue107-attempt3-official-evidence.json",
+      "scenario_count": 3,
+      "requests_per_scenario": 2,
+      "final_completed": null,
+      "final_text_bytes": null,
+      "parsed_verdict_and_finding_count_only": true
+    },
+    "attempt4": {
+      "reconciliation_source": "../issue107-attempt4-readonly-reconciliation.json",
+      "scenario_count": 3,
+      "requests_per_scenario": 2,
+      "record_status": "passed",
+      "all_own_grants_revoked": true,
+      "final_state_source": "../issue107-attempt4-final-readonly-state.json",
+      "expired_at_observation": true,
+      "consumer_actual_reviewer_attempt": null,
+      "consumer_transition": null
+    },
+    "aggregate": {
+      "attempts_with_six_recorded_requests": 3,
+      "total_recorded_requests": 18,
+      "remote_stop": "unknown"
+    }
+  },
+  "acceptance_projection": {
+    "request_accounting_and_local_revoke_stop": "partially evidenced by existing records and this Journal availability audit",
+    "new_session_prompt_final_causality": "recovered from the existing qualification-record observation; see record-observation-recovery.md. Journal receipts alone still do not carry those fields.",
+    "read_history_to_request_digest_alignment": "recovered from existing record retention: each request digest is present in the Journal and retains message/read digests; see record-observation-recovery.md",
+    "clean_defect_denied_semantic_acceptance": "recovered from existing parsed_review observations, including schema-approved defect fields; see record-observation-manifest.json",
+    "real_consumer_positive_then_revoke_negative": "not_run/unverified: no actual reviewer attempt or transition was recorded",
+    "remote_provider_stop": "unknown",
+    "issue107_s_passed": false
+  }
+}

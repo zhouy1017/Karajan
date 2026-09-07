@@ -425,3 +425,55 @@ def test_installed_subject_requires_current_qualification_for_new_checks(binding
     after = checks.get(*args, principal="owner")
     assert after["checks"] == before["checks"]
     assert after["subject"] == before["subject"]
+
+
+def test_issue107_identity_precedes_real_ready_reply_loss(binding_case, tmp_path, monkeypatch):
+    """A C-only operator recovery can read the exact CAS after its ready reply is lost."""
+    import importlib.util
+    import json
+    import shutil
+    from pathlib import Path
+
+    from karajan.orchestration.candidate_subjects import candidate_identity
+
+    service, _, intents, args, candidates, _, _ = binding_case
+    source = (
+        Path(__file__).parents[2]
+        / "examples/go-readonly-reviewer-qualification-20260907/prepare_issue107_consumer.py"
+    )
+    spec = importlib.util.spec_from_file_location("issue107_ready_loss", source)
+    assert spec is not None and spec.loader is not None
+    consumer = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(consumer)
+    identity = {"command": "issue107", "qualification_ref": "explicit-c-boundary"}
+    monkeypatch.setattr(consumer, "FIXTURE_OWNER", "owner")
+    monkeypatch.setattr(consumer, "ensure_fixture", lambda _root: (service, args, {}))
+    original_advance = service.advance
+
+    def ready_then_lost(*values, **kwargs):
+        result = original_advance(*values, **kwargs)
+        if result["state"] == "ready":
+            raise OSError("controlled C reply loss after CandidateStore commit")
+        return result
+
+    monkeypatch.setattr(service, "advance", ready_then_lost)
+    with pytest.raises(OSError):
+        consumer.positive_result(tmp_path, identity)
+    operation = intents.read(*args, principal="owner")
+    transition = operation["validation"]["subject_transition"]
+    assert operation["validation"]["issue107_recovery_identity"] == identity
+    assert transition["phase"] == "ready"
+    exact = candidates.lookup_review_rebind(
+        transition["binding"], command_key=transition["command_key"]
+    )
+    assert candidate_identity(exact) == transition["receipt"]
+    fixture = tmp_path / "consumer-fixture"
+    fixture.mkdir()
+    shutil.copyfile(service.admissions.database, fixture / "admission.sqlite")
+    shutil.copytree(candidates.directory, fixture / "candidates")
+    with sqlite3.connect(fixture / "admission.sqlite") as database:
+        database.execute("UPDATE operations SET id=?", ("issue107-fixed-consumer-operation",))
+        row = database.execute("SELECT data FROM operations").fetchone()
+        assert row is not None
+        assert json.loads(row[0])["validation"]["issue107_recovery_identity"] == identity
+    assert consumer.positive_history(tmp_path, identity) is not None

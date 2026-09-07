@@ -1,6 +1,13 @@
 # Fixed readonly Go Reviewer implementation evidence
 
-Issue [#106](https://github.com/zhouy1017/Karajan/issues/106), product commit `1a000c5600108cab2b0128d272dd01e3510f1aea`. This archive records C/P implementation evidence, not official qualification. [#107](https://github.com/zhouy1017/Karajan/issues/107) remains unperformed. Current integration G and the actual merge are recorded on the final PR and Issues.
+This README is the archived evidence for Issue #106 only. Its later
+``Provider calls: zero`` statement describes that implementation archive and
+does not describe Issue #107. Issue #107 has its own retained history of 18
+official calls (three six-call starts), including expired and unknown facts;
+see `ISSUE-107-ATTEMPT4-INTERRUPTED.md` and the current Issue body. Neither
+archive claims that the outstanding #107 binding S evidence passed.
+
+Issue [#106](https://github.com/zhouy1017/Karajan/issues/106), product commit `1a000c5600108cab2b0128d272dd01e3510f1aea`. This archive records C/P implementation evidence, not official qualification. Its historical #107 status was `unperformed` at the time this archive was written; later #107 facts are retained separately above. Current integration G and the actual merge are recorded on the final PR and Issues.
 
 ## Original acceptance conditions
 

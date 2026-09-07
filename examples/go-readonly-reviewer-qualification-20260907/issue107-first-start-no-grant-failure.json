@@ -1,0 +1,15 @@
+{
+  "schema_version": "karajan.issue107-start-failure.v1",
+  "issue": 107,
+  "command": "issue107-official-go-reviewer-20260907",
+  "stage": "FixedGoReviewerSuite.observe before journal.create_grant",
+  "result": "failed",
+  "record_reason_codes": ["QUALIFICATION_EXECUTION_INCOMPLETE", "READONLY_REVIEWER_EVIDENCE_INCOMPLETE"],
+  "cause": "The controller private reviewer_work_root parent was absent; the observer child-directory creation failed before grant creation.",
+  "credential_resolved_before_observer": true,
+  "journal_grant_queries": {"clean_review": "GRANT_NOT_FOUND", "defect_review": "GRANT_NOT_FOUND", "denied_read": "GRANT_NOT_FOUND"},
+  "effect_path": "The fixed observer creates all three Journal grants before constructing GoRelayAuthorization; Relay send requires that grant authorization.",
+  "observed_authorized_relay_sends": 0,
+  "provider_remote_state": "unknown",
+  "repair": "Provision the existing controller-owned 0700 reviewer_work_root, then use a distinct command/start."
+}
