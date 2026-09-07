@@ -5,8 +5,10 @@ import shutil
 import sys
 import time
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from pathlib import Path
+from threading import Barrier
 from typing import Any
 
 import pytest
@@ -70,35 +72,43 @@ class FixtureCommander:
         }
 
 
-def planning_capacity(directory: Path) -> CapacityStore:
+def planning_capacity(
+    directory: Path,
+    *,
+    pools: tuple[str, ...] = ("service-fixture",),
+    remaining: str = "10",
+    lead_reserve: dict[str, str] | None = None,
+) -> CapacityStore:
     """Real SQLite Capacity facts matching the frozen fixture configuration."""
     directory.mkdir()
     store = CapacityStore(directory / "capacity.sqlite", clock=lambda: 1000.0)
-    store.register_pool(
-        {
-            "id": "service-fixture",
-            "account_id": "fixture-account",
-            "kind": "service",
-            "unit": "percent",
-            "window_kind": "fixed",
-        },
-        command_key="pool",
-    )
-    store.observe(
-        {
-            "pool_id": "service-fixture",
-            "window_id": "fixture-window",
-            "observed_at": 1000.0,
-            "reset_at": 2000.0,
-            "source": "fixture",
-            "source_ref": "fixture-observer",
-            "metric": "remaining",
-            "amount": "10",
-            "limit": "10",
-            "covered_usage_ids": [],
-        },
-        command_key="observe",
-    )
+    for pool in pools:
+        window = "fixture-window" if pools == ("service-fixture",) else "fixture-window-" + pool
+        store.register_pool(
+            {
+                "id": pool,
+                "account_id": "fixture-account",
+                "kind": "service",
+                "unit": "percent",
+                "window_kind": "fixed",
+            },
+            command_key="pool-" + pool,
+        )
+        store.observe(
+            {
+                "pool_id": pool,
+                "window_id": window,
+                "observed_at": 1000.0,
+                "reset_at": 2000.0,
+                "source": "fixture",
+                "source_ref": "fixture-observer",
+                "metric": "remaining",
+                "amount": remaining,
+                "limit": remaining,
+                "covered_usage_ids": [],
+            },
+            command_key="observe-" + pool,
+        )
     store.activate_policy(
         {
             "account_id": "fixture-account",
@@ -107,7 +117,7 @@ def planning_capacity(directory: Path) -> CapacityStore:
             "observation_max_age_seconds": 30,
             "require_official_observation": False,
             "safety_margin": {},
-            "lead_reserve": {},
+            "lead_reserve": lead_reserve or {},
             "lead_reserved_slots": 0,
             "conservative_mode": {
                 "enabled": True,
@@ -226,6 +236,150 @@ def test_two_intents_share_the_original_frozen_planning_budget(
     assert denied["phase"] == "denied"
     assert denied["reason_codes"] == ["PLANNING_BUDGET_EXHAUSTED"]
     assert len(authority.capacity.snapshot()["reservations"]) == 1
+
+
+def test_two_runs_contend_for_commander_protected_full_capacity_vector(
+    configured: dict, tmp_path: Path
+) -> None:
+    """Two original Runs race on one real complete-vector Capacity ledger."""
+    pools = ("planning-short", "planning-weekly", "planning-allowance")
+    full_configuration = json.loads(
+        (Path(__file__).parents[2] / "examples/projects/offline-configuration.json").read_text()
+    )
+    full_configuration["resources"]["profiles"][0]["quota_pool_refs"] = list(pools)
+    full_configuration["resources"]["quota_pools"] = [
+        {
+            "id": pool,
+            "account_id": "fixture-account",
+            "kind": "service",
+            "unit": "percent",
+            "limit": "5",
+            "observation_state": "unknown",
+        }
+        for pool in pools
+    ]
+    preview = configured["registry"].preview_configuration(
+        configured["id"], full_configuration, command_key="three-vector-preview", principal="owner"
+    )
+    configured = {
+        **configured["registry"].apply_configuration(
+            configured["id"],
+            preview["preview_id"],
+            expected_revision=configured["revision"],
+            command_key="three-vector-apply",
+            principal="owner",
+        ),
+        "registry": configured["registry"],
+    }
+    capacity = planning_capacity(
+        tmp_path / "shared-capacity",
+        pools=pools,
+        remaining="5",
+        lead_reserve={pool: "5" for pool in pools},
+    )
+    planner = RunPlanner(tmp_path / "two-runs.sqlite", configured["registry"])
+    fixed = configured["registry"].register_execution_policy(
+        configured["id"],
+        policy_request(configured),
+        command_key="two-runs-policy",
+        principal="owner",
+    )
+    runs = [
+        planner.create(request_v2(configured, fixed), command_key="two-runs-" + label, principal="owner")
+        for label in ("one", "two")
+    ]
+    execution_service = PlanningExecution(tmp_path / "two-runs-execution.sqlite", planner)
+    intents = [
+        planner.planning_intent(run["id"], term=1, command_key="two-intent-" + str(index), principal="lead")
+        for index, run in enumerate(runs, start=1)
+    ]
+    executions = [
+        execution_service.begin(
+            run["id"], intent["id"], principal="owner", command_key="two-begin-" + str(index)
+        )
+        for index, (run, intent) in enumerate(zip(runs, intents, strict=True), start=1)
+    ]
+    profile = executions[0]["binding"]["profile"]
+    capacity.register_profile(
+        {
+            "id": profile["id"],
+            "revision": profile["revision"],
+            "account_id": "fixture-account",
+            "pool_ids": list(pools),
+        },
+        command_key="two-runs-profile",
+    )
+    facts = {
+        "profile": profile,
+        "profile_digest": digest(
+            runs[0]["configuration_snapshot"]["configuration"]["resources"]["profiles"][0]["profile"]
+        ),
+        "runtime_version": "1",
+        "roles": ["commander"],
+        "tools": ["fixture-tools"],
+        "context_tokens": 8192,
+        "data_destination": "local-fixture",
+        "budget_enforcement": "bounded_calls",
+        "provenance": "fixture",
+        "evidence_ref": "fixture:commander",
+        "observed_at": 0.0,
+        "valid_until": 2_000_000_000.0,
+    }
+    authority = PlanningAdmissionAuthority(
+        tmp_path / "two-runs-admission.sqlite",
+        execution_service.database,
+        planner,
+        capacity,
+        FixtureCommander(facts),
+    )
+    expected_capacity = {
+        "policy_revision": 1,
+        "pool_windows": {pool: "fixture-window-" + pool for pool in pools},
+        "lead_reserve_access": True,
+    }
+    for index, (run, execution) in enumerate(zip(runs, executions, strict=True), start=1):
+        authority.register_estimate(
+            run["id"],
+            execution["binding"]["budget_ref"],
+            profile,
+            demand={pool: "5" for pool in pools},
+            expected_capacity=expected_capacity,
+            duration_seconds=25,
+            max_requests=5,
+            max_duration_seconds=100,
+            principal="owner",
+            command_key="two-estimate-" + str(index),
+        )
+    worker = {
+        "attempt_id": "protected-worker",
+        "run_id": "worker-run",
+        "profile_id": profile["id"],
+        "profile_revision": profile["revision"],
+        "role": "worker",
+        "purpose": None,
+        "authorization_ref": "worker-scope",
+        "rulebook_revision": "fixture-rulebook",
+        "duration_seconds": 25,
+        "demand": {pool: "5" for pool in pools},
+        "expected_capacity": {**expected_capacity, "lead_reserve_access": False},
+    }
+    assert capacity.admit(worker, command_key="protected-worker")["decision"] == "rejected"
+    assert capacity.snapshot()["reservations"] == []
+
+    barrier = Barrier(2)
+
+    def contend(index: int) -> dict[str, Any]:
+        barrier.wait(timeout=5)
+        return authority.advance(executions[index]["id"], "owner", "two-advance-" + str(index))
+
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        results = list(workers.map(contend, range(2)))
+    assert sorted(result["phase"] for result in results) == ["admitted", "denied"], results
+    reservations = capacity.snapshot()["reservations"]
+    assert len(reservations) == 1
+    assert reservations[0]["request"]["demand"] == {pool: "5" for pool in pools}
+    admitted = next(result for result in results if result["phase"] == "admitted")
+    assert admitted["budget_usage"]["attempts"] == 5
 
 
 def test_missing_commander_fact_is_a_production_zero_reservation_denial(
