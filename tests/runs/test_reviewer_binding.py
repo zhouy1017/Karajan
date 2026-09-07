@@ -187,6 +187,95 @@ def _passed_reviewer_subject(binding_case):
     return intents, args, candidates, captured, checks
 
 
+def test_public_reviewer_admission_retains_every_actual_candidate_author_before_capacity(
+    collection_case, monkeypatch
+):
+    """A real CandidateStore capture with only its second author colliding rejects."""
+    import karajan.orchestration.go_task_collector as collector_module
+    import karajan.orchestration.routing as routing_module
+    from karajan.orchestration.go_task_collector import GoTaskCaptureReceipt
+    from karajan.orchestration.reviewer_binding import ApprovedReviewerBindings
+
+    intents, args, candidates, journal, result = collection_case
+    second_author = {
+        "attempt_id": "reviewer-attempt-collision",
+        "fence": 2,
+        "profile_id": "fixture-profile",
+        "profile_revision": 1,
+        "model_family": "synthetic-second-author",
+        "context_id": "reviewer-context-collision",
+        "provenance_ref": "synthetic-second-captured-author",
+    }
+    original_capture = collector_module.compile_go_capture
+
+    def capture_with_second_author(*values, **kwargs):
+        document = original_capture(*values, **kwargs).as_dict()
+        document["freeze_request"]["authors"].append(
+            {
+                **second_author,
+                "provenance_ref": document["freeze_request"]["authors"][0]["provenance_ref"],
+            }
+        )
+        return GoTaskCaptureReceipt(document)
+
+    monkeypatch.setattr(collector_module, "compile_go_capture", capture_with_second_author)
+    captured = collector_module.ApprovedGoCollector(
+        intents, candidates, journal, source_check=lambda: None
+    ).collect(*args, principal="owner", runner=intents.host.runner, result=result)
+    actual = candidates.get(captured["id"])
+    assert {
+        key: actual["request"]["authors"][1][key]
+        for key in second_author
+        if key != "provenance_ref"
+    } == {key: second_author[key] for key in second_author if key != "provenance_ref"}
+
+    checks = ApprovedCandidateChecks(
+        intents.admissions,
+        candidates,
+        runner=SourceFixture(),
+        controller_source=lambda: {"schema_version": "synthetic.check-controller.v1"},
+    )
+    checks.advance(*args, principal="owner")
+    qualification = ReviewerQualificationFixture(intents.admissions.routing.qualifications)
+    service = ApprovedReviewerBindings(intents.admissions, candidates, qualification)
+    checks.subject_validator = service.current_locked
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(
+        (service, qualification, intents, args, candidates, captured, checks)
+    )
+    # The controller generates the Reviewer identity.  Fix it to the second
+    # captured author's attempt; the first remains independent.
+    monkeypatch.setattr(routing_module.uuid, "uuid4", lambda: second_author["attempt_id"])
+    before = intents.admissions.routing.capacity.path.read_bytes()
+    rejected = intents.admissions.enqueue(
+        run_id, "review", principal="owner", command_key="all-captured-authors"
+    )
+    assert rejected["state"] == "blocked"
+    routed_authors = rejected["assessment"]["route"]["snapshots"]["task"]["authors"]
+    assert [
+        (
+            author["profile"]["id"],
+            author["profile"]["revision"],
+            author["model_family"],
+            author["attempt_id"],
+            author["context_id"],
+        )
+        for author in routed_authors
+    ] == [
+        (
+            author["profile_id"],
+            author["profile_revision"],
+            author["model_family"],
+            author["attempt_id"],
+            author["context_id"],
+        )
+        for author in actual["request"]["authors"]
+    ]
+    assert "REVIEW_NOT_INDEPENDENT" in rejected["assessment"]["route"]["candidates"][0][
+        "reason_codes"
+    ]
+    assert intents.admissions.routing.capacity.path.read_bytes() == before
+
+
 def test_reviewer_admission_uses_distinct_operation_identity_and_capacity_request(binding_case):
     intents, (run_id, worker_operation_id), _, _, _ = _passed_reviewer_subject(binding_case)
     queued = intents.admissions.enqueue(
@@ -206,11 +295,10 @@ def test_reviewer_admission_uses_distinct_operation_identity_and_capacity_reques
 
 
 def _activate_reviewer_reservation(intents, run_id, operation):
-    receipt = intents.admissions.routing.capacity.activate(
-        operation["capacity_receipt"]["admission_id"],
-        command_key="reviewer-activate:" + operation["id"],
-    )
+    activated = intents.admissions.activate_reviewer(run_id, operation["id"], principal="owner")
+    receipt = activated["reviewer_activation"]["receipt"]
     assert receipt["decision"] == "capacity_revalidated", receipt
+    return activated
 
 
 def test_reviewer_effect_guard_uses_only_the_stored_operation_and_active_hold(binding_case):
@@ -295,6 +383,44 @@ def test_reviewer_effect_guard_rejects_cancelled_or_changed_binding_without_new_
             pytest.fail("cancelled reviewer entered the effect guard")
 
 
+def test_reviewer_effect_guard_keeps_its_last_legal_run_budget_claim(binding_case):
+    from karajan.orchestration.execution_budget import claim_process
+
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
+    reviewer = intents.admissions.advance(
+        run_id,
+        intents.admissions.enqueue(
+            run_id, "review", principal="owner", command_key="effect-last-claim"
+        )["id"],
+        principal="owner",
+    )
+    _activate_reviewer_reservation(intents, run_id, reviewer)
+    with intents.admissions._transaction() as db:
+        operation = intents.admissions._load(db, run_id, reviewer["id"])
+        with intents.admissions.routing.planner.activation_guard(run_id) as run:
+            claim_process(
+                db,
+                run,
+                operation,
+                attempt_id=reviewer["planned_attempt_id"],
+                scope="reviewer",
+                now=intents.admissions.routing.planner.clock(),
+            )
+        row = db.execute(
+            "SELECT data FROM run_execution_budgets WHERE run_id=?", (run_id,)
+        ).fetchone()
+        budget = json.loads(row[0])
+        budget["max_total_attempts"] = len(budget["claims"])
+        db.execute(
+            "UPDATE run_execution_budgets SET data=? WHERE run_id=?",
+            (json.dumps(budget), run_id),
+        )
+    with intents.admissions.reviewer_reserved_effect_guard(
+        run_id, reviewer["id"], principal="owner"
+    ) as held:
+        assert held["capacity"]["state"] == "active"
+
+
 @pytest.mark.parametrize(
     ("change", "reason"),
     [("attempts", "RUN_ATTEMPT_LIMIT"), ("duration", "RUN_DURATION_LIMIT")],
@@ -325,6 +451,38 @@ def test_reviewer_admission_honors_existing_run_cumulative_budget_before_capacit
     assert blocked["state"] == "blocked"
     assert blocked["reason_codes"] == [reason]
     assert intents.admissions.routing.capacity.path.read_bytes() == before
+
+
+def test_reviewer_admission_rechecks_run_deadline_after_capacity_lock_wait(
+    binding_case, monkeypatch
+):
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
+    with sqlite3.connect(intents.admissions.database) as db:
+        row = db.execute(
+            "SELECT data FROM run_execution_budgets WHERE run_id=?", (run_id,)
+        ).fetchone()
+        budget = json.loads(row[0])
+        budget.update(started_at=0.0, max_duration_seconds=1001)
+        db.execute(
+            "UPDATE run_execution_budgets SET data=? WHERE run_id=?",
+            (json.dumps(budget), run_id),
+        )
+    reviewer = intents.admissions.enqueue(
+        run_id, "review", principal="owner", command_key="deadline-at-capacity"
+    )
+    routing, capacity = intents.admissions.routing, intents.admissions.routing.capacity
+    actual = capacity.admit
+
+    def after_capacity_lock(request, *, command_key, before_reserve=None):
+        routing.planner.clock = lambda: 1001.0
+        return actual(request, command_key=command_key, before_reserve=before_reserve)
+
+    monkeypatch.setattr(capacity, "admit", after_capacity_lock)
+    before = capacity.path.read_bytes()
+    blocked = intents.admissions.advance(run_id, reviewer["id"], principal="owner")
+    assert blocked["state"] == "blocked"
+    assert blocked["reason_codes"] == ["RUN_DURATION_LIMIT"]
+    assert capacity.path.read_bytes() == before
 
 
 def test_multiple_credible_worker_operations_are_rejected_before_capacity(binding_case):
@@ -379,9 +537,9 @@ def test_reviewer_admission_reuses_one_exact_request_after_lost_reply(binding_ca
     capacity = intents.admissions.routing.capacity
     actual, calls = capacity.admit, []
 
-    def admit_then_lose(request, *, command_key):
+    def admit_then_lose(request, *, command_key, before_reserve=None):
         calls.append((request, command_key))
-        actual(request, command_key=command_key)
+        actual(request, command_key=command_key, before_reserve=before_reserve)
         raise ConnectionResetError("fixture response lost after Capacity commit")
 
     monkeypatch.setattr(capacity, "admit", admit_then_lose)
@@ -404,9 +562,9 @@ def test_concurrent_reviewer_advance_has_one_capacity_admission(binding_case, mo
     capacity = intents.admissions.routing.capacity
     actual, calls = capacity.admit, []
 
-    def observed(request, *, command_key):
+    def observed(request, *, command_key, before_reserve=None):
         calls.append((request, command_key))
-        return actual(request, command_key=command_key)
+        return actual(request, command_key=command_key, before_reserve=before_reserve)
 
     monkeypatch.setattr(capacity, "admit", observed)
     reservations_before = len(capacity.snapshot()["reservations"])
@@ -422,7 +580,7 @@ def test_concurrent_reviewer_advance_has_one_capacity_admission(binding_case, mo
     assert len(capacity.snapshot()["reservations"]) == reservations_before + 1
 
 
-def test_lost_reviewer_activate_reply_requires_reconciliation_without_new_claim(
+def test_lost_reviewer_activate_reply_recovers_the_original_activation_receipt(
     binding_case, monkeypatch
 ):
     intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
@@ -438,16 +596,23 @@ def test_lost_reviewer_activate_reply_requires_reconciliation_without_new_claim(
 
     monkeypatch.setattr(capacity, "activate", activate_then_lose)
     with pytest.raises(ConnectionResetError, match="activate response lost"):
-        capacity.activate(
-            reserved["capacity_receipt"]["admission_id"], command_key="external-activate"
-        )
+        intents.admissions.activate_reviewer(run_id, queued["id"], principal="owner")
     current = intents.admissions.get(run_id, queued["id"], principal="owner")
-    assert current["state"] == "reconciliation_required"
+    assert current["state"] == "reserved"
     assert current["request"] == queued["request"]
-    assert calls == [(reserved["capacity_receipt"]["admission_id"], "external-activate")]
-    assert intents.admissions.advance(run_id, queued["id"], principal="owner")["state"] == (
-        "reconciliation_required"
+    assert calls == [
+        (reserved["capacity_receipt"]["admission_id"], "reviewer-activate:" + queued["id"])
+    ]
+    assert current["reviewer_activation"]["receipt"] == capacity.command_receipt(
+        "activate",
+        {"admission_id": reserved["capacity_receipt"]["admission_id"]},
+        command_key="reviewer-activate:" + queued["id"],
     )
+    assert intents.admissions.reconcile_reviewer(run_id, queued["id"], principal="owner") == current
+    assert intents.admissions.activate_reviewer(run_id, queued["id"], principal="owner") == current
+    assert calls == [
+        (reserved["capacity_receipt"]["admission_id"], "reviewer-activate:" + queued["id"])
+    ]
 
 
 def test_reviewer_generation_change_blocks_current_effect_before_capacity(binding_case):

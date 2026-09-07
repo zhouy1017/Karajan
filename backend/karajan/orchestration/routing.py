@@ -256,11 +256,29 @@ class ApprovedRunRouting:
         worker_operation: dict[str, Any],
         candidates: Any,
         reviewer_validator: Any,
+        _held_run: dict[str, Any] | None = None,
     ) -> Iterator[dict[str, Any]]:
         """Fresh Reviewer guard using the original Worker operation only."""
         for value in (run_id, task_id, principal, attempt_id, context_id):
             identifier(value)
-        with self.planner.activation_guard(run_id) as run, ExitStack() as holds:
+        if _held_run is None:
+            with self.planner.activation_guard(run_id) as run:
+                self.planner._owner(run, principal)
+                with self.reviewer_admission_guard(
+                    run_id,
+                    task_id,
+                    principal=principal,
+                    attempt_id=attempt_id,
+                    context_id=context_id,
+                    worker_operation=worker_operation,
+                    candidates=candidates,
+                    reviewer_validator=reviewer_validator,
+                    _held_run=run,
+                ) as current:
+                    yield current
+            return
+        with ExitStack() as holds:
+            run = _held_run
             self.planner._owner(run, principal)
             receipt: dict[str, Any] = {
                 "schema_version": "karajan.approved-routing-assessment.v1",
@@ -342,15 +360,15 @@ class ApprovedRunRouting:
                     receipt["route"]["snapshots"]["task"] != original["route"]["snapshots"]["task"]
                 )
                 for collection in ("profiles", "estimates"):
-                    before = next(
+                    before: dict[str, Any] = next(
                         (row for row in old_source[collection] if row["profile"] == selected),
-                        None,
+                        {},
                     )
-                    current = next(
+                    current: dict[str, Any] = next(
                         (row for row in current_source[collection] if row["profile"] == selected),
-                        None,
+                        {},
                     )
-                    changed |= before is None or current != before
+                    changed |= not before or current != before
                 if changed:
                     receipt["state"] = "blocked"
                     receipt["reason_codes"] = ["RESERVED_EXECUTION_INPUT_CHANGED"]
@@ -369,6 +387,7 @@ class ApprovedRunRouting:
         principal: str,
         candidates: Any,
         reviewer_validator: Any,
+        _held_run: dict[str, Any] | None = None,
     ) -> Iterator[dict[str, Any]]:
         """Recheck one persisted Reviewer operation without admitting new demand.
 
@@ -396,7 +415,22 @@ class ApprovedRunRouting:
         ):
             raise RunError("REVIEW_WORKER_LINEAGE_REQUIRED")
         selected = original["route"]["selected_profile"]
-        with self.planner.activation_guard(run_id) as run, ExitStack() as holds:
+        if _held_run is None:
+            with self.planner.activation_guard(run_id) as run:
+                self.planner._owner(run, principal)
+                with self._reviewer_reserved_execution_guard(
+                    run_id,
+                    reviewer_operation,
+                    worker_operation,
+                    principal=principal,
+                    candidates=candidates,
+                    reviewer_validator=reviewer_validator,
+                    _held_run=run,
+                ) as current:
+                    yield current
+            return
+        with ExitStack() as holds:
+            run = _held_run
             self.planner._owner(run, principal)
             receipt: dict[str, Any] = {
                 "schema_version": "karajan.approved-routing-assessment.v1",
@@ -439,15 +473,15 @@ class ApprovedRunRouting:
                     != original["route"]["snapshots"]["task"]
                 )
                 for collection in ("profiles", "estimates"):
-                    before = next(
+                    before: dict[str, Any] | None = next(
                         (row for row in old_source[collection] if row["profile"] == selected),
                         None,
                     )
-                    current = next(
+                    current_profile: dict[str, Any] | None = next(
                         (row for row in current_source[collection] if row["profile"] == selected),
                         None,
                     )
-                    changed |= before is None or current != before
+                    changed |= before is None or current_profile != before
                 if changed:
                     receipt["state"] = "blocked"
                     receipt["reason_codes"] = ["RESERVED_REVIEWER_INPUT_CHANGED"]
