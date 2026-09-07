@@ -1,0 +1,79 @@
+"""Validate the exact common repair tree; all upstream traffic is a local fixture."""
+import hashlib
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+WORK = HERE.parents[1]
+ROOT = HERE.parents[3]
+OUT = HERE / sys.platform
+OUT.mkdir(exist_ok=False)
+
+def save(name, value):
+    (OUT / name).write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8')
+
+def sources():
+    return {p.relative_to(WORK).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+            for group in ('backend', 'tests') for p in sorted((WORK / group).rglob('*.py'))}
+
+before = sources()
+save('source-before.json', before)
+env = os.environ.copy()
+env.update(PYTHONUTF8='1', PYTHONPATH=str(WORK / 'backend'),
+           KARAJAN_GO_TOKENIZER_DIRECTORY=str(ROOT / '.cache/go-task-execution/.cache/go-context-artifacts'),
+           KARAJAN_OPENCODE_LINUX_BINARY=str(ROOT / '.cache/go-linux-runtime/package/bin/opencode'),
+           KARAJAN_REQUIRE_GO_TOKENIZER='1', HF_HUB_OFFLINE='1', TRANSFORMERS_OFFLINE='1')
+if sys.platform == 'linux':
+    env['KARAJAN_REQUIRE_OPENCODE_ISOLATION'] = '1'
+files = [
+    'tests/adapters/opencode/test_go_relay.py',
+    'tests/adapters/opencode/test_go_relay_context.py',
+    'tests/adapters/opencode/test_go_relay_nullable_names.py',
+    'tests/adapters/opencode/test_go_relay_journal.py',
+    'tests/adapters/opencode/test_go_context.py',
+    'tests/adapters/opencode/test_go_journal.py',
+    'tests/adapters/opencode/test_go_send_guard.py',
+    'tests/runs/test_go_execution_intent.py',
+    'tests/runs/test_go_native_diagnostic_contract.py',
+    'tests/runs/test_go_task_execution.py',
+]
+if sys.platform == 'linux':
+    files += ['tests/adapters/opencode/test_go_unix_relay.py', 'tests/isolation/test_go_task.py']
+common = ['-q', '-p', 'no:cacheprovider', '-o',
+          'pythonpath=backend tests/projects tests/runs tests/web tests/isolation tests/adapters/opencode tests/candidates tests/execution']
+commands = []
+
+def run(name, args):
+    command = [sys.executable, '-m', 'pytest', *args, *common, '--junitxml=' + str(OUT / (name + '.xml'))]
+    commands.append({'name': name, 'argv': command, 'cwd': str(WORK)})
+    save('commands.json', commands)
+    with (OUT / (name + '.stdout.txt')).open('wb') as output:
+        result = subprocess.run(command, cwd=WORK, env=env, stdout=output, stderr=subprocess.STDOUT, check=False)
+    save(name + '.result.json', {'exit_code': result.returncode})
+    return result.returncode
+
+code = run('contracts', files)
+if code == 0 and sys.platform == 'linux':
+    base = Path('/tmp/karajan-ci-native-20260907')
+    assert not base.exists(), 'Use a fresh basetemp; never remove another run directory'
+    code = run('native-long-path', ['tests/runs/test_go_task_execution_native.py', '--basetemp=' + str(base)])
+    paths = []
+    for case in sorted(base.glob('test_actual_host_child_native*')):
+        if not case.is_dir() or case.is_symlink():
+            continue
+        for operation in sorted((case / 'w').glob('operation-*')):
+            if operation.is_dir():
+                old_socket = str(operation / 'inference.sock')
+                paths.append({'operation_directory': str(operation), 'pre_repair_socket_path': old_socket,
+                              'pre_repair_socket_bytes': len(old_socket.encode())})
+    save('long-path-observation.json', {'basetemp': str(base), 'linux_pathname_limit': 107, 'started_operations': paths,
+                                      'all_observed_paths_exceed_107': bool(paths) and all(p['pre_repair_socket_bytes'] > 107 for p in paths)})
+after = sources()
+save('source-after.json', after)
+save('result.json', {'exit_code': code, 'sources_equal': before == after, 'source_count': len(after),
+                     'scope': 'Local C/P with original synthetic qualification and localhost HTTP; no provider S or remote G.'})
+print(json.dumps({'platform': sys.platform, 'exit_code': code, 'sources_equal': before == after, 'output': str(OUT)}))
+raise SystemExit(code or (0 if before == after else 2))

@@ -1,0 +1,180 @@
+I001 [*] Import block is un-sorted or un-formatted
+  --> backend\karajan\isolation\go_task.py:9:1
+   |
+ 7 |   """
+ 8 |
+ 9 | / import hashlib
+10 | | import os
+11 | | import json
+12 | | import stat
+13 | | import tempfile
+14 | | import sys
+15 | | import re
+16 | | import secrets
+17 | | import time
+18 | | from collections.abc import Callable
+19 | | from contextlib import AbstractContextManager
+20 | | from dataclasses import dataclass, field
+21 | | from pathlib import Path
+22 | | from typing import Any
+23 | |
+24 | | import httpx
+25 | |
+26 | | from karajan.adapters.opencode.go_context import GoRequestAccounting
+27 | | from karajan.adapters.opencode.go_relay import GoRelay, GoRelayAuthorization, GoRelayContext
+28 | | from karajan.projects.credential_sources import ResolvedCredential
+29 | |
+30 | | from ._opencode_inner import configuration
+31 | | from ._opencode_projection import projection_files
+32 | | from .go_probe import source_digest
+33 | | from .go_projected_probe import _validate_runtime, projected_runtime_source
+34 | | from .opencode_runtime import IsolatedOpenCode, StoppedProjection
+   | |_________________________________________________________________^
+help: Organize imports
+   |
+9  | import hashlib
+10 + import json
+11 | import os
+   - import json
+12 + import re
+13 + import secrets
+14 | import stat
+15 + import sys
+16 | import tempfile
+   - import sys
+   - import re
+   - import secrets
+17 | import time
+   |
+
+E501 Line too long (124 > 100)
+   --> backend\karajan\isolation\go_task.py:102:101
+    |
+102 | def _failure_diagnostic(error: BaseException, *, native: IsolatedOpenCode | None, report: dict[str, Any]) -> dict[str, Any]:
+    |                                                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^
+103 |     runtime = report.get("runtime", {})
+104 |     return {
+    |
+
+E501 Line too long (134 > 100)
+   --> backend\karajan\isolation\go_task.py:105:101
+    |
+103 |     runtime = report.get("runtime", {})
+104 |     return {
+105 |         "exception_type": type(error).__name__ if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,63}", type(error).__name__) else "Exception",
+    |                                                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+106 |         "reason_code": _safe_failure_code(error, "UNCLASSIFIED_NATIVE_FAILURE"),
+107 |         "identity": {
+    |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> tests\isolation\test_go_task.py:7:1
+   |
+ 5 |   """
+ 6 |
+ 7 | / import hashlib
+ 8 | | import json
+ 9 | | import os
+10 | | import stat
+11 | | import sys
+12 | | import tempfile
+13 | | import time
+14 | | from pathlib import Path
+15 | | from contextlib import contextmanager
+16 | | from dataclasses import FrozenInstanceError, replace
+17 | | from typing import Any
+18 | |
+19 | | import httpx
+20 | | import pytest
+21 | | from karajan.adapters.opencode.go_journal import GoCallJournal
+22 | | from karajan.adapters.opencode.go_relay import GoRelayAuthorization, GoRelayContext
+23 | | from karajan.isolation.go_probe import source_digest
+24 | | from karajan.isolation.go_task import (
+25 | |     GoTaskFile,
+26 | |     GoTaskInput,
+27 | |     _cleanup_relay_socket_root,
+28 | |     _failure_diagnostic,
+29 | |     _relay_socket_root,
+30 | |     execute_go_task,
+31 | |     native_task_source,
+32 | | )
+33 | | import karajan.isolation.go_task as go_task_module
+34 | | from karajan.projects.credential_sources import ResolvedCredential
+35 | | from test_go_context import accounting as accounting
+36 | | from test_go_context import artifacts as artifacts
+37 | | from test_opencode_go_composition import runtime_artifact
+38 | | from karajan.isolation._opencode_capture import ProjectionEntry, StoppedProjection
+   | |__________________________________________________________________________________^
+39 |
+40 |   SECRET = "synthetic-task-credential-not-a-provider-key"
+   |
+help: Organize imports
+   |
+13 | import time
+   - from pathlib import Path
+14 | from contextlib import contextmanager
+15 | from dataclasses import FrozenInstanceError, replace
+16 + from pathlib import Path
+17 | from typing import Any
+18 |
+19 | import httpx
+20 + import karajan.isolation.go_task as go_task_module
+21 | import pytest
+22 | from karajan.adapters.opencode.go_journal import GoCallJournal
+23 | from karajan.adapters.opencode.go_relay import GoRelayAuthorization, GoRelayContext
+24 + from karajan.isolation._opencode_capture import ProjectionEntry, StoppedProjection
+25 | from karajan.isolation.go_probe import source_digest
+--------------------------------------------------------------------------------
+34 | )
+   - import karajan.isolation.go_task as go_task_module
+35 | from karajan.projects.credential_sources import ResolvedCredential
+36 | from test_go_context import accounting as accounting
+37 | from test_go_context import artifacts as artifacts
+38 | from test_opencode_go_composition import runtime_artifact
+   - from karajan.isolation._opencode_capture import ProjectionEntry, StoppedProjection
+39 |
+   |
+
+E501 Line too long (121 > 100)
+   --> tests\isolation\test_go_task.py:181:101
+    |
+180 | @pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux runtime required")
+181 | def test_execute_go_task_uses_short_controller_relay_root_on_long_operation_directory(tmp_path, accounting, monkeypatch):
+    |                                                                                                     ^^^^^^^^^^^^^^^^^^^^^
+182 |     runtime, task, credential, auth, context = prepared(tmp_path, accounting)
+183 |     relay_roots = []
+    |
+
+E501 Line too long (103 > 100)
+   --> tests\isolation\test_go_task.py:188:101
+    |
+187 |     class FakeNative:
+188 |         def __init__(self, runtime, directory, upstream_socket, capability, *_, projection=None, **__):
+    |                                                                                                     ^^^
+189 |             self.runtime = runtime
+190 |             self.directory = directory
+    |
+
+E501 Line too long (108 > 100)
+   --> tests\isolation\test_go_task.py:211:101
+    |
+209 |                 "ipv4_routes": [],
+210 |                 "no_new_privileges": True,
+211 |                 "capabilities": {key: "0000000000000000" for key in ("effective", "permitted", "bounding")},
+    |                                                                                                     ^^^^^^^^
+212 |             }
+    |
+
+E501 Line too long (110 > 100)
+   --> tests\isolation\test_go_task.py:245:101
+    |
+243 |                 "0" * 64,
+244 |                 projection,
+245 |                 tuple((row["path"], (self.workspace / row["path"]).read_bytes()) for row in self._projection),
+    |                                                                                                     ^^^^^^^^^^
+246 |                 json.dumps({"local_stop": "confirmed"}, sort_keys=True, separators=(",", ":")),
+247 |             )
+    |
+
+Found 8 errors.
+[*] 2 fixable with the `--fix` option.

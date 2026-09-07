@@ -1,0 +1,161 @@
+{
+  "author": {
+    "id": "MDQ6VXNlcjIwMzA1OTk5",
+    "is_bot": false,
+    "login": "zhouy1017",
+    "name": "YANG ZHOU"
+  },
+  "baseRefName": "dev",
+  "comments": [],
+  "commit_count_returned": 16,
+  "commits": [
+    {
+      "author_logins": [
+        "zhouy1017"
+      ],
+      "authoredDate": "2026-09-06T17:37:55Z",
+      "committedDate": "2026-09-06T17:37:55Z",
+      "messageHeadline": "feat: prepare trusted reviewer bindings and rerun candidate validation",
+      "oid": "1fc97849697cfe89a79595cba07e9ec028c6d0b2"
+    },
+    {
+      "author_logins": [
+        "zhouy1017"
+      ],
+      "authoredDate": "2026-09-06T17:53:16Z",
+      "committedDate": "2026-09-06T17:53:16Z",
+      "messageHeadline": "docs: publish reviewer binding and validation subject evidence",
+      "oid": "d05456c0d8b3fd20b45ecbd8a4ea5c7951ee3bc3"
+    },
+    {
+      "author_logins": [
+        "zhouy1017"
+      ],
+      "authoredDate": "2026-09-06T17:57:19Z",
+      "committedDate": "2026-09-06T17:57:19Z",
+      "messageHeadline": "docs: record reviewer subject PR and original issue progress",
+      "oid": "c80e41abfdc13b13034f6c82ea3fe47eb71a3b72"
+    }
+  ],
+  "currentHeadRuns": [
+    {
+      "attempt": 1,
+      "conclusion": "failure",
+      "createdAt": "2026-09-06T17:57:23Z",
+      "databaseId": 34050185708,
+      "event": "pull_request",
+      "headSha": "c80e41abfdc13b13034f6c82ea3fe47eb71a3b72",
+      "status": "completed",
+      "updatedAt": "2026-09-06T18:23:07Z",
+      "url": "https://github.com/zhouy1017/Karajan/actions/runs/34050185708",
+      "workflowName": "CI"
+    },
+    {
+      "attempt": 1,
+      "conclusion": "failure",
+      "createdAt": "2026-09-06T17:57:20Z",
+      "databaseId": 34050183894,
+      "event": "push",
+      "headSha": "c80e41abfdc13b13034f6c82ea3fe47eb71a3b72",
+      "status": "completed",
+      "updatedAt": "2026-09-06T18:24:26Z",
+      "url": "https://github.com/zhouy1017/Karajan/actions/runs/34050183894",
+      "workflowName": "CI"
+    }
+  ],
+  "headRefName": "codex/m3-reviewer-validation-subject",
+  "headRefOid": "c80e41abfdc13b13034f6c82ea3fe47eb71a3b72",
+  "isDraft": true,
+  "mergeCommit": null,
+  "mergeStateStatus": "BLOCKED",
+  "mergeable": "MERGEABLE",
+  "mergedAt": null,
+  "mergedBy": null,
+  "number": 103,
+  "reviews": [],
+  "state": "OPEN",
+  "statusCheckRollup": [
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-09-06T18:17:46Z",
+      "conclusion": "FAILURE",
+      "detailsUrl": "https://github.com/zhouy1017/Karajan/actions/runs/34050185708/job/101532317939",
+      "name": "python-quality (ubuntu-24.04, Python 3.12)",
+      "startedAt": "2026-09-06T17:57:45Z",
+      "status": "COMPLETED",
+      "workflowName": "CI"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-09-06T18:17:47Z",
+      "conclusion": "FAILURE",
+      "detailsUrl": "https://github.com/zhouy1017/Karajan/actions/runs/34050183894/job/101532317245",
+      "name": "python-quality (ubuntu-24.04, Python 3.12)",
+      "startedAt": "2026-09-06T17:57:45Z",
+      "status": "COMPLETED",
+      "workflowName": "CI"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-09-06T18:23:01Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/zhouy1017/Karajan/actions/runs/34050185708/job/101532317887",
+      "name": "python-quality (windows-2022, Python 3.12)",
+      "startedAt": "2026-09-06T17:57:44Z",
+      "status": "COMPLETED",
+      "workflowName": "CI"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-09-06T18:24:21Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/zhouy1017/Karajan/actions/runs/34050183894/job/101532317154",
+      "name": "python-quality (windows-2022, Python 3.12)",
+      "startedAt": "2026-09-06T17:57:45Z",
+      "status": "COMPLETED",
+      "workflowName": "CI"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-09-06T17:58:12Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/zhouy1017/Karajan/actions/runs/34050185708/job/101532317728",
+      "name": "frontend-quality",
+      "startedAt": "2026-09-06T17:57:45Z",
+      "status": "COMPLETED",
+      "workflowName": "CI"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-09-06T17:58:11Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/zhouy1017/Karajan/actions/runs/34050183894/job/101532317094",
+      "name": "frontend-quality",
+      "startedAt": "2026-09-06T17:57:44Z",
+      "status": "COMPLETED",
+      "workflowName": "CI"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-09-06T18:23:06Z",
+      "conclusion": "FAILURE",
+      "detailsUrl": "https://github.com/zhouy1017/Karajan/actions/runs/34050185708/job/101535928124",
+      "name": "quality-gate",
+      "startedAt": "2026-09-06T18:23:03Z",
+      "status": "COMPLETED",
+      "workflowName": "CI"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-09-06T18:24:25Z",
+      "conclusion": "FAILURE",
+      "detailsUrl": "https://github.com/zhouy1017/Karajan/actions/runs/34050183894/job/101536110971",
+      "name": "quality-gate",
+      "startedAt": "2026-09-06T18:24:23Z",
+      "status": "COMPLETED",
+      "workflowName": "CI"
+    }
+  ],
+  "updatedAt": "2026-09-06T17:57:27Z",
+  "url": "https://github.com/zhouy1017/Karajan/pull/103"
+}

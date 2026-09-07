@@ -1,0 +1,65 @@
+# Luna native Task CI repair evidence
+
+Date: 2026-09-07 (Asia/Hong_Kong)
+
+The frozen Spark handoff was preserved under `.cache/luna-handoff-before/` and
+was reviewed as unaccepted input. No Git, remote, provider, credential, key,
+dependency, or workflow mutation was performed.
+
+## Source identity
+
+All four edited files were LF-only at execution time. The handoff/current
+pre-edit SHA-256 values were:
+
+| file | before | after |
+| --- | --- | --- |
+| `backend/karajan/adapters/opencode/go_relay.py` | `dfc488a8e3ebde07fc0f87817680b72aa2d374e2265e5666b3ddaf1049d598ab` | `088c335d1bfeedc2b69bc2395acc704ea6b32f71b6addcc74c06d87b2400170b` |
+| `backend/karajan/isolation/go_task.py` | `7d416103f6bb8af96068c1dae15788e461865d379f5853068b8154bb551da17d` | `daf8cadd27f89f85f4842f51f11839990bdec9d7711705abeb89948766935a62` |
+| `tests/adapters/opencode/test_go_unix_relay.py` | `0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f` | `0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f` |
+| `tests/isolation/test_go_task.py` | `57fd6ff2590e928fbda3a45a85750f567d2094dbbdbfda0922b12f8f30a37e93` | `bbb9d6242e1214097f0e043b211a48a917e589738dba3eb445c3687d3c2b6288` |
+
+The pre-edit values are also retained in the frozen handoff manifest. The
+executed files were the exact post-edit worktree bytes; `git diff --check` and
+Windows `compileall` passed.
+
+## Executed checks
+
+Windows focused checks, from the worktree root:
+
+```text
+C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m pytest -q tests/adapters/opencode/test_go_unix_relay.py tests/isolation/test_go_task.py -o "pythonpath=backend tests/projects tests/runs tests/web tests/isolation tests/adapters/opencode tests/candidates tests/execution"
+7 passed, 23 skipped in 0.95s
+```
+
+WSL focused boundary checks used the supplied Python, tokenizer, OpenCode,
+offline settings, and the same explicit pytest option:
+
+```text
+tests/adapters/opencode/test_go_unix_relay.py tests/isolation/test_go_task.py -k "path_length or relay_socket_root or failure_diagnostic"
+4 passed, 27 deselected in 3.37s
+```
+
+This covered pathname lengths 107 (accepted) and 108 (rejected), root
+replacement by symlink, unexpected retained assets, successful root cleanup,
+and content-free failure diagnostics.
+
+The original real Host/native cases were run unchanged:
+
+```text
+tests/runs/test_go_task_execution_native.py
+3 passed in 155.69s (0:02:35) on the final source bytes
+```
+
+The three results were `none`, `grant_reply_lost`, and `cancel_after_send`,
+with the real Host, namespace, OpenCode runtime, and synthetic loopback HTTP.
+
+## Observations
+
+The relay root now retains its original device, inode, owner, and mode. Cleanup
+only removes that exact owner-controlled 0700 directory after relay socket
+cleanup and only when it is empty; a replaced pathname or unexpected asset is
+left untouched and produces a scoped cleanup reason.
+
+When native capture cannot be obtained, the report retains only a bounded
+exception type, sanitized reason code, and lifecycle identity facts. Paths,
+prompts, credentials, and request content are not retained.
