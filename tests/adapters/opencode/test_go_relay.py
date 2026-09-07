@@ -371,7 +371,6 @@ def test_rejection_drain_has_total_deadline_under_slow_trickle() -> None:
             finally:
                 stopped.set()
                 sender.join(timeout=1)
-                peer.shutdown(socket.SHUT_WR)
         assert not requests
         assert not relay.receipts
 
