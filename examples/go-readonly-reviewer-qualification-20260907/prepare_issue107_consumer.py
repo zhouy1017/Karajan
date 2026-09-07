@@ -366,8 +366,19 @@ def negative(private_root: Path, report: Path) -> None:
         diagnostic = {"compiled": compiled["binding"] is not None, "reason_codes": compiled["reason_codes"],
                       "qualification_issues": compiled["assessment"]["qualification_issues"]}
     except Exception as error:
-        diagnostic = {"exception_type": type(error).__name__, "reason_code": getattr(error, "code", None),
-                      "detail": str(error)[:120]}
+        # Reports are an external evidence boundary. Never copy exception text:
+        # OS/database errors can embed controller-private paths or other values.
+        code = getattr(error, "code", None)
+        safe_codes = {
+            "QUALIFICATION_REVOKED", "RUNTIME_TOOLS_NOT_QUALIFIED",
+            "REVIEWER_QUALIFICATION_REQUIRED", "NO_ELIGIBLE_PROFILE",
+            "PROFILE_IDENTITY_MISMATCH", "REVIEW_BINDING_SOURCE_UNAVAILABLE",
+        }
+        safe_types = {"RunError", "CandidateError", "QualificationError", "OSError", "KeyError"}
+        diagnostic = {
+            "exception_type": type(error).__name__ if type(error).__name__ in safe_types else "UNCLASSIFIED_EXCEPTION",
+            "reason_code": code if code in safe_codes else "UNCLASSIFIED",
+        }
     report.parent.mkdir(parents=True, exist_ok=True)
     report.write_text(json.dumps({
         "schema_version": "karajan.issue107-consumer-negative.v1", "issue": 107,
