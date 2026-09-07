@@ -9,6 +9,7 @@ import uuid
 from collections.abc import Callable, Iterator
 from contextlib import ExitStack, contextmanager
 from copy import deepcopy
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from karajan.capacity import (
@@ -19,14 +20,34 @@ from karajan.capacity import (
 )
 from karajan.projects.qualification import ProfileQualificationStore
 from karajan.routing import evaluate_reserved_profile, evaluate_route, select_rule
-from karajan.routing.compiler import digest, parse, reference
+from karajan.routing.compiler import RoutingError, digest, parse, reference
 from karajan.routing.models import AccountState, PoolState, TaskClassification
+from karajan.routing.quotas import QuotaTemporalFence, capture_quota_temporal_fence
 from karajan.runs import RunError, RunPlanner
 from karajan.runs.planning import encoded, identifier
 from karajan.storage import require_schema
 
 from .go_reviewer_scope import resolve_go_reviewer_execution
 from .go_scope import resolve_go_execution
+
+
+@dataclass(frozen=True)
+class ReviewerTemporalFence:
+    """Retained Reviewer source windows for an O(1) final boundary check."""
+
+    floor: float
+    qualification_observed_at: float
+    qualification_valid_until: float
+    estimate_created_at: float
+    estimate_valid_until: float
+
+    def assert_current(self, *, as_of: float) -> None:
+        if type(as_of) not in (int, float) or as_of < self.floor:
+            raise RunError("REVIEWER_BOUNDARY_CLOCK_INVALID")
+        if not self.qualification_observed_at <= as_of < self.qualification_valid_until:
+            raise RunError("REVIEWER_QUALIFICATION_EXPIRED")
+        if not self.estimate_created_at <= as_of < self.estimate_valid_until:
+            raise RunError("REVIEWER_ESTIMATE_EXPIRED")
 
 if TYPE_CHECKING:
     from karajan.projects.demand import AttemptEstimateStore
@@ -502,7 +523,7 @@ class ApprovedRunRouting:
         worker_operation: dict[str, Any],
         candidates: Any,
         clock: Callable[[], float],
-    ) -> None:
+    ) -> ReviewerTemporalFence:
         """Recheck elapsed Reviewer facts while the caller still holds Project and Capacity.
 
         The caller owns operation -> Run -> Project and invokes this only after
@@ -514,12 +535,12 @@ class ApprovedRunRouting:
         # only potentially blocking read in this guard, so complete it before
         # taking the temporal sample used for every source below.
         _current_reviewer_check_artifacts(worker_operation, candidates)
-        self.reviewer_elapsed_boundary_guard(assessment, clock=clock)
+        return self.reviewer_elapsed_boundary_guard(assessment, clock=clock)
 
     def reviewer_elapsed_boundary_guard(
         self, assessment: dict[str, Any], *, clock: Callable[[], float]
-    ) -> None:
-        """Check stored Reviewer qualification and estimate windows without I/O."""
+    ) -> ReviewerTemporalFence:
+        """Capture stored Reviewer windows after all source reads complete."""
         if assessment.get("state") != "selected":
             raise RunError("RESERVED_REVIEWER_ROUTE_NOT_CURRENT")
         route = assessment.get("route")
@@ -541,9 +562,14 @@ class ApprovedRunRouting:
             None,
         )
         facts = profile.get("facts") if isinstance(profile, dict) else None
+        observed_at = facts.get("observed_at") if isinstance(facts, dict) else None
+        valid_until = facts.get("valid_until") if isinstance(facts, dict) else None
         if (
-            not isinstance(facts, dict)
-            or not facts.get("observed_at", now + 1) <= now < facts.get("valid_until", now)
+            not isinstance(observed_at, (int, float))
+            or isinstance(observed_at, bool)
+            or not isinstance(valid_until, (int, float))
+            or isinstance(valid_until, bool)
+            or not observed_at <= now < valid_until
         ):
             raise RunError("REVIEWER_QUALIFICATION_EXPIRED")
         estimate = next(
@@ -554,11 +580,23 @@ class ApprovedRunRouting:
             ),
             None,
         )
+        created_at = estimate.get("created_at") if isinstance(estimate, dict) else None
+        estimate_valid_until = estimate.get("valid_until") if isinstance(estimate, dict) else None
         if (
-            not isinstance(estimate, dict)
-            or not estimate.get("created_at", now + 1) <= now < estimate.get("valid_until", now)
+            not isinstance(created_at, (int, float))
+            or isinstance(created_at, bool)
+            or not isinstance(estimate_valid_until, (int, float))
+            or isinstance(estimate_valid_until, bool)
+            or not created_at <= now < estimate_valid_until
         ):
             raise RunError("REVIEWER_ESTIMATE_EXPIRED")
+        return ReviewerTemporalFence(
+            floor=float(now),
+            qualification_observed_at=float(observed_at),
+            qualification_valid_until=float(valid_until),
+            estimate_created_at=float(created_at),
+            estimate_valid_until=float(estimate_valid_until),
+        )
 
     def reviewer_capacity_boundary_guard(
         self,
@@ -567,7 +605,7 @@ class ApprovedRunRouting:
         request: dict[str, Any],
         boundary: CapacityBoundaryFacts,
         as_of: float | None = None,
-    ) -> None:
+    ) -> QuotaTemporalFence:
         """Reapply the frozen Reviewer route's quota policy to fresh Capacity facts.
 
         Capacity owns the complete source fragment and, for an effect boundary,
@@ -632,6 +670,10 @@ class ApprovedRunRouting:
             raise RunError("REVIEWER_CAPACITY_BOUNDARY_INVALID") from None
         if report["selected_profile"] != selected:
             raise RunError("REVIEWER_CAPACITY_REVALIDATION_FAILED")
+        try:
+            return capture_quota_temporal_fence(report)
+        except (RoutingError, KeyError, TypeError, ValueError):
+            raise RunError("REVIEWER_CAPACITY_BOUNDARY_INVALID") from None
 
     def _build(
         self,

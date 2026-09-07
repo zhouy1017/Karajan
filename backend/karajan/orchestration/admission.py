@@ -9,12 +9,12 @@ from pathlib import Path
 from typing import Any
 
 from karajan.capacity import CapacityError
-from karajan.routing.compiler import digest
+from karajan.routing.compiler import RoutingError, digest
 from karajan.runs import RunError
 from karajan.runs.planning import encoded, identifier
 from karajan.storage import open_database, require_schema
 
-from .execution_budget import admission_allowed, current_process
+from .execution_budget import capture_run_budget_boundary
 from .routing import ApprovedRunRouting
 
 
@@ -204,11 +204,10 @@ class ApprovedTaskAdmission:
                 activation["receipt"] = receipt
                 if receipt.get("decision") == "capacity_revalidated":
                     operation["reason_codes"] = []
-                    self._save(db, operation)
-                    return operation
-                # Keep the immutable rejected receipt, then derive the current
-                # reservation state below. A past rejection cannot mask expiry.
-                operation["reason_codes"] = list(receipt.get("reason_codes", []))
+                else:
+                    # Keep the immutable rejected receipt, then derive the current
+                    # reservation state below. A past rejection cannot mask expiry.
+                    operation["reason_codes"] = list(receipt.get("reason_codes", []))
                 self._save(db, operation)
         facts = self.routing.capacity.routing_facts()
         admission_id = operation["capacity_receipt"]["admission_id"]
@@ -230,7 +229,12 @@ class ApprovedTaskAdmission:
             operation["state"], reason = "expired", "RESERVATION_EXPIRED_UNSENT"
         elif current["stored_state"] == "released":
             operation["state"], reason = "released", "RESERVATION_RELEASED"
-        elif current["stored_state"] != "reserved":
+        elif current["stored_state"] != "reserved" and not (
+            current["stored_state"] == "active"
+            and isinstance(activation, dict)
+            and isinstance(activation.get("receipt"), dict)
+            and activation["receipt"].get("decision") == "capacity_revalidated"
+        ):
             operation["state"], reason = (
                 "reconciliation_required",
                 "EXECUTION_RECONCILIATION_REQUIRED",
@@ -390,37 +394,55 @@ class ApprovedTaskAdmission:
                                 self._save(db, operation)
                                 return operation
 
+                            run_budget_boundary: Any | None = None
+                            capacity_quota_fence: Any | None = None
+                            reviewer_temporal_fence: Any | None = None
+
                             def check_budget_at_reservation() -> None:
-                                self.routing.reviewer_boundary_guard(
+                                nonlocal run_budget_boundary, reviewer_temporal_fence
+                                reviewer_temporal_fence = self.routing.reviewer_boundary_guard(
                                     current,
                                     worker_operation=reviewer_worker,
                                     candidates=bindings.candidates,
                                     clock=lambda: self.routing.capacity.clock(),
                                 )
-                                admission_allowed(db, run, now=self.routing.planner.clock())
+                                run_budget_boundary = capture_run_budget_boundary(
+                                    db,
+                                    run,
+                                    operation_id=operation["id"],
+                                    attempt_id=operation["planned_attempt_id"],
+                                )
 
                             capacity_boundary: Any | None = None
 
                             def check_reviewer_capacity_route(boundary: Any) -> None:
-                                nonlocal capacity_boundary
+                                nonlocal capacity_boundary, capacity_quota_fence
                                 capacity_boundary = boundary
-                                self.routing.reviewer_capacity_boundary_guard(
-                                    current, request=request, boundary=boundary
+                                capacity_quota_fence = (
+                                    self.routing.reviewer_capacity_boundary_guard(
+                                        current, request=request, boundary=boundary
+                                    )
                                 )
 
                             def check_reviewer_final_reservation_boundary() -> None:
-                                if capacity_boundary is None:
+                                if (
+                                    capacity_boundary is None
+                                    or capacity_quota_fence is None
+                                    or run_budget_boundary is None
+                                    or reviewer_temporal_fence is None
+                                ):
                                     raise RunError("REVIEWER_CAPACITY_BOUNDARY_INVALID")
-                                self.routing.reviewer_elapsed_boundary_guard(
-                                    current, clock=lambda: self.routing.capacity.clock()
+                                capacity_now = self.routing.capacity.clock()
+                                try:
+                                    capacity_quota_fence.assert_current(as_of=capacity_now)
+                                except RoutingError:
+                                    raise RunError(
+                                        "REVIEWER_CAPACITY_REVALIDATION_FAILED"
+                                    ) from None
+                                reviewer_temporal_fence.assert_current(as_of=capacity_now)
+                                run_budget_boundary.assert_new_admission_allowed(
+                                    now=self.routing.planner.clock()
                                 )
-                                self.routing.reviewer_capacity_boundary_guard(
-                                    current,
-                                    request=request,
-                                    boundary=capacity_boundary,
-                                    as_of=self.routing.capacity.clock(),
-                                )
-                                admission_allowed(db, run, now=self.routing.planner.clock())
 
                             try:
                                 receipt = self.routing.capacity.admit(
@@ -641,53 +663,51 @@ class ApprovedTaskAdmission:
                         raise RunError("REVIEWER_RESERVED_ROUTE_NOT_CURRENT")
                     # This is the existing Reviewer admission's Capacity transaction;
                     # it excludes only its own hold and cannot issue another claim.
+                    run_budget_boundary: Any | None = None
+                    capacity_quota_fence: Any | None = None
+                    reviewer_temporal_fence: Any | None = None
+
                     def check_reviewer_effect_boundary() -> None:
-                        self.routing.reviewer_boundary_guard(
+                        nonlocal run_budget_boundary, reviewer_temporal_fence
+                        reviewer_temporal_fence = self.routing.reviewer_boundary_guard(
                             current,
                             worker_operation=worker_operation,
                             candidates=bindings.candidates,
                             clock=lambda: self.routing.capacity.clock(),
                         )
+                        run_budget_boundary = capture_run_budget_boundary(
+                            db,
+                            run,
+                            operation_id=operation["id"],
+                            attempt_id=operation["planned_attempt_id"],
+                        )
 
                     capacity_boundary: Any | None = None
 
                     def check_reviewer_capacity_route(boundary: Any) -> None:
-                        nonlocal capacity_boundary
+                        nonlocal capacity_boundary, capacity_quota_fence
                         capacity_boundary = boundary
-                        self.routing.reviewer_capacity_boundary_guard(
+                        capacity_quota_fence = self.routing.reviewer_capacity_boundary_guard(
                             current, request=request, boundary=boundary
                         )
 
                     def check_reviewer_final_effect_boundary() -> None:
-                        if capacity_boundary is None:
+                        if (
+                            capacity_boundary is None
+                            or capacity_quota_fence is None
+                            or run_budget_boundary is None
+                            or reviewer_temporal_fence is None
+                        ):
                             raise RunError("REVIEWER_CAPACITY_BOUNDARY_INVALID")
-                        self.routing.reviewer_elapsed_boundary_guard(
-                            current, clock=lambda: self.routing.capacity.clock()
-                        )
-                        self.routing.reviewer_capacity_boundary_guard(
-                            current,
-                            request=request,
-                            boundary=capacity_boundary,
-                            as_of=self.routing.capacity.clock(),
-                        )
-                        now = self.routing.planner.clock()
+                        capacity_now = self.routing.capacity.clock()
                         try:
-                            current_process(
-                                db,
-                                run,
-                                operation,
-                                attempt_id=operation["planned_attempt_id"],
-                                now=now,
-                            )
-                        except RunError as error:
-                            if error.code != "RUN_EXECUTION_CLAIM_REQUIRED":
-                                raise
-                            # #115 does not claim a native Reviewer process.
-                            # Before that later #116 claim exists, this is a
-                            # fresh-admission check; after it exists, the
-                            # exact original process remains valid even at the
-                            # final legal Run slot.
-                            admission_allowed(db, run, now=now)
+                            capacity_quota_fence.assert_current(as_of=capacity_now)
+                        except RoutingError:
+                            raise RunError("REVIEWER_CAPACITY_REVALIDATION_FAILED") from None
+                        reviewer_temporal_fence.assert_current(as_of=capacity_now)
+                        run_budget_boundary.assert_current_or_new_admission_allowed(
+                            now=self.routing.planner.clock()
+                        )
 
                     with self.routing.capacity.pre_effect_guard(
                         capacity_receipt["admission_id"],
@@ -696,21 +716,6 @@ class ApprovedTaskAdmission:
                         after_capacity_facts=check_reviewer_capacity_route,
                         before_effect_yield=check_reviewer_final_effect_boundary,
                     ) as capacity:
-                        now = self.routing.planner.clock()
-                        try:
-                            current_process(
-                                db,
-                                run,
-                                operation,
-                                attempt_id=operation["planned_attempt_id"],
-                                now=now,
-                            )
-                        except RunError as error:
-                            if error.code != "RUN_EXECUTION_CLAIM_REQUIRED":
-                                raise
-                            # #115 has not claimed a native Reviewer process;
-                            # it can only prove that a future claim still fits.
-                            admission_allowed(db, run, now=now)
                         yield {
                             "operation": operation,
                             "revalidation": current,

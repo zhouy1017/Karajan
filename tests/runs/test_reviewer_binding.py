@@ -546,6 +546,42 @@ def test_reviewer_admission_rechecks_run_deadline_after_capacity_lock_wait(
     assert capacity.path.read_bytes() == before
 
 
+def test_reviewer_final_run_budget_fence_checks_after_its_completed_sqlite_read(
+    binding_case, monkeypatch
+):
+    import karajan.orchestration.admission as admission_module
+
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
+    with sqlite3.connect(intents.admissions.database) as db:
+        row = db.execute(
+            "SELECT data FROM run_execution_budgets WHERE run_id=?", (run_id,)
+        ).fetchone()
+        budget = json.loads(row[0])
+        budget.update(started_at=0.0, max_duration_seconds=1001)
+        db.execute(
+            "UPDATE run_execution_budgets SET data=? WHERE run_id=?",
+            (json.dumps(budget), run_id),
+        )
+    reviewer = intents.admissions.enqueue(
+        run_id, "review", principal="owner", command_key="reviewer-budget-read-fence"
+    )
+    original = admission_module.capture_run_budget_boundary
+
+    def capture_then_cross_deadline(*args, **kwargs):
+        boundary = original(*args, **kwargs)
+        intents.admissions.routing.planner.clock = lambda: 1001.0
+        return boundary
+
+    monkeypatch.setattr(
+        admission_module, "capture_run_budget_boundary", capture_then_cross_deadline
+    )
+    before = intents.admissions.routing.capacity.path.read_bytes()
+    blocked = intents.admissions.advance(run_id, reviewer["id"], principal="owner")
+    assert blocked["state"] == "blocked"
+    assert blocked["reason_codes"] == ["RUN_DURATION_LIMIT"]
+    assert intents.admissions.routing.capacity.path.read_bytes() == before
+
+
 def _tighten_reviewer_conservative_capacity(
     capacity, *, maximum: int, observation_age: int, conservative_maximum: int | None = None
 ) -> None:
@@ -602,6 +638,80 @@ def test_reviewer_unknown_quota_uses_conservative_observation_age_at_capacity_bo
     blocked = intents.admissions.advance(run_id, reviewer["id"], principal="owner")
     assert blocked["state"] == "blocked"
     assert blocked["reason_codes"] == ["REVIEWER_CAPACITY_REVALIDATION_FAILED"]
+    assert capacity.path.read_bytes() == before
+
+
+def test_reviewer_final_quota_fence_rejects_age_crossed_during_complete_evaluation(
+    binding_case, monkeypatch
+):
+    import karajan.orchestration.routing as routing_module
+
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
+    capacity = intents.admissions.routing.capacity
+    _tighten_reviewer_conservative_capacity(capacity, maximum=2, observation_age=5)
+    reviewer = intents.admissions.enqueue(
+        run_id, "review", principal="owner", command_key="reviewer-conservative-evaluator-time"
+    )
+    original = routing_module.evaluate_reserved_profile
+    calls = []
+
+    def delayed_complete_evaluation(*args, **kwargs):
+        report = original(*args, **kwargs)
+        calls.append(report["selected_profile"])
+        capacity.clock = lambda: 1006.0
+        return report
+
+    monkeypatch.setattr(routing_module, "evaluate_reserved_profile", delayed_complete_evaluation)
+    before = capacity.path.read_bytes()
+    blocked = intents.admissions.advance(run_id, reviewer["id"], principal="owner")
+    assert calls
+    assert blocked["state"] == "blocked"
+    assert blocked["reason_codes"] == ["REVIEWER_CAPACITY_REVALIDATION_FAILED"]
+    assert capacity.path.read_bytes() == before
+
+
+@pytest.mark.parametrize(
+    ("source", "reason"),
+    [
+        ("qualification", "REVIEWER_QUALIFICATION_EXPIRED"),
+        ("estimate", "REVIEWER_ESTIMATE_EXPIRED"),
+    ],
+)
+def test_reviewer_final_source_fence_rejects_expiry_during_complete_evaluation(
+    binding_case, monkeypatch, source, reason
+):
+    import karajan.orchestration.routing as routing_module
+
+    _, qualification, intents, (run_id, _), _, _, _ = binding_case
+    _passed_reviewer_subject(binding_case)
+    routing, capacity = intents.admissions.routing, intents.admissions.routing.capacity
+    if source == "qualification":
+        qualification.mutate = lambda observed: observed["facts"].update(valid_until=1001.0)
+    else:
+        original_estimate = routing.estimates.estimate_locked
+
+        def short_lived(*args, **kwargs):
+            result = deepcopy(original_estimate(*args, **kwargs))
+            if result["source_binding"] is not None:
+                result["source_binding"]["valid_until"] = 1001.0
+            return result
+
+        monkeypatch.setattr(routing.estimates, "estimate_locked", short_lived)
+    reviewer = intents.admissions.enqueue(
+        run_id, "review", principal="owner", command_key="reviewer-evaluator-source-" + source
+    )
+    original = routing_module.evaluate_reserved_profile
+
+    def delayed_complete_evaluation(*args, **kwargs):
+        report = original(*args, **kwargs)
+        capacity.clock = lambda: 1001.0
+        return report
+
+    monkeypatch.setattr(routing_module, "evaluate_reserved_profile", delayed_complete_evaluation)
+    before = capacity.path.read_bytes()
+    blocked = intents.admissions.advance(run_id, reviewer["id"], principal="owner")
+    assert blocked["state"] == "blocked"
+    assert blocked["reason_codes"] == [reason]
     assert capacity.path.read_bytes() == before
 
 
@@ -1233,6 +1343,55 @@ def test_lost_reviewer_activate_reply_recovers_the_original_activation_receipt(
     assert calls == [
         (reserved["capacity_receipt"]["admission_id"], "reviewer-activate:" + queued["id"])
     ]
+
+
+@pytest.mark.parametrize(
+    ("reconciliation", "state", "reason"),
+    [
+        (
+            {
+                "local_ended": True,
+                "remote_ended": False,
+                "usage_complete": False,
+                "not_sent": False,
+            },
+            "reconciliation_required",
+            "EXECUTION_RECONCILIATION_REQUIRED",
+        ),
+        (
+            {"local_ended": True, "remote_ended": True, "usage_complete": False, "not_sent": True},
+            "released",
+            "RESERVATION_RELEASED",
+        ),
+    ],
+)
+def test_successful_reviewer_activation_receipt_does_not_mask_current_capacity_state(
+    binding_case, reconciliation, state, reason
+):
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
+    reviewer = intents.admissions.advance(
+        run_id,
+        intents.admissions.enqueue(
+            run_id, "review", principal="owner", command_key="activation-current-" + state
+        )["id"],
+        principal="owner",
+    )
+    activated = _activate_reviewer_reservation(intents, run_id, reviewer)
+    capacity = intents.admissions.routing.capacity
+    admission_id = reviewer["capacity_receipt"]["admission_id"]
+    capacity.reconcile(
+        admission_id,
+        **reconciliation,
+        evidence_ref="fixture:reviewer-current-" + state,
+        command_key="reviewer-current-" + state,
+    )
+    current = intents.admissions.reconcile_reviewer(run_id, reviewer["id"], principal="owner")
+    assert current["state"] == state
+    assert current["reason_codes"] == [reason]
+    assert current["reviewer_activation"]["receipt"] == activated["reviewer_activation"]["receipt"]
+    assert current["capacity_status"]["admission"]["stored_state"] == (
+        "unknown" if state == "reconciliation_required" else "released"
+    )
 
 
 def test_reviewer_generation_change_blocks_current_effect_before_capacity(binding_case):
