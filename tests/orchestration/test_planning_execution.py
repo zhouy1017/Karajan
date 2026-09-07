@@ -25,6 +25,8 @@ class FixtureAuthorities:
         self.capacity = capacity
         self.request: dict[str, Any] | None = None
         self.key: str | None = None
+        self.activation_request: dict[str, Any] | None = None
+        self.activation_key: str | None = None
         self.content: bytes | None = None
         self.output_source = "b" * 64
 
@@ -45,10 +47,25 @@ class FixtureAuthorities:
         )
         self.key = "planning-admit:" + binding["execution_id"]
         self.capacity.admit(self.request, command_key=self.key)
+        receipt = self.capacity.command_receipt("admit", self.request, command_key=self.key)
+        assert receipt is not None
+        self.activation_request = {"admission_id": receipt["admission_id"]}
+        self.activation_key = "planning-activate:" + binding["execution_id"]
         self.content = content
 
+    def activate(self) -> None:
+        assert self.activation_request is not None and self.activation_key is not None
+        self.capacity.activate(
+            self.activation_request["admission_id"], command_key=self.activation_key
+        )
+
     def read_admission(self, binding: dict[str, Any]) -> object:
-        assert self.request is not None and self.key is not None
+        assert (
+            self.request is not None
+            and self.key is not None
+            and self.activation_request is not None
+            and self.activation_key is not None
+        )
         return {
             "schema_version": "karajan.planning-admission-evidence.v1",
             "binding_sha256": digest(binding),
@@ -59,6 +76,11 @@ class FixtureAuthorities:
             "capacity_command_key": self.key,
             "capacity_receipt": self.capacity.command_receipt(
                 "admit", self.request, command_key=self.key
+            ),
+            "capacity_activation_request": self.activation_request,
+            "capacity_activation_command_key": self.activation_key,
+            "capacity_activation_receipt": self.capacity.command_receipt(
+                "activate", self.activation_request, command_key=self.activation_key
             ),
             "state": "admitted",
         }
@@ -190,6 +212,7 @@ def test_id_only_output_consumption_reopens_exact_capacity_receipt_and_plan(
 ) -> None:
     service, run, intent, authorities = planning_case(tmp_path, configured)
     execution = begin(service, run, intent, authorities)
+    authorities.activate()
 
     admitted = service.reconcile(execution["id"], principal="owner")
     assert admitted["state"] == "awaiting_output"
@@ -243,6 +266,7 @@ def test_missing_mismatched_or_changed_evidence_never_submits(
             "UnknownAdmissions", (), {"read_admission": staticmethod(unknown)}
         )()
     else:
+        authorities.activate()
         service.reconcile(execution["id"], principal="owner")
         authorities.content = b'{"summary":"changed"}'
     result = service.submit(execution["id"], principal="owner", command_key="submit")
@@ -315,11 +339,32 @@ def test_capacity_reader_and_frozen_output_source_reject_substitution(
         tmp_path / "source", {**configured, "registry": registry}
     )
     execution = begin(service, run, intent, authorities)
+    authorities.activate()
     assert service.reconcile(execution["id"], principal="owner")["state"] == "awaiting_output"
     authorities.output_source = "c" * 64
     rejected = service.submit(execution["id"], principal="owner", command_key="submit")
     assert rejected["submission"] is None
-    assert rejected["reason_codes"] == ["PLANNING_OUTPUT_BINDING_MISMATCH"]
+    assert rejected["reason_codes"] == ["PLANNING_OUTPUT_SOURCE_CHANGED"]
+    assert service.planner.get(run["id"], principal="owner")["plans"] == []
+
+
+def test_missing_or_changed_activation_receipt_never_submits(
+    configured: dict, tmp_path: Path
+) -> None:
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authorities)
+    original = authorities.read_admission
+
+    def missing_activation(binding: dict[str, Any]) -> object:
+        value = original(binding)
+        value["capacity_activation_command_key"] = "unissued-activation"
+        value["capacity_activation_receipt"] = None
+        return value
+
+    authorities.read_admission = missing_activation  # type: ignore[method-assign]
+    result = service.submit(execution["id"], principal="owner", command_key="submit")
+    assert result["submission"] is None
+    assert result["reason_codes"] == ["PLANNING_CAPACITY_ACTIVATION_MISMATCH"]
     assert service.planner.get(run["id"], principal="owner")["plans"] == []
 
 
@@ -328,6 +373,7 @@ def test_exact_run_receipt_recovers_lost_reply_without_resubmission(
 ) -> None:
     service, run, intent, authorities = planning_case(tmp_path, configured)
     execution = begin(service, run, intent, authorities)
+    authorities.activate()
     original = service.planner._submit_planning_execution_plan
 
     def lose_reply(*args: Any, **kwargs: Any) -> dict[str, Any]:
@@ -355,6 +401,7 @@ def test_cancellation_observed_before_run_submit_prevents_plan(
 ) -> None:
     service, run, intent, authorities = planning_case(tmp_path, configured)
     execution = begin(service, run, intent, authorities)
+    authorities.activate()
     original = service.planner._submit_planning_execution_plan
 
     def cancel_at_boundary(*args: Any, **kwargs: Any) -> dict[str, Any]:
@@ -373,6 +420,7 @@ def test_begin_replay_survives_original_intent_state_change(
 ) -> None:
     service, run, intent, authorities = planning_case(tmp_path, configured)
     execution = begin(service, run, intent, authorities)
+    authorities.activate()
     service.submit(execution["id"], principal="owner", command_key="submit")
     assert (
         service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
@@ -402,6 +450,7 @@ def test_v2_output_uses_the_versioned_parser_and_run_submission(
     execution = service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
     content = json.dumps(submit_request(run, intent)["plan"], separators=(",", ":")).encode()
     authorities.prepare(execution["binding"], content)
+    authorities.activate()
     submitted = service.submit(execution["id"], principal="owner", command_key="submit")
     assert submitted["state"] == "submitted"
     assert submitted["submission"]["routing_binding"]["execution_policy"]["id"] == policy["id"]

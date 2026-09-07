@@ -35,6 +35,9 @@ class PlanningAdmissionEvidence(Contract):
     capacity_request: dict[str, Any]
     capacity_command_key: str
     capacity_receipt: dict[str, Any] | None
+    capacity_activation_request: dict[str, Any]
+    capacity_activation_command_key: str
+    capacity_activation_receipt: dict[str, Any] | None
     state: Literal["admitted", "denied", "unknown"]
 
 
@@ -367,6 +370,23 @@ class PlanningExecution:
             or receipt.get("decision") != "admitted"
         ):
             return self._blocked(execution_id, principal, "PLANNING_CAPACITY_RECEIPT_MISMATCH")
+        if evidence["capacity_activation_request"] != {"admission_id": receipt["admission_id"]}:
+            return self._blocked(execution_id, principal, "PLANNING_CAPACITY_ACTIVATION_MISMATCH")
+        try:
+            activation = self.capacity.command_receipt(
+                "activate",
+                evidence["capacity_activation_request"],
+                command_key=evidence["capacity_activation_command_key"],
+            )
+        except ValueError:
+            return self._blocked(execution_id, principal, "PLANNING_CAPACITY_ACTIVATION_INVALID")
+        if (
+            activation is None
+            or activation != evidence["capacity_activation_receipt"]
+            or activation.get("decision") != "capacity_revalidated"
+            or activation.get("admission_id") != evidence["capacity_receipt"]["admission_id"]
+        ):
+            return self._blocked(execution_id, principal, "PLANNING_CAPACITY_ACTIVATION_MISMATCH")
         if self.outputs is None:
             return self._blocked(execution_id, principal, "PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE")
         try:
@@ -437,6 +457,23 @@ class PlanningExecution:
             return self._blocked(
                 execution["id"], principal, "PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE"
             )
+        try:
+            current_source = PlanningOutputSource.model_validate(
+                self.outputs.read_source(execution["binding"])
+            ).model_dump()
+        except (ValidationError, TypeError, ValueError):
+            return self._blocked(execution["id"], principal, "PLANNING_OUTPUT_SOURCE_INVALID")
+        if current_source["authority_kind"] == "fixture" and not self.allow_fixture_authorities:
+            return self._blocked(execution["id"], principal, "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN")
+        if current_source["authority_kind"] == "production":
+            return self._blocked(
+                execution["id"], principal, "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE"
+            )
+        if (
+            current_source["binding_sha256"] != execution["binding_sha256"]
+            or current_source["source_sha256"] != execution.get("output_source_sha256")
+        ):
+            return self._blocked(execution["id"], principal, "PLANNING_OUTPUT_SOURCE_CHANGED")
         try:
             evidence = PlanningOutputEvidence.model_validate(
                 self.outputs.read_output(execution["id"], execution["binding"])

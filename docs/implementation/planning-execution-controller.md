@@ -10,9 +10,11 @@ artifact 路径或调用方提供的 receipt。`reconcile` 只通过 `PlanningAd
 capacity request/key 的已有回执；没有回执、状态 unknown、绑定不一致或权限来源不完整时不申请
 新的 admission、不创建进程且不提交计划。
 
-`reconcile` 还要求控制器持有实际的 `CapacityStore`，用原 capacity request 和 command key 只读
-重开 `admit` receipt，并逐字段比较 authority 的观察。它会从内部 output authority 封存来源 SHA-256；
+`reconcile` 还要求控制器持有实际的 `CapacityStore`，用原 capacity request/key 与原 activation
+request/key 分别只读重开 `admit` 和 `activate` receipt，并逐字段比较 authority 的观察；两个 receipt
+都不能缺失或用无关命令替代。它会从内部 output authority 封存来源 SHA-256；
 `submit` 只按 execution ID 读取完整 bytes、大小、SHA-256、完成身份和来源摘要，并要求来源等于封存值。
+提交前还会再次读取当前 source；冻结来源匹配但当前来源已改变的迟到旧输出同样拒绝。
 控制器校验摘要后调用 `parse_planning_output`；成功内容仍由现有 `RunPlanner`
 复查 term、lead、授权 ceiling、配置和 v1/v2 routing。owner 的精确批准继续是原有入口，控制器
 不替代该决定。
