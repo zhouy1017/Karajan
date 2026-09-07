@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="5.135" timestamp="2026-09-06T21:43:27.722068+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_go_task_execution_native" name="test_actual_host_child_native_candidate_and_replay" time="0.816"><failure message="KeyError: 'base_ref'">projected = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x7bcd64869040&gt;, 'project_id': '9e4eba4f-5b8e-4a53-8...fixture'), 'repository': PosixPath('/tmp/karajan-task-full-a/test_actual_host_child_native_0/fixture/repository'), ...}
+tmp_path = PosixPath('/tmp/karajan-task-full-a/test_actual_host_child_native_0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x7bcd642f3800&gt;
+artifacts = PosixPath('/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-artifacts')
+
+&gt;   ???
+E   KeyError: 'base_ref'
+
+C:\Users\Chooo\Playground\Karajan\.cache\go-task-execution-v2\tests\runs\test_go_task_execution_native.py:92: KeyError</failure></testcase></testsuite></testsuites>

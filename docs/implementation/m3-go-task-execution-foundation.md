@@ -47,4 +47,4 @@ Candidate 验收、验证、Review 和 PR 状态由后续可信消费者处理�
 本片测试使用临时 Git、真实 SQLite、真实本地进程和 Linux 原生 OpenCode；上游是
 显式本地 HTTP fixture。合成资格只供接口边界测试，不能作为部署资格。
 已验证普通任务文件的 read/edit 与首个请求后撤回，不将其等同于批准 Run 的完整执行。
-CI 错误按用户要求在对应 GitHub PR 中 @copilot 修复，独立功能开发继续。
+CI 错误按当前[修复分工](testing-gates.md#ci-失败的修复分工)派发，独立功能开发继续。

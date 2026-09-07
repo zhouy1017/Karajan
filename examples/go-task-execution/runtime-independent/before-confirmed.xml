@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="6" time="2.186" timestamp="2026-09-06T21:50:35.116605+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.runtime-independent.test_runtime_review" name="test_runner_source_changes_when_effective_guard_implementation_changes[orchestration/go_task_collector.py]" time="0.008" /><testcase classname=".cache.runtime-independent.test_runtime_review" name="test_runner_source_changes_when_effective_guard_implementation_changes[orchestration/_go_task_runner.py]" time="0.005" /><testcase classname=".cache.runtime-independent.test_runtime_review" name="test_runner_source_changes_when_effective_guard_implementation_changes[routing/evaluator.py]" time="0.006"><failure message="AssertionError: Effective controller source omitted: routing/evaluator.py&#10;assert {'schema_version': 'karajan.go-task-runner-source.v1', 'native_task': {'fixture': 'native-source'}, 'controller_source...6fc0a44c0bc21ed2f14786fefc61e54f02cc88c9202ee7bbb', ...}, 'permission_scope': 'approved_existing_files_read_edit', ...} != {'schema_version': 'karajan.go-task-runner-source.v1', 'native_task': {'fixture': 'native-source'}, 'controller_source...6fc0a44c0bc21ed2f14786fefc61e54f02cc88c9202ee7bbb', ...}, 'permission_scope': 'approved_existing_files_read_edit', ...}">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002B0B824E180&gt;
+relative = 'routing/evaluator.py'
+
+    @pytest.mark.parametrize("relative", [
+        "orchestration/go_task_collector.py", "orchestration/_go_task_runner.py",
+        "routing/evaluator.py", "routing/quotas.py", "capacity/models.py",
+    ])
+    def test_runner_source_changes_when_effective_guard_implementation_changes(monkeypatch, relative):
+        # Only the nested native mechanism is a fixed fixture. Exercise the real
+        # controller-source compiler and actual repository byte reads; no ELF or
+        # tokenizer is needed to prove these controller hashes are or are not read.
+        monkeypatch.setattr(go_task_binding, "native_task_source", lambda *_: {"fixture": "native-source"})
+        before = go_task_binding.task_runner_source(Path("unused-fixture"), object())
+        original = Path.read_bytes
+        selected = Path(go_task_binding.__file__).parents[1] / relative
+        def changed(path):
+            body = original(path)
+            return body + b"\n# independent simulated deployment change\n" if path == selected else body
+        monkeypatch.setattr(Path, "read_bytes", changed)
+        after = go_task_binding.task_runner_source(Path("unused-fixture"), object())
+&gt;       assert after != before, f"Effective controller source omitted: {relative}"
+E       AssertionError: Effective controller source omitted: routing/evaluator.py
+E       assert {'schema_version': 'karajan.go-task-runner-source.v1', 'native_task': {'fixture': 'native-source'}, 'controller_source...6fc0a44c0bc21ed2f14786fefc61e54f02cc88c9202ee7bbb', ...}, 'permission_scope': 'approved_existing_files_read_edit', ...} != {'schema_version': 'karajan.go-task-runner-source.v1', 'native_task': {'fixture': 'native-source'}, 'controller_source...6fc0a44c0bc21ed2f14786fefc61e54f02cc88c9202ee7bbb', ...}, 'permission_scope': 'approved_existing_files_read_edit', ...}
+
+.cache\runtime-independent\test_runtime_review.py:47: AssertionError</failure></testcase><testcase classname=".cache.runtime-independent.test_runtime_review" name="test_runner_source_changes_when_effective_guard_implementation_changes[routing/quotas.py]" time="0.006"><failure message="AssertionError: Effective controller source omitted: routing/quotas.py&#10;assert {'schema_version': 'karajan.go-task-runner-source.v1', 'native_task': {'fixture': 'native-source'}, 'controller_source...6fc0a44c0bc21ed2f14786fefc61e54f02cc88c9202ee7bbb', ...}, 'permission_scope': 'approved_existing_files_read_edit', ...} != {'schema_version': 'karajan.go-task-runner-source.v1', 'native_task': {'fixture': 'native-source'}, 'controller_source...6fc0a44c0bc21ed2f14786fefc61e54f02cc88c9202ee7bbb', ...}, 'permission_scope': 'approved_existing_files_read_edit', ...}">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002B0B824E960&gt;
+relative = 'routing/quotas.py'
+
+    @pytest.mark.parametrize("relative", [
+        "orchestration/go_task_collector.py", "orchestration/_go_task_runner.py",
+        "routing/evaluator.py", "routing/quotas.py", "capacity/models.py",
+    ])
+    def test_runner_source_changes_when_effective_guard_implementation_changes(monkeypatch, relative):
+        # Only the nested native mechanism is a fixed fixture. Exercise the real
+        # controller-source compiler and actual repository byte reads; no ELF or
+        # tokenizer is needed to prove these controller hashes are or are not read.
+        monkeypatch.setattr(go_task_binding, "native_task_source", lambda *_: {"fixture": "native-source"})
+        before = go_task_binding.task_runner_source(Path("unused-fixture"), object())
+        original = Path.read_bytes
+        selected = Path(go_task_binding.__file__).parents[1] / relative
+        def changed(path):
+            body = original(path)
+            return body + b"\n# independent simulated deployment change\n" if path == selected else body
+        monkeypatch.setattr(Path, "read_bytes", changed)
+        after = go_task_binding.task_runner_source(Path("unused-fixture"), object())
+&gt;       assert after != before, f"Effective controller source omitted: {relative}"
+E       AssertionError: Effective controller source omitted: routing/quotas.py
+E       assert {'schema_version': 'karajan.go-task-runner-source.v1', 'native_task': {'fixture': 'native-source'}, 'controller_source...6fc0a44c0bc21ed2f14786fefc61e54f02cc88c9202ee7bbb', ...}, 'permission_scope': 'approved_existing_files_read_edit', ...} != {'schema_version': 'karajan.go-task-runner-source.v1', 'native_task': {'fixture': 'native-source'}, 'controller_source...6fc0a44c0bc21ed2f14786fefc61e54f02cc88c9202ee7bbb', ...}, 'permission_scope': 'approved_existing_files_read_edit', ...}
+
+.cache\runtime-independent\test_runtime_review.py:47: AssertionError</failure></testcase><testcase classname=".cache.runtime-independent.test_runtime_review" name="test_runner_source_changes_when_effective_guard_implementation_changes[capacity/models.py]" time="0.005"><failure message="AssertionError: Effective controller source omitted: capacity/models.py&#10;assert {'schema_version': 'karajan.go-task-runner-source.v1', 'native_task': {'fixture': 'native-source'}, 'controller_source...6fc0a44c0bc21ed2f14786fefc61e54f02cc88c9202ee7bbb', ...}, 'permission_scope': 'approved_existing_files_read_edit', ...} != {'schema_version': 'karajan.go-task-runner-source.v1', 'native_task': {'fixture': 'native-source'}, 'controller_source...6fc0a44c0bc21ed2f14786fefc61e54f02cc88c9202ee7bbb', ...}, 'permission_scope': 'approved_existing_files_read_edit', ...}">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002B0B824F350&gt;
+relative = 'capacity/models.py'
+
+    @pytest.mark.parametrize("relative", [
+        "orchestration/go_task_collector.py", "orchestration/_go_task_runner.py",
+        "routing/evaluator.py", "routing/quotas.py", "capacity/models.py",
+    ])
+    def test_runner_source_changes_when_effective_guard_implementation_changes(monkeypatch, relative):
+        # Only the nested native mechanism is a fixed fixture. Exercise the real
+        # controller-source compiler and actual repository byte reads; no ELF or
+        # tokenizer is needed to prove these controller hashes are or are not read.
+        monkeypatch.setattr(go_task_binding, "native_task_source", lambda *_: {"fixture": "native-source"})
+        before = go_task_binding.task_runner_source(Path("unused-fixture"), object())
+        original = Path.read_bytes
+        selected = Path(go_task_binding.__file__).parents[1] / relative
+        def changed(path):
+            body = original(path)
+            return body + b"\n# independent simulated deployment change\n" if path == selected else body
+        monkeypatch.setattr(Path, "read_bytes", changed)
+        after = go_task_binding.task_runner_source(Path("unused-fixture"), object())
+&gt;       assert after != before, f"Effective controller source omitted: {relative}"
+E       AssertionError: Effective controller source omitted: capacity/models.py
+E       assert {'schema_version': 'karajan.go-task-runner-source.v1', 'native_task': {'fixture': 'native-source'}, 'controller_source...6fc0a44c0bc21ed2f14786fefc61e54f02cc88c9202ee7bbb', ...}, 'permission_scope': 'approved_existing_files_read_edit', ...} != {'schema_version': 'karajan.go-task-runner-source.v1', 'native_task': {'fixture': 'native-source'}, 'controller_source...6fc0a44c0bc21ed2f14786fefc61e54f02cc88c9202ee7bbb', ...}, 'permission_scope': 'approved_existing_files_read_edit', ...}
+
+.cache\runtime-independent\test_runtime_review.py:47: AssertionError</failure></testcase><testcase classname=".cache.runtime-independent.test_runtime_review" name="test_missing_journal_does_not_block_cancellation_of_owned_prepared_host" time="1.051"><failure message="karajan.runs.planning.RunError: TASK_DEPLOYMENT_PATH_INVALID">deployment = (&lt;karajan.orchestration.go_task_runtime.GoTaskSettings object at 0x000002B0B83638F0&gt;, &lt;karajan.orchestration.go_execut...ntents object at 0x000002B0B833E2A0&gt;, ('1b7f7587-d28c-4d7a-b364-77290e6cdd42', 'e105dd8a-e2c6-4d3d-9a6a-ca0df4d3d1eb'))
+
+    def test_missing_journal_does_not_block_cancellation_of_owned_prepared_host(deployment):
+        settings, _, args = deployment
+        services = open_go_task_services(settings, run_id=args[0], operation_id=args[1], principal="owner")
+        intents = services.intents
+        intents.admissions.routing.capacity.clock = lambda: 1000.0
+        # Seed one real Capacity activation and owned prepared Host row, using an
+        # explicit inert fixture compiler. No process or provider is started.
+        spec = ProcessSpec((sys._base_executable, "-c", "pass"), settings.control_directory)
+        intents.launch_compiler = lambda operation: GoLaunchSpec(spec, "c" * 64)
+        current = intents.read(*args, principal="owner")
+        intent = current["execution"]["intent"]
+        intents.admissions.routing.capacity.activate(intent["admission_id"], command_key=intent["activation_key"])
+        intents.activation_recorded(*args, principal="owner")
+        op = intents.freeze_launch(*args, principal="owner")
+        intents.host.prepare(AttemptManifest.model_validate(op["execution"]["launch"]["manifest"]),
+                             intent["start_key"], spec)
+        intents.host.initialize_control_once(intent["attempt_id"], prepared_id=intent["start_key"],
+                                            fence=intent["fence"], authorization_ref=intent["authorization_ref"])
+        settings.journal_path.rename(settings.journal_path.with_suffix(".retained"))
+&gt;       reopened = open_go_task_services(settings, run_id=args[0], operation_id=args[1], principal="owner")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.cache\runtime-independent\test_runtime_review.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+backend\karajan\orchestration\go_task_runtime.py:265: in open_go_task_services
+    _state_paths(settings)
+backend\karajan\orchestration\go_task_runtime.py:211: in _state_paths
+    _plain(settings.journal_path)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-831/test_missing_journal_does_not_0/deployment-journal/go.sqlite')
+directory = False
+
+    def _plain(path: Path, *, directory: bool = False) -&gt; None:
+        try:
+            for item in (path, *path.parents):
+                info = item.lstat()
+                if stat.S_ISLNK(info.st_mode) or (
+                    getattr(info, "st_file_attributes", 0) &amp; stat.FILE_ATTRIBUTE_REPARSE_POINT
+                ):
+                    raise ValueError()
+            info = path.stat()
+            if not (stat.S_ISDIR(info.st_mode) if directory else stat.S_ISREG(info.st_mode)):
+                raise ValueError()
+            if not directory and info.st_nlink != 1:
+                raise ValueError()
+        except (OSError, ValueError):
+&gt;           raise RunError("TASK_DEPLOYMENT_PATH_INVALID") from None
+E           karajan.runs.planning.RunError: TASK_DEPLOYMENT_PATH_INVALID
+
+backend\karajan\orchestration\go_task_runtime.py:156: RunError</failure></testcase></testsuite></testsuites>

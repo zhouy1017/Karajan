@@ -18,6 +18,7 @@ from karajan.routing.compiler import digest, parse, reference
 from karajan.routing.models import AccountState, PoolState, TaskClassification
 from karajan.runs import RunError, RunPlanner
 from karajan.runs.planning import encoded, identifier
+from karajan.storage import require_schema
 
 from .go_scope import resolve_go_execution
 
@@ -40,15 +41,40 @@ class ApprovedRunRouting:
 
         if qualifications.projects.database.resolve() != planner.projects.database.resolve():
             raise RunError("ROUTING_PROJECT_SOURCE_MISMATCH")
+        if planner.existing_only and not (
+            planner.projects.existing_only
+            and qualifications.projects.existing_only
+            and capacity.existing_only
+        ):
+            raise RunError("EXISTING_STORE_PARENT_MODE_REQUIRED")
         self.planner = planner
         self.qualifications = qualifications
         self.capacity = capacity
         self.estimates = estimates or AttemptEstimateStore(planner)
+        if planner.existing_only and not (
+            self.estimates.planner.existing_only and self.estimates.projects.existing_only
+        ):
+            raise RunError("EXISTING_STORE_PARENT_MODE_REQUIRED")
         if (
             self.estimates.planner.database.resolve() != planner.database.resolve()
             or self.estimates.projects.database.resolve() != planner.projects.database.resolve()
         ):
             raise RunError("ROUTING_ESTIMATE_SOURCE_MISMATCH")
+        if planner.existing_only:
+            require_schema(
+                planner.database,
+                {
+                    "approved_routing_assessments": [
+                        "id",
+                        "run_id",
+                        "principal",
+                        "command_key",
+                        "payload",
+                        "result",
+                    ]
+                },
+            )
+            return
         with planner._transaction() as db:
             db.execute(
                 "CREATE TABLE IF NOT EXISTS approved_routing_assessments ("

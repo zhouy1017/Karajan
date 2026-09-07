@@ -1,0 +1,152 @@
+{
+  "schema_version": "karajan.collector-author-evidence.v1",
+  "issue": "https://github.com/zhouy1017/Karajan/issues/90",
+  "worktree": "codex/m3-go-task-execution-v2",
+  "base": "858bd5a",
+  "scope": "Existing Candidate storage, trusted Task capture compilation and guarded collection, exact historical commit recovery",
+  "sources": {
+    "backend/karajan/candidates/store.py": "8f69dfdd1364d6a33cd5351f28785a445fa36f213ce4a10dffcef8c7153a758f",
+    "backend/karajan/candidates/_capture_lookup.py": "ea524d6973801a7583648357252070ff28657f2454730a4c063240daab3cd608",
+    "backend/karajan/orchestration/go_task_collector.py": "a9d3149f33ae026ae4e4dbc5e74a5daed9aaebac75066005da57d84c07f699bc",
+    "tests/candidates/test_capture_recovery.py": "893425d490a65f6a90b65927c81e2bceb16432493975cde8ad6525046076f811",
+    "tests/runs/test_go_task_collector.py": "c0493565c6d807774f634a1c8c0e1df6f34d2ee23e2a3828e6bf537de5fd3e77"
+  },
+  "reports": {
+    "existing-red.xml": {
+      "sha256": "7b7fa5d6a7880c95b7fc770725ab70aa076a1e6dceb26be42016eee62da72071",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.156
+    },
+    "existing-green.xml": {
+      "sha256": "74e7ea0c8b9be2f0494f19451d4c0204ad12e3186a64020bf2bbb8602edf88e4",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.159
+    },
+    "lookup-red.xml": {
+      "sha256": "f20652335ca49db5f95d6fd7142c6d0028c79178a815cd3c748a3d9acdfb63ab",
+      "tests": 2,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 1.71
+    },
+    "lookup-green.xml": {
+      "sha256": "26b25aef0022115ae91bbf7d624831f5f99e4475ebf099272f57f4946cfcb9df",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 1.488
+    },
+    "candidate-boundaries.xml": {
+      "sha256": "1e9587d6ccf0d95c39a396abe3c981d02ab528c609747eded27d494be61dad2b",
+      "tests": 45,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 39.062
+    },
+    "compiler-red.xml": {
+      "sha256": "007f358600cd067c12fde4bb6fdd450864a558e2810a506d9419c6954db454eb",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 2.37
+    },
+    "compiler-green.xml": {
+      "sha256": "46a8b146f52c817ba957cdc513f2f32b34f12db8da41cdd6eba03a200e852a86",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 2.211
+    },
+    "compiler-boundaries.xml": {
+      "sha256": "988454b5d47fd72e2abf388afe9d0b68bed612f96eda2148f2eea7e81396e84b",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 14.563
+    },
+    "collection-red.xml": {
+      "sha256": "3676306f98b492a39887912e1d5f48413e2bc9762bae6a92447e7347124907c4",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 2.102
+    },
+    "collection-green.xml": {
+      "sha256": "7b4fa7a4010be97186f065285bbcc9697b68414a9c31116171c929908aac97de",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 2.496
+    },
+    "collection-recovery.xml": {
+      "sha256": "d46c3a70c3baddb7387738b7eac97c0b1d82bd16933f2a95f6d3eeab0bddfe2a",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 7.663
+    },
+    "final-windows.xml": {
+      "sha256": "d769422b7cc6f97db64c15be54e2e26b5a3605b53261f557684578f9e04808f0",
+      "tests": 138,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "seconds": 100.271
+    },
+    "final-linux.xml": {
+      "sha256": "bd1f2fea908d254f1610bc93685e58d98fe90533dd55836ba8e1b865104a862e",
+      "tests": 63,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 18.611
+    }
+  },
+  "static": {
+    "format": "passed, 5 files",
+    "mypy": "passed, 3 product files, follow-imports=silent",
+    "ruff": "passed, 5 files"
+  },
+  "evidence_scope": {
+    "not_run": [
+      "actual native/provider Task in this author group",
+      "validation execution",
+      "independent reviewer",
+      "PR delivery"
+    ],
+    "test_doubles": [
+      "planning admission reader",
+      "profile qualification producer",
+      "Host current child/fence authority in Collector unit cases",
+      "native GoTaskResult/StoppedProjection producer",
+      "fresh source checker"
+    ],
+    "real": [
+      "Git baseline",
+      "SQLite stores and transactions",
+      "Candidate CAS/tree/modes",
+      "durable Go Journal"
+    ]
+  },
+  "remaining": [
+    "Consumer owns actual Host child to native HTTP fixture integration",
+    "Current review/check gates stay missing",
+    "Capture with no exact committed Candidate cannot retry from mutable tree",
+    "Lookup proves historical commit, not current CAS availability"
+  ]
+}

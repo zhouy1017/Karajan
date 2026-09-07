@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -eu
+cd /mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-execution-v2
+export PYTHONPATH=backend:tests/runs:tests/projects:tests/web:tests/isolation:tests/adapters/opencode
+export KARAJAN_REQUIRE_OPENCODE_ISOLATION=1
+export KARAJAN_REQUIRE_GO_TOKENIZER=1
+export KARAJAN_OPENCODE_LINUX_BINARY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode
+export KARAJAN_GO_TOKENIZER_DIRECTORY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-artifacts
+export HF_HUB_OFFLINE=1
+export TRANSFORMERS_OFFLINE=1
+exec /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest \
+  -c pyproject.toml -p no:cacheprovider \
+  'tests/runs/test_go_task_execution_native.py::test_actual_host_child_native_candidate_and_replay[none]' \
+  'tests/runs/test_go_task_execution_native.py::test_actual_host_child_native_candidate_and_replay[cancel_after_send]' \
+  --basetemp=/tmp/pytest-of-review/pytest-1 -q --tb=short \
+  --junitxml=/mnt/c/Users/Chooo/Playground/Karajan/.cache/ci-pr92-independent/original-long-path.junit.xml

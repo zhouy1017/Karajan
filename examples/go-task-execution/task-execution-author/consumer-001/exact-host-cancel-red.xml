@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="8" skipped="0" tests="8" time="0.312" timestamp="2026-09-06T22:14:29.550912+08:00" hostname="ProArt-Zhou"><testcase classname="tests.execution.test_exact_cancellation" name="test_expected_full_original_launch_is_checked_before_any_cancellation_write[prepared_id]" time="0.021"><failure message="TypeError: RunnerHost.cancel() got an unexpected keyword argument 'expected_binding'">owned = (&lt;karajan.execution.host.RunnerHost object at 0x0000015999B3D760&gt;, AttemptManifest(id='attempt-local-1', fence=1, role...cache/go-task-execution-v2/.cache/exact-host-cancel-red-tmp/test_expected_full_original_la0/old-controller-directory'))
+field = 'prepared_id'
+
+    @pytest.mark.parametrize("field",["prepared_id","fence","budget_ref","profile_revision","argv","cwd","timeout_seconds"])
+    def test_expected_full_original_launch_is_checked_before_any_cancellation_write(owned,field):
+        host,attempt,binding,_ = owned
+        different = deepcopy(binding)
+        if field=="prepared_id":
+            different[field]="other-start"
+        elif field in {"fence","profile_revision"}:
+            different["manifest"][field]+=1
+        elif field=="budget_ref":
+            different["manifest"][field]="another-budget"
+        elif field=="argv":
+            different["process_spec"][field]=[sys.executable,"-c","print('different')"]
+        elif field=="cwd":
+            different["process_spec"][field]+="-different"
+        else:
+            different["process_spec"][field]+=1
+        before=host.database.read_bytes()
+        with pytest.raises(LaunchDenied,match="CANCELLATION_BINDING_MISMATCH"):
+&gt;           host.cancel(attempt.id,"cancel",expected_binding=different,timeout_seconds=0)
+E           TypeError: RunnerHost.cancel() got an unexpected keyword argument 'expected_binding'
+
+tests\execution\test_exact_cancellation.py:42: TypeError</failure></testcase><testcase classname="tests.execution.test_exact_cancellation" name="test_expected_full_original_launch_is_checked_before_any_cancellation_write[fence]" time="0.019"><failure message="TypeError: RunnerHost.cancel() got an unexpected keyword argument 'expected_binding'">owned = (&lt;karajan.execution.host.RunnerHost object at 0x0000015999E82F90&gt;, AttemptManifest(id='attempt-local-1', fence=1, role...cache/go-task-execution-v2/.cache/exact-host-cancel-red-tmp/test_expected_full_original_la1/old-controller-directory'))
+field = 'fence'
+
+    @pytest.mark.parametrize("field",["prepared_id","fence","budget_ref","profile_revision","argv","cwd","timeout_seconds"])
+    def test_expected_full_original_launch_is_checked_before_any_cancellation_write(owned,field):
+        host,attempt,binding,_ = owned
+        different = deepcopy(binding)
+        if field=="prepared_id":
+            different[field]="other-start"
+        elif field in {"fence","profile_revision"}:
+            different["manifest"][field]+=1
+        elif field=="budget_ref":
+            different["manifest"][field]="another-budget"
+        elif field=="argv":
+            different["process_spec"][field]=[sys.executable,"-c","print('different')"]
+        elif field=="cwd":
+            different["process_spec"][field]+="-different"
+        else:
+            different["process_spec"][field]+=1
+        before=host.database.read_bytes()
+        with pytest.raises(LaunchDenied,match="CANCELLATION_BINDING_MISMATCH"):
+&gt;           host.cancel(attempt.id,"cancel",expected_binding=different,timeout_seconds=0)
+E           TypeError: RunnerHost.cancel() got an unexpected keyword argument 'expected_binding'
+
+tests\execution\test_exact_cancellation.py:42: TypeError</failure></testcase><testcase classname="tests.execution.test_exact_cancellation" name="test_expected_full_original_launch_is_checked_before_any_cancellation_write[budget_ref]" time="0.021"><failure message="TypeError: RunnerHost.cancel() got an unexpected keyword argument 'expected_binding'">owned = (&lt;karajan.execution.host.RunnerHost object at 0x0000015999E83740&gt;, AttemptManifest(id='attempt-local-1', fence=1, role...cache/go-task-execution-v2/.cache/exact-host-cancel-red-tmp/test_expected_full_original_la2/old-controller-directory'))
+field = 'budget_ref'
+
+    @pytest.mark.parametrize("field",["prepared_id","fence","budget_ref","profile_revision","argv","cwd","timeout_seconds"])
+    def test_expected_full_original_launch_is_checked_before_any_cancellation_write(owned,field):
+        host,attempt,binding,_ = owned
+        different = deepcopy(binding)
+        if field=="prepared_id":
+            different[field]="other-start"
+        elif field in {"fence","profile_revision"}:
+            different["manifest"][field]+=1
+        elif field=="budget_ref":
+            different["manifest"][field]="another-budget"
+        elif field=="argv":
+            different["process_spec"][field]=[sys.executable,"-c","print('different')"]
+        elif field=="cwd":
+            different["process_spec"][field]+="-different"
+        else:
+            different["process_spec"][field]+=1
+        before=host.database.read_bytes()
+        with pytest.raises(LaunchDenied,match="CANCELLATION_BINDING_MISMATCH"):
+&gt;           host.cancel(attempt.id,"cancel",expected_binding=different,timeout_seconds=0)
+E           TypeError: RunnerHost.cancel() got an unexpected keyword argument 'expected_binding'
+
+tests\execution\test_exact_cancellation.py:42: TypeError</failure></testcase><testcase classname="tests.execution.test_exact_cancellation" name="test_expected_full_original_launch_is_checked_before_any_cancellation_write[profile_revision]" time="0.020"><failure message="TypeError: RunnerHost.cancel() got an unexpected keyword argument 'expected_binding'">owned = (&lt;karajan.execution.host.RunnerHost object at 0x0000015999E83350&gt;, AttemptManifest(id='attempt-local-1', fence=1, role...cache/go-task-execution-v2/.cache/exact-host-cancel-red-tmp/test_expected_full_original_la3/old-controller-directory'))
+field = 'profile_revision'
+
+    @pytest.mark.parametrize("field",["prepared_id","fence","budget_ref","profile_revision","argv","cwd","timeout_seconds"])
+    def test_expected_full_original_launch_is_checked_before_any_cancellation_write(owned,field):
+        host,attempt,binding,_ = owned
+        different = deepcopy(binding)
+        if field=="prepared_id":
+            different[field]="other-start"
+        elif field in {"fence","profile_revision"}:
+            different["manifest"][field]+=1
+        elif field=="budget_ref":
+            different["manifest"][field]="another-budget"
+        elif field=="argv":
+            different["process_spec"][field]=[sys.executable,"-c","print('different')"]
+        elif field=="cwd":
+            different["process_spec"][field]+="-different"
+        else:
+            different["process_spec"][field]+=1
+        before=host.database.read_bytes()
+        with pytest.raises(LaunchDenied,match="CANCELLATION_BINDING_MISMATCH"):
+&gt;           host.cancel(attempt.id,"cancel",expected_binding=different,timeout_seconds=0)
+E           TypeError: RunnerHost.cancel() got an unexpected keyword argument 'expected_binding'
+
+tests\execution\test_exact_cancellation.py:42: TypeError</failure></testcase><testcase classname="tests.execution.test_exact_cancellation" name="test_expected_full_original_launch_is_checked_before_any_cancellation_write[argv]" time="0.019"><failure message="TypeError: RunnerHost.cancel() got an unexpected keyword argument 'expected_binding'">owned = (&lt;karajan.execution.host.RunnerHost object at 0x0000015999EFC230&gt;, AttemptManifest(id='attempt-local-1', fence=1, role...cache/go-task-execution-v2/.cache/exact-host-cancel-red-tmp/test_expected_full_original_la4/old-controller-directory'))
+field = 'argv'
+
+    @pytest.mark.parametrize("field",["prepared_id","fence","budget_ref","profile_revision","argv","cwd","timeout_seconds"])
+    def test_expected_full_original_launch_is_checked_before_any_cancellation_write(owned,field):
+        host,attempt,binding,_ = owned
+        different = deepcopy(binding)
+        if field=="prepared_id":
+            different[field]="other-start"
+        elif field in {"fence","profile_revision"}:
+            different["manifest"][field]+=1
+        elif field=="budget_ref":
+            different["manifest"][field]="another-budget"
+        elif field=="argv":
+            different["process_spec"][field]=[sys.executable,"-c","print('different')"]
+        elif field=="cwd":
+            different["process_spec"][field]+="-different"
+        else:
+            different["process_spec"][field]+=1
+        before=host.database.read_bytes()
+        with pytest.raises(LaunchDenied,match="CANCELLATION_BINDING_MISMATCH"):
+&gt;           host.cancel(attempt.id,"cancel",expected_binding=different,timeout_seconds=0)
+E           TypeError: RunnerHost.cancel() got an unexpected keyword argument 'expected_binding'
+
+tests\execution\test_exact_cancellation.py:42: TypeError</failure></testcase><testcase classname="tests.execution.test_exact_cancellation" name="test_expected_full_original_launch_is_checked_before_any_cancellation_write[cwd]" time="0.021"><failure message="TypeError: RunnerHost.cancel() got an unexpected keyword argument 'expected_binding'">owned = (&lt;karajan.execution.host.RunnerHost object at 0x0000015999EFC2C0&gt;, AttemptManifest(id='attempt-local-1', fence=1, role...cache/go-task-execution-v2/.cache/exact-host-cancel-red-tmp/test_expected_full_original_la5/old-controller-directory'))
+field = 'cwd'
+
+    @pytest.mark.parametrize("field",["prepared_id","fence","budget_ref","profile_revision","argv","cwd","timeout_seconds"])
+    def test_expected_full_original_launch_is_checked_before_any_cancellation_write(owned,field):
+        host,attempt,binding,_ = owned
+        different = deepcopy(binding)
+        if field=="prepared_id":
+            different[field]="other-start"
+        elif field in {"fence","profile_revision"}:
+            different["manifest"][field]+=1
+        elif field=="budget_ref":
+            different["manifest"][field]="another-budget"
+        elif field=="argv":
+            different["process_spec"][field]=[sys.executable,"-c","print('different')"]
+        elif field=="cwd":
+            different["process_spec"][field]+="-different"
+        else:
+            different["process_spec"][field]+=1
+        before=host.database.read_bytes()
+        with pytest.raises(LaunchDenied,match="CANCELLATION_BINDING_MISMATCH"):
+&gt;           host.cancel(attempt.id,"cancel",expected_binding=different,timeout_seconds=0)
+E           TypeError: RunnerHost.cancel() got an unexpected keyword argument 'expected_binding'
+
+tests\execution\test_exact_cancellation.py:42: TypeError</failure></testcase><testcase classname="tests.execution.test_exact_cancellation" name="test_expected_full_original_launch_is_checked_before_any_cancellation_write[timeout_seconds]" time="0.020"><failure message="TypeError: RunnerHost.cancel() got an unexpected keyword argument 'expected_binding'">owned = (&lt;karajan.execution.host.RunnerHost object at 0x0000015999E83AA0&gt;, AttemptManifest(id='attempt-local-1', fence=1, role...cache/go-task-execution-v2/.cache/exact-host-cancel-red-tmp/test_expected_full_original_la6/old-controller-directory'))
+field = 'timeout_seconds'
+
+    @pytest.mark.parametrize("field",["prepared_id","fence","budget_ref","profile_revision","argv","cwd","timeout_seconds"])
+    def test_expected_full_original_launch_is_checked_before_any_cancellation_write(owned,field):
+        host,attempt,binding,_ = owned
+        different = deepcopy(binding)
+        if field=="prepared_id":
+            different[field]="other-start"
+        elif field in {"fence","profile_revision"}:
+            different["manifest"][field]+=1
+        elif field=="budget_ref":
+            different["manifest"][field]="another-budget"
+        elif field=="argv":
+            different["process_spec"][field]=[sys.executable,"-c","print('different')"]
+        elif field=="cwd":
+            different["process_spec"][field]+="-different"
+        else:
+            different["process_spec"][field]+=1
+        before=host.database.read_bytes()
+        with pytest.raises(LaunchDenied,match="CANCELLATION_BINDING_MISMATCH"):
+&gt;           host.cancel(attempt.id,"cancel",expected_binding=different,timeout_seconds=0)
+E           TypeError: RunnerHost.cancel() got an unexpected keyword argument 'expected_binding'
+
+tests\execution\test_exact_cancellation.py:42: TypeError</failure></testcase><testcase classname="tests.execution.test_exact_cancellation" name="test_exact_historical_cancel_does_not_require_current_fence_or_existing_cwd" time="0.024"><failure message="TypeError: RunnerHost.cancel() got an unexpected keyword argument 'expected_binding'">owned = (&lt;karajan.execution.host.RunnerHost object at 0x0000015999E82180&gt;, AttemptManifest(id='attempt-local-1', fence=1, role...cache/go-task-execution-v2/.cache/exact-host-cancel-red-tmp/test_exact_historical_cancel_d0/old-controller-directory'))
+
+    def test_exact_historical_cancel_does_not_require_current_fence_or_existing_cwd(owned):
+        host,attempt,binding,cwd=owned
+        host.set_control(attempt.id,fence=attempt.fence+1,authorization_ref="withdrawn",dispatch_enabled=False)
+        cwd.rmdir()
+        restarted=RunnerHost(host.directory,existing_only=True)
+&gt;       first=restarted.cancel(attempt.id,"cancel",expected_binding=binding,timeout_seconds=0)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: RunnerHost.cancel() got an unexpected keyword argument 'expected_binding'
+
+tests\execution\test_exact_cancellation.py:52: TypeError</failure></testcase></testsuite></testsuites>

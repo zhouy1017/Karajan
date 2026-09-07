@@ -1,0 +1,15 @@
+{
+  "head": "825248a29c4dcdb4f432157fdf0979f26ed9c9b9",
+  "ci_tested_merge_ref": "50b479897746aeeafd4ada0a03e03ad48925b9c6",
+  "sources": {
+    "tests/runs/test_go_task_execution_native.py": "c11bb8564646d99718b90a9122ce0316f59e95e8ace13f52b5ede16957e68b66",
+    "tests/runs/task_execution_fixture.py": "14b9a28587b2a550011213be69f8e38e956e81548ec8ec82c427da1cebedb3c2",
+    "tests/runs/_task_execution_fixture_entry.py": "32ee5933cff7f896c1faf901f0640782e587b28f9a0a09371f79f14fff038077",
+    "backend/karajan/orchestration/go_task_execution.py": "3bca8ad44860e11815e9ecb9dedae1edd9d9d556f4940f4fd6694af30cb30cf9",
+    "backend/karajan/isolation/go_task.py": "43fd65a93550e1903692d12dad2349437e60aab8e88a1c0d60d90397143e1cbf",
+    "backend/karajan/adapters/opencode/go_relay.py": "c5b56dd85a1cfad2b6314ac0426fa599eb584403162c389befc89364e87791ff",
+    "backend/karajan/orchestration/go_task_collector.py": "a9d3149f33ae026ae4e4dbc5e74a5daed9aaebac75066005da57d84c07f699bc",
+    ".github/workflows/ci.yml": "d23494ed38121f2d67b7c193ad74b3d066367a558ed6911ffc3e07881e88c5f3"
+  },
+  "ci_log_sha256": "31369f3a9c5f0e35b2ae595aa0e5b9e9bb64ccc5f51e4b42b66bfa47e3daca9d"
+}

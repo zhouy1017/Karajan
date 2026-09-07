@@ -1,0 +1,125 @@
+{
+  "scope": "Round three CLI interrupted with Ctrl-C after independent review: product001-004 closed; formal replay expectation wrong, maintained enum/claim coverage missing; short-path native passes do not prove requested long-path P. Author green filenames may contain failures or skips; inspect XML.",
+  "files": [
+    {
+      "original": "backend/karajan/adapters/opencode/go_relay.py",
+      "snapshot": "backend__karajan__adapters__opencode__go_relay.py.txt",
+      "sha256": "088c335d1bfeedc2b69bc2395acc704ea6b32f71b6addcc74c06d87b2400170b",
+      "bytes": 40505
+    },
+    {
+      "original": "backend/karajan/isolation/go_task.py",
+      "snapshot": "backend__karajan__isolation__go_task.py.txt",
+      "sha256": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+      "bytes": 22507
+    },
+    {
+      "original": "backend/karajan/orchestration/go_execution_intent.py",
+      "snapshot": "backend__karajan__orchestration__go_execution_intent.py.txt",
+      "sha256": "4e72794f6aae846d31788d136dbe47bf15aa6fde839731c57d14f5aa86c5a8e9",
+      "bytes": 43782
+    },
+    {
+      "original": "backend/karajan/orchestration/go_task_execution.py",
+      "snapshot": "backend__karajan__orchestration__go_task_execution.py.txt",
+      "sha256": "789e9945a698d6f519f65db35205460ad35a0babf35aee2fbb5c6f82ec095b4d",
+      "bytes": 21077
+    },
+    {
+      "original": "tests/adapters/opencode/test_go_unix_relay.py",
+      "snapshot": "tests__adapters__opencode__test_go_unix_relay.py.txt",
+      "sha256": "0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f",
+      "bytes": 5017
+    },
+    {
+      "original": "tests/isolation/test_go_task.py",
+      "snapshot": "tests__isolation__test_go_task.py.txt",
+      "sha256": "0784cb488b333815da50270030c74cd29cce446c036a411071e63a83fa596f76",
+      "bytes": 23424
+    },
+    {
+      "original": "tests/runs/test_go_task_execution.py",
+      "snapshot": "tests__runs__test_go_task_execution.py.txt",
+      "sha256": "3628ecabb53e82c1697226cbb3b946f807b80b0e2679422948939171a8cd1a1e",
+      "bytes": 14506
+    },
+    {
+      "original": ".cache/luna-native-round-three-author/diagnostic-red.xml",
+      "snapshot": "author__diagnostic-red.xml",
+      "sha256": "1f6e0a24938f49364c5a63bc6743f87d55158b4b5f5ebaf2dda303ce835fb323",
+      "bytes": 7185
+    },
+    {
+      "original": ".cache/luna-native-round-three-author/focused-green.xml",
+      "snapshot": "author__focused-green.xml",
+      "sha256": "1a98981820b5c91a9b8c6900c04f8c22e84ac45f556ccc1b00993fe40b8b058d",
+      "bytes": 4322
+    },
+    {
+      "original": ".cache/luna-native-round-three-author/formal-consume-green.xml",
+      "snapshot": "author__formal-consume-green.xml",
+      "sha256": "7841086efe8923a95e08a5975e3fee7e7cfc703bee748b1df05360c72b3973f7",
+      "bytes": 680
+    },
+    {
+      "original": ".cache/luna-native-round-three-author/formal-linux-green.xml",
+      "snapshot": "author__formal-linux-green.xml",
+      "sha256": "2efcacf37d7ac7dbcfa89c1963be5ec856662ec071fa920bd7a7d24833366f93",
+      "bytes": 5204
+    },
+    {
+      "original": ".cache/luna-native-round-three-author/independent-native-green.xml",
+      "snapshot": "author__independent-native-green.xml",
+      "sha256": "b1d0881169d37889fe0ff8f3eeb7284152e9fecad7a1aea7580759736a55a558",
+      "bytes": 749
+    },
+    {
+      "original": ".cache/luna-native-round-three-author/linux-native-green.xml",
+      "snapshot": "author__linux-native-green.xml",
+      "sha256": "6c7f6c8bdd4b1c267eb87b80b722c9e78123109bf65a4d946d12eca03169ed41",
+      "bytes": 45404
+    },
+    {
+      "original": ".cache/luna-native-round-three-author/linux-native-three.xml",
+      "snapshot": "author__linux-native-three.xml",
+      "sha256": "db544892efff721488eaadbb09cce7b571a82bd4f52d07c8f389478ff84aee7b",
+      "bytes": 703
+    },
+    {
+      "original": ".cache/luna-native-round-three-author/linux-positive.xml",
+      "snapshot": "author__linux-positive.xml",
+      "sha256": "2814d1726cedf53e323deb2a927d1be95ec96c91034fd126fbdf8606dda41c31",
+      "bytes": 402
+    },
+    {
+      "original": ".cache/luna-native-round-three-author/mypy.txt",
+      "snapshot": "author__mypy.txt",
+      "sha256": "0fd28b277f6e98e8effe0f968e9e5806e258d7effddfe7c7bc46acdf973ad56b",
+      "bytes": 46
+    },
+    {
+      "original": ".cache/luna-native-round-three-author/ruff-check.txt",
+      "snapshot": "author__ruff-check.txt",
+      "sha256": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0",
+      "bytes": 20
+    },
+    {
+      "original": ".cache/luna-native-round-three-author/ruff-format.txt",
+      "snapshot": "author__ruff-format.txt",
+      "sha256": "1ece423b8e43b875d82d0401c0075eacce3f0c086c413776a4970362257fa73a",
+      "bytes": 8301
+    },
+    {
+      "original": ".cache/luna-native-round-three-author/test_diagnostic_claim.py",
+      "snapshot": "author__test_diagnostic_claim.py.txt",
+      "sha256": "c41cacaea53a279a8c2b01b46b8c661071d3e8c5876d2bcb50b33dd8e9b83713",
+      "bytes": 2859
+    },
+    {
+      "original": ".cache/luna-native-round-three-author/windows-focused-green.xml",
+      "snapshot": "author__windows-focused-green.xml",
+      "sha256": "f6b1f36ae856afaf57f5dab8aa387bf0f11432020cf0f3cb76e09c9b436d7db2",
+      "bytes": 1221
+    }
+  ]
+}

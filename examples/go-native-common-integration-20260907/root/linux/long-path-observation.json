@@ -1,0 +1,17 @@
+{
+  "basetemp": "/tmp/karajan-ci-native-20260907",
+  "linux_pathname_limit": 107,
+  "started_operations": [
+    {
+      "operation_directory": "/tmp/karajan-ci-native-20260907/test_actual_host_child_native_0/w/operation-4f25032c-5df2-412e-ab7c-4ba40c7fcf04",
+      "pre_repair_socket_path": "/tmp/karajan-ci-native-20260907/test_actual_host_child_native_0/w/operation-4f25032c-5df2-412e-ab7c-4ba40c7fcf04/inference.sock",
+      "pre_repair_socket_bytes": 127
+    },
+    {
+      "operation_directory": "/tmp/karajan-ci-native-20260907/test_actual_host_child_native_2/w/operation-938960df-432c-4555-8c85-5bc65f7587fd",
+      "pre_repair_socket_path": "/tmp/karajan-ci-native-20260907/test_actual_host_child_native_2/w/operation-938960df-432c-4555-8c85-5bc65f7587fd/inference.sock",
+      "pre_repair_socket_bytes": 127
+    }
+  ],
+  "all_observed_paths_exceed_107": true
+}

@@ -1,0 +1,15 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Users\Chooo\Playground\Karajan\.cache\ci-spark-task-native
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 35 items
+
+tests\runs\test_go_task_execution.py s                                   [  2%]
+tests\runs\test_go_native_diagnostic_contract.py ...........             [ 34%]
+tests\runs\test_go_execution_intent.py .......................           [100%]
+
+- generated xml file: C:\Users\Chooo\Playground\Karajan\.cache\ci-spark-task-native\.cache\luna-native-final-windows.xml -
+=========================== short test summary info ===========================
+SKIPPED [1] tests\runs\test_go_task_execution.py:237: Pinned official tokenizer artifacts have not been provisioned locally
+======================= 34 passed, 1 skipped in 36.61s ========================

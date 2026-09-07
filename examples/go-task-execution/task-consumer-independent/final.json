@@ -1,0 +1,39 @@
+{
+  "finding": "CONSUMER-001",
+  "priority": "P2",
+  "status": "closed",
+  "reviewer": "capacity_facts",
+  "role_scope": "Independent of consumer and entry author; reviewer authored separate intent persistence, excluded from this independent endorsement.",
+  "provider_calls": 0,
+  "real_credentials_accessed": false,
+  "checks": {
+    "before_windows": {
+      "passed": 7,
+      "failed": 3,
+      "seconds": 11.69
+    },
+    "final_windows": {
+      "passed": 10,
+      "failed": 0,
+      "seconds": 11.72
+    },
+    "final_wsl_linux": {
+      "passed": 10,
+      "failed": 0,
+      "seconds": 8.57
+    },
+    "ruff": "passed"
+  },
+  "sha256": {
+    "backend/karajan/execution/host.py": "87860c4cca8aa37883ffbd69b4fac02808e9c7ad0db24c33245fe7ec38d16192",
+    "backend/karajan/orchestration/go_task_execution.py": "3bca8ad44860e11815e9ecb9dedae1edd9d9d556f4940f4fd6694af30cb30cf9",
+    "backend/karajan/orchestration/_go_task_runner.py": "0a43cf7b1924b40a66ea35e354e15a6cce697b954c243c8808a7bf7500343822",
+    ".cache/task-consumer-independent/test_consumer_review.py": "9c554a633535b3bab6408078bf5db2aa64b17f35f8b8500727765b4577a5d8bd",
+    ".cache/task-consumer-independent/test-before.py.txt": "e398540c55e40464af44e3c1b87d561a8887a87c2ba2c1c230c327bc75f44c81",
+    ".cache/task-consumer-independent/before.xml": "795126e8493a9fa05371e4b82a35172b65b6c4d982112aaeeaaa9b0850bfcd98",
+    ".cache/task-consumer-independent/windows-final.xml": "d4bccef18024d44880275da890b13f1a1b41e4e8352c41aa042641fcda9fc995",
+    ".cache/task-consumer-independent/wsl-final.xml": "07cd96605814cf7c745fabc453b96498c4a33931ef35ce98230fb2f043f31396",
+    ".cache/task-consumer-independent/consumer-before.py.txt": "fb2e726ba7639f27c04a054f7115c4a49ad563424e7af44e66b457ccc29677b1",
+    ".cache/task-consumer-independent/entry-before.py.txt": "0a43cf7b1924b40a66ea35e354e15a6cce697b954c243c8808a7bf7500343822"
+  }
+}

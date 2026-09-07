@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Annotated, Any, Literal, Self
 
 from karajan.contracts.probe import Contract, Identifier
+from karajan.storage import open_database, require_schema
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
 _Identifier = Annotated[str, Field(pattern=r"^[A-Za-z0-9_.:-]{1,160}$")]
@@ -203,8 +204,30 @@ def _binding(value: object) -> dict[str, Any]:
 
 
 class GoCallJournal:
-    def __init__(self, path: Path, *, clock: Callable[[], float] = time.time) -> None:
+    def __init__(
+        self,
+        path: Path,
+        *,
+        existing_only: bool = False,
+        clock: Callable[[], float] = time.time,
+        defer_validation: bool = False,
+    ) -> None:
         self.path, self.clock = Path(path), clock
+        self.existing_only = existing_only
+        if defer_validation:
+            if not existing_only:
+                raise GoJournalError("DEFERRED_VALIDATION_REQUIRES_EXISTING_STORE")
+            return
+        if existing_only:
+            require_schema(
+                self.path,
+                {
+                    "go_grants": ["id", "binding", "capability_digest", "created_at", "revoked_at"],
+                    "go_calls": ["grant_id", "call_id", "receipt"],
+                    "go_expired_grants": ["grant_id", "observed_at"],
+                },
+            )
+            return
         with self._transaction() as db:
             db.execute(
                 "CREATE TABLE IF NOT EXISTS go_grants (id TEXT PRIMARY KEY, "
@@ -223,7 +246,7 @@ class GoCallJournal:
 
     @contextmanager
     def _transaction(self) -> Iterator[sqlite3.Connection]:
-        db = sqlite3.connect(self.path, timeout=10)
+        db = open_database(self.path, existing_only=self.existing_only)
         db.row_factory = sqlite3.Row
         try:
             db.execute("PRAGMA synchronous=FULL")

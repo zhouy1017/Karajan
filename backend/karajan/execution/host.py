@@ -17,6 +17,7 @@ from pathlib import Path
 from pydantic import TypeAdapter
 
 from karajan.contracts.probe import AttemptManifest, Identifier, PositiveInteger
+from karajan.storage import require_schema
 
 from ._platform import ProcessGroup, ProcessIdentity, observe_process, process_identity
 
@@ -117,10 +118,51 @@ def encoded(value: object) -> str:
 
 
 class RunnerHost:
-    def __init__(self, state_directory: Path) -> None:
+    def __init__(
+        self, state_directory: Path, *, existing_only: bool = False, defer_validation: bool = False
+    ) -> None:
+        if defer_validation and not existing_only:
+            raise ValueError("DEFERRED_VALIDATION_REQUIRES_EXISTING_STORE")
         self.directory = state_directory.resolve()
-        self.directory.mkdir(parents=True, exist_ok=True)
+        self.existing_only = existing_only
+        if not existing_only:
+            self.directory.mkdir(parents=True, exist_ok=True)
         self.database = self.directory / "runnerhost.sqlite3"
+        if defer_validation:
+            return
+        if existing_only:
+            require_schema(
+                self.database,
+                {
+                    "executions": [
+                        "start_key",
+                        "attempt_id",
+                        "request_digest",
+                        "manifest",
+                        "spec",
+                        "state",
+                        "activation",
+                        "activation_digest",
+                        "nonce",
+                        "supervisor_pid",
+                        "supervisor_birth",
+                        "containment_ready",
+                        "exit_code",
+                        "cancelled",
+                        "launch_phase",
+                        "business_status",
+                        "usage_settled",
+                        "usage_sequence",
+                        "runner_pid",
+                        "runner_birth",
+                    ],
+                    "controls": ["attempt_id", "fence", "authorization_ref", "dispatch_enabled"],
+                    "cancellations": ["cancel_key", "attempt_id"],
+                    "results": ["attempt_id", "event_id", "payload", "accepted", "reason"],
+                    "usage_events": ["attempt_id", "event_id", "sequence", "fence", "payload"],
+                },
+            )
+            return
         with self._connect() as connection:
             connection.execute(
                 "CREATE TABLE IF NOT EXISTS executions ("
@@ -163,6 +205,7 @@ class RunnerHost:
 
     @contextmanager
     def _connect(self, *, existing_only: bool = False) -> Iterator[sqlite3.Connection]:
+        existing_only = existing_only or self.existing_only
         database = self.database.as_uri() + "?mode=rw" if existing_only else str(self.database)
         connection = sqlite3.connect(database, timeout=10, uri=existing_only)
         connection.row_factory = sqlite3.Row
@@ -228,6 +271,62 @@ class RunnerHost:
                 "dispatch_enabled=excluded.dispatch_enabled",
                 (attempt_id, fence, authorization_ref, int(dispatch_enabled)),
             )
+
+    def initialize_control_once(
+        self,
+        attempt_id: str,
+        *,
+        prepared_id: str,
+        fence: int,
+        authorization_ref: str,
+    ) -> dict[str, object]:
+        """Initialize the exact prepared launch without overwriting any control.
+
+        The trusted coordinator holds its current business guards around this
+        operation. A disabled original control stays disabled on every replay.
+        This does not accept activation or authorize a model/provider effect.
+        """
+        for value in (attempt_id, prepared_id, authorization_ref):
+            _identifier.validate_python(value, strict=True)
+        _positive_integer.validate_python(fence, strict=True)
+        with self._connect(existing_only=True) as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                "SELECT * FROM executions WHERE attempt_id=?", (attempt_id,)
+            ).fetchone()
+            if row is None:
+                raise KeyError(attempt_id)
+            manifest = AttemptManifest.model_validate_json(row["manifest"])
+            if (
+                row["start_key"] != prepared_id
+                or manifest.id != attempt_id
+                or manifest.fence != fence
+                or manifest.authorization_ref != authorization_ref
+            ):
+                raise LaunchDenied("CONTROL_PREPARED_BINDING_MISMATCH")
+            if row["cancelled"]:
+                raise LaunchDenied("CONTROL_PREPARED_CANCELLED")
+            old = connection.execute(
+                "SELECT * FROM controls WHERE attempt_id=?", (attempt_id,)
+            ).fetchone()
+            if old is None:
+                if row["state"] != "prepared" or row["activation"] is not None:
+                    raise LaunchDenied("CONTROL_PREPARED_REQUIRED")
+                connection.execute(
+                    "INSERT INTO controls VALUES (?,?,?,1)",
+                    (attempt_id, fence, authorization_ref),
+                )
+            elif old["fence"] != fence or old["authorization_ref"] != authorization_ref:
+                raise LaunchDenied("CONTROL_ALREADY_DIFFERENT")
+            return {
+                "attempt_id": attempt_id,
+                "prepared_id": prepared_id,
+                "fence": fence,
+                "authorization_ref": authorization_ref,
+                "dispatch_enabled": old is None or bool(old["dispatch_enabled"]),
+                "inserted": old is None,
+                "activation_allowed": False,
+            }
 
     @contextmanager
     def current_fence_guard(
@@ -484,10 +583,30 @@ class RunnerHost:
         return self.inspect(attempt.id)
 
     def cancel(
-        self, attempt_id: str, cancel_key: str, *, timeout_seconds: float = 3.0
+        self,
+        attempt_id: str,
+        cancel_key: str,
+        *,
+        timeout_seconds: float = 3.0,
+        expected_binding: dict[str, object] | None = None,
     ) -> Cancellation:
+        """Cancel the owned process; optionally fence cleanup to a frozen launch.
+
+        The controller's historical binding is compared in the same transaction
+        as cancellation. It is not current execution authority: withdrawn control
+        or a removed old cwd must not prevent stopping this exact original row.
+        Omitting the binding preserves the existing trusted Host API behavior.
+        """
         if not cancel_key or timeout_seconds < 0 or not math.isfinite(timeout_seconds):
             raise ValueError("A cancel key and nonnegative wait are required.")
+        expected_json = None
+        if expected_binding is not None:
+            try:
+                if set(expected_binding) != {"prepared_id", "manifest", "process_spec"}:
+                    raise ValueError()
+                expected_json = encoded(expected_binding)
+            except (TypeError, ValueError):
+                raise LaunchDenied("CANCELLATION_BINDING_MISMATCH") from None
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             row = connection.execute(
@@ -495,6 +614,14 @@ class RunnerHost:
             ).fetchone()
             if row is None:
                 raise KeyError(attempt_id)
+            if expected_json is not None and expected_json != encoded(
+                {
+                    "prepared_id": row["start_key"],
+                    "manifest": json.loads(row["manifest"]),
+                    "process_spec": json.loads(row["spec"]),
+                }
+            ):
+                raise LaunchDenied("CANCELLATION_BINDING_MISMATCH")
             previous = connection.execute(
                 "SELECT attempt_id FROM cancellations WHERE cancel_key=?", (cancel_key,)
             ).fetchone()

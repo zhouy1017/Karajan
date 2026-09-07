@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="6" time="2.522" timestamp="2026-09-06T22:04:19.568341+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.runtime-independent.test_runtime_review" name="test_runner_source_changes_when_effective_guard_implementation_changes[orchestration/go_task_collector.py]" time="0.179" /><testcase classname=".cache.runtime-independent.test_runtime_review" name="test_runner_source_changes_when_effective_guard_implementation_changes[orchestration/_go_task_runner.py]" time="0.030" /><testcase classname=".cache.runtime-independent.test_runtime_review" name="test_runner_source_changes_when_effective_guard_implementation_changes[routing/evaluator.py]" time="0.031" /><testcase classname=".cache.runtime-independent.test_runtime_review" name="test_runner_source_changes_when_effective_guard_implementation_changes[routing/quotas.py]" time="0.027" /><testcase classname=".cache.runtime-independent.test_runtime_review" name="test_runner_source_changes_when_effective_guard_implementation_changes[capacity/models.py]" time="0.029" /><testcase classname=".cache.runtime-independent.test_runtime_review" name="test_missing_journal_does_not_block_cancellation_of_owned_prepared_host" time="1.111"><failure message="AssertionError: assert 'exited' == 'cancelled'&#10;  &#10;  - cancelled&#10;  + exited">deployment = (&lt;karajan.orchestration.go_task_runtime.GoTaskSettings object at 0x000001A66A6B3DD0&gt;, &lt;karajan.orchestration.go_execut...ntents object at 0x000001A66A689EB0&gt;, ('e39c35bf-4ec2-4822-8f12-b31d2eceace1', '5c2af0f9-94a8-41ca-9690-24781f06c0f3'))
+
+    def test_missing_journal_does_not_block_cancellation_of_owned_prepared_host(deployment):
+        settings, _, args = deployment
+        services = open_go_task_services(
+            settings, run_id=args[0], operation_id=args[1], principal="owner"
+        )
+        intents = services.intents
+        intents.admissions.routing.capacity.clock = lambda: 1000.0
+        # Seed one real Capacity activation and owned prepared Host row, using an
+        # explicit inert fixture compiler. No process or provider is started.
+        spec = ProcessSpec((sys._base_executable, "-c", "pass"), settings.control_directory)
+        intents.launch_compiler = lambda operation: GoLaunchSpec(spec, "c" * 64)
+        current = intents.read(*args, principal="owner")
+        intent = current["execution"]["intent"]
+        intents.admissions.routing.capacity.activate(
+            intent["admission_id"], command_key=intent["activation_key"]
+        )
+        intents.activation_recorded(*args, principal="owner")
+        op = intents.freeze_launch(*args, principal="owner")
+        intents.host.prepare(
+            AttemptManifest.model_validate(op["execution"]["launch"]["manifest"]),
+            intent["start_key"],
+            spec,
+        )
+        intents.host.initialize_control_once(
+            intent["attempt_id"],
+            prepared_id=intent["start_key"],
+            fence=intent["fence"],
+            authorization_ref=intent["authorization_ref"],
+        )
+        settings.journal_path.rename(settings.journal_path.with_suffix(".retained"))
+        reopened = open_go_task_services(
+            settings, run_id=args[0], operation_id=args[1], principal="owner"
+        )
+        result = ApprovedGoTaskExecution(reopened).cancel(*args, principal="owner")
+        assert result["cancel_requested"]
+&gt;       assert reopened.intents.host.inspect(intent["attempt_id"]).state == "cancelled"
+E       AssertionError: assert 'exited' == 'cancelled'
+E         
+E         - cancelled
+E         + exited
+
+.cache\runtime-independent\test_runtime_review.py:105: AssertionError</failure></testcase></testsuite></testsuites>

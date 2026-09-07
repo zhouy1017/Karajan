@@ -13,6 +13,7 @@ from pydantic import Field, FiniteFloat, TypeAdapter, ValidationError, model_val
 from karajan.contracts.probe import Contract
 from karajan.resources.broker import units
 from karajan.routing.models import Estimate, Quantity
+from karajan.storage import require_schema
 
 from .models import Identifier, ProfileRef
 from .publication import digest, effective_catalog
@@ -200,6 +201,27 @@ class AttemptEstimateStore:
         self.planner = planner
         self.projects = planner.projects
         self.clock = clock
+        if self.projects.existing_only:
+            require_schema(
+                self.projects.database,
+                {
+                    "attempt_estimates": [
+                        "sequence",
+                        "project_id",
+                        "id",
+                        "revision",
+                        "run_id",
+                        "task_id",
+                        "profile_id",
+                        "profile_revision",
+                        "record",
+                        "digest",
+                    ],
+                    "attempt_estimate_commands": ["principal", "key", "digest", "result"],
+                    "attempt_estimate_revocations": ["project_id", "id", "revision", "record"],
+                },
+            )
+            return
         with self.projects._transaction() as db:
             db.execute(
                 "CREATE TABLE IF NOT EXISTS attempt_estimates (sequence INTEGER PRIMARY KEY, "

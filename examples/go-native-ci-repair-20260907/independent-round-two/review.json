@@ -1,0 +1,139 @@
+{
+  "schema_version": "karajan.independent-native-ci-review-round-two.v1",
+  "reviewer": "capacity_facts",
+  "original_findings": {
+    "NATIVE-001": "closed",
+    "NATIVE-002": "closed",
+    "NATIVE-003": "closed"
+  },
+  "open_findings": [
+    {
+      "id": "NATIVE-004",
+      "priority": 2,
+      "reason": "cleanup enum literal annotations do not reject invalid persisted facts"
+    },
+    {
+      "id": "NATIVE-TEST",
+      "reason": "no formal public persistence regression test currently included"
+    }
+  ],
+  "sources_at_test": {
+    "backend/karajan/isolation/go_task.py": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+    "backend/karajan/adapters/opencode/go_relay.py": "088c335d1bfeedc2b69bc2395acc704ea6b32f71b6addcc74c06d87b2400170b",
+    "backend/karajan/orchestration/go_execution_intent.py": "8adb01b2370e6cd3f3a98fc63c3e7f028c4aebb4d15ae86dc2d7b5c970ffad15",
+    "backend/karajan/orchestration/go_task_execution.py": "789e9945a698d6f519f65db35205460ad35a0babf35aee2fbb5c6f82ec095b4d",
+    "tests/isolation/test_go_task.py": "94edba59c1ed986f73260679879bc0af0bab4b7f1bbf92bff5cdddf0b1a09216",
+    "tests/adapters/opencode/test_go_unix_relay.py": "0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f"
+  },
+  "sources_at_close": {
+    "backend/karajan/isolation/go_task.py": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+    "backend/karajan/adapters/opencode/go_relay.py": "088c335d1bfeedc2b69bc2395acc704ea6b32f71b6addcc74c06d87b2400170b",
+    "backend/karajan/orchestration/go_execution_intent.py": "8adb01b2370e6cd3f3a98fc63c3e7f028c4aebb4d15ae86dc2d7b5c970ffad15",
+    "backend/karajan/orchestration/go_task_execution.py": "789e9945a698d6f519f65db35205460ad35a0babf35aee2fbb5c6f82ec095b4d",
+    "tests/isolation/test_go_task.py": "95d97c2a419adacddf485da562ef6130e9e34ef4226a7aac496e00c62e297535",
+    "tests/adapters/opencode/test_go_unix_relay.py": "0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f"
+  },
+  "source_changes_during_review": {
+    "tests/isolation/test_go_task.py": {
+      "before": "94edba59c1ed986f73260679879bc0af0bab4b7f1bbf92bff5cdddf0b1a09216",
+      "after": "95d97c2a419adacddf485da562ef6130e9e34ef4226a7aac496e00c62e297535"
+    }
+  },
+  "results": {
+    "original-three.xml": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "3",
+      "time": "34.704",
+      "timestamp": "2026-09-07T09:27:08.642247+08:00",
+      "hostname": "ProArt-Zhou"
+    },
+    "claim-windows.xml": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "1",
+      "time": "1.063",
+      "timestamp": "2026-09-07T09:28:19.631359+08:00",
+      "hostname": "ProArt-Zhou"
+    },
+    "cleanup-enum-before.xml": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "2",
+      "skipped": "0",
+      "tests": "2",
+      "time": "2.126",
+      "timestamp": "2026-09-07T09:28:53.003539+08:00",
+      "hostname": "ProArt-Zhou"
+    }
+  },
+  "checks": {
+    "ruff": {
+      "argv": [
+        "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "backend/karajan/isolation/go_task.py",
+        "backend/karajan/adapters/opencode/go_relay.py",
+        "backend/karajan/orchestration/go_execution_intent.py",
+        "backend/karajan/orchestration/go_task_execution.py",
+        "tests/isolation/test_go_task.py",
+        "tests/adapters/opencode/test_go_unix_relay.py"
+      ],
+      "returncode": 0,
+      "output": "ruff.txt"
+    },
+    "mypy": {
+      "argv": [
+        "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "backend/karajan"
+      ],
+      "returncode": 0,
+      "output": "mypy.txt"
+    },
+    "claim-windows": {
+      "argv": [
+        "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "-o",
+        "pythonpath=backend tests/projects tests/runs tests/web tests/isolation tests/adapters/opencode tests/candidates tests/execution",
+        ".cache/native-resume-independent/round-two/test_diagnostic_claim.py",
+        "-q",
+        "--junitxml=.cache/native-resume-independent/round-two/claim-windows.xml"
+      ],
+      "returncode": 0,
+      "output": "claim-windows.txt"
+    }
+  },
+  "provider_calls": 0,
+  "native_P": "not_run_by_reviewer",
+  "artifacts": {
+    "checks.json": "6845a6815286fddd925ed8b0c91e7c2bc06d46ce47a6d6e57420471f4b4c6a2f",
+    "claim-windows.txt": "52ac5bc3266ca4d56a21ff1b10c02330179b0d932808009cc47412933a91bb80",
+    "claim-windows.xml": "77af1b9ad31e16cbb3143d10cdb52861a3976adbc76960dcec0b5a742a4ad56e",
+    "cleanup-enum-before.xml": "6d67bdd3c06898632f7380a02fb3ba7050b3f6b686279f5b6d142d6c07dba703",
+    "go_execution_intent.py.before.txt": "8adb01b2370e6cd3f3a98fc63c3e7f028c4aebb4d15ae86dc2d7b5c970ffad15",
+    "go_relay.py.before.txt": "088c335d1bfeedc2b69bc2395acc704ea6b32f71b6addcc74c06d87b2400170b",
+    "go_task.py.before.txt": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+    "go_task_execution.py.before.txt": "789e9945a698d6f519f65db35205460ad35a0babf35aee2fbb5c6f82ec095b4d",
+    "mypy.txt": "0fd28b277f6e98e8effe0f968e9e5806e258d7effddfe7c7bc46acdf973ad56b",
+    "original-three.xml": "75c79bccc6d85c09558d53475486c66dfbd712c92a76705c11d8a9faadd12c45",
+    "README.md": "7a2bb9895e06135f8ee1ebde88bf9a98b41edafd20e201297b7d48cd40bf3ce9",
+    "ruff.txt": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "source-before.json": "b5a832ce85bf437c9b7b6d3462c213be6c622ac8e636ee1bb4d79c1f25874659",
+    "test_diagnostic_claim.py": "c41cacaea53a279a8c2b01b46b8c661071d3e8c5876d2bcb50b33dd8e9b83713",
+    "test_go_task.py.before.txt": "94edba59c1ed986f73260679879bc0af0bab4b7f1bbf92bff5cdddf0b1a09216",
+    "test_go_unix_relay.py.before.txt": "0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f",
+    "test_native_boundaries.py": "b3d7d779d6676c2f9c1ff16a43f66885ff9ce757c958d5b9141c963b495f46eb"
+  }
+}

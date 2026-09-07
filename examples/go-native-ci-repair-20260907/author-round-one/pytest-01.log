@@ -1,0 +1,15 @@
+sssss.ssssssssssssssssss......                                           [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\adapters\opencode\test_go_unix_relay.py:31: Linux namespace transport
+SKIPPED [1] tests\adapters\opencode\test_go_unix_relay.py:44: Linux namespace transport
+SKIPPED [1] tests\adapters\opencode\test_go_unix_relay.py:54: Linux namespace transport
+SKIPPED [1] tests\adapters\opencode\test_go_unix_relay.py:102: Linux namespace transport
+SKIPPED [1] tests\adapters\opencode\test_go_unix_relay.py:136: Linux namespace transport
+SKIPPED [1] tests\isolation\test_go_task.py:135: Fixed Linux runtime required
+SKIPPED [1] tests\isolation\test_go_task.py:179: Fixed Linux runtime required
+SKIPPED [1] tests\isolation\test_go_task.py:292: Fixed Linux runtime required
+SKIPPED [1] tests\isolation\test_go_task.py:306: Fixed Linux runtime required
+SKIPPED [11] tests\isolation\test_go_task.py:360: Fixed Linux runtime required
+SKIPPED [2] tests\isolation\test_go_task.py:420: Fixed Linux runtime required
+SKIPPED [1] tests\isolation\test_go_task.py:450: Fixed Linux runtime required
+7 passed, 23 skipped in 0.95s

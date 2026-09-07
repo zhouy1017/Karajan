@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="10" time="11.656" timestamp="2026-09-06T22:11:19.177803+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.task-consumer-independent.test_consumer_review" name="test_cleanup_matches_full_frozen_host_binding_not_just_attempt_and_start_key[None]" time="0.948" /><testcase classname=".cache.task-consumer-independent.test_consumer_review" name="test_cleanup_matches_full_frozen_host_binding_not_just_attempt_and_start_key[changed1]" time="0.964"><failure message="AssertionError: assert b'SQLite form...0\x00\x00\x00' == b'SQLite form...0\x00\x00\x00'&#10;  &#10;  At index 27 diff: b'\n' != b'\t'&#10;  Use -v to get more diff">history = (&lt;karajan.orchestration.go_task_execution.ApprovedGoTaskExecution object at 0x000002D58492C110&gt;, '972aeb46-9205-40fb-9043-3ef65913b1e4', '6fc4cf47-8ac0-47ff-ab07-694978eaaf0a')
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-848/test_cleanup_matches_full_froz1')
+changed = {'fence': 2}
+
+    @pytest.mark.parametrize("changed", [None, {"fence": 2}, {"budget_ref": "other-budget"}, {"profile_revision": 2}])
+    def test_cleanup_matches_full_frozen_host_binding_not_just_attempt_and_start_key(history, tmp_path, changed):
+        facade, run_id, operation_id = history
+        op = launch(history, tmp_path, changed=changed)
+        intent = op["execution"]["intent"]
+        before = facade.services.intents.host.database.read_bytes()
+        result = facade.cancel(run_id, operation_id, principal="owner")
+        assert result["cancel_requested"]
+        snapshot = facade.services.intents.host.inspect(intent["attempt_id"])
+        if changed is None:
+            assert snapshot.state == "exited" and snapshot.business_status == "cancelled"
+        else:
+&gt;           assert facade.services.intents.host.database.read_bytes() == before
+E           AssertionError: assert b'SQLite form...0\x00\x00\x00' == b'SQLite form...0\x00\x00\x00'
+E             
+E             At index 27 diff: b'\n' != b'\t'
+E             Use -v to get more diff
+
+.cache\task-consumer-independent\test_consumer_review.py:60: AssertionError</failure></testcase><testcase classname=".cache.task-consumer-independent.test_consumer_review" name="test_cleanup_matches_full_frozen_host_binding_not_just_attempt_and_start_key[changed2]" time="1.025"><failure message="AssertionError: assert b'SQLite form...0\x00\x00\x00' == b'SQLite form...0\x00\x00\x00'&#10;  &#10;  At index 27 diff: b'\n' != b'\t'&#10;  Use -v to get more diff">history = (&lt;karajan.orchestration.go_task_execution.ApprovedGoTaskExecution object at 0x000002D584ABDFD0&gt;, 'a0d78feb-7997-4878-afb9-f8a6a564342c', '83a1857c-9871-405a-95de-673bba78322d')
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-848/test_cleanup_matches_full_froz2')
+changed = {'budget_ref': 'other-budget'}
+
+    @pytest.mark.parametrize("changed", [None, {"fence": 2}, {"budget_ref": "other-budget"}, {"profile_revision": 2}])
+    def test_cleanup_matches_full_frozen_host_binding_not_just_attempt_and_start_key(history, tmp_path, changed):
+        facade, run_id, operation_id = history
+        op = launch(history, tmp_path, changed=changed)
+        intent = op["execution"]["intent"]
+        before = facade.services.intents.host.database.read_bytes()
+        result = facade.cancel(run_id, operation_id, principal="owner")
+        assert result["cancel_requested"]
+        snapshot = facade.services.intents.host.inspect(intent["attempt_id"])
+        if changed is None:
+            assert snapshot.state == "exited" and snapshot.business_status == "cancelled"
+        else:
+&gt;           assert facade.services.intents.host.database.read_bytes() == before
+E           AssertionError: assert b'SQLite form...0\x00\x00\x00' == b'SQLite form...0\x00\x00\x00'
+E             
+E             At index 27 diff: b'\n' != b'\t'
+E             Use -v to get more diff
+
+.cache\task-consumer-independent\test_consumer_review.py:60: AssertionError</failure></testcase><testcase classname=".cache.task-consumer-independent.test_consumer_review" name="test_cleanup_matches_full_frozen_host_binding_not_just_attempt_and_start_key[changed3]" time="1.047"><failure message="AssertionError: assert b'SQLite form...0\x00\x00\x00' == b'SQLite form...0\x00\x00\x00'&#10;  &#10;  At index 27 diff: b'\n' != b'\t'&#10;  Use -v to get more diff">history = (&lt;karajan.orchestration.go_task_execution.ApprovedGoTaskExecution object at 0x000002D584BED1F0&gt;, '787c6b70-3492-4b46-8411-0840193d17e6', '07e14133-c645-4095-9e7a-da08a16e20fa')
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-848/test_cleanup_matches_full_froz3')
+changed = {'profile_revision': 2}
+
+    @pytest.mark.parametrize("changed", [None, {"fence": 2}, {"budget_ref": "other-budget"}, {"profile_revision": 2}])
+    def test_cleanup_matches_full_frozen_host_binding_not_just_attempt_and_start_key(history, tmp_path, changed):
+        facade, run_id, operation_id = history
+        op = launch(history, tmp_path, changed=changed)
+        intent = op["execution"]["intent"]
+        before = facade.services.intents.host.database.read_bytes()
+        result = facade.cancel(run_id, operation_id, principal="owner")
+        assert result["cancel_requested"]
+        snapshot = facade.services.intents.host.inspect(intent["attempt_id"])
+        if changed is None:
+            assert snapshot.state == "exited" and snapshot.business_status == "cancelled"
+        else:
+&gt;           assert facade.services.intents.host.database.read_bytes() == before
+E           AssertionError: assert b'SQLite form...0\x00\x00\x00' == b'SQLite form...0\x00\x00\x00'
+E             
+E             At index 27 diff: b'\n' != b'\t'
+E             Use -v to get more diff
+
+.cache\task-consumer-independent\test_consumer_review.py:60: AssertionError</failure></testcase><testcase classname=".cache.task-consumer-independent.test_consumer_review" name="test_actual_effect_callbacks_recheck_current_authority[cancel_before_start]" time="1.057" /><testcase classname=".cache.task-consumer-independent.test_consumer_review" name="test_actual_effect_callbacks_recheck_current_authority[cancel_before_send]" time="1.087" /><testcase classname=".cache.task-consumer-independent.test_consumer_review" name="test_actual_effect_callbacks_recheck_current_authority[source_before_send]" time="1.166" /><testcase classname=".cache.task-consumer-independent.test_consumer_review" name="test_actual_effect_callbacks_recheck_current_authority[double_start]" time="1.167" /><testcase classname=".cache.task-consumer-independent.test_consumer_review" name="test_lost_one_use_return_cannot_claim_resolve_or_create_again[claim]" time="1.114" /><testcase classname=".cache.task-consumer-independent.test_consumer_review" name="test_lost_one_use_return_cannot_claim_resolve_or_create_again[grant]" time="1.077" /></testsuite></testsuites>

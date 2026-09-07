@@ -1,0 +1,375 @@
+{
+  "schema_version": "karajan.go-native-common-integration-publication.v1",
+  "date": "2026-09-07",
+  "code_commit": "aa384798fb49797cdc5b140130dae93ee8f651b4",
+  "evidence_merge_head": "ef440f4e7902bc1d3a262afa9112154cd9690a4a",
+  "publication_commit": null,
+  "evidence_levels": [
+    "C",
+    "P"
+  ],
+  "provider_S": "not_run",
+  "remote_G": "pending_current_head",
+  "source_worktrees": {
+    "NATIVE": ".cache/ci-spark-task-native",
+    "ROOT": "repository_root"
+  },
+  "copy_count": 45,
+  "copied_byte_match": true,
+  "copied_files": [
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-independent/checks.json",
+      "published_path": "independent/checks.json",
+      "bytes": 437,
+      "sha256": "4fe093280deeada04ee233166274852bcdcb2503068a243ce12322e3d144fed2"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-independent/go_execution_intent.py.before.txt",
+      "published_path": "independent/go_execution_intent.py.before.txt",
+      "bytes": 43782,
+      "sha256": "4e72794f6aae846d31788d136dbe47bf15aa6fde839731c57d14f5aa86c5a8e9"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-independent/go_relay.py.before.txt",
+      "published_path": "independent/go_relay.py.before.txt",
+      "bytes": 42484,
+      "sha256": "c45f2784bff518407fc90c3f61d9adf0a92b69f701b77dde1aef86e6b0b5d2cd"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-independent/go_task.py.before.txt",
+      "published_path": "independent/go_task.py.before.txt",
+      "bytes": 22507,
+      "sha256": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-independent/go_task_execution.py.before.txt",
+      "published_path": "independent/go_task_execution.py.before.txt",
+      "bytes": 21077,
+      "sha256": "789e9945a698d6f519f65db35205460ad35a0babf35aee2fbb5c6f82ec095b4d"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-independent/marker-check.json",
+      "published_path": "independent/marker-check.json",
+      "bytes": 8744,
+      "sha256": "ec3eb06b97476b0fde2c878707747be6785625f2dc20a56cda0f4097789c83bb"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-independent/mypy.log",
+      "published_path": "independent/mypy.log",
+      "bytes": 46,
+      "sha256": "0fd28b277f6e98e8effe0f968e9e5806e258d7effddfe7c7bc46acdf973ad56b"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-independent/README.md",
+      "published_path": "independent/README.md",
+      "bytes": 3124,
+      "sha256": "cc87e9ad021837e7bce95b74791ce7bc16b9bbcfb050dea1ef2b45d5444980ee"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-independent/review.json",
+      "published_path": "independent/review.json",
+      "bytes": 12357,
+      "sha256": "e87da584ed09be87acf5ee08f690103920596bcc8f0e8b0bbe2dcf3798a0e981"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-independent/ruff.log",
+      "published_path": "independent/ruff.log",
+      "bytes": 19,
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-independent/source-after.json",
+      "published_path": "independent/source-after.json",
+      "bytes": 1186,
+      "sha256": "d5ca893c9aa759987832307e54dc4648f104522b1f81744392b989d2e8fc7381"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-independent/source-before.json",
+      "published_path": "independent/source-before.json",
+      "bytes": 1186,
+      "sha256": "d5ca893c9aa759987832307e54dc4648f104522b1f81744392b989d2e8fc7381"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-independent/test_go_native_diagnostic_contract.py.before.txt",
+      "published_path": "independent/test_go_native_diagnostic_contract.py.before.txt",
+      "bytes": 3172,
+      "sha256": "7a3f9dc8501152f6fd4e3a1ef9393028633d5c992e445cb8d5874c27a0a57c0e"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-independent/test_go_relay.py.before.txt",
+      "published_path": "independent/test_go_relay.py.before.txt",
+      "bytes": 30879,
+      "sha256": "580b428c9169a6ecfcc50c06cb81099b8d257fc69921e3c5164a55dddbc07d23"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-independent/test_go_relay_context.py.before.txt",
+      "published_path": "independent/test_go_relay_context.py.before.txt",
+      "bytes": 11292,
+      "sha256": "ae7bac8042c44e28e4e5dca06d0d839a61ed187816d68930307c25fb45596135"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-independent/test_go_task.py.before.txt",
+      "published_path": "independent/test_go_task.py.before.txt",
+      "bytes": 23424,
+      "sha256": "0784cb488b333815da50270030c74cd29cce446c036a411071e63a83fa596f76"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-independent/test_go_task_execution.py.before.txt",
+      "published_path": "independent/test_go_task_execution.py.before.txt",
+      "bytes": 14464,
+      "sha256": "dc504c7cb1f360bd6632b7a8765ed5eb7ba71a68a04987f78a7446c9a54f011a"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-independent/test_go_unix_relay.py.before.txt",
+      "published_path": "independent/test_go_unix_relay.py.before.txt",
+      "bytes": 5017,
+      "sha256": "0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-root/linux/commands.json",
+      "published_path": "root/linux/commands.json",
+      "bytes": 1868,
+      "sha256": "76bc77428883cc93c53411e9a0ff93cb5b13a1ea3caeea20074de50e65003f42"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-root/linux/contracts.result.json",
+      "published_path": "root/linux/contracts.result.json",
+      "bytes": 21,
+      "sha256": "81868a6e94ffc0178bf833deb1c9013d9fab4ee95ddb876a5e8ec4f1d26376d2"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-root/linux/contracts.stdout.txt",
+      "published_path": "root/linux/contracts.stdout.txt",
+      "bytes": 352,
+      "sha256": "c2e2ca5f6ebc4c50330b11d72370400f89018faaa4a3cdf28ff7adab8f96cf0c"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-root/linux/contracts.xml",
+      "published_path": "root/linux/contracts.xml",
+      "bytes": 45918,
+      "sha256": "d614ef7d95ae5b761f1cb7eb7fe99dd2da3d92ecad733878960972b0775904f8"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-root/linux/long-path-observation.json",
+      "published_path": "root/linux/long-path-observation.json",
+      "bytes": 870,
+      "sha256": "881bf59c89bf72c8b124ee74ba8d5d9ac80238ac595566244b31977bfcfa9ced"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-root/linux/native-long-path.result.json",
+      "published_path": "root/linux/native-long-path.result.json",
+      "bytes": 21,
+      "sha256": "81868a6e94ffc0178bf833deb1c9013d9fab4ee95ddb876a5e8ec4f1d26376d2"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-root/linux/native-long-path.stdout.txt",
+      "published_path": "root/linux/native-long-path.stdout.txt",
+      "bytes": 110,
+      "sha256": "ce209241c63848ce2100b34e299d0ebf288695f282f799fb2fa3e13af4c76c10"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-root/linux/native-long-path.xml",
+      "published_path": "root/linux/native-long-path.xml",
+      "bytes": 703,
+      "sha256": "71ed6f82cbb42084bb858faf281e421faa3a1dad5efe6b7dc7e29c245f3cf29e"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-root/linux/result.json",
+      "published_path": "root/linux/result.json",
+      "bytes": 178,
+      "sha256": "3014fa716234aaae3ac78b55ce1f4ccd95815335888794d2376e5e1d66876717"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-root/linux/source-after.json",
+      "published_path": "root/linux/source-after.json",
+      "bytes": 27985,
+      "sha256": "d7d92026cf7cd0b2815adef8abb2ae50fd59ed2df50208ab79ae885b7ce680bf"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-root/linux/source-before.json",
+      "published_path": "root/linux/source-before.json",
+      "bytes": 27985,
+      "sha256": "d7d92026cf7cd0b2815adef8abb2ae50fd59ed2df50208ab79ae885b7ce680bf"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-root/run.py",
+      "published_path": "root/run.py.txt",
+      "bytes": 4068,
+      "sha256": "d56fcf1e2f2961559f3da2a921cc1f55b55bf348ad6eaa063d96ce30b8062326"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-root/win32/commands.json",
+      "published_path": "root/win32/commands.json",
+      "bytes": 1147,
+      "sha256": "b9bcfe4a586137a681727452c1702ce8bd8a360b875b724868f18ddd8645805d"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-root/win32/contracts.result.json",
+      "published_path": "root/win32/contracts.result.json",
+      "bytes": 24,
+      "sha256": "50d7caf03dd967e4363a5bc7babbf450452b31dd1ec7fb605b2abc6465759571"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-root/win32/contracts.stdout.txt",
+      "published_path": "root/win32/contracts.stdout.txt",
+      "bytes": 3077,
+      "sha256": "a155cbc6fcbf995e1b8dd6c7def442b383848e2dd9e125b5ec9617c18152de5d"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-root/win32/contracts.xml",
+      "published_path": "root/win32/contracts.xml",
+      "bytes": 43782,
+      "sha256": "21537924f4ebff663f8f3409c17375e0f87721aae866954eeea9f03958d53c68"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-root/win32/result.json",
+      "published_path": "root/win32/result.json",
+      "bytes": 184,
+      "sha256": "e2a996f4e27a7742272a5865284961b95e79129320865432151e771605bda74b"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-root/win32/source-after.json",
+      "published_path": "root/win32/source-after.json",
+      "bytes": 28234,
+      "sha256": "074160292230a29811e76a4aec8832498f6d97e72aa3d322abd7cae3685aafb1"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/common-repair-root/win32/source-before.json",
+      "published_path": "root/win32/source-before.json",
+      "bytes": 28234,
+      "sha256": "074160292230a29811e76a4aec8832498f6d97e72aa3d322abd7cae3685aafb1"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/luna-native-cross-platform-windows.xml",
+      "published_path": "marker/windows.xml",
+      "bytes": 620,
+      "sha256": "e7853421025e50115192a8fefa7021c01f624b822941ed13c4e11c6047068992"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/luna-native-cross-platform-windows.stdout.txt",
+      "published_path": "marker/windows.stdout.txt",
+      "bytes": 748,
+      "sha256": "ce4c39c6c952a44bbee55159e5525818b8a60ec04d0f52f6aad092cd4d904125"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/luna-native-cross-platform-linux.xml",
+      "published_path": "marker/linux.xml",
+      "bytes": 404,
+      "sha256": "e5bd38543773f356c4468936fbd1f2f54f0867d79aa811b1c2b1693eef67895d"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": ".cache/luna-native-cross-platform-linux.stdout.txt",
+      "published_path": "marker/linux.stdout.txt",
+      "bytes": 579,
+      "sha256": "05c478c8c77c3400845216786fb83cfffcfc1deb1dad05563e906b7bba744d44"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_path": "tests/runs/test_go_task_execution.py",
+      "published_path": "marker/test_go_task_execution.py.txt",
+      "bytes": 14464,
+      "sha256": "dc504c7cb1f360bd6632b7a8765ed5eb7ba71a68a04987f78a7446c9a54f011a"
+    },
+    {
+      "source_worktree": "ROOT",
+      "source_path": ".cache/ci-resume-20260907/native-relay-merge-review.md",
+      "published_path": "relay-review/native-relay-merge-review.md",
+      "bytes": 2026,
+      "sha256": "9460f972aa90435de2c83e08d1a9e580679af09eab35dd51b4d3e477620ca37c"
+    },
+    {
+      "source_worktree": "ROOT",
+      "source_path": ".cache/ci-resume-20260907/native-relay-merge-review.json",
+      "published_path": "relay-review/native-relay-merge-review.json",
+      "bytes": 2537,
+      "sha256": "897b0569c245d9f98639637827a2b6632234fcec881d73ac7e2ea4fbcd3eaf39"
+    },
+    {
+      "source_worktree": "NATIVE",
+      "source_kind": "git_blob",
+      "source_commit": "78c6dc8654099250bb0a3b7829538816d042cd93",
+      "source_path": "tests/runs/test_go_task_execution.py",
+      "published_path": "marker/test_go_task_execution.before-marker.py.txt",
+      "bytes": 14380,
+      "sha256": "64ca3965f03ea339041f7e2ba559af3b0e6355fceb92152ce4ccca70250b4f85"
+    }
+  ],
+  "generated_files": {
+    ".gitattributes": {
+      "bytes": 9,
+      "sha256": "8b9c3028d6467ff3be7c793141927841d70f47f52d0590677438f488ca154992"
+    },
+    "commit-binding.json": {
+      "bytes": 6509,
+      "sha256": "503594831800615c7fbaca15d1c2de7088e7b77da7f78d3ddb35a2b31f91e783"
+    },
+    "README.md": {
+      "bytes": 3672,
+      "sha256": "faefb69f3fb9efb1f481991592d0878c6a9e883c2800d04cbba75763bb35d68e"
+    }
+  },
+  "command_records": [
+    "root/linux/commands.json",
+    "root/win32/commands.json",
+    "root/run.py.txt",
+    "independent/checks.json"
+  ],
+  "source_binding": "commit-binding.json",
+  "results": {
+    "linux_contracts": "284 passed",
+    "linux_native_long_path": "3 passed; 127-byte old sockets for both started operations",
+    "windows_common_original": "250 passed, 1 failed; original platform failure retained",
+    "marker_only_windows": "1 skipped",
+    "marker_only_linux": "1 passed",
+    "ruff": "passed independently",
+    "mypy_backend": "128 source files passed independently"
+  },
+  "limitations": [
+    "Windows complete common set was not rerun after marker; only exact target ran.",
+    "Root common Linux source differs only by platform marker; test body AST unchanged.",
+    "Independent Relay review is code-only; does not add P/S/G execution.",
+    "Archive scripts are .py.txt and not pytest collection inputs.",
+    "Original N96 and prior Relay archives were not edited."
+  ]
+}

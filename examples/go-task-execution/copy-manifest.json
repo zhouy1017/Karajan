@@ -1,0 +1,1284 @@
+{
+  "schema_version": "karajan.evidence-copy-map.v1",
+  "issue": 90,
+  "prepared_against_head": "c2c4b145473a259582d0d37a01e423ca03f03b65",
+  "status": "local_evidence_packaged_remote_ci_pending",
+  "official_provider_calls": 0,
+  "copy_policy": "Exact bytes. Independent executable tests archived as .py.txt. Original reports and original source hashes are not rewritten. Prior component/source runs do not imply combined-head qualification.",
+  "pending": [
+    "final candidate remote CI"
+  ],
+  "omitted": [
+    {
+      "source_pattern": ".cache/task-execution-author/native/*/public-operation.json",
+      "reason": "Large historical public snapshots omitted from selected bundle; original freeze records their hashes. Source manifests and summary retained."
+    },
+    {
+      "source_pattern": "**/__pycache__/**, **/*.pyc, any database, credential, raw CLI log or mutable native run directory",
+      "reason": "Not public selected evidence."
+    }
+  ],
+  "files": [
+    {
+      "source_path": ".cache/go-lifecycle-evidence/control-green.xml",
+      "published_path": "examples/go-task-execution/go-lifecycle-evidence/control-green.xml",
+      "sha256": "1088ed932462ed3cac5994f966cf0fb576b0d65aef7c2b63f38cdc77e878a9e7",
+      "bytes": 1572,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/go-lifecycle-evidence/control-red.xml",
+      "published_path": "examples/go-task-execution/go-lifecycle-evidence/control-red.xml",
+      "sha256": "0d425d57be85baac174fed491b0bb0b1c90477d3b3a25b193e6c4d4f32fb407f",
+      "bytes": 10868,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 9,
+        "failures": 9,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/go-lifecycle-evidence/freeze.json",
+      "published_path": "examples/go-task-execution/go-lifecycle-evidence/freeze.json",
+      "sha256": "ba8255a05f7e7f047449de3ffae0f38f8830d85af4253952cc725fcec43550b9",
+      "bytes": 1176,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/go-lifecycle-evidence/intent-before-launch-canonicalization.py.txt",
+      "published_path": "examples/go-task-execution/go-lifecycle-evidence/intent-before-launch-canonicalization.py.txt",
+      "sha256": "212f2aa4e598efa042bfd47c0b1a6b711fab5d86304f410cb52d3d515db057df",
+      "bytes": 39150,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/go-lifecycle-evidence/intent-green.xml",
+      "published_path": "examples/go-task-execution/go-lifecycle-evidence/intent-green.xml",
+      "sha256": "053ef0a429ddd07414a424b243781ea22ae9d24e81c454cdca0e15265a9b8a8f",
+      "bytes": 373,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/go-lifecycle-evidence/intent-red.xml",
+      "published_path": "examples/go-task-execution/go-lifecycle-evidence/intent-red.xml",
+      "sha256": "21d214f897d5d15ed7ae4ba56293d88a5167361fa5091082f9c82fa9f702f354",
+      "bytes": 1442,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 1,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/go-lifecycle-evidence/lifecycle-before.xml",
+      "published_path": "examples/go-task-execution/go-lifecycle-evidence/lifecycle-before.xml",
+      "sha256": "94cbb1391f6882e325d05564b6205fad70ebcc4c71f9d28d5f337f65cf80026b",
+      "bytes": 7618,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 15,
+        "failures": 2,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/go-lifecycle-evidence/lifecycle-capture.xml",
+      "published_path": "examples/go-task-execution/go-lifecycle-evidence/lifecycle-capture.xml",
+      "sha256": "03f56498e1bfd11f866d930b78a7a3176cd17aa5d85a2d944341d91786426a6f",
+      "bytes": 7389,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 26,
+        "failures": 3,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/go-lifecycle-evidence/lifecycle-green.xml",
+      "published_path": "examples/go-task-execution/go-lifecycle-evidence/lifecycle-green.xml",
+      "sha256": "5434d0fef95fd6cb8da0faf1dea18e2b11d3058dd23917486a40f915f4c898cd",
+      "bytes": 2392,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/go-lifecycle-evidence/README.md",
+      "published_path": "examples/go-task-execution/go-lifecycle-evidence/README.md",
+      "sha256": "b28a670ebcedc9deedf33b148d069b7f90db61e51bb9f029c35d327d62685a97",
+      "bytes": 4104,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/go-lifecycle-evidence/windows-final.xml",
+      "published_path": "examples/go-task-execution/go-lifecycle-evidence/windows-final.xml",
+      "sha256": "0635975d594a8098fec8e7e36256a2be6746824931958cef3b516f6342d29ad5",
+      "bytes": 8542,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 58,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/go-lifecycle-evidence/wsl-final.xml",
+      "published_path": "examples/go-task-execution/go-lifecycle-evidence/wsl-final.xml",
+      "sha256": "5e601f3f19c9b22f64006e1203aeb9230259df51b17f1eff9bfad9ac69ccb97d",
+      "bytes": 8542,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 58,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/collector-author/candidate-boundaries.xml",
+      "published_path": "examples/go-task-execution/collector-author/candidate-boundaries.xml",
+      "sha256": "1e9587d6ccf0d95c39a396abe3c981d02ab528c609747eded27d494be61dad2b",
+      "bytes": 7028,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 45,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/collector-author/collection-green.xml",
+      "published_path": "examples/go-task-execution/collector-author/collection-green.xml",
+      "sha256": "7b4fa7a4010be97186f065285bbcc9697b68414a9c31116171c929908aac97de",
+      "bytes": 395,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/collector-author/collection-recovery.xml",
+      "published_path": "examples/go-task-execution/collector-author/collection-recovery.xml",
+      "sha256": "d46c3a70c3baddb7387738b7eac97c0b1d82bd16933f2a95f6d3eeab0bddfe2a",
+      "bytes": 1063,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/collector-author/collection-red.xml",
+      "published_path": "examples/go-task-execution/collector-author/collection-red.xml",
+      "sha256": "3676306f98b492a39887912e1d5f48413e2bc9762bae6a92447e7347124907c4",
+      "bytes": 1517,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/collector-author/compiler-boundaries.xml",
+      "published_path": "examples/go-task-execution/collector-author/compiler-boundaries.xml",
+      "sha256": "988454b5d47fd72e2abf388afe9d0b68bed612f96eda2148f2eea7e81396e84b",
+      "bytes": 2055,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/collector-author/compiler-green.xml",
+      "published_path": "examples/go-task-execution/collector-author/compiler-green.xml",
+      "sha256": "46a8b146f52c817ba957cdc513f2f32b34f12db8da41cdd6eba03a200e852a86",
+      "bytes": 398,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/collector-author/compiler-red.xml",
+      "published_path": "examples/go-task-execution/collector-author/compiler-red.xml",
+      "sha256": "007f358600cd067c12fde4bb6fdd450864a558e2810a506d9419c6954db454eb",
+      "bytes": 1121,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/collector-author/existing-green.xml",
+      "published_path": "examples/go-task-execution/collector-author/existing-green.xml",
+      "sha256": "74e7ea0c8b9be2f0494f19451d4c0204ad12e3186a64020bf2bbb8602edf88e4",
+      "bytes": 404,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/collector-author/existing-red.xml",
+      "published_path": "examples/go-task-execution/collector-author/existing-red.xml",
+      "sha256": "7b7fa5d6a7880c95b7fc770725ab70aa076a1e6dceb26be42016eee62da72071",
+      "bytes": 1088,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/collector-author/final-linux.xml",
+      "published_path": "examples/go-task-execution/collector-author/final-linux.xml",
+      "sha256": "bd1f2fea908d254f1610bc93685e58d98fe90533dd55836ba8e1b865104a862e",
+      "bytes": 9798,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 63,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/collector-author/final-windows.xml",
+      "published_path": "examples/go-task-execution/collector-author/final-windows.xml",
+      "sha256": "d769422b7cc6f97db64c15be54e2e26b5a3605b53261f557684578f9e04808f0",
+      "bytes": 22478,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 138,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      }
+    },
+    {
+      "source_path": ".cache/collector-author/freeze.json",
+      "published_path": "examples/go-task-execution/collector-author/freeze.json",
+      "sha256": "4981bfca3e7117bece3804a063756c20d7e4c7e78bd6289d63b2751fcb9dd4aa",
+      "bytes": 4845,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/collector-author/lookup-green.xml",
+      "published_path": "examples/go-task-execution/collector-author/lookup-green.xml",
+      "sha256": "26b25aef0022115ae91bbf7d624831f5f99e4475ebf099272f57f4946cfcb9df",
+      "bytes": 565,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/collector-author/lookup-red.xml",
+      "published_path": "examples/go-task-execution/collector-author/lookup-red.xml",
+      "sha256": "f20652335ca49db5f95d6fd7142c6d0028c79178a815cd3c748a3d9acdfb63ab",
+      "bytes": 2203,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 2,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/collector-author/README.md",
+      "published_path": "examples/go-task-execution/collector-author/README.md",
+      "sha256": "0752219f83985a042f0dc03d8b1e37c314c43aa51eddbfda648543386bb4b2ba",
+      "bytes": 4797,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/collector-ownership-correction/author-red.xml",
+      "published_path": "examples/go-task-execution/collector-ownership-correction/author-red.xml",
+      "sha256": "ecedb118d927b782f51272b5ea57b064010dae02034f148494f3c12408128682",
+      "bytes": 9449,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 4,
+        "failures": 4,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/collector-ownership-correction/deferred-green.xml",
+      "published_path": "examples/go-task-execution/collector-ownership-correction/deferred-green.xml",
+      "sha256": "ad8e711eb33346a7b4b8e352511883ea0e29f2f303f614b11cbcec0d06e7f527",
+      "bytes": 400,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/collector-ownership-correction/deferred-red.xml",
+      "published_path": "examples/go-task-execution/collector-ownership-correction/deferred-red.xml",
+      "sha256": "cb8afe99c8d837a004b31c5ba0c1ca1d9e50538c86e998ea890bbbf33112c0ca",
+      "bytes": 1112,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/collector-ownership-correction/final-linux.xml",
+      "published_path": "examples/go-task-execution/collector-ownership-correction/final-linux.xml",
+      "sha256": "ddec0cd8f5fe71e0abb960385a26d1306291df78b4e60e1380316aa77246248d",
+      "bytes": 8084,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 52,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/collector-ownership-correction/final-windows.xml",
+      "published_path": "examples/go-task-execution/collector-ownership-correction/final-windows.xml",
+      "sha256": "7c06e84127f29d4e479dc191b198ce4c88eb34440e404597577807ed2e707880",
+      "bytes": 8084,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 52,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/collector-ownership-correction/freeze.json",
+      "published_path": "examples/go-task-execution/collector-ownership-correction/freeze.json",
+      "sha256": "d933b12459394be4f8a07282e8a53cfc80be46cc282119f93e156dcdceee6113",
+      "bytes": 2956,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/collector-ownership-correction/green.xml",
+      "published_path": "examples/go-task-execution/collector-ownership-correction/green.xml",
+      "sha256": "db036bb17987199e75601aee7aa8352455ed7a881e3d16b43666e9e7b1a0d436",
+      "bytes": 4757,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 29,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/collector-ownership-correction/README.md",
+      "published_path": "examples/go-task-execution/collector-ownership-correction/README.md",
+      "sha256": "4b8cbb82d2cc4f79adb138154cf54eed678bccd1d5145e9922855d824317fc07",
+      "bytes": 3157,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/collector-ownership-correction/red.xml",
+      "published_path": "examples/go-task-execution/collector-ownership-correction/red.xml",
+      "sha256": "f0606699b957a0e6e1d898e88d0ac6c822cca12aae76f4e6d36042c462027fea",
+      "bytes": 7662,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 2,
+        "failures": 2,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/collector-ownership-correction/static-validation.txt",
+      "published_path": "examples/go-task-execution/collector-ownership-correction/static-validation.txt",
+      "sha256": "6c0af601593fc9fdb4822bc0025226f7d2471004dbbf5d9ca885995885842302",
+      "bytes": 88,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/collector-independent/before.xml",
+      "published_path": "examples/go-task-execution/collector-independent/before.xml",
+      "sha256": "02c80c71f70cbf64e049257fbdbfd4da5128d3f422c0c93520c702059f5f5baf",
+      "bytes": 9075,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 11,
+        "failures": 2,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/collector-independent/final.json",
+      "published_path": "examples/go-task-execution/collector-independent/final.json",
+      "sha256": "116c86603fd544a03abcecbbd96655d80be76abd9f7bb32ff1dacb56efab9d42",
+      "bytes": 1067,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/collector-independent/lookup-before.py.txt",
+      "published_path": "examples/go-task-execution/collector-independent/lookup-before.py.txt",
+      "sha256": "ea524d6973801a7583648357252070ff28657f2454730a4c063240daab3cd608",
+      "bytes": 4432,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/collector-independent/README.md",
+      "published_path": "examples/go-task-execution/collector-independent/README.md",
+      "sha256": "abe7f83cb7dda6984521710cb8d1647263893ff21b1355165e78bee20a7d0a1f",
+      "bytes": 4039,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/collector-independent/store-before.py.txt",
+      "published_path": "examples/go-task-execution/collector-independent/store-before.py.txt",
+      "sha256": "8f69dfdd1364d6a33cd5351f28785a445fa36f213ce4a10dffcef8c7153a758f",
+      "bytes": 37469,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/collector-independent/test-before.py.txt",
+      "published_path": "examples/go-task-execution/collector-independent/test-before.py.txt",
+      "sha256": "1fb94708f3bbd4d9bd21dadd3272a05fa00b0a9412fcb9c3738746eee33798d6",
+      "bytes": 7309,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/collector-independent/test_review.py",
+      "published_path": "examples/go-task-execution/collector-independent/test_review.py.txt",
+      "sha256": "8906838bb753238728ae6d45b3bfc4a3fa5c1ba76a82599851c55bc854997ee1",
+      "bytes": 7780,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/collector-independent/windows-final.xml",
+      "published_path": "examples/go-task-execution/collector-independent/windows-final.xml",
+      "sha256": "4f29961692ecea0d2139638e783f4916dab9dc5006f9b7a197c10b58ddfd4207",
+      "bytes": 2015,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/collector-independent/wsl-final.xml",
+      "published_path": "examples/go-task-execution/collector-independent/wsl-final.xml",
+      "sha256": "6c80f775731c9a5a201d27a059a40df513128e4a8997241ea206bc6e382ee018",
+      "bytes": 2014,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/existing-stores-independent/before-sources.json",
+      "published_path": "examples/go-task-execution/existing-stores-independent/before-sources.json",
+      "sha256": "60391960b06b9d97ec5956b069a232132a50936cd818e407691776b029f9f47d",
+      "bytes": 1220,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/existing-stores-independent/boundaries.xml",
+      "published_path": "examples/go-task-execution/existing-stores-independent/boundaries.xml",
+      "sha256": "d2c44e06da044d8786036852d712ea383affe7c3b446b339614d2dd634cbe489",
+      "bytes": 3952,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 21,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/existing-stores-independent/correction.xml",
+      "published_path": "examples/go-task-execution/existing-stores-independent/correction.xml",
+      "sha256": "9616acd533beecc3b651521fcaba7e7757cbea8d2bdfe588af96008d69f3d411",
+      "bytes": 4133,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 22,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/existing-stores-independent/credential-existing-red.xml",
+      "published_path": "examples/go-task-execution/existing-stores-independent/credential-existing-red.xml",
+      "sha256": "e78df963d4856490f5b656dbc70c5dc973fbe3c6abff1dd7f1370cecb754bc73",
+      "bytes": 1942,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/existing-stores-independent/final-linux.xml",
+      "published_path": "examples/go-task-execution/existing-stores-independent/final-linux.xml",
+      "sha256": "a205058843c78ddd4ad0e9f6a096165888fa074b9c22d98a786a75493b7b2e18",
+      "bytes": 4981,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 27,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/existing-stores-independent/final-windows.xml",
+      "published_path": "examples/go-task-execution/existing-stores-independent/final-windows.xml",
+      "sha256": "156c5df68d9cfd5be2433971603a596f6c9167c358c1f8a79ef7539e48d7ece8",
+      "bytes": 4981,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 27,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/existing-stores-independent/review.json",
+      "published_path": "examples/go-task-execution/existing-stores-independent/review.json",
+      "sha256": "9e2e17d25a03389df4d7532f2850221bbe05753c9d910575e81306bb4a48960a",
+      "bytes": 3188,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/existing-stores-independent/review.md",
+      "published_path": "examples/go-task-execution/existing-stores-independent/review.md",
+      "sha256": "482bc44d142b96d33865d76f954a45266b95410eb9127e00f9876d8af6750f1e",
+      "bytes": 3296,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/existing-stores-independent/test_independent.py",
+      "published_path": "examples/go-task-execution/existing-stores-independent/test_independent.py.txt",
+      "sha256": "a198685609202819101a18c1dca9b77fbe961354fddc633b2da2047cdaef84ab",
+      "bytes": 9524,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/runtime-independent/before-confirmed.xml",
+      "published_path": "examples/go-task-execution/runtime-independent/before-confirmed.xml",
+      "sha256": "18173d98af86c4d968f4b336da64d172b59431b347986ff32e5b522060457538",
+      "bytes": 12858,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 6,
+        "failures": 4,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/runtime-independent/before.xml",
+      "published_path": "examples/go-task-execution/runtime-independent/before.xml",
+      "sha256": "184a8efab6e319bf9f02eeff8ac1f667691d95a074f66e26975e9337d66a00de",
+      "bytes": 11960,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 6,
+        "failures": 4,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/runtime-independent/binding-before.py.txt",
+      "published_path": "examples/go-task-execution/runtime-independent/binding-before.py.txt",
+      "sha256": "d4f56e375a1bef55a46a60feeb9a46bd25fa5b6eba1f8a37178a3903bf3fecf2",
+      "bytes": 8435,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/runtime-independent/final.json",
+      "published_path": "examples/go-task-execution/runtime-independent/final.json",
+      "sha256": "87d3025e78008a58d1e990d3b5200b9797ea76aea262b29e8e080b88a8aa0103",
+      "bytes": 1487,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/runtime-independent/README.md",
+      "published_path": "examples/go-task-execution/runtime-independent/README.md",
+      "sha256": "1171ae94714b5bebb6e829c7c08da7f6a8a430b497b73e304c7fb00850d5d7e8",
+      "bytes": 5225,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/runtime-independent/runtime-before.py.txt",
+      "published_path": "examples/go-task-execution/runtime-independent/runtime-before.py.txt",
+      "sha256": "404c1b5dcb39bfb320fcd7cab70438f8b968fdcb198ad71f7f810828073559aa",
+      "bytes": 15249,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/runtime-independent/test-before-host-status-correction.py.txt",
+      "published_path": "examples/go-task-execution/runtime-independent/test-before-host-status-correction.py.txt",
+      "sha256": "c7a1d9bc2e15b976a59845e517b9e0d4256280b518be914fd63f9e73e006d9d6",
+      "bytes": 4183,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/runtime-independent/test-confirmed.py.txt",
+      "published_path": "examples/go-task-execution/runtime-independent/test-confirmed.py.txt",
+      "sha256": "f8493eea2f45461b765c0982a53a34ffcc5d58204881e1adb972309e2b28cc89",
+      "bytes": 3872,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/runtime-independent/test-initial.py.txt",
+      "published_path": "examples/go-task-execution/runtime-independent/test-initial.py.txt",
+      "sha256": "391c8dd1dc22ec8581e9bc06cadc36b2f01a3fb513088106f75ca27cac27579e",
+      "bytes": 3809,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/runtime-independent/test_runtime_review.py",
+      "published_path": "examples/go-task-execution/runtime-independent/test_runtime_review.py.txt",
+      "sha256": "f13fd1f9eea715fab637a9acfa7abd935bf046e113bf98c78ea66861daf2723e",
+      "bytes": 4322,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/runtime-independent/windows-after-fix-first.xml",
+      "published_path": "examples/go-task-execution/runtime-independent/windows-after-fix-first.xml",
+      "sha256": "15c6e6b163c8449742fa4c232e1e497c650a586ab56c28843bbeec377ab85618",
+      "bytes": 3861,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 6,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/runtime-independent/windows-final.xml",
+      "published_path": "examples/go-task-execution/runtime-independent/windows-final.xml",
+      "sha256": "171d5b5a7fa76d75d086377da28f24a29398c4ed2b4536dfc35dfed15829d9f0",
+      "bytes": 1351,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/runtime-independent/wsl-after-fix-first.xml",
+      "published_path": "examples/go-task-execution/runtime-independent/wsl-after-fix-first.xml",
+      "sha256": "8dd96d14dc08af796c2590dd1476b76bd72910e2b3c02fe7e53f31bdb68bce42",
+      "bytes": 1978,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 6,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/runtime-independent/wsl-final.xml",
+      "published_path": "examples/go-task-execution/runtime-independent/wsl-final.xml",
+      "sha256": "9643dc6eeef9acf0f4621789a714e6588bffca5349b18db8a76dc7be75376ddd",
+      "bytes": 1351,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/task-consumer-independent/before.xml",
+      "published_path": "examples/go-task-execution/task-consumer-independent/before.xml",
+      "sha256": "795126e8493a9fa05371e4b82a35172b65b6c4d982112aaeeaaa9b0850bfcd98",
+      "bytes": 7105,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 10,
+        "failures": 3,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/task-consumer-independent/consumer-before.py.txt",
+      "published_path": "examples/go-task-execution/task-consumer-independent/consumer-before.py.txt",
+      "sha256": "fb2e726ba7639f27c04a054f7115c4a49ad563424e7af44e66b457ccc29677b1",
+      "bytes": 19387,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/task-consumer-independent/entry-before.py.txt",
+      "published_path": "examples/go-task-execution/task-consumer-independent/entry-before.py.txt",
+      "sha256": "0a43cf7b1924b40a66ea35e354e15a6cce697b954c243c8808a7bf7500343822",
+      "bytes": 1915,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/task-consumer-independent/final.json",
+      "published_path": "examples/go-task-execution/task-consumer-independent/final.json",
+      "sha256": "ab29696f27137b70845cc1e1aa44abe14de829c04a8814b72e012b920ba577d2",
+      "bytes": 1937,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/task-consumer-independent/README.md",
+      "published_path": "examples/go-task-execution/task-consumer-independent/README.md",
+      "sha256": "0dc5a2b6a1f02aff26fbc836b72ef0aa50cd35189d19754549bdf3c10e0f5340",
+      "bytes": 4705,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/task-consumer-independent/test-before.py.txt",
+      "published_path": "examples/go-task-execution/task-consumer-independent/test-before.py.txt",
+      "sha256": "e398540c55e40464af44e3c1b87d561a8887a87c2ba2c1c230c327bc75f44c81",
+      "bytes": 7428,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/task-consumer-independent/test_consumer_review.py",
+      "published_path": "examples/go-task-execution/task-consumer-independent/test_consumer_review.py.txt",
+      "sha256": "9c554a633535b3bab6408078bf5db2aa64b17f35f8b8500727765b4577a5d8bd",
+      "bytes": 7789,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/task-consumer-independent/windows-final.xml",
+      "published_path": "examples/go-task-execution/task-consumer-independent/windows-final.xml",
+      "sha256": "d4bccef18024d44880275da890b13f1a1b41e4e8352c41aa042641fcda9fc995",
+      "bytes": 2006,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/task-consumer-independent/wsl-final.xml",
+      "published_path": "examples/go-task-execution/task-consumer-independent/wsl-final.xml",
+      "sha256": "07cd96605814cf7c745fabc453b96498c4a33931ef35ce98230fb2f043f31396",
+      "bytes": 2005,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/task-execution-author/README.md",
+      "published_path": "examples/go-task-execution/task-execution-author/history/d-round/README.md",
+      "sha256": "0214d2b6ff685f8a070206b5ac3f24e253d08b8b4b832a7d77407e1d1b1999a6",
+      "bytes": 6300,
+      "stage": "historical_d_round"
+    },
+    {
+      "source_path": ".cache/task-execution-author/freeze.json",
+      "published_path": "examples/go-task-execution/task-execution-author/history/d-round/freeze.json",
+      "sha256": "a91eaf19c94c943125f85be5f3b7952ab3a9c240b0b0dccac3b15298b107bdcb",
+      "bytes": 3356,
+      "stage": "historical_d_round"
+    },
+    {
+      "source_path": ".cache/task-execution-author/freeze.d-before-followups.json",
+      "published_path": "examples/go-task-execution/task-execution-author/history/d-round/freeze.d-before-followups.json",
+      "sha256": "dd7c7c324f17c11c5bc3c7b8b892d888dc1347997267f9212b4beacaafd9ef0c",
+      "bytes": 3214,
+      "stage": "historical_d_round"
+    },
+    {
+      "source_path": ".cache/task-execution-author/consumer-001/README.md",
+      "published_path": "examples/go-task-execution/task-execution-author/consumer-001/README.md",
+      "sha256": "7cb58cd5664b63d9ccaefefacb6f1470b326fdc5d97e4d1209f082c8c91f877a",
+      "bytes": 1853,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/task-execution-author/consumer-001/freeze.json",
+      "published_path": "examples/go-task-execution/task-execution-author/consumer-001/freeze.json",
+      "sha256": "31d6317240f14af573f8dfa947a1f67c32fcbb4d0e3b3bd6a0e377a02b095a12",
+      "bytes": 1179,
+      "stage": "component_evidence"
+    },
+    {
+      "source_path": ".cache/task-execution-author/native/summary.json",
+      "published_path": "examples/go-task-execution/task-execution-author/history/d-round/native/summary.json",
+      "sha256": "3e7820416859af0df8813df8fbd906c16ed8100ae6bf8f8d1be8831a298339c4",
+      "bytes": 4572,
+      "stage": "historical_d_round"
+    },
+    {
+      "source_path": ".cache/task-execution-author/native/none/source-manifest.json",
+      "published_path": "examples/go-task-execution/task-execution-author/history/d-round/native/none/source-manifest.json",
+      "sha256": "ad677b1d303450d5baa274d5330f0c42c2a1843522ad59f655c2f17bec93dbf6",
+      "bytes": 21840,
+      "stage": "historical_d_round"
+    },
+    {
+      "source_path": ".cache/task-execution-author/native/grant_reply_lost/source-manifest.json",
+      "published_path": "examples/go-task-execution/task-execution-author/history/d-round/native/grant_reply_lost/source-manifest.json",
+      "sha256": "c861d423e639c70d2150f87548c857321d2a754d5f831f63ac9c7cfc188faa15",
+      "bytes": 21840,
+      "stage": "historical_d_round"
+    },
+    {
+      "source_path": ".cache/task-execution-author/native/cancel_after_send/source-manifest.json",
+      "published_path": "examples/go-task-execution/task-execution-author/history/d-round/native/cancel_after_send/source-manifest.json",
+      "sha256": "a1584bf18833d2b0d55397b98cbdbc70259230f14d349dc6e8b067f54ba77079",
+      "bytes": 21840,
+      "stage": "historical_d_round"
+    },
+    {
+      "source_path": ".cache/task-activation-recovery-red.xml",
+      "published_path": "examples/go-task-execution/task-execution-author/history/d-round/task-activation-recovery-red.xml",
+      "sha256": "063db0710bbc3bd6cc8b222d2e7786dcbc93ca480ec4fb0875429d8e8b72c9a3",
+      "bytes": 1806,
+      "stage": "historical_d_round",
+      "junit": {
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/task-activation-recovery-green.xml",
+      "published_path": "examples/go-task-execution/task-execution-author/history/d-round/task-activation-recovery-green.xml",
+      "sha256": "4432c00ec30329207fad98782b16043dadd36c6a65efcc866239cdc3327e4a30",
+      "bytes": 1833,
+      "stage": "historical_d_round",
+      "junit": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/task-cancel-recovery-red.xml",
+      "published_path": "examples/go-task-execution/task-execution-author/history/d-round/task-cancel-recovery-red.xml",
+      "sha256": "5c3696c081463b16f81e7ed6156d4436ae5b96fae0f4cd308b5e6f08628c7ee2",
+      "bytes": 2874,
+      "stage": "historical_d_round",
+      "junit": {
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/task-cancel-recovery-final.xml",
+      "published_path": "examples/go-task-execution/task-execution-author/history/d-round/task-cancel-recovery-final.xml",
+      "sha256": "6ed24c9897e401005a172baab88a38cfe48392d578017277a68bd3ac2d63ca4e",
+      "bytes": 391,
+      "stage": "historical_d_round",
+      "junit": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/task-full-native-a.xml",
+      "published_path": "examples/go-task-execution/task-execution-author/history/d-round/task-full-native-a.xml",
+      "sha256": "a9c8ae39fe6029e59ce2f22ba10fc5989d548c4070038218f8fa10a6b2979aa4",
+      "bytes": 1157,
+      "stage": "historical_d_round",
+      "junit": {
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/task-full-native-b.xml",
+      "published_path": "examples/go-task-execution/task-execution-author/history/d-round/task-full-native-b.xml",
+      "sha256": "5ba002145b49727099fce9354d54dc204e706936c16519c9dddd8c74d66909c2",
+      "bytes": 6635,
+      "stage": "historical_d_round",
+      "junit": {
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/task-full-native-c.xml",
+      "published_path": "examples/go-task-execution/task-execution-author/history/d-round/task-full-native-c.xml",
+      "sha256": "645dd13cf711ef578d154b1d39341aa30ad09a818d6b7ce49dfc0ef3940d06aa",
+      "bytes": 6992,
+      "stage": "historical_d_round",
+      "junit": {
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/task-full-native-d.xml",
+      "published_path": "examples/go-task-execution/task-execution-author/history/d-round/task-full-native-d.xml",
+      "sha256": "7a4fb0746068a2a8cc11d3dfe61d9ce85b356e438d56899a977a55019d962076",
+      "bytes": 703,
+      "stage": "historical_d_round",
+      "junit": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/task-facade-final-linux.xml",
+      "published_path": "examples/go-task-execution/task-execution-author/history/d-round/task-facade-final-linux.xml",
+      "sha256": "9b03952633b81b0b099b3799ece7123f521a5c4303c11bb65e8d1af1de8e50ed",
+      "bytes": 1832,
+      "stage": "historical_d_round",
+      "junit": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/exact-host-cancel-red.xml",
+      "published_path": "examples/go-task-execution/task-execution-author/consumer-001/exact-host-cancel-red.xml",
+      "sha256": "97b4d9b0542245589f5e3ff092c0dcbb7cbd1d2f667aa597199ad4816b1b3917",
+      "bytes": 14006,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 8,
+        "failures": 8,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/exact-host-cancel-green.xml",
+      "published_path": "examples/go-task-execution/task-execution-author/consumer-001/exact-host-cancel-green.xml",
+      "sha256": "8d1dac77dde91e78663f8e3115b27411da2be327ccb144fb227b04340ae596af",
+      "bytes": 4948,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 29,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/exact-host-regression.xml",
+      "published_path": "examples/go-task-execution/task-execution-author/consumer-001/exact-host-regression.xml",
+      "sha256": "9ac4273e666a213f19da138aaa7469ac0a951e37ed5bd7bbf311d954c0dc1a81",
+      "bytes": 9600,
+      "stage": "component_evidence",
+      "junit": {
+        "tests": 61,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/task-runtime-deferred-windows.xml",
+      "published_path": "examples/go-task-execution/root-checks/task-runtime-deferred-windows.xml",
+      "sha256": "88d98b5439a0dde305132fcc9343bb2c84769648418f3fe7ad42bc0fb127beb7",
+      "bytes": 3469,
+      "stage": "root_integration_check",
+      "junit": {
+        "tests": 22,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/existing-store-compatibility-correction-windows.xml",
+      "published_path": "examples/go-task-execution/root-checks/existing-store-compatibility-correction-windows.xml",
+      "sha256": "e36cd0a53081ea3040f468af93456d29dfc8e8bf67a47758e8d4edfc4b566a00",
+      "bytes": 2478,
+      "stage": "root_integration_check",
+      "junit": {
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/existing-stores-compatibility-windows.xml",
+      "published_path": "examples/go-task-execution/root-checks/existing-stores-compatibility-windows.xml",
+      "sha256": "32a85dadf8bde09003702479a430b1b8cf226004dcb104bf0b727069a6b1ba7a",
+      "bytes": 66573,
+      "stage": "root_integration_check",
+      "junit": {
+        "tests": 386,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/spark-integration-windows.xml",
+      "published_path": "examples/go-task-execution/root-checks/spark-integration-windows.xml",
+      "sha256": "fa223e692a3872eb43f2d2223035f76b682a3e1c2495b70aac95774130800722",
+      "bytes": 18316,
+      "stage": "root_integration_check",
+      "junit": {
+        "tests": 108,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/task-execution-author/native-e/cancel_after_send/public-operation.json",
+      "published_path": "examples/go-task-execution/task-execution-author/native-e/cancel_after_send/public-operation.json",
+      "sha256": "14b37b165126579728862a5569b78fa67b673cf007bf7445c892c294df183b8b",
+      "bytes": 279731,
+      "stage": "combined_candidate_native_fixture_final"
+    },
+    {
+      "source_path": ".cache/task-execution-author/native-e/cancel_after_send/source-manifest.json",
+      "published_path": "examples/go-task-execution/task-execution-author/native-e/cancel_after_send/source-manifest.json",
+      "sha256": "4b7e900b10ddf99ee826d895472063f6a878e31cdd79f1b42a63772856937a7b",
+      "bytes": 21840,
+      "stage": "combined_candidate_native_fixture_final"
+    },
+    {
+      "source_path": ".cache/task-execution-author/native-e/freeze.json",
+      "published_path": "examples/go-task-execution/task-execution-author/native-e/freeze.json",
+      "sha256": "b1dc738118d4858b94e3f479071f2ae7131974e5a197933729e7d613fa589426",
+      "bytes": 2361,
+      "stage": "combined_candidate_native_fixture_final"
+    },
+    {
+      "source_path": ".cache/task-execution-author/native-e/grant_reply_lost/public-operation.json",
+      "published_path": "examples/go-task-execution/task-execution-author/native-e/grant_reply_lost/public-operation.json",
+      "sha256": "085723cd5d846dd1eb4d5a62fa605c96d39398262a9ef428e79856a3cfd0e90a",
+      "bytes": 280566,
+      "stage": "combined_candidate_native_fixture_final"
+    },
+    {
+      "source_path": ".cache/task-execution-author/native-e/grant_reply_lost/source-manifest.json",
+      "published_path": "examples/go-task-execution/task-execution-author/native-e/grant_reply_lost/source-manifest.json",
+      "sha256": "af935b71040aa7f938dedb0ff2918b9d9a8f6522f80efff583f7a8c304a44932",
+      "bytes": 21840,
+      "stage": "combined_candidate_native_fixture_final"
+    },
+    {
+      "source_path": ".cache/task-execution-author/native-e/junit.xml",
+      "published_path": "examples/go-task-execution/task-execution-author/native-e/junit.xml",
+      "sha256": "56e78d1a707777434f34795dc88b8253e673a0d57bae1c9e38c42f35097a93b8",
+      "bytes": 703,
+      "stage": "combined_candidate_native_fixture_final",
+      "junit": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/task-execution-author/native-e/none/public-operation.json",
+      "published_path": "examples/go-task-execution/task-execution-author/native-e/none/public-operation.json",
+      "sha256": "2e95173615ae68eef0e699d1185cb655cd18526e4b302b86cb7eae7249b8f8df",
+      "bytes": 313586,
+      "stage": "combined_candidate_native_fixture_final"
+    },
+    {
+      "source_path": ".cache/task-execution-author/native-e/none/source-manifest.json",
+      "published_path": "examples/go-task-execution/task-execution-author/native-e/none/source-manifest.json",
+      "sha256": "ae4b39cfb5160d045ee5fa9136fa7941641e4891f673bae43850639de8e76ed7",
+      "bytes": 21840,
+      "stage": "combined_candidate_native_fixture_final"
+    },
+    {
+      "source_path": ".cache/task-execution-author/native-e/README.md",
+      "published_path": "examples/go-task-execution/task-execution-author/native-e/README.md",
+      "sha256": "f10e6c53e017e4edff1f2b2d7ed38507f874bd6a1f20f1bfe33cf1a5a15a1a4b",
+      "bytes": 3435,
+      "stage": "combined_candidate_native_fixture_final"
+    },
+    {
+      "source_path": ".cache/task-execution-author/native-e/summary.json",
+      "published_path": "examples/go-task-execution/task-execution-author/native-e/summary.json",
+      "sha256": "f79ebafb8b5c4df7dfe65d2e5a911e5e7564c12ce94d99473b3390b8c7de0923",
+      "bytes": 4572,
+      "stage": "combined_candidate_native_fixture_final"
+    },
+    {
+      "source_path": ".cache/task-intent-independent/README.md",
+      "published_path": "examples/go-task-execution/task-intent-independent/README.md",
+      "sha256": "09075fcf90a97daee77b0c19e5be6c44557a3960a00fe5981081cc2be925f359",
+      "bytes": 7787,
+      "stage": "combined_candidate_independent_intent_review"
+    },
+    {
+      "source_path": ".cache/task-intent-independent/review.json",
+      "published_path": "examples/go-task-execution/task-intent-independent/review.json",
+      "sha256": "7549c2589fcfd57b460644d0e21e9f7119d5e8bcd92769f0065ccc3dc2616d85",
+      "bytes": 2829,
+      "stage": "combined_candidate_independent_intent_review"
+    },
+    {
+      "source_path": ".cache/task-intent-independent/source-before.json",
+      "published_path": "examples/go-task-execution/task-intent-independent/source-before.json",
+      "sha256": "c7433d268c8070b0a41811b805f528aa9df809a950e3bbe765ec52ebf356b64c",
+      "bytes": 348,
+      "stage": "combined_candidate_independent_intent_review"
+    },
+    {
+      "source_path": ".cache/task-intent-independent/test_intent_boundaries.py",
+      "published_path": "examples/go-task-execution/task-intent-independent/test_intent_boundaries.py.txt",
+      "sha256": "dd1fbe74e85d76e51b6d258da665b29b01a14d79232409c6d7be61a375fc7197",
+      "bytes": 12089,
+      "stage": "combined_candidate_independent_intent_review"
+    },
+    {
+      "source_path": ".cache/task-intent-independent/test-initial.py.txt",
+      "published_path": "examples/go-task-execution/task-intent-independent/test-initial.py.txt",
+      "sha256": "7bae6de8b1016fa5981456468d6805423c6062673f59414f59e8e588e539ab44",
+      "bytes": 12029,
+      "stage": "combined_candidate_independent_intent_review"
+    },
+    {
+      "source_path": ".cache/task-intent-independent/initial.xml",
+      "published_path": "examples/go-task-execution/task-intent-independent/initial.xml",
+      "sha256": "f2f73127a31fa771ca810a92f15bb85bdd7b6ee4e7fa6fe6d899d6df00d88643",
+      "bytes": 3189,
+      "stage": "combined_candidate_independent_intent_review",
+      "junit": {
+        "tests": 9,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/task-intent-independent/final-windows.xml",
+      "published_path": "examples/go-task-execution/task-intent-independent/final-windows.xml",
+      "sha256": "ba213c415ad2fc1cfa3999ca07e8df1431e73ff59bb17476f5806ab76db5667b",
+      "bytes": 1756,
+      "stage": "combined_candidate_independent_intent_review",
+      "junit": {
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "source_path": ".cache/task-intent-independent/final-linux.xml",
+      "published_path": "examples/go-task-execution/task-intent-independent/final-linux.xml",
+      "sha256": "9355465297d03fed68fba5e9a205ed56bfeb794fc569394c88a465ccbc580cbd",
+      "bytes": 1756,
+      "stage": "combined_candidate_independent_intent_review",
+      "junit": {
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    }
+  ],
+  "historical_reference_notes": [
+    {
+      "report": ".cache/task-execution-author/freeze.d-before-followups.json",
+      "referenced_path": ".cache/task-execution-author/README.md",
+      "original_expected_sha256": "758351f41712e8a9d91200d9039f4c8bb5582c032c694b337dff73fc955d1618",
+      "copied_current_sha256": "0214d2b6ff685f8a070206b5ac3f24e253d08b8b4b832a7d77407e1d1b1999a6",
+      "explanation": "The older freeze precedes README follow-up notes. Both original freeze JSON and the later README are copied unchanged. This documentation reference mismatch does not relabel historical product/test evidence."
+    }
+  ],
+  "verification": {
+    "all_copies_source_equals_destination": true,
+    "all_copy_sha256_and_lengths_verified": true,
+    "copied_file_count": 121,
+    "copied_bytes": 1667171,
+    "auto_collectable_python_files": 0,
+    "native_final_controller_files_verified_per_scenario": 128,
+    "native_final_scenarios_verified": 3
+  }
+}

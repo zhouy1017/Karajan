@@ -15,6 +15,7 @@ from pydantic import TypeAdapter, ValidationError
 
 from karajan.contracts.probe import Contract, Identifier
 from karajan.projects import ProjectRegistry
+from karajan.storage import open_database, require_schema
 
 from .models import (
     ApprovePlan,
@@ -74,12 +75,34 @@ class RunPlanner:
         projects: ProjectRegistry,
         *,
         admissions: Callable[[str], dict[str, Any]] | None = None,
+        existing_only: bool = False,
         clock: Callable[[], float] = time.time,
     ) -> None:
+        if existing_only and not projects.existing_only:
+            raise RunError("EXISTING_STORE_PARENT_MODE_REQUIRED")
         self.database = database
         self.projects = projects
         self.clock = clock
         self.admissions = admissions
+        self.existing_only = existing_only
+        if existing_only:
+            require_schema(
+                self.database,
+                {
+                    "runs": ["id", "snapshot"],
+                    "run_commands": ["principal", "key", "digest", "result", "error"],
+                    "run_events": [
+                        "sequence",
+                        "run_id",
+                        "kind",
+                        "principal",
+                        "command_key",
+                        "at",
+                        "result",
+                    ],
+                },
+            )
+            return
         with self._transaction() as db:
             db.execute(
                 "CREATE TABLE IF NOT EXISTS runs (id TEXT PRIMARY KEY, snapshot TEXT NOT NULL)"
@@ -97,7 +120,7 @@ class RunPlanner:
 
     @contextmanager
     def _transaction(self) -> Iterator[sqlite3.Connection]:
-        db = sqlite3.connect(self.database, timeout=10, isolation_level=None)
+        db = open_database(self.database, existing_only=self.existing_only, isolation_level=None)
         db.row_factory = sqlite3.Row
         try:
             db.execute("PRAGMA foreign_keys=ON")

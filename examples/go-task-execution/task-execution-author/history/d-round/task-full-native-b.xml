@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="6.150" timestamp="2026-09-06T21:44:06.319301+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_go_task_execution_native" name="test_actual_host_child_native_candidate_and_replay" time="2.430"><failure message="karajan.projects.registry.ProjectError: CONFIGURATION_NOT_STORABLE">projected = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x7ef98b6ff320&gt;, 'project_id': '50e17508-3347-4cc1-8...fixture'), 'repository': PosixPath('/tmp/karajan-task-full-b/test_actual_host_child_native_0/fixture/repository'), ...}
+tmp_path = PosixPath('/tmp/karajan-task-full-b/test_actual_host_child_native_0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x7ef98b6feed0&gt;
+artifacts = PosixPath('/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-artifacts')
+
+    def test_actual_host_child_native_candidate_and_replay(projected, tmp_path, accounting, artifacts):
+        repository = projected["repository"]
+        for path, data in {
+            "src/report.py": b"print('approved task')\n",
+            "tests/test_report.py": b"assert True\n",
+            "assets/opaque.bin": b"\x00\xff preserved\x01",
+            "tools/check.sh": b"#!/bin/sh\nexit 0\n",
+        }.items():
+            target = repository / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(data)
+        (repository / "tools/check.sh").chmod(0o755)
+        for arguments in (
+            ["add", "."],
+            [
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "-qm",
+                "Task baseline",
+            ],
+        ):
+            subprocess.run(["git", "-C", str(repository), *arguments], check=True, capture_output=True)
+        projects = projected["projects"]
+        current = projects.get(projected["project_id"])
+        projects.update(
+            current["id"],
+            {"name": current["name"], "base_ref": "main", "target_branch": "main", "allowed_target_branches": ["main"]},
+            expected_revision=current["revision"],
+            principal="owner",
+            command_key="baseline-refresh",
+        )
+        calls = []
+        errors = []
+        services = None
+    
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, *args):
+                pass
+    
+            def do_POST(self):
+                try:
+                    assert self.client_address[0] == "127.0.0.1"
+                    request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+                    operation = services.intents.read(run_id, op_id, principal="owner")
+                    call = services.journal.snapshot(operation["execution"]["intent"]["grant_id"])[
+                        "calls"
+                    ][-1]
+                    assert call["state"] == "send_unknown"
+                    assert call["request_context"]["accounted_input_tokens"] &gt; 0
+                    calls.append(
+                        {
+                            "sequence": call["sequence"],
+                            "prompt_retained": any(
+                                "approved-task-brief" in str(message.get("content"))
+                                for message in request["messages"]
+                            ),
+                            "tool_history": sum(
+                                message["role"] == "tool" for message in request["messages"]
+                            ),
+                        }
+                    )
+                    body = reply(len(calls))
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/event-stream")
+                    self.send_header("Content-Length", str(len(body)))
+                    self.end_headers()
+                    self.wfile.write(body)
+                except Exception as error:
+                    errors.append(type(error).__name__)
+                    self.send_error(500)
+    
+        server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        thread = Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+&gt;           services, run_id, op_id = approved_fixture(
+                projected, tmp_path, runtime_artifact(), accounting, artifacts, server.server_port
+            )
+
+tests/runs/test_go_task_execution_native.py:141: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/runs/task_execution_fixture.py:187: in approved_fixture
+    projects.apply_configuration(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;karajan.projects.registry.ProjectRegistry object at 0x7ef98b6ff320&gt;
+project_id = '50e17508-3347-4cc1-8760-dc60e59d38bb'
+preview_id = 'a3ecb972-7f54-497c-86bc-7b43560fbc64', expected_revision = 4
+command_key = 'fixture-apply', principal = 'owner'
+
+    def apply_configuration(
+        self,
+        project_id: str,
+        preview_id: str,
+        *,
+        expected_revision: int,
+        command_key: str,
+        principal: str,
+    ) -&gt; dict[str, Any]:
+        project_id = identifier(project_id)
+        preview_id = identifier(preview_id)
+        digest = hashlib.sha256(
+            encoded(["apply", project_id, preview_id, expected_revision]).encode()
+        ).hexdigest()
+        with self._transaction() as db:
+            previous = self._replay(db, principal, command_key, digest)
+            if previous is not None:
+                return previous
+            snapshot = self._current(db, project_id, expected_revision)
+            self._require_owner(db, project_id, principal)
+            row = db.execute(
+                "SELECT result, configuration FROM previews WHERE id=? AND project_id=?",
+                (preview_id, project_id),
+            ).fetchone()
+            if row is None:
+                raise ProjectError("PREVIEW_NOT_FOUND")
+            preview = json.loads(row["result"])
+            self._check_preview(db, project_id, preview, principal)
+            if not preview.get("can_save_draft") or row["configuration"] is None:
+&gt;               raise ProjectError("CONFIGURATION_NOT_STORABLE")
+E               karajan.projects.registry.ProjectError: CONFIGURATION_NOT_STORABLE
+
+backend/karajan/projects/registry.py:350: ProjectError</failure></testcase></testsuite></testsuites>

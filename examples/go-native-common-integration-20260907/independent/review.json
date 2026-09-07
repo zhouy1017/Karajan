@@ -1,0 +1,269 @@
+{
+  "schema_version": "karajan.common-repair-independent.v1",
+  "reviewer": "capacity_facts",
+  "decision": "accept_marker_and_current_static",
+  "findings": [],
+  "marker_sha256": "dc504c7cb1f360bd6632b7a8765ed5eb7ba71a68a04987f78a7446c9a54f011a",
+  "sources": {
+    "backend/karajan/isolation/go_task.py": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+    "backend/karajan/adapters/opencode/go_relay.py": "c45f2784bff518407fc90c3f61d9adf0a92b69f701b77dde1aef86e6b0b5d2cd",
+    "backend/karajan/orchestration/go_execution_intent.py": "4e72794f6aae846d31788d136dbe47bf15aa6fde839731c57d14f5aa86c5a8e9",
+    "backend/karajan/orchestration/go_task_execution.py": "789e9945a698d6f519f65db35205460ad35a0babf35aee2fbb5c6f82ec095b4d",
+    "tests/runs/test_go_task_execution.py": "dc504c7cb1f360bd6632b7a8765ed5eb7ba71a68a04987f78a7446c9a54f011a",
+    "tests/runs/test_go_native_diagnostic_contract.py": "7a3f9dc8501152f6fd4e3a1ef9393028633d5c992e445cb8d5874c27a0a57c0e",
+    "tests/isolation/test_go_task.py": "0784cb488b333815da50270030c74cd29cce446c036a411071e63a83fa596f76",
+    "tests/adapters/opencode/test_go_unix_relay.py": "0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f",
+    "tests/adapters/opencode/test_go_relay.py": "580b428c9169a6ecfcc50c06cb81099b8d257fc69921e3c5164a55dddbc07d23",
+    "tests/adapters/opencode/test_go_relay_context.py": "ae7bac8042c44e28e4e5dca06d0d839a61ed187816d68930307c25fb45596135"
+  },
+  "source_unchanged_during_review": true,
+  "merge_context": {
+    "head": "78c6dc8654099250bb0a3b7829538816d042cd93",
+    "merge_head": "046045f2d9573c3cae6375c38c8de2f6b4190d70"
+  },
+  "marker_only_ast_equal": true,
+  "common_source_count": 247,
+  "common_source_differences": {
+    "tests/runs/test_go_task_execution.py": {
+      "recorded": "64ca3965f03ea339041f7e2ba559af3b0e6355fceb92152ce4ccca70250b4f85",
+      "current": "dc504c7cb1f360bd6632b7a8765ed5eb7ba71a68a04987f78a7446c9a54f011a"
+    }
+  },
+  "common_evidence": {
+    "linux": {
+      "contracts": {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "tests": "284",
+        "time": "125.603",
+        "timestamp": "2026-09-07T10:20:05.225991+08:00",
+        "hostname": "ProArt-Zhou"
+      },
+      "source_differences": {
+        "tests/runs/test_go_task_execution.py": {
+          "recorded": "64ca3965f03ea339041f7e2ba559af3b0e6355fceb92152ce4ccca70250b4f85",
+          "current": "dc504c7cb1f360bd6632b7a8765ed5eb7ba71a68a04987f78a7446c9a54f011a"
+        }
+      },
+      "diagnostic_cases": [
+        {
+          "classname": "tests.runs.test_go_native_diagnostic_contract",
+          "name": "test_replacement_runner_cannot_attach_or_replace_original_failure",
+          "time": "0.487",
+          "result": "passed"
+        },
+        {
+          "classname": "tests.runs.test_go_native_diagnostic_contract",
+          "name": "test_invalid_cleanup_fact_is_rejected_before_persistence[native_stop-PRIVATE_DIAGNOSTIC_CONTENT_IS_NOT_A_CLEANUP_STATE]",
+          "time": "0.473",
+          "result": "passed"
+        },
+        {
+          "classname": "tests.runs.test_go_native_diagnostic_contract",
+          "name": "test_invalid_cleanup_fact_is_rejected_before_persistence[native_stop-True]",
+          "time": "0.465",
+          "result": "passed"
+        },
+        {
+          "classname": "tests.runs.test_go_native_diagnostic_contract",
+          "name": "test_invalid_cleanup_fact_is_rejected_before_persistence[native_stop-None]",
+          "time": "0.472",
+          "result": "passed"
+        },
+        {
+          "classname": "tests.runs.test_go_native_diagnostic_contract",
+          "name": "test_invalid_cleanup_fact_is_rejected_before_persistence[native_stop-value3]",
+          "time": "0.467",
+          "result": "passed"
+        },
+        {
+          "classname": "tests.runs.test_go_native_diagnostic_contract",
+          "name": "test_invalid_cleanup_fact_is_rejected_before_persistence[native_stop-closed]",
+          "time": "0.503",
+          "result": "passed"
+        },
+        {
+          "classname": "tests.runs.test_go_native_diagnostic_contract",
+          "name": "test_invalid_cleanup_fact_is_rejected_before_persistence[relay_status-PRIVATE_DIAGNOSTIC_CONTENT_IS_NOT_A_CLEANUP_STATE]",
+          "time": "0.470",
+          "result": "passed"
+        },
+        {
+          "classname": "tests.runs.test_go_native_diagnostic_contract",
+          "name": "test_invalid_cleanup_fact_is_rejected_before_persistence[relay_status-True]",
+          "time": "0.470",
+          "result": "passed"
+        },
+        {
+          "classname": "tests.runs.test_go_native_diagnostic_contract",
+          "name": "test_invalid_cleanup_fact_is_rejected_before_persistence[relay_status-None]",
+          "time": "0.487",
+          "result": "passed"
+        },
+        {
+          "classname": "tests.runs.test_go_native_diagnostic_contract",
+          "name": "test_invalid_cleanup_fact_is_rejected_before_persistence[relay_status-value3]",
+          "time": "0.487",
+          "result": "passed"
+        },
+        {
+          "classname": "tests.runs.test_go_native_diagnostic_contract",
+          "name": "test_invalid_cleanup_fact_is_rejected_before_persistence[relay_status-closed]",
+          "time": "0.472",
+          "result": "passed"
+        }
+      ],
+      "native_P": {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "tests": "3",
+        "time": "153.146",
+        "timestamp": "2026-09-07T10:22:09.263032+08:00",
+        "hostname": "ProArt-Zhou"
+      }
+    },
+    "win32": {
+      "contracts": {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "1",
+        "skipped": "0",
+        "tests": "251",
+        "time": "62.390",
+        "timestamp": "2026-09-07T10:20:00.171966+08:00",
+        "hostname": "ProArt-Zhou"
+      },
+      "source_differences": {
+        "tests/runs/test_go_task_execution.py": {
+          "recorded": "64ca3965f03ea339041f7e2ba559af3b0e6355fceb92152ce4ccca70250b4f85",
+          "current": "dc504c7cb1f360bd6632b7a8765ed5eb7ba71a68a04987f78a7446c9a54f011a"
+        }
+      },
+      "diagnostic_cases": [
+        {
+          "classname": "tests.runs.test_go_native_diagnostic_contract",
+          "name": "test_replacement_runner_cannot_attach_or_replace_original_failure",
+          "time": "1.031",
+          "result": "passed"
+        },
+        {
+          "classname": "tests.runs.test_go_native_diagnostic_contract",
+          "name": "test_invalid_cleanup_fact_is_rejected_before_persistence[native_stop-PRIVATE_DIAGNOSTIC_CONTENT_IS_NOT_A_CLEANUP_STATE]",
+          "time": "0.953",
+          "result": "passed"
+        },
+        {
+          "classname": "tests.runs.test_go_native_diagnostic_contract",
+          "name": "test_invalid_cleanup_fact_is_rejected_before_persistence[native_stop-True]",
+          "time": "1.023",
+          "result": "passed"
+        },
+        {
+          "classname": "tests.runs.test_go_native_diagnostic_contract",
+          "name": "test_invalid_cleanup_fact_is_rejected_before_persistence[native_stop-None]",
+          "time": "0.967",
+          "result": "passed"
+        },
+        {
+          "classname": "tests.runs.test_go_native_diagnostic_contract",
+          "name": "test_invalid_cleanup_fact_is_rejected_before_persistence[native_stop-value3]",
+          "time": "0.968",
+          "result": "passed"
+        },
+        {
+          "classname": "tests.runs.test_go_native_diagnostic_contract",
+          "name": "test_invalid_cleanup_fact_is_rejected_before_persistence[native_stop-closed]",
+          "time": "1.030",
+          "result": "passed"
+        },
+        {
+          "classname": "tests.runs.test_go_native_diagnostic_contract",
+          "name": "test_invalid_cleanup_fact_is_rejected_before_persistence[relay_status-PRIVATE_DIAGNOSTIC_CONTENT_IS_NOT_A_CLEANUP_STATE]",
+          "time": "0.959",
+          "result": "passed"
+        },
+        {
+          "classname": "tests.runs.test_go_native_diagnostic_contract",
+          "name": "test_invalid_cleanup_fact_is_rejected_before_persistence[relay_status-True]",
+          "time": "0.940",
+          "result": "passed"
+        },
+        {
+          "classname": "tests.runs.test_go_native_diagnostic_contract",
+          "name": "test_invalid_cleanup_fact_is_rejected_before_persistence[relay_status-None]",
+          "time": "0.983",
+          "result": "passed"
+        },
+        {
+          "classname": "tests.runs.test_go_native_diagnostic_contract",
+          "name": "test_invalid_cleanup_fact_is_rejected_before_persistence[relay_status-value3]",
+          "time": "0.939",
+          "result": "passed"
+        },
+        {
+          "classname": "tests.runs.test_go_native_diagnostic_contract",
+          "name": "test_invalid_cleanup_fact_is_rejected_before_persistence[relay_status-closed]",
+          "time": "0.960",
+          "result": "passed"
+        }
+      ]
+    }
+  },
+  "checks": {
+    "ruff": {
+      "argv": [
+        "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "."
+      ],
+      "returncode": 0,
+      "output": "ruff.log"
+    },
+    "mypy": {
+      "argv": [
+        "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "backend"
+      ],
+      "returncode": 0,
+      "output": "mypy.log"
+    }
+  },
+  "author_evidence_hashes": {
+    ".cache/luna-native-cross-platform-windows.xml": "e7853421025e50115192a8fefa7021c01f624b822941ed13c4e11c6047068992",
+    ".cache/luna-native-cross-platform-linux.xml": "e5bd38543773f356c4468936fbd1f2f54f0867d79aa811b1c2b1693eef67895d",
+    ".cache/common-repair-root/linux/contracts.xml": "d614ef7d95ae5b761f1cb7eb7fe99dd2da3d92ecad733878960972b0775904f8",
+    ".cache/common-repair-root/linux/native-long-path.xml": "71ed6f82cbb42084bb858faf281e421faa3a1dad5efe6b7dc7e29c245f3cf29e",
+    ".cache/common-repair-root/linux/long-path-observation.json": "881bf59c89bf72c8b124ee74ba8d5d9ac80238ac595566244b31977bfcfa9ced",
+    ".cache/common-repair-root/win32/contracts.xml": "21537924f4ebff663f8f3409c17375e0f87721aae866954eeea9f03958d53c68"
+  },
+  "own_behavior_rerun": false,
+  "provider_calls": 0,
+  "remote_CI": "not_run",
+  "artifacts": {
+    "checks.json": "4fe093280deeada04ee233166274852bcdcb2503068a243ce12322e3d144fed2",
+    "go_execution_intent.py.before.txt": "4e72794f6aae846d31788d136dbe47bf15aa6fde839731c57d14f5aa86c5a8e9",
+    "go_relay.py.before.txt": "c45f2784bff518407fc90c3f61d9adf0a92b69f701b77dde1aef86e6b0b5d2cd",
+    "go_task.py.before.txt": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+    "go_task_execution.py.before.txt": "789e9945a698d6f519f65db35205460ad35a0babf35aee2fbb5c6f82ec095b4d",
+    "marker-check.json": "ec3eb06b97476b0fde2c878707747be6785625f2dc20a56cda0f4097789c83bb",
+    "mypy.log": "0fd28b277f6e98e8effe0f968e9e5806e258d7effddfe7c7bc46acdf973ad56b",
+    "README.md": "cc87e9ad021837e7bce95b74791ce7bc16b9bbcfb050dea1ef2b45d5444980ee",
+    "ruff.log": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "source-after.json": "d5ca893c9aa759987832307e54dc4648f104522b1f81744392b989d2e8fc7381",
+    "source-before.json": "d5ca893c9aa759987832307e54dc4648f104522b1f81744392b989d2e8fc7381",
+    "test_go_native_diagnostic_contract.py.before.txt": "7a3f9dc8501152f6fd4e3a1ef9393028633d5c992e445cb8d5874c27a0a57c0e",
+    "test_go_relay.py.before.txt": "580b428c9169a6ecfcc50c06cb81099b8d257fc69921e3c5164a55dddbc07d23",
+    "test_go_relay_context.py.before.txt": "ae7bac8042c44e28e4e5dca06d0d839a61ed187816d68930307c25fb45596135",
+    "test_go_task.py.before.txt": "0784cb488b333815da50270030c74cd29cce446c036a411071e63a83fa596f76",
+    "test_go_task_execution.py.before.txt": "dc504c7cb1f360bd6632b7a8765ed5eb7ba71a68a04987f78a7446c9a54f011a",
+    "test_go_unix_relay.py.before.txt": "0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f"
+  }
+}

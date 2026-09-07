@@ -1,0 +1,129 @@
+{
+  "attempt": 1,
+  "conclusion": "failure",
+  "databaseId": 34050183894,
+  "event": "push",
+  "headSha": "c80e41abfdc13b13034f6c82ea3fe47eb71a3b72",
+  "jobs": [
+    {
+      "completedAt": "2026-09-06T17:58:11Z",
+      "conclusion": "success",
+      "databaseId": 101532317094,
+      "name": "frontend-quality",
+      "startedAt": "2026-09-06T17:57:44Z",
+      "status": "completed",
+      "steps": [],
+      "url": "https://github.com/zhouy1017/Karajan/actions/runs/34050183894/job/101532317094"
+    },
+    {
+      "completedAt": "2026-09-06T18:24:21Z",
+      "conclusion": "success",
+      "databaseId": 101532317154,
+      "name": "python-quality (windows-2022, Python 3.12)",
+      "startedAt": "2026-09-06T17:57:45Z",
+      "status": "completed",
+      "steps": [
+        {
+          "conclusion": "skipped",
+          "name": "Permit required namespaces on the ephemeral Linux test runner",
+          "number": 10
+        }
+      ],
+      "url": "https://github.com/zhouy1017/Karajan/actions/runs/34050183894/job/101532317154"
+    },
+    {
+      "completedAt": "2026-09-06T18:17:47Z",
+      "conclusion": "failure",
+      "databaseId": 101532317245,
+      "name": "python-quality (ubuntu-24.04, Python 3.12)",
+      "startedAt": "2026-09-06T17:57:45Z",
+      "status": "completed",
+      "steps": [
+        {
+          "conclusion": "failure",
+          "name": "Run tests, including contract tests",
+          "number": 13
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Check Go diagnostic boundaries without provider credentials",
+          "number": 14
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Check approved-routing public boundaries without provider credentials",
+          "number": 15
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Check durable task admission and recovery without provider credentials",
+          "number": 16
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Check isolated Go runtime independent boundaries without provider credentials",
+          "number": 17
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Check persistent Go qualification independent boundaries without credentials",
+          "number": 18
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Check task context and validation policy independent boundaries",
+          "number": 19
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Check reserved task startup independent boundaries",
+          "number": 20
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Check stopped projection and writer capture independent cases",
+          "number": 21
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Check projected qualification and approved task scope independently",
+          "number": 22
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Post Set up pinned Node.js for the runtime probe",
+          "number": 41
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Post Set up the pinned uv version",
+          "number": 42
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Post Set up Python 3.12",
+          "number": 43
+        }
+      ],
+      "url": "https://github.com/zhouy1017/Karajan/actions/runs/34050183894/job/101532317245"
+    },
+    {
+      "completedAt": "2026-09-06T18:24:25Z",
+      "conclusion": "failure",
+      "databaseId": 101536110971,
+      "name": "quality-gate",
+      "startedAt": "2026-09-06T18:24:23Z",
+      "status": "completed",
+      "steps": [
+        {
+          "conclusion": "failure",
+          "name": "Require every upstream check to succeed",
+          "number": 2
+        }
+      ],
+      "url": "https://github.com/zhouy1017/Karajan/actions/runs/34050183894/job/101536110971"
+    }
+  ],
+  "status": "completed",
+  "url": "https://github.com/zhouy1017/Karajan/actions/runs/34050183894"
+}
