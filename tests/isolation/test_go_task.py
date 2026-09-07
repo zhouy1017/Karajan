@@ -6,17 +6,34 @@ must replace the no-op business guards with actual durable controller services.
 
 import hashlib
 import json
+import os
+import stat
 import sys
+import tempfile
 import time
 from contextlib import contextmanager
 from dataclasses import FrozenInstanceError, replace
+from pathlib import Path
+from typing import Any
 
 import httpx
+import karajan.isolation.go_task as go_task_module
 import pytest
 from karajan.adapters.opencode.go_journal import GoCallJournal
 from karajan.adapters.opencode.go_relay import GoRelayAuthorization, GoRelayContext
+from karajan.isolation._opencode_capture import ProjectionEntry, StoppedProjection
+from karajan.isolation._opencode_inner import configuration
 from karajan.isolation.go_probe import source_digest
-from karajan.isolation.go_task import GoTaskFile, GoTaskInput, execute_go_task, native_task_source
+from karajan.isolation.go_task import (
+    GoTaskFile,
+    GoTaskInput,
+    _cleanup_relay_socket_root,
+    _failure_diagnostic,
+    _relay_socket_root,
+    _safe_failure_code,
+    execute_go_task,
+    native_task_source,
+)
 from karajan.projects.credential_sources import ResolvedCredential
 from test_go_context import accounting as accounting
 from test_go_context import artifacts as artifacts
@@ -26,6 +43,21 @@ SECRET = "synthetic-task-credential-not-a-provider-key"
 INITIAL = b"def add(a, b):\n    return a - b\n"
 EXPECTED = b"def add(a, b):\n    return a + b\n"
 REFERENCE = b"Contract: add returns the sum of its two arguments.\n"
+
+
+class NativeStartFailure:
+    stop = "unknown"
+
+    def __init__(self, runtime, directory, socket_path, capability, *, projection):
+        self.workspace = directory / "workspace"
+        self.workspace.mkdir(parents=True)
+        self.socket_path = socket_path
+
+    def capture_projection(self):
+        raise RuntimeError("TASK_CAPTURE_NO_SUCCESSFUL_START")
+
+    def close(self):
+        return {"local_stop": self.stop}
 
 
 def file(path, content, writable):
@@ -58,6 +90,16 @@ def test_input_is_immutable_and_descriptor_contains_only_bound_summaries():
         task.prompt = "changed"
     descriptor["files"].clear()
     assert len(task.descriptor()["files"]) == 1
+
+
+def test_failure_codes_reject_uppercase_exception_content():
+    assert (
+        _safe_failure_code(
+            RuntimeError("PRIVATE_CUSTOMER_CASE_ACME_INTERNAL_2026"),
+            "UNCLASSIFIED_NATIVE_FAILURE",
+        )
+        == "UNCLASSIFIED_NATIVE_FAILURE"
+    )
 
 
 def prepared(tmp_path, accounting):
@@ -160,6 +202,246 @@ def test_real_native_task_returns_owned_stopped_projection_and_durable_usage(tmp
     assert task.prompt not in json.dumps(result.report)
     result.report["status"] = "forged"
     assert result.report["status"] == "completed"
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux runtime required")
+def test_execute_go_task_uses_short_controller_relay_root_on_long_operation_directory(
+    tmp_path, accounting, monkeypatch
+):
+    runtime, task, credential, auth, context = prepared(tmp_path, accounting)
+    relay_roots = []
+    observed_socket_paths: list[Path] = []
+    upstream_values: dict[str, Any] = {}
+
+    class FakeNative:
+        def __init__(
+            self, runtime, directory, upstream_socket, capability, *_, projection=None, **__
+        ):
+            self.runtime = runtime
+            self.directory = directory
+            self.upstream_socket = upstream_socket
+            self.workspace = directory / "workspace"
+            self.workspace.mkdir(parents=True, exist_ok=True)
+            self.capability = capability
+            self._projection = projection or []
+            self._requests = 0
+            observed_socket_paths.append(upstream_socket)
+
+        def start(self) -> dict[str, Any]:
+            return self.snapshot()
+
+        def snapshot(self) -> dict[str, Any]:
+            return {
+                "state": "running",
+                "namespace_pid": 1,
+                "host_mount_visible": False,
+                "wsl_interop_visible": False,
+                "native_control_fd_inherited": False,
+                "network_interfaces": ["lo"],
+                "ipv4_routes": [],
+                "no_new_privileges": True,
+                "capabilities": {
+                    key: "0000000000000000" for key in ("effective", "permitted", "bounding")
+                },
+            }
+
+        def request(self, method: str, route: str, body: dict[str, Any] | None = None) -> Any:
+            if method == "GET" and route == "/config":
+                expected = configuration("<local-capability>", projection=self._projection)
+                return {
+                    "model": expected["model"],
+                    "permission": expected["permission"],
+                    "fixture": "synthetic",
+                }
+            if method == "POST" and route == "/session":
+                return {"id": "session"}
+            if route == "/session/session/prompt_async":
+                return {}
+            if route.startswith("/session/session/message"):
+                self._requests += 1
+                payload = {
+                    "model": "glm-5.3-flash",
+                    "stream": True,
+                    "max_tokens": 4096,
+                    "messages": [{"role": "user", "content": "fixed fixture request"}],
+                }
+                with httpx.Client(
+                    transport=httpx.HTTPTransport(uds=str(self.upstream_socket)),
+                    trust_env=False,
+                ) as client:
+                    upstream = client.post(
+                        "http://relay/v1/chat/completions",
+                        json=payload,
+                        headers={
+                            "Authorization": f"Bearer {self.capability}",
+                            "x-opencode-session": "session",
+                        },
+                    )
+                assert upstream.status_code == 200
+                index = self._requests
+                if index == 2:
+                    (self.workspace / "src/add.py").write_bytes(
+                        b"def add(a, b):\n    return a + b\n"
+                    )
+                part = []
+                if index in (1, 2):
+                    part.append(
+                        {
+                            "type": "tool",
+                            "tool": "read" if index == 1 else "edit",
+                            "state": {
+                                "status": "completed",
+                                "input": {
+                                    "filePath": "/workspace/src/add.py",
+                                },
+                            },
+                        }
+                    )
+                return [
+                    {
+                        "info": {
+                            "role": "assistant",
+                            "modelID": "glm-5.3-flash",
+                            "providerID": "opencode-go",
+                            "time": {"completed": "1"} if index == 3 else {},
+                            "finish": "stop" if index == 3 else "tool-calls",
+                        },
+                        "parts": part,
+                    }
+                ]
+            raise AssertionError(f"unexpected route {method} {route}")
+
+        def capture_projection(self) -> StoppedProjection:
+            projection = tuple(ProjectionEntry(**row) for row in self._projection)
+            return StoppedProjection(
+                "0" * 64,
+                projection,
+                tuple(
+                    (row["path"], (self.workspace / row["path"]).read_bytes())
+                    for row in self._projection
+                ),
+                json.dumps({"local_stop": "confirmed"}, sort_keys=True, separators=(",", ":")),
+            )
+
+        def close(self) -> dict[str, Any]:
+            return {"local_stop": "confirmed"}
+
+    def synthetic_relay_root():
+        root = Path(tempfile.mkdtemp(prefix="go-relay-root-", dir="/tmp"))
+        relay_roots.append(root)
+        os.chmod(root, 0o700)
+        identity = root.lstat()
+        return go_task_module._RelaySocketRoot(
+            root, identity.st_dev, identity.st_ino, identity.st_uid, stat.S_IMODE(identity.st_mode)
+        )
+
+    monkeypatch.setattr(go_task_module, "_relay_socket_root", synthetic_relay_root)
+    monkeypatch.setattr(go_task_module, "IsolatedOpenCode", FakeNative)
+
+    responses = []
+
+    def receive(request):
+        responses.append(request)
+        return response(1)
+
+    result = execute_go_task(
+        runtime,
+        tmp_path / ("operation-" + ("x" * 220)),
+        task,
+        credential,
+        auth,
+        context,
+        start_native=lambda native: native.start(),
+        send_guard=permitted,
+        client_factory=lambda: httpx.Client(transport=httpx.MockTransport(receive)),
+    )
+    assert result.report["status"] == "completed", result.report
+    assert len(relay_roots) == 1
+    assert relay_roots[0].exists() is False
+    assert len(observed_socket_paths) == 1
+    assert len(str(observed_socket_paths[0])) <= 107
+    assert str(observed_socket_paths[0]).startswith("/tmp/")
+    assert not relay_roots[0].exists()
+    upstream_values["relay_socket"] = str(observed_socket_paths[0])
+    assert upstream_values["relay_socket"] == str(observed_socket_paths[0])
+    assert len(responses) == 3
+    assert result.capture is not None
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux runtime required")
+def test_unknown_native_stop_retains_empty_relay_root(tmp_path, accounting, monkeypatch):
+    runtime, task, credential, auth, context = prepared(tmp_path, accounting)
+    leases = []
+    allocate = _relay_socket_root
+
+    def allocated():
+        lease = allocate()
+        leases.append(lease)
+        return lease
+
+    monkeypatch.setattr(go_task_module, "_relay_socket_root", allocated)
+    monkeypatch.setattr(go_task_module, "IsolatedOpenCode", NativeStartFailure)
+
+    def start_unknown(native):
+        raise RuntimeError("TASK_NATIVE_START_RESPONSE_UNKNOWN")
+
+    result = execute_go_task(
+        runtime,
+        tmp_path / "operation",
+        task,
+        credential,
+        auth,
+        context,
+        start_native=start_unknown,
+        send_guard=permitted,
+    )
+    assert result.capture is None
+    assert result.report["native_cleanup"]["local_stop"] == "unknown"
+    assert result.report["relay_cleanup"]["status"] == "closed"
+    assert leases[0].path.exists()
+    _cleanup_relay_socket_root(leases[0])
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux runtime required")
+def test_relay_socket_root_cleanup_refuses_replaced_path(tmp_path):
+    lease = _relay_socket_root()
+    replacement = tmp_path / "replacement"
+    lease.path.rename(replacement)
+    lease.path.symlink_to(replacement, target_is_directory=True)
+    with pytest.raises(RuntimeError, match="TASK_RELAY_SOCKET_ROOT_IDENTITY_CHANGED"):
+        _cleanup_relay_socket_root(lease)
+    assert replacement.is_dir()
+    assert lease.path.is_symlink()
+    lease.path.unlink()
+    replacement.rmdir()
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux runtime required")
+def test_relay_socket_root_cleanup_refuses_unexpected_assets():
+    lease = _relay_socket_root()
+    (lease.path / "unexpected").write_text("must remain")
+    with pytest.raises(RuntimeError, match="TASK_RELAY_SOCKET_ROOT_CONTENTS_PRESENT"):
+        _cleanup_relay_socket_root(lease)
+    assert (lease.path / "unexpected").read_text() == "must remain"
+    (lease.path / "unexpected").unlink()
+    _cleanup_relay_socket_root(lease)
+
+
+def test_native_failure_diagnostic_is_content_free_and_identity_bound():
+    report = {"runtime": {"state": "running"}, "native_cleanup": {"local_stop": "unknown"}}
+    diagnostic = _failure_diagnostic(
+        RuntimeError("/private/prompt-and-key: native failure"), native=object(), report=report
+    )
+    assert diagnostic == {
+        "exception_type": "RuntimeError",
+        "reason_code": "UNCLASSIFIED_NATIVE_FAILURE",
+        "identity": {
+            "native_started": True,
+            "runtime_state": "running",
+            "local_stop": "unknown",
+        },
+    }
+    assert "prompt-and-key" not in json.dumps(diagnostic)
 
 
 def response(index, *, usage=True):
