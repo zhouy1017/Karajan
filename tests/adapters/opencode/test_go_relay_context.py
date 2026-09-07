@@ -1,5 +1,6 @@
 """Actual HTTP relay and durable journal; synthetic upstream and credentials."""
 
+import threading
 from typing import Any
 
 import httpx
@@ -209,11 +210,39 @@ def test_context_receipt_cannot_be_replaced_by_replaying_a_logical_call(tmp_path
 
 
 @pytest.mark.parametrize("violation", ["missing", "input", "output", "transport"])
-def test_failed_context_observation_revokes_remaining_sends(tmp_path, accounting, violation):
+def test_failed_context_observation_revokes_remaining_sends(
+    tmp_path, accounting, violation, monkeypatch: pytest.MonkeyPatch
+):
     journal = GoCallJournal(tmp_path / "calls.sqlite", clock=lambda: 1000.0)
     binding = task_binding()
     grant = journal.create_grant(binding, grant_id="task")
     upstream = []
+    completion_started = threading.Event()
+    completion_release = threading.Event()
+    completion_finished = threading.Event()
+    completion_committed = threading.Event()
+    completion_errors: list[BaseException] = []
+    original_complete_call = journal.complete_call
+
+    def controlled_completion(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        """Expose the owned SQLite commit without changing relay behavior."""
+        completion_started.set()
+        if not completion_release.wait(timeout=5):
+            error = TimeoutError("controlled Journal completion was not released")
+            completion_errors.append(error)
+            completion_finished.set()
+            raise error
+        try:
+            result = original_complete_call(*args, **kwargs)
+        except BaseException as error:
+            completion_errors.append(error)
+            completion_finished.set()
+            raise
+        completion_committed.set()
+        completion_finished.set()
+        return result
+
+    monkeypatch.setattr(journal, "complete_call", controlled_completion)
 
     def receive(request):
         upstream.append(request)
@@ -251,6 +280,12 @@ def test_failed_context_observation_revokes_remaining_sends(tmp_path, accounting
     try:
         assert post(relay).status_code == 502
         assert len(upstream) == 1
+        assert completion_started.wait(timeout=5), "Journal completion was never entered"
+        assert not completion_committed.is_set(), "Journal completed before the HTTP response"
+        completion_release.set()
+        assert completion_finished.wait(timeout=5), "Journal completion did not finish"
+        assert completion_committed.is_set(), "Journal completion did not commit"
+        assert not completion_errors
         assert journal.snapshot("task")["state"] == "revoked"
         recorded = journal.snapshot("task")["calls"][0]
         assert recorded["state"] == (
@@ -261,6 +296,7 @@ def test_failed_context_observation_revokes_remaining_sends(tmp_path, accounting
         assert len(upstream) == 1
         assert journal.snapshot("task")["request_count"] == 1
     finally:
+        completion_release.set()
         assert relay.close()["status"] == "closed"
 
 
