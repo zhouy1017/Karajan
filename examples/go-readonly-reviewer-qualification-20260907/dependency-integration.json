@@ -1,0 +1,18 @@
+{
+  "implementation_commit": "1a000c5600108cab2b0128d272dd01e3510f1aea",
+  "dependency_integration_commit": "a453aa9080a084f935985627f7608fa8b500fa6f",
+  "included_current_heads": [
+    "f3704e606eba2dbd69c99624d73e0f3f8bbaa878",
+    "f5e43750eaacc792aef6e0c21a972143f66b03d1",
+    "37daff5fa16322c4453bde40d342776f8a1b4fa7",
+    "fdf497c249d3af869af5361b943f78346e084d07"
+  ],
+  "product_test_frontend_delta": [],
+  "conflicts": [
+    {
+      "path": "docs/planning/profile-membership-issue.md",
+      "resolution": "Original contract bytes normalized equal on both sides; retain HEAD with the longer already-published historical progress. No product conflict."
+    }
+  ],
+  "known_pending_ci_repair": "PR103 Linux concurrent cancel result publication; Luna owns validated correction, not included at this freeze."
+}

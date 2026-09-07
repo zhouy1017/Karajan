@@ -1,0 +1,16 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Users\Chooo\Playground\Karajan\.cache\go-reviewer-qualification
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 36 items
+
+tests\isolation\test_go_reviewer_probe.py .ssss                          [ 13%]
+tests\isolation\test_go_reviewer_probe_boundaries.py ................... [ 66%]
+............                                                             [100%]
+
+- generated xml file: C:\Users\Chooo\Playground\Karajan\.cache\go-reviewer-qualification\.cache\reviewer-observer-author\final-windows.xml -
+=========================== short test summary info ===========================
+SKIPPED [1] \mnt\c\Users\Chooo\Playground\Karajan\.cache\go-reviewer-qualification\tests\isolation\test_go_reviewer_probe.py:49: Fixed Linux source required
+SKIPPED [3] \mnt\c\Users\Chooo\Playground\Karajan\.cache\go-reviewer-qualification\tests\isolation\test_go_reviewer_probe.py:167: Fixed Linux native required
+======================== 32 passed, 4 skipped in 2.28s ========================

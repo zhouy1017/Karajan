@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="2.888" timestamp="2026-09-07T11:45:38.171214+08:00" hostname="ProArt-Zhou"><testcase classname="tests.isolation.test_go_reviewer_probe" name="test_actual_readonly_review_has_new_session_complete_final_and_retained_reads[clean_review]" time="0.646"><failure message="ImportError: cannot import name 'observe_go_reviewer_tools' from 'karajan.isolation.go_reviewer_probe' (/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-reviewer-qualification/backend/karajan/isolation/go_reviewer_probe.py)">tmp_path = PosixPath('/tmp/karajan-reviewer-observer-red/test_actual_readonly_review_ha0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x7631debbcf50&gt;
+scenario = 'clean_review'
+
+    @pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux native required")
+    @pytest.mark.parametrize("scenario", ["clean_review", "defect_review", "denied_read"])
+    def test_actual_readonly_review_has_new_session_complete_final_and_retained_reads(
+        tmp_path, accounting, scenario
+    ):
+&gt;       from karajan.isolation.go_reviewer_probe import observe_go_reviewer_tools
+E       ImportError: cannot import name 'observe_go_reviewer_tools' from 'karajan.isolation.go_reviewer_probe' (/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-reviewer-qualification/backend/karajan/isolation/go_reviewer_probe.py)
+
+tests/isolation/test_go_reviewer_probe.py:130: ImportError</failure></testcase></testsuite></testsuites>

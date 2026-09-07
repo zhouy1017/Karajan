@@ -1,0 +1,127 @@
+"""Independent C: real Store/Suite/Journal; observer and source explicitly replaced.
+
+These are controller scheduling assertions, not native/provider qualifications.
+The observer double lets a completed first scenario invalidate current authority.
+"""
+
+from copy import deepcopy
+import importlib.util
+import os
+from pathlib import Path
+import sys
+
+import pytest
+from karajan.adapters.opencode.go_context import GoRequestAccounting
+from karajan.projects.go_reviewer_suite import FixedGoReviewerSuite
+from karajan.projects.qualification import ProfileQualificationStore, QualificationError
+from test_go_context import artifacts
+from test_readonly_reviewer_qualification_store import (
+    case,
+    facts,
+    projected,
+    qualify,
+    reviewer_case,
+)
+
+__all__ = ["artifacts", "case", "projected", "reviewer_case"]
+
+
+if os.environ.get("KARAJAN_INDEPENDENT_SOURCE") == "before":
+    def load_before(filename, module_name):
+        from importlib.machinery import SourceFileLoader
+
+        path = Path(__file__).with_name(filename + ".before.py.txt")
+        loader = SourceFileLoader(module_name, str(path))
+        spec = importlib.util.spec_from_loader(module_name, loader)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        loader.exec_module(module)
+        return module
+
+    ProfileQualificationStore = load_before(
+        "qualification.py", "karajan.projects._independent_before_store"
+    ).ProfileQualificationStore
+    FixedGoReviewerSuite = load_before(
+        "go_reviewer_suite.py", "karajan.projects._independent_before_suite"
+    ).FixedGoReviewerSuite
+
+
+@pytest.mark.parametrize("change", ["none", "credential_revoke", "profile_disabled"])
+def test_changed_current_authority_stops_before_next_scenario(
+    reviewer_case, artifacts, tmp_path, monkeypatch, change
+):
+    case = reviewer_case
+    work = tmp_path / "concrete-suite"
+    work.mkdir(mode=0o700)
+    suite = FixedGoReviewerSuite(
+        tmp_path / "inert-runtime",
+        work,
+        case["suite"].journal,
+        accounting=GoRequestAccounting(artifacts),
+        clock=lambda: case["clock"][0],
+    )
+    source = deepcopy(case["reviewer_suite"].source())
+    monkeypatch.setattr(suite, "source", lambda: deepcopy(source))
+    original_observe = suite.observe
+    def checked_observe(*args, **kwargs):
+        try:
+            return original_observe(*args, **kwargs)
+        except Exception as error:
+            print("SYNTHETIC_OBSERVER_SETUP_ERROR", type(error).__name__, str(error))
+            raise
+    monkeypatch.setattr(suite, "observe", checked_observe)
+    # Result checking is outside this specific authority scheduling boundary.
+    monkeypatch.setattr(suite, "_validate_report", lambda *args: [])
+    case["store"] = ProfileQualificationStore(
+        case["projects"],
+        clock=lambda: case["clock"][0],
+        credentials=case["credentials"],
+        go_suite=case["suite"],
+        reviewer_suite=suite,
+    )
+    entered = []
+
+    def observer(runtime, directory, secret, authorization, *, scenario, **kwargs):
+        entered.append(scenario)
+        if len(entered) == 1 and change == "credential_revoke":
+            case["credentials"].revoke(
+                case["project_id"],
+                "secret:go",
+                authorization.binding["auth_generation"],
+                principal="owner",
+                command_key="independent-revoke",
+            )
+        elif len(entered) == 1 and change == "profile_disabled":
+            projects = case["projects"]
+            config = projects.get_configuration(case["project_id"])["configuration"]
+            reviewer = next(
+                row for row in config["resources"]["profiles"] if row["id"] == "readonly-reviewer"
+            )
+            reviewer["enabled"] = False
+            preview = projects.preview_configuration(
+                case["project_id"], config, command_key="disable-preview", principal="owner"
+            )
+            projects.apply_configuration(
+                case["project_id"],
+                preview["preview_id"],
+                expected_revision=projects.get(case["project_id"])["revision"],
+                command_key="disable-apply",
+                principal="owner",
+            )
+        return {"session": {"id": "synthetic-" + scenario}, "test_double": True}
+
+    monkeypatch.setattr(
+        "karajan.isolation.go_reviewer_probe.observe_go_reviewer_tools", observer
+    )
+    result = qualify(case)
+    assert result["status"] == ("passed" if change == "none" else "failed"), result
+    assert result["observation"]["grant_cleanup"] == [
+        {"grant_id": row["grant_id"], "state": "revoked"}
+        for row in result["binding"]["execution_start"]["scenarios"]
+    ]
+    assert qualify(case) == result
+    if change != "none":
+        with pytest.raises(QualificationError):
+            facts(case)
+    expected = ["clean_review", "defect_review", "denied_read"] if change == "none" else ["clean_review"]
+    assert entered == expected, {"change": change, "entered_after_invalidation": entered}

@@ -1,0 +1,211 @@
+{
+  "scope": "Independent documentation/archive Standards and Spec only; not Suite code review or new execution",
+  "head": "a453aa9080a084f935985627f7608fa8b500fa6f",
+  "inputs": {
+    "docs/implementation/go-readonly-reviewer-qualification.md": "5f71a534845f1457642716e27db119d173c80b1715b0f89662b060c3a2cd0d57",
+    "examples/go-readonly-reviewer-qualification-20260907/README.md": "722be333672dc59b746d38775c60292450271623e3b5b5f149b5f02bb877f3f3",
+    "examples/go-readonly-reviewer-qualification-20260907/publication-map.json": "45c00e3953fb19426abdf8176a26122c7d4dc3e5e8d513d69449246fc5144ac8",
+    "examples/go-readonly-reviewer-qualification-20260907/source-to-code.json": "a55c82d4a7ee3ead27cd60f7c5f64b5eb9253b8d2c10925058183aa8337b48a6"
+  },
+  "map": {
+    "count": 203,
+    "unique_published_paths": 203,
+    "all_original_and_published_bytes_sha_size_match": true,
+    "errors": []
+  },
+  "source": {
+    "code_commit": "1a000c5600108cab2b0128d272dd01e3510f1aea",
+    "module_count": 145,
+    "P_source_count": 145,
+    "same_path_set": true,
+    "non_exact": [
+      {
+        "path": "backend/karajan/projects/qualification.py",
+        "local_sha256": "5faa73df7095e76141bc44974b977e8d3253eea0d2fddd6717617c7eb7154ad2",
+        "git_sha256": "b70cdfe6b76d6aca316b571f3d1c77787be461095cc4d078650bf6048e3de133",
+        "only_crlf_to_lf": true,
+        "local_crlf_count": 1360,
+        "git_crlf_count": 0
+      }
+    ],
+    "invalid": []
+  },
+  "xml": {
+    "root/root-current-guard.xml": {
+      "tests": 18.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 6.615
+    },
+    "suite/linux.xml": {
+      "tests": 66.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 77.579
+    },
+    "reviewer-root-independent/final-six.xml": {
+      "tests": 6.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 5.888
+    },
+    "reviewer-observer-author/final-negative-linux.xml": {
+      "tests": 41.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 70.399
+    },
+    "root/root-final-combination-windows-pass.xml": {
+      "tests": 153.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 2.0,
+      "time": 128.754
+    },
+    "root/root-final-factory-assets.xml": {
+      "tests": 12.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 4.785
+    }
+  },
+  "integration": {
+    "commit": "a453aa9080a084f935985627f7608fa8b500fa6f",
+    "parents": [
+      "9f010eb77104a007d8e7af75d1dec71500e94e3a",
+      "fdf497c249d3af869af5361b943f78346e084d07"
+    ],
+    "code_is_ancestor": true,
+    "behavior_paths_changed": [],
+    "trees": {
+      "backend": {
+        "code": "b46645cc5e63be4faa115c0d2e4fbab6c4cdc1a4",
+        "integration": "b46645cc5e63be4faa115c0d2e4fbab6c4cdc1a4"
+      },
+      "tests": {
+        "code": "d2a3a69ed32c90f15cfb80b6331fb2f6ccf97728",
+        "integration": "d2a3a69ed32c90f15cfb80b6331fb2f6ccf97728"
+      },
+      "frontend": {
+        "code": "565dd31cebeb7c994bef33e3bfd156ac7c0c3c5d",
+        "integration": "565dd31cebeb7c994bef33e3bfd156ac7c0c3c5d"
+      }
+    }
+  },
+  "journal_relay_xml": {
+    "journal-relay/compatibility-windows.xml": {
+      "tests": 319.0,
+      "failures": 1.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 28.393
+    },
+    "journal-relay/completion-timing-target.xml": {
+      "tests": 3.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 2.099
+    },
+    "journal-relay/journal-first-green.xml": {
+      "tests": 1.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 1.484
+    },
+    "journal-relay/journal-first-red.xml": {
+      "tests": 1.0,
+      "failures": 1.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 1.712
+    },
+    "journal-relay/new-contract-linux.xml": {
+      "tests": 61.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 6.279
+    },
+    "journal-relay/new-contract-windows.xml": {
+      "tests": 61.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 5.017
+    },
+    "journal-relay/readonly-request-green.xml": {
+      "tests": 6.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 1.887
+    },
+    "journal-relay/readonly-request-red.xml": {
+      "tests": 6.0,
+      "failures": 2.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 1.96
+    },
+    "journal-relay/readonly-response-green.xml": {
+      "tests": 4.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 1.735
+    },
+    "journal-relay/readonly-response-red.xml": {
+      "tests": 4.0,
+      "failures": 1.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 1.878
+    },
+    "journal-relay/relay-first-green.xml": {
+      "tests": 1.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 1.477
+    },
+    "journal-relay/relay-first-red.xml": {
+      "tests": 1.0,
+      "failures": 1.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 1.547
+    }
+  },
+  "root_log_paths": [
+    "root/root-author-evidence.md",
+    "root/root-combination-windows.txt",
+    "root/root-combination-windows.xml",
+    "root/root-current-guard.txt",
+    "root/root-current-guard.xml",
+    "root/root-factory-pass1.txt",
+    "root/root-factory-pass1.xml",
+    "root/root-factory-pass2.txt",
+    "root/root-factory-pass2.xml",
+    "root/root-final-combination-windows-pass.txt",
+    "root/root-final-combination-windows-pass.xml",
+    "root/root-final-combination-windows.txt",
+    "root/root-final-combination-windows.xml",
+    "root/root-final-factory-assets.txt",
+    "root/root-final-factory-assets.xml",
+    "root/root-final-full-ruff.txt",
+    "root/root-final-mypy.txt",
+    "root/root-final-ruff.txt",
+    "root/root-lowlevel-review.md",
+    "root/root-scope-pass2.txt",
+    "root/root-scope-pass2.xml",
+    "root/root-scope-pass3.txt",
+    "root/root-scope-pass3.xml"
+  ]
+}

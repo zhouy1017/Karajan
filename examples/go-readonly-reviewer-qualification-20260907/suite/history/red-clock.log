@@ -1,0 +1,38 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_________ test_clock_becomes_unavailable_after_effect_retains_cleanup _________
+
+synthetic_suite = (<karajan.projects.go_reviewer_suite.FixedGoReviewerSuite object at 0x0000023956B1FF50>, <karajan.adapters.opencode.go...o-channel', 'account_id': 'go-account', 'billing_path': 'subscription_only', 'approved_data_destination': True}}, ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000023956B1FDA0>
+
+    def test_clock_becomes_unavailable_after_effect_retains_cleanup(synthetic_suite, monkeypatch):
+        suite, journal, start = synthetic_suite
+    
+        def observed(runtime, directory, secret, authorization, *, scenario, **kwargs):
+            report = synthetic_observation(suite, authorization, scenario)
+    
+            def missing():
+                raise OSError("synthetic clock unavailable")
+    
+            suite.clock = missing
+            return report
+    
+        install_observer(monkeypatch, observed)
+>       result = suite.observe(start, credential())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\projects\test_go_reviewer_suite.py:458: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+backend\karajan\projects\go_reviewer_suite.py:292: in observe
+    now = self.clock()
+          ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def missing():
+>       raise OSError("synthetic clock unavailable")
+E       OSError: synthetic clock unavailable
+
+tests\projects\test_go_reviewer_suite.py:452: OSError
+=========================== short test summary info ===========================
+FAILED tests/projects/test_go_reviewer_suite.py::test_clock_becomes_unavailable_after_effect_retains_cleanup
+1 failed, 5 deselected in 1.14s

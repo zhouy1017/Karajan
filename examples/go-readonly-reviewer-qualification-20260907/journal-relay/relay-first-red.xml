@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="1.547" timestamp="2026-09-07T11:34:39.655641+08:00" hostname="ProArt-Zhou"><testcase classname="tests.adapters.opencode.test_go_reviewer_qualification_relay" name="test_read_response_has_a_durable_measured_send_before_the_upstream_fixture" time="0.438"><failure message="AttributeError: module 'karajan.adapters.opencode.go_relay' has no attribute 'GoReviewerQualificationContext'. Did you mean: 'GoQualificationContext'?">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-975/test_read_response_has_a_durab0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000002104AEBC230&gt;
+
+    def test_read_response_has_a_durable_measured_send_before_the_upstream_fixture(
+        tmp_path, accounting
+    ):
+        bound = reviewer_binding(accounting)
+    
+        def receive(request):
+            snapshot = GoCallJournal(tmp_path / "calls.sqlite", clock=lambda: 1000.0).snapshot(
+                "qualification"
+            )
+            assert snapshot["request_count"] == 1
+            assert snapshot["calls"][0]["state"] == "send_unknown"
+            assert snapshot["calls"][0]["request_context"]["source_sha256"] == bound["context"][
+                "source_sha256"
+            ]
+            return tool_answer()
+    
+&gt;       with exchange(tmp_path, bound, reviewer_context(accounting, bound), receive=receive) as (
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            relay, journal, upstream,
+        ):
+
+tests\adapters\opencode\test_go_reviewer_qualification_relay.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000002104AEBC230&gt;
+bound = {'qualification_id': 'qualification-1', 'attempt_id': 'attempt-1', 'fence': 1, 'profile_digest': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', ...}
+
+    def reviewer_context(accounting, bound):
+&gt;       return relay_module.GoReviewerQualificationContext(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            accounting=accounting,
+            probe_spec_digest=bound["probe_spec_digest"],
+            scenario=bound["scenario"],
+            **bound["context"],
+        )
+E       AttributeError: module 'karajan.adapters.opencode.go_relay' has no attribute 'GoReviewerQualificationContext'. Did you mean: 'GoQualificationContext'?
+
+tests\adapters\opencode\test_go_reviewer_qualification_relay.py:14: AttributeError</failure></testcase></testsuite></testsuites>

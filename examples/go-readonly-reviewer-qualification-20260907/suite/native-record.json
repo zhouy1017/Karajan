@@ -1,0 +1,4524 @@
+{
+  "schema_version": "karajan.profile-qualification.v1",
+  "id": "db3cb152-3b80-4f04-acc6-97e3fbe0563d",
+  "project_id": "03486e50-e9a8-42d1-8981-2bd3f79465f4",
+  "principal": "owner",
+  "status": "passed",
+  "qualification_scope": "readonly_reviewer_tools_fixture",
+  "suite_ref": {
+    "id": "opencode-go-readonly-review-linux",
+    "revision": 1
+  },
+  "provenance": "fixture",
+  "runtime_tools_status": "not_run",
+  "live_qualified": false,
+  "dispatch_eligible": false,
+  "binding": {
+    "qualification_scope": "readonly_reviewer_tools_fixture",
+    "suite_ref": {
+      "id": "opencode-go-readonly-review-linux",
+      "revision": 1
+    },
+    "profile_binding": {
+      "registration": {
+        "id": "readonly-reviewer",
+        "revision": 1,
+        "profile": {
+          "id": "readonly-reviewer",
+          "revision": 1,
+          "binding": {
+            "model_id": "glm-5.3-flash",
+            "channel_id": "fixture-channel",
+            "account_id": "fixture-account",
+            "runtime_kind": "opencode-go-isolated",
+            "runtime_version": "1.18.29",
+            "auth_mode": "api_key",
+            "billing_path": "subscription_only",
+            "native_settings": {
+              "suite_ref": {
+                "id": "opencode-go-readonly-review-linux",
+                "revision": 1
+              }
+            }
+          },
+          "auth_ref": "secret:go",
+          "required_permissions": [
+            "read"
+          ],
+          "admission_granularity": "attempt",
+          "usage_coverage": "unknown"
+        },
+        "model_family": "fixture-family",
+        "max_class": "T3",
+        "required_isolation": "tool_sandboxed",
+        "enabled": true,
+        "quota_pool_refs": [
+          "service-fixture"
+        ],
+        "capability_evidence": [
+          {
+            "capability": "bounded_code_edit",
+            "status": "passed",
+            "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+            "runtime_version": "1",
+            "evidence_ref": "fixture:bounded_code_edit",
+            "provenance": "fixture"
+          },
+          {
+            "capability": "bounded_implementation",
+            "status": "passed",
+            "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+            "runtime_version": "1",
+            "evidence_ref": "fixture:bounded_implementation",
+            "provenance": "fixture"
+          },
+          {
+            "capability": "candidate_capture",
+            "status": "passed",
+            "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+            "runtime_version": "1",
+            "evidence_ref": "fixture:candidate_capture",
+            "provenance": "fixture"
+          },
+          {
+            "capability": "code_review",
+            "status": "passed",
+            "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+            "runtime_version": "1",
+            "evidence_ref": "fixture:code_review",
+            "provenance": "fixture"
+          },
+          {
+            "capability": "controlled_tools",
+            "status": "passed",
+            "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+            "runtime_version": "1",
+            "evidence_ref": "fixture:controlled_tools",
+            "provenance": "fixture"
+          },
+          {
+            "capability": "critical_code_review",
+            "status": "passed",
+            "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+            "runtime_version": "1",
+            "evidence_ref": "fixture:critical_code_review",
+            "provenance": "fixture"
+          },
+          {
+            "capability": "critical_implementation",
+            "status": "passed",
+            "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+            "runtime_version": "1",
+            "evidence_ref": "fixture:critical_implementation",
+            "provenance": "fixture"
+          },
+          {
+            "capability": "design_reasoning",
+            "status": "passed",
+            "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+            "runtime_version": "1",
+            "evidence_ref": "fixture:design_reasoning",
+            "provenance": "fixture"
+          },
+          {
+            "capability": "structured_findings",
+            "status": "passed",
+            "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+            "runtime_version": "1",
+            "evidence_ref": "fixture:structured_findings",
+            "provenance": "fixture"
+          },
+          {
+            "capability": "structured_plan_output",
+            "status": "passed",
+            "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+            "runtime_version": "1",
+            "evidence_ref": "fixture:structured_plan_output",
+            "provenance": "fixture"
+          }
+        ]
+      },
+      "account": {
+        "id": "fixture-account",
+        "provider_id": "opencode-go",
+        "secret_ref": "secret:go"
+      },
+      "channel": {
+        "account_id": "fixture-account",
+        "approved_data_destination": true,
+        "billing_path": "subscription_only",
+        "id": "fixture-channel"
+      },
+      "repository": {
+        "base_ref": "main",
+        "base_sha": "0e3517de2afdef2a967c7a35a6a8c9b1ba6fd66f",
+        "identity_sha256": "1ba73064df3a45a3af046602c1dbca787822e1db1f49e3f5248b21838fead83a",
+        "root": "/tmp/karajan-reviewer-store-final-20260907-a/test_actual_store_suite_three_0/fixture/repository"
+      }
+    },
+    "execution_start": {
+      "qualification_id": "db3cb152-3b80-4f04-acc6-97e3fbe0563d",
+      "project_id": "03486e50-e9a8-42d1-8981-2bd3f79465f4",
+      "suite_ref": {
+        "id": "opencode-go-readonly-review-linux",
+        "revision": 1
+      },
+      "profile_binding": {
+        "registration": {
+          "id": "readonly-reviewer",
+          "revision": 1,
+          "profile": {
+            "id": "readonly-reviewer",
+            "revision": 1,
+            "binding": {
+              "model_id": "glm-5.3-flash",
+              "channel_id": "fixture-channel",
+              "account_id": "fixture-account",
+              "runtime_kind": "opencode-go-isolated",
+              "runtime_version": "1.18.29",
+              "auth_mode": "api_key",
+              "billing_path": "subscription_only",
+              "native_settings": {
+                "suite_ref": {
+                  "id": "opencode-go-readonly-review-linux",
+                  "revision": 1
+                }
+              }
+            },
+            "auth_ref": "secret:go",
+            "required_permissions": [
+              "read"
+            ],
+            "admission_granularity": "attempt",
+            "usage_coverage": "unknown"
+          },
+          "model_family": "fixture-family",
+          "max_class": "T3",
+          "required_isolation": "tool_sandboxed",
+          "enabled": true,
+          "quota_pool_refs": [
+            "service-fixture"
+          ],
+          "capability_evidence": [
+            {
+              "capability": "bounded_code_edit",
+              "status": "passed",
+              "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+              "runtime_version": "1",
+              "evidence_ref": "fixture:bounded_code_edit",
+              "provenance": "fixture"
+            },
+            {
+              "capability": "bounded_implementation",
+              "status": "passed",
+              "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+              "runtime_version": "1",
+              "evidence_ref": "fixture:bounded_implementation",
+              "provenance": "fixture"
+            },
+            {
+              "capability": "candidate_capture",
+              "status": "passed",
+              "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+              "runtime_version": "1",
+              "evidence_ref": "fixture:candidate_capture",
+              "provenance": "fixture"
+            },
+            {
+              "capability": "code_review",
+              "status": "passed",
+              "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+              "runtime_version": "1",
+              "evidence_ref": "fixture:code_review",
+              "provenance": "fixture"
+            },
+            {
+              "capability": "controlled_tools",
+              "status": "passed",
+              "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+              "runtime_version": "1",
+              "evidence_ref": "fixture:controlled_tools",
+              "provenance": "fixture"
+            },
+            {
+              "capability": "critical_code_review",
+              "status": "passed",
+              "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+              "runtime_version": "1",
+              "evidence_ref": "fixture:critical_code_review",
+              "provenance": "fixture"
+            },
+            {
+              "capability": "critical_implementation",
+              "status": "passed",
+              "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+              "runtime_version": "1",
+              "evidence_ref": "fixture:critical_implementation",
+              "provenance": "fixture"
+            },
+            {
+              "capability": "design_reasoning",
+              "status": "passed",
+              "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+              "runtime_version": "1",
+              "evidence_ref": "fixture:design_reasoning",
+              "provenance": "fixture"
+            },
+            {
+              "capability": "structured_findings",
+              "status": "passed",
+              "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+              "runtime_version": "1",
+              "evidence_ref": "fixture:structured_findings",
+              "provenance": "fixture"
+            },
+            {
+              "capability": "structured_plan_output",
+              "status": "passed",
+              "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+              "runtime_version": "1",
+              "evidence_ref": "fixture:structured_plan_output",
+              "provenance": "fixture"
+            }
+          ]
+        },
+        "account": {
+          "id": "fixture-account",
+          "provider_id": "opencode-go",
+          "secret_ref": "secret:go"
+        },
+        "channel": {
+          "account_id": "fixture-account",
+          "approved_data_destination": true,
+          "billing_path": "subscription_only",
+          "id": "fixture-channel"
+        },
+        "repository": {
+          "base_ref": "main",
+          "base_sha": "0e3517de2afdef2a967c7a35a6a8c9b1ba6fd66f",
+          "identity_sha256": "1ba73064df3a45a3af046602c1dbca787822e1db1f49e3f5248b21838fead83a",
+          "root": "/tmp/karajan-reviewer-store-final-20260907-a/test_actual_store_suite_three_0/fixture/repository"
+        }
+      },
+      "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+      "auth_generation": "c7f61a84-c39c-4aa3-89a5-9186021b393c",
+      "credential_source_id": "synthetic",
+      "authentication_source": {
+        "auth_ref": "secret:go",
+        "generation": "c7f61a84-c39c-4aa3-89a5-9186021b393c",
+        "previous_generation": null,
+        "project_id": "03486e50-e9a8-42d1-8981-2bd3f79465f4",
+        "registered_at": 1788754663.047924,
+        "schema_version": "karajan.credential-generation.v1",
+        "source": {
+          "id": "synthetic",
+          "kind": "controller_local_key_file"
+        }
+      },
+      "source": {
+        "schema_version": "karajan.fixed-go-reviewer-suite-source.v1",
+        "suite_ref": {
+          "id": "opencode-go-readonly-review-linux",
+          "revision": 1
+        },
+        "observation_origin": "http_fixture",
+        "qualification_scope": "readonly_reviewer_tools_fixture",
+        "runtime_source": {
+          "schema_version": "karajan.fixed-go-runtime-source.v1",
+          "execution_path": "linux-unshare-chroot-opencode-go-readonly-reviewer-v1",
+          "runtime_version": "1.18.29",
+          "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+          "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+          "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+          "machine": "x86_64",
+          "source_sha256": {
+            "go_probe.py": "f9fe86a085db0e9d863a79087f67356c3715048735eddde5917cbf4b141d4743",
+            "opencode_runtime.py": "213de2adf2ada620e3382ccdae099935a4644927a04b3e4c0b59cfb4295bb003",
+            "_opencode_namespace.py": "6e981c2f8d0de875380ad342f168a0e8bddb46ae9e607202121ebd26b8d35019",
+            "_opencode_inner.py": "3fed107dda1ba908fbc098f37f5d26b22c82b7402a79f2c9612d208dfa01b3e3",
+            "_opencode_projection.py": "cac01b05d8aae1ab1916b30d6f50500585fdce3dfd07fe956ffb002243274c57",
+            "_opencode_capture.py": "9cb7c45bbf073c39efcf0d0591bb287ab4891a9ee0cecf0adbc5cea1b0383907",
+            "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+            "go_relay.py": "33dce5c2c52c5558efb98682db79fd72c5e854b3ff2a389d5ba7249212efd299",
+            "go_journal.py": "f82f1c098e884c1b6c6423245553ca8b1bbe75a2623950a27362d506f51fbfbb",
+            "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b",
+            "isolation/go_reviewer_probe.py": "1a9f45607ce54f373bc35e645f1fb6c37cbd169fa7271dc09bfb1bcfabe744f8",
+            "isolation/_go_reviewer_evidence.py": "f80f64a2eeb08ddcab41702527ee7f6b2a6bcc85d5f7a8767947298657cb4987",
+            "isolation/go_task.py": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+            "isolation/go_projected_probe.py": "85d13bf5ce4c86343d7831cb99ab48e37d01fded79416c622a95b031f26648ce",
+            "candidates/review_output.py": "8b72d037154f7c4d1a9bb8af95d5713b3851de4122327aa070f3f2562c226733",
+            "candidates/models.py": "e5a94a8042d33c46fdd3af58c3bbd8e616895e2b35ee127e19c2757e64c43fb9",
+            "candidates/store.py": "d48c5bc50dc35d17548e85e8795a2359e4c915c839c0a4e24055a6cbd38ffa13",
+            "adapters/opencode/go_context.py": "ab351b634e38351bed631db97734d1e519fc7e4577b0fb094f2651fa112d0428"
+          },
+          "system_executable_sha256": {
+            "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c",
+            "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+            "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+            "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+          },
+          "native_settings_digest": "ae97fd8de7046b24b3ef2aea2f43c15ee8672e88940674088a54c359f5f2fc89",
+          "probe_spec": {
+            "schema_version": "karajan.go-readonly-reviewer-probe-spec.v1",
+            "suite_ref": {
+              "id": "opencode-go-readonly-review-linux",
+              "revision": 1
+            },
+            "model": "glm-5.3-flash",
+            "scenarios": [
+              "clean_review",
+              "defect_review",
+              "denied_read"
+            ],
+            "max_requests": 6,
+            "max_total_requests": 18,
+            "scenario_timeout_seconds": 150,
+            "suite_timeout_seconds": 600,
+            "context": {
+              "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+              "approved_input_tokens": 12288,
+              "reserved_output_tokens": 4096,
+              "operating_context_tokens": 16384,
+              "fixed_margin": 2048,
+              "ratio_margin_basis_points": 2000
+            },
+            "parser_revision": "karajan.review-output-parser.v1",
+            "cases": {
+              "clean_review": {
+                "projection": [
+                  {
+                    "path": "acceptance.md",
+                    "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "writable": false
+                  },
+                  {
+                    "path": "src/range.py",
+                    "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                    "writable": false
+                  }
+                ],
+                "files": [
+                  {
+                    "path": "acceptance.md",
+                    "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "bytes": 226,
+                    "mode": "100644"
+                  },
+                  {
+                    "path": "src/range.py",
+                    "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                    "bytes": 67,
+                    "mode": "100644"
+                  }
+                ],
+                "prompt_sha256": "a31d85c9028c54bb0cae8bace58bc4431b239251ed1098faf76e7b1418f4e1eb",
+                "allowed_files": [
+                  "acceptance.md",
+                  "src/range.py"
+                ],
+                "allowed_acceptance_refs": [
+                  "acceptance:clamp-v1"
+                ],
+                "expected": {
+                  "verdict": "passed",
+                  "findings": "empty_findings"
+                }
+              },
+              "defect_review": {
+                "projection": [
+                  {
+                    "path": "acceptance.md",
+                    "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "writable": false
+                  },
+                  {
+                    "path": "src/range.py",
+                    "sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                    "writable": false
+                  }
+                ],
+                "files": [
+                  {
+                    "path": "acceptance.md",
+                    "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "bytes": 226,
+                    "mode": "100644"
+                  },
+                  {
+                    "path": "src/range.py",
+                    "sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                    "bytes": 67,
+                    "mode": "100644"
+                  }
+                ],
+                "prompt_sha256": "a31d85c9028c54bb0cae8bace58bc4431b239251ed1098faf76e7b1418f4e1eb",
+                "allowed_files": [
+                  "acceptance.md",
+                  "src/range.py"
+                ],
+                "allowed_acceptance_refs": [
+                  "acceptance:clamp-v1"
+                ],
+                "expected": {
+                  "verdict": "failed",
+                  "findings": "blocking_finding_at_source_acceptance"
+                }
+              },
+              "denied_read": {
+                "projection": [
+                  {
+                    "path": "acceptance.md",
+                    "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "writable": false
+                  },
+                  {
+                    "path": "src/range.py",
+                    "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                    "writable": false
+                  }
+                ],
+                "files": [
+                  {
+                    "path": "acceptance.md",
+                    "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "bytes": 226,
+                    "mode": "100644"
+                  },
+                  {
+                    "path": "src/range.py",
+                    "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                    "bytes": 67,
+                    "mode": "100644"
+                  }
+                ],
+                "prompt_sha256": "a8b2c2a280a4863db080bfcbef1e630f644d662ef1304ad76899417b4095f6de",
+                "allowed_files": [
+                  "acceptance.md",
+                  "src/range.py"
+                ],
+                "allowed_acceptance_refs": [
+                  "acceptance:clamp-v1"
+                ],
+                "expected": {
+                  "verdict": "inconclusive",
+                  "findings": "empty_findings"
+                }
+              }
+            }
+          },
+          "probe_spec_digest": "d89115148f416db185d5b75b29d90bccb1143da1cb385e97e159a4a3a4f6a565",
+          "accounting_source": {
+            "schema_version": "karajan.go-context-source.v1",
+            "model": "glm-5.3-flash",
+            "channel": "opencode-go",
+            "measurement_method": "reference_tokenizer_estimate",
+            "libraries": {
+              "transformers": "5.16.1",
+              "tokenizers": "0.23.2",
+              "Jinja2": "3.1.6"
+            },
+            "artifacts": {
+              "tokenizer.json": {
+                "sha256": "19e773648cb4e65de8660ea6365e10acca112d42a854923df93db4a6f333a82d",
+                "bytes": 20217442,
+                "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/690b705278a3a58e538fcb37c2ca8b5f9511213c/tokenizer.json"
+              },
+              "tokenizer_config.json": {
+                "sha256": "98b1271574f41abf89427ae2dda030d94dc9478f0edc5a8bd240db213c6fd5fc",
+                "bytes": 761,
+                "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/690b705278a3a58e538fcb37c2ca8b5f9511213c/tokenizer_config.json"
+              },
+              "chat_template.jinja": {
+                "sha256": "0c4099f3382d6c92700dfb99725025360966fd73032f0ecf32377c0d9e6309c5",
+                "bytes": 10950,
+                "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/690b705278a3a58e538fcb37c2ca8b5f9511213c/chat_template.jinja"
+              }
+            },
+            "normalizer": {
+              "id": "openai-compatible-text-functions.v1",
+              "implementation_sha256": "ab351b634e38351bed631db97734d1e519fc7e4577b0fb094f2651fa112d0428",
+              "generation_prompt": true,
+              "add_special_tokens": false,
+              "default_reasoning_effort": "max",
+              "default_clear_thinking": false,
+              "tool_argument_normalization": "duplicate-rejecting-json-object",
+              "request_digest_encoding": "ordered-json-utf8-compact"
+            },
+            "declared_capacity": {
+              "basis": "provider_declared",
+              "context_tokens": 1000000,
+              "max_output_tokens": 131072,
+              "catalog_revision": "98383f3755693d8b173ec1a2ff8bd0ae851ef207",
+              "channel_record_url": "https://github.com/anomalyco/models.dev/blob/98383f3755693d8b173ec1a2ff8bd0ae851ef207/providers/opencode-go/models/glm-5.3-flash.toml",
+              "model_record_url": "https://github.com/anomalyco/models.dev/blob/98383f3755693d8b173ec1a2ff8bd0ae851ef207/models/zhipuai/glm-5.3-flash.toml",
+              "channel_record_sha256": "04995d39482667fe746b81bb5bd2ad08817ee0a11ad2de0d93a9d774f54c68f0",
+              "model_record_sha256": "541b4e2dc3b05cfae7e89766882eff3dc6e733b8309d9d11fe9037d5bd374b0a",
+              "model_documentation": "https://docs.z.ai/guides/vlm/glm-5.3-flash",
+              "channel_documentation": "https://opencode.ai/docs/go/"
+            },
+            "server_exact_accounting": false,
+            "qualification_granted": false
+          },
+          "native_settings": {
+            "model": "opencode-go/glm-5.3-flash",
+            "small_model": "opencode-go/glm-5.3-flash",
+            "default_agent": "probe",
+            "enabled_providers": [
+              "opencode-go"
+            ],
+            "autoupdate": false,
+            "share": "disabled",
+            "snapshot": false,
+            "compaction": {
+              "auto": false,
+              "prune": false
+            },
+            "plugin": [],
+            "mcp": {},
+            "lsp": false,
+            "formatter": false,
+            "permission": {
+              "*": "deny",
+              "read": {
+                "*": "deny",
+                "workspace/acceptance.md": "allow",
+                "workspace/src/range.py": "allow"
+              },
+              "edit": {
+                "*": "deny"
+              }
+            },
+            "agent": {
+              "probe": {
+                "mode": "primary",
+                "options": {},
+                "steps": 4,
+                "permission": {
+                  "*": "deny",
+                  "read": {
+                    "*": "deny",
+                    "workspace/acceptance.md": "allow",
+                    "workspace/src/range.py": "allow"
+                  },
+                  "edit": {
+                    "*": "deny"
+                  }
+                }
+              },
+              "title": {
+                "disable": true,
+                "options": {},
+                "permission": {}
+              },
+              "summary": {
+                "disable": true,
+                "options": {},
+                "permission": {}
+              },
+              "compaction": {
+                "disable": true,
+                "options": {},
+                "permission": {}
+              },
+              "explore": {
+                "disable": true,
+                "options": {},
+                "permission": {}
+              },
+              "general": {
+                "disable": true,
+                "options": {},
+                "permission": {}
+              },
+              "build": {
+                "disable": true,
+                "options": {},
+                "permission": {}
+              },
+              "plan": {
+                "disable": true,
+                "options": {},
+                "permission": {}
+              }
+            },
+            "provider": {
+              "opencode-go": {
+                "npm": "@ai-sdk/openai-compatible",
+                "name": "Fixed local inference bridge",
+                "whitelist": [
+                  "glm-5.3-flash"
+                ],
+                "options": {
+                  "baseURL": "http://127.0.0.1:5001/v1",
+                  "apiKey": "<local-capability>",
+                  "timeout": 90000
+                },
+                "models": {
+                  "glm-5.3-flash": {
+                    "name": "glm-5.3-flash",
+                    "tool_call": true,
+                    "limit": {
+                      "context": 16384,
+                      "output": 4096
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "runtime_digest": "655f6180d81d739dfbb84d44f4a679f9ae19bafa014e40cf713ab96a16e41110",
+        "probe_spec": {
+          "schema_version": "karajan.go-readonly-reviewer-probe-spec.v1",
+          "suite_ref": {
+            "id": "opencode-go-readonly-review-linux",
+            "revision": 1
+          },
+          "model": "glm-5.3-flash",
+          "scenarios": [
+            "clean_review",
+            "defect_review",
+            "denied_read"
+          ],
+          "max_requests": 6,
+          "max_total_requests": 18,
+          "scenario_timeout_seconds": 150,
+          "suite_timeout_seconds": 600,
+          "context": {
+            "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+            "approved_input_tokens": 12288,
+            "reserved_output_tokens": 4096,
+            "operating_context_tokens": 16384,
+            "fixed_margin": 2048,
+            "ratio_margin_basis_points": 2000
+          },
+          "parser_revision": "karajan.review-output-parser.v1",
+          "cases": {
+            "clean_review": {
+              "projection": [
+                {
+                  "path": "acceptance.md",
+                  "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                  "writable": false
+                },
+                {
+                  "path": "src/range.py",
+                  "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                  "writable": false
+                }
+              ],
+              "files": [
+                {
+                  "path": "acceptance.md",
+                  "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                  "bytes": 226,
+                  "mode": "100644"
+                },
+                {
+                  "path": "src/range.py",
+                  "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                  "bytes": 67,
+                  "mode": "100644"
+                }
+              ],
+              "prompt_sha256": "a31d85c9028c54bb0cae8bace58bc4431b239251ed1098faf76e7b1418f4e1eb",
+              "allowed_files": [
+                "acceptance.md",
+                "src/range.py"
+              ],
+              "allowed_acceptance_refs": [
+                "acceptance:clamp-v1"
+              ],
+              "expected": {
+                "verdict": "passed",
+                "findings": "empty_findings"
+              }
+            },
+            "defect_review": {
+              "projection": [
+                {
+                  "path": "acceptance.md",
+                  "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                  "writable": false
+                },
+                {
+                  "path": "src/range.py",
+                  "sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                  "writable": false
+                }
+              ],
+              "files": [
+                {
+                  "path": "acceptance.md",
+                  "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                  "bytes": 226,
+                  "mode": "100644"
+                },
+                {
+                  "path": "src/range.py",
+                  "sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                  "bytes": 67,
+                  "mode": "100644"
+                }
+              ],
+              "prompt_sha256": "a31d85c9028c54bb0cae8bace58bc4431b239251ed1098faf76e7b1418f4e1eb",
+              "allowed_files": [
+                "acceptance.md",
+                "src/range.py"
+              ],
+              "allowed_acceptance_refs": [
+                "acceptance:clamp-v1"
+              ],
+              "expected": {
+                "verdict": "failed",
+                "findings": "blocking_finding_at_source_acceptance"
+              }
+            },
+            "denied_read": {
+              "projection": [
+                {
+                  "path": "acceptance.md",
+                  "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                  "writable": false
+                },
+                {
+                  "path": "src/range.py",
+                  "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                  "writable": false
+                }
+              ],
+              "files": [
+                {
+                  "path": "acceptance.md",
+                  "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                  "bytes": 226,
+                  "mode": "100644"
+                },
+                {
+                  "path": "src/range.py",
+                  "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                  "bytes": 67,
+                  "mode": "100644"
+                }
+              ],
+              "prompt_sha256": "a8b2c2a280a4863db080bfcbef1e630f644d662ef1304ad76899417b4095f6de",
+              "allowed_files": [
+                "acceptance.md",
+                "src/range.py"
+              ],
+              "allowed_acceptance_refs": [
+                "acceptance:clamp-v1"
+              ],
+              "expected": {
+                "verdict": "inconclusive",
+                "findings": "empty_findings"
+              }
+            }
+          }
+        },
+        "probe_spec_digest": "d89115148f416db185d5b75b29d90bccb1143da1cb385e97e159a4a3a4f6a565",
+        "work_root": {
+          "path": "/tmp/karajan-reviewer-store-final-20260907-a/test_actual_store_suite_three_0/native-work"
+        },
+        "journal": {
+          "path": "/tmp/karajan-reviewer-store-final-20260907-a/test_actual_store_suite_three_0/actual-journal.sqlite"
+        },
+        "producer_sha256": "88ec0b837306f6fc5b1d0400e96ae9d0702f4cd5307a83689ebfe7fbee727a3d"
+      },
+      "started_at": 1788754665.4829855,
+      "expires_at": 1788755265.4829855,
+      "scenarios": [
+        {
+          "scenario": "clean_review",
+          "attempt_id": "5cebe544-1c57-4886-b109-80e0665520bd",
+          "fence": 1,
+          "grant_id": "0c55f3f7-057a-459d-9e9c-18a3c834f724",
+          "grant_binding": {
+            "qualification_id": "db3cb152-3b80-4f04-acc6-97e3fbe0563d",
+            "attempt_id": "5cebe544-1c57-4886-b109-80e0665520bd",
+            "fence": 1,
+            "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+            "runtime_digest": "655f6180d81d739dfbb84d44f4a679f9ae19bafa014e40cf713ab96a16e41110",
+            "channel": "fixture-channel",
+            "model": "glm-5.3-flash",
+            "auth_generation": "c7f61a84-c39c-4aa3-89a5-9186021b393c",
+            "expires_at": 1788755265.4829855,
+            "max_requests": 6,
+            "schema_version": "karajan.go-reviewer-qualification-grant.v1",
+            "probe_spec_digest": "d89115148f416db185d5b75b29d90bccb1143da1cb385e97e159a4a3a4f6a565",
+            "scenario": "clean_review",
+            "context": {
+              "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+              "approved_input_tokens": 12288,
+              "reserved_output_tokens": 4096,
+              "operating_context_tokens": 16384,
+              "fixed_margin": 2048,
+              "ratio_margin_basis_points": 2000
+            }
+          }
+        },
+        {
+          "scenario": "defect_review",
+          "attempt_id": "6dca853e-7b8f-4314-9f5d-d8648cd64135",
+          "fence": 1,
+          "grant_id": "19a90299-981e-49a8-969a-eb7c5633f9a4",
+          "grant_binding": {
+            "qualification_id": "db3cb152-3b80-4f04-acc6-97e3fbe0563d",
+            "attempt_id": "6dca853e-7b8f-4314-9f5d-d8648cd64135",
+            "fence": 1,
+            "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+            "runtime_digest": "655f6180d81d739dfbb84d44f4a679f9ae19bafa014e40cf713ab96a16e41110",
+            "channel": "fixture-channel",
+            "model": "glm-5.3-flash",
+            "auth_generation": "c7f61a84-c39c-4aa3-89a5-9186021b393c",
+            "expires_at": 1788755265.4829855,
+            "max_requests": 6,
+            "schema_version": "karajan.go-reviewer-qualification-grant.v1",
+            "probe_spec_digest": "d89115148f416db185d5b75b29d90bccb1143da1cb385e97e159a4a3a4f6a565",
+            "scenario": "defect_review",
+            "context": {
+              "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+              "approved_input_tokens": 12288,
+              "reserved_output_tokens": 4096,
+              "operating_context_tokens": 16384,
+              "fixed_margin": 2048,
+              "ratio_margin_basis_points": 2000
+            }
+          }
+        },
+        {
+          "scenario": "denied_read",
+          "attempt_id": "ab98831e-163e-4a8e-acf2-424d0887dcd6",
+          "fence": 1,
+          "grant_id": "8401a6a3-00c7-4178-a03a-be5cbde362f1",
+          "grant_binding": {
+            "qualification_id": "db3cb152-3b80-4f04-acc6-97e3fbe0563d",
+            "attempt_id": "ab98831e-163e-4a8e-acf2-424d0887dcd6",
+            "fence": 1,
+            "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+            "runtime_digest": "655f6180d81d739dfbb84d44f4a679f9ae19bafa014e40cf713ab96a16e41110",
+            "channel": "fixture-channel",
+            "model": "glm-5.3-flash",
+            "auth_generation": "c7f61a84-c39c-4aa3-89a5-9186021b393c",
+            "expires_at": 1788755265.4829855,
+            "max_requests": 6,
+            "schema_version": "karajan.go-reviewer-qualification-grant.v1",
+            "probe_spec_digest": "d89115148f416db185d5b75b29d90bccb1143da1cb385e97e159a4a3a4f6a565",
+            "scenario": "denied_read",
+            "context": {
+              "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+              "approved_input_tokens": 12288,
+              "reserved_output_tokens": 4096,
+              "operating_context_tokens": 16384,
+              "fixed_margin": 2048,
+              "ratio_margin_basis_points": 2000
+            }
+          }
+        }
+      ]
+    },
+    "controller_sha256": "5faa73df7095e76141bc44974b977e8d3253eea0d2fddd6717617c7eb7154ad2"
+  },
+  "observed_at": 1788754728.8273714,
+  "valid_until": 1788754788.8273714,
+  "observation": {
+    "schema_version": "karajan.fixed-go-reviewer-suite-observation.v1",
+    "suite_ref": {
+      "id": "opencode-go-readonly-review-linux",
+      "revision": 1
+    },
+    "qualification_id": "db3cb152-3b80-4f04-acc6-97e3fbe0563d",
+    "source": {
+      "schema_version": "karajan.fixed-go-reviewer-suite-source.v1",
+      "suite_ref": {
+        "id": "opencode-go-readonly-review-linux",
+        "revision": 1
+      },
+      "observation_origin": "http_fixture",
+      "qualification_scope": "readonly_reviewer_tools_fixture",
+      "runtime_source": {
+        "schema_version": "karajan.fixed-go-runtime-source.v1",
+        "execution_path": "linux-unshare-chroot-opencode-go-readonly-reviewer-v1",
+        "runtime_version": "1.18.29",
+        "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+        "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+        "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+        "machine": "x86_64",
+        "source_sha256": {
+          "go_probe.py": "f9fe86a085db0e9d863a79087f67356c3715048735eddde5917cbf4b141d4743",
+          "opencode_runtime.py": "213de2adf2ada620e3382ccdae099935a4644927a04b3e4c0b59cfb4295bb003",
+          "_opencode_namespace.py": "6e981c2f8d0de875380ad342f168a0e8bddb46ae9e607202121ebd26b8d35019",
+          "_opencode_inner.py": "3fed107dda1ba908fbc098f37f5d26b22c82b7402a79f2c9612d208dfa01b3e3",
+          "_opencode_projection.py": "cac01b05d8aae1ab1916b30d6f50500585fdce3dfd07fe956ffb002243274c57",
+          "_opencode_capture.py": "9cb7c45bbf073c39efcf0d0591bb287ab4891a9ee0cecf0adbc5cea1b0383907",
+          "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+          "go_relay.py": "33dce5c2c52c5558efb98682db79fd72c5e854b3ff2a389d5ba7249212efd299",
+          "go_journal.py": "f82f1c098e884c1b6c6423245553ca8b1bbe75a2623950a27362d506f51fbfbb",
+          "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b",
+          "isolation/go_reviewer_probe.py": "1a9f45607ce54f373bc35e645f1fb6c37cbd169fa7271dc09bfb1bcfabe744f8",
+          "isolation/_go_reviewer_evidence.py": "f80f64a2eeb08ddcab41702527ee7f6b2a6bcc85d5f7a8767947298657cb4987",
+          "isolation/go_task.py": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+          "isolation/go_projected_probe.py": "85d13bf5ce4c86343d7831cb99ab48e37d01fded79416c622a95b031f26648ce",
+          "candidates/review_output.py": "8b72d037154f7c4d1a9bb8af95d5713b3851de4122327aa070f3f2562c226733",
+          "candidates/models.py": "e5a94a8042d33c46fdd3af58c3bbd8e616895e2b35ee127e19c2757e64c43fb9",
+          "candidates/store.py": "d48c5bc50dc35d17548e85e8795a2359e4c915c839c0a4e24055a6cbd38ffa13",
+          "adapters/opencode/go_context.py": "ab351b634e38351bed631db97734d1e519fc7e4577b0fb094f2651fa112d0428"
+        },
+        "system_executable_sha256": {
+          "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c",
+          "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+          "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+          "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+        },
+        "native_settings_digest": "ae97fd8de7046b24b3ef2aea2f43c15ee8672e88940674088a54c359f5f2fc89",
+        "probe_spec": {
+          "schema_version": "karajan.go-readonly-reviewer-probe-spec.v1",
+          "suite_ref": {
+            "id": "opencode-go-readonly-review-linux",
+            "revision": 1
+          },
+          "model": "glm-5.3-flash",
+          "scenarios": [
+            "clean_review",
+            "defect_review",
+            "denied_read"
+          ],
+          "max_requests": 6,
+          "max_total_requests": 18,
+          "scenario_timeout_seconds": 150,
+          "suite_timeout_seconds": 600,
+          "context": {
+            "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+            "approved_input_tokens": 12288,
+            "reserved_output_tokens": 4096,
+            "operating_context_tokens": 16384,
+            "fixed_margin": 2048,
+            "ratio_margin_basis_points": 2000
+          },
+          "parser_revision": "karajan.review-output-parser.v1",
+          "cases": {
+            "clean_review": {
+              "projection": [
+                {
+                  "path": "acceptance.md",
+                  "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                  "writable": false
+                },
+                {
+                  "path": "src/range.py",
+                  "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                  "writable": false
+                }
+              ],
+              "files": [
+                {
+                  "path": "acceptance.md",
+                  "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                  "bytes": 226,
+                  "mode": "100644"
+                },
+                {
+                  "path": "src/range.py",
+                  "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                  "bytes": 67,
+                  "mode": "100644"
+                }
+              ],
+              "prompt_sha256": "a31d85c9028c54bb0cae8bace58bc4431b239251ed1098faf76e7b1418f4e1eb",
+              "allowed_files": [
+                "acceptance.md",
+                "src/range.py"
+              ],
+              "allowed_acceptance_refs": [
+                "acceptance:clamp-v1"
+              ],
+              "expected": {
+                "verdict": "passed",
+                "findings": "empty_findings"
+              }
+            },
+            "defect_review": {
+              "projection": [
+                {
+                  "path": "acceptance.md",
+                  "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                  "writable": false
+                },
+                {
+                  "path": "src/range.py",
+                  "sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                  "writable": false
+                }
+              ],
+              "files": [
+                {
+                  "path": "acceptance.md",
+                  "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                  "bytes": 226,
+                  "mode": "100644"
+                },
+                {
+                  "path": "src/range.py",
+                  "sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                  "bytes": 67,
+                  "mode": "100644"
+                }
+              ],
+              "prompt_sha256": "a31d85c9028c54bb0cae8bace58bc4431b239251ed1098faf76e7b1418f4e1eb",
+              "allowed_files": [
+                "acceptance.md",
+                "src/range.py"
+              ],
+              "allowed_acceptance_refs": [
+                "acceptance:clamp-v1"
+              ],
+              "expected": {
+                "verdict": "failed",
+                "findings": "blocking_finding_at_source_acceptance"
+              }
+            },
+            "denied_read": {
+              "projection": [
+                {
+                  "path": "acceptance.md",
+                  "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                  "writable": false
+                },
+                {
+                  "path": "src/range.py",
+                  "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                  "writable": false
+                }
+              ],
+              "files": [
+                {
+                  "path": "acceptance.md",
+                  "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                  "bytes": 226,
+                  "mode": "100644"
+                },
+                {
+                  "path": "src/range.py",
+                  "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                  "bytes": 67,
+                  "mode": "100644"
+                }
+              ],
+              "prompt_sha256": "a8b2c2a280a4863db080bfcbef1e630f644d662ef1304ad76899417b4095f6de",
+              "allowed_files": [
+                "acceptance.md",
+                "src/range.py"
+              ],
+              "allowed_acceptance_refs": [
+                "acceptance:clamp-v1"
+              ],
+              "expected": {
+                "verdict": "inconclusive",
+                "findings": "empty_findings"
+              }
+            }
+          }
+        },
+        "probe_spec_digest": "d89115148f416db185d5b75b29d90bccb1143da1cb385e97e159a4a3a4f6a565",
+        "accounting_source": {
+          "schema_version": "karajan.go-context-source.v1",
+          "model": "glm-5.3-flash",
+          "channel": "opencode-go",
+          "measurement_method": "reference_tokenizer_estimate",
+          "libraries": {
+            "transformers": "5.16.1",
+            "tokenizers": "0.23.2",
+            "Jinja2": "3.1.6"
+          },
+          "artifacts": {
+            "tokenizer.json": {
+              "sha256": "19e773648cb4e65de8660ea6365e10acca112d42a854923df93db4a6f333a82d",
+              "bytes": 20217442,
+              "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/690b705278a3a58e538fcb37c2ca8b5f9511213c/tokenizer.json"
+            },
+            "tokenizer_config.json": {
+              "sha256": "98b1271574f41abf89427ae2dda030d94dc9478f0edc5a8bd240db213c6fd5fc",
+              "bytes": 761,
+              "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/690b705278a3a58e538fcb37c2ca8b5f9511213c/tokenizer_config.json"
+            },
+            "chat_template.jinja": {
+              "sha256": "0c4099f3382d6c92700dfb99725025360966fd73032f0ecf32377c0d9e6309c5",
+              "bytes": 10950,
+              "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/690b705278a3a58e538fcb37c2ca8b5f9511213c/chat_template.jinja"
+            }
+          },
+          "normalizer": {
+            "id": "openai-compatible-text-functions.v1",
+            "implementation_sha256": "ab351b634e38351bed631db97734d1e519fc7e4577b0fb094f2651fa112d0428",
+            "generation_prompt": true,
+            "add_special_tokens": false,
+            "default_reasoning_effort": "max",
+            "default_clear_thinking": false,
+            "tool_argument_normalization": "duplicate-rejecting-json-object",
+            "request_digest_encoding": "ordered-json-utf8-compact"
+          },
+          "declared_capacity": {
+            "basis": "provider_declared",
+            "context_tokens": 1000000,
+            "max_output_tokens": 131072,
+            "catalog_revision": "98383f3755693d8b173ec1a2ff8bd0ae851ef207",
+            "channel_record_url": "https://github.com/anomalyco/models.dev/blob/98383f3755693d8b173ec1a2ff8bd0ae851ef207/providers/opencode-go/models/glm-5.3-flash.toml",
+            "model_record_url": "https://github.com/anomalyco/models.dev/blob/98383f3755693d8b173ec1a2ff8bd0ae851ef207/models/zhipuai/glm-5.3-flash.toml",
+            "channel_record_sha256": "04995d39482667fe746b81bb5bd2ad08817ee0a11ad2de0d93a9d774f54c68f0",
+            "model_record_sha256": "541b4e2dc3b05cfae7e89766882eff3dc6e733b8309d9d11fe9037d5bd374b0a",
+            "model_documentation": "https://docs.z.ai/guides/vlm/glm-5.3-flash",
+            "channel_documentation": "https://opencode.ai/docs/go/"
+          },
+          "server_exact_accounting": false,
+          "qualification_granted": false
+        },
+        "native_settings": {
+          "model": "opencode-go/glm-5.3-flash",
+          "small_model": "opencode-go/glm-5.3-flash",
+          "default_agent": "probe",
+          "enabled_providers": [
+            "opencode-go"
+          ],
+          "autoupdate": false,
+          "share": "disabled",
+          "snapshot": false,
+          "compaction": {
+            "auto": false,
+            "prune": false
+          },
+          "plugin": [],
+          "mcp": {},
+          "lsp": false,
+          "formatter": false,
+          "permission": {
+            "*": "deny",
+            "read": {
+              "*": "deny",
+              "workspace/acceptance.md": "allow",
+              "workspace/src/range.py": "allow"
+            },
+            "edit": {
+              "*": "deny"
+            }
+          },
+          "agent": {
+            "probe": {
+              "mode": "primary",
+              "options": {},
+              "steps": 4,
+              "permission": {
+                "*": "deny",
+                "read": {
+                  "*": "deny",
+                  "workspace/acceptance.md": "allow",
+                  "workspace/src/range.py": "allow"
+                },
+                "edit": {
+                  "*": "deny"
+                }
+              }
+            },
+            "title": {
+              "disable": true,
+              "options": {},
+              "permission": {}
+            },
+            "summary": {
+              "disable": true,
+              "options": {},
+              "permission": {}
+            },
+            "compaction": {
+              "disable": true,
+              "options": {},
+              "permission": {}
+            },
+            "explore": {
+              "disable": true,
+              "options": {},
+              "permission": {}
+            },
+            "general": {
+              "disable": true,
+              "options": {},
+              "permission": {}
+            },
+            "build": {
+              "disable": true,
+              "options": {},
+              "permission": {}
+            },
+            "plan": {
+              "disable": true,
+              "options": {},
+              "permission": {}
+            }
+          },
+          "provider": {
+            "opencode-go": {
+              "npm": "@ai-sdk/openai-compatible",
+              "name": "Fixed local inference bridge",
+              "whitelist": [
+                "glm-5.3-flash"
+              ],
+              "options": {
+                "baseURL": "http://127.0.0.1:5001/v1",
+                "apiKey": "<local-capability>",
+                "timeout": 90000
+              },
+              "models": {
+                "glm-5.3-flash": {
+                  "name": "glm-5.3-flash",
+                  "tool_call": true,
+                  "limit": {
+                    "context": 16384,
+                    "output": 4096
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "runtime_digest": "655f6180d81d739dfbb84d44f4a679f9ae19bafa014e40cf713ab96a16e41110",
+      "probe_spec": {
+        "schema_version": "karajan.go-readonly-reviewer-probe-spec.v1",
+        "suite_ref": {
+          "id": "opencode-go-readonly-review-linux",
+          "revision": 1
+        },
+        "model": "glm-5.3-flash",
+        "scenarios": [
+          "clean_review",
+          "defect_review",
+          "denied_read"
+        ],
+        "max_requests": 6,
+        "max_total_requests": 18,
+        "scenario_timeout_seconds": 150,
+        "suite_timeout_seconds": 600,
+        "context": {
+          "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+          "approved_input_tokens": 12288,
+          "reserved_output_tokens": 4096,
+          "operating_context_tokens": 16384,
+          "fixed_margin": 2048,
+          "ratio_margin_basis_points": 2000
+        },
+        "parser_revision": "karajan.review-output-parser.v1",
+        "cases": {
+          "clean_review": {
+            "projection": [
+              {
+                "path": "acceptance.md",
+                "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                "writable": false
+              },
+              {
+                "path": "src/range.py",
+                "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                "writable": false
+              }
+            ],
+            "files": [
+              {
+                "path": "acceptance.md",
+                "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                "bytes": 226,
+                "mode": "100644"
+              },
+              {
+                "path": "src/range.py",
+                "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                "bytes": 67,
+                "mode": "100644"
+              }
+            ],
+            "prompt_sha256": "a31d85c9028c54bb0cae8bace58bc4431b239251ed1098faf76e7b1418f4e1eb",
+            "allowed_files": [
+              "acceptance.md",
+              "src/range.py"
+            ],
+            "allowed_acceptance_refs": [
+              "acceptance:clamp-v1"
+            ],
+            "expected": {
+              "verdict": "passed",
+              "findings": "empty_findings"
+            }
+          },
+          "defect_review": {
+            "projection": [
+              {
+                "path": "acceptance.md",
+                "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                "writable": false
+              },
+              {
+                "path": "src/range.py",
+                "sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                "writable": false
+              }
+            ],
+            "files": [
+              {
+                "path": "acceptance.md",
+                "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                "bytes": 226,
+                "mode": "100644"
+              },
+              {
+                "path": "src/range.py",
+                "sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                "bytes": 67,
+                "mode": "100644"
+              }
+            ],
+            "prompt_sha256": "a31d85c9028c54bb0cae8bace58bc4431b239251ed1098faf76e7b1418f4e1eb",
+            "allowed_files": [
+              "acceptance.md",
+              "src/range.py"
+            ],
+            "allowed_acceptance_refs": [
+              "acceptance:clamp-v1"
+            ],
+            "expected": {
+              "verdict": "failed",
+              "findings": "blocking_finding_at_source_acceptance"
+            }
+          },
+          "denied_read": {
+            "projection": [
+              {
+                "path": "acceptance.md",
+                "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                "writable": false
+              },
+              {
+                "path": "src/range.py",
+                "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                "writable": false
+              }
+            ],
+            "files": [
+              {
+                "path": "acceptance.md",
+                "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                "bytes": 226,
+                "mode": "100644"
+              },
+              {
+                "path": "src/range.py",
+                "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                "bytes": 67,
+                "mode": "100644"
+              }
+            ],
+            "prompt_sha256": "a8b2c2a280a4863db080bfcbef1e630f644d662ef1304ad76899417b4095f6de",
+            "allowed_files": [
+              "acceptance.md",
+              "src/range.py"
+            ],
+            "allowed_acceptance_refs": [
+              "acceptance:clamp-v1"
+            ],
+            "expected": {
+              "verdict": "inconclusive",
+              "findings": "empty_findings"
+            }
+          }
+        }
+      },
+      "probe_spec_digest": "d89115148f416db185d5b75b29d90bccb1143da1cb385e97e159a4a3a4f6a565",
+      "work_root": {
+        "path": "/tmp/karajan-reviewer-store-final-20260907-a/test_actual_store_suite_three_0/native-work"
+      },
+      "journal": {
+        "path": "/tmp/karajan-reviewer-store-final-20260907-a/test_actual_store_suite_three_0/actual-journal.sqlite"
+      },
+      "producer_sha256": "88ec0b837306f6fc5b1d0400e96ae9d0702f4cd5307a83689ebfe7fbee727a3d"
+    },
+    "observation_origin": "http_fixture",
+    "qualification_scope": "readonly_reviewer_tools_fixture",
+    "runtime_tools_status": "not_run",
+    "dispatch_eligible": false,
+    "provider_remote_stop": "unknown",
+    "billing_limit_qualification": "not_run",
+    "scenarios": [
+      {
+        "scenario": "clean_review",
+        "attempt_id": "5cebe544-1c57-4886-b109-80e0665520bd",
+        "fence": 1,
+        "grant_id": "0c55f3f7-057a-459d-9e9c-18a3c834f724",
+        "status": "passed",
+        "reason_codes": [],
+        "observation": {
+          "schema_version": "karajan.go-readonly-reviewer-observation.v1",
+          "scope": "readonly_reviewer_tools_fixture",
+          "observation_origin": "http_fixture",
+          "scenario": "clean_review",
+          "grant_id": "0c55f3f7-057a-459d-9e9c-18a3c834f724",
+          "runtime_source": {
+            "schema_version": "karajan.fixed-go-runtime-source.v1",
+            "execution_path": "linux-unshare-chroot-opencode-go-readonly-reviewer-v1",
+            "runtime_version": "1.18.29",
+            "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+            "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+            "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+            "machine": "x86_64",
+            "source_sha256": {
+              "go_probe.py": "f9fe86a085db0e9d863a79087f67356c3715048735eddde5917cbf4b141d4743",
+              "opencode_runtime.py": "213de2adf2ada620e3382ccdae099935a4644927a04b3e4c0b59cfb4295bb003",
+              "_opencode_namespace.py": "6e981c2f8d0de875380ad342f168a0e8bddb46ae9e607202121ebd26b8d35019",
+              "_opencode_inner.py": "3fed107dda1ba908fbc098f37f5d26b22c82b7402a79f2c9612d208dfa01b3e3",
+              "_opencode_projection.py": "cac01b05d8aae1ab1916b30d6f50500585fdce3dfd07fe956ffb002243274c57",
+              "_opencode_capture.py": "9cb7c45bbf073c39efcf0d0591bb287ab4891a9ee0cecf0adbc5cea1b0383907",
+              "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+              "go_relay.py": "33dce5c2c52c5558efb98682db79fd72c5e854b3ff2a389d5ba7249212efd299",
+              "go_journal.py": "f82f1c098e884c1b6c6423245553ca8b1bbe75a2623950a27362d506f51fbfbb",
+              "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b",
+              "isolation/go_reviewer_probe.py": "1a9f45607ce54f373bc35e645f1fb6c37cbd169fa7271dc09bfb1bcfabe744f8",
+              "isolation/_go_reviewer_evidence.py": "f80f64a2eeb08ddcab41702527ee7f6b2a6bcc85d5f7a8767947298657cb4987",
+              "isolation/go_task.py": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+              "isolation/go_projected_probe.py": "85d13bf5ce4c86343d7831cb99ab48e37d01fded79416c622a95b031f26648ce",
+              "candidates/review_output.py": "8b72d037154f7c4d1a9bb8af95d5713b3851de4122327aa070f3f2562c226733",
+              "candidates/models.py": "e5a94a8042d33c46fdd3af58c3bbd8e616895e2b35ee127e19c2757e64c43fb9",
+              "candidates/store.py": "d48c5bc50dc35d17548e85e8795a2359e4c915c839c0a4e24055a6cbd38ffa13",
+              "adapters/opencode/go_context.py": "ab351b634e38351bed631db97734d1e519fc7e4577b0fb094f2651fa112d0428"
+            },
+            "system_executable_sha256": {
+              "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c",
+              "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+              "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+              "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+            },
+            "native_settings_digest": "ae97fd8de7046b24b3ef2aea2f43c15ee8672e88940674088a54c359f5f2fc89",
+            "probe_spec": {
+              "schema_version": "karajan.go-readonly-reviewer-probe-spec.v1",
+              "suite_ref": {
+                "id": "opencode-go-readonly-review-linux",
+                "revision": 1
+              },
+              "model": "glm-5.3-flash",
+              "scenarios": [
+                "clean_review",
+                "defect_review",
+                "denied_read"
+              ],
+              "max_requests": 6,
+              "max_total_requests": 18,
+              "scenario_timeout_seconds": 150,
+              "suite_timeout_seconds": 600,
+              "context": {
+                "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+                "approved_input_tokens": 12288,
+                "reserved_output_tokens": 4096,
+                "operating_context_tokens": 16384,
+                "fixed_margin": 2048,
+                "ratio_margin_basis_points": 2000
+              },
+              "parser_revision": "karajan.review-output-parser.v1",
+              "cases": {
+                "clean_review": {
+                  "projection": [
+                    {
+                      "path": "acceptance.md",
+                      "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                      "writable": false
+                    },
+                    {
+                      "path": "src/range.py",
+                      "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                      "writable": false
+                    }
+                  ],
+                  "files": [
+                    {
+                      "path": "acceptance.md",
+                      "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                      "bytes": 226,
+                      "mode": "100644"
+                    },
+                    {
+                      "path": "src/range.py",
+                      "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                      "bytes": 67,
+                      "mode": "100644"
+                    }
+                  ],
+                  "prompt_sha256": "a31d85c9028c54bb0cae8bace58bc4431b239251ed1098faf76e7b1418f4e1eb",
+                  "allowed_files": [
+                    "acceptance.md",
+                    "src/range.py"
+                  ],
+                  "allowed_acceptance_refs": [
+                    "acceptance:clamp-v1"
+                  ],
+                  "expected": {
+                    "verdict": "passed",
+                    "findings": "empty_findings"
+                  }
+                },
+                "defect_review": {
+                  "projection": [
+                    {
+                      "path": "acceptance.md",
+                      "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                      "writable": false
+                    },
+                    {
+                      "path": "src/range.py",
+                      "sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                      "writable": false
+                    }
+                  ],
+                  "files": [
+                    {
+                      "path": "acceptance.md",
+                      "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                      "bytes": 226,
+                      "mode": "100644"
+                    },
+                    {
+                      "path": "src/range.py",
+                      "sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                      "bytes": 67,
+                      "mode": "100644"
+                    }
+                  ],
+                  "prompt_sha256": "a31d85c9028c54bb0cae8bace58bc4431b239251ed1098faf76e7b1418f4e1eb",
+                  "allowed_files": [
+                    "acceptance.md",
+                    "src/range.py"
+                  ],
+                  "allowed_acceptance_refs": [
+                    "acceptance:clamp-v1"
+                  ],
+                  "expected": {
+                    "verdict": "failed",
+                    "findings": "blocking_finding_at_source_acceptance"
+                  }
+                },
+                "denied_read": {
+                  "projection": [
+                    {
+                      "path": "acceptance.md",
+                      "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                      "writable": false
+                    },
+                    {
+                      "path": "src/range.py",
+                      "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                      "writable": false
+                    }
+                  ],
+                  "files": [
+                    {
+                      "path": "acceptance.md",
+                      "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                      "bytes": 226,
+                      "mode": "100644"
+                    },
+                    {
+                      "path": "src/range.py",
+                      "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                      "bytes": 67,
+                      "mode": "100644"
+                    }
+                  ],
+                  "prompt_sha256": "a8b2c2a280a4863db080bfcbef1e630f644d662ef1304ad76899417b4095f6de",
+                  "allowed_files": [
+                    "acceptance.md",
+                    "src/range.py"
+                  ],
+                  "allowed_acceptance_refs": [
+                    "acceptance:clamp-v1"
+                  ],
+                  "expected": {
+                    "verdict": "inconclusive",
+                    "findings": "empty_findings"
+                  }
+                }
+              }
+            },
+            "probe_spec_digest": "d89115148f416db185d5b75b29d90bccb1143da1cb385e97e159a4a3a4f6a565",
+            "accounting_source": {
+              "schema_version": "karajan.go-context-source.v1",
+              "model": "glm-5.3-flash",
+              "channel": "opencode-go",
+              "measurement_method": "reference_tokenizer_estimate",
+              "libraries": {
+                "transformers": "5.16.1",
+                "tokenizers": "0.23.2",
+                "Jinja2": "3.1.6"
+              },
+              "artifacts": {
+                "tokenizer.json": {
+                  "sha256": "19e773648cb4e65de8660ea6365e10acca112d42a854923df93db4a6f333a82d",
+                  "bytes": 20217442,
+                  "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/690b705278a3a58e538fcb37c2ca8b5f9511213c/tokenizer.json"
+                },
+                "tokenizer_config.json": {
+                  "sha256": "98b1271574f41abf89427ae2dda030d94dc9478f0edc5a8bd240db213c6fd5fc",
+                  "bytes": 761,
+                  "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/690b705278a3a58e538fcb37c2ca8b5f9511213c/tokenizer_config.json"
+                },
+                "chat_template.jinja": {
+                  "sha256": "0c4099f3382d6c92700dfb99725025360966fd73032f0ecf32377c0d9e6309c5",
+                  "bytes": 10950,
+                  "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/690b705278a3a58e538fcb37c2ca8b5f9511213c/chat_template.jinja"
+                }
+              },
+              "normalizer": {
+                "id": "openai-compatible-text-functions.v1",
+                "implementation_sha256": "ab351b634e38351bed631db97734d1e519fc7e4577b0fb094f2651fa112d0428",
+                "generation_prompt": true,
+                "add_special_tokens": false,
+                "default_reasoning_effort": "max",
+                "default_clear_thinking": false,
+                "tool_argument_normalization": "duplicate-rejecting-json-object",
+                "request_digest_encoding": "ordered-json-utf8-compact"
+              },
+              "declared_capacity": {
+                "basis": "provider_declared",
+                "context_tokens": 1000000,
+                "max_output_tokens": 131072,
+                "catalog_revision": "98383f3755693d8b173ec1a2ff8bd0ae851ef207",
+                "channel_record_url": "https://github.com/anomalyco/models.dev/blob/98383f3755693d8b173ec1a2ff8bd0ae851ef207/providers/opencode-go/models/glm-5.3-flash.toml",
+                "model_record_url": "https://github.com/anomalyco/models.dev/blob/98383f3755693d8b173ec1a2ff8bd0ae851ef207/models/zhipuai/glm-5.3-flash.toml",
+                "channel_record_sha256": "04995d39482667fe746b81bb5bd2ad08817ee0a11ad2de0d93a9d774f54c68f0",
+                "model_record_sha256": "541b4e2dc3b05cfae7e89766882eff3dc6e733b8309d9d11fe9037d5bd374b0a",
+                "model_documentation": "https://docs.z.ai/guides/vlm/glm-5.3-flash",
+                "channel_documentation": "https://opencode.ai/docs/go/"
+              },
+              "server_exact_accounting": false,
+              "qualification_granted": false
+            },
+            "native_settings": {
+              "model": "opencode-go/glm-5.3-flash",
+              "small_model": "opencode-go/glm-5.3-flash",
+              "default_agent": "probe",
+              "enabled_providers": [
+                "opencode-go"
+              ],
+              "autoupdate": false,
+              "share": "disabled",
+              "snapshot": false,
+              "compaction": {
+                "auto": false,
+                "prune": false
+              },
+              "plugin": [],
+              "mcp": {},
+              "lsp": false,
+              "formatter": false,
+              "permission": {
+                "*": "deny",
+                "read": {
+                  "*": "deny",
+                  "workspace/acceptance.md": "allow",
+                  "workspace/src/range.py": "allow"
+                },
+                "edit": {
+                  "*": "deny"
+                }
+              },
+              "agent": {
+                "probe": {
+                  "mode": "primary",
+                  "options": {},
+                  "steps": 4,
+                  "permission": {
+                    "*": "deny",
+                    "read": {
+                      "*": "deny",
+                      "workspace/acceptance.md": "allow",
+                      "workspace/src/range.py": "allow"
+                    },
+                    "edit": {
+                      "*": "deny"
+                    }
+                  }
+                },
+                "title": {
+                  "disable": true,
+                  "options": {},
+                  "permission": {}
+                },
+                "summary": {
+                  "disable": true,
+                  "options": {},
+                  "permission": {}
+                },
+                "compaction": {
+                  "disable": true,
+                  "options": {},
+                  "permission": {}
+                },
+                "explore": {
+                  "disable": true,
+                  "options": {},
+                  "permission": {}
+                },
+                "general": {
+                  "disable": true,
+                  "options": {},
+                  "permission": {}
+                },
+                "build": {
+                  "disable": true,
+                  "options": {},
+                  "permission": {}
+                },
+                "plan": {
+                  "disable": true,
+                  "options": {},
+                  "permission": {}
+                }
+              },
+              "provider": {
+                "opencode-go": {
+                  "npm": "@ai-sdk/openai-compatible",
+                  "name": "Fixed local inference bridge",
+                  "whitelist": [
+                    "glm-5.3-flash"
+                  ],
+                  "options": {
+                    "baseURL": "http://127.0.0.1:5001/v1",
+                    "apiKey": "<local-capability>",
+                    "timeout": 90000
+                  },
+                  "models": {
+                    "glm-5.3-flash": {
+                      "name": "glm-5.3-flash",
+                      "tool_call": true,
+                      "limit": {
+                        "context": 16384,
+                        "output": 4096
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "runtime_digest": "655f6180d81d739dfbb84d44f4a679f9ae19bafa014e40cf713ab96a16e41110",
+          "probe_spec": {
+            "schema_version": "karajan.go-readonly-reviewer-probe-spec.v1",
+            "suite_ref": {
+              "id": "opencode-go-readonly-review-linux",
+              "revision": 1
+            },
+            "model": "glm-5.3-flash",
+            "scenarios": [
+              "clean_review",
+              "defect_review",
+              "denied_read"
+            ],
+            "max_requests": 6,
+            "max_total_requests": 18,
+            "scenario_timeout_seconds": 150,
+            "suite_timeout_seconds": 600,
+            "context": {
+              "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+              "approved_input_tokens": 12288,
+              "reserved_output_tokens": 4096,
+              "operating_context_tokens": 16384,
+              "fixed_margin": 2048,
+              "ratio_margin_basis_points": 2000
+            },
+            "parser_revision": "karajan.review-output-parser.v1",
+            "cases": {
+              "clean_review": {
+                "projection": [
+                  {
+                    "path": "acceptance.md",
+                    "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "writable": false
+                  },
+                  {
+                    "path": "src/range.py",
+                    "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                    "writable": false
+                  }
+                ],
+                "files": [
+                  {
+                    "path": "acceptance.md",
+                    "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "bytes": 226,
+                    "mode": "100644"
+                  },
+                  {
+                    "path": "src/range.py",
+                    "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                    "bytes": 67,
+                    "mode": "100644"
+                  }
+                ],
+                "prompt_sha256": "a31d85c9028c54bb0cae8bace58bc4431b239251ed1098faf76e7b1418f4e1eb",
+                "allowed_files": [
+                  "acceptance.md",
+                  "src/range.py"
+                ],
+                "allowed_acceptance_refs": [
+                  "acceptance:clamp-v1"
+                ],
+                "expected": {
+                  "verdict": "passed",
+                  "findings": "empty_findings"
+                }
+              },
+              "defect_review": {
+                "projection": [
+                  {
+                    "path": "acceptance.md",
+                    "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "writable": false
+                  },
+                  {
+                    "path": "src/range.py",
+                    "sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                    "writable": false
+                  }
+                ],
+                "files": [
+                  {
+                    "path": "acceptance.md",
+                    "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "bytes": 226,
+                    "mode": "100644"
+                  },
+                  {
+                    "path": "src/range.py",
+                    "sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                    "bytes": 67,
+                    "mode": "100644"
+                  }
+                ],
+                "prompt_sha256": "a31d85c9028c54bb0cae8bace58bc4431b239251ed1098faf76e7b1418f4e1eb",
+                "allowed_files": [
+                  "acceptance.md",
+                  "src/range.py"
+                ],
+                "allowed_acceptance_refs": [
+                  "acceptance:clamp-v1"
+                ],
+                "expected": {
+                  "verdict": "failed",
+                  "findings": "blocking_finding_at_source_acceptance"
+                }
+              },
+              "denied_read": {
+                "projection": [
+                  {
+                    "path": "acceptance.md",
+                    "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "writable": false
+                  },
+                  {
+                    "path": "src/range.py",
+                    "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                    "writable": false
+                  }
+                ],
+                "files": [
+                  {
+                    "path": "acceptance.md",
+                    "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "bytes": 226,
+                    "mode": "100644"
+                  },
+                  {
+                    "path": "src/range.py",
+                    "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                    "bytes": 67,
+                    "mode": "100644"
+                  }
+                ],
+                "prompt_sha256": "a8b2c2a280a4863db080bfcbef1e630f644d662ef1304ad76899417b4095f6de",
+                "allowed_files": [
+                  "acceptance.md",
+                  "src/range.py"
+                ],
+                "allowed_acceptance_refs": [
+                  "acceptance:clamp-v1"
+                ],
+                "expected": {
+                  "verdict": "inconclusive",
+                  "findings": "empty_findings"
+                }
+              }
+            }
+          },
+          "probe_spec_digest": "d89115148f416db185d5b75b29d90bccb1143da1cb385e97e159a4a3a4f6a565",
+          "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+          "source_sha256": {
+            "go_probe.py": "f9fe86a085db0e9d863a79087f67356c3715048735eddde5917cbf4b141d4743",
+            "opencode_runtime.py": "213de2adf2ada620e3382ccdae099935a4644927a04b3e4c0b59cfb4295bb003",
+            "_opencode_namespace.py": "6e981c2f8d0de875380ad342f168a0e8bddb46ae9e607202121ebd26b8d35019",
+            "_opencode_inner.py": "3fed107dda1ba908fbc098f37f5d26b22c82b7402a79f2c9612d208dfa01b3e3",
+            "_opencode_projection.py": "cac01b05d8aae1ab1916b30d6f50500585fdce3dfd07fe956ffb002243274c57",
+            "_opencode_capture.py": "9cb7c45bbf073c39efcf0d0591bb287ab4891a9ee0cecf0adbc5cea1b0383907",
+            "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+            "go_relay.py": "33dce5c2c52c5558efb98682db79fd72c5e854b3ff2a389d5ba7249212efd299",
+            "go_journal.py": "f82f1c098e884c1b6c6423245553ca8b1bbe75a2623950a27362d506f51fbfbb",
+            "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b",
+            "isolation/go_reviewer_probe.py": "1a9f45607ce54f373bc35e645f1fb6c37cbd169fa7271dc09bfb1bcfabe744f8",
+            "isolation/_go_reviewer_evidence.py": "f80f64a2eeb08ddcab41702527ee7f6b2a6bcc85d5f7a8767947298657cb4987",
+            "isolation/go_task.py": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+            "isolation/go_projected_probe.py": "85d13bf5ce4c86343d7831cb99ab48e37d01fded79416c622a95b031f26648ce",
+            "candidates/review_output.py": "8b72d037154f7c4d1a9bb8af95d5713b3851de4122327aa070f3f2562c226733",
+            "candidates/models.py": "e5a94a8042d33c46fdd3af58c3bbd8e616895e2b35ee127e19c2757e64c43fb9",
+            "candidates/store.py": "d48c5bc50dc35d17548e85e8795a2359e4c915c839c0a4e24055a6cbd38ffa13",
+            "adapters/opencode/go_context.py": "ab351b634e38351bed631db97734d1e519fc7e4577b0fb094f2651fa112d0428"
+          },
+          "runtime_tools_status": "not_run",
+          "dispatch_eligible": false,
+          "real_credential_passed_to_runtime": false,
+          "provider_remote_stop": "unknown",
+          "billing_limit_qualification": "not_run",
+          "runtime": {
+            "state": "running",
+            "runtime_version": "1.18.29",
+            "runtime_tools_status": "not_run",
+            "dispatch_eligible": false,
+            "namespace_pid": 1,
+            "namespaces": {
+              "user": "user:[4026532179]",
+              "mnt": "mnt:[4026532235]",
+              "pid": "pid:[4026532238]",
+              "net": "net:[4026532240]"
+            },
+            "host_mount_visible": false,
+            "wsl_interop_visible": false,
+            "native_control_fd_inherited": false,
+            "network_interfaces": [
+              "lo"
+            ],
+            "ipv4_routes": [],
+            "capabilities": {
+              "effective": "0000000000000000",
+              "permitted": "0000000000000000",
+              "bounding": "0000000000000000"
+            },
+            "no_new_privileges": true,
+            "runtime_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650"
+          },
+          "effective_configuration_matches": true,
+          "session": {
+            "id": "ses_f85e9947cffenWyakQc3DjIRDh",
+            "initial_message_count": 0,
+            "initial_messages_sha256": "5e4ce7b36ba37b78a5d5f9fd08e6b7b54ba6879d651aa46ec9e1d6fa24ebe30a",
+            "prompt_message_id": "msg_07a166f99001c8D3kTokKKY1ml"
+          },
+          "native_final": {
+            "session_id": "ses_f85e9947cffenWyakQc3DjIRDh",
+            "prompt_message_id": "msg_07a166f99001c8D3kTokKKY1ml",
+            "assistant_message_id": "msg_07a167bc6001XR9PoWwj5DVur9",
+            "parent_id": "msg_07a166f99001c8D3kTokKKY1ml",
+            "provider_id": "opencode-go",
+            "model_id": "glm-5.3-flash",
+            "created_at": 1788754688966,
+            "completed_at": 1788754690128,
+            "finish": "stop",
+            "error": null,
+            "text": "{\"verdict\": \"pass\", \"findings\": []}",
+            "text_sha256": "196e122584c365e72758582413ed51ec7fe3ca633dcdea8313da565925734016",
+            "text_part_count": 1,
+            "text_part_id": "prt_07a168048001Hdba0qOcTfJ2O0",
+            "text_part_message_id": "msg_07a167bc6001XR9PoWwj5DVur9",
+            "text_part_session_id": "ses_f85e9947cffenWyakQc3DjIRDh",
+            "text_part_started_at": 1788754690120,
+            "text_part_completed_at": 1788754690122
+          },
+          "parsed_review": {
+            "verdict": "passed",
+            "findings": []
+          },
+          "parser_revision": "karajan.review-output-parser.v1",
+          "readonly": {
+            "before": [
+              {
+                "path": "acceptance.md",
+                "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                "bytes": 226,
+                "mode": "100644"
+              },
+              {
+                "path": "src/range.py",
+                "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                "bytes": 67,
+                "mode": "100644"
+              }
+            ],
+            "after": [
+              {
+                "path": "acceptance.md",
+                "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                "bytes": 226,
+                "mode": "100644"
+              },
+              {
+                "path": "src/range.py",
+                "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                "bytes": 67,
+                "mode": "100644"
+              }
+            ],
+            "mounts": [
+              {
+                "path": "acceptance.md",
+                "readonly": true,
+                "mount_flags": 4097,
+                "device": 2096,
+                "inode": 399423,
+                "host_identity_matches": true
+              },
+              {
+                "path": "src/range.py",
+                "readonly": true,
+                "mount_flags": 4097,
+                "device": 2096,
+                "inode": 399425,
+                "host_identity_matches": true
+              }
+            ],
+            "unchanged": true,
+            "outside_projection_unchanged": true
+          },
+          "tools": [
+            {
+              "message_id": "msg_07a16718d001zNXz63OXQIPTT4",
+              "call_id": "reviewer_call_1",
+              "name": "read",
+              "path": "acceptance.md",
+              "status": "completed",
+              "permission_denied": false,
+              "os_not_found": false
+            },
+            {
+              "message_id": "msg_07a167740001bTuSeOpvZ18nf4",
+              "call_id": "reviewer_call_2",
+              "name": "read",
+              "path": "src/range.py",
+              "status": "completed",
+              "permission_denied": false,
+              "os_not_found": false
+            }
+          ],
+          "native_cleanup": {
+            "dispatch_eligible": false,
+            "local_stop": "confirmed",
+            "namespace_init_stopped": true,
+            "observed_processes": [
+              {
+                "birth": "15128079",
+                "namespace_pid": 1,
+                "pid": 146777
+              },
+              {
+                "birth": "15128286",
+                "namespace_pid": 47,
+                "pid": 146823
+              }
+            ],
+            "observed_processes_still_running": [],
+            "remote_stop": "unknown",
+            "runtime_tools_status": "not_run"
+          },
+          "relay_cleanup": {
+            "status": "closed",
+            "errors": []
+          },
+          "requests": [
+            {
+              "requested_model": "glm-5.3-flash",
+              "session_header_present": true,
+              "tool_results_in_request": 0,
+              "fixture_content_in_tool_result": false,
+              "denied_canary_in_request": false,
+              "requested_stream": true,
+              "reported_models": [
+                "glm-5.3-flash"
+              ],
+              "tool_names": [
+                "read"
+              ],
+              "usage": {
+                "prompt_tokens": 100,
+                "completion_tokens": 20
+              },
+              "upstream_send_attempted": true,
+              "upstream_status": 200,
+              "upstream_response_complete": true,
+              "response_bytes": 893,
+              "stream_terminated": true,
+              "protocol_passed": true,
+              "relay_completed": true,
+              "reason_codes": [],
+              "sequence": 1,
+              "request_context": {
+                "schema_version": "karajan.go-context-measurement.v1",
+                "model": "glm-5.3-flash",
+                "measurement_method": "reference_tokenizer_estimate",
+                "measurement_confidence": "local_estimate",
+                "request_digest": "4d891cce788c7d97dd20a123ad211ed746053dc6c50a5b3c48b0e8c573486950",
+                "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+                "local_input_tokens": 2583,
+                "fixed_margin": 2048,
+                "ratio_margin_basis_points": 2000,
+                "margin_tokens": 2565,
+                "accounted_input_tokens": 5148,
+                "requested_output_tokens": 4096,
+                "approved_input_tokens": 12288,
+                "reserved_output_tokens": 4096,
+                "operating_context_tokens": 16384,
+                "declared_context_tokens": 1000000,
+                "declared_max_output_tokens": 131072,
+                "template_reasoning_effort": "max",
+                "template_clear_thinking": false
+              },
+              "journal_call_id": "71036776-c531-4262-9b48-153f503ccf8c",
+              "finish_reason": "tool_calls",
+              "go_cost_trailer_seen": false,
+              "provider_reported_cost": null,
+              "provider_reported_cost_unit": "unknown"
+            },
+            {
+              "requested_model": "glm-5.3-flash",
+              "session_header_present": true,
+              "tool_results_in_request": 1,
+              "fixture_content_in_tool_result": false,
+              "denied_canary_in_request": false,
+              "requested_stream": true,
+              "reported_models": [
+                "glm-5.3-flash"
+              ],
+              "tool_names": [
+                "read"
+              ],
+              "usage": {
+                "prompt_tokens": 100,
+                "completion_tokens": 20
+              },
+              "upstream_send_attempted": true,
+              "upstream_status": 200,
+              "upstream_response_complete": true,
+              "response_bytes": 892,
+              "stream_terminated": true,
+              "protocol_passed": true,
+              "relay_completed": true,
+              "reason_codes": [],
+              "sequence": 2,
+              "request_context": {
+                "schema_version": "karajan.go-context-measurement.v1",
+                "model": "glm-5.3-flash",
+                "measurement_method": "reference_tokenizer_estimate",
+                "measurement_confidence": "local_estimate",
+                "request_digest": "6624753a6bbe375c9b401bbbacd24e81a0c4adc3b04f7ad29cd6ce403ec2ca9a",
+                "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+                "local_input_tokens": 2721,
+                "fixed_margin": 2048,
+                "ratio_margin_basis_points": 2000,
+                "margin_tokens": 2593,
+                "accounted_input_tokens": 5314,
+                "requested_output_tokens": 4096,
+                "approved_input_tokens": 12288,
+                "reserved_output_tokens": 4096,
+                "operating_context_tokens": 16384,
+                "declared_context_tokens": 1000000,
+                "declared_max_output_tokens": 131072,
+                "template_reasoning_effort": "max",
+                "template_clear_thinking": false
+              },
+              "journal_call_id": "84868e47-f231-4892-ab94-6c7b7db4eb90",
+              "finish_reason": "tool_calls",
+              "go_cost_trailer_seen": false,
+              "provider_reported_cost": null,
+              "provider_reported_cost_unit": "unknown"
+            },
+            {
+              "requested_model": "glm-5.3-flash",
+              "session_header_present": true,
+              "tool_results_in_request": 2,
+              "fixture_content_in_tool_result": true,
+              "denied_canary_in_request": false,
+              "requested_stream": true,
+              "reported_models": [
+                "glm-5.3-flash"
+              ],
+              "tool_names": [],
+              "usage": {
+                "prompt_tokens": 100,
+                "completion_tokens": 20
+              },
+              "upstream_send_attempted": true,
+              "upstream_status": 200,
+              "upstream_response_complete": true,
+              "response_bytes": 777,
+              "stream_terminated": true,
+              "protocol_passed": true,
+              "relay_completed": true,
+              "reason_codes": [],
+              "sequence": 3,
+              "request_context": {
+                "schema_version": "karajan.go-context-measurement.v1",
+                "model": "glm-5.3-flash",
+                "measurement_method": "reference_tokenizer_estimate",
+                "measurement_confidence": "local_estimate",
+                "request_digest": "7aa85f0d6ec0a205beb5cabf4b5d3cd04c017593ce53aaa1fa76be9edb435f39",
+                "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+                "local_input_tokens": 2795,
+                "fixed_margin": 2048,
+                "ratio_margin_basis_points": 2000,
+                "margin_tokens": 2607,
+                "accounted_input_tokens": 5402,
+                "requested_output_tokens": 4096,
+                "approved_input_tokens": 12288,
+                "reserved_output_tokens": 4096,
+                "operating_context_tokens": 16384,
+                "declared_context_tokens": 1000000,
+                "declared_max_output_tokens": 131072,
+                "template_reasoning_effort": "max",
+                "template_clear_thinking": false
+              },
+              "journal_call_id": "b0da7f9a-1f25-4822-9d6c-0dd076ac32ee",
+              "finish_reason": "stop",
+              "go_cost_trailer_seen": false,
+              "provider_reported_cost": null,
+              "provider_reported_cost_unit": "unknown"
+            }
+          ],
+          "retention": {
+            "requests": [
+              {
+                "sequence": 1,
+                "request_digest": "4d891cce788c7d97dd20a123ad211ed746053dc6c50a5b3c48b0e8c573486950",
+                "message_count": 2,
+                "messages_digest": "81824610d968e3a6614dee37d6d65c8738d0b1dd6a661ab4ed02b2c4d381c463",
+                "initial_input_retained": true,
+                "prior_messages_retained": true,
+                "read_results": [],
+                "denied_canary_present": false
+              },
+              {
+                "sequence": 2,
+                "request_digest": "6624753a6bbe375c9b401bbbacd24e81a0c4adc3b04f7ad29cd6ce403ec2ca9a",
+                "message_count": 4,
+                "messages_digest": "9fd27ff596b483c42ee29b5c53e48f07b5a2235d1008d8f8ad6dde1cab6970a8",
+                "initial_input_retained": true,
+                "prior_messages_retained": true,
+                "read_results": [
+                  {
+                    "path": "acceptance.md",
+                    "content_sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "tool_result_sha256": "6dd6ee55e2680ac42f8449e4e62360abc85c62057cf9593bdb027d587f5b1eae"
+                  }
+                ],
+                "denied_canary_present": false
+              },
+              {
+                "sequence": 3,
+                "request_digest": "7aa85f0d6ec0a205beb5cabf4b5d3cd04c017593ce53aaa1fa76be9edb435f39",
+                "message_count": 6,
+                "messages_digest": "9fcb201470d0d3d2d7cdc2f528a39843cf753f84c15f6c6093fa91a2ca986071",
+                "initial_input_retained": true,
+                "prior_messages_retained": true,
+                "read_results": [
+                  {
+                    "path": "acceptance.md",
+                    "content_sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "tool_result_sha256": "6dd6ee55e2680ac42f8449e4e62360abc85c62057cf9593bdb027d587f5b1eae"
+                  },
+                  {
+                    "path": "src/range.py",
+                    "content_sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                    "tool_result_sha256": "cff36bf4cc3cfbd1c794d6a1903f2f314fca6b74db141d04c4f1cd1ae3b6dc95"
+                  }
+                ],
+                "denied_canary_present": false
+              }
+            ],
+            "final_request_digest": "7aa85f0d6ec0a205beb5cabf4b5d3cd04c017593ce53aaa1fa76be9edb435f39"
+          },
+          "journal": {
+            "grant_id": "0c55f3f7-057a-459d-9e9c-18a3c834f724",
+            "binding": {
+              "attempt_id": "5cebe544-1c57-4886-b109-80e0665520bd",
+              "auth_generation": "c7f61a84-c39c-4aa3-89a5-9186021b393c",
+              "channel": "fixture-channel",
+              "context": {
+                "approved_input_tokens": 12288,
+                "fixed_margin": 2048,
+                "operating_context_tokens": 16384,
+                "ratio_margin_basis_points": 2000,
+                "reserved_output_tokens": 4096,
+                "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588"
+              },
+              "expires_at": 1788755265.4829855,
+              "fence": 1,
+              "max_requests": 6,
+              "model": "glm-5.3-flash",
+              "probe_spec_digest": "d89115148f416db185d5b75b29d90bccb1143da1cb385e97e159a4a3a4f6a565",
+              "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+              "qualification_id": "db3cb152-3b80-4f04-acc6-97e3fbe0563d",
+              "runtime_digest": "655f6180d81d739dfbb84d44f4a679f9ae19bafa014e40cf713ab96a16e41110",
+              "scenario": "clean_review",
+              "schema_version": "karajan.go-reviewer-qualification-grant.v1"
+            },
+            "created_at": 1788754668.5484183,
+            "revoked_at": 1788754690.180075,
+            "state": "revoked",
+            "request_count": 3,
+            "calls": [
+              {
+                "call_id": "71036776-c531-4262-9b48-153f503ccf8c",
+                "completed_at": 1788754687.7592587,
+                "grant_id": "0c55f3f7-057a-459d-9e9c-18a3c834f724",
+                "outcome": {
+                  "protocol_passed": true,
+                  "reason_codes": [],
+                  "response_bytes": 893,
+                  "state": "response_received",
+                  "upstream_status": 200,
+                  "usage": {
+                    "completion_tokens": 20,
+                    "prompt_tokens": 100
+                  }
+                },
+                "request_context": {
+                  "accounted_input_tokens": 5148,
+                  "approved_input_tokens": 12288,
+                  "declared_context_tokens": 1000000,
+                  "declared_max_output_tokens": 131072,
+                  "fixed_margin": 2048,
+                  "local_input_tokens": 2583,
+                  "margin_tokens": 2565,
+                  "measurement_confidence": "local_estimate",
+                  "measurement_method": "reference_tokenizer_estimate",
+                  "model": "glm-5.3-flash",
+                  "operating_context_tokens": 16384,
+                  "ratio_margin_basis_points": 2000,
+                  "request_digest": "4d891cce788c7d97dd20a123ad211ed746053dc6c50a5b3c48b0e8c573486950",
+                  "requested_output_tokens": 4096,
+                  "reserved_output_tokens": 4096,
+                  "schema_version": "karajan.go-context-measurement.v1",
+                  "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+                  "template_clear_thinking": false,
+                  "template_reasoning_effort": "max"
+                },
+                "send_intent_at": 1788754687.7550101,
+                "sequence": 1,
+                "state": "response_received"
+              },
+              {
+                "call_id": "84868e47-f231-4892-ab94-6c7b7db4eb90",
+                "completed_at": 1788754688.9452524,
+                "grant_id": "0c55f3f7-057a-459d-9e9c-18a3c834f724",
+                "outcome": {
+                  "protocol_passed": true,
+                  "reason_codes": [],
+                  "response_bytes": 892,
+                  "state": "response_received",
+                  "upstream_status": 200,
+                  "usage": {
+                    "completion_tokens": 20,
+                    "prompt_tokens": 100
+                  }
+                },
+                "request_context": {
+                  "accounted_input_tokens": 5314,
+                  "approved_input_tokens": 12288,
+                  "declared_context_tokens": 1000000,
+                  "declared_max_output_tokens": 131072,
+                  "fixed_margin": 2048,
+                  "local_input_tokens": 2721,
+                  "margin_tokens": 2593,
+                  "measurement_confidence": "local_estimate",
+                  "measurement_method": "reference_tokenizer_estimate",
+                  "model": "glm-5.3-flash",
+                  "operating_context_tokens": 16384,
+                  "ratio_margin_basis_points": 2000,
+                  "request_digest": "6624753a6bbe375c9b401bbbacd24e81a0c4adc3b04f7ad29cd6ce403ec2ca9a",
+                  "requested_output_tokens": 4096,
+                  "reserved_output_tokens": 4096,
+                  "schema_version": "karajan.go-context-measurement.v1",
+                  "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+                  "template_clear_thinking": false,
+                  "template_reasoning_effort": "max"
+                },
+                "send_intent_at": 1788754688.9410312,
+                "sequence": 2,
+                "state": "response_received"
+              },
+              {
+                "call_id": "b0da7f9a-1f25-4822-9d6c-0dd076ac32ee",
+                "completed_at": 1788754690.1131313,
+                "grant_id": "0c55f3f7-057a-459d-9e9c-18a3c834f724",
+                "outcome": {
+                  "protocol_passed": true,
+                  "reason_codes": [],
+                  "response_bytes": 777,
+                  "state": "response_received",
+                  "upstream_status": 200,
+                  "usage": {
+                    "completion_tokens": 20,
+                    "prompt_tokens": 100
+                  }
+                },
+                "request_context": {
+                  "accounted_input_tokens": 5402,
+                  "approved_input_tokens": 12288,
+                  "declared_context_tokens": 1000000,
+                  "declared_max_output_tokens": 131072,
+                  "fixed_margin": 2048,
+                  "local_input_tokens": 2795,
+                  "margin_tokens": 2607,
+                  "measurement_confidence": "local_estimate",
+                  "measurement_method": "reference_tokenizer_estimate",
+                  "model": "glm-5.3-flash",
+                  "operating_context_tokens": 16384,
+                  "ratio_margin_basis_points": 2000,
+                  "request_digest": "7aa85f0d6ec0a205beb5cabf4b5d3cd04c017593ce53aaa1fa76be9edb435f39",
+                  "requested_output_tokens": 4096,
+                  "reserved_output_tokens": 4096,
+                  "schema_version": "karajan.go-context-measurement.v1",
+                  "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+                  "template_clear_thinking": false,
+                  "template_reasoning_effort": "max"
+                },
+                "send_intent_at": 1788754690.1089947,
+                "sequence": 3,
+                "state": "response_received"
+              }
+            ]
+          },
+          "reason_codes": [],
+          "status": "passed"
+        }
+      },
+      {
+        "scenario": "defect_review",
+        "attempt_id": "6dca853e-7b8f-4314-9f5d-d8648cd64135",
+        "fence": 1,
+        "grant_id": "19a90299-981e-49a8-969a-eb7c5633f9a4",
+        "status": "passed",
+        "reason_codes": [],
+        "observation": {
+          "schema_version": "karajan.go-readonly-reviewer-observation.v1",
+          "scope": "readonly_reviewer_tools_fixture",
+          "observation_origin": "http_fixture",
+          "scenario": "defect_review",
+          "grant_id": "19a90299-981e-49a8-969a-eb7c5633f9a4",
+          "runtime_source": {
+            "schema_version": "karajan.fixed-go-runtime-source.v1",
+            "execution_path": "linux-unshare-chroot-opencode-go-readonly-reviewer-v1",
+            "runtime_version": "1.18.29",
+            "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+            "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+            "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+            "machine": "x86_64",
+            "source_sha256": {
+              "go_probe.py": "f9fe86a085db0e9d863a79087f67356c3715048735eddde5917cbf4b141d4743",
+              "opencode_runtime.py": "213de2adf2ada620e3382ccdae099935a4644927a04b3e4c0b59cfb4295bb003",
+              "_opencode_namespace.py": "6e981c2f8d0de875380ad342f168a0e8bddb46ae9e607202121ebd26b8d35019",
+              "_opencode_inner.py": "3fed107dda1ba908fbc098f37f5d26b22c82b7402a79f2c9612d208dfa01b3e3",
+              "_opencode_projection.py": "cac01b05d8aae1ab1916b30d6f50500585fdce3dfd07fe956ffb002243274c57",
+              "_opencode_capture.py": "9cb7c45bbf073c39efcf0d0591bb287ab4891a9ee0cecf0adbc5cea1b0383907",
+              "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+              "go_relay.py": "33dce5c2c52c5558efb98682db79fd72c5e854b3ff2a389d5ba7249212efd299",
+              "go_journal.py": "f82f1c098e884c1b6c6423245553ca8b1bbe75a2623950a27362d506f51fbfbb",
+              "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b",
+              "isolation/go_reviewer_probe.py": "1a9f45607ce54f373bc35e645f1fb6c37cbd169fa7271dc09bfb1bcfabe744f8",
+              "isolation/_go_reviewer_evidence.py": "f80f64a2eeb08ddcab41702527ee7f6b2a6bcc85d5f7a8767947298657cb4987",
+              "isolation/go_task.py": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+              "isolation/go_projected_probe.py": "85d13bf5ce4c86343d7831cb99ab48e37d01fded79416c622a95b031f26648ce",
+              "candidates/review_output.py": "8b72d037154f7c4d1a9bb8af95d5713b3851de4122327aa070f3f2562c226733",
+              "candidates/models.py": "e5a94a8042d33c46fdd3af58c3bbd8e616895e2b35ee127e19c2757e64c43fb9",
+              "candidates/store.py": "d48c5bc50dc35d17548e85e8795a2359e4c915c839c0a4e24055a6cbd38ffa13",
+              "adapters/opencode/go_context.py": "ab351b634e38351bed631db97734d1e519fc7e4577b0fb094f2651fa112d0428"
+            },
+            "system_executable_sha256": {
+              "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c",
+              "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+              "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+              "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+            },
+            "native_settings_digest": "ae97fd8de7046b24b3ef2aea2f43c15ee8672e88940674088a54c359f5f2fc89",
+            "probe_spec": {
+              "schema_version": "karajan.go-readonly-reviewer-probe-spec.v1",
+              "suite_ref": {
+                "id": "opencode-go-readonly-review-linux",
+                "revision": 1
+              },
+              "model": "glm-5.3-flash",
+              "scenarios": [
+                "clean_review",
+                "defect_review",
+                "denied_read"
+              ],
+              "max_requests": 6,
+              "max_total_requests": 18,
+              "scenario_timeout_seconds": 150,
+              "suite_timeout_seconds": 600,
+              "context": {
+                "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+                "approved_input_tokens": 12288,
+                "reserved_output_tokens": 4096,
+                "operating_context_tokens": 16384,
+                "fixed_margin": 2048,
+                "ratio_margin_basis_points": 2000
+              },
+              "parser_revision": "karajan.review-output-parser.v1",
+              "cases": {
+                "clean_review": {
+                  "projection": [
+                    {
+                      "path": "acceptance.md",
+                      "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                      "writable": false
+                    },
+                    {
+                      "path": "src/range.py",
+                      "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                      "writable": false
+                    }
+                  ],
+                  "files": [
+                    {
+                      "path": "acceptance.md",
+                      "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                      "bytes": 226,
+                      "mode": "100644"
+                    },
+                    {
+                      "path": "src/range.py",
+                      "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                      "bytes": 67,
+                      "mode": "100644"
+                    }
+                  ],
+                  "prompt_sha256": "a31d85c9028c54bb0cae8bace58bc4431b239251ed1098faf76e7b1418f4e1eb",
+                  "allowed_files": [
+                    "acceptance.md",
+                    "src/range.py"
+                  ],
+                  "allowed_acceptance_refs": [
+                    "acceptance:clamp-v1"
+                  ],
+                  "expected": {
+                    "verdict": "passed",
+                    "findings": "empty_findings"
+                  }
+                },
+                "defect_review": {
+                  "projection": [
+                    {
+                      "path": "acceptance.md",
+                      "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                      "writable": false
+                    },
+                    {
+                      "path": "src/range.py",
+                      "sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                      "writable": false
+                    }
+                  ],
+                  "files": [
+                    {
+                      "path": "acceptance.md",
+                      "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                      "bytes": 226,
+                      "mode": "100644"
+                    },
+                    {
+                      "path": "src/range.py",
+                      "sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                      "bytes": 67,
+                      "mode": "100644"
+                    }
+                  ],
+                  "prompt_sha256": "a31d85c9028c54bb0cae8bace58bc4431b239251ed1098faf76e7b1418f4e1eb",
+                  "allowed_files": [
+                    "acceptance.md",
+                    "src/range.py"
+                  ],
+                  "allowed_acceptance_refs": [
+                    "acceptance:clamp-v1"
+                  ],
+                  "expected": {
+                    "verdict": "failed",
+                    "findings": "blocking_finding_at_source_acceptance"
+                  }
+                },
+                "denied_read": {
+                  "projection": [
+                    {
+                      "path": "acceptance.md",
+                      "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                      "writable": false
+                    },
+                    {
+                      "path": "src/range.py",
+                      "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                      "writable": false
+                    }
+                  ],
+                  "files": [
+                    {
+                      "path": "acceptance.md",
+                      "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                      "bytes": 226,
+                      "mode": "100644"
+                    },
+                    {
+                      "path": "src/range.py",
+                      "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                      "bytes": 67,
+                      "mode": "100644"
+                    }
+                  ],
+                  "prompt_sha256": "a8b2c2a280a4863db080bfcbef1e630f644d662ef1304ad76899417b4095f6de",
+                  "allowed_files": [
+                    "acceptance.md",
+                    "src/range.py"
+                  ],
+                  "allowed_acceptance_refs": [
+                    "acceptance:clamp-v1"
+                  ],
+                  "expected": {
+                    "verdict": "inconclusive",
+                    "findings": "empty_findings"
+                  }
+                }
+              }
+            },
+            "probe_spec_digest": "d89115148f416db185d5b75b29d90bccb1143da1cb385e97e159a4a3a4f6a565",
+            "accounting_source": {
+              "schema_version": "karajan.go-context-source.v1",
+              "model": "glm-5.3-flash",
+              "channel": "opencode-go",
+              "measurement_method": "reference_tokenizer_estimate",
+              "libraries": {
+                "transformers": "5.16.1",
+                "tokenizers": "0.23.2",
+                "Jinja2": "3.1.6"
+              },
+              "artifacts": {
+                "tokenizer.json": {
+                  "sha256": "19e773648cb4e65de8660ea6365e10acca112d42a854923df93db4a6f333a82d",
+                  "bytes": 20217442,
+                  "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/690b705278a3a58e538fcb37c2ca8b5f9511213c/tokenizer.json"
+                },
+                "tokenizer_config.json": {
+                  "sha256": "98b1271574f41abf89427ae2dda030d94dc9478f0edc5a8bd240db213c6fd5fc",
+                  "bytes": 761,
+                  "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/690b705278a3a58e538fcb37c2ca8b5f9511213c/tokenizer_config.json"
+                },
+                "chat_template.jinja": {
+                  "sha256": "0c4099f3382d6c92700dfb99725025360966fd73032f0ecf32377c0d9e6309c5",
+                  "bytes": 10950,
+                  "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/690b705278a3a58e538fcb37c2ca8b5f9511213c/chat_template.jinja"
+                }
+              },
+              "normalizer": {
+                "id": "openai-compatible-text-functions.v1",
+                "implementation_sha256": "ab351b634e38351bed631db97734d1e519fc7e4577b0fb094f2651fa112d0428",
+                "generation_prompt": true,
+                "add_special_tokens": false,
+                "default_reasoning_effort": "max",
+                "default_clear_thinking": false,
+                "tool_argument_normalization": "duplicate-rejecting-json-object",
+                "request_digest_encoding": "ordered-json-utf8-compact"
+              },
+              "declared_capacity": {
+                "basis": "provider_declared",
+                "context_tokens": 1000000,
+                "max_output_tokens": 131072,
+                "catalog_revision": "98383f3755693d8b173ec1a2ff8bd0ae851ef207",
+                "channel_record_url": "https://github.com/anomalyco/models.dev/blob/98383f3755693d8b173ec1a2ff8bd0ae851ef207/providers/opencode-go/models/glm-5.3-flash.toml",
+                "model_record_url": "https://github.com/anomalyco/models.dev/blob/98383f3755693d8b173ec1a2ff8bd0ae851ef207/models/zhipuai/glm-5.3-flash.toml",
+                "channel_record_sha256": "04995d39482667fe746b81bb5bd2ad08817ee0a11ad2de0d93a9d774f54c68f0",
+                "model_record_sha256": "541b4e2dc3b05cfae7e89766882eff3dc6e733b8309d9d11fe9037d5bd374b0a",
+                "model_documentation": "https://docs.z.ai/guides/vlm/glm-5.3-flash",
+                "channel_documentation": "https://opencode.ai/docs/go/"
+              },
+              "server_exact_accounting": false,
+              "qualification_granted": false
+            },
+            "native_settings": {
+              "model": "opencode-go/glm-5.3-flash",
+              "small_model": "opencode-go/glm-5.3-flash",
+              "default_agent": "probe",
+              "enabled_providers": [
+                "opencode-go"
+              ],
+              "autoupdate": false,
+              "share": "disabled",
+              "snapshot": false,
+              "compaction": {
+                "auto": false,
+                "prune": false
+              },
+              "plugin": [],
+              "mcp": {},
+              "lsp": false,
+              "formatter": false,
+              "permission": {
+                "*": "deny",
+                "read": {
+                  "*": "deny",
+                  "workspace/acceptance.md": "allow",
+                  "workspace/src/range.py": "allow"
+                },
+                "edit": {
+                  "*": "deny"
+                }
+              },
+              "agent": {
+                "probe": {
+                  "mode": "primary",
+                  "options": {},
+                  "steps": 4,
+                  "permission": {
+                    "*": "deny",
+                    "read": {
+                      "*": "deny",
+                      "workspace/acceptance.md": "allow",
+                      "workspace/src/range.py": "allow"
+                    },
+                    "edit": {
+                      "*": "deny"
+                    }
+                  }
+                },
+                "title": {
+                  "disable": true,
+                  "options": {},
+                  "permission": {}
+                },
+                "summary": {
+                  "disable": true,
+                  "options": {},
+                  "permission": {}
+                },
+                "compaction": {
+                  "disable": true,
+                  "options": {},
+                  "permission": {}
+                },
+                "explore": {
+                  "disable": true,
+                  "options": {},
+                  "permission": {}
+                },
+                "general": {
+                  "disable": true,
+                  "options": {},
+                  "permission": {}
+                },
+                "build": {
+                  "disable": true,
+                  "options": {},
+                  "permission": {}
+                },
+                "plan": {
+                  "disable": true,
+                  "options": {},
+                  "permission": {}
+                }
+              },
+              "provider": {
+                "opencode-go": {
+                  "npm": "@ai-sdk/openai-compatible",
+                  "name": "Fixed local inference bridge",
+                  "whitelist": [
+                    "glm-5.3-flash"
+                  ],
+                  "options": {
+                    "baseURL": "http://127.0.0.1:5001/v1",
+                    "apiKey": "<local-capability>",
+                    "timeout": 90000
+                  },
+                  "models": {
+                    "glm-5.3-flash": {
+                      "name": "glm-5.3-flash",
+                      "tool_call": true,
+                      "limit": {
+                        "context": 16384,
+                        "output": 4096
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "runtime_digest": "655f6180d81d739dfbb84d44f4a679f9ae19bafa014e40cf713ab96a16e41110",
+          "probe_spec": {
+            "schema_version": "karajan.go-readonly-reviewer-probe-spec.v1",
+            "suite_ref": {
+              "id": "opencode-go-readonly-review-linux",
+              "revision": 1
+            },
+            "model": "glm-5.3-flash",
+            "scenarios": [
+              "clean_review",
+              "defect_review",
+              "denied_read"
+            ],
+            "max_requests": 6,
+            "max_total_requests": 18,
+            "scenario_timeout_seconds": 150,
+            "suite_timeout_seconds": 600,
+            "context": {
+              "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+              "approved_input_tokens": 12288,
+              "reserved_output_tokens": 4096,
+              "operating_context_tokens": 16384,
+              "fixed_margin": 2048,
+              "ratio_margin_basis_points": 2000
+            },
+            "parser_revision": "karajan.review-output-parser.v1",
+            "cases": {
+              "clean_review": {
+                "projection": [
+                  {
+                    "path": "acceptance.md",
+                    "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "writable": false
+                  },
+                  {
+                    "path": "src/range.py",
+                    "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                    "writable": false
+                  }
+                ],
+                "files": [
+                  {
+                    "path": "acceptance.md",
+                    "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "bytes": 226,
+                    "mode": "100644"
+                  },
+                  {
+                    "path": "src/range.py",
+                    "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                    "bytes": 67,
+                    "mode": "100644"
+                  }
+                ],
+                "prompt_sha256": "a31d85c9028c54bb0cae8bace58bc4431b239251ed1098faf76e7b1418f4e1eb",
+                "allowed_files": [
+                  "acceptance.md",
+                  "src/range.py"
+                ],
+                "allowed_acceptance_refs": [
+                  "acceptance:clamp-v1"
+                ],
+                "expected": {
+                  "verdict": "passed",
+                  "findings": "empty_findings"
+                }
+              },
+              "defect_review": {
+                "projection": [
+                  {
+                    "path": "acceptance.md",
+                    "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "writable": false
+                  },
+                  {
+                    "path": "src/range.py",
+                    "sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                    "writable": false
+                  }
+                ],
+                "files": [
+                  {
+                    "path": "acceptance.md",
+                    "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "bytes": 226,
+                    "mode": "100644"
+                  },
+                  {
+                    "path": "src/range.py",
+                    "sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                    "bytes": 67,
+                    "mode": "100644"
+                  }
+                ],
+                "prompt_sha256": "a31d85c9028c54bb0cae8bace58bc4431b239251ed1098faf76e7b1418f4e1eb",
+                "allowed_files": [
+                  "acceptance.md",
+                  "src/range.py"
+                ],
+                "allowed_acceptance_refs": [
+                  "acceptance:clamp-v1"
+                ],
+                "expected": {
+                  "verdict": "failed",
+                  "findings": "blocking_finding_at_source_acceptance"
+                }
+              },
+              "denied_read": {
+                "projection": [
+                  {
+                    "path": "acceptance.md",
+                    "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "writable": false
+                  },
+                  {
+                    "path": "src/range.py",
+                    "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                    "writable": false
+                  }
+                ],
+                "files": [
+                  {
+                    "path": "acceptance.md",
+                    "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "bytes": 226,
+                    "mode": "100644"
+                  },
+                  {
+                    "path": "src/range.py",
+                    "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                    "bytes": 67,
+                    "mode": "100644"
+                  }
+                ],
+                "prompt_sha256": "a8b2c2a280a4863db080bfcbef1e630f644d662ef1304ad76899417b4095f6de",
+                "allowed_files": [
+                  "acceptance.md",
+                  "src/range.py"
+                ],
+                "allowed_acceptance_refs": [
+                  "acceptance:clamp-v1"
+                ],
+                "expected": {
+                  "verdict": "inconclusive",
+                  "findings": "empty_findings"
+                }
+              }
+            }
+          },
+          "probe_spec_digest": "d89115148f416db185d5b75b29d90bccb1143da1cb385e97e159a4a3a4f6a565",
+          "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+          "source_sha256": {
+            "go_probe.py": "f9fe86a085db0e9d863a79087f67356c3715048735eddde5917cbf4b141d4743",
+            "opencode_runtime.py": "213de2adf2ada620e3382ccdae099935a4644927a04b3e4c0b59cfb4295bb003",
+            "_opencode_namespace.py": "6e981c2f8d0de875380ad342f168a0e8bddb46ae9e607202121ebd26b8d35019",
+            "_opencode_inner.py": "3fed107dda1ba908fbc098f37f5d26b22c82b7402a79f2c9612d208dfa01b3e3",
+            "_opencode_projection.py": "cac01b05d8aae1ab1916b30d6f50500585fdce3dfd07fe956ffb002243274c57",
+            "_opencode_capture.py": "9cb7c45bbf073c39efcf0d0591bb287ab4891a9ee0cecf0adbc5cea1b0383907",
+            "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+            "go_relay.py": "33dce5c2c52c5558efb98682db79fd72c5e854b3ff2a389d5ba7249212efd299",
+            "go_journal.py": "f82f1c098e884c1b6c6423245553ca8b1bbe75a2623950a27362d506f51fbfbb",
+            "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b",
+            "isolation/go_reviewer_probe.py": "1a9f45607ce54f373bc35e645f1fb6c37cbd169fa7271dc09bfb1bcfabe744f8",
+            "isolation/_go_reviewer_evidence.py": "f80f64a2eeb08ddcab41702527ee7f6b2a6bcc85d5f7a8767947298657cb4987",
+            "isolation/go_task.py": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+            "isolation/go_projected_probe.py": "85d13bf5ce4c86343d7831cb99ab48e37d01fded79416c622a95b031f26648ce",
+            "candidates/review_output.py": "8b72d037154f7c4d1a9bb8af95d5713b3851de4122327aa070f3f2562c226733",
+            "candidates/models.py": "e5a94a8042d33c46fdd3af58c3bbd8e616895e2b35ee127e19c2757e64c43fb9",
+            "candidates/store.py": "d48c5bc50dc35d17548e85e8795a2359e4c915c839c0a4e24055a6cbd38ffa13",
+            "adapters/opencode/go_context.py": "ab351b634e38351bed631db97734d1e519fc7e4577b0fb094f2651fa112d0428"
+          },
+          "runtime_tools_status": "not_run",
+          "dispatch_eligible": false,
+          "real_credential_passed_to_runtime": false,
+          "provider_remote_stop": "unknown",
+          "billing_limit_qualification": "not_run",
+          "runtime": {
+            "state": "running",
+            "runtime_version": "1.18.29",
+            "runtime_tools_status": "not_run",
+            "dispatch_eligible": false,
+            "namespace_pid": 1,
+            "namespaces": {
+              "user": "user:[4026532235]",
+              "mnt": "mnt:[4026532238]",
+              "pid": "pid:[4026532240]",
+              "net": "net:[4026532241]"
+            },
+            "host_mount_visible": false,
+            "wsl_interop_visible": false,
+            "native_control_fd_inherited": false,
+            "network_interfaces": [
+              "lo"
+            ],
+            "ipv4_routes": [],
+            "capabilities": {
+              "effective": "0000000000000000",
+              "permitted": "0000000000000000",
+              "bounding": "0000000000000000"
+            },
+            "no_new_privileges": true,
+            "runtime_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650"
+          },
+          "effective_configuration_matches": true,
+          "session": {
+            "id": "ses_f85e94c6affeM8iabO0BuU6R56",
+            "initial_message_count": 0,
+            "initial_messages_sha256": "5e4ce7b36ba37b78a5d5f9fd08e6b7b54ba6879d651aa46ec9e1d6fa24ebe30a",
+            "prompt_message_id": "msg_07a16b7ca001uWvSlTGomo6JaM"
+          },
+          "native_final": {
+            "session_id": "ses_f85e94c6affeM8iabO0BuU6R56",
+            "prompt_message_id": "msg_07a16b7ca001uWvSlTGomo6JaM",
+            "assistant_message_id": "msg_07a16c3cb001nS7La6Fas29rnl",
+            "parent_id": "msg_07a16b7ca001uWvSlTGomo6JaM",
+            "provider_id": "opencode-go",
+            "model_id": "glm-5.3-flash",
+            "created_at": 1788754707403,
+            "completed_at": 1788754708508,
+            "finish": "stop",
+            "error": null,
+            "text": "{\"verdict\": \"changes_requested\", \"findings\": [{\"severity\": \"high\", \"file\": \"src/range.py\", \"line\": 2, \"behavior\": \"Returns the high bound for values below the range.\", \"trigger\": \"clamp(-1, 0, 2) returns 2 instead of 0.\", \"acceptance_ref\": \"acceptance:clamp-v1\", \"blocking\": true}]}",
+            "text_sha256": "2547dcdc89a243f3f9399bf11b0fd891c5a43eba9f70e204c6ea5cc0c108e0fe",
+            "text_part_count": 1,
+            "text_part_id": "prt_07a16c815001JFQYjfD5se1ULs",
+            "text_part_message_id": "msg_07a16c3cb001nS7La6Fas29rnl",
+            "text_part_session_id": "ses_f85e94c6affeM8iabO0BuU6R56",
+            "text_part_started_at": 1788754708501,
+            "text_part_completed_at": 1788754708503
+          },
+          "parsed_review": {
+            "verdict": "failed",
+            "findings": [
+              {
+                "severity": "high",
+                "file": "src/range.py",
+                "line": 2,
+                "behavior": "Returns the high bound for values below the range.",
+                "trigger": "clamp(-1, 0, 2) returns 2 instead of 0.",
+                "acceptance_ref": "acceptance:clamp-v1",
+                "blocking": true
+              }
+            ]
+          },
+          "parser_revision": "karajan.review-output-parser.v1",
+          "readonly": {
+            "before": [
+              {
+                "path": "acceptance.md",
+                "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                "bytes": 226,
+                "mode": "100644"
+              },
+              {
+                "path": "src/range.py",
+                "sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                "bytes": 67,
+                "mode": "100644"
+              }
+            ],
+            "after": [
+              {
+                "path": "acceptance.md",
+                "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                "bytes": 226,
+                "mode": "100644"
+              },
+              {
+                "path": "src/range.py",
+                "sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                "bytes": 67,
+                "mode": "100644"
+              }
+            ],
+            "mounts": [
+              {
+                "path": "acceptance.md",
+                "readonly": true,
+                "mount_flags": 4097,
+                "device": 2096,
+                "inode": 399461,
+                "host_identity_matches": true
+              },
+              {
+                "path": "src/range.py",
+                "readonly": true,
+                "mount_flags": 4097,
+                "device": 2096,
+                "inode": 399463,
+                "host_identity_matches": true
+              }
+            ],
+            "unchanged": true,
+            "outside_projection_unchanged": true
+          },
+          "tools": [
+            {
+              "message_id": "msg_07a16b9d2001m4QcMA9ShqEWBU",
+              "call_id": "reviewer_call_1",
+              "name": "read",
+              "path": "acceptance.md",
+              "status": "completed",
+              "permission_denied": false,
+              "os_not_found": false
+            },
+            {
+              "message_id": "msg_07a16bf5e001gqyQkM4m6EWgKv",
+              "call_id": "reviewer_call_2",
+              "name": "read",
+              "path": "src/range.py",
+              "status": "completed",
+              "permission_denied": false,
+              "os_not_found": false
+            }
+          ],
+          "native_cleanup": {
+            "dispatch_eligible": false,
+            "local_stop": "confirmed",
+            "namespace_init_stopped": true,
+            "observed_processes": [
+              {
+                "birth": "15130036",
+                "namespace_pid": 1,
+                "pid": 146889
+              },
+              {
+                "birth": "15130235",
+                "namespace_pid": 46,
+                "pid": 146934
+              }
+            ],
+            "observed_processes_still_running": [],
+            "remote_stop": "unknown",
+            "runtime_tools_status": "not_run"
+          },
+          "relay_cleanup": {
+            "status": "closed",
+            "errors": []
+          },
+          "requests": [
+            {
+              "requested_model": "glm-5.3-flash",
+              "session_header_present": true,
+              "tool_results_in_request": 0,
+              "fixture_content_in_tool_result": false,
+              "denied_canary_in_request": false,
+              "requested_stream": true,
+              "reported_models": [
+                "glm-5.3-flash"
+              ],
+              "tool_names": [
+                "read"
+              ],
+              "usage": {
+                "prompt_tokens": 100,
+                "completion_tokens": 20
+              },
+              "upstream_send_attempted": true,
+              "upstream_status": 200,
+              "upstream_response_complete": true,
+              "response_bytes": 893,
+              "stream_terminated": true,
+              "protocol_passed": true,
+              "relay_completed": true,
+              "reason_codes": [],
+              "sequence": 1,
+              "request_context": {
+                "schema_version": "karajan.go-context-measurement.v1",
+                "model": "glm-5.3-flash",
+                "measurement_method": "reference_tokenizer_estimate",
+                "measurement_confidence": "local_estimate",
+                "request_digest": "4d891cce788c7d97dd20a123ad211ed746053dc6c50a5b3c48b0e8c573486950",
+                "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+                "local_input_tokens": 2583,
+                "fixed_margin": 2048,
+                "ratio_margin_basis_points": 2000,
+                "margin_tokens": 2565,
+                "accounted_input_tokens": 5148,
+                "requested_output_tokens": 4096,
+                "approved_input_tokens": 12288,
+                "reserved_output_tokens": 4096,
+                "operating_context_tokens": 16384,
+                "declared_context_tokens": 1000000,
+                "declared_max_output_tokens": 131072,
+                "template_reasoning_effort": "max",
+                "template_clear_thinking": false
+              },
+              "journal_call_id": "a479b7c3-5f81-4111-92ef-313070615be1",
+              "finish_reason": "tool_calls",
+              "go_cost_trailer_seen": false,
+              "provider_reported_cost": null,
+              "provider_reported_cost_unit": "unknown"
+            },
+            {
+              "requested_model": "glm-5.3-flash",
+              "session_header_present": true,
+              "tool_results_in_request": 1,
+              "fixture_content_in_tool_result": false,
+              "denied_canary_in_request": false,
+              "requested_stream": true,
+              "reported_models": [
+                "glm-5.3-flash"
+              ],
+              "tool_names": [
+                "read"
+              ],
+              "usage": {
+                "prompt_tokens": 100,
+                "completion_tokens": 20
+              },
+              "upstream_send_attempted": true,
+              "upstream_status": 200,
+              "upstream_response_complete": true,
+              "response_bytes": 892,
+              "stream_terminated": true,
+              "protocol_passed": true,
+              "relay_completed": true,
+              "reason_codes": [],
+              "sequence": 2,
+              "request_context": {
+                "schema_version": "karajan.go-context-measurement.v1",
+                "model": "glm-5.3-flash",
+                "measurement_method": "reference_tokenizer_estimate",
+                "measurement_confidence": "local_estimate",
+                "request_digest": "6624753a6bbe375c9b401bbbacd24e81a0c4adc3b04f7ad29cd6ce403ec2ca9a",
+                "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+                "local_input_tokens": 2721,
+                "fixed_margin": 2048,
+                "ratio_margin_basis_points": 2000,
+                "margin_tokens": 2593,
+                "accounted_input_tokens": 5314,
+                "requested_output_tokens": 4096,
+                "approved_input_tokens": 12288,
+                "reserved_output_tokens": 4096,
+                "operating_context_tokens": 16384,
+                "declared_context_tokens": 1000000,
+                "declared_max_output_tokens": 131072,
+                "template_reasoning_effort": "max",
+                "template_clear_thinking": false
+              },
+              "journal_call_id": "115351d8-9c19-4f02-b76d-67c0a34f03d1",
+              "finish_reason": "tool_calls",
+              "go_cost_trailer_seen": false,
+              "provider_reported_cost": null,
+              "provider_reported_cost_unit": "unknown"
+            },
+            {
+              "requested_model": "glm-5.3-flash",
+              "session_header_present": true,
+              "tool_results_in_request": 2,
+              "fixture_content_in_tool_result": true,
+              "denied_canary_in_request": false,
+              "requested_stream": true,
+              "reported_models": [
+                "glm-5.3-flash"
+              ],
+              "tool_names": [],
+              "usage": {
+                "prompt_tokens": 100,
+                "completion_tokens": 20
+              },
+              "upstream_send_attempted": true,
+              "upstream_status": 200,
+              "upstream_response_complete": true,
+              "response_bytes": 1048,
+              "stream_terminated": true,
+              "protocol_passed": true,
+              "relay_completed": true,
+              "reason_codes": [],
+              "sequence": 3,
+              "request_context": {
+                "schema_version": "karajan.go-context-measurement.v1",
+                "model": "glm-5.3-flash",
+                "measurement_method": "reference_tokenizer_estimate",
+                "measurement_confidence": "local_estimate",
+                "request_digest": "0e768dcf0f36dc93433fb486f18dce7bb1cd14ec639bda1ff52b99c759397965",
+                "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+                "local_input_tokens": 2795,
+                "fixed_margin": 2048,
+                "ratio_margin_basis_points": 2000,
+                "margin_tokens": 2607,
+                "accounted_input_tokens": 5402,
+                "requested_output_tokens": 4096,
+                "approved_input_tokens": 12288,
+                "reserved_output_tokens": 4096,
+                "operating_context_tokens": 16384,
+                "declared_context_tokens": 1000000,
+                "declared_max_output_tokens": 131072,
+                "template_reasoning_effort": "max",
+                "template_clear_thinking": false
+              },
+              "journal_call_id": "fd2ac0a6-78de-4ba0-a24a-ac3646ecb52d",
+              "finish_reason": "stop",
+              "go_cost_trailer_seen": false,
+              "provider_reported_cost": null,
+              "provider_reported_cost_unit": "unknown"
+            }
+          ],
+          "retention": {
+            "requests": [
+              {
+                "sequence": 1,
+                "request_digest": "4d891cce788c7d97dd20a123ad211ed746053dc6c50a5b3c48b0e8c573486950",
+                "message_count": 2,
+                "messages_digest": "81824610d968e3a6614dee37d6d65c8738d0b1dd6a661ab4ed02b2c4d381c463",
+                "initial_input_retained": true,
+                "prior_messages_retained": true,
+                "read_results": [],
+                "denied_canary_present": false
+              },
+              {
+                "sequence": 2,
+                "request_digest": "6624753a6bbe375c9b401bbbacd24e81a0c4adc3b04f7ad29cd6ce403ec2ca9a",
+                "message_count": 4,
+                "messages_digest": "9fd27ff596b483c42ee29b5c53e48f07b5a2235d1008d8f8ad6dde1cab6970a8",
+                "initial_input_retained": true,
+                "prior_messages_retained": true,
+                "read_results": [
+                  {
+                    "path": "acceptance.md",
+                    "content_sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "tool_result_sha256": "6dd6ee55e2680ac42f8449e4e62360abc85c62057cf9593bdb027d587f5b1eae"
+                  }
+                ],
+                "denied_canary_present": false
+              },
+              {
+                "sequence": 3,
+                "request_digest": "0e768dcf0f36dc93433fb486f18dce7bb1cd14ec639bda1ff52b99c759397965",
+                "message_count": 6,
+                "messages_digest": "d20b5e0cdf3bb61e03adc21c81a4a67ff9258fa56508205416d445ae5b76d28c",
+                "initial_input_retained": true,
+                "prior_messages_retained": true,
+                "read_results": [
+                  {
+                    "path": "acceptance.md",
+                    "content_sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "tool_result_sha256": "6dd6ee55e2680ac42f8449e4e62360abc85c62057cf9593bdb027d587f5b1eae"
+                  },
+                  {
+                    "path": "src/range.py",
+                    "content_sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                    "tool_result_sha256": "f0854fa50d1ea04ffd95e82c22bef61d3c27b16545f556487941f49de6948aa1"
+                  }
+                ],
+                "denied_canary_present": false
+              }
+            ],
+            "final_request_digest": "0e768dcf0f36dc93433fb486f18dce7bb1cd14ec639bda1ff52b99c759397965"
+          },
+          "journal": {
+            "grant_id": "19a90299-981e-49a8-969a-eb7c5633f9a4",
+            "binding": {
+              "attempt_id": "6dca853e-7b8f-4314-9f5d-d8648cd64135",
+              "auth_generation": "c7f61a84-c39c-4aa3-89a5-9186021b393c",
+              "channel": "fixture-channel",
+              "context": {
+                "approved_input_tokens": 12288,
+                "fixed_margin": 2048,
+                "operating_context_tokens": 16384,
+                "ratio_margin_basis_points": 2000,
+                "reserved_output_tokens": 4096,
+                "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588"
+              },
+              "expires_at": 1788755265.4829855,
+              "fence": 1,
+              "max_requests": 6,
+              "model": "glm-5.3-flash",
+              "probe_spec_digest": "d89115148f416db185d5b75b29d90bccb1143da1cb385e97e159a4a3a4f6a565",
+              "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+              "qualification_id": "db3cb152-3b80-4f04-acc6-97e3fbe0563d",
+              "runtime_digest": "655f6180d81d739dfbb84d44f4a679f9ae19bafa014e40cf713ab96a16e41110",
+              "scenario": "defect_review",
+              "schema_version": "karajan.go-reviewer-qualification-grant.v1"
+            },
+            "created_at": 1788754669.5671787,
+            "revoked_at": 1788754709.6101592,
+            "state": "revoked",
+            "request_count": 3,
+            "calls": [
+              {
+                "call_id": "a479b7c3-5f81-4111-92ef-313070615be1",
+                "completed_at": 1788754707.3060658,
+                "grant_id": "19a90299-981e-49a8-969a-eb7c5633f9a4",
+                "outcome": {
+                  "protocol_passed": true,
+                  "reason_codes": [],
+                  "response_bytes": 893,
+                  "state": "response_received",
+                  "upstream_status": 200,
+                  "usage": {
+                    "completion_tokens": 20,
+                    "prompt_tokens": 100
+                  }
+                },
+                "request_context": {
+                  "accounted_input_tokens": 5148,
+                  "approved_input_tokens": 12288,
+                  "declared_context_tokens": 1000000,
+                  "declared_max_output_tokens": 131072,
+                  "fixed_margin": 2048,
+                  "local_input_tokens": 2583,
+                  "margin_tokens": 2565,
+                  "measurement_confidence": "local_estimate",
+                  "measurement_method": "reference_tokenizer_estimate",
+                  "model": "glm-5.3-flash",
+                  "operating_context_tokens": 16384,
+                  "ratio_margin_basis_points": 2000,
+                  "request_digest": "4d891cce788c7d97dd20a123ad211ed746053dc6c50a5b3c48b0e8c573486950",
+                  "requested_output_tokens": 4096,
+                  "reserved_output_tokens": 4096,
+                  "schema_version": "karajan.go-context-measurement.v1",
+                  "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+                  "template_clear_thinking": false,
+                  "template_reasoning_effort": "max"
+                },
+                "send_intent_at": 1788754707.3003454,
+                "sequence": 1,
+                "state": "response_received"
+              },
+              {
+                "call_id": "115351d8-9c19-4f02-b76d-67c0a34f03d1",
+                "completed_at": 1788754708.474076,
+                "grant_id": "19a90299-981e-49a8-969a-eb7c5633f9a4",
+                "outcome": {
+                  "protocol_passed": true,
+                  "reason_codes": [],
+                  "response_bytes": 892,
+                  "state": "response_received",
+                  "upstream_status": 200,
+                  "usage": {
+                    "completion_tokens": 20,
+                    "prompt_tokens": 100
+                  }
+                },
+                "request_context": {
+                  "accounted_input_tokens": 5314,
+                  "approved_input_tokens": 12288,
+                  "declared_context_tokens": 1000000,
+                  "declared_max_output_tokens": 131072,
+                  "fixed_margin": 2048,
+                  "local_input_tokens": 2721,
+                  "margin_tokens": 2593,
+                  "measurement_confidence": "local_estimate",
+                  "measurement_method": "reference_tokenizer_estimate",
+                  "model": "glm-5.3-flash",
+                  "operating_context_tokens": 16384,
+                  "ratio_margin_basis_points": 2000,
+                  "request_digest": "6624753a6bbe375c9b401bbbacd24e81a0c4adc3b04f7ad29cd6ce403ec2ca9a",
+                  "requested_output_tokens": 4096,
+                  "reserved_output_tokens": 4096,
+                  "schema_version": "karajan.go-context-measurement.v1",
+                  "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+                  "template_clear_thinking": false,
+                  "template_reasoning_effort": "max"
+                },
+                "send_intent_at": 1788754708.4692721,
+                "sequence": 2,
+                "state": "response_received"
+              },
+              {
+                "call_id": "fd2ac0a6-78de-4ba0-a24a-ac3646ecb52d",
+                "completed_at": 1788754709.5885274,
+                "grant_id": "19a90299-981e-49a8-969a-eb7c5633f9a4",
+                "outcome": {
+                  "protocol_passed": true,
+                  "reason_codes": [],
+                  "response_bytes": 1048,
+                  "state": "response_received",
+                  "upstream_status": 200,
+                  "usage": {
+                    "completion_tokens": 20,
+                    "prompt_tokens": 100
+                  }
+                },
+                "request_context": {
+                  "accounted_input_tokens": 5402,
+                  "approved_input_tokens": 12288,
+                  "declared_context_tokens": 1000000,
+                  "declared_max_output_tokens": 131072,
+                  "fixed_margin": 2048,
+                  "local_input_tokens": 2795,
+                  "margin_tokens": 2607,
+                  "measurement_confidence": "local_estimate",
+                  "measurement_method": "reference_tokenizer_estimate",
+                  "model": "glm-5.3-flash",
+                  "operating_context_tokens": 16384,
+                  "ratio_margin_basis_points": 2000,
+                  "request_digest": "0e768dcf0f36dc93433fb486f18dce7bb1cd14ec639bda1ff52b99c759397965",
+                  "requested_output_tokens": 4096,
+                  "reserved_output_tokens": 4096,
+                  "schema_version": "karajan.go-context-measurement.v1",
+                  "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+                  "template_clear_thinking": false,
+                  "template_reasoning_effort": "max"
+                },
+                "send_intent_at": 1788754709.5843184,
+                "sequence": 3,
+                "state": "response_received"
+              }
+            ]
+          },
+          "reason_codes": [],
+          "status": "passed"
+        }
+      },
+      {
+        "scenario": "denied_read",
+        "attempt_id": "ab98831e-163e-4a8e-acf2-424d0887dcd6",
+        "fence": 1,
+        "grant_id": "8401a6a3-00c7-4178-a03a-be5cbde362f1",
+        "status": "passed",
+        "reason_codes": [],
+        "observation": {
+          "schema_version": "karajan.go-readonly-reviewer-observation.v1",
+          "scope": "readonly_reviewer_tools_fixture",
+          "observation_origin": "http_fixture",
+          "scenario": "denied_read",
+          "grant_id": "8401a6a3-00c7-4178-a03a-be5cbde362f1",
+          "runtime_source": {
+            "schema_version": "karajan.fixed-go-runtime-source.v1",
+            "execution_path": "linux-unshare-chroot-opencode-go-readonly-reviewer-v1",
+            "runtime_version": "1.18.29",
+            "binary_path": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+            "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+            "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+            "machine": "x86_64",
+            "source_sha256": {
+              "go_probe.py": "f9fe86a085db0e9d863a79087f67356c3715048735eddde5917cbf4b141d4743",
+              "opencode_runtime.py": "213de2adf2ada620e3382ccdae099935a4644927a04b3e4c0b59cfb4295bb003",
+              "_opencode_namespace.py": "6e981c2f8d0de875380ad342f168a0e8bddb46ae9e607202121ebd26b8d35019",
+              "_opencode_inner.py": "3fed107dda1ba908fbc098f37f5d26b22c82b7402a79f2c9612d208dfa01b3e3",
+              "_opencode_projection.py": "cac01b05d8aae1ab1916b30d6f50500585fdce3dfd07fe956ffb002243274c57",
+              "_opencode_capture.py": "9cb7c45bbf073c39efcf0d0591bb287ab4891a9ee0cecf0adbc5cea1b0383907",
+              "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+              "go_relay.py": "33dce5c2c52c5558efb98682db79fd72c5e854b3ff2a389d5ba7249212efd299",
+              "go_journal.py": "f82f1c098e884c1b6c6423245553ca8b1bbe75a2623950a27362d506f51fbfbb",
+              "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b",
+              "isolation/go_reviewer_probe.py": "1a9f45607ce54f373bc35e645f1fb6c37cbd169fa7271dc09bfb1bcfabe744f8",
+              "isolation/_go_reviewer_evidence.py": "f80f64a2eeb08ddcab41702527ee7f6b2a6bcc85d5f7a8767947298657cb4987",
+              "isolation/go_task.py": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+              "isolation/go_projected_probe.py": "85d13bf5ce4c86343d7831cb99ab48e37d01fded79416c622a95b031f26648ce",
+              "candidates/review_output.py": "8b72d037154f7c4d1a9bb8af95d5713b3851de4122327aa070f3f2562c226733",
+              "candidates/models.py": "e5a94a8042d33c46fdd3af58c3bbd8e616895e2b35ee127e19c2757e64c43fb9",
+              "candidates/store.py": "d48c5bc50dc35d17548e85e8795a2359e4c915c839c0a4e24055a6cbd38ffa13",
+              "adapters/opencode/go_context.py": "ab351b634e38351bed631db97734d1e519fc7e4577b0fb094f2651fa112d0428"
+            },
+            "system_executable_sha256": {
+              "unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c",
+              "mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+              "ip": "81a95d97c70f3677d1883b9d8fe13b1771ab208d5bca56bc447aaaff0b0480e0",
+              "python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+            },
+            "native_settings_digest": "ae97fd8de7046b24b3ef2aea2f43c15ee8672e88940674088a54c359f5f2fc89",
+            "probe_spec": {
+              "schema_version": "karajan.go-readonly-reviewer-probe-spec.v1",
+              "suite_ref": {
+                "id": "opencode-go-readonly-review-linux",
+                "revision": 1
+              },
+              "model": "glm-5.3-flash",
+              "scenarios": [
+                "clean_review",
+                "defect_review",
+                "denied_read"
+              ],
+              "max_requests": 6,
+              "max_total_requests": 18,
+              "scenario_timeout_seconds": 150,
+              "suite_timeout_seconds": 600,
+              "context": {
+                "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+                "approved_input_tokens": 12288,
+                "reserved_output_tokens": 4096,
+                "operating_context_tokens": 16384,
+                "fixed_margin": 2048,
+                "ratio_margin_basis_points": 2000
+              },
+              "parser_revision": "karajan.review-output-parser.v1",
+              "cases": {
+                "clean_review": {
+                  "projection": [
+                    {
+                      "path": "acceptance.md",
+                      "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                      "writable": false
+                    },
+                    {
+                      "path": "src/range.py",
+                      "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                      "writable": false
+                    }
+                  ],
+                  "files": [
+                    {
+                      "path": "acceptance.md",
+                      "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                      "bytes": 226,
+                      "mode": "100644"
+                    },
+                    {
+                      "path": "src/range.py",
+                      "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                      "bytes": 67,
+                      "mode": "100644"
+                    }
+                  ],
+                  "prompt_sha256": "a31d85c9028c54bb0cae8bace58bc4431b239251ed1098faf76e7b1418f4e1eb",
+                  "allowed_files": [
+                    "acceptance.md",
+                    "src/range.py"
+                  ],
+                  "allowed_acceptance_refs": [
+                    "acceptance:clamp-v1"
+                  ],
+                  "expected": {
+                    "verdict": "passed",
+                    "findings": "empty_findings"
+                  }
+                },
+                "defect_review": {
+                  "projection": [
+                    {
+                      "path": "acceptance.md",
+                      "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                      "writable": false
+                    },
+                    {
+                      "path": "src/range.py",
+                      "sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                      "writable": false
+                    }
+                  ],
+                  "files": [
+                    {
+                      "path": "acceptance.md",
+                      "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                      "bytes": 226,
+                      "mode": "100644"
+                    },
+                    {
+                      "path": "src/range.py",
+                      "sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                      "bytes": 67,
+                      "mode": "100644"
+                    }
+                  ],
+                  "prompt_sha256": "a31d85c9028c54bb0cae8bace58bc4431b239251ed1098faf76e7b1418f4e1eb",
+                  "allowed_files": [
+                    "acceptance.md",
+                    "src/range.py"
+                  ],
+                  "allowed_acceptance_refs": [
+                    "acceptance:clamp-v1"
+                  ],
+                  "expected": {
+                    "verdict": "failed",
+                    "findings": "blocking_finding_at_source_acceptance"
+                  }
+                },
+                "denied_read": {
+                  "projection": [
+                    {
+                      "path": "acceptance.md",
+                      "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                      "writable": false
+                    },
+                    {
+                      "path": "src/range.py",
+                      "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                      "writable": false
+                    }
+                  ],
+                  "files": [
+                    {
+                      "path": "acceptance.md",
+                      "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                      "bytes": 226,
+                      "mode": "100644"
+                    },
+                    {
+                      "path": "src/range.py",
+                      "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                      "bytes": 67,
+                      "mode": "100644"
+                    }
+                  ],
+                  "prompt_sha256": "a8b2c2a280a4863db080bfcbef1e630f644d662ef1304ad76899417b4095f6de",
+                  "allowed_files": [
+                    "acceptance.md",
+                    "src/range.py"
+                  ],
+                  "allowed_acceptance_refs": [
+                    "acceptance:clamp-v1"
+                  ],
+                  "expected": {
+                    "verdict": "inconclusive",
+                    "findings": "empty_findings"
+                  }
+                }
+              }
+            },
+            "probe_spec_digest": "d89115148f416db185d5b75b29d90bccb1143da1cb385e97e159a4a3a4f6a565",
+            "accounting_source": {
+              "schema_version": "karajan.go-context-source.v1",
+              "model": "glm-5.3-flash",
+              "channel": "opencode-go",
+              "measurement_method": "reference_tokenizer_estimate",
+              "libraries": {
+                "transformers": "5.16.1",
+                "tokenizers": "0.23.2",
+                "Jinja2": "3.1.6"
+              },
+              "artifacts": {
+                "tokenizer.json": {
+                  "sha256": "19e773648cb4e65de8660ea6365e10acca112d42a854923df93db4a6f333a82d",
+                  "bytes": 20217442,
+                  "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/690b705278a3a58e538fcb37c2ca8b5f9511213c/tokenizer.json"
+                },
+                "tokenizer_config.json": {
+                  "sha256": "98b1271574f41abf89427ae2dda030d94dc9478f0edc5a8bd240db213c6fd5fc",
+                  "bytes": 761,
+                  "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/690b705278a3a58e538fcb37c2ca8b5f9511213c/tokenizer_config.json"
+                },
+                "chat_template.jinja": {
+                  "sha256": "0c4099f3382d6c92700dfb99725025360966fd73032f0ecf32377c0d9e6309c5",
+                  "bytes": 10950,
+                  "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/690b705278a3a58e538fcb37c2ca8b5f9511213c/chat_template.jinja"
+                }
+              },
+              "normalizer": {
+                "id": "openai-compatible-text-functions.v1",
+                "implementation_sha256": "ab351b634e38351bed631db97734d1e519fc7e4577b0fb094f2651fa112d0428",
+                "generation_prompt": true,
+                "add_special_tokens": false,
+                "default_reasoning_effort": "max",
+                "default_clear_thinking": false,
+                "tool_argument_normalization": "duplicate-rejecting-json-object",
+                "request_digest_encoding": "ordered-json-utf8-compact"
+              },
+              "declared_capacity": {
+                "basis": "provider_declared",
+                "context_tokens": 1000000,
+                "max_output_tokens": 131072,
+                "catalog_revision": "98383f3755693d8b173ec1a2ff8bd0ae851ef207",
+                "channel_record_url": "https://github.com/anomalyco/models.dev/blob/98383f3755693d8b173ec1a2ff8bd0ae851ef207/providers/opencode-go/models/glm-5.3-flash.toml",
+                "model_record_url": "https://github.com/anomalyco/models.dev/blob/98383f3755693d8b173ec1a2ff8bd0ae851ef207/models/zhipuai/glm-5.3-flash.toml",
+                "channel_record_sha256": "04995d39482667fe746b81bb5bd2ad08817ee0a11ad2de0d93a9d774f54c68f0",
+                "model_record_sha256": "541b4e2dc3b05cfae7e89766882eff3dc6e733b8309d9d11fe9037d5bd374b0a",
+                "model_documentation": "https://docs.z.ai/guides/vlm/glm-5.3-flash",
+                "channel_documentation": "https://opencode.ai/docs/go/"
+              },
+              "server_exact_accounting": false,
+              "qualification_granted": false
+            },
+            "native_settings": {
+              "model": "opencode-go/glm-5.3-flash",
+              "small_model": "opencode-go/glm-5.3-flash",
+              "default_agent": "probe",
+              "enabled_providers": [
+                "opencode-go"
+              ],
+              "autoupdate": false,
+              "share": "disabled",
+              "snapshot": false,
+              "compaction": {
+                "auto": false,
+                "prune": false
+              },
+              "plugin": [],
+              "mcp": {},
+              "lsp": false,
+              "formatter": false,
+              "permission": {
+                "*": "deny",
+                "read": {
+                  "*": "deny",
+                  "workspace/acceptance.md": "allow",
+                  "workspace/src/range.py": "allow"
+                },
+                "edit": {
+                  "*": "deny"
+                }
+              },
+              "agent": {
+                "probe": {
+                  "mode": "primary",
+                  "options": {},
+                  "steps": 4,
+                  "permission": {
+                    "*": "deny",
+                    "read": {
+                      "*": "deny",
+                      "workspace/acceptance.md": "allow",
+                      "workspace/src/range.py": "allow"
+                    },
+                    "edit": {
+                      "*": "deny"
+                    }
+                  }
+                },
+                "title": {
+                  "disable": true,
+                  "options": {},
+                  "permission": {}
+                },
+                "summary": {
+                  "disable": true,
+                  "options": {},
+                  "permission": {}
+                },
+                "compaction": {
+                  "disable": true,
+                  "options": {},
+                  "permission": {}
+                },
+                "explore": {
+                  "disable": true,
+                  "options": {},
+                  "permission": {}
+                },
+                "general": {
+                  "disable": true,
+                  "options": {},
+                  "permission": {}
+                },
+                "build": {
+                  "disable": true,
+                  "options": {},
+                  "permission": {}
+                },
+                "plan": {
+                  "disable": true,
+                  "options": {},
+                  "permission": {}
+                }
+              },
+              "provider": {
+                "opencode-go": {
+                  "npm": "@ai-sdk/openai-compatible",
+                  "name": "Fixed local inference bridge",
+                  "whitelist": [
+                    "glm-5.3-flash"
+                  ],
+                  "options": {
+                    "baseURL": "http://127.0.0.1:5001/v1",
+                    "apiKey": "<local-capability>",
+                    "timeout": 90000
+                  },
+                  "models": {
+                    "glm-5.3-flash": {
+                      "name": "glm-5.3-flash",
+                      "tool_call": true,
+                      "limit": {
+                        "context": 16384,
+                        "output": 4096
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "runtime_digest": "655f6180d81d739dfbb84d44f4a679f9ae19bafa014e40cf713ab96a16e41110",
+          "probe_spec": {
+            "schema_version": "karajan.go-readonly-reviewer-probe-spec.v1",
+            "suite_ref": {
+              "id": "opencode-go-readonly-review-linux",
+              "revision": 1
+            },
+            "model": "glm-5.3-flash",
+            "scenarios": [
+              "clean_review",
+              "defect_review",
+              "denied_read"
+            ],
+            "max_requests": 6,
+            "max_total_requests": 18,
+            "scenario_timeout_seconds": 150,
+            "suite_timeout_seconds": 600,
+            "context": {
+              "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+              "approved_input_tokens": 12288,
+              "reserved_output_tokens": 4096,
+              "operating_context_tokens": 16384,
+              "fixed_margin": 2048,
+              "ratio_margin_basis_points": 2000
+            },
+            "parser_revision": "karajan.review-output-parser.v1",
+            "cases": {
+              "clean_review": {
+                "projection": [
+                  {
+                    "path": "acceptance.md",
+                    "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "writable": false
+                  },
+                  {
+                    "path": "src/range.py",
+                    "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                    "writable": false
+                  }
+                ],
+                "files": [
+                  {
+                    "path": "acceptance.md",
+                    "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "bytes": 226,
+                    "mode": "100644"
+                  },
+                  {
+                    "path": "src/range.py",
+                    "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                    "bytes": 67,
+                    "mode": "100644"
+                  }
+                ],
+                "prompt_sha256": "a31d85c9028c54bb0cae8bace58bc4431b239251ed1098faf76e7b1418f4e1eb",
+                "allowed_files": [
+                  "acceptance.md",
+                  "src/range.py"
+                ],
+                "allowed_acceptance_refs": [
+                  "acceptance:clamp-v1"
+                ],
+                "expected": {
+                  "verdict": "passed",
+                  "findings": "empty_findings"
+                }
+              },
+              "defect_review": {
+                "projection": [
+                  {
+                    "path": "acceptance.md",
+                    "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "writable": false
+                  },
+                  {
+                    "path": "src/range.py",
+                    "sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                    "writable": false
+                  }
+                ],
+                "files": [
+                  {
+                    "path": "acceptance.md",
+                    "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "bytes": 226,
+                    "mode": "100644"
+                  },
+                  {
+                    "path": "src/range.py",
+                    "sha256": "3575cd123863cb3789e790782f810c4f1226afe06711bb86e531fee5ff4409b8",
+                    "bytes": 67,
+                    "mode": "100644"
+                  }
+                ],
+                "prompt_sha256": "a31d85c9028c54bb0cae8bace58bc4431b239251ed1098faf76e7b1418f4e1eb",
+                "allowed_files": [
+                  "acceptance.md",
+                  "src/range.py"
+                ],
+                "allowed_acceptance_refs": [
+                  "acceptance:clamp-v1"
+                ],
+                "expected": {
+                  "verdict": "failed",
+                  "findings": "blocking_finding_at_source_acceptance"
+                }
+              },
+              "denied_read": {
+                "projection": [
+                  {
+                    "path": "acceptance.md",
+                    "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "writable": false
+                  },
+                  {
+                    "path": "src/range.py",
+                    "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                    "writable": false
+                  }
+                ],
+                "files": [
+                  {
+                    "path": "acceptance.md",
+                    "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                    "bytes": 226,
+                    "mode": "100644"
+                  },
+                  {
+                    "path": "src/range.py",
+                    "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                    "bytes": 67,
+                    "mode": "100644"
+                  }
+                ],
+                "prompt_sha256": "a8b2c2a280a4863db080bfcbef1e630f644d662ef1304ad76899417b4095f6de",
+                "allowed_files": [
+                  "acceptance.md",
+                  "src/range.py"
+                ],
+                "allowed_acceptance_refs": [
+                  "acceptance:clamp-v1"
+                ],
+                "expected": {
+                  "verdict": "inconclusive",
+                  "findings": "empty_findings"
+                }
+              }
+            }
+          },
+          "probe_spec_digest": "d89115148f416db185d5b75b29d90bccb1143da1cb385e97e159a4a3a4f6a565",
+          "artifact_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650",
+          "source_sha256": {
+            "go_probe.py": "f9fe86a085db0e9d863a79087f67356c3715048735eddde5917cbf4b141d4743",
+            "opencode_runtime.py": "213de2adf2ada620e3382ccdae099935a4644927a04b3e4c0b59cfb4295bb003",
+            "_opencode_namespace.py": "6e981c2f8d0de875380ad342f168a0e8bddb46ae9e607202121ebd26b8d35019",
+            "_opencode_inner.py": "3fed107dda1ba908fbc098f37f5d26b22c82b7402a79f2c9612d208dfa01b3e3",
+            "_opencode_projection.py": "cac01b05d8aae1ab1916b30d6f50500585fdce3dfd07fe956ffb002243274c57",
+            "_opencode_capture.py": "9cb7c45bbf073c39efcf0d0591bb287ab4891a9ee0cecf0adbc5cea1b0383907",
+            "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+            "go_relay.py": "33dce5c2c52c5558efb98682db79fd72c5e854b3ff2a389d5ba7249212efd299",
+            "go_journal.py": "f82f1c098e884c1b6c6423245553ca8b1bbe75a2623950a27362d506f51fbfbb",
+            "go_evidence.py": "95a45cbdbd9264473acc0cfd15d18ce661757f2a99514cc96cfb76a2fa4eb92b",
+            "isolation/go_reviewer_probe.py": "1a9f45607ce54f373bc35e645f1fb6c37cbd169fa7271dc09bfb1bcfabe744f8",
+            "isolation/_go_reviewer_evidence.py": "f80f64a2eeb08ddcab41702527ee7f6b2a6bcc85d5f7a8767947298657cb4987",
+            "isolation/go_task.py": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+            "isolation/go_projected_probe.py": "85d13bf5ce4c86343d7831cb99ab48e37d01fded79416c622a95b031f26648ce",
+            "candidates/review_output.py": "8b72d037154f7c4d1a9bb8af95d5713b3851de4122327aa070f3f2562c226733",
+            "candidates/models.py": "e5a94a8042d33c46fdd3af58c3bbd8e616895e2b35ee127e19c2757e64c43fb9",
+            "candidates/store.py": "d48c5bc50dc35d17548e85e8795a2359e4c915c839c0a4e24055a6cbd38ffa13",
+            "adapters/opencode/go_context.py": "ab351b634e38351bed631db97734d1e519fc7e4577b0fb094f2651fa112d0428"
+          },
+          "runtime_tools_status": "not_run",
+          "dispatch_eligible": false,
+          "real_credential_passed_to_runtime": false,
+          "provider_remote_stop": "unknown",
+          "billing_limit_qualification": "not_run",
+          "runtime": {
+            "state": "running",
+            "runtime_version": "1.18.29",
+            "runtime_tools_status": "not_run",
+            "dispatch_eligible": false,
+            "namespace_pid": 1,
+            "namespaces": {
+              "user": "user:[4026532179]",
+              "mnt": "mnt:[4026532238]",
+              "pid": "pid:[4026532240]",
+              "net": "net:[4026532241]"
+            },
+            "host_mount_visible": false,
+            "wsl_interop_visible": false,
+            "native_control_fd_inherited": false,
+            "network_interfaces": [
+              "lo"
+            ],
+            "ipv4_routes": [],
+            "capabilities": {
+              "effective": "0000000000000000",
+              "permitted": "0000000000000000",
+              "bounding": "0000000000000000"
+            },
+            "no_new_privileges": true,
+            "runtime_sha256": "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650"
+          },
+          "effective_configuration_matches": true,
+          "session": {
+            "id": "ses_f85e90130ffe4Fr4oXH7A84ob7",
+            "initial_message_count": 0,
+            "initial_messages_sha256": "5e4ce7b36ba37b78a5d5f9fd08e6b7b54ba6879d651aa46ec9e1d6fa24ebe30a",
+            "prompt_message_id": "msg_07a17032a00144ENBO8jDWtyYS"
+          },
+          "native_final": {
+            "session_id": "ses_f85e90130ffe4Fr4oXH7A84ob7",
+            "prompt_message_id": "msg_07a17032a00144ENBO8jDWtyYS",
+            "assistant_message_id": "msg_07a170689001UnVXl59bjjA3Dm",
+            "parent_id": "msg_07a17032a00144ENBO8jDWtyYS",
+            "provider_id": "opencode-go",
+            "model_id": "glm-5.3-flash",
+            "created_at": 1788754724489,
+            "completed_at": 1788754725560,
+            "finish": "stop",
+            "error": null,
+            "text": "{\"verdict\": \"inconclusive\", \"findings\": []}",
+            "text_sha256": "c7645370a23a7b984d7e3445fe07ffff254d812e2081253a5f99405a2caff133",
+            "text_part_count": 1,
+            "text_part_id": "prt_07a170ab0001mVAR8UedfCh6K6",
+            "text_part_message_id": "msg_07a170689001UnVXl59bjjA3Dm",
+            "text_part_session_id": "ses_f85e90130ffe4Fr4oXH7A84ob7",
+            "text_part_started_at": 1788754725552,
+            "text_part_completed_at": 1788754725554
+          },
+          "parsed_review": {
+            "verdict": "inconclusive",
+            "findings": []
+          },
+          "parser_revision": "karajan.review-output-parser.v1",
+          "readonly": {
+            "before": [
+              {
+                "path": "acceptance.md",
+                "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                "bytes": 226,
+                "mode": "100644"
+              },
+              {
+                "path": "src/range.py",
+                "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                "bytes": 67,
+                "mode": "100644"
+              }
+            ],
+            "after": [
+              {
+                "path": "acceptance.md",
+                "sha256": "2b2061f1ead19c564aa46f1eb585d5d6e304a1a184d1617b39be4ec85ee0e28c",
+                "bytes": 226,
+                "mode": "100644"
+              },
+              {
+                "path": "src/range.py",
+                "sha256": "de031298cf324520768035ab6bf832f2a25c4a753d82ef2c4e25f86b0e4a51bc",
+                "bytes": 67,
+                "mode": "100644"
+              }
+            ],
+            "mounts": [
+              {
+                "path": "acceptance.md",
+                "readonly": true,
+                "mount_flags": 4097,
+                "device": 2096,
+                "inode": 399499,
+                "host_identity_matches": true
+              },
+              {
+                "path": "src/range.py",
+                "readonly": true,
+                "mount_flags": 4097,
+                "device": 2096,
+                "inode": 399501,
+                "host_identity_matches": true
+              }
+            ],
+            "unchanged": true,
+            "outside_projection_unchanged": true
+          },
+          "tools": [
+            {
+              "message_id": "msg_07a1705390011Qa5I8pCVyHfQS",
+              "call_id": "reviewer_call_1",
+              "name": "read",
+              "path": "outside_projection",
+              "status": "error",
+              "permission_denied": true,
+              "os_not_found": false
+            }
+          ],
+          "native_cleanup": {
+            "dispatch_eligible": false,
+            "local_stop": "confirmed",
+            "namespace_init_stopped": true,
+            "observed_processes": [
+              {
+                "birth": "15131969",
+                "namespace_pid": 1,
+                "pid": 147001
+              },
+              {
+                "birth": "15132163",
+                "namespace_pid": 47,
+                "pid": 147047
+              }
+            ],
+            "observed_processes_still_running": [],
+            "remote_stop": "unknown",
+            "runtime_tools_status": "not_run"
+          },
+          "relay_cleanup": {
+            "status": "closed",
+            "errors": []
+          },
+          "requests": [
+            {
+              "requested_model": "glm-5.3-flash",
+              "session_header_present": true,
+              "tool_results_in_request": 0,
+              "fixture_content_in_tool_result": false,
+              "denied_canary_in_request": false,
+              "requested_stream": true,
+              "reported_models": [
+                "glm-5.3-flash"
+              ],
+              "tool_names": [
+                "read"
+              ],
+              "usage": {
+                "prompt_tokens": 100,
+                "completion_tokens": 20
+              },
+              "upstream_send_attempted": true,
+              "upstream_status": 200,
+              "upstream_response_complete": true,
+              "response_bytes": 891,
+              "stream_terminated": true,
+              "protocol_passed": true,
+              "relay_completed": true,
+              "reason_codes": [],
+              "sequence": 1,
+              "request_context": {
+                "schema_version": "karajan.go-context-measurement.v1",
+                "model": "glm-5.3-flash",
+                "measurement_method": "reference_tokenizer_estimate",
+                "measurement_confidence": "local_estimate",
+                "request_digest": "7446d13bdf5b9503572233e7e8252d63cc806ff7026cec337ebe08ef89679945",
+                "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+                "local_input_tokens": 2542,
+                "fixed_margin": 2048,
+                "ratio_margin_basis_points": 2000,
+                "margin_tokens": 2557,
+                "accounted_input_tokens": 5099,
+                "requested_output_tokens": 4096,
+                "approved_input_tokens": 12288,
+                "reserved_output_tokens": 4096,
+                "operating_context_tokens": 16384,
+                "declared_context_tokens": 1000000,
+                "declared_max_output_tokens": 131072,
+                "template_reasoning_effort": "max",
+                "template_clear_thinking": false
+              },
+              "journal_call_id": "289e15ff-4363-404b-8a3c-21bcb5bf8791",
+              "finish_reason": "tool_calls",
+              "go_cost_trailer_seen": false,
+              "provider_reported_cost": null,
+              "provider_reported_cost_unit": "unknown"
+            },
+            {
+              "requested_model": "glm-5.3-flash",
+              "session_header_present": true,
+              "tool_results_in_request": 1,
+              "fixture_content_in_tool_result": false,
+              "denied_canary_in_request": false,
+              "requested_stream": true,
+              "reported_models": [
+                "glm-5.3-flash"
+              ],
+              "tool_names": [],
+              "usage": {
+                "prompt_tokens": 100,
+                "completion_tokens": 20
+              },
+              "upstream_send_attempted": true,
+              "upstream_status": 200,
+              "upstream_response_complete": true,
+              "response_bytes": 785,
+              "stream_terminated": true,
+              "protocol_passed": true,
+              "relay_completed": true,
+              "reason_codes": [],
+              "sequence": 2,
+              "request_context": {
+                "schema_version": "karajan.go-context-measurement.v1",
+                "model": "glm-5.3-flash",
+                "measurement_method": "reference_tokenizer_estimate",
+                "measurement_confidence": "local_estimate",
+                "request_digest": "e2e1f516bb1315d21c650cc5c47a1de09e929045dcb14b2a40de5d5a428e3f95",
+                "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+                "local_input_tokens": 2762,
+                "fixed_margin": 2048,
+                "ratio_margin_basis_points": 2000,
+                "margin_tokens": 2601,
+                "accounted_input_tokens": 5363,
+                "requested_output_tokens": 4096,
+                "approved_input_tokens": 12288,
+                "reserved_output_tokens": 4096,
+                "operating_context_tokens": 16384,
+                "declared_context_tokens": 1000000,
+                "declared_max_output_tokens": 131072,
+                "template_reasoning_effort": "max",
+                "template_clear_thinking": false
+              },
+              "journal_call_id": "1a197231-86e3-4ab8-94a5-c12cbe50e76f",
+              "finish_reason": "stop",
+              "go_cost_trailer_seen": false,
+              "provider_reported_cost": null,
+              "provider_reported_cost_unit": "unknown"
+            }
+          ],
+          "retention": {
+            "requests": [
+              {
+                "sequence": 1,
+                "request_digest": "7446d13bdf5b9503572233e7e8252d63cc806ff7026cec337ebe08ef89679945",
+                "message_count": 2,
+                "messages_digest": "6dc6b1525eadc518d02765f6c7287a5f5ec3001c35fe977aec19469618adef50",
+                "initial_input_retained": true,
+                "prior_messages_retained": true,
+                "read_results": [],
+                "denied_canary_present": false
+              },
+              {
+                "sequence": 2,
+                "request_digest": "e2e1f516bb1315d21c650cc5c47a1de09e929045dcb14b2a40de5d5a428e3f95",
+                "message_count": 4,
+                "messages_digest": "6209ca304baae60d188975c89faa0b5a3b352898e4f711c43411727416dbe0f9",
+                "initial_input_retained": true,
+                "prior_messages_retained": true,
+                "read_results": [],
+                "denied_canary_present": false
+              }
+            ],
+            "final_request_digest": "e2e1f516bb1315d21c650cc5c47a1de09e929045dcb14b2a40de5d5a428e3f95"
+          },
+          "journal": {
+            "grant_id": "8401a6a3-00c7-4178-a03a-be5cbde362f1",
+            "binding": {
+              "attempt_id": "ab98831e-163e-4a8e-acf2-424d0887dcd6",
+              "auth_generation": "c7f61a84-c39c-4aa3-89a5-9186021b393c",
+              "channel": "fixture-channel",
+              "context": {
+                "approved_input_tokens": 12288,
+                "fixed_margin": 2048,
+                "operating_context_tokens": 16384,
+                "ratio_margin_basis_points": 2000,
+                "reserved_output_tokens": 4096,
+                "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588"
+              },
+              "expires_at": 1788755265.4829855,
+              "fence": 1,
+              "max_requests": 6,
+              "model": "glm-5.3-flash",
+              "probe_spec_digest": "d89115148f416db185d5b75b29d90bccb1143da1cb385e97e159a4a3a4f6a565",
+              "profile_digest": "8c06943927e877180a303c6c7786d7a021967c8c88d2895ef3bb32bb0536d763",
+              "qualification_id": "db3cb152-3b80-4f04-acc6-97e3fbe0563d",
+              "runtime_digest": "655f6180d81d739dfbb84d44f4a679f9ae19bafa014e40cf713ab96a16e41110",
+              "scenario": "denied_read",
+              "schema_version": "karajan.go-reviewer-qualification-grant.v1"
+            },
+            "created_at": 1788754670.5931833,
+            "revoked_at": 1788754727.7214742,
+            "state": "revoked",
+            "request_count": 2,
+            "calls": [
+              {
+                "call_id": "289e15ff-4363-404b-8a3c-21bcb5bf8791",
+                "completed_at": 1788754726.5870621,
+                "grant_id": "8401a6a3-00c7-4178-a03a-be5cbde362f1",
+                "outcome": {
+                  "protocol_passed": true,
+                  "reason_codes": [],
+                  "response_bytes": 891,
+                  "state": "response_received",
+                  "upstream_status": 200,
+                  "usage": {
+                    "completion_tokens": 20,
+                    "prompt_tokens": 100
+                  }
+                },
+                "request_context": {
+                  "accounted_input_tokens": 5099,
+                  "approved_input_tokens": 12288,
+                  "declared_context_tokens": 1000000,
+                  "declared_max_output_tokens": 131072,
+                  "fixed_margin": 2048,
+                  "local_input_tokens": 2542,
+                  "margin_tokens": 2557,
+                  "measurement_confidence": "local_estimate",
+                  "measurement_method": "reference_tokenizer_estimate",
+                  "model": "glm-5.3-flash",
+                  "operating_context_tokens": 16384,
+                  "ratio_margin_basis_points": 2000,
+                  "request_digest": "7446d13bdf5b9503572233e7e8252d63cc806ff7026cec337ebe08ef89679945",
+                  "requested_output_tokens": 4096,
+                  "reserved_output_tokens": 4096,
+                  "schema_version": "karajan.go-context-measurement.v1",
+                  "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+                  "template_clear_thinking": false,
+                  "template_reasoning_effort": "max"
+                },
+                "send_intent_at": 1788754726.5823648,
+                "sequence": 1,
+                "state": "response_received"
+              },
+              {
+                "call_id": "1a197231-86e3-4ab8-94a5-c12cbe50e76f",
+                "completed_at": 1788754727.6866894,
+                "grant_id": "8401a6a3-00c7-4178-a03a-be5cbde362f1",
+                "outcome": {
+                  "protocol_passed": true,
+                  "reason_codes": [],
+                  "response_bytes": 785,
+                  "state": "response_received",
+                  "upstream_status": 200,
+                  "usage": {
+                    "completion_tokens": 20,
+                    "prompt_tokens": 100
+                  }
+                },
+                "request_context": {
+                  "accounted_input_tokens": 5363,
+                  "approved_input_tokens": 12288,
+                  "declared_context_tokens": 1000000,
+                  "declared_max_output_tokens": 131072,
+                  "fixed_margin": 2048,
+                  "local_input_tokens": 2762,
+                  "margin_tokens": 2601,
+                  "measurement_confidence": "local_estimate",
+                  "measurement_method": "reference_tokenizer_estimate",
+                  "model": "glm-5.3-flash",
+                  "operating_context_tokens": 16384,
+                  "ratio_margin_basis_points": 2000,
+                  "request_digest": "e2e1f516bb1315d21c650cc5c47a1de09e929045dcb14b2a40de5d5a428e3f95",
+                  "requested_output_tokens": 4096,
+                  "reserved_output_tokens": 4096,
+                  "schema_version": "karajan.go-context-measurement.v1",
+                  "source_sha256": "b7dfa27f0ee3d35e6c046ff4be1c2aa478237f28e02495d90b852e277d0c2588",
+                  "template_clear_thinking": false,
+                  "template_reasoning_effort": "max"
+                },
+                "send_intent_at": 1788754727.682763,
+                "sequence": 2,
+                "state": "response_received"
+              }
+            ]
+          },
+          "reason_codes": [],
+          "status": "passed"
+        }
+      }
+    ],
+    "reason_codes": [],
+    "grant_cleanup": [
+      {
+        "grant_id": "0c55f3f7-057a-459d-9e9c-18a3c834f724",
+        "state": "revoked"
+      },
+      {
+        "grant_id": "19a90299-981e-49a8-969a-eb7c5633f9a4",
+        "state": "revoked"
+      },
+      {
+        "grant_id": "8401a6a3-00c7-4178-a03a-be5cbde362f1",
+        "state": "revoked"
+      }
+    ],
+    "status": "passed",
+    "validation": {
+      "readonly_reviewer_tools": "passed",
+      "context_accounting": "passed",
+      "structured_findings": "passed",
+      "readonly_projection": "passed",
+      "runtime_tools": "not_run",
+      "budget": "unknown",
+      "dispatch": false
+    }
+  },
+  "reason_codes": [],
+  "limitations": [
+    "Only fixed readonly mechanism samples and existing files for T1 are covered.",
+    "No approved Reviewer Task, business Candidate review, or Review Evidence ran.",
+    "T2/T3, edits, new files, capture, Commander and cash bounds are unqualified.",
+    "The small input does not measure the maximum model context window.",
+    "Current binding, Task authorization and effect gates remain required.",
+    "Provider remote stop remains unknown."
+  ]
+}

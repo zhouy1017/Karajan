@@ -1,0 +1,16 @@
+
+=================================== ERRORS ====================================
+_________ ERROR collecting tests/isolation/test_go_reviewer_probe.py __________
+ImportError while importing test module 'C:\Users\Chooo\Playground\Karajan\.cache\go-reviewer-qualification\tests\isolation\test_go_reviewer_probe.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\isolation\test_go_reviewer_probe.py:3: in <module>
+    from karajan.isolation.go_reviewer_probe import reviewer_probe_spec
+E   ModuleNotFoundError: No module named 'karajan.isolation.go_reviewer_probe'
+=========================== short test summary info ===========================
+ERROR tests/isolation/test_go_reviewer_probe.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.16s

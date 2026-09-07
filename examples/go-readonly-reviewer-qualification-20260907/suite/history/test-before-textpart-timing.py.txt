@@ -1,0 +1,802 @@
+"""Suite C contracts: explicit source/observer doubles, real persistent Journal.
+
+These doubles never create production Profile facts or prove native execution.
+The frozen-source native P is run by the shared QualificationStore integration.
+"""
+
+import copy
+import hashlib
+import json
+from pathlib import Path
+
+import pytest
+from karajan.adapters.opencode.go_context import GoRequestAccounting
+from karajan.adapters.opencode.go_journal import GoCallJournal
+from karajan.isolation.go_probe import source_digest
+from karajan.projects.credential_sources import ResolvedCredential
+
+
+class SyntheticAccounting(GoRequestAccounting):
+    def __init__(self):
+        pass
+
+    def source(self):
+        return {"synthetic_accounting_for_suite_contract": True}
+
+
+def profile_binding():
+    return {
+        "registration": {
+            "id": "reviewer",
+            "revision": 1,
+            "profile": {
+                "id": "reviewer",
+                "revision": 1,
+                "auth_ref": "go-secret",
+                "required_permissions": ["read"],
+                "binding": {
+                    "model_id": "glm-5.3-flash",
+                    "runtime_kind": "opencode-go-isolated",
+                    "runtime_version": "1.18.29",
+                    "auth_mode": "api_key",
+                    "native_settings": {
+                        "suite_ref": {"id": "opencode-go-readonly-review-linux", "revision": 1}
+                    },
+                    "account_id": "go-account",
+                    "channel_id": "go-channel",
+                    "billing_path": "subscription_only",
+                },
+            },
+        },
+        "account": {"id": "go-account", "provider_id": "opencode-go", "secret_ref": "go-secret"},
+        "channel": {
+            "id": "go-channel",
+            "account_id": "go-account",
+            "billing_path": "subscription_only",
+            "approved_data_destination": True,
+        },
+    }
+
+
+def test_source_and_profile_are_fixed_readonly_and_fixture_marked(tmp_path, monkeypatch):
+    from karajan.isolation.go_reviewer_probe import reviewer_probe_spec
+    from karajan.projects.go_reviewer_suite import FixedGoReviewerSuite
+
+    accounting = SyntheticAccounting()
+    runtime = {"probe_spec": reviewer_probe_spec(accounting), "synthetic_runtime": True}
+    monkeypatch.setattr(
+        "karajan.isolation.go_reviewer_probe.reviewer_runtime_source",
+        lambda *args: copy.deepcopy(runtime),
+    )
+    suite = FixedGoReviewerSuite(
+        Path("synthetic-runtime"),
+        tmp_path,
+        GoCallJournal(tmp_path / "calls.sqlite"),
+        accounting=accounting,
+        client_factory=lambda: None,
+    )
+    source = suite.source()
+    assert source["schema_version"] == "karajan.fixed-go-reviewer-suite-source.v1"
+    assert source["qualification_scope"] == "readonly_reviewer_tools_fixture"
+    assert source["observation_origin"] == "http_fixture"
+    assert source["probe_spec"]["scenarios"] == ["clean_review", "defect_review", "denied_read"]
+    suite.validate_profile(profile_binding())
+    changed = profile_binding()
+    changed["registration"]["profile"]["required_permissions"].append("edit")
+    with pytest.raises(ValueError, match="FIXED_GO_REVIEWER_PROFILE_UNSUPPORTED"):
+        suite.validate_profile(changed)
+
+
+def credential():
+    return ResolvedCredential(
+        "project-one", "go-secret", "generation-one", "source-one", "SYNTHETIC_SECRET_DO_NOT_REPORT"
+    )
+
+
+def execution_start(suite):
+    source, binding = suite.source(), profile_binding()
+    start = {
+        "qualification_id": "qualification-one",
+        "project_id": "project-one",
+        "suite_ref": source["suite_ref"],
+        "profile_binding": binding,
+        "profile_digest": source_digest(binding["registration"]["profile"]),
+        "auth_generation": "generation-one",
+        "credential_source_id": "source-one",
+        "authentication_source": {
+            "schema_version": "karajan.credential-generation.v1",
+            "project_id": "project-one",
+            "auth_ref": "go-secret",
+            "generation": "generation-one",
+            "source": {"kind": "controller_local_key_file", "id": "source-one"},
+            "registered_at": 99.0,
+            "previous_generation": None,
+        },
+        "source": source,
+        "started_at": 100.0,
+        "expires_at": 700.0,
+        "scenarios": [],
+    }
+    for name in ("clean_review", "defect_review", "denied_read"):
+        start["scenarios"].append(
+            {
+                "scenario": name,
+                "attempt_id": "attempt-" + name,
+                "grant_id": "grant-" + name,
+                "fence": 1,
+                "grant_binding": {
+                    "schema_version": "karajan.go-reviewer-qualification-grant.v1",
+                    "qualification_id": start["qualification_id"],
+                    "attempt_id": "attempt-" + name,
+                    "fence": 1,
+                    "profile_digest": start["profile_digest"],
+                    "runtime_digest": source["runtime_digest"],
+                    "channel": "go-channel",
+                    "model": "glm-5.3-flash",
+                    "auth_generation": "generation-one",
+                    "expires_at": 700.0,
+                    "max_requests": 6,
+                    "scenario": name,
+                    "probe_spec_digest": source_digest(source["probe_spec"]),
+                    "context": source["probe_spec"]["context"],
+                },
+            }
+        )
+    return start
+
+
+@pytest.fixture
+def synthetic_suite(tmp_path, monkeypatch):
+    from karajan.isolation.go_reviewer_probe import reviewer_probe_spec
+    from karajan.projects.go_reviewer_suite import FixedGoReviewerSuite
+
+    accounting = SyntheticAccounting()
+    runtime = {
+        "probe_spec": reviewer_probe_spec(accounting),
+        "artifact_sha256": "a" * 64,
+        "source_sha256": {"synthetic-runtime": "b" * 64},
+        "native_settings_digest": "c" * 64,
+        "synthetic_runtime": True,
+    }
+    monkeypatch.setattr(
+        "karajan.isolation.go_reviewer_probe.reviewer_runtime_source",
+        lambda *args: copy.deepcopy(runtime),
+    )
+    journal = GoCallJournal(tmp_path / "calls.sqlite", clock=lambda: 101.0)
+    suite = FixedGoReviewerSuite(
+        Path("synthetic-runtime"),
+        tmp_path,
+        journal,
+        accounting=accounting,
+        client_factory=lambda: None,
+        clock=lambda: 101.0,
+    )
+    return suite, journal, execution_start(suite)
+
+
+@pytest.mark.parametrize("lost_index", [1, 2, 3])
+def test_lost_create_reply_revokes_only_preallocated_owned_grants(
+    synthetic_suite, monkeypatch, lost_index
+):
+    suite, journal, start = synthetic_suite
+    original, count = journal.create_grant, 0
+
+    def lost(binding, *, grant_id):
+        nonlocal count
+        result = original(binding, grant_id=grant_id)
+        count += 1
+        if count == lost_index:
+            raise ConnectionError(credential().reveal())
+        return result
+
+    monkeypatch.setattr(journal, "create_grant", lost)
+    result = suite.observe(start, credential())
+    assert result["status"] == "failed"
+    assert [row["status"] for row in result["scenarios"]] == ["not_run"] * 3
+    assert [row["state"] for row in result["grant_cleanup"]] == (
+        ["revoked"] * lost_index + ["not_created"] * (3 - lost_index)
+    )
+    assert credential().reveal() not in str(result)
+    for row in start["scenarios"][:lost_index]:
+        assert (
+            GoCallJournal(journal.path, clock=lambda: 101.0).snapshot(row["grant_id"])[
+                "request_count"
+            ]
+            == 0
+        )
+
+
+def synthetic_observation(suite, authorization, scenario):
+    """Native/wire observer double; only Journal writes below are real effects."""
+    source = suite.source()
+    spec = source["probe_spec"]
+    case = spec["cases"][scenario]
+    context = spec["context"]
+    requests, retention = [], []
+    for index in range(2):
+        measurement = {
+            "schema_version": "karajan.go-context-measurement.v1",
+            "model": "glm-5.3-flash",
+            "measurement_method": "reference_tokenizer_estimate",
+            "measurement_confidence": "local_estimate",
+            "request_digest": source_digest({"scenario": scenario, "request": index}),
+            "local_input_tokens": 100,
+            "margin_tokens": 2068,
+            "accounted_input_tokens": 2168,
+            "requested_output_tokens": 4096,
+            "declared_context_tokens": 1000000,
+            "declared_max_output_tokens": 131072,
+            "template_reasoning_effort": "high",
+            "template_clear_thinking": False,
+            **context,
+        }
+        call_id = f"call-{scenario}-{index}"
+        begun = suite.journal.begin_call(
+            authorization.grant_id,
+            call_id,
+            capability=authorization.capability,
+            binding=authorization.binding,
+            request_context=measurement,
+        )
+        assert begun["send_allowed"] is True
+        completed = suite.journal.complete_call(
+            authorization.grant_id,
+            call_id,
+            capability=authorization.capability,
+            binding=authorization.binding,
+            outcome={
+                "state": "response_received",
+                "upstream_status": 200,
+                "response_bytes": 500,
+                "usage": {"prompt_tokens": 100, "completion_tokens": 80, "total_tokens": 180},
+                "protocol_passed": True,
+                "reason_codes": [],
+            },
+        )
+        requests.append(
+            {
+                "sequence": index + 1,
+                "journal_call_id": call_id,
+                "upstream_send_attempted": True,
+                "upstream_response_complete": True,
+                "relay_completed": True,
+                "stream_terminated": True,
+                "reported_models": ["glm-5.3-flash"],
+                "requested_model": "glm-5.3-flash",
+                "denied_canary_in_request": False,
+                "tool_names": ["read"] if index == 0 else [],
+                "finish_reason": "tool_calls" if index == 0 else "stop",
+                "request_context": measurement,
+                **completed["outcome"],
+            }
+        )
+        retention.append(
+            {
+                "sequence": index + 1,
+                "request_digest": measurement["request_digest"],
+                "message_count": 2 + index * 3,
+                "messages_digest": source_digest({"messages": [scenario, index]}),
+                "initial_input_retained": True,
+                "prior_messages_retained": True,
+                "read_results": []
+                if index == 0 or scenario == "denied_read"
+                else [
+                    {"path": row["path"], "content_sha256": row["sha256"]} for row in case["files"]
+                ],
+                "denied_canary_present": False,
+            }
+        )
+    finding = {
+        "severity": "high",
+        "file": "src/range.py",
+        "line": 2,
+        "behavior": "clamp(-1, 0, 2) returns 2 instead of 0",
+        "trigger": "value -1 is below low 0 with high 2",
+        "acceptance_ref": "acceptance:clamp-v1",
+        "blocking": True,
+    }
+    wire = {
+        "verdict": {
+            "clean_review": "pass",
+            "defect_review": "changes_requested",
+            "denied_read": "inconclusive",
+        }[scenario],
+        "findings": [finding] if scenario == "defect_review" else [],
+    }
+    text = json.dumps(wire)
+    suite.journal.revoke_grant(authorization.grant_id)
+    return {
+        "schema_version": "karajan.go-readonly-reviewer-observation.v1",
+        "scope": source["qualification_scope"],
+        "observation_origin": "http_fixture",
+        "scenario": scenario,
+        "grant_id": authorization.grant_id,
+        "runtime_source": source["runtime_source"],
+        "runtime_digest": source["runtime_digest"],
+        "probe_spec": spec,
+        "probe_spec_digest": source_digest(spec),
+        "artifact_sha256": source["runtime_source"]["artifact_sha256"],
+        "source_sha256": source["runtime_source"]["source_sha256"],
+        "runtime_tools_status": "not_run",
+        "dispatch_eligible": False,
+        "real_credential_passed_to_runtime": False,
+        "provider_remote_stop": "unknown",
+        "billing_limit_qualification": "not_run",
+        "effective_configuration_matches": True,
+        "runtime": {
+            "state": "running",
+            "runtime_version": "1.18.29",
+            "runtime_sha256": "a" * 64,
+            "namespace_pid": 1,
+            "namespaces": {k: k + ":[123]" for k in ("user", "mnt", "pid", "net")},
+            "host_mount_visible": False,
+            "wsl_interop_visible": False,
+            "native_control_fd_inherited": False,
+            "network_interfaces": ["lo"],
+            "ipv4_routes": [],
+            "capabilities": {k: "0000000000000000" for k in ("effective", "permitted", "bounding")},
+            "no_new_privileges": True,
+        },
+        "session": {
+            "id": "session-" + scenario,
+            "initial_message_count": 0,
+            "initial_messages_sha256": source_digest({"messages": []}),
+            "prompt_message_id": "prompt-" + scenario,
+        },
+        "native_final": {
+            "session_id": "session-" + scenario,
+            "prompt_message_id": "prompt-" + scenario,
+            "assistant_message_id": "assistant-" + scenario,
+            "parent_id": "prompt-" + scenario,
+            "provider_id": "opencode-go",
+            "model_id": "glm-5.3-flash",
+            "completed_at": 101000,
+            "finish": "stop",
+            "error": None,
+            "text": text,
+            "text_sha256": hashlib.sha256(text.encode()).hexdigest(),
+            "text_part_count": 1,
+            "text_part_id": "text-" + scenario,
+            "text_part_message_id": "assistant-" + scenario,
+            "text_part_session_id": "session-" + scenario,
+            "text_part_started_at": 100500,
+            "text_part_completed_at": 100999,
+        },
+        "parsed_review": {**wire, "verdict": case["expected"]["verdict"]},
+        "parser_revision": spec["parser_revision"],
+        "readonly": {
+            "before": copy.deepcopy(case["files"]),
+            "after": copy.deepcopy(case["files"]),
+            "unchanged": True,
+            "mounts": [
+                {
+                    "path": row["path"],
+                    "readonly": True,
+                    "mount_flags": 1,
+                    "device": 1,
+                    "inode": index + 1,
+                    "host_identity_matches": True,
+                }
+                for index, row in enumerate(case["files"])
+            ],
+        },
+        "tools": [
+            {
+                "message_id": "tool-message-" + str(index),
+                "call_id": "tool-" + str(index),
+                "name": "read",
+                "path": path,
+                "status": "error" if scenario == "denied_read" else "completed",
+                "permission_denied": scenario == "denied_read",
+                "os_not_found": False,
+            }
+            for index, path in enumerate(
+                ["outside_projection"] if scenario == "denied_read" else case["allowed_files"]
+            )
+        ],
+        "requests": requests,
+        "retention": {
+            "requests": retention,
+            "final_request_digest": retention[-1]["request_digest"],
+        },
+        "journal": suite.journal.snapshot(authorization.grant_id),
+        "native_cleanup": {"local_stop": "confirmed", "namespace_init_stopped": True},
+        "relay_cleanup": {"status": "closed"},
+        "reason_codes": [],
+        "status": "passed",
+    }
+
+
+def install_observer(monkeypatch, callback):
+    # Deliberate public producer-port double; not a real native observation.
+    monkeypatch.setattr(
+        "karajan.isolation.go_reviewer_probe.observe_go_reviewer_tools", callback, raising=False
+    )
+
+
+def test_three_reports_require_real_journal_and_distinct_completed_review_content(
+    synthetic_suite, monkeypatch
+):
+    suite, journal, start = synthetic_suite
+    install_observer(
+        monkeypatch,
+        lambda runtime, directory, secret, authorization, *, scenario, **kwargs: (
+            synthetic_observation(suite, authorization, scenario)
+        ),
+    )
+    result = suite.observe(start, credential())
+    assert result["status"] == "passed", result["scenarios"]
+    assert [row["observation"]["parsed_review"]["verdict"] for row in result["scenarios"]] == [
+        "passed",
+        "failed",
+        "inconclusive",
+    ]
+    assert result["validation"] == {
+        "readonly_reviewer_tools": "passed",
+        "context_accounting": "passed",
+        "structured_findings": "passed",
+        "readonly_projection": "passed",
+        "runtime_tools": "not_run",
+        "budget": "unknown",
+        "dispatch": False,
+    }
+    assert [journal.snapshot(row["grant_id"])["request_count"] for row in start["scenarios"]] == [
+        2,
+        2,
+        2,
+    ]
+
+
+def test_clock_becomes_unavailable_after_effect_retains_cleanup(synthetic_suite, monkeypatch):
+    suite, journal, start = synthetic_suite
+
+    def observed(runtime, directory, secret, authorization, *, scenario, **kwargs):
+        report = synthetic_observation(suite, authorization, scenario)
+
+        def missing():
+            raise OSError("synthetic clock unavailable")
+
+        suite.clock = missing
+        return report
+
+    install_observer(monkeypatch, observed)
+    result = suite.observe(start, credential())
+    assert result["status"] == "failed"
+    assert "SUITE_TIME_BOUNDARY_INVALID" in result["reason_codes"]
+    assert all(
+        journal.snapshot(row["grant_id"])["state"] == "revoked" for row in start["scenarios"]
+    )
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        "credential",
+        "expiry",
+        "future",
+        "fence",
+        "source",
+        "model",
+        "context",
+        "schema",
+        "duplicate_attempt",
+        "extra",
+    ],
+)
+def test_start_mismatch_is_zero_grants_and_zero_observations(synthetic_suite, monkeypatch, change):
+    from dataclasses import replace
+
+    from karajan.adapters.opencode.go_journal import GoJournalError
+
+    suite, journal, start = synthetic_suite
+    secret = credential()
+    if change == "credential":
+        secret = replace(secret, generation="new-generation")
+    elif change == "expiry":
+        start["expires_at"] = 701.0
+        for row in start["scenarios"]:
+            row["grant_binding"]["expires_at"] = 701.0
+    elif change == "future":
+        suite.clock = lambda: 99.0
+    elif change == "source":
+        start["source"]["observation_origin"] = "official_go"
+    elif change == "duplicate_attempt":
+        start["scenarios"][1]["attempt_id"] = start["scenarios"][0]["attempt_id"]
+        start["scenarios"][1]["grant_binding"]["attempt_id"] = start["scenarios"][0]["attempt_id"]
+    elif change == "extra":
+        start["scenarios"][0]["grant_binding"]["suite_ref"] = start["suite_ref"]
+    elif change == "context":
+        start["scenarios"][0]["grant_binding"]["context"] = {
+            **start["scenarios"][0]["grant_binding"]["context"],
+            "fixed_margin": 1,
+        }
+    else:
+        key, value = {
+            "fence": ("fence", True),
+            "model": ("model", "other-model"),
+            "schema": ("schema_version", "karajan.go-qualification-grant.v2"),
+        }[change]
+        start["scenarios"][0]["grant_binding"][key] = value
+    called = []
+    install_observer(monkeypatch, lambda *args, **kwargs: called.append(True))
+    with pytest.raises(ValueError, match="FIXED_GO_REVIEWER_START_BINDING_MISMATCH"):
+        suite.observe(start, secret)
+    assert called == []
+    with pytest.raises(GoJournalError, match="GRANT_NOT_FOUND"):
+        journal.snapshot(start["scenarios"][0]["grant_id"])
+
+
+@pytest.mark.parametrize("index", [0, 1, 2])
+def test_foreign_grant_is_not_revoked_on_create_conflict(synthetic_suite, index):
+    suite, journal, start = synthetic_suite
+    row = start["scenarios"][index]
+    journal.create_grant(
+        {**row["grant_binding"], "auth_generation": "foreign-generation"}, grant_id=row["grant_id"]
+    )
+    before = journal.snapshot(row["grant_id"])
+    result = suite.observe(start, credential())
+    assert result["status"] == "failed"
+    assert journal.snapshot(row["grant_id"]) == before
+    assert result["grant_cleanup"][index]["state"] == "not_owned"
+    assert "GRANT_CLEANUP_BINDING_MISMATCH" in result["reason_codes"]
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        "journal_call",
+        "usage",
+        "request_digest",
+        "history",
+        "missing_read",
+        "canary",
+        "session",
+        "initial_messages",
+        "parent",
+        "model",
+        "finish",
+        "incomplete",
+        "text_parts",
+        "truncated",
+        "tool_json",
+        "parsed_output",
+        "parser_revision",
+        "writable",
+        "changed_file",
+        "mount_identity",
+        "stop_unknown",
+        "open_relay",
+        "control_fd",
+        "network",
+        "shell",
+        "relay_not_complete",
+        "last_tool_response",
+    ],
+)
+def test_passed_observer_cannot_override_missing_or_mismatched_facts(
+    synthetic_suite, monkeypatch, change
+):
+    suite, journal, start = synthetic_suite
+
+    def observed(runtime, directory, secret, authorization, *, scenario, **kwargs):
+        report = synthetic_observation(suite, authorization, scenario)
+        if change == "journal_call":
+            report["requests"][0]["journal_call_id"] = "unrelated-call"
+        elif change == "usage":
+            report["requests"][0]["usage"] = {"prompt_tokens": 1}
+        elif change == "request_digest":
+            report["retention"]["requests"][-1]["request_digest"] = "e" * 64
+        elif change == "history":
+            report["retention"]["requests"][-1]["prior_messages_retained"] = False
+        elif change == "missing_read":
+            report["retention"]["requests"][-1]["read_results"] = []
+        elif change == "canary":
+            report["retention"]["requests"][-1]["denied_canary_present"] = True
+        elif change == "session":
+            report["native_final"]["session_id"] = "old-session"
+        elif change == "initial_messages":
+            report["session"]["initial_message_count"] = 1
+        elif change == "parent":
+            report["native_final"]["parent_id"] = "old-prompt"
+        elif change == "model":
+            report["native_final"]["model_id"] = "other-model"
+        elif change == "finish":
+            report["native_final"]["finish"] = "length"
+        elif change == "incomplete":
+            report["native_final"]["completed_at"] = None
+        elif change == "text_parts":
+            report["native_final"]["text_part_count"] = 2
+        elif change in ("truncated", "tool_json"):
+            text = report["native_final"]["text"]
+            text = text[:-1] if change == "truncated" else "tool result: " + text
+            report["native_final"]["text"] = text
+            report["native_final"]["text_sha256"] = hashlib.sha256(text.encode()).hexdigest()
+        elif change == "parsed_output":
+            report["parsed_review"]["verdict"] = "inconclusive"
+        elif change == "parser_revision":
+            report["parser_revision"] = "old-parser"
+        elif change == "writable":
+            report["readonly"]["mounts"][0]["mount_flags"] = 0
+        elif change == "changed_file":
+            report["readonly"]["after"][0]["sha256"] = "e" * 64
+        elif change == "mount_identity":
+            report["readonly"]["mounts"][0]["host_identity_matches"] = False
+        elif change == "stop_unknown":
+            report["native_cleanup"]["local_stop"] = "unknown"
+        elif change == "open_relay":
+            report["relay_cleanup"]["status"] = "closing"
+        elif change == "control_fd":
+            report["runtime"]["native_control_fd_inherited"] = True
+        elif change == "network":
+            report["runtime"]["network_interfaces"].append("eth0")
+        elif change == "shell":
+            report["tools"][0]["name"] = "bash"
+        elif change == "relay_not_complete":
+            report["requests"][-1]["relay_completed"] = False
+        elif change == "last_tool_response":
+            report["requests"][-1]["finish_reason"] = "tool_calls"
+        return report
+
+    install_observer(monkeypatch, observed)
+    result = suite.observe(start, credential())
+    assert result["status"] == "failed"
+    assert [row["status"] for row in result["scenarios"]] == ["failed", "not_run", "not_run"]
+    assert result["scenarios"][0]["reason_codes"] != ["SCENARIO_OBSERVATION_INCOMPLETE"]
+    assert [journal.snapshot(row["grant_id"])["request_count"] for row in start["scenarios"]] == [
+        2,
+        0,
+        0,
+    ]
+
+
+def test_grant_send_unknown_cannot_be_overwritten_by_a_passed_report(synthetic_suite, monkeypatch):
+    suite, journal, start = synthetic_suite
+    original = journal.complete_call
+
+    def no_commit(grant_id, call_id, **kwargs):
+        # Lost completion before commit leaves actual begin intent unknown.
+        return {"outcome": kwargs["outcome"]}
+
+    monkeypatch.setattr(journal, "complete_call", no_commit)
+    install_observer(
+        monkeypatch,
+        lambda runtime, directory, secret, authorization, *, scenario, **kwargs: (
+            synthetic_observation(suite, authorization, scenario)
+        ),
+    )
+    result = suite.observe(start, credential())
+    monkeypatch.setattr(journal, "complete_call", original)
+    snapshot = GoCallJournal(journal.path, clock=lambda: 101.0).snapshot(
+        start["scenarios"][0]["grant_id"]
+    )
+    assert result["status"] == "failed"
+    assert snapshot["state"] == "revoked"
+    assert [call["state"] for call in snapshot["calls"]] == ["send_unknown", "send_unknown"]
+
+
+def test_repeated_session_or_unavailable_source_stops_later_scenarios(synthetic_suite, monkeypatch):
+    suite, journal, start = synthetic_suite
+
+    def observed(runtime, directory, secret, authorization, *, scenario, **kwargs):
+        report = synthetic_observation(suite, authorization, scenario)
+        report["session"]["id"] = report["native_final"]["session_id"] = "same-session"
+        return report
+
+    install_observer(monkeypatch, observed)
+    result = suite.observe(start, credential())
+    assert [row["status"] for row in result["scenarios"]] == ["passed", "failed", "not_run"]
+    assert "REVIEWER_SESSION_REUSED" in result["scenarios"][1]["reason_codes"]
+    assert journal.snapshot(start["scenarios"][2]["grant_id"])["request_count"] == 0
+
+
+def test_source_disappears_and_raw_secret_exception_is_never_reported(synthetic_suite, monkeypatch):
+    suite, journal, start = synthetic_suite
+
+    def observed(*args, **kwargs):
+        def missing(*args):
+            raise OSError(credential().reveal())
+
+        monkeypatch.setattr("karajan.isolation.go_reviewer_probe.reviewer_runtime_source", missing)
+        raise RuntimeError(credential().reveal())
+
+    install_observer(monkeypatch, observed)
+    result = suite.observe(start, credential())
+    assert result["status"] == "failed"
+    assert "SUITE_SOURCE_UNAVAILABLE" in result["reason_codes"]
+    assert credential().reveal() not in json.dumps(result)
+    assert all(
+        journal.snapshot(row["grant_id"])["state"] == "revoked" for row in start["scenarios"]
+    )
+
+
+@pytest.mark.parametrize(
+    "scenario,change",
+    [
+        ("defect_review", "line"),
+        ("defect_review", "blocking"),
+        ("defect_review", "acceptance"),
+        ("denied_read", "passed"),
+        ("denied_read", "not_denied"),
+    ],
+)
+def test_known_scenario_semantics_are_reparsed_not_trusted_from_passed(
+    synthetic_suite, monkeypatch, scenario, change
+):
+    from karajan.candidates.review_output import parse_review_output
+
+    suite, journal, start = synthetic_suite
+
+    def observed(runtime, directory, secret, authorization, *, scenario, **kwargs):
+        report = synthetic_observation(suite, authorization, scenario)
+        if scenario != target:
+            return report
+        if change == "not_denied":
+            report["tools"][0]["permission_denied"] = False
+            return report
+        body = json.loads(report["native_final"]["text"])
+        if change == "line":
+            body["findings"][0]["line"] = 1
+        elif change == "blocking":
+            body["findings"][0]["blocking"] = False
+        elif change == "acceptance":
+            body["findings"][0]["acceptance_ref"] = "acceptance:foreign"
+        else:
+            body["verdict"] = "pass"
+        text = json.dumps(body)
+        report["native_final"]["text"] = text
+        report["native_final"]["text_sha256"] = hashlib.sha256(text.encode()).hexdigest()
+        # All changes except the foreign reference also pass the real parser:
+        # the Suite must enforce fixed-case expectations beyond JSON validity.
+        if change != "acceptance":
+            report["parsed_review"] = parse_review_output(
+                text,
+                allowed_files=frozenset({"acceptance.md", "src/range.py"}),
+                allowed_acceptance_refs=frozenset({"acceptance:clamp-v1"}),
+            ).model_dump(mode="json")
+        return report
+
+    target = scenario
+    install_observer(monkeypatch, observed)
+    result = suite.observe(start, credential())
+    assert result["status"] == "failed"
+    row = next(row for row in result["scenarios"] if row["scenario"] == scenario)
+    assert row["status"] == "failed"
+    assert row["reason_codes"] != ["SCENARIO_OBSERVATION_INCOMPLETE"]
+
+
+def test_capability_lost_on_old_grant_is_not_recovered_by_new_directory(synthetic_suite):
+    suite, journal, start = synthetic_suite
+    journal.create_grant(
+        start["scenarios"][0]["grant_binding"], grant_id=start["scenarios"][0]["grant_id"]
+    )
+    result = suite.observe(start, credential())
+    assert result["status"] == "failed"
+    assert [row["status"] for row in result["scenarios"]] == ["not_run"] * 3
+    assert journal.snapshot(start["scenarios"][0]["grant_id"])["request_count"] == 0
+    before = journal.snapshot(start["scenarios"][0]["grant_id"])
+    with pytest.raises(ValueError, match="NEW_CONTROLLER_DIRECTORY_REQUIRED"):
+        suite.observe(start, credential())
+    assert journal.snapshot(start["scenarios"][0]["grant_id"]) == before
+
+
+@pytest.mark.parametrize("field,value", [
+    ("text_part_id", ""), ("text_part_message_id", "unrelated-message"),
+    ("text_part_session_id", "old-session"), ("text_part_started_at", None),
+    ("text_part_completed_at", None), ("text_part_completed_at", 99000),
+    ("text_part_completed_at", 102000),
+])
+def test_complete_text_part_requires_native_identity_and_end_time(
+    synthetic_suite, monkeypatch, field, value
+):
+    suite, journal, start = synthetic_suite
+
+    def observed(runtime, directory, secret, authorization, *, scenario, **kwargs):
+        report = synthetic_observation(suite, authorization, scenario)
+        report["native_final"][field] = value
+        return report
+
+    install_observer(monkeypatch, observed)
+    result = suite.observe(start, credential())
+    assert result["status"] == "failed"
+    assert result["scenarios"][0]["reason_codes"] == ["REVIEWER_FINAL_OR_FINDINGS_INVALID"]
+    assert journal.snapshot(start["scenarios"][1]["grant_id"])["request_count"] == 0

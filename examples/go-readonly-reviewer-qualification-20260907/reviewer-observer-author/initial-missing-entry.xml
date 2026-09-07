@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="0.125" timestamp="2026-09-07T11:34:14.805733+08:00" hostname="ProArt-Zhou"><testcase classname="" name="tests.isolation.test_go_reviewer_probe" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\Users\Chooo\Playground\Karajan\.cache\go-reviewer-qualification\tests\isolation\test_go_reviewer_probe.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\isolation\test_go_reviewer_probe.py:3: in &lt;module&gt;
+    from karajan.isolation.go_reviewer_probe import reviewer_probe_spec
+E   ModuleNotFoundError: No module named 'karajan.isolation.go_reviewer_probe'</error></testcase></testsuite></testsuites>

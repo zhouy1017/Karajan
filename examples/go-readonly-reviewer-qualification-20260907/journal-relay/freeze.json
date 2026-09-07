@@ -1,0 +1,116 @@
+{
+  "frozen_at_utc": "2026-09-07T03:49:56.320478+00:00",
+  "issue": 106,
+  "scope": "Journal and Relay Reviewer qualification only; no provider/profile qualification",
+  "files": {
+    "backend/karajan/adapters/opencode/go_journal.py": {
+      "sha256": "f82f1c098e884c1b6c6423245553ca8b1bbe75a2623950a27362d506f51fbfbb",
+      "bytes": 19868,
+      "line_endings": "LF"
+    },
+    "backend/karajan/adapters/opencode/go_relay.py": {
+      "sha256": "33dce5c2c52c5558efb98682db79fd72c5e854b3ff2a389d5ba7249212efd299",
+      "bytes": 46309,
+      "line_endings": "LF"
+    },
+    "tests/adapters/opencode/test_go_reviewer_qualification_grants.py": {
+      "sha256": "f1834bf6569eaeaeb3fb6dfda0b52b95b6efb016ffb94518832e6e18459e5902",
+      "bytes": 7940,
+      "line_endings": "LF"
+    },
+    "tests/adapters/opencode/test_go_reviewer_qualification_relay.py": {
+      "sha256": "6601d770806bccc29ee9e9d49b468128b3e945a66a6d48d402ce3f0e9fd6df53",
+      "bytes": 15997,
+      "line_endings": "LF"
+    }
+  },
+  "tests": {
+    "compatibility-windows.xml": {
+      "tests": 319.0,
+      "failures": 1.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 28.393
+    },
+    "completion-timing-target.xml": {
+      "tests": 3.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 2.099
+    },
+    "journal-first-green.xml": {
+      "tests": 1.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 1.484
+    },
+    "journal-first-red.xml": {
+      "tests": 1.0,
+      "failures": 1.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 1.712
+    },
+    "new-contract-linux.xml": {
+      "tests": 61.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 6.279
+    },
+    "new-contract-windows.xml": {
+      "tests": 61.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 5.017
+    },
+    "readonly-request-green.xml": {
+      "tests": 6.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 1.887
+    },
+    "readonly-request-red.xml": {
+      "tests": 6.0,
+      "failures": 2.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 1.96
+    },
+    "readonly-response-green.xml": {
+      "tests": 4.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 1.735
+    },
+    "readonly-response-red.xml": {
+      "tests": 4.0,
+      "failures": 1.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 1.878
+    },
+    "relay-first-green.xml": {
+      "tests": 1.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 1.477
+    },
+    "relay-first-red.xml": {
+      "tests": 1.0,
+      "failures": 1.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 1.547
+    }
+  },
+  "compatibility_note": "Windows compatibility original318passed1failed; original failing case passed once on targeted rerun, before/current public delayed-completion controls both passed; no old test or completion ordering modified. This is not a claim of a fresh all-green319 rerun.",
+  "immutable_legacy_ast": "legacy-ast-comparison.json",
+  "static": "static-commands.json"
+}

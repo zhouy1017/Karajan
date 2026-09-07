@@ -1,0 +1,33 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/Chooo/Playground/Karajan/.cache/go-reviewer-qualification
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 34 items / 33 deselected / 1 selected
+
+tests/isolation/test_go_reviewer_probe_boundaries.py F                   [100%]
+
+=================================== FAILURES ===================================
+_______ test_readonly_modes_are_observed_from_files_not_filled_from_spec _______
+
+tmp_path = PosixPath('/tmp/karajan-reviewer-mode-red/test_readonly_modes_are_observ0')
+accounting = <karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x7faaea49c440>
+boundary = {'created': 1, 'started': 1, 'prompted': 1, 'mutate': <function boundary.<locals>.<lambda> at 0x7faaea47d800>, ...}
+
+    @pytest.mark.skipif(sys.platform != "linux", reason="Actual POSIX chmod semantics required")
+    def test_readonly_modes_are_observed_from_files_not_filled_from_spec(
+        tmp_path, accounting, boundary
+    ):
+        boundary["capture_mode"] = 0o755
+        result = observe(tmp_path, accounting)
+>       assert result["readonly"]["after"][0]["mode"] == "100755"
+E       AssertionError: assert '100644' == '100755'
+E         
+E         - 100755
+E         + 100644
+
+tests/isolation/test_go_reviewer_probe_boundaries.py:197: AssertionError
+- generated xml file: /mnt/c/Users/Chooo/Playground/Karajan/.cache/go-reviewer-qualification/.cache/reviewer-observer-author/mode-stat-red.xml -
+=========================== short test summary info ============================
+FAILED tests/isolation/test_go_reviewer_probe_boundaries.py::test_readonly_modes_are_observed_from_files_not_filled_from_spec
+======================= 1 failed, 33 deselected in 3.07s =======================

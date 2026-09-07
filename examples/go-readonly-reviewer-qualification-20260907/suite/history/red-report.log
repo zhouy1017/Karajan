@@ -1,0 +1,25 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_ test_three_reports_require_real_journal_and_distinct_completed_review_content _
+
+synthetic_suite = (<karajan.projects.go_reviewer_suite.FixedGoReviewerSuite object at 0x0000025647BB7890>, <karajan.adapters.opencode.go...o-channel', 'account_id': 'go-account', 'billing_path': 'subscription_only', 'approved_data_destination': True}}, ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025647B7B5C0>
+
+    def test_three_reports_require_real_journal_and_distinct_completed_review_content(
+        synthetic_suite, monkeypatch
+    ):
+        suite, journal, start = synthetic_suite
+        install_observer(monkeypatch, lambda runtime, directory, secret, authorization, *, scenario,
+                         **kwargs: synthetic_observation(suite, authorization, scenario))
+        result = suite.observe(start, credential())
+>       assert result["status"] == "passed", result["scenarios"]
+E       AssertionError: [{'scenario': 'clean_review', 'attempt_id': 'attempt-clean_review', 'fence': 1, 'grant_id': 'grant-clean_review', ...}....}, {'scenario': 'denied_read', 'attempt_id': 'attempt-denied_read', 'fence': 1, 'grant_id': 'grant-denied_read', ...}]
+E       assert 'failed' == 'passed'
+E         
+E         - passed
+E         + failed
+
+tests\projects\test_go_reviewer_suite.py:272: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/projects/test_go_reviewer_suite.py::test_three_reports_require_real_journal_and_distinct_completed_review_content
+1 failed, 4 deselected in 1.14s

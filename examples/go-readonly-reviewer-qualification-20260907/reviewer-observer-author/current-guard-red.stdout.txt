@@ -1,0 +1,109 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Users\Chooo\Playground\Karajan\.cache\go-reviewer-qualification
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 33 items / 31 deselected / 2 selected
+
+tests\isolation\test_go_reviewer_probe_boundaries.py FF                  [100%]
+
+================================== FAILURES ===================================
+___ test_current_identity_guard_blocks_start_or_prompt_and_reaches_relay[1] ___
+
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-995/test_current_identity_guard_bl0')
+accounting = <karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000002C8A7D87E30>
+boundary = {'created': 0, 'started': 0, 'prompted': 0, 'mutate': <function boundary.<locals>.<lambda> at 0x000002C8A7D8B420>, ...}
+reject_on = 1
+
+    @pytest.mark.parametrize("reject_on", [1, 2])
+    def test_current_identity_guard_blocks_start_or_prompt_and_reaches_relay(
+        tmp_path, accounting, boundary, reject_on
+    ):
+        entries = []
+    
+        @contextmanager
+        def guard():
+            entries.append(len(entries) + 1)
+            if len(entries) == reject_on:
+                raise ValueError("synthetic-current-identity-withdrawn")
+            yield
+    
+>       result = observe(tmp_path, accounting, current_guard=guard)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\isolation\test_go_reviewer_probe_boundaries.py:365: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-995/test_current_identity_guard_bl0')
+accounting = <karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000002C8A7D87E30>
+current_guard = <function test_current_identity_guard_blocks_start_or_prompt_and_reaches_relay.<locals>.guard at 0x000002C8A7D8BC40>
+kwargs = {}
+
+    def observe(tmp_path, accounting, *, current_guard=nullcontext, **kwargs):
+        auth = reviewer_authorization(tmp_path, accounting, Path("synthetic-ELF"), "clean_review")
+>       result = probe.observe_go_reviewer_tools(
+            Path("synthetic-ELF"),
+            tmp_path / "observation",
+            SECRET,
+            auth,
+            scenario="clean_review",
+            accounting=accounting,
+            client_factory=lambda: None,
+            current_guard=current_guard,
+            **kwargs,
+        )
+E       TypeError: observe_go_reviewer_tools() got an unexpected keyword argument 'current_guard'
+
+tests\isolation\test_go_reviewer_probe_boundaries.py:162: TypeError
+___ test_current_identity_guard_blocks_start_or_prompt_and_reaches_relay[2] ___
+
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-995/test_current_identity_guard_bl1')
+accounting = <karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000002C8A7D87E30>
+boundary = {'created': 0, 'started': 0, 'prompted': 0, 'mutate': <function boundary.<locals>.<lambda> at 0x000002C8A7D8BCE0>, ...}
+reject_on = 2
+
+    @pytest.mark.parametrize("reject_on", [1, 2])
+    def test_current_identity_guard_blocks_start_or_prompt_and_reaches_relay(
+        tmp_path, accounting, boundary, reject_on
+    ):
+        entries = []
+    
+        @contextmanager
+        def guard():
+            entries.append(len(entries) + 1)
+            if len(entries) == reject_on:
+                raise ValueError("synthetic-current-identity-withdrawn")
+            yield
+    
+>       result = observe(tmp_path, accounting, current_guard=guard)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\isolation\test_go_reviewer_probe_boundaries.py:365: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-995/test_current_identity_guard_bl1')
+accounting = <karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000002C8A7D87E30>
+current_guard = <function test_current_identity_guard_blocks_start_or_prompt_and_reaches_relay.<locals>.guard at 0x000002C8A913BCE0>
+kwargs = {}
+
+    def observe(tmp_path, accounting, *, current_guard=nullcontext, **kwargs):
+        auth = reviewer_authorization(tmp_path, accounting, Path("synthetic-ELF"), "clean_review")
+>       result = probe.observe_go_reviewer_tools(
+            Path("synthetic-ELF"),
+            tmp_path / "observation",
+            SECRET,
+            auth,
+            scenario="clean_review",
+            accounting=accounting,
+            client_factory=lambda: None,
+            current_guard=current_guard,
+            **kwargs,
+        )
+E       TypeError: observe_go_reviewer_tools() got an unexpected keyword argument 'current_guard'
+
+tests\isolation\test_go_reviewer_probe_boundaries.py:162: TypeError
+- generated xml file: C:\Users\Chooo\Playground\Karajan\.cache\go-reviewer-qualification\.cache\reviewer-observer-author\current-guard-red.xml -
+=========================== short test summary info ===========================
+FAILED tests/isolation/test_go_reviewer_probe_boundaries.py::test_current_identity_guard_blocks_start_or_prompt_and_reaches_relay[1]
+FAILED tests/isolation/test_go_reviewer_probe_boundaries.py::test_current_identity_guard_blocks_start_or_prompt_and_reaches_relay[2]
+====================== 2 failed, 31 deselected in 4.90s =======================

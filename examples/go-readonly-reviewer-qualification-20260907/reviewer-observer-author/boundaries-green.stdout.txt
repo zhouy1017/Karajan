@@ -1,0 +1,12 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Users\Chooo\Playground\Karajan\.cache\go-reviewer-qualification
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 29 items
+
+tests\isolation\test_go_reviewer_probe_boundaries.py ................... [ 65%]
+..........                                                               [100%]
+
+- generated xml file: C:\Users\Chooo\Playground\Karajan\.cache\go-reviewer-qualification\.cache\reviewer-observer-author\boundaries-green.xml -
+============================= 29 passed in 2.10s ==============================

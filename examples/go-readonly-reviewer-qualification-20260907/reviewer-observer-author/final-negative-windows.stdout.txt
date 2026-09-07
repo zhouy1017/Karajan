@@ -1,0 +1,20 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Users\Chooo\Playground\Karajan\.cache\go-reviewer-qualification
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 44 items
+
+tests\isolation\test_go_reviewer_probe.py .ssss                          [ 11%]
+tests\isolation\test_go_reviewer_probe_boundaries.py .s................. [ 54%]
+...............                                                          [ 88%]
+tests\isolation\test_go_reviewer_probe_negative.py sssss                 [100%]
+
+- generated xml file: C:\Users\Chooo\Playground\Karajan\.cache\go-reviewer-qualification\.cache\reviewer-observer-author\final-negative-windows.xml -
+=========================== short test summary info ===========================
+SKIPPED [1] tests\isolation\test_go_reviewer_probe.py:50: Fixed Linux source required
+SKIPPED [3] tests\isolation\test_go_reviewer_probe.py:168: Fixed Linux native required
+SKIPPED [1] \mnt\c\Users\Chooo\Playground\Karajan\.cache\go-reviewer-qualification\tests\isolation\test_go_reviewer_probe_boundaries.py:191: Actual POSIX chmod semantics required
+SKIPPED [4] \mnt\c\Users\Chooo\Playground\Karajan\.cache\go-reviewer-qualification\tests\isolation\test_go_reviewer_probe_negative.py:87: Fixed Linux native required
+SKIPPED [1] \mnt\c\Users\Chooo\Playground\Karajan\.cache\go-reviewer-qualification\tests\isolation\test_go_reviewer_probe_negative.py:99: Fixed Linux native required
+======================= 34 passed, 10 skipped in 2.44s ========================

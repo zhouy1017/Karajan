@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="3" time="1.042" timestamp="2026-09-07T11:43:47.956045+08:00" hostname="ProArt-Zhou"><testcase classname="tests.projects.test_go_reviewer_suite" name="test_lost_create_reply_revokes_only_preallocated_owned_grants[1]" time="0.015"><failure message="AttributeError: 'FixedGoReviewerSuite' object has no attribute 'observe'">synthetic_suite = (&lt;karajan.projects.go_reviewer_suite.FixedGoReviewerSuite object at 0x0000018277152F90&gt;, &lt;karajan.adapters.opencode.go...o-channel', 'account_id': 'go-account', 'billing_path': 'subscription_only', 'approved_data_destination': True}}, ...})
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x00000182771221B0&gt;
+lost_index = 1
+
+    @pytest.mark.parametrize("lost_index", [1, 2, 3])
+    def test_lost_create_reply_revokes_only_preallocated_owned_grants(
+        synthetic_suite, monkeypatch, lost_index
+    ):
+        suite, journal, start = synthetic_suite
+        original, count = journal.create_grant, 0
+    
+        def lost(binding, *, grant_id):
+            nonlocal count
+            result = original(binding, grant_id=grant_id)
+            count += 1
+            if count == lost_index:
+                raise ConnectionError(credential().reveal())
+            return result
+    
+        monkeypatch.setattr(journal, "create_grant", lost)
+&gt;       result = suite.observe(start, credential())
+                 ^^^^^^^^^^^^^
+E       AttributeError: 'FixedGoReviewerSuite' object has no attribute 'observe'
+
+tests\projects\test_go_reviewer_suite.py:143: AttributeError</failure></testcase><testcase classname="tests.projects.test_go_reviewer_suite" name="test_lost_create_reply_revokes_only_preallocated_owned_grants[2]" time="0.005"><failure message="AttributeError: 'FixedGoReviewerSuite' object has no attribute 'observe'">synthetic_suite = (&lt;karajan.projects.go_reviewer_suite.FixedGoReviewerSuite object at 0x0000018277153170&gt;, &lt;karajan.adapters.opencode.go...o-channel', 'account_id': 'go-account', 'billing_path': 'subscription_only', 'approved_data_destination': True}}, ...})
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x00000182771533B0&gt;
+lost_index = 2
+
+    @pytest.mark.parametrize("lost_index", [1, 2, 3])
+    def test_lost_create_reply_revokes_only_preallocated_owned_grants(
+        synthetic_suite, monkeypatch, lost_index
+    ):
+        suite, journal, start = synthetic_suite
+        original, count = journal.create_grant, 0
+    
+        def lost(binding, *, grant_id):
+            nonlocal count
+            result = original(binding, grant_id=grant_id)
+            count += 1
+            if count == lost_index:
+                raise ConnectionError(credential().reveal())
+            return result
+    
+        monkeypatch.setattr(journal, "create_grant", lost)
+&gt;       result = suite.observe(start, credential())
+                 ^^^^^^^^^^^^^
+E       AttributeError: 'FixedGoReviewerSuite' object has no attribute 'observe'
+
+tests\projects\test_go_reviewer_suite.py:143: AttributeError</failure></testcase><testcase classname="tests.projects.test_go_reviewer_suite" name="test_lost_create_reply_revokes_only_preallocated_owned_grants[3]" time="0.005"><failure message="AttributeError: 'FixedGoReviewerSuite' object has no attribute 'observe'">synthetic_suite = (&lt;karajan.projects.go_reviewer_suite.FixedGoReviewerSuite object at 0x000001827716C920&gt;, &lt;karajan.adapters.opencode.go...o-channel', 'account_id': 'go-account', 'billing_path': 'subscription_only', 'approved_data_destination': True}}, ...})
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001827716C530&gt;
+lost_index = 3
+
+    @pytest.mark.parametrize("lost_index", [1, 2, 3])
+    def test_lost_create_reply_revokes_only_preallocated_owned_grants(
+        synthetic_suite, monkeypatch, lost_index
+    ):
+        suite, journal, start = synthetic_suite
+        original, count = journal.create_grant, 0
+    
+        def lost(binding, *, grant_id):
+            nonlocal count
+            result = original(binding, grant_id=grant_id)
+            count += 1
+            if count == lost_index:
+                raise ConnectionError(credential().reveal())
+            return result
+    
+        monkeypatch.setattr(journal, "create_grant", lost)
+&gt;       result = suite.observe(start, credential())
+                 ^^^^^^^^^^^^^
+E       AttributeError: 'FixedGoReviewerSuite' object has no attribute 'observe'
+
+tests\projects\test_go_reviewer_suite.py:143: AttributeError</failure></testcase></testsuite></testsuites>

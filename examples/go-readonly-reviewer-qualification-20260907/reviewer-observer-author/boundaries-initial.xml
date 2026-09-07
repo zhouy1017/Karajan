@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="29" time="1.868" timestamp="2026-09-07T11:55:46.058322+08:00" hostname="ProArt-Zhou"><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_boundary_control_selects_only_complete_final_text" time="0.450" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_final_native_identity_and_completion_are_not_model_claims[sessionID-ses_old-NATIVE_ASSISTANT_IDENTITY_MISMATCH]" time="0.014" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_final_native_identity_and_completion_are_not_model_claims[parentID-msg_old-NATIVE_ASSISTANT_IDENTITY_MISMATCH]" time="0.014" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_final_native_identity_and_completion_are_not_model_claims[modelID-different-NATIVE_ASSISTANT_IDENTITY_MISMATCH]" time="0.013" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_final_native_identity_and_completion_are_not_model_claims[providerID-different-NATIVE_ASSISTANT_IDENTITY_MISMATCH]" time="0.014" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_final_native_identity_and_completion_are_not_model_claims[error-value4-SENSITIVE_NATIVE_OUTPUT]" time="0.014" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_final_native_identity_and_completion_are_not_model_claims[error-value5-NATIVE_ASSISTANT_IDENTITY_MISMATCH]" time="0.014" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_final_native_identity_and_completion_are_not_model_claims[finish-length-NATIVE_FINAL_INCOMPLETE]" time="0.013" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_final_native_identity_and_completion_are_not_model_claims[time-value7-NATIVE_FINAL_INCOMPLETE]" time="0.014" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_final_native_identity_and_completion_are_not_model_claims[time-value8-NATIVE_FINAL_INCOMPLETE]" time="0.015" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_ambiguous_or_unfinished_native_parts_are_never_parsed[duplicate_final]" time="0.014" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_ambiguous_or_unfinished_native_parts_are_never_parsed[duplicate_text]" time="0.014" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_ambiguous_or_unfinished_native_parts_are_never_parsed[tool_only]" time="0.014" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_ambiguous_or_unfinished_native_parts_are_never_parsed[unfinished_tool]" time="0.013" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_ambiguous_or_unfinished_native_parts_are_never_parsed[foreign_part]" time="0.014"><failure message="AssertionError: assert {'verdict': 'passed', 'findings': []} is None">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-989/test_ambiguous_or_unfinished_n4')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000001A3349ED6D0&gt;
+boundary = {'created': 1, 'started': 1, 'prompted': 1, 'mutate': &lt;function test_ambiguous_or_unfinished_native_parts_are_never_parsed.&lt;locals&gt;.mutate at 0x000001A334A19800&gt;, ...}
+change = 'foreign_part'
+
+    @pytest.mark.parametrize("change", ["duplicate_final", "duplicate_text", "tool_only", "unfinished_tool",
+                                       "foreign_part", "unfinished_text"])
+    def test_ambiguous_or_unfinished_native_parts_are_never_parsed(
+        tmp_path, accounting, boundary, change
+    ):
+        def mutate(messages):
+            parts = messages[-1]["parts"]
+            if change == "duplicate_final":
+                messages.append(copy.deepcopy(messages[-1]))
+            elif change == "duplicate_text":
+                parts.append(copy.deepcopy(parts[0]))
+            elif change == "tool_only":
+                parts[:] = [{"type": "tool", "tool": "read", "state": {"status": "completed"}}]
+            elif change == "unfinished_tool":
+                parts.append({"type": "tool", "tool": "read", "state": {"status": "running"}})
+            elif change == "foreign_part":
+                parts[0]["messageID"] = "msg_foreign"
+            else:
+                parts[0]["time"].pop("end")
+        boundary["mutate"] = mutate
+        result = observe(tmp_path, accounting)
+&gt;       assert result["parsed_review"] is None
+E       AssertionError: assert {'verdict': 'passed', 'findings': []} is None
+
+tests\isolation\test_go_reviewer_probe_boundaries.py:165: AssertionError</failure></testcase><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_ambiguous_or_unfinished_native_parts_are_never_parsed[unfinished_text]" time="0.019"><failure message="AssertionError: assert {'verdict': 'passed', 'findings': []} is None">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-989/test_ambiguous_or_unfinished_n5')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000001A3349ED6D0&gt;
+boundary = {'created': 1, 'started': 1, 'prompted': 1, 'mutate': &lt;function test_ambiguous_or_unfinished_native_parts_are_never_parsed.&lt;locals&gt;.mutate at 0x000001A335D84040&gt;, ...}
+change = 'unfinished_text'
+
+    @pytest.mark.parametrize("change", ["duplicate_final", "duplicate_text", "tool_only", "unfinished_tool",
+                                       "foreign_part", "unfinished_text"])
+    def test_ambiguous_or_unfinished_native_parts_are_never_parsed(
+        tmp_path, accounting, boundary, change
+    ):
+        def mutate(messages):
+            parts = messages[-1]["parts"]
+            if change == "duplicate_final":
+                messages.append(copy.deepcopy(messages[-1]))
+            elif change == "duplicate_text":
+                parts.append(copy.deepcopy(parts[0]))
+            elif change == "tool_only":
+                parts[:] = [{"type": "tool", "tool": "read", "state": {"status": "completed"}}]
+            elif change == "unfinished_tool":
+                parts.append({"type": "tool", "tool": "read", "state": {"status": "running"}})
+            elif change == "foreign_part":
+                parts[0]["messageID"] = "msg_foreign"
+            else:
+                parts[0]["time"].pop("end")
+        boundary["mutate"] = mutate
+        result = observe(tmp_path, accounting)
+&gt;       assert result["parsed_review"] is None
+E       AssertionError: assert {'verdict': 'passed', 'findings': []} is None
+
+tests\isolation\test_go_reviewer_probe_boundaries.py:165: AssertionError</failure></testcase><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_whole_final_text_is_parsed_without_json_slicing[prefix {&quot;verdict&quot;:&quot;pass&quot;,&quot;findings&quot;:[]}]" time="0.014" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_whole_final_text_is_parsed_without_json_slicing[```json\n{&quot;verdict&quot;:&quot;pass&quot;,&quot;findings&quot;:[]}\n```]" time="0.013" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_whole_final_text_is_parsed_without_json_slicing[{&quot;verdict&quot;:&quot;pass&quot;,&quot;verdict&quot;:&quot;pass&quot;,&quot;findings&quot;:[]}]" time="0.014" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_whole_final_text_is_parsed_without_json_slicing[{&quot;verdict&quot;:&quot;pass&quot;,&quot;findings&quot;:[],&quot;completed&quot;:true}]" time="0.014" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_whole_final_text_is_parsed_without_json_slicing[{&quot;verdict&quot;:&quot;pass&quot;,&quot;findings&quot;:[],&quot;candidate_id&quot;:&quot;trusted-by-model&quot;}]" time="0.014" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_inconclusive_is_not_clean_review_success" time="0.014" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_new_session_must_be_empty_before_prompt" time="0.014" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_native_exception_does_not_echo_sensitive_details" time="0.014" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_grant_mismatch_is_zero_native_and_does_not_revoke_foreign_binding[update0]" time="0.008" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_grant_mismatch_is_zero_native_and_does_not_revoke_foreign_binding[update1]" time="0.008" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_grant_mismatch_is_zero_native_and_does_not_revoke_foreign_binding[update2]" time="0.002"><failure message="TypeError: reviewer_authorization() got multiple values for argument 'scenario'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-989/test_grant_mismatch_is_zero_na2')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000001A3349ED6D0&gt;
+boundary = {'created': 0, 'started': 0, 'prompted': 0, 'mutate': &lt;function boundary.&lt;locals&gt;.&lt;lambda&gt; at 0x000001A335DD3920&gt;, ...}
+update = {'scenario': 'defect_review'}
+
+    @pytest.mark.parametrize("update", [
+        {"runtime_digest": "b" * 64}, {"probe_spec_digest": "b" * 64},
+        {"scenario": "defect_review"}, {"max_requests": 5},
+    ])
+    def test_grant_mismatch_is_zero_native_and_does_not_revoke_foreign_binding(
+        tmp_path, accounting, boundary, update
+    ):
+&gt;       auth = reviewer_authorization(tmp_path, accounting, Path("synthetic-ELF"), "clean_review", **update)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: reviewer_authorization() got multiple values for argument 'scenario'
+
+tests\isolation\test_go_reviewer_probe_boundaries.py:212: TypeError</failure></testcase><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_grant_mismatch_is_zero_native_and_does_not_revoke_foreign_binding[update3]" time="0.009" /><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_revoked_grant_is_never_resumed" time="0.009" /></testsuite></testsuites>

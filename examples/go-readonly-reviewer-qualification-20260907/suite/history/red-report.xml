@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="1.105" timestamp="2026-09-07T11:47:03.969415+08:00" hostname="ProArt-Zhou"><testcase classname="tests.projects.test_go_reviewer_suite" name="test_three_reports_require_real_journal_and_distinct_completed_review_content" time="0.047"><failure message="AssertionError: [{'scenario': 'clean_review', 'attempt_id': 'attempt-clean_review', 'fence': 1, 'grant_id': 'grant-clean_review', ...}....}, {'scenario': 'denied_read', 'attempt_id': 'attempt-denied_read', 'fence': 1, 'grant_id': 'grant-denied_read', ...}]&#10;assert 'failed' == 'passed'&#10;  &#10;  - passed&#10;  + failed">synthetic_suite = (&lt;karajan.projects.go_reviewer_suite.FixedGoReviewerSuite object at 0x0000025647BB7890&gt;, &lt;karajan.adapters.opencode.go...o-channel', 'account_id': 'go-account', 'billing_path': 'subscription_only', 'approved_data_destination': True}}, ...})
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000025647B7B5C0&gt;
+
+    def test_three_reports_require_real_journal_and_distinct_completed_review_content(
+        synthetic_suite, monkeypatch
+    ):
+        suite, journal, start = synthetic_suite
+        install_observer(monkeypatch, lambda runtime, directory, secret, authorization, *, scenario,
+                         **kwargs: synthetic_observation(suite, authorization, scenario))
+        result = suite.observe(start, credential())
+&gt;       assert result["status"] == "passed", result["scenarios"]
+E       AssertionError: [{'scenario': 'clean_review', 'attempt_id': 'attempt-clean_review', 'fence': 1, 'grant_id': 'grant-clean_review', ...}....}, {'scenario': 'denied_read', 'attempt_id': 'attempt-denied_read', 'fence': 1, 'grant_id': 'grant-denied_read', ...}]
+E       assert 'failed' == 'passed'
+E         
+E         - passed
+E         + failed
+
+tests\projects\test_go_reviewer_suite.py:272: AssertionError</failure></testcase></testsuite></testsuites>

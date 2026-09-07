@@ -1,0 +1,55 @@
+[
+  {
+    "name": "ruff",
+    "command": [
+      "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+      "-m",
+      "ruff",
+      "check",
+      "backend/karajan/adapters/opencode/go_journal.py",
+      "backend/karajan/adapters/opencode/go_relay.py",
+      "tests/adapters/opencode/test_go_reviewer_qualification_grants.py",
+      "tests/adapters/opencode/test_go_reviewer_qualification_relay.py"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "format",
+    "command": [
+      "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+      "-m",
+      "ruff",
+      "format",
+      "--check",
+      "backend/karajan/adapters/opencode/go_journal.py",
+      "backend/karajan/adapters/opencode/go_relay.py",
+      "tests/adapters/opencode/test_go_reviewer_qualification_grants.py",
+      "tests/adapters/opencode/test_go_reviewer_qualification_relay.py"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "mypy-windows",
+    "command": [
+      "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+      "-m",
+      "mypy",
+      "backend/karajan/adapters/opencode/go_journal.py",
+      "backend/karajan/adapters/opencode/go_relay.py"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "mypy-linux",
+    "command": [
+      "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+      "-m",
+      "mypy",
+      "--platform",
+      "linux",
+      "backend/karajan/adapters/opencode/go_journal.py",
+      "backend/karajan/adapters/opencode/go_relay.py"
+    ],
+    "exit_code": 0
+  }
+]

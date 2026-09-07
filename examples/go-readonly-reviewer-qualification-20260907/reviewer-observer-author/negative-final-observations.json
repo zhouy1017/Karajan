@@ -1,0 +1,70 @@
+[
+  {
+    "path": "negative-observation-1.json",
+    "input_test_directory": "test_actual_readonly_reviewer_0",
+    "sha256": "ee58174d99f0baef1bd1c07bbbc0ca4ce1c79b6b4f775296b31e68faabfc6993",
+    "runtime_digest": "655f6180d81d739dfbb84d44f4a679f9ae19bafa014e40cf713ab96a16e41110",
+    "expected_status": "failed",
+    "actual_status": "failed",
+    "reason_codes": [
+      "RELAY_REJECTED_REQUEST",
+      "PROVIDER_PROTOCOL_INCOMPLETE",
+      "MEASURED_WIRE_RETENTION_INCOMPLETE"
+    ],
+    "requests": 1
+  },
+  {
+    "path": "negative-observation-2.json",
+    "input_test_directory": "test_actual_readonly_reviewer_1",
+    "sha256": "cea649e84649639e21a6900b247853fcc7a100a47718e3be3361d1a0b1a5e48a",
+    "runtime_digest": "655f6180d81d739dfbb84d44f4a679f9ae19bafa014e40cf713ab96a16e41110",
+    "expected_status": "failed",
+    "actual_status": "failed",
+    "reason_codes": [
+      "RELAY_REJECTED_REQUEST",
+      "PROVIDER_PROTOCOL_INCOMPLETE",
+      "MEASURED_WIRE_RETENTION_INCOMPLETE"
+    ],
+    "requests": 1
+  },
+  {
+    "path": "negative-observation-3.json",
+    "input_test_directory": "test_actual_readonly_reviewer_2",
+    "sha256": "a925e27b783ca6e57060704a19451e1a10206973449620353d4be5bdec515247",
+    "runtime_digest": "655f6180d81d739dfbb84d44f4a679f9ae19bafa014e40cf713ab96a16e41110",
+    "expected_status": "failed",
+    "actual_status": "failed",
+    "reason_codes": [
+      "RELAY_REJECTED_REQUEST",
+      "PROVIDER_PROTOCOL_INCOMPLETE",
+      "MEASURED_WIRE_RETENTION_INCOMPLETE"
+    ],
+    "requests": 1
+  },
+  {
+    "path": "negative-observation-4.json",
+    "input_test_directory": "test_actual_readonly_reviewer_3",
+    "sha256": "3d441a6d55e8618275c90d49c81bbcec5b7995278d43ec20105eacf585e4c752",
+    "runtime_digest": "655f6180d81d739dfbb84d44f4a679f9ae19bafa014e40cf713ab96a16e41110",
+    "expected_status": "failed",
+    "actual_status": "failed",
+    "reason_codes": [
+      "RELAY_REJECTED_REQUEST",
+      "PROVIDER_PROTOCOL_INCOMPLETE",
+      "MEASURED_WIRE_RETENTION_INCOMPLETE"
+    ],
+    "requests": 1
+  },
+  {
+    "path": "negative-observation-5.json",
+    "input_test_directory": "test_actual_readonly_reviewer_4",
+    "sha256": "1109cff8ef90e4c5dab3c34fc815bb8f068056e08b73cdb7c31bcd0d2fe7f72f",
+    "runtime_digest": "655f6180d81d739dfbb84d44f4a679f9ae19bafa014e40cf713ab96a16e41110",
+    "expected_status": "failed",
+    "actual_status": "failed",
+    "reason_codes": [
+      "NATIVE_READ_TOOL_INCOMPLETE"
+    ],
+    "requests": 2
+  }
+]

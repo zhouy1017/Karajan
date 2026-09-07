@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="1.037" timestamp="2026-09-07T11:42:10.467358+08:00" hostname="ProArt-Zhou"><testcase classname="tests.projects.test_go_reviewer_suite" name="test_source_and_profile_are_fixed_readonly_and_fixture_marked" time="0.033"><failure message="ModuleNotFoundError: No module named 'karajan.projects.go_reviewer_suite'">tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-reviewer-qualification/.cache/go-reviewer-suite-author/tmp-red-source/test_source_and_profile_are_fi0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000026B01061250&gt;
+
+    def test_source_and_profile_are_fixed_readonly_and_fixture_marked(tmp_path, monkeypatch):
+        from karajan.isolation.go_reviewer_probe import reviewer_probe_spec
+&gt;       from karajan.projects.go_reviewer_suite import FixedGoReviewerSuite
+E       ModuleNotFoundError: No module named 'karajan.projects.go_reviewer_suite'
+
+tests\projects\test_go_reviewer_suite.py:48: ModuleNotFoundError</failure></testcase></testsuite></testsuites>

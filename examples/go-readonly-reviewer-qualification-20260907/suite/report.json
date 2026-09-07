@@ -1,0 +1,65 @@
+{
+  "schema_version": "karajan.reviewer-suite-author-publication.v1",
+  "base_commit": "a2d1373fb551894e9bf5ca7091782f6d2ca4b08b",
+  "implementation_commit": null,
+  "scope": "Issue106 C/P only; not official S107, Reviewer Task or Review Evidence",
+  "owned_source_sha256": "88ec0b837306f6fc5b1d0400e96ae9d0702f4cd5307a83689ebfe7fbee727a3d",
+  "test_sha256": "1097d3cbdd431991380f6bc32028f42c28dc0d083474b5e164e9bad81160f7c3",
+  "source_count": 145,
+  "source_map_sha256": "9aa6817d7ac37b957c52c103d94c66495ffdb2932ececaf1d3c55516ac4e462c",
+  "source_before_after_equal": true,
+  "source_still_current_at_publication": true,
+  "results": {
+    "windows.xml": {
+      "tests": 66.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 1.0,
+      "time": 3.068
+    },
+    "linux.xml": {
+      "tests": 66.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 77.579
+    }
+  },
+  "scenarios": [
+    {
+      "scenario": "clean_review",
+      "mechanism_status": "passed",
+      "review_verdict": "passed",
+      "requests": 3,
+      "local_stop": "confirmed",
+      "grant_state": "revoked"
+    },
+    {
+      "scenario": "defect_review",
+      "mechanism_status": "passed",
+      "review_verdict": "failed",
+      "requests": 3,
+      "local_stop": "confirmed",
+      "grant_state": "revoked"
+    },
+    {
+      "scenario": "denied_read",
+      "mechanism_status": "passed",
+      "review_verdict": "inconclusive",
+      "requests": 2,
+      "local_stop": "confirmed",
+      "grant_state": "revoked"
+    }
+  ],
+  "fixture_http_requests": 8,
+  "provider_requests": 0,
+  "replay_extra_requests": 0,
+  "production_reviewer_roles": [],
+  "commands": {
+    "windows": "C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m pytest tests/projects/test_go_reviewer_suite.py -q --basetemp=.cache/go-reviewer-suite-final/tmp-tool-finish-final --junitxml=.cache/go-reviewer-suite-final/tool-finish-final.xml",
+    "linux": "PYTHONPATH=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-reviewer-qualification/backend KARAJAN_OPENCODE_LINUX_BINARY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode KARAJAN_GO_TOKENIZER_DIRECTORY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-artifacts KARAJAN_REQUIRE_GO_TOKENIZER=1 /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest tests/projects/test_go_reviewer_suite.py -q -o \"pythonpath=backend tests/projects tests/isolation tests/adapters/opencode\" -o cache_dir=/tmp/karajan-reviewer-store-final-cache --basetemp=/tmp/karajan-reviewer-store-final-20260907-a --junitxml=.cache/go-reviewer-suite-final/final-store-linux.xml",
+    "ruff": "python -m ruff check backend/karajan/projects/go_reviewer_suite.py tests/projects/test_go_reviewer_suite.py",
+    "mypy_windows": "python -m mypy backend/karajan/projects/go_reviewer_suite.py",
+    "mypy_linux": "python -m mypy --platform linux backend/karajan/projects/go_reviewer_suite.py"
+  }
+}

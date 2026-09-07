@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="10" time="18.255" timestamp="2026-09-07T11:48:49.840110+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_readonly_reviewer_scope" name="test_public_binding_consumes_and_records_the_resolved_limits" time="1.731" /><testcase classname="tests.runs.test_readonly_reviewer_scope" name="test_public_binding_never_passes_ineligible_scope_to_membership[missing]" time="1.630" /><testcase classname="tests.runs.test_readonly_reviewer_scope" name="test_public_binding_never_passes_ineligible_scope_to_membership[worker]" time="1.803" /><testcase classname="tests.runs.test_readonly_reviewer_scope" name="test_public_binding_never_passes_ineligible_scope_to_membership[unknown]" time="1.649" /><testcase classname="tests.runs.test_readonly_reviewer_scope" name="test_public_binding_never_passes_ineligible_scope_to_membership[tools]" time="1.865" /><testcase classname="tests.runs.test_readonly_reviewer_scope" name="test_public_binding_never_passes_ineligible_scope_to_membership[parser]" time="1.663" /><testcase classname="tests.runs.test_readonly_reviewer_scope" name="test_public_binding_never_passes_ineligible_scope_to_membership[margin]" time="1.676" /><testcase classname="tests.runs.test_readonly_reviewer_scope" name="test_public_binding_never_passes_ineligible_scope_to_membership[O]" time="1.640" /><testcase classname="tests.runs.test_readonly_reviewer_scope" name="test_pure_scope_rejects_unqualified_approved_task_limits[T2]" time="1.668"><failure message="KeyError: 'project_id'">binding_case = (&lt;karajan.orchestration.reviewer_binding.ApprovedReviewerBindings object at 0x000001EBFBAF10A0&gt;, &lt;test_reviewer_bindin...8d1a0', 'revision': 1, 'content_sha256': '9395ac8d3ea1d71735dc76ffa9fee87d8eac0b7d15cd9f00170df29fea66bd80', ...}, ...)
+fault = 'T2'
+
+    @pytest.mark.parametrize("fault", ["T2", "T3", "edit", "wrong_source", "small_margin", "small_ratio", "O", "I", "C"])
+    def test_pure_scope_rejects_unqualified_approved_task_limits(binding_case, fault):
+&gt;       registration, observation, task, execution = resolver_inputs(binding_case)
+                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\runs\test_readonly_reviewer_scope.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+binding_case = (&lt;karajan.orchestration.reviewer_binding.ApprovedReviewerBindings object at 0x000001EBFBAF10A0&gt;, &lt;test_reviewer_bindin...8d1a0', 'revision': 1, 'content_sha256': '9395ac8d3ea1d71735dc76ffa9fee87d8eac0b7d15cd9f00170df29fea66bd80', ...}, ...)
+
+    def resolver_inputs(binding_case):
+        service, _, _, args, _, _, _ = binding_case
+        first = service.advance(*args, principal="owner")
+        assert first["state"] == "prepared", first
+        membership = first["assessment"]["membership"]
+        task = deepcopy(membership["snapshots"]["task"])
+        operation = service.admissions.get(*args, principal="owner")
+        source = operation["workspace"]["source_binding"]
+        execution = source["execution_policy"]
+        fixed = source["profile_registration"]
+        with service.qualifications.projects._transaction() as db:
+            observation = service.qualifications._facts(
+&gt;               db, operation["project_id"], fixed, "runtime_tools", None
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+            )
+E           KeyError: 'project_id'
+
+tests\runs\test_readonly_reviewer_scope.py:29: KeyError</failure></testcase><testcase classname="tests.runs.test_readonly_reviewer_scope" name="test_pure_scope_rejects_unqualified_approved_task_limits[T3]" time="1.802"><failure message="KeyError: 'project_id'">binding_case = (&lt;karajan.orchestration.reviewer_binding.ApprovedReviewerBindings object at 0x000001EBFBB30F80&gt;, &lt;test_reviewer_bindin...2252c', 'revision': 1, 'content_sha256': '2b186fc6e904b6ace0498cf5788cdb8f3b76c6ce2156e17960b0d7043b08444d', ...}, ...)
+fault = 'T3'
+
+    @pytest.mark.parametrize("fault", ["T2", "T3", "edit", "wrong_source", "small_margin", "small_ratio", "O", "I", "C"])
+    def test_pure_scope_rejects_unqualified_approved_task_limits(binding_case, fault):
+&gt;       registration, observation, task, execution = resolver_inputs(binding_case)
+                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\runs\test_readonly_reviewer_scope.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+binding_case = (&lt;karajan.orchestration.reviewer_binding.ApprovedReviewerBindings object at 0x000001EBFBB30F80&gt;, &lt;test_reviewer_bindin...2252c', 'revision': 1, 'content_sha256': '2b186fc6e904b6ace0498cf5788cdb8f3b76c6ce2156e17960b0d7043b08444d', ...}, ...)
+
+    def resolver_inputs(binding_case):
+        service, _, _, args, _, _, _ = binding_case
+        first = service.advance(*args, principal="owner")
+        assert first["state"] == "prepared", first
+        membership = first["assessment"]["membership"]
+        task = deepcopy(membership["snapshots"]["task"])
+        operation = service.admissions.get(*args, principal="owner")
+        source = operation["workspace"]["source_binding"]
+        execution = source["execution_policy"]
+        fixed = source["profile_registration"]
+        with service.qualifications.projects._transaction() as db:
+            observation = service.qualifications._facts(
+&gt;               db, operation["project_id"], fixed, "runtime_tools", None
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+            )
+E           KeyError: 'project_id'
+
+tests\runs\test_readonly_reviewer_scope.py:29: KeyError</failure></testcase></testsuite></testsuites>

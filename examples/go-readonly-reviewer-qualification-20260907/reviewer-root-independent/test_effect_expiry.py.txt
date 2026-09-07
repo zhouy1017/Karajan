@@ -1,0 +1,51 @@
+"""C only: source validation crosses expiry before an observer's guarded effect."""
+
+from copy import deepcopy
+
+from karajan.adapters.opencode.go_context import GoRequestAccounting
+from karajan.projects.go_reviewer_suite import FixedGoReviewerSuite
+from karajan.projects.qualification import ProfileQualificationStore
+from test_current_authority import artifacts, case, projected, reviewer_case
+from test_readonly_reviewer_qualification_store import qualify
+
+__all__ = ["artifacts", "case", "projected", "reviewer_case"]
+
+
+def test_source_validation_cannot_carry_effect_beyond_original_expiry(
+    reviewer_case, artifacts, tmp_path, monkeypatch
+):
+    case = reviewer_case
+    work = tmp_path / "deadline-suite"
+    work.mkdir(mode=0o700)
+    suite = FixedGoReviewerSuite(
+        tmp_path / "inert-runtime", work, case["suite"].journal,
+        accounting=GoRequestAccounting(artifacts), clock=lambda: case["clock"][0],
+    )
+    source = deepcopy(case["reviewer_suite"].source())
+    control = {"cross_expiry_on_source_read": False}
+
+    def source_read():
+        if control["cross_expiry_on_source_read"]:
+            case["clock"][0] = 1700.0
+        return deepcopy(source)
+
+    monkeypatch.setattr(suite, "source", source_read)
+    monkeypatch.setattr(suite, "_validate_report", lambda *args: [])
+    case["store"] = ProfileQualificationStore(
+        case["projects"], clock=lambda: case["clock"][0],
+        credentials=case["credentials"], reviewer_suite=suite,
+    )
+    effects = []
+
+    def observer(runtime, directory, secret, authorization, *, current_guard, **kwargs):
+        # Equivalent C seam to the observer's guarded native.start. No process starts.
+        control["cross_expiry_on_source_read"] = True
+        with current_guard():
+            effects.append({"at": case["clock"][0], "expiry": authorization.binding["expires_at"]})
+        return {"session": {"id": "synthetic-deadline"}, "test_double": True}
+
+    monkeypatch.setattr("karajan.isolation.go_reviewer_probe.observe_go_reviewer_tools", observer)
+    result = qualify(case)
+    assert result["status"] == "failed"
+    assert result["observation"]["grant_cleanup"]
+    assert effects == [], {"guarded_effects_after_expiry": effects}

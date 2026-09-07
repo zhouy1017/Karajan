@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="3.070" timestamp="2026-09-07T12:12:20.063790+08:00" hostname="ProArt-Zhou"><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_readonly_modes_are_observed_from_files_not_filled_from_spec" time="0.603"><failure message="AssertionError: assert '100644' == '100755'&#10;  &#10;  - 100755&#10;  + 100644">tmp_path = PosixPath('/tmp/karajan-reviewer-mode-red/test_readonly_modes_are_observ0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x7faaea49c440&gt;
+boundary = {'created': 1, 'started': 1, 'prompted': 1, 'mutate': &lt;function boundary.&lt;locals&gt;.&lt;lambda&gt; at 0x7faaea47d800&gt;, ...}
+
+    @pytest.mark.skipif(sys.platform != "linux", reason="Actual POSIX chmod semantics required")
+    def test_readonly_modes_are_observed_from_files_not_filled_from_spec(
+        tmp_path, accounting, boundary
+    ):
+        boundary["capture_mode"] = 0o755
+        result = observe(tmp_path, accounting)
+&gt;       assert result["readonly"]["after"][0]["mode"] == "100755"
+E       AssertionError: assert '100644' == '100755'
+E         
+E         - 100755
+E         + 100644
+
+tests/isolation/test_go_reviewer_probe_boundaries.py:197: AssertionError</failure></testcase></testsuite></testsuites>

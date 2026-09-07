@@ -1,0 +1,61 @@
+"""Read timing evidence; both versions exercise public HTTP/Journal boundaries."""
+import importlib.machinery
+import importlib.util
+import sys
+import threading
+from pathlib import Path
+
+import httpx
+import pytest
+import karajan.adapters.opencode.go_relay as current
+from karajan.adapters.opencode.go_journal import GoCallJournal
+from karajan.routing.compiler import digest
+from test_go_context import accounting, artifacts
+from test_go_relay import SECRET, CANARY, answer, post
+from test_go_task_grants import task_binding
+
+__all__ = ["accounting", "artifacts"]
+
+@pytest.mark.parametrize("version", ["before", "current"])
+def test_http_error_is_not_a_final_journal_completion_barrier(tmp_path, accounting, version):
+    module = current
+    if version == "before":
+        name = "karajan.adapters.opencode._reviewer_before_relay"
+        path = Path(__file__).parent / "before/go_relay.py.txt"
+        loader = importlib.machinery.SourceFileLoader(name, str(path))
+        spec = importlib.util.spec_from_loader(name, loader)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[name] = module
+        loader.exec_module(module)
+    entered, release = threading.Event(), threading.Event()
+    class DelayedCompletion(GoCallJournal):
+        def complete_call(self, *args, **kwargs):
+            entered.set()
+            assert release.wait(timeout=5)
+            return super().complete_call(*args, **kwargs)
+    journal = DelayedCompletion(tmp_path / "calls.sqlite", clock=lambda: 1000.0)
+    bound = task_binding()
+    grant = journal.create_grant(bound, grant_id="task")
+    relay = module.GoRelay(
+        SECRET, CANARY,
+        authorization=module.GoRelayAuthorization(journal, "task", bound, grant["capability"]),
+        context=module.GoRelayContext(accounting, digest(accounting.source()),
+                                     bound["execution_policy_digest"], 4000, 4096, 8192, 100, 1000),
+        client_factory=lambda: httpx.Client(transport=httpx.MockTransport(lambda request: answer()),
+                                           trust_env=False),
+    )
+    relay.start()
+    try:
+        assert post(relay).status_code == 502
+        assert entered.wait(timeout=2)
+        before = journal.snapshot("task")
+        assert before["state"] == "revoked"
+        assert before["calls"][0]["state"] == "send_unknown"
+        release.set()
+        assert relay.close()["status"] == "closed"
+        after = journal.snapshot("task")
+        assert after["calls"][0]["state"] == "response_received"
+        assert after["calls"][0]["outcome"]["protocol_passed"] is False
+    finally:
+        release.set()
+        relay.close()
