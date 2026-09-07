@@ -1,0 +1,13 @@
+Baseline: 7c85669a3d2a5b717bbcaea7f8dbbf2c5ea937a0
+Source: backend/karajan/adapters/opencode/go_relay.py
+SHA256: DEB0239590D67DDFB077F025773BB9C7C2947A7F3379C693F7EE469D0AAB2453
+Test: tests/adapters/opencode/test_go_relay.py
+SHA256: 580B428C9169A6ECFCC50C06CB81099B8D257FC69921E3C5164A55DDDBC07D23
+Test: tests/adapters/opencode/test_go_relay_context.py
+SHA256: AE7BAC8042C44E28E4E5DCA06D0D839A61ED187816D68930307C25FB45596135
+Independent copied suite: 6 passed
+Formal suite: 196 passed
+Ruff affected files: passed
+Mypy production relay with pyproject.toml: passed
+Mypy test files: 20 errors, including pre-existing untyped-fixture errors; retained in mypy.log
+Scope check: git diff --check passed; recovery helper normalized bytes unchanged from baseline

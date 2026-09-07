@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd /mnt/c/Users/Chooo/Playground/Karajan/.cache/ci-spark-relay
+export PYTHONPATH=backend
+export KARAJAN_GO_TOKENIZER_DIRECTORY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-artifacts
+export KARAJAN_REQUIRE_GO_TOKENIZER=1
+export HF_HUB_OFFLINE=1
+export TRANSFORMERS_OFFLINE=1
+ /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest tests/adapters/opencode/test_go_relay.py tests/adapters/opencode/test_go_relay_context.py tests/adapters/opencode/test_go_relay_nullable_names.py tests/adapters/opencode/test_go_relay_journal.py tests/adapters/opencode/test_go_context.py tests/adapters/opencode/test_go_journal.py tests/adapters/opencode/test_go_unix_relay.py -p no:cacheprovider -o "pythonpath=backend tests/adapters/opencode" -q --basetemp=/tmp/relay-linux-followup --junitxml=.cache/relay-linux-followup/linux.xml 2>&1 | tee .cache/relay-linux-followup/linux.log
