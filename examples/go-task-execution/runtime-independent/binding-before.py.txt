@@ -1,0 +1,203 @@
+"""Derive native execution identities from the one approved, persisted operation.
+
+These internal compilers do not grant current authority. Their consumer must
+hold Run, resource and Host guards at each effect; a digest or old receipt alone
+does not authorize a start. No credential value is an input or output here.
+"""
+
+import hashlib
+from copy import deepcopy
+from pathlib import Path
+from typing import Any
+
+from karajan.adapters.opencode.go_context import GoRequestAccounting
+from karajan.adapters.opencode.go_relay import GoRelayContext
+from karajan.contracts.probe import AttemptManifest, Profile
+from karajan.execution import Activation
+from karajan.isolation.go_probe import source_digest
+from karajan.isolation.go_task import native_task_source
+from karajan.routing.compiler import digest
+from karajan.runs import RunError
+
+from .go_execution_intent import GoExecutionSource
+
+
+def task_runner_source(runtime: Path, accounting: GoRequestAccounting) -> dict[str, Any]:
+    """Actual source envelope, separately binding qualification and Task code."""
+    root = Path(__file__).resolve().parents[1]
+    files = (
+        "orchestration/go_task_binding.py",
+        "orchestration/go_task_input.py",
+        "orchestration/go_task_runtime.py",
+        "orchestration/go_task_execution.py",
+        "orchestration/_go_task_runner.py",
+        "orchestration/go_task_collector.py",
+        "orchestration/go_execution_intent.py",
+        "orchestration/workspace.py",
+        "orchestration/admission.py",
+        "orchestration/routing.py",
+        "orchestration/go_scope.py",
+        "execution/host.py",
+        "execution/_supervisor.py",
+        "execution/_platform.py",
+        "candidates/store.py",
+        "candidates/_capture_lookup.py",
+        "storage.py",
+        "projects/registry.py",
+        "projects/qualification.py",
+        "projects/credential_sources.py",
+        "projects/demand.py",
+        "projects/go_suite.py",
+        "runs/planning.py",
+        "runs/routing_authorization.py",
+        "capacity/store.py",
+    )
+    return {
+        "schema_version": "karajan.go-task-runner-source.v1",
+        "native_task": native_task_source(runtime, accounting),
+        "controller_sources": {
+            path: hashlib.sha256((root / path).read_bytes()).hexdigest() for path in files
+        },
+        "permission_scope": "approved_existing_files_read_edit",
+        "runner_identity": "host_direct_child_pid_birth",
+        "recovery": "observe_same_attempt_no_second_effect_claim",
+    }
+
+
+def execution_source(source: dict[str, Any]) -> GoExecutionSource:
+    return GoExecutionSource(source_digest(source), source_digest(source["native_task"]))
+
+
+def _parts(operation: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any], Profile]:
+    try:
+        execution = operation["execution"]
+        intent = execution["intent"]
+        workspace = deepcopy(operation["workspace"])
+        workspace_sha = workspace.pop("digest")
+        if digest(workspace) != workspace_sha:
+            raise ValueError()
+        input_sha = workspace.pop("input_sha256")
+        if (
+            execution["schema_version"] != "karajan.go-task-execution-intent.v1"
+            or workspace["schema_version"] != "karajan.approved-task-workspace.v1"
+            or digest(workspace) != input_sha
+            or digest(intent) != execution["intent_digest"]
+            or intent["operation_id"] != operation["id"]
+            or workspace["operation_id"] != operation["id"]
+            or intent["context_id"] != operation["planned_context_id"]
+            or workspace["planned_context_id"] != operation["planned_context_id"]
+            or workspace["planned_attempt_id"] != operation["planned_attempt_id"]
+            or workspace["run_id"] != operation["run_id"]
+            or workspace["task_id"] != operation["task_id"]
+            or intent["workspace_digest"] != workspace_sha
+            or intent["input_sha256"] != input_sha
+            or intent["admission_request_digest"] != digest(operation["request"])
+            or intent["attempt_id"] != operation["planned_attempt_id"]
+            or intent["run_id"] != operation["run_id"]
+            or intent["task_id"] != operation["task_id"]
+            or operation["cancel_requested"]
+            or execution["cancel_requested"]
+        ):
+            raise ValueError()
+        source = workspace["source_binding"]
+        profile = Profile.model_validate(source["profile_registration"]["profile"])
+        if (
+            source["selected_profile"] != {"id": profile.id, "revision": profile.revision}
+            or intent["authorization_ref"] != digest(source["approval"])
+            or intent["execution_context"] != source["profile_source"]["execution_context"]
+            or profile.binding.runtime_kind != "opencode-go-isolated"
+            or profile.binding.model_id != "glm-5.3-flash"
+        ):
+            raise ValueError()
+        return intent, source, profile
+    except (ValueError, KeyError, TypeError):
+        raise RunError("TASK_EXECUTION_BINDING_MISMATCH") from None
+
+
+def task_host_manifest(operation: dict[str, Any]) -> AttemptManifest:
+    intent, source, profile = _parts(operation)
+    tasks = source["plan"]["plan"]["tasks"]
+    task = next((task for task in tasks if task["id"] == intent["task_id"]), None)
+    if task is None or task["role"] != "worker" or set(task["tools"]) != {"read", "edit"}:
+        raise RunError("TASK_NATIVE_TOOL_SCOPE_UNSUPPORTED")
+    return AttemptManifest(
+        id=intent["attempt_id"],
+        fence=intent["fence"],
+        role="worker",
+        profile_id=profile.id,
+        profile_revision=profile.revision,
+        authorization_ref=intent["authorization_ref"],
+        budget_ref=intent["budget_ref"],
+        permissions=["read", "edit"],
+        requested_binding=profile.binding,
+    )
+
+
+def task_host_activation(operation: dict[str, Any]) -> Activation:
+    intent, _, _ = _parts(operation)
+    receipt = operation["execution"]["capacity_activation"]
+    if (
+        not isinstance(receipt, dict)
+        or receipt["decision"] != "capacity_revalidated"
+        or receipt["admission_id"] != intent["admission_id"]
+    ):
+        raise RunError("TASK_EXECUTION_ACTIVATION_REQUIRED")
+    return Activation(
+        id=intent["activation_key"],
+        attempt_id=intent["attempt_id"],
+        fence=intent["fence"],
+        authorization_ref=intent["authorization_ref"],
+        budget_ref=intent["budget_ref"],
+        expires_at=receipt["expires_at"],
+    )
+
+
+def task_authentication(operation: dict[str, Any]) -> dict[str, Any]:
+    _, source, _ = _parts(operation)
+    try:
+        start = source["profile_source"]["qualification"]["observation"]["binding"][
+            "execution_start"
+        ]
+        return dict(deepcopy(start["authentication_source"]))
+    except (KeyError, TypeError):
+        raise RunError("TASK_AUTHENTICATION_SOURCE_REQUIRED") from None
+
+
+def task_grant_binding(operation: dict[str, Any]) -> dict[str, Any]:
+    intent, source, profile = _parts(operation)
+    activation = task_host_activation(operation)
+    authentication = task_authentication(operation)
+    context = intent["execution_context"]
+    return {
+        "subject": {
+            "kind": "task_attempt",
+            "project_id": intent["project_id"],
+            "run_id": intent["run_id"],
+            "task_id": intent["task_id"],
+        },
+        "attempt_id": intent["attempt_id"],
+        "fence": intent["fence"],
+        "profile_digest": digest(profile.model_dump()),
+        "runtime_digest": intent["runner_source_sha256"],
+        "channel": profile.binding.channel_id,
+        "model": profile.binding.model_id,
+        "auth_generation": authentication["generation"],
+        "expires_at": activation.expires_at,
+        "max_requests": context["max_requests"],
+        "approval_digest": digest(source["approval"]),
+        "execution_policy_digest": context["execution_policy_digest"],
+        "workspace_digest": intent["workspace_digest"],
+        "authentication_source_digest": digest(authentication),
+    }
+
+
+def task_relay_context(
+    operation: dict[str, Any], accounting: GoRequestAccounting
+) -> GoRelayContext:
+    intent, _, _ = _parts(operation)
+    limits = intent["execution_context"]
+    return GoRelayContext(
+        accounting=accounting,
+        execution_policy_digest=limits["execution_policy_digest"],
+        **limits["context"],
+    )

@@ -1,0 +1,67 @@
+{
+  "base": "e00f619",
+  "evidence_scope": {
+    "not_run": [
+      "native process/model/provider",
+      "remote stop or billing",
+      "whole issue acceptance"
+    ],
+    "real": [
+      "SQLite Run/Project/Capacity/Host/Journal/Candidate persistence",
+      "Temporary Git/CAS fixtures",
+      "Concurrent control withdrawal/initialization"
+    ],
+    "test_doubles": [
+      "qualification/source producers",
+      "native GoTaskResult and current Host child in capture fixture"
+    ]
+  },
+  "evidence_sha256": {
+    "README.md": "09075fcf90a97daee77b0c19e5be6c44557a3960a00fe5981081cc2be925f359",
+    "final-linux.xml": "9355465297d03fed68fba5e9a205ed56bfeb794fc569394c88a465ccbc580cbd",
+    "final-windows.xml": "ba213c415ad2fc1cfa3999ca07e8df1431e73ff59bb17476f5806ab76db5667b",
+    "initial.xml": "f2f73127a31fa771ca810a92f15bb85bdd7b6ee4e7fa6fe6d899d6df00d88643",
+    "source-before.json": "c7433d268c8070b0a41811b805f528aa9df809a950e3bbe765ec52ebf356b64c",
+    "test-initial.py.txt": "7bae6de8b1016fa5981456468d6805423c6062673f59414f59e8e588e539ab44",
+    "test_intent_boundaries.py": "dd1fbe74e85d76e51b6d258da665b29b01a14d79232409c6d7be61a375fc7197"
+  },
+  "fixture_sha256": {
+    "tests/runs/test_go_execution_intent.py": "986e8952c58391744b1a27a8176785358b81412d03dbeace37afc3c3841a7a5b",
+    "tests/runs/test_go_lifecycle.py": "40238d91511c30fca8ec8ac2f29969ba8be914da1b8c135d1dc55cd95604f576",
+    "tests/runs/test_go_task_collector.py": "c0493565c6d807774f634a1c8c0e1df6f34d2ee23e2a3828e6bf537de5fd3e77",
+    "tests/runs/test_go_task_input.py": "eac210652527b42336d44fb87535890c0e27f550410691152a927f44b45c6324",
+    "tests/runs/test_projected_go_routing.py": "e325c9b391b31c5f0c4a1005db20026a72d7d5af144c43b8792d7854ccee81af"
+  },
+  "head": "c2c4b145473a259582d0d37a01e423ca03f03b65",
+  "results": {
+    "initial": {
+      "classification": "Reviewer assertion error: unattempted versus existing prepared Host phase. Original test/XML preserved; no product change.",
+      "failed": 1,
+      "passed": 8
+    },
+    "linux": {
+      "failed": 0,
+      "passed": 9,
+      "seconds": 8.12,
+      "skipped": 0
+    },
+    "windows": {
+      "failed": 0,
+      "passed": 9,
+      "seconds": 9.57,
+      "skipped": 0
+    }
+  },
+  "review_scope": [
+    "GoExecutionIntents new #90 lifecycle interfaces",
+    "RunnerHost.initialize_control_once"
+  ],
+  "reviewer": "independent ui_spec_finalize",
+  "source_sha256": {
+    "backend/karajan/execution/host.py": "87860c4cca8aa37883ffbd69b4fac02808e9c7ad0db24c33245fe7ec38d16192",
+    "backend/karajan/orchestration/go_execution_intent.py": "3416c3f324d6653f246b2317de257e362f410980dda458756dab1e029d6082f1"
+  },
+  "source_unchanged_after_final": true,
+  "spec_findings": [],
+  "standards_findings": []
+}

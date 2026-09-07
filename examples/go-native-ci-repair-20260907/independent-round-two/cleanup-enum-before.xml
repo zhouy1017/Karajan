@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="2.126" timestamp="2026-09-07T09:28:53.003539+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.native-resume-independent.round-two.test_diagnostic_claim" name="test_invalid_cleanup_fact_is_rejected_before_persistence[native_stop]" time="0.947"><failure message="AssertionError: {'error_type': 'RuntimeError', 'intent_digest': 'de951d56266f1dafb6847efffd3c32148596b8b5037c2a2f18b5bade44fa3005', 'n...': {'local_stop': 'PRIVATE_DIAGNOSTIC_CONTENT_IS_NOT_A_CLEANUP_STATE'}, 'reason_code': 'UNIX_RELAY_PATH_TOO_LONG', ...}&#10;assert {'activation_...t': None, ...} == {'activation_...t': None, ...}&#10;  &#10;  Omitting 17 identical items, use -vv to show&#10;  Differing items:&#10;  {'execution': {'cancel_requested': False, 'capacity_activation': {'activation_allowed': False, 'admission_id': '222646...cal_stop': 'PRIVATE_DIAGNOSTIC_CONTENT_IS_NOT_A_CLEANUP_STATE'}, 'reason_code': 'UNIX_RELAY_PATH_TOO_LONG', ...}, ...}} != {'execution': {'cancel_requested': False, 'capacity_activation': {'activation_allowed': False, 'admission_id': '222646...037c2a2f18b5bade44fa3005', 'runner': {'birth': 'synthetic-owned-birth', 'pid': 12345}}, 'host_observation': None, ...}}&#10;  Use -v to get more diff">launched_intent = (&lt;karajan.orchestration.go_execution_intent.GoExecutionIntents object at 0x0000026BDE102990&gt;, ('8892a66e-59cc-4b61-a68c-e64908d4b6b4', 'ab853ce0-acb2-48f5-bb60-76220c055b9a'), ProcessIdentity(pid=12345, birth='synthetic-owned-birth'))
+field = 'native_stop'
+
+    @pytest.mark.parametrize("field", ["native_stop", "relay_status"])
+    def test_invalid_cleanup_fact_is_rejected_before_persistence(launched_intent, field):
+        service, args, runner = launched_intent
+        service.effect_start_claim(*args, principal="owner", runner=runner)
+        before = service.read(*args, principal="owner")
+        fields = {
+            "reason_code": "UNIX_RELAY_PATH_TOO_LONG",
+            "error_type": "RuntimeError",
+            "native_stop": "not_started",
+            "relay_status": "closed",
+        }
+        private_text = "PRIVATE_DIAGNOSTIC_CONTENT_IS_NOT_A_CLEANUP_STATE"
+        fields[field] = private_text
+        error = None
+        try:
+            service.record_failure_diagnostic(*args, principal="owner", runner=runner, **fields)
+        except RunError as caught:
+            error = caught
+        after = service.read(*args, principal="owner")
+&gt;       assert after == before, after["execution"].get("failure_diagnostic")
+E       AssertionError: {'error_type': 'RuntimeError', 'intent_digest': 'de951d56266f1dafb6847efffd3c32148596b8b5037c2a2f18b5bade44fa3005', 'n...': {'local_stop': 'PRIVATE_DIAGNOSTIC_CONTENT_IS_NOT_A_CLEANUP_STATE'}, 'reason_code': 'UNIX_RELAY_PATH_TOO_LONG', ...}
+E       assert {'activation_...t': None, ...} == {'activation_...t': None, ...}
+E         
+E         Omitting 17 identical items, use -vv to show
+E         Differing items:
+E         {'execution': {'cancel_requested': False, 'capacity_activation': {'activation_allowed': False, 'admission_id': '222646...cal_stop': 'PRIVATE_DIAGNOSTIC_CONTENT_IS_NOT_A_CLEANUP_STATE'}, 'reason_code': 'UNIX_RELAY_PATH_TOO_LONG', ...}, ...}} != {'execution': {'cancel_requested': False, 'capacity_activation': {'activation_allowed': False, 'admission_id': '222646...037c2a2f18b5bade44fa3005', 'runner': {'birth': 'synthetic-owned-birth', 'pid': 12345}}, 'host_observation': None, ...}}
+E         Use -v to get more diff
+
+.cache\native-resume-independent\round-two\test_diagnostic_claim.py:70: AssertionError</failure></testcase><testcase classname=".cache.native-resume-independent.round-two.test_diagnostic_claim" name="test_invalid_cleanup_fact_is_rejected_before_persistence[relay_status]" time="0.951"><failure message="AssertionError: {'error_type': 'RuntimeError', 'intent_digest': 'b49bfaf1eb3007667bc19844837b060b1350c002f72428b0c206238bc601ee24', 'native_cleanup': {'local_stop': 'not_started'}, 'reason_code': 'UNIX_RELAY_PATH_TOO_LONG', ...}&#10;assert {'activation_...t': None, ...} == {'activation_...t': None, ...}&#10;  &#10;  Omitting 17 identical items, use -vv to show&#10;  Differing items:&#10;  {'execution': {'cancel_requested': False, 'capacity_activation': {'activation_allowed': False, 'admission_id': 'bbdd5c...6238bc601ee24', 'native_cleanup': {'local_stop': 'not_started'}, 'reason_code': 'UNIX_RELAY_PATH_TOO_LONG', ...}, ...}} != {'execution': {'cancel_requested': False, 'capacity_activation': {'activation_allowed': False, 'admission_id': 'bbdd5c...f72428b0c206238bc601ee24', 'runner': {'birth': 'synthetic-owned-birth', 'pid': 12345}}, 'host_observation': None, ...}}&#10;  Use -v to get more diff">launched_intent = (&lt;karajan.orchestration.go_execution_intent.GoExecutionIntents object at 0x0000026BDE0DB4A0&gt;, ('1bdd81c3-ea0c-4543-bccc-5152dc0201d0', 'b546af02-b4b2-42d4-877b-3a1df0eeee45'), ProcessIdentity(pid=12345, birth='synthetic-owned-birth'))
+field = 'relay_status'
+
+    @pytest.mark.parametrize("field", ["native_stop", "relay_status"])
+    def test_invalid_cleanup_fact_is_rejected_before_persistence(launched_intent, field):
+        service, args, runner = launched_intent
+        service.effect_start_claim(*args, principal="owner", runner=runner)
+        before = service.read(*args, principal="owner")
+        fields = {
+            "reason_code": "UNIX_RELAY_PATH_TOO_LONG",
+            "error_type": "RuntimeError",
+            "native_stop": "not_started",
+            "relay_status": "closed",
+        }
+        private_text = "PRIVATE_DIAGNOSTIC_CONTENT_IS_NOT_A_CLEANUP_STATE"
+        fields[field] = private_text
+        error = None
+        try:
+            service.record_failure_diagnostic(*args, principal="owner", runner=runner, **fields)
+        except RunError as caught:
+            error = caught
+        after = service.read(*args, principal="owner")
+&gt;       assert after == before, after["execution"].get("failure_diagnostic")
+E       AssertionError: {'error_type': 'RuntimeError', 'intent_digest': 'b49bfaf1eb3007667bc19844837b060b1350c002f72428b0c206238bc601ee24', 'native_cleanup': {'local_stop': 'not_started'}, 'reason_code': 'UNIX_RELAY_PATH_TOO_LONG', ...}
+E       assert {'activation_...t': None, ...} == {'activation_...t': None, ...}
+E         
+E         Omitting 17 identical items, use -vv to show
+E         Differing items:
+E         {'execution': {'cancel_requested': False, 'capacity_activation': {'activation_allowed': False, 'admission_id': 'bbdd5c...6238bc601ee24', 'native_cleanup': {'local_stop': 'not_started'}, 'reason_code': 'UNIX_RELAY_PATH_TOO_LONG', ...}, ...}} != {'execution': {'cancel_requested': False, 'capacity_activation': {'activation_allowed': False, 'admission_id': 'bbdd5c...f72428b0c206238bc601ee24', 'runner': {'birth': 'synthetic-owned-birth', 'pid': 12345}}, 'host_observation': None, ...}}
+E         Use -v to get more diff
+
+.cache\native-resume-independent\round-two\test_diagnostic_claim.py:70: AssertionError</failure></testcase></testsuite></testsuites>

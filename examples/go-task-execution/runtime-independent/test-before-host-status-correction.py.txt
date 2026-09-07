@@ -1,0 +1,106 @@
+"""Independent factory/source review, no provider and no credential material.
+
+The intent port itself is authored by this reviewer and is not independently
+reviewed. Public synthetic deployment fixtures seed original records only.
+"""
+
+import sys
+from pathlib import Path
+
+import pytest
+from karajan.contracts.probe import AttemptManifest
+from karajan.execution import ProcessSpec
+from karajan.orchestration import go_task_binding
+from karajan.orchestration.go_execution_intent import GoLaunchSpec
+from karajan.orchestration.go_task_execution import ApprovedGoTaskExecution
+from karajan.orchestration.go_task_runtime import open_go_task_services
+from test_go_execution_intent import (
+    case as case,
+)
+from test_go_execution_intent import (
+    prepared as prepared,
+)
+from test_go_execution_intent import (
+    projected as projected,
+)
+from test_go_execution_intent import (
+    ready as ready,
+)
+from test_go_execution_intent import (
+    reservation as reservation,
+)
+from test_go_task_runtime import (
+    deployment as deployment,
+)
+from test_go_task_runtime import (
+    private_fixture_directories as private_fixture_directories,
+)
+
+
+@pytest.mark.parametrize(
+    "relative",
+    [
+        "orchestration/go_task_collector.py",
+        "orchestration/_go_task_runner.py",
+        "routing/evaluator.py",
+        "routing/quotas.py",
+        "capacity/models.py",
+    ],
+)
+def test_runner_source_changes_when_effective_guard_implementation_changes(monkeypatch, relative):
+    # Only the nested native mechanism is a fixed fixture. Exercise the real
+    # controller-source compiler and actual repository byte reads; no ELF or
+    # tokenizer is needed to prove these controller hashes are or are not read.
+    monkeypatch.setattr(
+        go_task_binding, "native_task_source", lambda *_: {"fixture": "native-source"}
+    )
+    before = go_task_binding.task_runner_source(Path("unused-fixture"), object())
+    original = Path.read_bytes
+    selected = Path(go_task_binding.__file__).parents[1] / relative
+
+    def changed(path):
+        body = original(path)
+        return body + b"\n# independent simulated deployment change\n" if path == selected else body
+
+    monkeypatch.setattr(Path, "read_bytes", changed)
+    after = go_task_binding.task_runner_source(Path("unused-fixture"), object())
+    assert after != before, f"Effective controller source omitted: {relative}"
+
+
+def test_missing_journal_does_not_block_cancellation_of_owned_prepared_host(deployment):
+    settings, _, args = deployment
+    services = open_go_task_services(
+        settings, run_id=args[0], operation_id=args[1], principal="owner"
+    )
+    intents = services.intents
+    intents.admissions.routing.capacity.clock = lambda: 1000.0
+    # Seed one real Capacity activation and owned prepared Host row, using an
+    # explicit inert fixture compiler. No process or provider is started.
+    spec = ProcessSpec((sys._base_executable, "-c", "pass"), settings.control_directory)
+    intents.launch_compiler = lambda operation: GoLaunchSpec(spec, "c" * 64)
+    current = intents.read(*args, principal="owner")
+    intent = current["execution"]["intent"]
+    intents.admissions.routing.capacity.activate(
+        intent["admission_id"], command_key=intent["activation_key"]
+    )
+    intents.activation_recorded(*args, principal="owner")
+    op = intents.freeze_launch(*args, principal="owner")
+    intents.host.prepare(
+        AttemptManifest.model_validate(op["execution"]["launch"]["manifest"]),
+        intent["start_key"],
+        spec,
+    )
+    intents.host.initialize_control_once(
+        intent["attempt_id"],
+        prepared_id=intent["start_key"],
+        fence=intent["fence"],
+        authorization_ref=intent["authorization_ref"],
+    )
+    settings.journal_path.rename(settings.journal_path.with_suffix(".retained"))
+    reopened = open_go_task_services(
+        settings, run_id=args[0], operation_id=args[1], principal="owner"
+    )
+    result = ApprovedGoTaskExecution(reopened).cancel(*args, principal="owner")
+    assert result["cancel_requested"]
+    assert reopened.intents.host.inspect(intent["attempt_id"]).state == "cancelled"
+    assert not settings.journal_path.exists()

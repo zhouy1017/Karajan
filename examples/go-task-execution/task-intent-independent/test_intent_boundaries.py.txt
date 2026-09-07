@@ -1,0 +1,268 @@
+"""Independent public lifecycle combinations; real SQLite, explicit producer doubles.
+
+The reused setup constructs approved stores, real Git/CAS and Journal. It does
+not execute its ProcessSpec: qualification, source and capture/child observations
+are synthetic. This module reviews intent persistence, not Collector/native qualification.
+"""
+
+import sqlite3
+from concurrent.futures import ThreadPoolExecutor
+from copy import deepcopy
+from threading import Barrier
+
+import pytest
+from karajan.contracts.probe import AttemptManifest
+from karajan.execution import LaunchDenied, ProcessIdentity, RunnerHost
+from karajan.orchestration.go_execution_intent import GoExecutionIntents, GoExecutionSource
+from karajan.orchestration.go_task_collector import compile_go_capture
+from karajan.routing.compiler import digest
+from karajan.runs import RunError
+from test_go_lifecycle import (
+    activated,
+    captured_case,
+    case,
+    collection_case,
+    lifecycle,
+    projected,
+    ready,
+    reservation,
+    workspace_case,
+)
+
+__all__ = [
+    "captured_case", "case", "collection_case", "lifecycle", "projected", "ready",
+    "reservation", "workspace_case",
+]
+
+
+def reopen(service, args):
+    def forbidden_source():
+        pytest.fail("Historical reopen requested fresh source")
+
+    return GoExecutionIntents.open_existing(
+        service.admissions,
+        run_id=args[0], operation_id=args[1], principal="owner",
+        host=service.host, journal=service.journal, candidates=service.candidates,
+        source_if_unprepared=forbidden_source,
+        launch_compiler=service.launch_compiler,
+    )
+
+
+def external_bytes(service):
+    paths = [service.host.database, service.admissions.routing.capacity.path]
+    if service.journal is not None:
+        paths.append(service.journal.path)
+    if service.candidates is not None:
+        paths.append(service.candidates.directory / "candidates.sqlite")
+    return {path: path.read_bytes() for path in paths}
+
+
+def assert_unchanged(snapshot):
+    assert all(path.read_bytes() == original for path, original in snapshot.items())
+
+
+def test_lost_activation_reply_then_cancel_reopens_only_original_history(lifecycle):
+    service, args = lifecycle
+    op = service.read(*args, principal="owner")
+    intent = op["execution"]["intent"]
+    original = service.admissions.routing.capacity.activate(
+        intent["admission_id"], command_key=intent["activation_key"]
+    )
+    assert service.read(*args, principal="owner")["execution"]["capacity_activation"] is None
+    service.cancel_intent(*args, principal="owner")
+    service.source = GoExecutionSource("d" * 64, "e" * 64)
+    recovered = reopen(service, args)
+    outside = external_bytes(recovered)
+    first = recovered.activation_recorded(*args, principal="owner")
+    assert first["execution"]["capacity_activation"] == original
+    assert first["state"] == "cancellation_pending" and first["cancel_requested"]
+    original_db = recovered.admissions.database.read_bytes()
+    assert recovered.activation_recorded(*args, principal="owner") == first
+    assert recovered.admissions.database.read_bytes() == original_db
+    for name in ["activation_guard", "launch_preparation_guard", "startup_guard"]:
+        with pytest.raises(RunError, match="TASK_EXECUTION_CANCEL_REQUESTED"):
+            with getattr(recovered, name)(*args, principal="owner"):
+                pytest.fail("Historical activation rearmed a cancelled stage")
+    assert recovered.cleanup_binding(*args, principal="owner") is None
+    assert_unchanged(outside)
+
+
+def test_frozen_launch_is_detached_and_history_survives_removed_live_compiler(lifecycle):
+    service, args = lifecycle
+    activated(lifecycle)
+    op = service.freeze_launch(*args, principal="owner")
+    expected = deepcopy(op["execution"]["launch"])
+    op["execution"]["launch"]["process_spec"]["argv"].append("reader-only")
+    op["execution"]["launch"]["grant_binding"]["expires_at"] = 999999.0
+    service.cancel_intent(*args, principal="owner")
+    service.launch_compiler = None
+    service.source = GoExecutionSource("f" * 64, "e" * 64)
+    recovered = reopen(service, args)
+    before = recovered.admissions.database.read_bytes()
+    outside = external_bytes(recovered)
+    assert recovered.cleanup_binding(*args, principal="owner")["launch"] == expected
+    assert recovered.reconcile(*args, principal="owner")["execution"]["launch"] == expected
+    assert recovered.admissions.database.read_bytes() == before
+    assert_unchanged(outside)
+
+
+@pytest.mark.parametrize("operation", ["read_operation", "open_existing"])
+def test_missing_operation_database_is_not_recreated_by_history(lifecycle, operation):
+    service, args = lifecycle
+    path = service.admissions.database
+    saved = path.with_suffix(".review-saved")
+    path.rename(saved)
+    saved_bytes = saved.read_bytes()
+    with pytest.raises(sqlite3.Error):
+        if operation == "read_operation":
+            GoExecutionIntents.read_operation(service.admissions, *args, principal="owner")
+        else:
+            reopen(service, args)
+    assert not path.exists()
+    assert saved.read_bytes() == saved_bytes
+
+
+def test_observer_records_mismatched_resources_without_touching_them(lifecycle):
+    service, args = lifecycle
+    activated(lifecycle)
+    op = service.freeze_launch(*args, principal="owner")
+    launch, intent = op["execution"]["launch"], op["execution"]["intent"]
+    service.host.prepare(
+        AttemptManifest.model_validate(launch["manifest"]),
+        "another-start", service.launch_compiler(op).process_spec,
+    )
+    unowned = deepcopy(launch["grant_binding"])
+    unowned["attempt_id"] = "unowned-attempt"
+    service.journal.create_grant(unowned, grant_id=intent["grant_id"])
+    service.cancel_intent(*args, principal="owner")
+    outside = external_bytes(service)
+    observed = service.observe_execution(*args, principal="owner", failure="cancel")
+    evidence = observed["execution"]["observation"]
+    assert evidence["host"] == {"state": "unknown"}
+    assert evidence["grant"] == {"state": "binding_mismatch"}
+    assert evidence["native_stop"] == evidence["provider_remote_stop"] == "unknown"
+    assert observed["state"] == "cancellation_pending"
+    recorded_bytes = service.admissions.database.read_bytes()
+    assert service.record_cleanup(*args, principal="owner")["cancel_requested"]
+    # Failure=None is a distinct observation, then its exact replay is stable.
+    stable = service.admissions.database.read_bytes()
+    service.record_cleanup(*args, principal="owner")
+    assert service.admissions.database.read_bytes() == stable
+    assert recorded_bytes != stable
+    assert_unchanged(outside)
+
+
+def host_control(service, args):
+    activated((service, args))
+    op = service.freeze_launch(*args, principal="owner")
+    intent, launch = op["execution"]["intent"], op["execution"]["launch"]
+    service.host.prepare(
+        AttemptManifest.model_validate(launch["manifest"]),
+        intent["start_key"], service.launch_compiler(op).process_spec,
+    )
+    return {
+        "attempt_id": intent["attempt_id"], "prepared_id": intent["start_key"],
+        "fence": intent["fence"], "authorization_ref": intent["authorization_ref"],
+    }
+
+
+def test_control_lost_reply_and_disabled_reopen_cannot_rearm(lifecycle):
+    service, args = lifecycle
+    identity = host_control(service, args)
+    assert service.host.initialize_control_once(**identity)["inserted"] is True
+    service.host.set_control(
+        identity["attempt_id"], fence=identity["fence"],
+        authorization_ref=identity["authorization_ref"], dispatch_enabled=False,
+    )
+    reopened_host = RunnerHost(service.host.directory, existing_only=True)
+    before = reopened_host.database.read_bytes()
+    replay = reopened_host.initialize_control_once(**identity)
+    assert replay["inserted"] is replay["dispatch_enabled"] is replay["activation_allowed"] is False
+    assert reopened_host.database.read_bytes() == before
+    snapshot = reopened_host.inspect(identity["attempt_id"])
+    assert snapshot.launch_phase == "prepared"
+    assert snapshot.supervisor is None
+
+
+def test_concurrent_withdrawal_and_initialization_finish_with_withdrawn_control(lifecycle):
+    service, args = lifecycle
+    identity = host_control(service, args)
+    gate = Barrier(2)
+
+    def initialize():
+        gate.wait(timeout=3)
+        return service.host.initialize_control_once(**identity)
+
+    def withdraw():
+        gate.wait(timeout=3)
+        return service.host.set_control(
+            identity["attempt_id"], fence=identity["fence"],
+            authorization_ref=identity["authorization_ref"], dispatch_enabled=False,
+        )
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first, second = pool.submit(initialize), pool.submit(withdraw)
+        first.result(timeout=5)
+        second.result(timeout=5)
+    assert service.host.initialize_control_once(**identity)["dispatch_enabled"] is False
+    service.host.set_control(
+        identity["attempt_id"], fence=identity["fence"] + 1,
+        authorization_ref="later-auth", dispatch_enabled=False,
+    )
+    before = service.host.database.read_bytes()
+    with pytest.raises(LaunchDenied, match="CONTROL_ALREADY_DIFFERENT"):
+        service.host.initialize_control_once(**identity)
+    assert service.host.database.read_bytes() == before
+
+
+def test_capture_lost_reply_and_late_candidate_link_preserve_original_identity(collection_case):
+    service, args, candidates, journal, result = collection_case
+    # The producer/Host identity in this reused setup is explicitly synthetic;
+    # real Candidate/Journal/operation stores establish persistence behavior only.
+    op = service.read(*args, principal="owner")
+    receipt = compile_go_capture(op, result, candidates, journal)
+    document = receipt.as_dict()
+    runner = service.host.runner
+    service.capture_recorded(*args, principal="owner", runner=runner, capture=receipt)
+    candidate = candidates.freeze_projection(
+        document["projection"], dict(result.capture.files), document["freeze_request"]
+    )
+    service.cancel_intent(*args, principal="owner")
+    recovered = reopen(service, args)
+    recovered.source = GoExecutionSource("f" * 64, "e" * 64)
+    external = {p: p.read_bytes() for p in [journal.path, candidates.directory / "candidates.sqlite"]}
+    original = recovered.admissions.database.read_bytes()
+    assert recovered.capture_recorded(
+        *args, principal="owner", runner=runner, capture=receipt
+    )["cancel_requested"]
+    assert recovered.admissions.database.read_bytes() == original
+    with pytest.raises(RunError, match="TASK_EXECUTION_CLAIM_NOT_CURRENT"):
+        recovered.capture_recorded(
+            *args, principal="owner", runner=ProcessIdentity(runner.pid, "other-birth"),
+            capture=receipt,
+        )
+    with pytest.raises(RunError):
+        with recovered.collection_guard(
+            *args, principal="owner", runner=runner, capture_digest=digest(document)
+        ):
+            pytest.fail("Historical capture permitted a new freeze")
+    linked = recovered.candidate_recorded(
+        *args, principal="owner", capture_digest=digest(document), candidate_id=candidate["id"]
+    )
+    assert linked["state"] == "cancellation_pending" and linked["cancel_requested"]
+    assert linked["execution"]["collection"]["candidate"]["id"] == candidate["id"]
+    after = recovered.admissions.database.read_bytes()
+    assert recovered.candidate_recorded(
+        *args, principal="owner", capture_digest=digest(document), candidate_id=candidate["id"]
+    ) == linked
+    assert recovered.admissions.database.read_bytes() == after
+    assert_unchanged(external)
+
+
+def test_other_owner_cannot_read_reopen_cleanup_or_change_phase(lifecycle):
+    service, args = lifecycle
+    before = service.admissions.database.read_bytes()
+    for method in [service.read, service.cleanup_binding, service.record_cleanup, service.freeze_launch]:
+        with pytest.raises(RunError, match="USER_DECISION_REQUIRED"):
+            method(*args, principal="other")
+    assert service.admissions.database.read_bytes() == before

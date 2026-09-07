@@ -1,0 +1,107 @@
+{
+  "schema_version": "karajan.independent-native-ci-review-round-three.v1",
+  "reviewer": "capacity_facts",
+  "findings_closed": [
+    "NATIVE-001",
+    "NATIVE-002",
+    "NATIVE-003",
+    "NATIVE-004"
+  ],
+  "open_maintenance_items": [
+    "formal consume replay test incorrectly expects repeat Collector error",
+    "formal enum/claim persistence regression tests absent"
+  ],
+  "source_before": {
+    "backend/karajan/isolation/go_task.py": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+    "backend/karajan/adapters/opencode/go_relay.py": "088c335d1bfeedc2b69bc2395acc704ea6b32f71b6addcc74c06d87b2400170b",
+    "backend/karajan/orchestration/go_execution_intent.py": "4e72794f6aae846d31788d136dbe47bf15aa6fde839731c57d14f5aa86c5a8e9",
+    "backend/karajan/orchestration/go_task_execution.py": "789e9945a698d6f519f65db35205460ad35a0babf35aee2fbb5c6f82ec095b4d",
+    "tests/isolation/test_go_task.py": "0784cb488b333815da50270030c74cd29cce446c036a411071e63a83fa596f76",
+    "tests/adapters/opencode/test_go_unix_relay.py": "0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f",
+    "tests/runs/test_go_task_execution.py": "3628ecabb53e82c1697226cbb3b946f807b80b0e2679422948939171a8cd1a1e"
+  },
+  "source_after": {
+    "backend/karajan/isolation/go_task.py": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+    "backend/karajan/adapters/opencode/go_relay.py": "088c335d1bfeedc2b69bc2395acc704ea6b32f71b6addcc74c06d87b2400170b",
+    "backend/karajan/orchestration/go_execution_intent.py": "4e72794f6aae846d31788d136dbe47bf15aa6fde839731c57d14f5aa86c5a8e9",
+    "backend/karajan/orchestration/go_task_execution.py": "789e9945a698d6f519f65db35205460ad35a0babf35aee2fbb5c6f82ec095b4d",
+    "tests/isolation/test_go_task.py": "0784cb488b333815da50270030c74cd29cce446c036a411071e63a83fa596f76",
+    "tests/adapters/opencode/test_go_unix_relay.py": "0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f",
+    "tests/runs/test_go_task_execution.py": "3628ecabb53e82c1697226cbb3b946f807b80b0e2679422948939171a8cd1a1e"
+  },
+  "source_changed": false,
+  "command": "PYTHONPATH=backend KARAJAN_OPENCODE_LINUX_BINARY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode KARAJAN_REQUIRE_OPENCODE_ISOLATION=1 KARAJAN_GO_TOKENIZER_DIRECTORY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-artifacts KARAJAN_REQUIRE_GO_TOKENIZER=1 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest -c pyproject.toml -p no:cacheprovider -o \"pythonpath=backend tests/projects tests/runs tests/web tests/isolation tests/adapters/opencode tests/candidates tests/execution\" .cache/native-resume-independent/round-three/test_native_boundaries.py .cache/native-resume-independent/round-three/test_diagnostic_claim.py tests/runs/test_go_task_execution.py::test_consume_preserves_native_failure_when_collector_rejects_missing_capture -q --junitxml=.cache/native-resume-independent/round-three/final-linux.xml",
+  "result": {
+    "summary": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "1",
+      "skipped": "0",
+      "tests": "7",
+      "time": "75.014",
+      "timestamp": "2026-09-07T09:51:32.065314+08:00",
+      "hostname": "ProArt-Zhou"
+    },
+    "cases": [
+      {
+        "classname": ".cache.native-resume-independent.round-three.test_native_boundaries",
+        "name": "test_unknown_native_stop_retains_original_empty_socket_lease",
+        "time": "2.830",
+        "result": "passed"
+      },
+      {
+        "classname": ".cache.native-resume-independent.round-three.test_native_boundaries",
+        "name": "test_arbitrary_uppercase_private_text_is_not_a_diagnostic_code",
+        "time": "2.167",
+        "result": "passed"
+      },
+      {
+        "classname": ".cache.native-resume-independent.round-three.test_native_boundaries",
+        "name": "test_public_consume_preserves_native_failure_when_collector_rejects_capture",
+        "time": "33.504",
+        "result": "passed"
+      },
+      {
+        "classname": ".cache.native-resume-independent.round-three.test_diagnostic_claim",
+        "name": "test_replacement_runner_cannot_attach_or_replace_original_failure",
+        "time": "0.526",
+        "result": "passed"
+      },
+      {
+        "classname": ".cache.native-resume-independent.round-three.test_diagnostic_claim",
+        "name": "test_invalid_cleanup_fact_is_rejected_before_persistence[native_stop]",
+        "time": "0.527",
+        "result": "passed"
+      },
+      {
+        "classname": ".cache.native-resume-independent.round-three.test_diagnostic_claim",
+        "name": "test_invalid_cleanup_fact_is_rejected_before_persistence[relay_status]",
+        "time": "0.486",
+        "result": "passed"
+      },
+      {
+        "classname": "tests.runs.test_go_task_execution",
+        "name": "test_consume_preserves_native_failure_when_collector_rejects_missing_capture",
+        "time": "30.666",
+        "result": "failed"
+      }
+    ]
+  },
+  "provider_calls": 0,
+  "native_P": "not_run_by_reviewer",
+  "artifacts": {
+    "final-linux.xml": "dd0e7d8b001ddf3857898a0031f99d4570abe56e7223708cbe8ceffde506fea0",
+    "go_execution_intent.py.before.txt": "4e72794f6aae846d31788d136dbe47bf15aa6fde839731c57d14f5aa86c5a8e9",
+    "go_relay.py.before.txt": "088c335d1bfeedc2b69bc2395acc704ea6b32f71b6addcc74c06d87b2400170b",
+    "go_task.py.before.txt": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+    "go_task_execution.py.before.txt": "789e9945a698d6f519f65db35205460ad35a0babf35aee2fbb5c6f82ec095b4d",
+    "README.md": "0bc4a8268a481177648e1cc1d1d40bde52cd0dff568d1927f2ef7cbdf03c5f6b",
+    "source-after.json": "5ccca071922839cf61e24a13b4a9e15e5c77fd9b9dc3c140b0195fe71bc637fe",
+    "source-before.json": "5ccca071922839cf61e24a13b4a9e15e5c77fd9b9dc3c140b0195fe71bc637fe",
+    "test_diagnostic_claim.py": "c41cacaea53a279a8c2b01b46b8c661071d3e8c5876d2bcb50b33dd8e9b83713",
+    "test_go_task.py.before.txt": "0784cb488b333815da50270030c74cd29cce446c036a411071e63a83fa596f76",
+    "test_go_task_execution.py.before.txt": "3628ecabb53e82c1697226cbb3b946f807b80b0e2679422948939171a8cd1a1e",
+    "test_go_unix_relay.py.before.txt": "0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f",
+    "test_native_boundaries.py": "b3d7d779d6676c2f9c1ff16a43f66885ff9ce757c958d5b9141c963b495f46eb"
+  }
+}

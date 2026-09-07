@@ -1,0 +1,18 @@
+{
+  "ci_original": {
+    "socket_path_shape": "/tmp/pytest-of-runner/pytest-0/test_actual_host_child_native_0/w/operation-00000000-0000-4000-8000-000000000001/inference.sock",
+    "encoded_bytes": 126,
+    "work_root_bytes": 64
+  },
+  "local_e_green": {
+    "socket_path_shape": "/tmp/kt90b/test_actual_host_child_native_0/w/operation-00000000-0000-4000-8000-000000000001/inference.sock",
+    "encoded_bytes": 106,
+    "work_root_bytes": 44
+  },
+  "independent_original_test_repro": {
+    "socket_path_shape": "/tmp/pytest-of-review/pytest-1/test_actual_host_child_native_0/w/operation-00000000-0000-4000-8000-000000000001/inference.sock",
+    "encoded_bytes": 126,
+    "work_root_bytes": 64
+  },
+  "maximum_work_root_bytes_for_current_uuid_shape": 45
+}

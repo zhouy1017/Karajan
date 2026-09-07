@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="8.827" timestamp="2026-09-06T21:44:35.100671+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_go_task_execution_native" name="test_actual_host_child_native_candidate_and_replay" time="4.962"><failure message="karajan.runs.planning.RunError: TASK_EXECUTION_SOURCE_CHANGED">projected = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x768cb52b3cb0&gt;, 'project_id': '8c8bb93e-6d44-4c59-a...fixture'), 'repository': PosixPath('/tmp/karajan-task-full-c/test_actual_host_child_native_0/fixture/repository'), ...}
+tmp_path = PosixPath('/tmp/karajan-task-full-c/test_actual_host_child_native_0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x768cb4e86390&gt;
+artifacts = PosixPath('/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-artifacts')
+
+    def test_actual_host_child_native_candidate_and_replay(projected, tmp_path, accounting, artifacts):
+        repository = projected["repository"]
+        for path, data in {
+            "src/report.py": b"print('approved task')\n",
+            "tests/test_report.py": b"assert True\n",
+            "assets/opaque.bin": b"\x00\xff preserved\x01",
+            "tools/check.sh": b"#!/bin/sh\nexit 0\n",
+        }.items():
+            target = repository / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(data)
+        (repository / "tools/check.sh").chmod(0o755)
+        for arguments in (
+            ["add", "."],
+            [
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "-qm",
+                "Task baseline",
+            ],
+        ):
+            subprocess.run(["git", "-C", str(repository), *arguments], check=True, capture_output=True)
+        projects = projected["projects"]
+        current = projects.get(projected["project_id"])
+        projects.update(
+            current["id"],
+            {"name": current["name"], "base_ref": "main", "target_branch": "main", "allowed_target_branches": ["main"]},
+            expected_revision=current["revision"],
+            principal="owner",
+            command_key="baseline-refresh",
+        )
+        calls = []
+        errors = []
+        services = None
+    
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, *args):
+                pass
+    
+            def do_POST(self):
+                try:
+                    assert self.client_address[0] == "127.0.0.1"
+                    request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+                    operation = services.intents.read(run_id, op_id, principal="owner")
+                    call = services.journal.snapshot(operation["execution"]["intent"]["grant_id"])[
+                        "calls"
+                    ][-1]
+                    assert call["state"] == "send_unknown"
+                    assert call["request_context"]["accounted_input_tokens"] &gt; 0
+                    calls.append(
+                        {
+                            "sequence": call["sequence"],
+                            "prompt_retained": any(
+                                "approved-task-brief" in str(message.get("content"))
+                                for message in request["messages"]
+                            ),
+                            "tool_history": sum(
+                                message["role"] == "tool" for message in request["messages"]
+                            ),
+                        }
+                    )
+                    body = reply(len(calls))
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/event-stream")
+                    self.send_header("Content-Length", str(len(body)))
+                    self.end_headers()
+                    self.wfile.write(body)
+                except Exception as error:
+                    errors.append(type(error).__name__)
+                    self.send_error(500)
+    
+        server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        thread = Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            services, run_id, op_id = approved_fixture(
+                projected, tmp_path, runtime_artifact(), accounting, artifacts, server.server_port
+            )
+            assert services.client_factory is not None
+            facade = ApprovedGoTaskExecution(services)
+&gt;           advanced = facade.advance(run_id, op_id, principal="owner")
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/runs/test_go_task_execution_native.py:146: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/karajan/orchestration/go_task_execution.py:57: in advance
+    _check_source(self.services, operation)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+services = GoTaskServices(intents=&lt;karajan.orchestration.go_execution_intent.GoExecutionIntents object at 0x768cb4d846b0&gt;, candid...ocals&gt;.fixed_spec at 0x768cb4ed3e20&gt;, client_factory=&lt;function open_fixture.&lt;locals&gt;.client_factory at 0x768cb4d60040&gt;)
+operation = {'activation_allowed': False, 'assessment': {'activation_allowed': False, 'admission_expectations': [{'estimate_sha256...e2736d13af8dd501e48288', 'dispatch_enabled': False, ...}, 'cancel_requested': False, 'cancellation_receipt': None, ...}
+
+    def _check_source(services: GoTaskServices, operation: dict[str, Any]) -&gt; None:
+        """Filesystem re-observation only; safe inside already-held business DB guards."""
+        try:
+            fresh = services.fresh_source()
+            actual = execution_source(fresh)
+            intent = operation.get("execution", {}).get("intent")
+            if actual != services.intents.source or (
+                intent is not None
+                and (
+                    intent["runner_source_sha256"] != actual.runner_source_sha256
+                    or intent["native_source_sha256"] != actual.native_source_sha256
+                )
+            ):
+                raise ValueError()
+            qualified = operation["workspace"]["source_binding"]["profile_source"]["qualification"][
+                "observation"
+            ]["binding"]["execution_start"]["source"]["runtime_source"]
+            if fresh["native_task"]["qualified_mechanism_descriptor"] != qualified:
+                raise ValueError()
+        except Exception:
+&gt;           raise RunError("TASK_EXECUTION_SOURCE_CHANGED") from None
+E           karajan.runs.planning.RunError: TASK_EXECUTION_SOURCE_CHANGED
+
+backend/karajan/orchestration/go_task_execution.py:230: RunError</failure></testcase></testsuite></testsuites>

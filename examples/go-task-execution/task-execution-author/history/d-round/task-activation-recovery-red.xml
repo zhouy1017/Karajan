@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="2.062" timestamp="2026-09-06T22:04:35.152594+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_go_task_execution" name="test_reconcile_recovers_original_committed_activation_without_activating" time="0.967"><failure message="AssertionError: assert None == {'decision': 'capacity_revalidated', 'reason_codes': [], 'policy_revision': 1, 'admission_id': 'cffd5921-3611-4841-a433-1f3811b58771', ...}">history = (&lt;karajan.orchestration.go_task_execution.ApprovedGoTaskExecution object at 0x00000187E4D17F80&gt;, 'dc18b390-3947-4257-afed-e3c6f02b7575', 'a2397313-3d9e-4502-a543-ea146b30cb7e')
+
+    def test_reconcile_recovers_original_committed_activation_without_activating(history):
+        facade, run_id, operation_id = history
+        intents = facade.services.intents
+        operation = intents.prepare_intent(run_id, operation_id, principal="owner", command_key="prepare")
+        intent = operation["execution"]["intent"]
+        receipt = intents.admissions.routing.capacity.activate(intent["admission_id"], command_key=intent["activation_key"])
+        before = intents.admissions.routing.capacity.path.read_bytes()
+        assert operation["execution"]["capacity_activation"] is None
+        recovered = facade.reconcile(run_id, operation_id, principal="owner")
+&gt;       assert recovered["execution"]["capacity_activation"] == receipt
+E       AssertionError: assert None == {'decision': 'capacity_revalidated', 'reason_codes': [], 'policy_revision': 1, 'admission_id': 'cffd5921-3611-4841-a433-1f3811b58771', ...}
+
+tests\runs\test_go_task_execution.py:233: AssertionError</failure></testcase></testsuite></testsuites>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.136" timestamp="2026-09-06T21:52:19.155255+08:00" hostname="ProArt-Zhou"><testcase classname="tests.candidates.test_capture_recovery" name="test_deferred_existing_handle_does_not_provision_and_checks_every_use" time="0.006"><failure message="TypeError: CandidateStore.__init__() got an unexpected keyword argument 'defer_validation'">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-834/test_deferred_existing_handle_0')
+
+    def test_deferred_existing_handle_does_not_provision_and_checks_every_use(tmp_path):
+        missing = tmp_path / "absent" / "candidate-state"
+        with pytest.raises(CandidateError, match="CANDIDATE_EXISTING_MODE_REQUIRED"):
+&gt;           CandidateStore(missing, defer_validation=True)
+E           TypeError: CandidateStore.__init__() got an unexpected keyword argument 'defer_validation'
+
+tests\candidates\test_capture_recovery.py:156: TypeError</failure></testcase></testsuite></testsuites>

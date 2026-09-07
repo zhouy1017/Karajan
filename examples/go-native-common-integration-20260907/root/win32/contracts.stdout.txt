@@ -1,0 +1,47 @@
+........................................................................ [ 28%]
+........................................................................ [ 57%]
+........................................................................ [ 86%]
+.................................F.                                      [100%]
+================================== FAILURES ===================================
+_ test_consume_preserves_native_failure_when_collector_rejects_missing_capture _
+
+projected = {'projects': <karajan.projects.registry.ProjectRegistry object at 0x000002277A78A120>, 'project_id': '6aa7f368-2e0a-4b...C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-972/test_consume_preserves_native_0/fixture/repository'), ...}
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-972/test_consume_preserves_native_0')
+accounting = <karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000002277A7882F0>
+artifacts = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-artifacts')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002277A7E7770>
+
+>   ???
+
+/mnt/c/Users/Chooo/Playground/Karajan/.cache/ci-spark-task-native/tests/runs/test_go_task_execution.py:277: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\runs\task_execution_fixture.py:187: in approved_fixture
+    native = task_runner_source(runtime, accounting)["native_task"][
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\orchestration\go_task_binding.py:34: in task_runner_source
+    "native_task": native_task_source(runtime, accounting),
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\isolation\go_task.py:242: in native_task_source
+    mechanism = projected_runtime_source(runtime, accounting)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\karajan\isolation\go_projected_probe.py:72: in projected_runtime_source
+    source = go_runtime_source(runtime)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+runtime = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode')
+
+    def go_runtime_source(runtime: Path) -> dict[str, Any]:
+        """Read the exact fixed runtime source without reading provider credentials.
+    
+        A grant's runtime_digest means this complete descriptor's canonical digest,
+        not merely the ELF hash. Observation and controller use this same definition.
+        """
+        if sys.platform != "linux":
+>           raise ValueError("LINUX_NAMESPACES_REQUIRED")
+E           ValueError: LINUX_NAMESPACES_REQUIRED
+
+backend\karajan\isolation\go_probe.py:52: ValueError
+=========================== short test summary info ===========================
+FAILED tests/runs/test_go_task_execution.py::test_consume_preserves_native_failure_when_collector_rejects_missing_capture
+1 failed, 250 passed in 62.46s (0:01:02)

@@ -1,0 +1,45 @@
+{
+  "match": true,
+  "files": [
+    {
+      "path": "backend/karajan/adapters/opencode/go_relay.py",
+      "raw_sha256": "088c335d1bfeedc2b69bc2395acc704ea6b32f71b6addcc74c06d87b2400170b",
+      "index_sha256": "088c335d1bfeedc2b69bc2395acc704ea6b32f71b6addcc74c06d87b2400170b"
+    },
+    {
+      "path": "backend/karajan/isolation/go_task.py",
+      "raw_sha256": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+      "index_sha256": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8"
+    },
+    {
+      "path": "backend/karajan/orchestration/go_execution_intent.py",
+      "raw_sha256": "4e72794f6aae846d31788d136dbe47bf15aa6fde839731c57d14f5aa86c5a8e9",
+      "index_sha256": "4e72794f6aae846d31788d136dbe47bf15aa6fde839731c57d14f5aa86c5a8e9"
+    },
+    {
+      "path": "backend/karajan/orchestration/go_task_execution.py",
+      "raw_sha256": "789e9945a698d6f519f65db35205460ad35a0babf35aee2fbb5c6f82ec095b4d",
+      "index_sha256": "789e9945a698d6f519f65db35205460ad35a0babf35aee2fbb5c6f82ec095b4d"
+    },
+    {
+      "path": "tests/adapters/opencode/test_go_unix_relay.py",
+      "raw_sha256": "0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f",
+      "index_sha256": "0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f"
+    },
+    {
+      "path": "tests/isolation/test_go_task.py",
+      "raw_sha256": "0784cb488b333815da50270030c74cd29cce446c036a411071e63a83fa596f76",
+      "index_sha256": "0784cb488b333815da50270030c74cd29cce446c036a411071e63a83fa596f76"
+    },
+    {
+      "path": "tests/runs/test_go_native_diagnostic_contract.py",
+      "raw_sha256": "7a3f9dc8501152f6fd4e3a1ef9393028633d5c992e445cb8d5874c27a0a57c0e",
+      "index_sha256": "7a3f9dc8501152f6fd4e3a1ef9393028633d5c992e445cb8d5874c27a0a57c0e"
+    },
+    {
+      "path": "tests/runs/test_go_task_execution.py",
+      "raw_sha256": "64ca3965f03ea339041f7e2ba559af3b0e6355fceb92152ce4ccca70250b4f85",
+      "index_sha256": "64ca3965f03ea339041f7e2ba559af3b0e6355fceb92152ce4ccca70250b4f85"
+    }
+  ]
+}

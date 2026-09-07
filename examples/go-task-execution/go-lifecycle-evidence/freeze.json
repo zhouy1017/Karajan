@@ -1,0 +1,24 @@
+{
+  "schema_version": "karajan.author-evidence.v1",
+  "issue": 90,
+  "base": "858bd5a18c1ff9c6f4afd153247c89bb13879756",
+  "status": "frozen",
+  "source_sha256": {
+    "backend/karajan/orchestration/go_execution_intent.py": "3416c3f324d6653f246b2317de257e362f410980dda458756dab1e029d6082f1",
+    "backend/karajan/execution/host.py": "50aab019b04a3e13bed087ea16fd27e87a8de6ead1f5b42aeb20777c4ff29d62",
+    "tests/runs/test_go_lifecycle.py": "40238d91511c30fca8ec8ac2f29969ba8be914da1b8c135d1dc55cd95604f576",
+    "tests/execution/test_control_initialization.py": "5ec3239a7ac7805a47073a4a4fcb748b24cd08b17482a5d0ba0ee4ae5224d9a7"
+  },
+  "validation": {
+    "windows": {"passed": 58, "seconds": 52.89, "evidence": "windows-final.xml"},
+    "wsl": {"passed": 58, "seconds": 26.80, "evidence": "wsl-final.xml"},
+    "ruff": "passed",
+    "mypy_sources": 2,
+    "mypy": "passed"
+  },
+  "limitations": [
+    "Synthetic native result and Host authority in capture lifecycle fixtures; real stores and Journal",
+    "No provider calls, credentials, new Profile qualification or Candidate validation approval",
+    "Host file includes separately root-owned existing-only changes"
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "schema_version": "karajan.collector-correction-evidence.v1",
+  "issue": "https://github.com/zhouy1017/Karajan/issues/90",
+  "original_author_freeze": "../collector-author/freeze.json",
+  "independent_review": "../collector-independent/final.json",
+  "corrected_findings": [
+    "COLLECTOR-001",
+    "COLLECTOR-002"
+  ],
+  "additional_parent_scope": "defer_validation existing-only optional recovery handle",
+  "final_sources": {
+    "backend/karajan/candidates/store.py": "011aa22ba030564f1ef511fe923a47f75c48488ace40572d95c07503b9bc6da6",
+    "backend/karajan/candidates/_capture_lookup.py": "ea524d6973801a7583648357252070ff28657f2454730a4c063240daab3cd608",
+    "backend/karajan/orchestration/go_task_collector.py": "a9d3149f33ae026ae4e4dbc5e74a5daed9aaebac75066005da57d84c07f699bc",
+    "tests/candidates/test_capture_recovery.py": "ad582a1160327fa073e267e09af78d2c99f7d317b96b7fb7876be98db22e2ead",
+    "tests/runs/test_go_task_collector.py": "c0493565c6d807774f634a1c8c0e1df6f34d2ee23e2a3828e6bf537de5fd3e77"
+  },
+  "reports": {
+    "red.xml": {
+      "errors": 0,
+      "seconds": 3.2,
+      "skipped": 0,
+      "failures": 2,
+      "sha256": "f0606699b957a0e6e1d898e88d0ac6c822cca12aae76f4e6d36042c462027fea",
+      "tests": 2
+    },
+    "author-red.xml": {
+      "errors": 0,
+      "seconds": 4.549,
+      "skipped": 0,
+      "failures": 4,
+      "sha256": "ecedb118d927b782f51272b5ea57b064010dae02034f148494f3c12408128682",
+      "tests": 4
+    },
+    "green.xml": {
+      "errors": 0,
+      "seconds": 33.716,
+      "skipped": 0,
+      "failures": 0,
+      "sha256": "db036bb17987199e75601aee7aa8352455ed7a881e3d16b43666e9e7b1a0d436",
+      "tests": 29
+    },
+    "deferred-red.xml": {
+      "errors": 0,
+      "seconds": 0.136,
+      "skipped": 0,
+      "failures": 1,
+      "sha256": "cb8afe99c8d837a004b31c5ba0c1ca1d9e50538c86e998ea890bbbf33112c0ca",
+      "tests": 1
+    },
+    "deferred-green.xml": {
+      "errors": 0,
+      "seconds": 0.153,
+      "skipped": 0,
+      "failures": 0,
+      "sha256": "ad8e711eb33346a7b4b8e352511883ea0e29f2f303f614b11cbcec0d06e7f527",
+      "tests": 1
+    },
+    "final-windows.xml": {
+      "errors": 0,
+      "seconds": 53.851,
+      "skipped": 0,
+      "failures": 0,
+      "sha256": "7c06e84127f29d4e479dc191b198ce4c88eb34440e404597577807ed2e707880",
+      "tests": 52
+    },
+    "final-linux.xml": {
+      "errors": 0,
+      "seconds": 17.789,
+      "skipped": 0,
+      "failures": 0,
+      "sha256": "ddec0cd8f5fe71e0abb960385a26d1306291df78b4e60e1380316aa77246248d",
+      "tests": 52
+    }
+  },
+  "static": {
+    "ruff": "passed",
+    "mypy": "passed",
+    "format": "passed",
+    "output": "static-validation.txt"
+  },
+  "limitations": [
+    "No native/provider invocation in this author group",
+    "Actual native integration belongs to the fixed consumer",
+    "Missing validation/Reviewer evidence still blocks delivery",
+    "Historical lookup does not prove artifact availability"
+  ]
+}

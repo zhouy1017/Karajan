@@ -1,0 +1,94 @@
+"""Independent PR92 diagnosis. Synthetic credential; no provider or native launch."""
+
+import json
+from pathlib import Path
+
+import pytest
+from karajan.adapters.opencode.go_relay import GoRelay
+from karajan.isolation.go_task import execute_go_task
+from test_go_context import accounting as accounting
+from test_go_context import artifacts as artifacts
+from test_go_task import permitted, prepared
+
+OUTPUT = Path(__file__).parent
+
+
+def socket_path(root, length):
+    tail = "/inference.sock"
+    filler = length - len(str(root).encode()) - 1 - len(tail)
+    assert filler > 0
+    directory = root / ("x" * filler)
+    directory.mkdir()
+    result = directory / "inference.sock"
+    assert len(str(result).encode()) == length
+    return result
+
+
+@pytest.mark.parametrize("length", [106, 107, 108, 126])
+def test_public_relay_bind_boundary(tmp_path, length):
+    calls = []
+
+    def no_client():
+        calls.append(True)
+        raise AssertionError("No HTTP client may be created")
+
+    relay = GoRelay("synthetic-diagnostic-not-provider-key", "synthetic-canary", client_factory=no_client)
+    target = socket_path(tmp_path, length)
+    evidence = {"path_bytes": length, "case": "public_relay_start"}
+    try:
+        if length <= 107:
+            relay.start(unix_socket=target)
+            evidence["result"] = "started"
+            assert target.is_socket()
+        else:
+            with pytest.raises(OSError, match="AF_UNIX path too long") as caught:
+                relay.start(unix_socket=target)
+            evidence.update(result="rejected", error_type=type(caught.value).__name__, error=str(caught.value))
+        assert calls == [] and relay.receipts == []
+    finally:
+        evidence["close"] = relay.close()
+        evidence["http_clients_created"] = len(calls)
+        (OUTPUT / f"relay-{length}.json").write_text(json.dumps(evidence, indent=2))
+
+
+def test_public_task_producer_ci_length_fails_before_native_and_send(tmp_path, accounting):
+    runtime, task, credential, authorization, context = prepared(tmp_path, accounting)
+    target = socket_path(tmp_path, 126)
+    # execute_go_task itself must create its previously absent owned directory.
+    target.parent.rmdir()
+    starts, clients = [], []
+
+    def no_start(native):
+        starts.append(True)
+        raise AssertionError("Namespace start must not be reached")
+
+    def no_client():
+        clients.append(True)
+        raise AssertionError("HTTP must not be reached")
+
+    result = execute_go_task(
+        runtime, target.parent, task, credential, authorization, context,
+        start_native=no_start, send_guard=permitted, client_factory=no_client,
+    )
+    report = result.report
+    assert result.capture is None
+    assert starts == clients == []
+    assert report["error_type"] == "OSError"
+    assert report["status"] == "failed"
+    assert report["native_cleanup"] == {"local_stop": "not_started"}
+    assert report["journal"]["state"] == "revoked"
+    assert report["journal"]["request_count"] == 0
+    assert report["requests"] == []
+    evidence = {
+        "case": "public_execute_go_task", "socket_path_bytes": 126,
+        "status": report["status"], "reason_codes": report["reason_codes"],
+        "error_type": report["error_type"], "capture_present": result.capture is not None,
+        "native_cleanup": report["native_cleanup"], "relay_cleanup": report["relay_cleanup"],
+        "grant_state": report["journal"]["state"],
+        "request_count": report["journal"]["request_count"],
+        "namespace_starts": len(starts), "http_clients_created": len(clients),
+        "native_source_sha256": report["native_source_sha256"],
+        "runner_source_digest": report["runner_source_digest"],
+        "observation_origin": report["observation_origin"],
+    }
+    (OUTPUT / "producer-126.json").write_text(json.dumps(evidence, indent=2))

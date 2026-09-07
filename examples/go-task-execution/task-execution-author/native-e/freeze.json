@@ -1,0 +1,42 @@
+{
+  "schema_version": "karajan.author-freeze.v1",
+  "issue": 90,
+  "commit": "c2c4b145473a259582d0d37a01e423ca03f03b65",
+  "round": "e-final",
+  "date": "2026-09-06",
+  "product_and_inputs": {
+    "backend/karajan/orchestration/go_task_execution.py": "3bca8ad44860e11815e9ecb9dedae1edd9d9d556f4940f4fd6694af30cb30cf9",
+    "backend/karajan/orchestration/_go_task_runner.py": "0a43cf7b1924b40a66ea35e354e15a6cce697b954c243c8808a7bf7500343822",
+    "backend/karajan/execution/host.py": "87860c4cca8aa37883ffbd69b4fac02808e9c7ad0db24c33245fe7ec38d16192",
+    "tests/runs/test_go_task_execution.py": "81dd72b782899bc9a37f4af2de019be02848e951a9bda409bf49427202a29db2",
+    "tests/runs/test_go_task_execution_native.py": "c11bb8564646d99718b90a9122ce0316f59e95e8ace13f52b5ede16957e68b66",
+    "tests/runs/task_execution_fixture.py": "14b9a28587b2a550011213be69f8e38e956e81548ec8ec82c427da1cebedb3c2",
+    "tests/runs/_task_execution_fixture_entry.py": "32ee5933cff7f896c1faf901f0640782e587b28f9a0a09371f79f14fff038077"
+  },
+  "evidence": {
+    "cancel_after_send/public-operation.json": "14b37b165126579728862a5569b78fa67b673cf007bf7445c892c294df183b8b",
+    "cancel_after_send/source-manifest.json": "4b7e900b10ddf99ee826d895472063f6a878e31cdd79f1b42a63772856937a7b",
+    "grant_reply_lost/public-operation.json": "085723cd5d846dd1eb4d5a62fa605c96d39398262a9ef428e79856a3cfd0e90a",
+    "grant_reply_lost/source-manifest.json": "af935b71040aa7f938dedb0ff2918b9d9a8f6522f80efff583f7a8c304a44932",
+    "junit.xml": "56e78d1a707777434f34795dc88b8253e673a0d57bae1c9e38c42f35097a93b8",
+    "none/public-operation.json": "2e95173615ae68eef0e699d1185cb655cd18526e4b302b86cb7eae7249b8f8df",
+    "none/source-manifest.json": "ae4b39cfb5160d045ee5fa9136fa7941641e4891f673bae43850639de8e76ed7",
+    "README.md": "f10e6c53e017e4edff1f2b2d7ed38507f874bd6a1f20f1bfe33cf1a5a15a1a4b",
+    "summary.json": "f79ebafb8b5c4df7dfe65d2e5a911e5e7564c12ce94d99473b3390b8c7de0923"
+  },
+  "validation": {
+    "actual_linux_native_loopback": {
+      "passed": 3,
+      "seconds": 161.88
+    },
+    "current_controller_sources_match": true,
+    "official_provider": "not_run",
+    "evidence_level": [
+      "C",
+      "P"
+    ],
+    "review_role": "author"
+  },
+  "prior_evidence": "../native/ (d round, unchanged)",
+  "state_directory": "/tmp/kt90b"
+}

@@ -12,6 +12,7 @@ from karajan.capacity import CapacityError
 from karajan.routing.compiler import digest
 from karajan.runs import RunError
 from karajan.runs.planning import encoded, identifier
+from karajan.storage import open_database, require_schema
 
 from .routing import ApprovedRunRouting
 
@@ -23,15 +24,34 @@ class ApprovedTaskAdmission:
     until a separately qualified execution consumer is implemented.
     """
 
-    def __init__(self, database: Path, routing: ApprovedRunRouting) -> None:
+    def __init__(
+        self, database: Path, routing: ApprovedRunRouting, *, existing_only: bool = False
+    ) -> None:
+        if existing_only and not (
+            routing.planner.existing_only
+            and routing.planner.projects.existing_only
+            and routing.capacity.existing_only
+        ):
+            raise RunError("EXISTING_STORE_PARENT_MODE_REQUIRED")
         self.database, self.routing = database.resolve(), routing
-        self.database.parent.mkdir(parents=True, exist_ok=True)
+        self.existing_only = existing_only
+        if not existing_only:
+            self.database.parent.mkdir(parents=True, exist_ok=True)
         if self.database in {
             routing.planner.database.resolve(),
             routing.planner.projects.database.resolve(),
             routing.capacity.path.resolve(),
         }:
             raise RunError("ADMISSION_DATABASE_MUST_BE_SEPARATE")
+        if existing_only:
+            require_schema(
+                self.database,
+                {
+                    "operations": ["id", "run_id", "task_id", "state", "data"],
+                    "commands": ["principal", "key", "payload", "result"],
+                },
+            )
+            return
         with self._transaction() as db:
             db.execute(
                 "CREATE TABLE IF NOT EXISTS operations (id TEXT PRIMARY KEY, run_id TEXT NOT NULL, "
@@ -44,7 +64,7 @@ class ApprovedTaskAdmission:
 
     @contextmanager
     def _transaction(self) -> Iterator[sqlite3.Connection]:
-        db = sqlite3.connect(self.database, timeout=10, isolation_level=None)
+        db = open_database(self.database, existing_only=self.existing_only, isolation_level=None)
         db.row_factory = sqlite3.Row
         try:
             db.execute("PRAGMA synchronous=FULL")

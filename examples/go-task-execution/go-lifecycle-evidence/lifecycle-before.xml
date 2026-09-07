@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="15" time="16.514" timestamp="2026-09-06T21:34:51.390804+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_go_lifecycle" name="test_activation_guard_holds_original_prepared_intent" time="0.983" /><testcase classname="tests.runs.test_go_lifecycle" name="test_launch_replay_freezes_original_expiry_and_does_not_touch_resource_ledgers" time="1.895"><failure message="karajan.runs.planning.RunError: TASK_LAUNCH_BINDING_CONFLICT">lifecycle = (&lt;karajan.orchestration.go_execution_intent.GoExecutionIntents object at 0x000001D7A9172B40&gt;, ('f93233d7-47c6-459b-9987-959f06d362f6', '5e3089f1-a879-42ea-b0a0-f1470a7af962'))
+
+    def test_launch_replay_freezes_original_expiry_and_does_not_touch_resource_ledgers(lifecycle):
+        service, args = lifecycle
+        op = activated(lifecycle)
+        paths = (service.admissions.routing.capacity.path, service.journal.path, service.host.database)
+        before = {p: p.read_bytes() for p in paths}
+        first = service.freeze_launch(*args, principal="owner")
+        original = service.admissions.database.read_bytes()
+&gt;       second = service.freeze_launch(*args, principal="owner")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\runs\test_go_lifecycle.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.orchestration.go_execution_intent.GoExecutionIntents object at 0x000001D7A9172B40&gt;
+run_id = 'f93233d7-47c6-459b-9987-959f06d362f6'
+operation_id = '5e3089f1-a879-42ea-b0a0-f1470a7af962', principal = 'owner'
+
+    def freeze_launch(self, run_id: str, operation_id: str, *, principal: str) -&gt; dict[str, Any]:
+        """Compile one exact launch from owned state and a fixed deployment compiler."""
+        from .go_task_binding import task_grant_binding, task_host_activation, task_host_manifest
+    
+        with self._edit(run_id, operation_id, principal) as (operation, execution):
+            if operation["cancel_requested"]:
+                raise RunError("TASK_EXECUTION_CANCEL_REQUESTED")
+            if self.launch_compiler is None:
+                raise RunError("TASK_LAUNCH_COMPILER_REQUIRED")
+            spec = self.launch_compiler(deepcopy(operation))
+            if type(spec) is not GoLaunchSpec:
+                raise RunError("TASK_LAUNCH_SPEC_INVALID")
+            launch = {
+                "schema_version": "karajan.go-task-launch.v1",
+                "intent_digest": execution["intent_digest"],
+                "manifest": task_host_manifest(operation).model_dump(),
+                "activation": asdict(task_host_activation(operation)),
+                "grant_binding": task_grant_binding(operation),
+                "process_spec": spec.process_spec.document(),
+                "bootstrap_digest": spec.bootstrap_digest,
+            }
+            launch["digest"] = digest(launch)
+            prior = execution.get("launch")
+            if prior is not None:
+                if prior != launch:
+&gt;                   raise RunError("TASK_LAUNCH_BINDING_CONFLICT")
+E                   karajan.runs.planning.RunError: TASK_LAUNCH_BINDING_CONFLICT
+
+backend\karajan\orchestration\go_execution_intent.py:408: RunError</failure></testcase><testcase classname="tests.runs.test_go_lifecycle" name="test_launch_cannot_change_controller_compiler_after_freeze" time="1.005" /><testcase classname="tests.runs.test_go_lifecycle" name="test_launch_preparation_serializes_cancel_then_cannot_rearm" time="1.050" /><testcase classname="tests.runs.test_go_lifecycle" name="test_cancelled_operation_blocks_both_pre_effect_stages[activation_guard]" time="0.960" /><testcase classname="tests.runs.test_go_lifecycle" name="test_cancelled_operation_blocks_both_pre_effect_stages[launch_preparation_guard]" time="0.957" /><testcase classname="tests.runs.test_go_lifecycle" name="test_prepared_host_stage_needs_activation_and_frozen_launch" time="1.068" /><testcase classname="tests.runs.test_go_lifecycle" name="test_cleanup_uses_original_history_after_cancel_and_source_change" time="0.991"><failure message="AssertionError: assert {'activation'...8', ...}, ...} == {'schema_vers...c', ...}, ...}&#10;  &#10;  Omitting 7 identical items, use -vv to show&#10;  Differing items:&#10;  {'process_spec': {'argv': ['C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe', '-c', 'pass'], 'cwd': ...\\Chooo\\AppData\\Local\\Temp\\pytest-of-Chooo\\pytest-814\\test_cleanup_uses_original_his0', 'timeout_seconds': 30.0}} != {'process_spec': {'argv': ('C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe', '-c', 'pass'), 'cwd': ...\\Chooo\\AppData\\Local\\Temp\\pytest-of-Chooo\\pytest-814\\test_cleanup_uses_original_his0', 'timeout_seconds': 30.0}}&#10;  Use -v to get more diff">lifecycle = (&lt;karajan.orchestration.go_execution_intent.GoExecutionIntents object at 0x000001D7D960B140&gt;, ('d57474a2-b34b-496d-be9c-21227bd23c26', '5b5d4d9a-0bda-43ad-843b-7526bd6b4300'))
+
+    def test_cleanup_uses_original_history_after_cancel_and_source_change(lifecycle):
+        service, args = lifecycle
+        activated(lifecycle)
+        op = service.freeze_launch(*args, principal="owner")
+        service.cancel_intent(*args, principal="owner")
+        service.source = GoExecutionSource("d" * 64, "e" * 64)
+        service.launch_compiler = lambda operation: pytest.fail("Cleanup recompiled launch")
+        before = service.admissions.database.read_bytes()
+        restored = service.cleanup_binding(*args, principal="owner")
+&gt;       assert restored["launch"] == op["execution"]["launch"]
+E       AssertionError: assert {'activation'...8', ...}, ...} == {'schema_vers...c', ...}, ...}
+E         
+E         Omitting 7 identical items, use -vv to show
+E         Differing items:
+E         {'process_spec': {'argv': ['C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe', '-c', 'pass'], 'cwd': ...\\Chooo\\AppData\\Local\\Temp\\pytest-of-Chooo\\pytest-814\\test_cleanup_uses_original_his0', 'timeout_seconds': 30.0}} != {'process_spec': {'argv': ('C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe', '-c', 'pass'), 'cwd': ...\\Chooo\\AppData\\Local\\Temp\\pytest-of-Chooo\\pytest-814\\test_cleanup_uses_original_his0', 'timeout_seconds': 30.0}}
+E         Use -v to get more diff
+
+tests\runs\test_go_lifecycle.py:154: AssertionError</failure></testcase><testcase classname="tests.runs.test_go_lifecycle" name="test_existing_reconstruction_does_not_call_fresh_source_and_retains_owner_gate" time="0.985" /><testcase classname="tests.runs.test_go_lifecycle" name="test_unprepared_reconstruction_calls_lazy_source_once_and_does_not_prepare" time="1.070" /><testcase classname="tests.runs.test_go_lifecycle" name="test_observation_keeps_send_unknown_and_never_revokes_or_refunds" time="1.029" /><testcase classname="tests.runs.test_go_lifecycle" name="test_cleanup_observation_distinguishes_unowned_or_unavailable_grant[missing]" time="1.004" /><testcase classname="tests.runs.test_go_lifecycle" name="test_cleanup_observation_distinguishes_unowned_or_unavailable_grant[mismatch]" time="1.050" /><testcase classname="tests.runs.test_go_lifecycle" name="test_cleanup_observation_distinguishes_unowned_or_unavailable_grant[unavailable]" time="1.076" /><testcase classname="tests.runs.test_go_lifecycle" name="test_existing_corrupt_source_never_falls_back_to_fresh_source" time="1.039" /></testsuite></testsuites>
