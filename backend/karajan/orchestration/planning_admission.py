@@ -1327,16 +1327,24 @@ class PlanningAdmissionAuthority:
                 self._run_intent_from_run(held_run, binding, principal)
                 with self._current_qualification_guard(binding, held_run) as qualification:
                     self._assert_qualification_live(record, qualification)
+
+                    def before_effect() -> None:
+                        # This can read the sealed credential material, runtime
+                        # observer and protected bootstrap. Capacity performs
+                        # its own fresh temporal/evaluate pass only after this
+                        # controller callback returns.
+                        self._assert_qualification_live(record, qualification, reobserve=True)
+                        self._assert_budget_deadline(record, record["budget_usage"])
+
                     # Project qualification remains held until Capacity has
                     # revalidated the reservation and the caller's effect
-                    # exits. The deadline is deliberately checked after the
-                    # Capacity transaction has acquired its effect lock.
+                    # exits. No blocking authority read occurs after Capacity
+                    # has completed its final fresh revalidation.
                     with self.capacity.pre_effect_guard(
                         record["capacity_receipt"]["admission_id"],
                         expected_request=record["capacity_request"],
+                        before_effect=before_effect,
                     ) as capacity:
-                        self._assert_qualification_live(record, qualification, reobserve=True)
-                        self._assert_budget_deadline(record, record["budget_usage"])
                         yield {
                             "execution_id": execution_id,
                             "binding_sha256": record["binding_sha256"],
