@@ -1,0 +1,284 @@
+{
+  "candidate": "447319708801927c0063700d1d294b6c4b2bebfe",
+  "cases": [
+    {
+      "case": "preserve text, escaped brackets and original amount",
+      "result": "passed"
+    },
+    {
+      "case": "valid multibyte plan at exact byte limit",
+      "result": "passed"
+    },
+    {
+      "case": "byte limit +1",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_LIMIT_EXCEEDED"
+    },
+    {
+      "case": "valid JSON container depth 16",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "valid JSON container depth 17",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_LIMIT_EXCEEDED"
+    },
+    {
+      "case": "strict task revision '1'",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "strict task revision 1.0",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "strict task revision None",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "strict task required '1'",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "strict task required 1.0",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "strict task required None",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "strict task context_tokens '1'",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "strict task context_tokens 1.0",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "strict task context_tokens None",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "strict task duration_seconds '1'",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "strict task duration_seconds 1.0",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "strict task duration_seconds None",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "strict amount 1",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "strict amount True",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "strict amount 1.0",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "strict amount 'NaN'",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "strict amount 'Infinity'",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity run_id at root",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity run_id at authorization",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity run_id at task",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity intent_id at root",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity intent_id at authorization",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity intent_id at task",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity term at root",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity term at authorization",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity term at task",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity principal at root",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity principal at authorization",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity principal at task",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity receipt at root",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity receipt at authorization",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity receipt at task",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity admitted at root",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity admitted at authorization",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity admitted at task",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity authority at root",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity authority at authorization",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity authority at task",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity source at root",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity source at authorization",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity source at task",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity digest at root",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity digest at authorization",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity digest at task",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity approval at root",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity approval at authorization",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "identity approval at task",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_SCHEMA_INVALID"
+    },
+    {
+      "case": "nested escaped duplicate currency",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_JSON_INVALID"
+    },
+    {
+      "case": "decoded surrogate in nested key",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_INPUT_INVALID"
+    },
+    {
+      "case": "escaped surrogate nested value",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_INPUT_INVALID"
+    },
+    {
+      "case": "huge JSON integer stable rejection",
+      "result": "passed",
+      "reason": "PLANNING_OUTPUT_JSON_INVALID"
+    }
+  ],
+  "total": 56
+}
