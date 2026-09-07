@@ -146,6 +146,29 @@ def test_pre_effect_facts_callback_failure_changes_no_active_hold(ledger):
     assert store.snapshot() == before
 
 
+def test_pre_effect_final_callback_rechecks_its_clock_before_yield(ledger):
+    store, clock = ledger
+    value = bound_request(store)
+    admission_id = store.admit(value, command_key="reserve")["admission_id"]
+    store.activate(admission_id, command_key="activate")
+    before = store.snapshot()
+    callbacks: list[str] = []
+
+    def late_run_deadline_check() -> None:
+        callbacks.append("yield")
+        clock[0] = 1005.0
+
+    with pytest.raises(CapacityError, match="^OBSERVATION_STALE:short$"):
+        with store.pre_effect_guard(
+            admission_id,
+            expected_request=value,
+            before_effect_yield=late_run_deadline_check,
+        ):
+            pytest.fail("final stale facts entered the effect guard")
+    assert callbacks == ["yield"]
+    assert store.snapshot() == before
+
+
 @pytest.mark.parametrize("other_state", ["reserved", "active", "unknown"])
 def test_other_runs_holds_remain_charged_when_excluding_only_the_original_admission(
     ledger, other_state

@@ -400,6 +400,7 @@ class CapacityStore:
         command_key: str,
         before_reserve: Callable[[], None] | None = None,
         after_capacity_facts: Callable[[CapacityBoundaryFacts], None] | None = None,
+        before_reservation_write: Callable[[], None] | None = None,
     ) -> dict[str, Any]:
         """Admit a request, optionally rechecking a controller fact at the lock boundary.
 
@@ -413,11 +414,15 @@ class CapacityStore:
         after ``before_reserve`` and before a new reservation.  It is an
         internal, pure callback: it must not read controller sources or call
         Capacity.  A new admission has no owned claim to exclude.
+
+        ``before_reservation_write`` is the final trusted pure-time boundary.
+        It runs only after Capacity has completed its final source evaluation
+        and temporal recheck, immediately before a reservation can be written.
         """
         value = _admission_payload(request)
 
         def apply(db: sqlite3.Connection) -> dict[str, Any]:
-            profile, policy_revision, now, reasons, observations, availability = (
+            profile, policy, policy_revision, now, held, reasons, observations, availability = (
                 self._admission_evaluation(db, value)
             )
             if not reasons and before_reserve is not None:
@@ -426,7 +431,7 @@ class CapacityStore:
                 # Re-read every temporal Capacity input while this transaction
                 # is still held; its initial assessment cannot authorize a
                 # reservation at a later clock value.
-                profile, policy_revision, now, reasons, observations, availability = (
+                profile, policy, policy_revision, now, held, reasons, observations, availability = (
                     self._admission_evaluation(db, value)
                 )
             if not reasons and after_capacity_facts is not None:
@@ -441,9 +446,19 @@ class CapacityStore:
                 # The pure callback receives a source-complete snapshot, while
                 # this second check remains Capacity's final temporal/vector
                 # authority before a reservation can be written.
-                profile, policy_revision, now, reasons, observations, availability = (
+                profile, policy, policy_revision, now, held, reasons, observations, availability = (
                     self._admission_evaluation(db, value)
                 )
+            if not reasons:
+                now = self._now()
+                reasons = self._final_temporal_reasons(value, policy, held, observations, now)
+            if not reasons and before_reservation_write is not None:
+                before_reservation_write()
+                # The callback is pure, but its time check can be the instant a
+                # window crosses. Reuse the already-read facts; do not reopen a
+                # Capacity getter or alter the immutable captured fragment.
+                now = self._now()
+                reasons = self._final_temporal_reasons(value, policy, held, observations, now)
             decision: dict[str, Any] = {
                 "decision": "rejected" if reasons else "admitted",
                 "reason_codes": reasons,
@@ -479,7 +494,16 @@ class CapacityStore:
 
     def _admission_evaluation(
         self, db: sqlite3.Connection, value: dict[str, Any]
-    ) -> tuple[dict[str, Any], int, float, list[str], dict[str, Any], dict[str, str]]:
+    ) -> tuple[
+        dict[str, Any],
+        dict[str, Any],
+        int,
+        float,
+        list[dict[str, Any]],
+        list[str],
+        dict[str, Any],
+        dict[str, str],
+    ]:
         """Read the complete Capacity decision at one instant under its held lock."""
         if (
             db.execute(
@@ -507,7 +531,55 @@ class CapacityStore:
         reasons, observations, availability = self._evaluate(
             db, value, profile, policy, held, now, policy_revision=policy_row["revision"]
         )
-        return profile, policy_row["revision"], now, reasons, observations, availability
+        return (
+            profile,
+            policy,
+            policy_row["revision"],
+            now,
+            held,
+            reasons,
+            observations,
+            availability,
+        )
+
+    def _final_temporal_reasons(
+        self,
+        request: dict[str, Any],
+        policy: dict[str, Any],
+        held: list[dict[str, Any]],
+        observations: dict[str, Any],
+        now: float,
+    ) -> list[str]:
+        """Recheck elapsed Capacity conditions from a completed source read."""
+        lead = (
+            request["role"] == "commander"
+            and request["purpose"] == "lead"
+            and (
+                request.get("expected_capacity") is None
+                or request["expected_capacity"]["lead_reserve_access"]
+            )
+        )
+        reasons: list[str] = []
+        for pool_id, observed in observations.items():
+            if (
+                observed is None
+                or observed["observed_at"] > now
+                or now - observed["observed_at"] > policy["observation_max_age_seconds"]
+                or observed["reset_at"] is not None
+                and observed["reset_at"] <= now
+            ):
+                reasons.append("OBSERVATION_STALE:" + pool_id)
+                continue
+            if (
+                observed["metric"] == "unknown"
+                or observed["amount"] is None
+                or (observed["metric"] == "used" and observed["limit"] is None)
+            ):
+                reasons.extend(
+                    reason + ":" + pool_id
+                    for reason in self._conservative(request, policy, observed, held, now, lead)
+                )
+        return reasons
 
     @staticmethod
     def _reservation(db: sqlite3.Connection, identity: str) -> dict[str, Any]:
@@ -606,6 +678,7 @@ class CapacityStore:
         expected_request: dict[str, Any],
         before_effect: Callable[[], None] | None = None,
         after_capacity_facts: Callable[[CapacityBoundaryFacts], None] | None = None,
+        before_effect_yield: Callable[[], None] | None = None,
     ) -> Iterator[dict[str, Any]]:
         """Hold a fresh capacity check across the caller's bounded effect boundary.
 
@@ -679,6 +752,22 @@ class CapacityStore:
             )
             if reasons:
                 raise CapacityError(reasons[0])
+            now = self._now()
+            temporal = self._final_temporal_reasons(
+                expected, json.loads(policy["data"]), held, observations, now
+            )
+            if temporal:
+                raise CapacityError(temporal[0])
+            if before_effect_yield is not None:
+                before_effect_yield()
+                now = self._now()
+                if item["expires_at"] <= now:
+                    raise CapacityError("RESERVATION_EXPIRED")
+                temporal = self._final_temporal_reasons(
+                    expected, json.loads(policy["data"]), held, observations, now
+                )
+                if temporal:
+                    raise CapacityError(temporal[0])
             yield {
                 "decision": "capacity_revalidated",
                 "reason_codes": [],
