@@ -33,6 +33,7 @@ from .candidate_subjects import (
     stage_transition,
 )
 from .go_execution_intent import GoExecutionIntents, _connection
+from .go_reviewer_scope import resolve_go_reviewer_execution
 from .routing import _current_binding
 from .workspace import _approved_task
 
@@ -418,7 +419,7 @@ class ApprovedReviewerBindings:
         }
         catalog = effective_catalog(db, run["project_id"])
         resources = deepcopy(fixed["resources"])
-        facts, observations, issues = [], {}, []
+        facts, observations, issues, profile_limits = [], {}, [], []
         for registration in resources["profiles"]:
             ref = {"id": registration["id"], "revision": registration["revision"]}
             registration["capability_evidence"] = []
@@ -435,6 +436,11 @@ class ApprovedReviewerBindings:
                     or observed["facts"]["provenance"] != "imported_observation"
                 ):
                     raise QualificationError("REVIEWER_QUALIFICATION_REQUIRED")
+                limits, scope_reasons = resolve_go_reviewer_execution(
+                    original, observed, task_snapshot, execution, selection["effective_class"]
+                )
+                if limits is None:
+                    raise QualificationError(scope_reasons[0])
                 authentication = observed["observation"]["binding"]["execution_start"][
                     "authentication_source"
                 ]
@@ -456,6 +462,7 @@ class ApprovedReviewerBindings:
                     "qualification_source_digest": digest(observed["observation"]["binding"]),
                     "authentication_source_digest": digest(authentication),
                 }
+                profile_limits.append({"profile": ref, "limits": limits})
                 facts.append(observed["facts"])
                 registration["capability_evidence"] = observed["capability_evidence"]
                 if observed["facts"]["data_destination"] != execution["channel_destinations"].get(
@@ -495,6 +502,7 @@ class ApprovedReviewerBindings:
             "qualification_issues": issues,
             "preparation_identity_only": True,
             "actual_reviewer_attempt": None,
+            "profile_limits": profile_limits,
         }
         if not membership["eligible_profiles"]:
             return {

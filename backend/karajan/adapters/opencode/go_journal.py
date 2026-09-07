@@ -119,6 +119,13 @@ class _QualificationGrantV2(_GrantBinding):
     context: GoQualificationLimits
 
 
+class _ReviewerQualificationGrant(_GrantBinding):
+    schema_version: Literal["karajan.go-reviewer-qualification-grant.v1"]
+    probe_spec_digest: _Digest
+    scenario: Literal["clean_review", "defect_review", "denied_read"]
+    context: GoQualificationLimits
+
+
 class _TaskSubject(Contract):
     kind: Literal["task_attempt"]
     project_id: Identifier
@@ -195,6 +202,8 @@ def _binding(value: object) -> dict[str, Any]:
     if isinstance(value, dict) and "subject" in value:
         return _validated(_TaskGrantBinding, value)
     if isinstance(value, dict) and "schema_version" in value:
+        if value["schema_version"] == "karajan.go-reviewer-qualification-grant.v1":
+            return _validated(_ReviewerQualificationGrant, value)
         return _validated(_QualificationGrantV2, value)
     legacy = _validated(_GrantBinding, value)
     # Preserve the legacy public shape and key order, including canonical JSON
@@ -369,7 +378,10 @@ class GoCallJournal:
                 if old.get("request_context") != context:
                     raise GoJournalError("CALL_CONTEXT_CONFLICT")
                 return {"send_allowed": False, "receipt": old}
-            if value.get("schema_version") == "karajan.go-qualification-grant.v2":
+            if value.get("schema_version") in {
+                "karajan.go-qualification-grant.v2",
+                "karajan.go-reviewer-qualification-grant.v1",
+            }:
                 if context is None:
                     raise GoJournalError("QUALIFICATION_CONTEXT_REQUIRED")
                 if any(context[key] != expected for key, expected in value["context"].items()):

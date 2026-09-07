@@ -21,6 +21,7 @@ from karajan.runs.planning import identifier
 
 from .admission import ApprovedTaskAdmission
 from .go_execution_intent import GoExecutionIntents
+from .qualification_services import GoQualificationSettings, open_go_qualification_store
 from .routing import ApprovedRunRouting
 
 if TYPE_CHECKING:
@@ -55,9 +56,10 @@ class CheckSettings:
     python_executable: Path
     allowed_roots: tuple[Path, ...]
     environment_sources: tuple[CheckEnvironmentSource, ...] = ()
+    go_qualification_source: GoQualificationSettings | None = None
 
     def document(self) -> dict[str, Any]:
-        return {
+        result: dict[str, Any] = {
             "schema_version": _SCHEMA,
             **{name: str(getattr(self, name)) for name in _PATHS},
             "allowed_roots": [str(path) for path in self.allowed_roots],
@@ -66,14 +68,27 @@ class CheckSettings:
                 for row in self.environment_sources
             ],
         }
+        if self.go_qualification_source is not None:
+            result.update(
+                schema_version="karajan.candidate-check-bootstrap.v2",
+                go_qualification_source=self.go_qualification_source.document(),
+            )
+        return result
 
     @classmethod
     def from_document(cls, value: object) -> "CheckSettings":
         try:
+            current_source = (
+                isinstance(value, dict)
+                and value.get("schema_version") == "karajan.candidate-check-bootstrap.v2"
+            )
+            expected_keys = {"schema_version", *_PATHS, "allowed_roots", "environment_sources"}
+            if current_source:
+                expected_keys.add("go_qualification_source")
             if (
                 not isinstance(value, dict)
-                or set(value) != {"schema_version", *_PATHS, "allowed_roots", "environment_sources"}
-                or value["schema_version"] != _SCHEMA
+                or set(value) != expected_keys
+                or value["schema_version"] not in {_SCHEMA, "karajan.candidate-check-bootstrap.v2"}
             ):
                 raise ValueError()
 
@@ -105,6 +120,11 @@ class CheckSettings:
                 **{name: path(value[name]) for name in _PATHS},
                 allowed_roots=tuple(path(raw) for raw in roots),
                 environment_sources=tuple(entries),
+                go_qualification_source=GoQualificationSettings.from_document(
+                    value["go_qualification_source"]
+                )
+                if current_source
+                else None,
             )
         except (ValueError, TypeError, KeyError, OSError):
             raise RunError("CHECK_BOOTSTRAP_INVALID") from None
@@ -259,6 +279,14 @@ def open_check_services(
     for path in (*protected, settings.check_work_root):
         if any(path.is_relative_to(root) for root in repositories):
             raise RunError("CHECK_CONTROL_STATE_IN_REPOSITORY")
+    if settings.go_qualification_source is not None:
+        for path in settings.go_qualification_source.paths():
+            if any(path.is_relative_to(root) for root in repositories):
+                raise RunError("CHECK_CONTROL_STATE_IN_REPOSITORY")
+            if path.is_relative_to(
+                settings.check_work_root
+            ) or settings.check_work_root.is_relative_to(path):
+                raise RunError("CHECK_WORK_ROOT_MUST_BE_SEPARATE")
     if any(
         settings.check_work_root.is_relative_to(path)
         or path.is_relative_to(settings.check_work_root)
@@ -270,6 +298,12 @@ def open_check_services(
             _plain(path, directory=True)
             _private(path, directory=True)
         _plain(settings.host_directory / "runnerhost.sqlite3")
+        qualifications = open_go_qualification_store(
+            projects,
+            settings.go_qualification_source,
+            for_current=True,
+        )
+        routing.qualifications = qualifications
     candidates = CandidateStore(
         settings.candidate_directory, existing_only=True, defer_validation=not for_execution
     )

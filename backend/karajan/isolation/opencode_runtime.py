@@ -290,6 +290,45 @@ class IsolatedOpenCode:
         snapshot["runtime_sha256"] = RUNTIME_SHA256
         return snapshot
 
+    def readonly_projection_observation(self) -> list[dict[str, Any]]:
+        """Read actual mount flags and file identities in our live namespace.
+
+        This does not run a native tool or grant access. The explicit projection,
+        pinned successful start and current init identity determine every path.
+        """
+        if sys.platform != "linux":
+            raise ValueError("LINUX_NAMESPACES_REQUIRED")
+        with self._lifecycle_lock:
+            identity = self._init_identity
+            if (
+                self._snapshot["state"] != "running"
+                or self._projection is None
+                or identity is None
+                or _birth(identity["pid"]) != identity["birth"]
+            ):
+                raise ValueError("PROJECTION_OBSERVATION_NOT_RUNNING")
+            root = Path(f"/proc/{identity['pid']}/root/workspace")
+            rows = []
+            for row in self._projection:
+                projected = root / row["path"]
+                mounted = projected.stat()
+                original = (self.workspace / row["path"]).stat()
+                flags = os.statvfs(projected).f_flag
+                rows.append(
+                    {
+                        "path": row["path"],
+                        "readonly": bool(flags & os.ST_RDONLY),
+                        "mount_flags": flags,
+                        "device": mounted.st_dev,
+                        "inode": mounted.st_ino,
+                        "host_identity_matches": (mounted.st_dev, mounted.st_ino)
+                        == (original.st_dev, original.st_ino),
+                    }
+                )
+            if _birth(identity["pid"]) != identity["birth"]:
+                raise ValueError("PROJECTION_OBSERVATION_NOT_RUNNING")
+            return rows
+
     def close(self) -> dict[str, Any]:
         with self._close_lock:
             return self._close()

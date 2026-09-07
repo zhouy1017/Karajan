@@ -57,6 +57,7 @@ class ReviewerQualificationFixture(ProfileQualificationStore):
 
     generation = 1
     enabled = True
+    mutate = None
 
     def __init__(self, original):
         self.projects = original.projects
@@ -66,7 +67,19 @@ class ReviewerQualificationFixture(ProfileQualificationStore):
         if not self.enabled:
             raise QualificationError("QUALIFICATION_REVOKED")
         observed = deepcopy(self.original._facts(db, project_id, registration, scope, fixture_root))
-        observed["facts"].update(roles=["reviewer"], tools=["read", "edit"])
+        observed["facts"].update(roles=["reviewer"], tools=["read"])
+        # This explicit C double now supplies the readonly scope consumed by
+        # production binding. It remains no evidence for this Worker's actual role.
+        observed["qualification_scope"] = "readonly_reviewer_tools"
+        observed["executor_scope"].update(
+            schema_version="karajan.go-readonly-reviewer-executor-scope.v1",
+            suite_ref={"id": "opencode-go-readonly-review-linux", "revision": 1},
+            tools=["read"],
+            supported_roles=["reviewer"],
+            candidate_capture=False,
+            output_policy="fixed_native_limit",
+            output_parser_revision="karajan.review-output-parser.v1",
+        )
         observed["observation"]["binding"]["synthetic_reviewer_generation"] = self.generation
         observed["observation"]["binding"]["execution_start"]["authentication_source"][
             "generation"
@@ -82,6 +95,8 @@ class ReviewerQualificationFixture(ProfileQualificationStore):
                     "evidence_ref": "synthetic-reviewer-source",
                 }
             )
+        if self.mutate is not None:
+            self.mutate(observed)
         return observed
 
 
