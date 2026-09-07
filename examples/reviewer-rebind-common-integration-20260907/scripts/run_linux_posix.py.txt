@@ -1,0 +1,63 @@
+"""Run unchanged Candidate tests on a real Linux filesystem, preserving DrvFs history."""
+
+import hashlib
+import json
+import os
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+ROOT = Path.cwd().resolve()
+OUT = ROOT / ".cache/common-repair-downstream/linux-posix"
+BASE = Path("/tmp/karajan-rebind-f7d-20260907-0243")
+EXPECTED = "f7d42455752a5fe040d6670361ec6d18de0f9051"
+POINTER = (ROOT / ".git").read_text(encoding="utf-8").strip()
+ADMIN = "/mnt/c/" + POINTER.removeprefix("gitdir: C:/")
+
+
+def git(*args):
+    return subprocess.check_output(
+        ["git", "--git-dir=" + ADMIN, "--work-tree=" + str(ROOT), *args],
+        encoding="utf-8", errors="strict",
+    ).strip()
+
+
+def snapshot():
+    paths = [p for p in git("ls-files", "backend", "tests/candidates").splitlines()
+             if p.endswith(".py")] + ["pyproject.toml", "uv.lock"]
+    return {p: hashlib.sha256((ROOT / p).read_bytes()).hexdigest() for p in sorted(paths)}
+
+
+def save(name, value):
+    (OUT / name).write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8", newline="\n")
+
+
+assert sys.platform == "linux" and POINTER.startswith("gitdir: C:/")
+assert git("rev-parse", "HEAD") == EXPECTED
+assert not BASE.exists()
+OUT.mkdir(exist_ok=False)
+before = snapshot()
+save("source-before.json", before)
+env = dict(os.environ)
+env.update(PYTHONPATH=str(ROOT / "backend"), HF_HUB_OFFLINE="1",
+           TRANSFORMERS_OFFLINE="1", PIP_NO_INDEX="1",
+           PYTHONPYCACHEPREFIX=str(BASE) + "-pycache")
+argv = [sys.executable, "-m", "pytest", "tests/candidates", "-q", "-p", "no:cacheprovider",
+        "-o", "pythonpath=backend tests/candidates", "--basetemp=" + str(BASE),
+        "--junitxml=" + str(OUT / "tests.xml")]
+save("commands.json", {"head": EXPECTED, "argv": argv, "cwd": str(ROOT),
+                       "python": sys.version, "PYTHONPATH": env["PYTHONPATH"],
+                       "filesystem": "Linux /tmp; no DrvFs temp files", "offline": True})
+started = datetime.now(timezone.utc).isoformat()
+with (OUT / "pytest.stdout.txt").open("wb") as log:
+    process = subprocess.run(argv, env=env, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
+after = snapshot()
+save("source-after.json", after)
+result = {"head": git("rev-parse", "HEAD"), "exit_code": process.returncode,
+          "started_at": started, "finished_at": datetime.now(timezone.utc).isoformat(),
+          "sources_equal": before == after, "source_count": len(before)}
+save("result.json", result)
+print(json.dumps(result))
+raise SystemExit(1 if process.returncode or before != after else 0)

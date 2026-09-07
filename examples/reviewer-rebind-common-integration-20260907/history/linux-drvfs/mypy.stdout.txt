@@ -1,0 +1,1 @@
+/tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python: No module named mypy

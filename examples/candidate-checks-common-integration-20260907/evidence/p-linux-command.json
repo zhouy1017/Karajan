@@ -1,0 +1,32 @@
+{
+  "command": [
+    "/tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python",
+    "-m",
+    "pytest",
+    "-p",
+    "no:cacheprovider",
+    "-o",
+    "pythonpath=backend tests/projects tests/runs tests/web tests/isolation tests/adapters/opencode tests/candidates tests/execution",
+    "--basetemp",
+    "/tmp/karajan-common-downstream-valid-p-linux-20260907",
+    "--junitxml",
+    "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-validation/.cache/common-repair-downstream/p-linux.xml",
+    "-q",
+    "tests/runs/test_candidate_checks_native.py",
+    "tests/runs/test_candidate_checks_concurrency_native.py"
+  ],
+  "cwd": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-validation",
+  "env": {
+    "PYTHONPATH": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-validation/backend",
+    "KARAJAN_GO_TOKENIZER_DIRECTORY": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-artifacts",
+    "KARAJAN_REQUIRE_GO_TOKENIZER": "1",
+    "KARAJAN_OPENCODE_LINUX_BINARY": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode",
+    "KARAJAN_REQUIRE_OPENCODE_ISOLATION": "1",
+    "HF_HUB_OFFLINE": "1",
+    "TRANSFORMERS_OFFLINE": "1",
+    "PYTHONUTF8": "1"
+  },
+  "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "actual_head": "552dd6b5c78279efc398126e417969c41688232d",
+  "claim": "Offline local fixture validation; no provider credentials are read."
+}

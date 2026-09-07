@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+    "-m",
+    "mypy",
+    "--platform",
+    "linux",
+    "--cache-dir",
+    "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-candidate-rebind\\.cache\\common-repair-downstream\\linux-static\\mypy-cache",
+    "backend/karajan/candidates"
+  ],
+  "cwd": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-candidate-rebind",
+  "host": "Windows; Linux target for static type analysis",
+  "started_at": "2026-09-07T02:43:29.336472+00:00",
+  "finished_at": "2026-09-07T02:43:31.051952+00:00",
+  "exit_code": 0
+}

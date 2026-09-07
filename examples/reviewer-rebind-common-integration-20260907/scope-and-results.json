@@ -1,0 +1,239 @@
+{
+  "schema_version": "karajan.rebind-common-integration-audit.v1",
+  "recorded_at": "2026-09-07T02:45:01.711232+00:00",
+  "issue": 96,
+  "pull_request": 98,
+  "reviewer": "qualification_integration",
+  "kind": "Independent downstream integration check; original rebind implementation was authored by this reviewer and is not reclassified as independent original-code review",
+  "old_head": "f1919a97ec4a0ef609105fcdc9a30374cb9d6c34",
+  "common_head": "ef440f4e7902bc1d3a262afa9112154cd9690a4a",
+  "implementation_commit": "f7d42455752a5fe040d6670361ec6d18de0f9051",
+  "parents": [
+    "f1919a97ec4a0ef609105fcdc9a30374cb9d6c34",
+    "ef440f4e7902bc1d3a262afa9112154cd9690a4a"
+  ],
+  "changed_product_tests": [
+    {
+      "path": "backend/karajan/adapters/opencode/go_relay.py",
+      "merged_sha256": "c45f2784bff518407fc90c3f61d9adf0a92b69f701b77dde1aef86e6b0b5d2cd",
+      "common_sha256": "c45f2784bff518407fc90c3f61d9adf0a92b69f701b77dde1aef86e6b0b5d2cd",
+      "equals_common": true
+    },
+    {
+      "path": "backend/karajan/isolation/go_task.py",
+      "merged_sha256": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+      "common_sha256": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+      "equals_common": true
+    },
+    {
+      "path": "backend/karajan/orchestration/go_execution_intent.py",
+      "merged_sha256": "4e72794f6aae846d31788d136dbe47bf15aa6fde839731c57d14f5aa86c5a8e9",
+      "common_sha256": "4e72794f6aae846d31788d136dbe47bf15aa6fde839731c57d14f5aa86c5a8e9",
+      "equals_common": true
+    },
+    {
+      "path": "backend/karajan/orchestration/go_task_execution.py",
+      "merged_sha256": "789e9945a698d6f519f65db35205460ad35a0babf35aee2fbb5c6f82ec095b4d",
+      "common_sha256": "789e9945a698d6f519f65db35205460ad35a0babf35aee2fbb5c6f82ec095b4d",
+      "equals_common": true
+    },
+    {
+      "path": "tests/adapters/opencode/test_go_relay.py",
+      "merged_sha256": "580b428c9169a6ecfcc50c06cb81099b8d257fc69921e3c5164a55dddbc07d23",
+      "common_sha256": "580b428c9169a6ecfcc50c06cb81099b8d257fc69921e3c5164a55dddbc07d23",
+      "equals_common": true
+    },
+    {
+      "path": "tests/adapters/opencode/test_go_relay_context.py",
+      "merged_sha256": "ae7bac8042c44e28e4e5dca06d0d839a61ed187816d68930307c25fb45596135",
+      "common_sha256": "ae7bac8042c44e28e4e5dca06d0d839a61ed187816d68930307c25fb45596135",
+      "equals_common": true
+    },
+    {
+      "path": "tests/adapters/opencode/test_go_unix_relay.py",
+      "merged_sha256": "0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f",
+      "common_sha256": "0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f",
+      "equals_common": true
+    },
+    {
+      "path": "tests/isolation/test_go_task.py",
+      "merged_sha256": "0784cb488b333815da50270030c74cd29cce446c036a411071e63a83fa596f76",
+      "common_sha256": "0784cb488b333815da50270030c74cd29cce446c036a411071e63a83fa596f76",
+      "equals_common": true
+    },
+    {
+      "path": "tests/runs/test_go_native_diagnostic_contract.py",
+      "merged_sha256": "7a3f9dc8501152f6fd4e3a1ef9393028633d5c992e445cb8d5874c27a0a57c0e",
+      "common_sha256": "7a3f9dc8501152f6fd4e3a1ef9393028633d5c992e445cb8d5874c27a0a57c0e",
+      "equals_common": true
+    },
+    {
+      "path": "tests/runs/test_go_task_execution.py",
+      "merged_sha256": "dc504c7cb1f360bd6632b7a8765ed5eb7ba71a68a04987f78a7446c9a54f011a",
+      "common_sha256": "dc504c7cb1f360bd6632b7a8765ed5eb7ba71a68a04987f78a7446c9a54f011a",
+      "equals_common": true
+    }
+  ],
+  "candidate_sources_and_tests_changed": [],
+  "future_validation_subject_paths_present": [],
+  "runs": [
+    {
+      "platform": "windows",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "3",
+          "tests": "167",
+          "time": "147.124",
+          "timestamp": "2026-09-07T10:36:36.551877+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ],
+      "classes": {
+        "tests.candidates.test_baseline_materialization": 16,
+        "tests.candidates.test_capture_recovery": 19,
+        "tests.candidates.test_projected_capture": 15,
+        "tests.candidates.test_review_rebind": 42,
+        "tests.candidates.test_validation": 75
+      },
+      "result": {
+        "head": "f7d42455752a5fe040d6670361ec6d18de0f9051",
+        "results": [
+          {
+            "command": "pytest",
+            "exit_code": 0,
+            "started_at": "2026-09-07T02:36:35.938669+00:00",
+            "finished_at": "2026-09-07T02:39:03.793883+00:00"
+          },
+          {
+            "command": "ruff",
+            "exit_code": 0,
+            "started_at": "2026-09-07T02:39:03.793883+00:00",
+            "finished_at": "2026-09-07T02:39:03.884212+00:00"
+          },
+          {
+            "command": "mypy",
+            "exit_code": 0,
+            "started_at": "2026-09-07T02:39:03.884212+00:00",
+            "finished_at": "2026-09-07T02:39:05.829154+00:00"
+          }
+        ],
+        "sources_equal": true,
+        "source_count": 136
+      },
+      "before_after_equal": true,
+      "source_count": 136,
+      "current_missing": [],
+      "current_mismatch": [],
+      "xml_sha256": "da201188deee78357b18e5a097d3d1e0a619815c1a7e8ecce619c9253347f708"
+    },
+    {
+      "platform": "linux",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "50",
+          "skipped": "0",
+          "tests": "80",
+          "time": "208.047",
+          "timestamp": "2026-09-07T10:38:00.969314+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ],
+      "classes": {
+        "tests.candidates.test_baseline_materialization": 16,
+        "tests.candidates.test_capture_recovery": 19,
+        "tests.candidates.test_projected_capture": 15,
+        "tests.candidates.test_review_rebind": 30,
+        "null": 1
+      },
+      "result": {
+        "head": "f7d42455752a5fe040d6670361ec6d18de0f9051",
+        "results": [
+          {
+            "command": "pytest",
+            "exit_code": 2,
+            "started_at": "2026-09-07T02:38:00.632436+00:00",
+            "finished_at": "2026-09-07T02:41:23.677811+00:00"
+          },
+          {
+            "command": "ruff",
+            "exit_code": 1,
+            "started_at": "2026-09-07T02:41:23.677886+00:00",
+            "finished_at": "2026-09-07T02:41:23.709352+00:00"
+          },
+          {
+            "command": "mypy",
+            "exit_code": 1,
+            "started_at": "2026-09-07T02:41:23.709425+00:00",
+            "finished_at": "2026-09-07T02:41:23.740640+00:00"
+          }
+        ],
+        "sources_equal": true,
+        "source_count": 136
+      },
+      "before_after_equal": true,
+      "source_count": 136,
+      "current_missing": [],
+      "current_mismatch": [],
+      "xml_sha256": "06fa64d1650c8cd28b94135d2a7b2def86a635b78d67e77b7a3b3e75bbc24f3d"
+    },
+    {
+      "platform": "linux-posix",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "167",
+          "time": "17.844",
+          "timestamp": "2026-09-07T10:43:19.975151+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ],
+      "classes": {
+        "tests.candidates.test_baseline_materialization": 16,
+        "tests.candidates.test_capture_recovery": 19,
+        "tests.candidates.test_projected_capture": 15,
+        "tests.candidates.test_review_rebind": 42,
+        "tests.candidates.test_validation": 75
+      },
+      "result": {
+        "head": "f7d42455752a5fe040d6670361ec6d18de0f9051",
+        "exit_code": 0,
+        "started_at": "2026-09-07T02:43:19.165210+00:00",
+        "finished_at": "2026-09-07T02:43:37.350929+00:00",
+        "sources_equal": true,
+        "source_count": 136
+      },
+      "before_after_equal": true,
+      "source_count": 136,
+      "current_missing": [],
+      "current_mismatch": [],
+      "xml_sha256": "2284ba38934440f8144df035c087181e79ec32dffba23007349a3374eb8a2dcf"
+    }
+  ],
+  "static": {
+    "ruff": "Windows-hosted Ruff candidates+tests passed",
+    "mypy_win32": "Windows host win32 target, 6 source files passed",
+    "mypy_linux": "Windows host linux target, 6 source files passed; WSL environment has no mypy/ruff packages, no installation attempted"
+  },
+  "scope": [
+    "All five Candidate test files, including 42 policy-only rebind cases and ordinary validation/gate/capture recovery.",
+    "Real temporary Git, SQLite, CAS and filesystem mode behavior; no provider/key calls.",
+    "No complete native Task P rerun; common aa/ef evidence remains separately source-bound.",
+    "No VALID Checks, SUBJECT consumer, Reviewer qualification or Rulebook producer imported."
+  ],
+  "diagnostic_history": [
+    "Initial Linux metadata probe failed before pytest because Windows .git administrative path needed per-read translation. Original script retained.",
+    "Initial Linux pytest used DrvFs temp files: first failure stat showed0777 instead of expected0755; interrupted once after80 collected results to retain failures. It recorded50 failures (1 mode assertion,49 PATH_OUTSIDE_AUTHORIZATION),0errors,0skips. Not reclassified as a passing run.",
+    "Only cache harness/environment was corrected: new unique real Linux/tmp basetemp and private bytecode cache. Unchanged full167 tests then passed. No product or formal test edits."
+  ],
+  "confirmed_product_findings": [],
+  "G": "not_run for this downstream merge in this task",
+  "S": "not_run"
+}

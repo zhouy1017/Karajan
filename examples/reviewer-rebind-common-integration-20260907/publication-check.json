@@ -1,0 +1,6 @@
+{
+  "copied_files": 32,
+  "all_source_destination_bytes_equal": true,
+  "implementation_commit": "f7d42455752a5fe040d6670361ec6d18de0f9051",
+  "excluded": "SQLite, temporary Git repositories, mutable state, pycache and mypy-cache"
+}

@@ -1,0 +1,5 @@
+The first WSL invocation stopped before pytest and before creating Linux result files. The cache evidence runner invoked Linux git against the Windows-authored worktree .git pointer. Tool stderr began:
+
+fatal: not a git repository: /mnt/c/Users/Chooo/Playground/Karajan/.cache/reviewer-candidate-rebind/C:/Users/Chooo/Playground/Karajan/.git/worktrees/reviewer-candidate-rebind
+
+This is an excerpt from tool output, not a saved raw subprocess log. No Candidate test ran in that invocation. The evidence script was corrected to translate the explicit administrative git-dir for its own read-only Git calls only; fixture subprocesses receive no GIT_DIR override. The initial script bytes are retained as run.initial.py.txt; Windows used that version. No product/author test was changed.
