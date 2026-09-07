@@ -1,0 +1,483 @@
+{
+  "schema_version": "karajan.relay-ci-repair-publication.v1",
+  "implementation_commit": "03984aa08aecf79c33c44a9a054a707ae04748e0",
+  "base_commit": "7c85669a3d2a5b717bbcaea7f8dbbf2c5ea937a0",
+  "publication_candidate_ci": "pending",
+  "merge": "not_performed",
+  "provider_calls": 0,
+  "evidence_scope": "Local synthetic upstream with real TCP/HTTPX and SQLite; no S qualification",
+  "copy_counts": {
+    "author": 11,
+    "independent": 14,
+    "historical": 4,
+    "linux_followup": 8,
+    "total": 37
+  },
+  "copies": [
+    {
+      "category": "author",
+      "origin": ".cache/luna-relay-author/failed-harness-static.txt",
+      "destination": "author/failed-harness-static.txt",
+      "sha256": "8cd0428efc2341936964eb3cd0a9cb708fd2b7b63ce0f6ba0e84c90692e404f0",
+      "bytes": 110,
+      "original_freeze_sha256": null,
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "author",
+      "origin": ".cache/luna-relay-author/final-freeze.txt",
+      "destination": "author/final-freeze.txt",
+      "sha256": "e41744c52a3c7cb4ed75cd4b0dd4e7d59bdac42376e4a5dcdc0335ca9bddd667",
+      "bytes": 755,
+      "original_freeze_sha256": null,
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "author",
+      "origin": ".cache/luna-relay-author/formal.log",
+      "destination": "author/formal.log",
+      "sha256": "81ad9f2fff4917797897bd6e47ed507167d9022f2398a30abbbdc62c2608c896",
+      "bytes": 265,
+      "original_freeze_sha256": null,
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "author",
+      "origin": ".cache/luna-relay-author/formal.xml",
+      "destination": "author/formal.xml",
+      "sha256": "f22a6205fc24a7db1990f01ccc5077afb90179236cf19ee8312efd02b0f81eec",
+      "bytes": 33017,
+      "original_freeze_sha256": null,
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "author",
+      "origin": ".cache/luna-relay-author/independent.xml",
+      "destination": "author/independent.xml",
+      "sha256": "aaf36ee5dbb81d2a20617f165566ff09b0f4c5dd932158400b6a45ca0abcdb92",
+      "bytes": 1186,
+      "original_freeze_sha256": null,
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "author",
+      "origin": ".cache/luna-relay-author/lost-begin-observation.json",
+      "destination": "author/lost-begin-observation.json",
+      "sha256": "ebf3e02d221cb359d24e196034c42a74f62639f5572b6e146834167ff9114103",
+      "bytes": 185,
+      "original_freeze_sha256": null,
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "author",
+      "origin": ".cache/luna-relay-author/mypy-source.log",
+      "destination": "author/mypy-source.log",
+      "sha256": "8e63ae22e8213e327a5e9cbd584067681681bd8ef7f25c869877887ccdcfc4ff",
+      "bytes": 43,
+      "original_freeze_sha256": null,
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "author",
+      "origin": ".cache/luna-relay-author/mypy.log",
+      "destination": "author/mypy.log",
+      "sha256": "15bd2f513a66ef0b376e38b7a7023c3bb6892028e543bb2bdd04f6055e34ad5a",
+      "bytes": 2599,
+      "original_freeze_sha256": null,
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "author",
+      "origin": ".cache/luna-relay-author/ruff.log",
+      "destination": "author/ruff.log",
+      "sha256": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0",
+      "bytes": 20,
+      "original_freeze_sha256": null,
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "author",
+      "origin": ".cache/luna-relay-author/test_followup_boundaries.py",
+      "destination": "author/test_followup_boundaries.py.txt",
+      "sha256": "7a8853d2002badaa4eb2a36ce0e54a9307c96dc04d572c5906afa443fd2dcab1",
+      "bytes": 3975,
+      "original_freeze_sha256": null,
+      "copied_without_byte_changes": true,
+      "renamed_only": true
+    },
+    {
+      "category": "author",
+      "origin": ".cache/luna-relay-author/test_rejection_boundary.py",
+      "destination": "author/test_rejection_boundary.py.txt",
+      "sha256": "78792f8df5a199d892c7217de54a2d31dae7f66c8b9c6ba46d9cb318854981a7",
+      "bytes": 4610,
+      "original_freeze_sha256": null,
+      "copied_without_byte_changes": true,
+      "renamed_only": true
+    },
+    {
+      "category": "independent",
+      "origin": ".cache/relay-resume-independent/README.md",
+      "destination": "independent/README.md",
+      "sha256": "508c2fb6f0d616769a707ca9c610f25636efbe83198aa055dccf383ac8946cc6",
+      "bytes": 6163,
+      "original_freeze_sha256": "508c2fb6f0d616769a707ca9c610f25636efbe83198aa055dccf383ac8946cc6",
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "independent",
+      "origin": ".cache/relay-resume-independent/after-sources.json",
+      "destination": "independent/after-sources.json",
+      "sha256": "28717dbdecad6dc0b18bcdef336cc59717e943ed587f7337eea15c9fb71f9597",
+      "bytes": 709,
+      "original_freeze_sha256": "28717dbdecad6dc0b18bcdef336cc59717e943ed587f7337eea15c9fb71f9597",
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "independent",
+      "origin": ".cache/relay-resume-independent/before-sources.json",
+      "destination": "independent/before-sources.json",
+      "sha256": "28717dbdecad6dc0b18bcdef336cc59717e943ed587f7337eea15c9fb71f9597",
+      "bytes": 709,
+      "original_freeze_sha256": "28717dbdecad6dc0b18bcdef336cc59717e943ed587f7337eea15c9fb71f9597",
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "independent",
+      "origin": ".cache/relay-resume-independent/before.patch.txt",
+      "destination": "independent/before.patch.txt",
+      "sha256": "333a6523c2102bb88d0b59227f766c30b0f667147bde2afad8bbfd1bc64d644a",
+      "bytes": 15288,
+      "original_freeze_sha256": "333a6523c2102bb88d0b59227f766c30b0f667147bde2afad8bbfd1bc64d644a",
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "independent",
+      "origin": ".cache/relay-resume-independent/framing.xml",
+      "destination": "independent/framing.xml",
+      "sha256": "7379d22d99cdcacba3492cc2904f8e15a9e9a2b647bb20a885e1ca110f961eef",
+      "bytes": 952,
+      "original_freeze_sha256": "7379d22d99cdcacba3492cc2904f8e15a9e9a2b647bb20a885e1ca110f961eef",
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "independent",
+      "origin": ".cache/relay-resume-independent/go_relay.py.before.py.txt",
+      "destination": "independent/go_relay.py.before.py.txt",
+      "sha256": "deb0239590d67ddfb077f025773bb9c7c2947a7f3379c693f7ee469d0aab2453",
+      "bytes": 40081,
+      "original_freeze_sha256": "deb0239590d67ddfb077f025773bb9c7c2947a7f3379c693f7ee469d0aab2453",
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "independent",
+      "origin": ".cache/relay-resume-independent/lost-begin-observation.json",
+      "destination": "independent/lost-begin-observation.json",
+      "sha256": "ebf3e02d221cb359d24e196034c42a74f62639f5572b6e146834167ff9114103",
+      "bytes": 185,
+      "original_freeze_sha256": "ebf3e02d221cb359d24e196034c42a74f62639f5572b6e146834167ff9114103",
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "independent",
+      "origin": ".cache/relay-resume-independent/six.xml",
+      "destination": "independent/six.xml",
+      "sha256": "26ba198e6125bbf42c1ba783e4aa8908ccc4d75949a51805bc56c907c1cb6dd3",
+      "bytes": 1228,
+      "original_freeze_sha256": "26ba198e6125bbf42c1ba783e4aa8908ccc4d75949a51805bc56c907c1cb6dd3",
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "independent",
+      "origin": ".cache/relay-resume-independent/test_followup_boundaries.py",
+      "destination": "independent/test_followup_boundaries.py.txt",
+      "sha256": "7a8853d2002badaa4eb2a36ce0e54a9307c96dc04d572c5906afa443fd2dcab1",
+      "bytes": 3975,
+      "original_freeze_sha256": "7a8853d2002badaa4eb2a36ce0e54a9307c96dc04d572c5906afa443fd2dcab1",
+      "copied_without_byte_changes": true,
+      "renamed_only": true
+    },
+    {
+      "category": "independent",
+      "origin": ".cache/relay-resume-independent/test_framing_boundaries.py",
+      "destination": "independent/test_framing_boundaries.py.txt",
+      "sha256": "52cfe113e3679511e3464a9bd1c8d95339c7c1670a5705cddbb19c7ed1d45aeb",
+      "bytes": 3205,
+      "original_freeze_sha256": "52cfe113e3679511e3464a9bd1c8d95339c7c1670a5705cddbb19c7ed1d45aeb",
+      "copied_without_byte_changes": true,
+      "renamed_only": true
+    },
+    {
+      "category": "independent",
+      "origin": ".cache/relay-resume-independent/test_go_relay.py.before.py.txt",
+      "destination": "independent/test_go_relay.py.before.py.txt",
+      "sha256": "580b428c9169a6ecfcc50c06cb81099b8d257fc69921e3c5164a55dddbc07d23",
+      "bytes": 30879,
+      "original_freeze_sha256": "580b428c9169a6ecfcc50c06cb81099b8d257fc69921e3c5164a55dddbc07d23",
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "independent",
+      "origin": ".cache/relay-resume-independent/test_go_relay_context.py.before.py.txt",
+      "destination": "independent/test_go_relay_context.py.before.py.txt",
+      "sha256": "ae7bac8042c44e28e4e5dca06d0d839a61ed187816d68930307c25fb45596135",
+      "bytes": 11292,
+      "original_freeze_sha256": "ae7bac8042c44e28e4e5dca06d0d839a61ed187816d68930307c25fb45596135",
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "independent",
+      "origin": ".cache/relay-resume-independent/test_rejection_boundary.py",
+      "destination": "independent/test_rejection_boundary.py.txt",
+      "sha256": "78792f8df5a199d892c7217de54a2d31dae7f66c8b9c6ba46d9cb318854981a7",
+      "bytes": 4610,
+      "original_freeze_sha256": "78792f8df5a199d892c7217de54a2d31dae7f66c8b9c6ba46d9cb318854981a7",
+      "copied_without_byte_changes": true,
+      "renamed_only": true
+    },
+    {
+      "category": "independent",
+      "origin": ".cache/relay-resume-independent/freeze.json",
+      "destination": "independent/freeze.json",
+      "sha256": "9abcdaf7db75abe4dffdb424f99fc1bb4ff8e0bc179deca3b510819e207dac87",
+      "bytes": 2307,
+      "original_freeze_sha256": null,
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "history",
+      "origin": ".cache/spark-ci-10053-independent/HANDOFF.md",
+      "destination": "history/HANDOFF.md",
+      "sha256": "d60ff69a6be67b7360c87dd2e841dc1fb987aa281ccfd9f2687edd07bd2dbdfa",
+      "bytes": 2857,
+      "original_freeze_sha256": null,
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "history",
+      "origin": ".cache/spark-ci-10053-independent/README.md",
+      "destination": "history/README.md",
+      "sha256": "b306f8de250aa86a7e755f6e8682d7c70cd1be76492916d9d675ad7ee608b55b",
+      "bytes": 8000,
+      "original_freeze_sha256": null,
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "history",
+      "origin": ".cache/spark-ci-10053-independent/round-two-new-boundaries.xml",
+      "destination": "history/round-two-new-boundaries.xml",
+      "sha256": "dde56271ff38a2dff243a3c2a23c948539957f0d2824b8aa8bc3584e18dadd16",
+      "bytes": 6303,
+      "original_freeze_sha256": null,
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "history",
+      "origin": ".cache/spark-ci-10053-independent/round-two-original-four.xml",
+      "destination": "history/round-two-original-four.xml",
+      "sha256": "154846b9d5f27155ed7617be452d5c797c818ff7da0f073ddb938b81ab8dafbf",
+      "bytes": 905,
+      "original_freeze_sha256": null,
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "linux-followup",
+      "origin": ".cache/relay-linux-followup/README.md",
+      "destination": "linux-followup/README.md",
+      "sha256": "2c58368387ded738bf8e78825fa6e01a011a751393351a3e6afcbc7e5c628ae9",
+      "bytes": 2947,
+      "original_freeze_sha256": "2c58368387ded738bf8e78825fa6e01a011a751393351a3e6afcbc7e5c628ae9",
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "linux-followup",
+      "origin": ".cache/relay-linux-followup/result.json",
+      "destination": "linux-followup/result.json",
+      "sha256": "fb1cf378ab4e512bc180af5fbccf3934d7b9291be16aaafe3b716e360f21dd16",
+      "bytes": 1140,
+      "original_freeze_sha256": "fb1cf378ab4e512bc180af5fbccf3934d7b9291be16aaafe3b716e360f21dd16",
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "linux-followup",
+      "origin": ".cache/relay-linux-followup/linux.log",
+      "destination": "linux-followup/linux.log",
+      "sha256": "c3d678d6c8de5d50cb5b813656c17c4b2d8d113dbb3e655f7b394c1be8828cd3",
+      "bytes": 261,
+      "original_freeze_sha256": "c3d678d6c8de5d50cb5b813656c17c4b2d8d113dbb3e655f7b394c1be8828cd3",
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "linux-followup",
+      "origin": ".cache/relay-linux-followup/linux.xml",
+      "destination": "linux-followup/linux.xml",
+      "sha256": "886aac6ca6838a9f7570697e5d730a15b13aba9c40c6cb2fa5863946237b9174",
+      "bytes": 33477,
+      "original_freeze_sha256": "886aac6ca6838a9f7570697e5d730a15b13aba9c40c6cb2fa5863946237b9174",
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "linux-followup",
+      "origin": ".cache/relay-linux-followup/run.sh",
+      "destination": "linux-followup/run.sh.txt",
+      "sha256": "72b3e4d046a5768a10dc81b8b7b38b72a9561d73a7d68e0809c957da0595cc17",
+      "bytes": 945,
+      "original_freeze_sha256": "72b3e4d046a5768a10dc81b8b7b38b72a9561d73a7d68e0809c957da0595cc17",
+      "copied_without_byte_changes": true,
+      "renamed_only": true
+    },
+    {
+      "category": "linux-followup",
+      "origin": ".cache/relay-linux-followup/before-sources.json",
+      "destination": "linux-followup/before-sources.json",
+      "sha256": "1af66bf25e07a232af2cb88c60ae5a62324a2fd3c66ebadf7135d56b214eafa1",
+      "bytes": 15646,
+      "original_freeze_sha256": "1af66bf25e07a232af2cb88c60ae5a62324a2fd3c66ebadf7135d56b214eafa1",
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "linux-followup",
+      "origin": ".cache/relay-linux-followup/after-sources.json",
+      "destination": "linux-followup/after-sources.json",
+      "sha256": "7502be42d7741155511bd549bd377be3c309dfd6ff6fd3331d917609e40108da",
+      "bytes": 14471,
+      "original_freeze_sha256": "7502be42d7741155511bd549bd377be3c309dfd6ff6fd3331d917609e40108da",
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    },
+    {
+      "category": "linux-followup",
+      "origin": ".cache/relay-linux-followup/freeze.json",
+      "destination": "linux-followup/freeze.json",
+      "sha256": "f42be3075616695cb70329cc22309ef6940c2df0855f241d95b71086b2e12840",
+      "bytes": 692,
+      "original_freeze_sha256": null,
+      "copied_without_byte_changes": true,
+      "renamed_only": false
+    }
+  ],
+  "code_blobs": [
+    {
+      "path": "backend/karajan/adapters/opencode/go_relay.py",
+      "implementation_commit": "03984aa08aecf79c33c44a9a054a707ae04748e0",
+      "git_blob_oid": "f4827845b3e138d2decaa594317debaf97cebcab",
+      "sha256": "deb0239590d67ddfb077f025773bb9c7c2947a7f3379c693f7ee469d0aab2453",
+      "bytes": 40081,
+      "working_bytes_match_git_blob": true
+    },
+    {
+      "path": "tests/adapters/opencode/test_go_relay.py",
+      "implementation_commit": "03984aa08aecf79c33c44a9a054a707ae04748e0",
+      "git_blob_oid": "98ef93bbc34b170cf51c103d68d368732b823d3d",
+      "sha256": "580b428c9169a6ecfcc50c06cb81099b8d257fc69921e3c5164a55dddbc07d23",
+      "bytes": 30879,
+      "working_bytes_match_git_blob": true
+    },
+    {
+      "path": "tests/adapters/opencode/test_go_relay_context.py",
+      "implementation_commit": "03984aa08aecf79c33c44a9a054a707ae04748e0",
+      "git_blob_oid": "21ef6e16a581273aa18a147029a560d4a9e783d6",
+      "sha256": "ae7bac8042c44e28e4e5dca06d0d839a61ed187816d68930307c25fb45596135",
+      "bytes": 11292,
+      "working_bytes_match_git_blob": true
+    }
+  ],
+  "independent_scope": {
+    "product_sha256": "deb0239590d67ddfb077f025773bb9c7c2947a7f3379c693f7ee469d0aab2453",
+    "existing_cases_passed": 6,
+    "new_tcp_cases_passed": 4,
+    "standards": {
+      "blocking_findings": 0,
+      "nonblocking_heuristic_observations": 1
+    },
+    "spec": {
+      "closed_existing": [
+        "10053-REVIEW-003",
+        "10053-REVIEW-004"
+      ],
+      "new_confirmed_findings": 0
+    },
+    "staffing": "One independent reviewer assessed Standards and Spec separately; not two reviewers."
+  },
+  "author_scope": {
+    "copied_regression_cases_passed": 6,
+    "formal_windows_cases_passed": 196,
+    "ruff_affected": "passed",
+    "mypy_production_relay": "passed, 1 source",
+    "optional_test_module_mypy": "20 errors retained; not all characterized as preexisting"
+  },
+  "linux_followup_scope": {
+    "independent_execution": true,
+    "formal_cases_preserved": 196,
+    "additional_unix_transport_cases": 3,
+    "passed": 199,
+    "skipped": 0,
+    "failed": 0,
+    "source_hashes_unchanged": 125,
+    "freeze_sha256": "f42be3075616695cb70329cc22309ef6940c2df0855f241d95b71086b2e12840",
+    "implementation_commit": "03984aa08aecf79c33c44a9a054a707ae04748e0",
+    "test_input_shell_script": "linux-followup/run.sh.txt (filename changed only, not a production entry)"
+  },
+  "root_static_report": {
+    "provenance": "Root's actual tool-output report supplied for this publication; no raw log file exists or is fabricated.",
+    "commands": [
+      {
+        "command": "ruff check .",
+        "exit_code": 0,
+        "output": "All checks passed!"
+      },
+      {
+        "command": "mypy backend/karajan",
+        "exit_code": 0,
+        "output": "Success: no issues found in 118 source files"
+      }
+    ],
+    "ci_typecheck_scope": "backend/karajan"
+  },
+  "historical_references": {
+    "paths": "Paths inside original files retain their original worktree/.cache meaning. The origin-to-destination copies table translates only the selected files.",
+    "missing_references": "Unselected old-source controls, original CI reports, patches, temporary paths and future output files were not fabricated or copied.",
+    "original_freeze": "implementation_commit null and original uncommitted/HEAD language remain unchanged; this manifest binds the identical bytes to the implementation commit."
+  },
+  "publication_checks": {
+    "behavior_tests_repeated": false,
+    "git_diff_or_cached_whitespace_check": "not_run; cannot claim an unstaged or untracked archive passed a staged diff check",
+    "new_text_scope": [
+      "README.md",
+      ".gitattributes",
+      "publication-map.json",
+      "publication-check.json"
+    ],
+    "original_evidence_scope": "37 byte-preserved files, including historical CRLF and existing whitespace; not reformatted",
+    "attributes": "Leaf * -text preserves evidence bytes without changing whitespace rules."
+  }
+}

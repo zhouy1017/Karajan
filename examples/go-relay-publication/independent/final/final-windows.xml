@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="29" time="3.486" timestamp="2026-09-06T22:17:29.657797+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.spark-independent.final.test_final_publication" name="test_full_socket_body_has_published_protocol_but_not_delivery_completion" time="0.088"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+{
+  "client_status": 200,
+  "declared_content_length": 446,
+  "journal_outcome": null,
+  "journal_request_count": 1,
+  "journal_state": "send_unknown",
+  "null_name_count": 1,
+  "protocol_passed": true,
+  "received_body_bytes": 446,
+  "relay_completed": false
+}
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname=".cache.spark-independent.final.test_final_publication" name="test_completion_is_pending_until_actual_server_close_finishes" time="0.075"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+{
+  "barrier": "public injected HTTP transport close; no receipt/Journal writes mocked",
+  "client_status": 200,
+  "declared_content_length": 446,
+  "journal_outcome": null,
+  "journal_state": "send_unknown",
+  "protocol_passed": true,
+  "received_body_bytes": 446,
+  "relay_completed": true
+}
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname=".cache.spark-independent.final.test_final_publication" name="test_real_client_reset_fails_delivery_without_refunding_the_upstream_call" time="0.063"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+{
+  "actual_os_write_errors": [
+    "ConnectionResetError"
+  ],
+  "journal_outcome": {
+    "protocol_passed": false,
+    "reason_codes": [
+      "RELAY_TRANSPORT_ERROR"
+    ],
+    "response_bytes": 446,
+    "state": "response_received",
+    "upstream_status": 200,
+    "usage": {}
+  },
+  "journal_request_count": 1,
+  "journal_state": "response_received",
+  "null_name_count": 1,
+  "protocol_after_reset": false,
+  "protocol_before_reset": true,
+  "reason_codes": [
+    "RELAY_TRANSPORT_ERROR"
+  ],
+  "relay_completed": false,
+  "stream_terminated": true,
+  "upstream_response_complete": true
+}
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_nullable_names" name="test_null_is_no_new_name_fragment_but_records_content_free_count[names0]" time="0.059"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_nullable_names" name="test_null_is_no_new_name_fragment_but_records_content_free_count[names1]" time="0.063"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_nullable_names" name="test_null_is_no_new_name_fragment_but_records_content_free_count[names2]" time="0.062"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_nullable_names" name="test_absent_name_keeps_legacy_receipt_shape" time="0.061"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_nullable_names" name="test_nullable_names_never_expand_final_allowlist_or_accept_other_types[names0-UNAPPROVED_TOOL]" time="0.061"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_nullable_names" name="test_nullable_names_never_expand_final_allowlist_or_accept_other_types[names1-UNAPPROVED_TOOL]" time="0.061"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_nullable_names" name="test_nullable_names_never_expand_final_allowlist_or_accept_other_types[names2-UNAPPROVED_TOOL]" time="0.061"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_nullable_names" name="test_nullable_names_never_expand_final_allowlist_or_accept_other_types[names3-UNAPPROVED_TOOL]" time="0.061"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_nullable_names" name="test_nullable_names_never_expand_final_allowlist_or_accept_other_types[names4-INVALID_TOOL_NAME]" time="0.061"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_nullable_names" name="test_nullable_names_never_expand_final_allowlist_or_accept_other_types[names5-INVALID_TOOL_NAME]" time="0.061"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_nullable_names" name="test_nullable_names_never_expand_final_allowlist_or_accept_other_types[names6-INVALID_TOOL_NAME]" time="0.060"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_nullable_names" name="test_receipt_protocol_state_publishes_before_body_is_observable" time="0.077"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_nullable_names" name="test_receipt_protocol_state_publishes_before_transport_complete" time="0.078"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_context" name="test_task_grant_without_approved_context_accounting_cannot_send" time="0.075"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_context" name="test_complete_request_measurement_is_durable_before_upstream_receives_bytes" time="0.497"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_context" name="test_every_request_checks_approved_limits_before_spending_a_send_slot[input]" time="0.078"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_context" name="test_every_request_checks_approved_limits_before_spending_a_send_slot[output]" time="0.077"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_context" name="test_every_request_checks_approved_limits_before_spending_a_send_slot[context]" time="0.077"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_context" name="test_every_request_checks_approved_limits_before_spending_a_send_slot[source]" time="0.078"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_context" name="test_every_request_checks_approved_limits_before_spending_a_send_slot[policy]" time="0.076"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_context" name="test_every_request_checks_approved_limits_before_spending_a_send_slot[history]" time="0.078"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_context" name="test_context_receipt_cannot_be_replaced_by_replaying_a_logical_call" time="0.013"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_context" name="test_failed_context_observation_revokes_remaining_sends[missing]" time="0.096"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_context" name="test_failed_context_observation_revokes_remaining_sends[input]" time="0.092"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_context" name="test_failed_context_observation_revokes_remaining_sends[output]" time="0.123"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.adapters.opencode.test_go_relay_context" name="test_failed_context_observation_revokes_remaining_sends[transport]" time="0.108"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase></testsuite></testsuites>
