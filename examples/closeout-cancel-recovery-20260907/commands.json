@@ -1,0 +1,17 @@
+{
+  "windows": "ROOT/.venv/Scripts/python.exe -m pytest tests/runs/test_candidate_checks.py tests/runs/test_candidate_subjects.py tests/runs/test_check_services_factory.py tests/runs/test_reviewer_binding.py tests/runs/test_readonly_reviewer_scope.py tests/runs/test_reviewer_qualification_factory.py tests/candidates -q -o \"pythonpath=backend tests/projects tests/runs tests/web tests/isolation tests/adapters/opencode tests/candidates tests/execution\" --junitxml=.cache/closeout-combination-windows.xml",
+  "linux": "/tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest tests/runs/test_candidate_subjects_native.py::test_active_old_namespace_blocks_ready_subject_and_concurrent_cancel tests/runs/test_candidate_checks.py::test_public_cancel_retains_host_until_native_receipt_arrives tests/runs/test_candidate_checks.py::test_public_history_cancel_stops_host_from_persisted_observation -q -o \"pythonpath=backend tests/projects tests/runs tests/web tests/isolation tests/adapters/opencode tests/candidates tests/execution\" -o cache_dir=/tmp/karajan-closeout-cache-444fed2 --basetemp=/tmp/karajan-closeout-444fed2-a --junitxml=.cache/closeout-native-linux.xml",
+  "environment": {
+    "PYTHONPATH": "backend",
+    "KARAJAN_GO_TOKENIZER_DIRECTORY": "ROOT/.cache/go-task-execution/.cache/go-context-artifacts",
+    "KARAJAN_REQUIRE_GO_TOKENIZER": "1",
+    "HF_HUB_OFFLINE": "1",
+    "TRANSFORMERS_OFFLINE": "1",
+    "linux_only": {
+      "KARAJAN_REQUIRE_OPENCODE_ISOLATION": "1",
+      "KARAJAN_OPENCODE_LINUX_BINARY": "ROOT/.cache/go-linux-runtime/package/bin/opencode"
+    }
+  },
+  "ruff": "ROOT/.venv/Scripts/ruff.exe check .",
+  "mypy": "ROOT/.venv/Scripts/mypy.exe backend/karajan"
+}
