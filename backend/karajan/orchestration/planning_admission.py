@@ -24,11 +24,15 @@ from karajan.runs import RunError, RunPlanner
 from karajan.runs.planning import digest, encoded, identifier
 from karajan.storage import open_database, require_schema
 
+from .planning_bootstrap import (
+    PLANNING_ADMISSION_BOOTSTRAP,
+    assert_planning_bootstrap_current,
+    read_planning_bootstrap,
+)
 from .routing import _capacity_snapshot
 
 COMMANDER_QUALIFICATION_SCOPE = "commander_planning.v1"
 COMMANDER_QUALIFICATION_READER_VERSION = "karajan.commander-qualification-reader.v1"
-PLANNING_ADMISSION_BOOTSTRAP = "planning-admission-bootstrap.json"
 
 
 class CommanderQualificationReader(Protocol):
@@ -135,70 +139,27 @@ class PersistentCommanderQualificationReader:
 
 def open_persistent_planning_admission(control_directory: Path) -> "PlanningAdmissionAuthority":
     """Rebuild only fixed existing stores from a private deployment descriptor."""
-    control = control_directory.resolve(strict=True)
-    descriptor = control / PLANNING_ADMISSION_BOOTSTRAP
-    try:
-        if not control.is_dir() or descriptor.is_symlink() or not descriptor.is_file():
-            raise ValueError()
-        raw = descriptor.read_bytes()
-        value = json.loads(raw)
-        if (
-            set(value)
-            != {
-                "schema_version",
-                "state_directory",
-                "planning_execution_database",
-                "planning_admission_database",
-                "capacity_database",
-                "projects_database",
-                "allowed_roots",
-            }
-            or value["schema_version"] != "karajan.planning-admission-bootstrap.v1"
-        ):
-            raise ValueError()
-
-        def path(name: str) -> Path:
-            item = Path(value[name])
-            if not item.is_absolute() or ".." in item.parts:
-                raise ValueError()
-            return item.resolve(strict=True)
-
-        state = path("state_directory")
-        execution_db, admission_db = (
-            path("planning_execution_database"),
-            path("planning_admission_database"),
-        )
-        capacity_db, projects_db = path("capacity_database"), path("projects_database")
-        if any(
-            not item.is_file() for item in (execution_db, admission_db, capacity_db, projects_db)
-        ):
-            raise ValueError()
-        roots = tuple(Path(row).resolve(strict=True) for row in value["allowed_roots"])
-        if not roots or any(not root.is_dir() for root in roots):
-            raise ValueError()
-        if any(
-            not item.is_relative_to(state)
-            for item in (execution_db, admission_db, capacity_db, projects_db)
-        ):
-            raise ValueError()
-    except (OSError, TypeError, ValueError, KeyError, json.JSONDecodeError):
-        raise RunError("PLANNING_ADMISSION_BOOTSTRAP_INVALID") from None
-    projects = ProjectRegistry(projects_db, roots, existing_only=True)
-    planner = RunPlanner(state / "runs.sqlite", projects, existing_only=True)
-    capacity = CapacityStore(capacity_db, existing_only=True)
+    settings, bootstrap_sha = read_planning_bootstrap(control_directory)
+    projects = ProjectRegistry(
+        settings.projects_database, settings.allowed_roots, existing_only=True
+    )
+    planner = RunPlanner(settings.state_directory / "runs.sqlite", projects, existing_only=True)
+    capacity = CapacityStore(settings.capacity_database, existing_only=True)
     qualifications = ProfileQualificationStore(projects, commander_reader_only=True)
     reader = PersistentCommanderQualificationReader(
-        planner, qualifications, control_directory=control
+        planner, qualifications, control_directory=settings.control_directory
     )
     qualifications.commander_source = reader._current_source
     return PlanningAdmissionAuthority(
-        admission_db,
-        execution_db,
+        settings.planning_admission_database,
+        settings.planning_execution_database,
         planner,
         capacity,
         reader,
         authority_kind="production",
         existing_only=True,
+        bootstrap_sha256=bootstrap_sha,
+        bootstrap_control_directory=settings.control_directory,
     )
 
 
@@ -222,6 +183,8 @@ class PlanningAdmissionAuthority:
         *,
         authority_kind: str = "fixture",
         existing_only: bool = False,
+        bootstrap_sha256: str | None = None,
+        bootstrap_control_directory: Path | None = None,
     ) -> None:
         if authority_kind not in {"fixture", "production"}:
             raise RunError("PLANNING_AUTHORITY_KIND_INVALID")
@@ -231,6 +194,10 @@ class PlanningAdmissionAuthority:
         self.planner, self.capacity = planner, capacity
         self.qualifications = qualifications
         self.authority_kind, self.existing_only = authority_kind, existing_only
+        self.bootstrap_sha256 = bootstrap_sha256
+        self.bootstrap_control_directory = bootstrap_control_directory
+        if (bootstrap_sha256 is None) != (bootstrap_control_directory is None):
+            raise RunError("PLANNING_ADMISSION_BOOTSTRAP_INVALID")
         if self.database in {
             self.execution_database,
             planner.database.resolve(),
@@ -278,6 +245,10 @@ class PlanningAdmissionAuthority:
                 "CREATE TABLE IF NOT EXISTS commands (principal TEXT NOT NULL, key TEXT NOT NULL, "
                 "payload TEXT NOT NULL, result TEXT NOT NULL, PRIMARY KEY(principal,key))"
             )
+
+    def _assert_bootstrap_current(self) -> None:
+        if self.bootstrap_sha256 is not None and self.bootstrap_control_directory is not None:
+            assert_planning_bootstrap_current(self.bootstrap_control_directory, self.bootstrap_sha256)
 
     @contextmanager
     def _transaction(self) -> Iterator[sqlite3.Connection]:
