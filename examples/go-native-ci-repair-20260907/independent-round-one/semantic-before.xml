@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="3" time="10.996" timestamp="2026-09-07T09:09:18.850156+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.native-resume-independent.test_native_boundaries" name="test_unknown_native_stop_retains_original_empty_socket_lease" time="2.597"><failure message="AssertionError: Unknown native stop must retain its original socket root&#10;assert False&#10; +  where False = exists()&#10; +    where exists = PosixPath('/tmp/karajan-go-relay-lt3xpehf').exists&#10; +      where PosixPath('/tmp/karajan-go-relay-lt3xpehf') = _RelaySocketRoot(path=PosixPath('/tmp/karajan-go-relay-lt3xpehf'), st_dev=2096, st_ino=323592, st_uid=1000, st_mode=448).path">tmp_path = PosixPath('/tmp/pytest-of-chow/pytest-68/test_unknown_native_stop_retai0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x7267488ed520&gt;
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7267488ecda0&gt;
+
+    def test_unknown_native_stop_retains_original_empty_socket_lease(tmp_path, accounting, monkeypatch):
+        runtime, task, credential, auth, context = prepared(tmp_path, accounting)
+        leases = []
+        allocate = go_task._relay_socket_root
+    
+        def allocated():
+            lease = allocate()
+            leases.append(lease)
+            return lease
+    
+        def stop_unknown(native):
+            raise RuntimeError("TASK_NATIVE_START_RESPONSE_UNKNOWN")
+    
+        monkeypatch.setattr(go_task, "_relay_socket_root", allocated)
+        monkeypatch.setattr(go_task, "IsolatedOpenCode", NativeStartFailure)
+        monkeypatch.setattr(NativeStartFailure, "stop", "unknown")
+        try:
+            result = go_task.execute_go_task(
+                runtime, tmp_path / "operation", task, credential, auth, context,
+                start_native=stop_unknown, send_guard=permitted,
+                client_factory=lambda: httpx.Client(transport=httpx.MockTransport(fixture_request_forbidden)),
+            )
+            assert result.capture is None
+            assert result.report["native_cleanup"]["local_stop"] == "unknown"
+            assert result.report["relay_cleanup"]["status"] == "closed"
+            assert result.report["journal"]["request_count"] == 0
+            assert len(leases) == 1
+&gt;           assert leases[0].path.exists(), "Unknown native stop must retain its original socket root"
+E           AssertionError: Unknown native stop must retain its original socket root
+E           assert False
+E            +  where False = exists()
+E            +    where exists = PosixPath('/tmp/karajan-go-relay-lt3xpehf').exists
+E            +      where PosixPath('/tmp/karajan-go-relay-lt3xpehf') = _RelaySocketRoot(path=PosixPath('/tmp/karajan-go-relay-lt3xpehf'), st_dev=2096, st_ino=323592, st_uid=1000, st_mode=448).path
+
+.cache/native-resume-independent/test_native_boundaries.py:72: AssertionError</failure></testcase><testcase classname=".cache.native-resume-independent.test_native_boundaries" name="test_arbitrary_uppercase_private_text_is_not_a_diagnostic_code" time="2.027"><failure message="AssertionError: Raw private error text is not an allowlisted domain code&#10;assert 'PRIVATE_CUS...NTERNAL_2026' not in '{&quot;attempt_i...id&quot;: &quot;add&quot;}}'&#10;  &#10;  'PRIVATE_CUSTOMER_CASE_ACME_INTERNAL_2026' is contained here:&#10;  ?           ^^&#10;    n_code&quot;: &quot;PRIVATE_CUSTOMER_CASE_ACME_INTERNAL_2026&quot;, &quot;error_type&quot;: &quot;RuntimeError&quot;, &quot;fence&quot;: 1, &quot;grant_binding&quot;: {&quot;approval_digest&quot;: &quot;dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd&quot;, &quot;attempt_id&quot;: &quot;task-attempt&quot;, &quot;auth_generation&quot;: &quot;generation&quot;, &quot;authentication_source_digest&quot;: &quot;ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff&quot;, &quot;channel&quot;: &quot;opencode-go&quot;, &quot;execution_policy_digest&quot;: &quot;eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee&quot;, &quot;expires_at&quot;: 1...&#10;  &#10;  ...Full output truncated (2 lines hidden), use '-vv' to show">tmp_path = PosixPath('/tmp/pytest-of-chow/pytest-68/test_arbitrary_uppercase_priva0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x7267488ed520&gt;
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7267488ede80&gt;
+
+    def test_arbitrary_uppercase_private_text_is_not_a_diagnostic_code(tmp_path, accounting, monkeypatch):
+        runtime, task, credential, auth, context = prepared(tmp_path, accounting)
+        private_text = "PRIVATE_CUSTOMER_CASE_ACME_INTERNAL_2026"
+        task = replace(task, prompt=private_text)
+        monkeypatch.setattr(go_task, "IsolatedOpenCode", NativeStartFailure)
+    
+        def exception_with_task_text(native):
+            raise RuntimeError(task.prompt)
+    
+        result = go_task.execute_go_task(
+            runtime, tmp_path / "operation", task, credential, auth, context,
+            start_native=exception_with_task_text, send_guard=permitted,
+            client_factory=lambda: httpx.Client(transport=httpx.MockTransport(fixture_request_forbidden)),
+        )
+&gt;       assert private_text not in json.dumps(result.report), "Raw private error text is not an allowlisted domain code"
+E       AssertionError: Raw private error text is not an allowlisted domain code
+E       assert 'PRIVATE_CUS...NTERNAL_2026' not in '{"attempt_i...id": "add"}}'
+E         
+E         'PRIVATE_CUSTOMER_CASE_ACME_INTERNAL_2026' is contained here:
+E         ?           ^^
+E           n_code": "PRIVATE_CUSTOMER_CASE_ACME_INTERNAL_2026", "error_type": "RuntimeError", "fence": 1, "grant_binding": {"approval_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "attempt_id": "task-attempt", "auth_generation": "generation", "authentication_source_digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "channel": "opencode-go", "execution_policy_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "expires_at": 1...
+E         
+E         ...Full output truncated (2 lines hidden), use '-vv' to show
+
+.cache/native-resume-independent/test_native_boundaries.py:93: AssertionError</failure></testcase><testcase classname=".cache.native-resume-independent.test_native_boundaries" name="test_public_consume_preserves_native_failure_when_collector_rejects_capture" time="1.948"><failure message="karajan.runs.planning.RunError: TASK_WORKSPACE_NEW_FILES_NOT_SUPPORTED">projected = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x7267488ee390&gt;, 'project_id': '570da5bb-40c2-4a3f-a...re'), 'repository': PosixPath('/tmp/pytest-of-chow/pytest-68/test_public_consume_preserves_0/fixture/repository'), ...}
+tmp_path = PosixPath('/tmp/pytest-of-chow/pytest-68/test_public_consume_preserves_0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x7267488ed520&gt;
+artifacts = PosixPath('/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-artifacts')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x726747429850&gt;
+
+    def test_public_consume_preserves_native_failure_when_collector_rejects_capture(
+        projected, tmp_path, accounting, artifacts, monkeypatch
+    ):
+        from task_execution_fixture import approved_fixture
+        from karajan.orchestration import go_task_execution as consumer
+    
+&gt;       services, run_id, op_id = approved_fixture(
+            projected, tmp_path, runtime_artifact(), accounting, artifacts, 1,
+        )
+
+.cache/native-resume-independent/test_native_boundaries.py:104: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/runs/task_execution_fixture.py:387: in approved_fixture
+    ApprovedTaskWorkspace(admissions, candidates).prepare(
+backend/karajan/orchestration/workspace.py:60: in prepare
+    manifest = self._capture(run, operation, plan, task)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;karajan.orchestration.workspace.ApprovedTaskWorkspace object at 0x726747401520&gt;
+run = {'active_plan_revision': 1, 'approvals': [{'approved_at': 1788743369.1130898, 'approved_by': 'owner', 'authorization_d...mander': {'principal': 'lead', 'profile': {'id': 'fixture-profile', 'revision': 1}, 'purpose': 'lead', 'term': 1}, ...}
+operation = {'activation_allowed': False, 'assessment': {'activation_allowed': False, 'admission_expectations': [{'estimate_sha256...fcd926f6028e2db4ed7eec', 'dispatch_enabled': False, ...}, 'cancel_requested': False, 'cancellation_receipt': None, ...}
+plan = {'authorization_digest': 'e2825c918398c8af7f72159d469b25678d834a66285587fd2d0168bc4a8491a6', 'configuration_digest': '...nciliation': 'not_run', 'authorization_changed': False, ...}, 'intent_id': '0dd5e6f2-bfb3-4313-93c5-f1e26681f2f9', ...}
+task = {'acceptance': ['Report is repeatable'], 'complexity': 'T1', 'context_tokens': 12288, 'depends_on': [], ...}
+
+    def _capture(
+        self,
+        run: dict[str, Any],
+        operation: dict[str, Any],
+        plan: dict[str, Any],
+        task: dict[str, Any],
+    ) -&gt; dict[str, Any]:
+        auth = plan["plan"]["authorization"]
+        for roots in (auth["read_paths"], auth["write_paths"], task["paths"]):
+            _unambiguous(roots)
+        if not task["paths"]:
+            raise RunError("TASK_WORKSPACE_SCOPE_EMPTY")
+        repository = run["configuration_snapshot"]["repository"]
+        try:
+            baseline = self.candidates.register_baseline(
+                Path(repository["root"]),
+                repository_identity=repository["identity_sha256"],
+                base_sha=repository["base_sha"],
+            )
+        except CandidateError as error:
+            raise RunError(error.code) from None
+        paths = sorted(entry["path"] for entry in baseline["manifest"])
+        _unambiguous(paths)
+        read_paths = [path for path in paths if covered(path, auth["read_paths"])]
+        write_paths = [
+            path
+            for path in paths
+            if covered(path, task["paths"]) and covered(path, auth["write_paths"])
+        ]
+        if any(not any(covered(path, [root]) for path in paths) for root in task["paths"]):
+&gt;           raise RunError("TASK_WORKSPACE_NEW_FILES_NOT_SUPPORTED")
+E           karajan.runs.planning.RunError: TASK_WORKSPACE_NEW_FILES_NOT_SUPPORTED
+
+backend/karajan/orchestration/workspace.py:95: RunError</failure></testcase></testsuite></testsuites>

@@ -1,0 +1,767 @@
+{
+  "schema_version": "karajan.native-ci-publication-bytecheck.v1",
+  "implementation": "78c6dc8654099250bb0a3b7829538816d042cd93",
+  "raw_count": 92,
+  "all_originals_and_copies_exact": true,
+  "eight_N_git_objects_match_tested_raw_record": true,
+  "raw_checks": [
+    {
+      "target": "author-round-one/manifest.json",
+      "sha256": "585ce09a5d18bcd787a221f9e7289fe01a7ca154adf9143f99ed57ddf3504e42",
+      "bytes": 6502,
+      "exact_original_match": true,
+      "crlf_count": 73,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-round-one/.cache__luna-native-author__verification.md.txt",
+      "sha256": "d689d4478c4280d229024b6b837f1e516c6e61953f4207ff520b4f63a6375f76",
+      "bytes": 3106,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-round-one/partial.diff.txt",
+      "sha256": "3b30f99cb1a567807b478e25925339a30ce4436d8b6f958329243f7f8390f0ee",
+      "bytes": 18204,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 13
+    },
+    {
+      "target": "author-round-one/backend__karajan__adapters__opencode__go_relay.py.txt",
+      "sha256": "088c335d1bfeedc2b69bc2395acc704ea6b32f71b6addcc74c06d87b2400170b",
+      "bytes": 40505,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-round-one/backend__karajan__isolation__go_task.py.txt",
+      "sha256": "daf8cadd27f89f85f4842f51f11839990bdec9d7711705abeb89948766935a62",
+      "bytes": 21376,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-round-one/tests__adapters__opencode__test_go_unix_relay.py.txt",
+      "sha256": "0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f",
+      "bytes": 5017,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-round-one/tests__isolation__test_go_task.py.txt",
+      "sha256": "bbb9d6242e1214097f0e043b211a48a917e589738dba3eb445c3687d3c2b6288",
+      "bytes": 19533,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-round-one/pytest-01.log",
+      "sha256": "f8b4cfe4842b8eb10dda9dd3d84007614db3b294e24619d01f8e27131adca252",
+      "bytes": 1194,
+      "exact_original_match": true,
+      "crlf_count": 15,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-round-one/pytest-02.log",
+      "sha256": "cc0672eaa12ac6524af669bd3f0ffd58702212b95c4c08ef44b74e3683160fe7",
+      "bytes": 373,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-round-one/pytest-04.log",
+      "sha256": "18296ce90e2364bfda6835ed8aa8add1dfec3460f3112df698d1f131ef1c59ab",
+      "bytes": 113,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-round-one/pytest-06.log",
+      "sha256": "7806f4375d0644b982e6a941113aecbbabe8c1f36639f0eb17eeb0738556f5a3",
+      "bytes": 110,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-one/README.md",
+      "sha256": "b5fafe89115de570d3c7c124a8228fb8b5e8cf1e02d9219daa572babef496aa2",
+      "bytes": 5525,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-one/review.json",
+      "sha256": "345da8b29492afb2057e0b54341dad2b1d3eeeecade349620f94fa08fbb659ff",
+      "bytes": 4502,
+      "exact_original_match": true,
+      "crlf_count": 112,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-one/source-before.json",
+      "sha256": "3e1b2bc2e10b95debf512387461cbd6e9a4f3cd9063c2297f2a23e651fd4c9bc",
+      "bytes": 1311,
+      "exact_original_match": true,
+      "crlf_count": 34,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-one/test_native_boundaries.py.txt",
+      "sha256": "b3d7d779d6676c2f9c1ff16a43f66885ff9ce757c958d5b9141c963b495f46eb",
+      "bytes": 7025,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-one/test-first-baseline-missing.py.txt",
+      "sha256": "bb4272b3cb9a40d8f66cfc7df44900b154a5f99e76eb49f9609ec40835e9a071",
+      "bytes": 6167,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-one/first.xml",
+      "sha256": "70dd7c0793431d63c191867e57ceff7f5bd5ce8776f4b81884e690ba2e58cf36",
+      "bytes": 1581,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-one/semantic-before.xml",
+      "sha256": "ef4f725e3bece35ef2dd33a6d73662f2339d67b38c71c8f223563c38b524c93e",
+      "bytes": 10728,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 11
+    },
+    {
+      "target": "independent-round-one/consumer-before.xml",
+      "sha256": "c3896769d2c937bdbee951e16ccd07dd5a3c991484340e75ca8ee6fdddb61e83",
+      "bytes": 6409,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 5
+    },
+    {
+      "target": "independent-round-one/ruff.txt",
+      "sha256": "2f973dd26247a48cd75ab10dae7319b193b8aa08d01062054afe492b5f6034a6",
+      "bytes": 7032,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-one/mypy.txt",
+      "sha256": "a6e87d7e2356462aedf347f1b3db6dddbafa245e9f081c211e0bcca773c6190a",
+      "bytes": 168,
+      "exact_original_match": true,
+      "crlf_count": 2,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-one/go_task_execution.py.before.py.txt",
+      "sha256": "3bca8ad44860e11815e9ecb9dedae1edd9d9d556f4940f4fd6694af30cb30cf9",
+      "bytes": 19647,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-one/go_execution_intent.py.before.py.txt",
+      "sha256": "3416c3f324d6653f246b2317de257e362f410980dda458756dab1e029d6082f1",
+      "bytes": 41126,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-one/_go_task_runner.py.before.py.txt",
+      "sha256": "0a43cf7b1924b40a66ea35e354e15a6cce697b954c243c8808a7bf7500343822",
+      "bytes": 1915,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-two/README.md",
+      "sha256": "7a2bb9895e06135f8ee1ebde88bf9a98b41edafd20e201297b7d48cd40bf3ce9",
+      "bytes": 3096,
+      "exact_original_match": true,
+      "crlf_count": 25,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-two/review.json",
+      "sha256": "c5bbca8e9d909605a9d9c159c1f13ce5230b5a5ce7c97b16ea74aaa93f044f54",
+      "bytes": 6290,
+      "exact_original_match": true,
+      "crlf_count": 139,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-two/source-before.json",
+      "sha256": "b5a832ce85bf437c9b7b6d3462c213be6c622ac8e636ee1bb4d79c1f25874659",
+      "bytes": 714,
+      "exact_original_match": true,
+      "crlf_count": 8,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-two/original-three.xml",
+      "sha256": "75c79bccc6d85c09558d53475486c66dfbd712c92a76705c11d8a9faadd12c45",
+      "bytes": 779,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-two/claim-windows.xml",
+      "sha256": "77af1b9ad31e16cbb3143d10cdb52861a3976adbc76960dcec0b5a742a4ad56e",
+      "bytes": 422,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-two/cleanup-enum-before.xml",
+      "sha256": "6d67bdd3c06898632f7380a02fb3ba7050b3f6b686279f5b6d142d6c07dba703",
+      "bytes": 7205,
+      "exact_original_match": true,
+      "crlf_count": 62,
+      "trailing_whitespace_line_count": 2
+    },
+    {
+      "target": "independent-round-two/test_diagnostic_claim.py.txt",
+      "sha256": "c41cacaea53a279a8c2b01b46b8c661071d3e8c5876d2bcb50b33dd8e9b83713",
+      "bytes": 2859,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-two/ruff.txt",
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+      "bytes": 19,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-two/mypy.txt",
+      "sha256": "0fd28b277f6e98e8effe0f968e9e5806e258d7effddfe7c7bc46acdf973ad56b",
+      "bytes": 46,
+      "exact_original_match": true,
+      "crlf_count": 1,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-two/go_task.py.before.txt",
+      "sha256": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+      "bytes": 22507,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-two/go_execution_intent.py.before.txt",
+      "sha256": "8adb01b2370e6cd3f3a98fc63c3e7f028c4aebb4d15ae86dc2d7b5c970ffad15",
+      "bytes": 43562,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-two/go_task_execution.py.before.txt",
+      "sha256": "789e9945a698d6f519f65db35205460ad35a0babf35aee2fbb5c6f82ec095b4d",
+      "bytes": 21077,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-two/test_go_task.py.before.txt",
+      "sha256": "94edba59c1ed986f73260679879bc0af0bab4b7f1bbf92bff5cdddf0b1a09216",
+      "bytes": 21498,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "pr92-pathname-diagnosis/README.md",
+      "sha256": "19bd1731632e051fd1482a9bce60924287e56eeab23df577a0e7f8a7ebcc25f6",
+      "bytes": 6725,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "pr92-pathname-diagnosis/freeze.json",
+      "sha256": "ee4065e31e9a518747659e8d71880a7c45df966ea3944a46f90e763eb9311821",
+      "bytes": 1796,
+      "exact_original_match": true,
+      "crlf_count": 22,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "pr92-pathname-diagnosis/source-manifest.json",
+      "sha256": "4e164d372b57d0cda28dbb79a9951360a514275831e59121397028c46419b572",
+      "bytes": 1180,
+      "exact_original_match": true,
+      "crlf_count": 14,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "pr92-pathname-diagnosis/path-lengths.json",
+      "sha256": "fa60fb8ed102ebafd82822caf798b1545a2c0d139b2407d445c9de0b53f21df0",
+      "bytes": 770,
+      "exact_original_match": true,
+      "crlf_count": 17,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "pr92-pathname-diagnosis/producer-126.json",
+      "sha256": "ee93bd3e0cf18775a6d50b3b700d06735beb4a63f55357f8dd9086d6f3f18b3f",
+      "bytes": 732,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "pr92-pathname-diagnosis/original-long-path-summary.json",
+      "sha256": "82c5296f71b13f1d8a20985860222c89beb135d7f1118578aaaba8e32cd048b4",
+      "bytes": 1881,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "pr92-pathname-diagnosis/original-long-path.junit.xml",
+      "sha256": "797ae3c1d08c89ba44cacc5ef493eca5a1d096b571bc21c70743420051bb5bbd",
+      "bytes": 1364,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 1
+    },
+    {
+      "target": "pr92-pathname-diagnosis/run-original-long-path.sh.txt",
+      "sha256": "f5054f6a4ee79473e61fd76413286a634561fbcab70ae44a24904cca08357c7e",
+      "bytes": 1092,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "pr92-pathname-diagnosis/test_uds_diagnosis.py.txt",
+      "sha256": "411d92e11e2565d937129a1e1ebc30101371cef10e2766fba65eb1c35d81b088",
+      "bytes": 3837,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "pr92-pathname-diagnosis/uds.junit.xml",
+      "sha256": "d6888c46648a71d5f56b2273908ef78cf2f89091cfe0d047f410a94a49d81a6d",
+      "bytes": 685,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "pr92-pathname-diagnosis/relay-107.json",
+      "sha256": "c5d0d1db45ceacfa91f07f3e1d0fbc255b3bad6d6c8044a59f6c54623b322cf6",
+      "bytes": 166,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "pr92-pathname-diagnosis/relay-108.json",
+      "sha256": "6290184526f685f5fc75c7cce09858932274d15841a552761d0e2641231b2ccc",
+      "bytes": 230,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "pr103-failure/pr-103.json",
+      "sha256": "94b35fa9b0d19351706c4918c79cbdd5dc095089e88c106eacd63b30334f53bd",
+      "bytes": 5366,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "pr103-failure/failed-job-receipts.json",
+      "sha256": "c14136d2782529db62c63ba4dc943d622fff7c17afbc9c54445452b51eb87f5c",
+      "bytes": 903,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "pr103-failure/run-34050183894.json",
+      "sha256": "ce2d26eed0e4bff6cd9ff4d1e207812fd15c8d49efa31726c93b0d56a2a5c6b5",
+      "bytes": 4045,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "pr103-failure/run-34050185708.json",
+      "sha256": "4af8361ffafcf4d4f9c29b234c4264a51dd16b8b4626fa0e98e77ccc940547ed",
+      "bytes": 4053,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "pr103-failure/pr-103-job-101532317939.log",
+      "sha256": "0ddba2f32f4400a830301327f9daa2e60a8f38e794e12ff38bd882dc75730509",
+      "bytes": 135693,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 27
+    },
+    {
+      "target": "independent-round-three/README.md",
+      "sha256": "0bc4a8268a481177648e1cc1d1d40bde52cd0dff568d1927f2ef7cbdf03c5f6b",
+      "bytes": 2658,
+      "exact_original_match": true,
+      "crlf_count": 21,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-three/review.json",
+      "sha256": "6a86c9ea376d25c56a35db3fb87e3446025a913a6804b4410421a098c70857f0",
+      "bytes": 6534,
+      "exact_original_match": true,
+      "crlf_count": 107,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-three/source-before.json",
+      "sha256": "5ccca071922839cf61e24a13b4a9e15e5c77fd9b9dc3c140b0195fe71bc637fe",
+      "bytes": 825,
+      "exact_original_match": true,
+      "crlf_count": 9,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-three/source-after.json",
+      "sha256": "5ccca071922839cf61e24a13b4a9e15e5c77fd9b9dc3c140b0195fe71bc637fe",
+      "bytes": 825,
+      "exact_original_match": true,
+      "crlf_count": 9,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-three/final-linux.xml",
+      "sha256": "dd0e7d8b001ddf3857898a0031f99d4570abe56e7223708cbe8ceffde506fea0",
+      "bytes": 6296,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 5
+    },
+    {
+      "target": "independent-round-three/test_native_boundaries.py.txt",
+      "sha256": "b3d7d779d6676c2f9c1ff16a43f66885ff9ce757c958d5b9141c963b495f46eb",
+      "bytes": 7025,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-three/test_diagnostic_claim.py.txt",
+      "sha256": "c41cacaea53a279a8c2b01b46b8c661071d3e8c5876d2bcb50b33dd8e9b83713",
+      "bytes": 2859,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "independent-round-three/test_go_task_execution.py.before.txt",
+      "sha256": "3628ecabb53e82c1697226cbb3b946f807b80b0e2679422948939171a8cd1a1e",
+      "bytes": 14506,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-round-three/manifest.json",
+      "sha256": "d03383e8ba78c8a2c870c1ddf872e3efe68dae40c10b1189825195b068c71e59",
+      "bytes": 5422,
+      "exact_original_match": true,
+      "crlf_count": 125,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-round-three/partial.diff.txt",
+      "sha256": "253e14f2b6657e77de5bb564f7ab96bbcc70055ac926ccff6e3a6ab5113dcaa7",
+      "bytes": 35918,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 30
+    },
+    {
+      "target": "author-round-three/author__diagnostic-red.xml",
+      "sha256": "1f6e0a24938f49364c5a63bc6743f87d55158b4b5f5ebaf2dda303ce835fb323",
+      "bytes": 7185,
+      "exact_original_match": true,
+      "crlf_count": 62,
+      "trailing_whitespace_line_count": 2
+    },
+    {
+      "target": "author-round-three/author__focused-green.xml",
+      "sha256": "1a98981820b5c91a9b8c6900c04f8c22e84ac45f556ccc1b00993fe40b8b058d",
+      "bytes": 4322,
+      "exact_original_match": true,
+      "crlf_count": 6,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-round-three/author__formal-consume-green.xml",
+      "sha256": "7841086efe8923a95e08a5975e3fee7e7cfc703bee748b1df05360c72b3973f7",
+      "bytes": 680,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-round-three/author__formal-linux-green.xml",
+      "sha256": "2efcacf37d7ac7dbcfa89c1963be5ec856662ec071fa920bd7a7d24833366f93",
+      "bytes": 5204,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 5
+    },
+    {
+      "target": "author-round-three/author__linux-native-green.xml",
+      "sha256": "6c7f6c8bdd4b1c267eb87b80b722c9e78123109bf65a4d946d12eca03169ed41",
+      "bytes": 45404,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 36
+    },
+    {
+      "target": "author-round-three/author__linux-native-three.xml",
+      "sha256": "db544892efff721488eaadbb09cce7b571a82bd4f52d07c8f389478ff84aee7b",
+      "bytes": 703,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-round-three/author__linux-positive.xml",
+      "sha256": "2814d1726cedf53e323deb2a927d1be95ec96c91034fd126fbdf8606dda41c31",
+      "bytes": 402,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-final/report.md",
+      "sha256": "04ab90502258ba3da13765fbae04dfe4944cf9134f08f9a25bbf7830944caded",
+      "bytes": 3740,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-final/windows.xml",
+      "sha256": "67bdb64912c54c180b4b3795748957800ef2ab7f34b3f2efe70820fc1412cc3c",
+      "bytes": 5849,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-final/windows.stdout.txt",
+      "sha256": "b40bfc04b903387db04c3324088fa7b3fac9de331c8851e6caac4baf955ab384",
+      "bytes": 944,
+      "exact_original_match": true,
+      "crlf_count": 15,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-final/linux.xml",
+      "sha256": "80013b9016e5764ff6559914c365aaabf3fc25ed5cc153dc74396cae51ccbe6b",
+      "bytes": 5550,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-final/linux.stdout.txt",
+      "sha256": "11e2ed26c886c00a42aad678ed7e97c8c90ff7b5e8456a2c2ffe3edb9d5e7aca",
+      "bytes": 732,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-final/linux-consume.xml",
+      "sha256": "d3c41fa3d9444bda2f7c619b37219e233d1e0a6b73e7e0c5d9ae6b1361d80144",
+      "bytes": 404,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-final/linux-consume.stdout.txt",
+      "sha256": "bf5314e2b83b53c5147ebf0b82a11a74554aa63f81bd22830e16375c31178477",
+      "bytes": 578,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-final/ruff.txt",
+      "sha256": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0",
+      "bytes": 20,
+      "exact_original_match": true,
+      "crlf_count": 1,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-final/mypy.txt",
+      "sha256": "0fd28b277f6e98e8effe0f968e9e5806e258d7effddfe7c7bc46acdf973ad56b",
+      "bytes": 46,
+      "exact_original_match": true,
+      "crlf_count": 1,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "author-final/format.txt",
+      "sha256": "97d85b4b6c185a05396e2d09a3c304ff0f7cc77f8b7b7bb7989ec6cd875b3898",
+      "bytes": 27,
+      "exact_original_match": true,
+      "crlf_count": 1,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "implementation/native-code-index-check.json",
+      "sha256": "9f9ad770d7ff8a4e4fccc7dd9a409873efdb35432403d62331e29ff4ae94d240",
+      "bytes": 2089,
+      "exact_original_match": true,
+      "crlf_count": 45,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "history-plan/native-evidence-plan.md",
+      "sha256": "8569bc125a0e6d02096886df4a7f632c784114a60b01057cf77bf25d6c356996",
+      "bytes": 9066,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "history-plan/native-evidence-whitelist.json",
+      "sha256": "55169f678f15b32f2e7fd8a4320782e74c4de6b3772525425e3704885e87c63c",
+      "bytes": 51343,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "implementation/backend__karajan__adapters__opencode__go_relay.py.txt",
+      "sha256": "088c335d1bfeedc2b69bc2395acc704ea6b32f71b6addcc74c06d87b2400170b",
+      "bytes": 40505,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "implementation/backend__karajan__isolation__go_task.py.txt",
+      "sha256": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+      "bytes": 22507,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "implementation/backend__karajan__orchestration__go_execution_intent.py.txt",
+      "sha256": "4e72794f6aae846d31788d136dbe47bf15aa6fde839731c57d14f5aa86c5a8e9",
+      "bytes": 43782,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "implementation/backend__karajan__orchestration__go_task_execution.py.txt",
+      "sha256": "789e9945a698d6f519f65db35205460ad35a0babf35aee2fbb5c6f82ec095b4d",
+      "bytes": 21077,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "implementation/tests__adapters__opencode__test_go_unix_relay.py.txt",
+      "sha256": "0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f",
+      "bytes": 5017,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "implementation/tests__isolation__test_go_task.py.txt",
+      "sha256": "0784cb488b333815da50270030c74cd29cce446c036a411071e63a83fa596f76",
+      "bytes": 23424,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "implementation/tests__runs__test_go_native_diagnostic_contract.py.txt",
+      "sha256": "7a3f9dc8501152f6fd4e3a1ef9393028633d5c992e445cb8d5874c27a0a57c0e",
+      "bytes": 3172,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    },
+    {
+      "target": "implementation/tests__runs__test_go_task_execution.py.txt",
+      "sha256": "64ca3965f03ea339041f7e2ba559af3b0e6355fceb92152ce4ccca70250b4f85",
+      "bytes": 14380,
+      "exact_original_match": true,
+      "crlf_count": 0,
+      "trailing_whitespace_line_count": 0
+    }
+  ],
+  "generated_checks": {
+    "README.md": {
+      "sha256": "2689a7bd85d996da58abc5256386487ef0ba8695f837899e09b83bb44b9ce010",
+      "bytes": 6193,
+      "lf_no_bom_no_trailing_whitespace": true
+    },
+    "publication-map.json": {
+      "sha256": "fa124abe02518b8ba27c312a93586434eb8e861a5765e65cabd6474936f5a780",
+      "bytes": 99443,
+      "lf_no_bom_no_trailing_whitespace": true
+    },
+    ".gitattributes": {
+      "sha256": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da",
+      "bytes": 8,
+      "lf_no_bom_no_trailing_whitespace": true
+    }
+  },
+  "bytecheck_file_written_with_LF": true,
+  "raw_files_with_CRLF": 25,
+  "raw_files_with_trailing_whitespace": 11,
+  "staged_diff_check": "not_run; no staging or Git mutation authorized",
+  "behavior_tests_run": 0
+}

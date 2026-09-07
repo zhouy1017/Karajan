@@ -1,0 +1,459 @@
+diff --git a/backend/karajan/adapters/opencode/go_relay.py b/backend/karajan/adapters/opencode/go_relay.py
+index 5f8b1d0..4d8a8be 100644
+--- a/backend/karajan/adapters/opencode/go_relay.py
++++ b/backend/karajan/adapters/opencode/go_relay.py
+@@ -11,6 +11,7 @@ from __future__ import annotations
+ import copy
+ import hmac
+ import json
++import os
+ import re
+ import secrets
+ import socket
+@@ -41,6 +42,7 @@ _REQUEST_LIMIT = 262_144
+ _RESPONSE_LIMIT = 1_048_576
+ _MAX_REQUESTS = 6
+ _TOOLS = frozenset({"read", "edit"})
++_UNIX_RELAY_PATH_BYTES = 107
+ _SESSION = re.compile(r"[A-Za-z0-9_-]{1,160}\Z")
+ _COST = re.compile(r"(?:0|[1-9][0-9]{0,15})(?:\.[0-9]{1,24})?(?:[eE]([+-]?[0-9]{1,3}))?\Z")
+ if sys.platform == "linux":
+@@ -504,7 +506,13 @@ class GoRelay:
+             if unix_socket is not None:
+                 if sys.platform != "linux":
+                     raise RuntimeError("LINUX_UNIX_RELAY_REQUIRED")
+-                unix_socket = unix_socket.parent.resolve(strict=True) / unix_socket.name
++                parent = unix_socket.parent
++                parent_info = parent.lstat()
++                if stat.S_ISLNK(parent_info.st_mode) or not stat.S_ISDIR(parent_info.st_mode):
++                    raise RuntimeError("RELAY_SOCKET_PARENT_INVALID")
++                unix_socket = parent / unix_socket.name
++                if len(os.fsencode(str(unix_socket))) > _UNIX_RELAY_PATH_BYTES:
++                    raise RuntimeError("UNIX_RELAY_PATH_TOO_LONG")
+                 if unix_socket.exists() or unix_socket.is_symlink():
+                     raise RuntimeError("RELAY_SOCKET_PATH_EXISTS")
+             owner = self
+diff --git a/backend/karajan/isolation/go_task.py b/backend/karajan/isolation/go_task.py
+index 824a6fe..5793f05 100644
+--- a/backend/karajan/isolation/go_task.py
++++ b/backend/karajan/isolation/go_task.py
+@@ -7,7 +7,11 @@ Candidate acceptance, validation success, Profile qualification or a cash cap.
+ """
+ 
+ import hashlib
++import os
+ import json
++import stat
++import tempfile
++import sys
+ import re
+ import secrets
+ import time
+@@ -38,6 +42,76 @@ def _digest(value: object) -> bool:
+     return type(value) is str and re.fullmatch(r"[0-9a-f]{64}", value) is not None
+ 
+ 
++@dataclass(frozen=True, slots=True)
++class _RelaySocketRoot:
++    path: Path
++    st_dev: int
++    st_ino: int
++    st_uid: int
++    st_mode: int
++
++
++def _relay_socket_root() -> _RelaySocketRoot:
++    if sys.platform != "linux":
++        raise RuntimeError("TASK_RELAY_SOCKET_ROOT_PLATFORM_INVALID")
++    root = Path(tempfile.mkdtemp(prefix="karajan-go-relay-", dir="/tmp"))
++    os.chmod(root, 0o700)
++    identity = root.lstat()
++    if (
++        not stat.S_ISDIR(identity.st_mode)
++        or identity.st_uid != os.geteuid()
++        or stat.S_IMODE(identity.st_mode) != 0o700
++    ):
++        raise RuntimeError("TASK_RELAY_SOCKET_ROOT_OWNERSHIP_INVALID")
++    return _RelaySocketRoot(
++        root,
++        identity.st_dev,
++        identity.st_ino,
++        identity.st_uid,
++        stat.S_IMODE(identity.st_mode),
++    )
++
++
++def _cleanup_relay_socket_root(root: _RelaySocketRoot | None) -> None:
++    if root is None:
++        return
++    try:
++        identity = root.path.lstat()
++    except FileNotFoundError:
++        return
++    if (
++        not stat.S_ISDIR(identity.st_mode)
++        or identity.st_dev != root.st_dev
++        or identity.st_ino != root.st_ino
++        or identity.st_uid != root.st_uid
++        or stat.S_IMODE(identity.st_mode) != root.st_mode
++        or root.st_uid != os.geteuid()
++    ):
++        raise RuntimeError("TASK_RELAY_SOCKET_ROOT_IDENTITY_CHANGED")
++    with os.scandir(root.path) as entries:
++        if next(entries, None) is not None:
++            raise RuntimeError("TASK_RELAY_SOCKET_ROOT_CONTENTS_PRESENT")
++    root.path.rmdir()
++
++
++def _safe_failure_code(error: BaseException, fallback: str) -> str:
++    reason = str(error)
++    return reason if re.fullmatch(r"[A-Z][A-Z0-9_:-]{0,95}", reason) else fallback
++
++
++def _failure_diagnostic(error: BaseException, *, native: IsolatedOpenCode | None, report: dict[str, Any]) -> dict[str, Any]:
++    runtime = report.get("runtime", {})
++    return {
++        "exception_type": type(error).__name__ if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,63}", type(error).__name__) else "Exception",
++        "reason_code": _safe_failure_code(error, "UNCLASSIFIED_NATIVE_FAILURE"),
++        "identity": {
++            "native_started": native is not None,
++            "runtime_state": runtime.get("state", "not_started"),
++            "local_stop": report.get("native_cleanup", {}).get("local_stop", "unknown"),
++        },
++    }
++
++
+ @dataclass(frozen=True)
+ class GoTaskFile:
+     path: str
+@@ -212,6 +286,8 @@ def execute_go_task(
+     native: IsolatedOpenCode | None = None
+     capture: StoppedProjection | None = None
+     reasons: list[str] = []
++    relay_socket_root: _RelaySocketRoot | None = None
++    relay_socket: Path | None = None
+     descriptor = task.descriptor()
+     report: dict[str, Any] = {
+         "schema_version": "karajan.go-native-task-observation.v1",
+@@ -235,12 +311,14 @@ def execute_go_task(
+     deadline = time.monotonic() + task.timeout_seconds
+     try:
+         directory.mkdir(mode=0o700)
+-        relay.start(unix_socket=directory / "inference.sock")
++        relay_socket_root = _relay_socket_root()
++        relay_socket = relay_socket_root.path / "inference.sock"
++        relay.start(unix_socket=relay_socket)
+         projection = [row.projection() for row in task.files]
+         native = IsolatedOpenCode(
+             runtime,
+             directory / "native",
+-            directory / "inference.sock",
++            relay_socket,
+             relay.capability,
+             projection=projection,
+         )
+@@ -310,6 +388,7 @@ def execute_go_task(
+             reasons.append("TASK_NATIVE_TOOL_INCOMPLETE")
+     except Exception as error:
+         report["error_type"] = type(error).__name__
++        report["error_reason_code"] = _safe_failure_code(error, "UNCLASSIFIED_NATIVE_FAILURE")
+         reasons.append("TASK_EXECUTION_FAILED")
+     finally:
+         try:
+@@ -322,18 +401,34 @@ def execute_go_task(
+             try:
+                 capture = native.capture_projection()
+                 report["native_cleanup"] = capture.stop_evidence
+-            except Exception:
++            except Exception as error:
+                 reasons.append("TASK_STOPPED_CAPTURE_UNAVAILABLE")
++                report["native_capture_diagnostic"] = _failure_diagnostic(
++                    error, native=native, report=report
++                )
+                 try:
+                     report["native_cleanup"] = native.close()
+-                except Exception:
++                except Exception as stop_error:
+                     report["native_cleanup"] = {"local_stop": "unknown"}
++                    report["native_capture_diagnostic"]["stop_error"] = {
++                        "exception_type": type(stop_error).__name__,
++                        "reason_code": _safe_failure_code(
++                            stop_error, "UNCLASSIFIED_NATIVE_STOP_FAILURE"
++                        ),
++                    }
++                report["native_capture_diagnostic"]["identity"]["local_stop"] = report[
++                    "native_cleanup"
++                ].get("local_stop", "unknown")
+         else:
+             report["native_cleanup"] = {"local_stop": "not_started"}
+         try:
+             report["relay_cleanup"] = relay.close()
+         except Exception:
+             report["relay_cleanup"] = {"status": "unknown"}
++        try:
++            _cleanup_relay_socket_root(relay_socket_root)
++        except Exception:
++            reasons.append("TASK_RELAY_SOCKET_ROOT_NOT_CLEANED")
+     report["requests"] = relay.receipts
+     try:
+         report["journal"] = owned.journal.snapshot(owned.grant_id)
+diff --git a/tests/adapters/opencode/test_go_unix_relay.py b/tests/adapters/opencode/test_go_unix_relay.py
+index 3b3fc23..bd9de80 100644
+--- a/tests/adapters/opencode/test_go_unix_relay.py
++++ b/tests/adapters/opencode/test_go_unix_relay.py
+@@ -1,5 +1,6 @@
+ """Real pathname Unix HTTP transport; the upstream is explicitly synthetic."""
+ 
++import contextlib
+ import sys
+ from pathlib import Path
+ 
+@@ -12,6 +13,44 @@ from test_go_relay_journal import authorization
+ pytestmark = pytest.mark.skipif(sys.platform != "linux", reason="Linux namespace transport")
+ 
+ 
++def _socket_path_with_length(root: Path, target_length: int) -> Path:
++    base = root / "path"
++    base.mkdir()
++    index = 0
++    while True:
++        path = base / ("a" * index) / "inference.sock"
++        actual = len(str(path))
++        if actual == target_length:
++            path.parent.mkdir(parents=True, exist_ok=True)
++            return path
++        if actual > target_length:
++            raise ValueError("PATH_LENGTH_TARGET_UNREACHABLE")
++        index += 1
++
++
++def test_unix_relay_path_length_bounds(tmp_path):
++    relay = GoRelay(SECRET, CANARY)
++    try:
++        allowed = _socket_path_with_length(tmp_path, 107)
++        relay.start(unix_socket=allowed)
++        assert len(str(allowed)) == 107
++        assert relay.close()["status"] == "closed"
++        assert not allowed.exists()
++    finally:
++        with contextlib.suppress(FileNotFoundError):
++            relay.close()
++
++
++def test_unix_relay_rejects_overlong_path(tmp_path):
++    relay = GoRelay(SECRET, CANARY)
++    overlong = _socket_path_with_length(tmp_path, 108)
++    assert len(str(overlong)) == 108
++    with pytest.raises(RuntimeError, match="UNIX_RELAY_PATH_TOO_LONG"):
++        relay.start(unix_socket=overlong)
++    assert not overlong.exists()
++    assert relay.close()["status"] == "closed"
++
++
+ def test_unix_relay_keeps_the_same_fixed_endpoint_and_capability_boundary(tmp_path: Path) -> None:
+     requests = []
+ 
+diff --git a/tests/isolation/test_go_task.py b/tests/isolation/test_go_task.py
+index 992ccf7..1e5cbf8 100644
+--- a/tests/isolation/test_go_task.py
++++ b/tests/isolation/test_go_task.py
+@@ -6,21 +6,36 @@ must replace the no-op business guards with actual durable controller services.
+ 
+ import hashlib
+ import json
++import os
++import stat
+ import sys
++import tempfile
+ import time
++from pathlib import Path
+ from contextlib import contextmanager
+ from dataclasses import FrozenInstanceError, replace
++from typing import Any
+ 
+ import httpx
+ import pytest
+ from karajan.adapters.opencode.go_journal import GoCallJournal
+ from karajan.adapters.opencode.go_relay import GoRelayAuthorization, GoRelayContext
+ from karajan.isolation.go_probe import source_digest
+-from karajan.isolation.go_task import GoTaskFile, GoTaskInput, execute_go_task, native_task_source
++from karajan.isolation.go_task import (
++    GoTaskFile,
++    GoTaskInput,
++    _cleanup_relay_socket_root,
++    _failure_diagnostic,
++    _relay_socket_root,
++    execute_go_task,
++    native_task_source,
++)
++import karajan.isolation.go_task as go_task_module
+ from karajan.projects.credential_sources import ResolvedCredential
+ from test_go_context import accounting as accounting
+ from test_go_context import artifacts as artifacts
+ from test_opencode_go_composition import runtime_artifact
++from karajan.isolation._opencode_capture import ProjectionEntry, StoppedProjection
+ 
+ SECRET = "synthetic-task-credential-not-a-provider-key"
+ INITIAL = b"def add(a, b):\n    return a - b\n"
+@@ -162,6 +177,161 @@ def test_real_native_task_returns_owned_stopped_projection_and_durable_usage(tmp
+     assert result.report["status"] == "completed"
+ 
+ 
++@pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux runtime required")
++def test_execute_go_task_uses_short_controller_relay_root_on_long_operation_directory(tmp_path, accounting, monkeypatch):
++    runtime, task, credential, auth, context = prepared(tmp_path, accounting)
++    relay_roots = []
++    observed_socket_paths: list[Path] = []
++    upstream_values: dict[str, Any] = {}
++
++    class FakeNative:
++        def __init__(self, runtime, directory, upstream_socket, capability, *_, projection=None, **__):
++            self.runtime = runtime
++            self.directory = directory
++            self.upstream_socket = upstream_socket
++            self.workspace = directory / "workspace"
++            self.workspace.mkdir(parents=True, exist_ok=True)
++            self.capability = capability
++            self._projection = projection or []
++            observed_socket_paths.append(upstream_socket)
++
++        def start(self) -> dict[str, Any]:
++            return self.snapshot()
++
++        def snapshot(self) -> dict[str, Any]:
++            return {
++                "state": "running",
++                "namespace_pid": 1,
++                "host_mount_visible": False,
++                "wsl_interop_visible": False,
++                "native_control_fd_inherited": False,
++                "network_interfaces": ["lo"],
++                "ipv4_routes": [],
++                "no_new_privileges": True,
++                "capabilities": {key: "0000000000000000" for key in ("effective", "permitted", "bounding")},
++            }
++
++        def request(self, method: str, route: str, body: dict[str, Any] | None = None) -> Any:
++            if method == "GET" and route == "/config":
++                return {
++                    "model": "glm-5.3-flash",
++                    "permission": ["read", "edit"],
++                    "fixture": "synthetic",
++                }
++            if method == "POST" and route == "/session":
++                return {"id": "session"}
++            if route == "/session/session/prompt_async":
++                return {}
++            if route.startswith("/session/session/message"):
++                return [
++                    {
++                        "info": {
++                            "role": "assistant",
++                            "modelID": "glm-5.3-flash",
++                            "providerID": "opencode-go",
++                            "time": {"completed": "1"},
++                            "finish": "stop",
++                        },
++                        "parts": [],
++                    }
++                ]
++            raise AssertionError(f"unexpected route {method} {route}")
++
++        def capture_projection(self) -> StoppedProjection:
++            projection = tuple(ProjectionEntry(**row) for row in self._projection)
++            return StoppedProjection(
++                "0" * 64,
++                projection,
++                tuple((row["path"], (self.workspace / row["path"]).read_bytes()) for row in self._projection),
++                json.dumps({"local_stop": "confirmed"}, sort_keys=True, separators=(",", ":")),
++            )
++
++        def close(self) -> dict[str, Any]:
++            return {"local_stop": "confirmed"}
++
++    def synthetic_relay_root():
++        root = Path(tempfile.mkdtemp(prefix="go-relay-root-", dir="/tmp"))
++        relay_roots.append(root)
++        os.chmod(root, 0o700)
++        identity = root.lstat()
++        return go_task_module._RelaySocketRoot(
++            root, identity.st_dev, identity.st_ino, identity.st_uid, stat.S_IMODE(identity.st_mode)
++        )
++
++    monkeypatch.setattr(go_task_module, "_relay_socket_root", synthetic_relay_root)
++    monkeypatch.setattr(go_task_module, "IsolatedOpenCode", FakeNative)
++
++    responses = []
++    def receive(request):
++        responses.append(request)
++        return response(1)
++
++    result = execute_go_task(
++        runtime,
++        tmp_path / ("operation-" + ("x" * 220)),
++        task,
++        credential,
++        auth,
++        context,
++        start_native=lambda native: native.start(),
++        send_guard=permitted,
++        client_factory=lambda: httpx.Client(transport=httpx.MockTransport(receive)),
++    )
++    assert result.report["status"] == "completed"
++    assert len(relay_roots) == 1
++    assert relay_roots[0].exists() is False
++    assert len(observed_socket_paths) == 1
++    assert len(str(observed_socket_paths[0])) <= 107
++    assert str(observed_socket_paths[0]).startswith("/tmp/")
++    assert not relay_roots[0].exists()
++    upstream_values["relay_socket"] = str(observed_socket_paths[0])
++    assert upstream_values["relay_socket"] == str(observed_socket_paths[0])
++    assert len(responses) == 3
++    assert result.capture is not None
++
++
++@pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux runtime required")
++def test_relay_socket_root_cleanup_refuses_replaced_path(tmp_path):
++    lease = _relay_socket_root()
++    replacement = tmp_path / "replacement"
++    lease.path.rename(replacement)
++    lease.path.symlink_to(replacement, target_is_directory=True)
++    with pytest.raises(RuntimeError, match="TASK_RELAY_SOCKET_ROOT_IDENTITY_CHANGED"):
++        _cleanup_relay_socket_root(lease)
++    assert replacement.is_dir()
++    assert lease.path.is_symlink()
++    lease.path.unlink()
++    replacement.rmdir()
++
++
++@pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux runtime required")
++def test_relay_socket_root_cleanup_refuses_unexpected_assets():
++    lease = _relay_socket_root()
++    (lease.path / "unexpected").write_text("must remain")
++    with pytest.raises(RuntimeError, match="TASK_RELAY_SOCKET_ROOT_CONTENTS_PRESENT"):
++        _cleanup_relay_socket_root(lease)
++    assert (lease.path / "unexpected").read_text() == "must remain"
++    (lease.path / "unexpected").unlink()
++    _cleanup_relay_socket_root(lease)
++
++
++def test_native_failure_diagnostic_is_content_free_and_identity_bound():
++    report = {"runtime": {"state": "running"}, "native_cleanup": {"local_stop": "unknown"}}
++    diagnostic = _failure_diagnostic(
++        RuntimeError("/private/prompt-and-key: native failure"), native=object(), report=report
++    )
++    assert diagnostic == {
++        "exception_type": "RuntimeError",
++        "reason_code": "UNCLASSIFIED_NATIVE_FAILURE",
++        "identity": {
++            "native_started": True,
++            "runtime_state": "running",
++            "local_stop": "unknown",
++        },
++    }
++    assert "prompt-and-key" not in json.dumps(diagnostic)
++
++
+ def response(index, *, usage=True):
+     delta, finish = {"content": "Implemented."}, "stop"
+     if index in (1, 2):

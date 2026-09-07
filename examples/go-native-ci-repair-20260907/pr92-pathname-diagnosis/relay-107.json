@@ -1,0 +1,10 @@
+{
+  "path_bytes": 107,
+  "case": "public_relay_start",
+  "result": "started",
+  "close": {
+    "status": "closed",
+    "errors": []
+  },
+  "http_clients_created": 0
+}

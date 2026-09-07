@@ -1,0 +1,12 @@
+{
+  "path_bytes": 108,
+  "case": "public_relay_start",
+  "result": "rejected",
+  "error_type": "OSError",
+  "error": "AF_UNIX path too long",
+  "close": {
+    "status": "closed",
+    "errors": []
+  },
+  "http_clients_created": 0
+}
