@@ -422,6 +422,7 @@ class CapacityStore:
         value = _admission_payload(request)
 
         def apply(db: sqlite3.Connection) -> dict[str, Any]:
+            captured_at: float | None = None
             profile, policy, policy_revision, now, held, reasons, observations, availability = (
                 self._admission_evaluation(db, value)
             )
@@ -435,14 +436,12 @@ class CapacityStore:
                     self._admission_evaluation(db, value)
                 )
             if not reasons and after_capacity_facts is not None:
-                after_capacity_facts(
-                    CapacityBoundaryFacts(
-                        capture_routing_facts(
-                            self, db, account_ids=(profile["account_id"],)
-                        ),
-                        owned_admission_id=None,
-                    )
+                boundary = CapacityBoundaryFacts(
+                    capture_routing_facts(self, db, account_ids=(profile["account_id"],)),
+                    owned_admission_id=None,
                 )
+                captured_at = boundary.facts.as_dict()["captured_at"]
+                after_capacity_facts(boundary)
                 # The pure callback receives a source-complete snapshot, while
                 # this second check remains Capacity's final temporal/vector
                 # authority before a reservation can be written.
@@ -450,15 +449,31 @@ class CapacityStore:
                     self._admission_evaluation(db, value)
                 )
             if not reasons:
-                now = self._now()
-                reasons = self._final_temporal_reasons(value, policy, held, observations, now)
+                final_now = self._now()
+                reasons = self._final_temporal_reasons(
+                    value,
+                    policy,
+                    held,
+                    observations,
+                    final_now,
+                    evaluated_at=max(now, captured_at) if captured_at is not None else now,
+                )
+                now = final_now
             if not reasons and before_reservation_write is not None:
                 before_reservation_write()
                 # The callback is pure, but its time check can be the instant a
                 # window crosses. Reuse the already-read facts; do not reopen a
                 # Capacity getter or alter the immutable captured fragment.
-                now = self._now()
-                reasons = self._final_temporal_reasons(value, policy, held, observations, now)
+                final_now = self._now()
+                reasons = self._final_temporal_reasons(
+                    value,
+                    policy,
+                    held,
+                    observations,
+                    final_now,
+                    evaluated_at=max(now, captured_at) if captured_at is not None else now,
+                )
+                now = final_now
             decision: dict[str, Any] = {
                 "decision": "rejected" if reasons else "admitted",
                 "reason_codes": reasons,
@@ -549,6 +564,8 @@ class CapacityStore:
         held: list[dict[str, Any]],
         observations: dict[str, Any],
         now: float,
+        *,
+        evaluated_at: float,
     ) -> list[str]:
         """Recheck elapsed Capacity conditions from a completed source read."""
         lead = (
@@ -560,6 +577,11 @@ class CapacityStore:
             )
         )
         reasons: list[str] = []
+        if now < evaluated_at:
+            # A held/observation snapshot selected at a later time is not a
+            # valid basis for a new earlier ``as_of``.  In particular, doing
+            # so could resurrect a cooldown or make an expired hold disappear.
+            reasons.append("CAPACITY_CLOCK_REGRESSED")
         for pool_id, observed in observations.items():
             if (
                 observed is None
@@ -704,15 +726,14 @@ class CapacityStore:
                 raise CapacityError("ADMISSION_NOT_ACTIVE")
             if item["expires_at"] <= self._now():
                 raise CapacityError("RESERVATION_EXPIRED")
+            captured_at: float | None = None
             if after_capacity_facts is not None:
-                after_capacity_facts(
-                    CapacityBoundaryFacts(
-                        capture_routing_facts(
-                            self, db, account_ids=(item["account_id"],)
-                        ),
-                        owned_admission_id=identity,
-                    )
+                boundary = CapacityBoundaryFacts(
+                    capture_routing_facts(self, db, account_ids=(item["account_id"],)),
+                    owned_admission_id=identity,
                 )
+                captured_at = boundary.facts.as_dict()["captured_at"]
+                after_capacity_facts(boundary)
             now = self._now()
             if item["expires_at"] <= now:
                 raise CapacityError("RESERVATION_EXPIRED")
@@ -741,6 +762,7 @@ class CapacityStore:
                 and other["state"] in ("reserved", "active", "unknown")
                 and not (other["state"] == "reserved" and other["expires_at"] <= now)
             ]
+            evaluated_at = now
             reasons, observations, availability = self._evaluate(
                 db,
                 expected,
@@ -754,17 +776,33 @@ class CapacityStore:
                 raise CapacityError(reasons[0])
             now = self._now()
             temporal = self._final_temporal_reasons(
-                expected, json.loads(policy["data"]), held, observations, now
+                expected,
+                json.loads(policy["data"]),
+                held,
+                observations,
+                now,
+                evaluated_at=max(evaluated_at, captured_at)
+                if captured_at is not None
+                else evaluated_at,
             )
             if temporal:
                 raise CapacityError(temporal[0])
+            if item["expires_at"] <= now:
+                raise CapacityError("RESERVATION_EXPIRED")
             if before_effect_yield is not None:
                 before_effect_yield()
                 now = self._now()
                 if item["expires_at"] <= now:
                     raise CapacityError("RESERVATION_EXPIRED")
                 temporal = self._final_temporal_reasons(
-                    expected, json.loads(policy["data"]), held, observations, now
+                    expected,
+                    json.loads(policy["data"]),
+                    held,
+                    observations,
+                    now,
+                    evaluated_at=max(evaluated_at, captured_at)
+                    if captured_at is not None
+                    else evaluated_at,
                 )
                 if temporal:
                     raise CapacityError(temporal[0])
