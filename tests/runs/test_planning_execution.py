@@ -11,11 +11,10 @@ from karajan.capacity import CapacityStore
 from karajan.orchestration.planning_execution import PlanningExecution
 from karajan.runs import RunError, RunPlanner
 from karajan.runs.planning import digest
+from test_planning import create_request, proposal
+from test_routing_authorization import policy_request, request_v2, submit_request
 
-from tests.runs.test_planning import create_request, proposal
-from tests.runs.test_routing_authorization import policy_request, request_v2, submit_request
-
-pytest_plugins = ["tests.runs.test_planning"]
+pytest_plugins = ["test_planning"]
 
 
 class FixtureAuthorities:

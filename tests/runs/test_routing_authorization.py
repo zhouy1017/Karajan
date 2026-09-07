@@ -6,8 +6,7 @@ from pathlib import Path
 import pytest
 from karajan.projects import ProjectError, ProjectRegistry
 from karajan.runs import RunError, RunPlanner
-
-from tests.runs.test_planning import (
+from test_planning import (
     ScriptedAdmissionReader,
     create_request,
     project,
