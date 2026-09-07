@@ -1,0 +1,182 @@
+{
+  "schema_version": "karajan.review-output-parser-independent.v1",
+  "reviewer": "capacity_facts",
+  "reviewer_count": 1,
+  "standards": {
+    "findings": [],
+    "decision": "accept_current_C_slice"
+  },
+  "spec": {
+    "findings": [],
+    "C_missing": [],
+    "G_remaining": [
+      "implementation_commit",
+      "current_head_CI",
+      "publication",
+      "owner_merge"
+    ],
+    "P_S": "outside_issue104"
+  },
+  "source_before": {
+    "backend/karajan/candidates/review_output.py": "8b72d037154f7c4d1a9bb8af95d5713b3851de4122327aa070f3f2562c226733",
+    "tests/candidates/test_review_output.py": "66a4b72f55928a18815373ebeeb9063ac23a4e566b563bd4fc22ac48139f6d6f",
+    "backend/karajan/candidates/models.py": "99e99e5cb8f3ae6d6b02f9f0047e8239e8bc8901670c217e88cc6a6d31180769",
+    "backend/karajan/candidates/store.py": "9096bc2904d34ec01ab3adb22da45f151b94bfda90fd3e942890ba93675243ca",
+    "docs/planning/v1/issues/m3-review-output-parser.md": "7df55698f5a8b07479b597f8cbfa03dbeb0340518f91b1f568944f9943e61e59"
+  },
+  "source_after": {
+    "backend/karajan/candidates/review_output.py": "8b72d037154f7c4d1a9bb8af95d5713b3851de4122327aa070f3f2562c226733",
+    "tests/candidates/test_review_output.py": "66a4b72f55928a18815373ebeeb9063ac23a4e566b563bd4fc22ac48139f6d6f",
+    "backend/karajan/candidates/models.py": "99e99e5cb8f3ae6d6b02f9f0047e8239e8bc8901670c217e88cc6a6d31180769",
+    "backend/karajan/candidates/store.py": "9096bc2904d34ec01ab3adb22da45f151b94bfda90fd3e942890ba93675243ca",
+    "docs/planning/v1/issues/m3-review-output-parser.md": "7df55698f5a8b07479b597f8cbfa03dbeb0340518f91b1f568944f9943e61e59"
+  },
+  "unchanged_base_files": {
+    "backend/karajan/candidates/models.py": true,
+    "backend/karajan/candidates/store.py": true,
+    "backend/karajan/orchestration/serial.py": true,
+    "tests/candidates/test_validation.py": true
+  },
+  "independent_results": {
+    "first-windows.xml": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "15",
+      "time": "1.783",
+      "timestamp": "2026-09-07T10:06:27.343182+08:00",
+      "hostname": "ProArt-Zhou"
+    },
+    "final-linux.xml": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "15",
+      "time": "0.601",
+      "timestamp": "2026-09-07T10:07:20.038374+08:00",
+      "hostname": "ProArt-Zhou"
+    }
+  },
+  "windows_command": {
+    "argv": [
+      "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+      "-m",
+      "pytest",
+      "-p",
+      "no:cacheprovider",
+      "-o",
+      "pythonpath=backend tests/candidates",
+      ".cache/review-parser-independent/test_parser_contract.py",
+      "-q",
+      "--junitxml=.cache/review-parser-independent/first-windows.xml"
+    ],
+    "returncode": 0
+  },
+  "linux_command": "PYTHONPATH=backend /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest -p no:cacheprovider -o \"pythonpath=backend tests/candidates\" .cache/review-parser-independent/test_parser_contract.py -q --junitxml=.cache/review-parser-independent/final-linux.xml",
+  "author_evidence": {
+    "freeze_sha256": "18f1579ed5eb7bdcd80ec3b9f942966178cdd6d5dc4682e1fe900cc32530f0d4",
+    "verified_artifact_count": 33,
+    "all_bytes_match": true,
+    "results": {
+      "candidate-final-linux.xml": {
+        "tests": 375,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "time_seconds": 10.695
+      },
+      "candidate-final-windows.xml": {
+        "tests": 375,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3,
+        "time_seconds": 66.779
+      },
+      "candidate-linux-path-corrected.xml": {
+        "tests": 375,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time_seconds": 10.465
+      },
+      "fields-green.xml": {
+        "tests": 168,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time_seconds": 0.171
+      },
+      "fields-red.xml": {
+        "tests": 168,
+        "failures": 124,
+        "errors": 0,
+        "skipped": 0,
+        "time_seconds": 0.734
+      },
+      "first-green.xml": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time_seconds": 0.09
+      },
+      "initial-missing-entry.xml": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 1,
+        "skipped": 0,
+        "time_seconds": 0.183
+      },
+      "json-green.xml": {
+        "tests": 38,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time_seconds": 0.102
+      },
+      "json-red.xml": {
+        "tests": 38,
+        "failures": 34,
+        "errors": 0,
+        "skipped": 0,
+        "time_seconds": 0.254
+      },
+      "parser-final-windows.xml": {
+        "tests": 269,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time_seconds": 1.804
+      },
+      "scope-green.xml": {
+        "tests": 266,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time_seconds": 1.66
+      },
+      "scope-red.xml": {
+        "tests": 266,
+        "failures": 41,
+        "errors": 0,
+        "skipped": 0,
+        "time_seconds": 2.08
+      }
+    }
+  },
+  "provider_calls": 0,
+  "credential_reads": 0,
+  "artifacts": {
+    "command.json": "b71511210c3bc1e98d1926bc439fc74e83ace6e307f951b917d1371832c8ac52",
+    "final-linux.xml": "5622e44b0755bd02637feb8922e2e784cf271d8ea7d5c39b4943345206c23881",
+    "first-windows.stdout.txt": "da9afc950f0603c5a51b2b93da6ad6638d2d6d8956c7a08ba7227d5c26371939",
+    "first-windows.xml": "b4ebca3593910958c68f5ee37bb2c62ef364701ace9201b88cd5d8a2b862cd3f",
+    "README.md": "69eac3605a59a43948920ff8f66e3581acdae67c200157210cb6f6e3b9558a02",
+    "review_output.before.py.txt": "8b72d037154f7c4d1a9bb8af95d5713b3851de4122327aa070f3f2562c226733",
+    "source-after.json": "55a5ac95f793f54c8763b613fd6021d0e1eef205803beef92dd776035fb24faf",
+    "source-before.json": "55a5ac95f793f54c8763b613fd6021d0e1eef205803beef92dd776035fb24faf",
+    "test_parser_contract.py": "2e211eae118c7c84d4308a53a89366a42e2e3b428811d89bf089dde092aa5f52"
+  }
+}

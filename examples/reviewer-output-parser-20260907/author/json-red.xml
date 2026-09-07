@@ -1,0 +1,1354 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="34" skipped="0" tests="38" time="0.254" timestamp="2026-09-07T09:52:32.752145+08:00" hostname="ProArt-Zhou"><testcase classname="tests.candidates.test_review_output" name="test_maps_only_review_content[pass-passed]" time="0.000" /><testcase classname="tests.candidates.test_review_output" name="test_maps_only_review_content[changes_requested-failed]" time="0.000" /><testcase classname="tests.candidates.test_review_output" name="test_maps_only_review_content[inconclusive-inconclusive]" time="0.000" /><testcase classname="tests.candidates.test_review_output" name="test_unicode_escapes_and_findings_order_are_preserved" time="0.000" /><testcase classname="tests.candidates.test_review_output" name="test_rejects_invalid_input_without_interpreter_errors[None]" time="0.000"><failure message="TypeError: the JSON object must be str, bytes or bytearray, not NoneType">content = None
+
+    @pytest.mark.parametrize(
+        "content",
+        [None, {}, [], 1, True, bytearray(b"{}"), b"\xff", "\ud800", '"\\udfff"'],
+    )
+    def test_rejects_invalid_input_without_interpreter_errors(content: Any) -&gt; None:
+&gt;       rejected(content, "INPUT_INVALID")
+
+tests\candidates\test_review_output.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\candidates\test_review_output.py:52: in rejected
+    parse(content, **scope)
+tests\candidates\test_review_output.py:44: in parse
+    return parse_review_output(
+backend\karajan\candidates\review_output.py:22: in parse_review_output
+    document = json.loads(content)
+               ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+s = None, cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+&gt;               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not NoneType
+
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\json\__init__.py:339: TypeError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_invalid_input_without_interpreter_errors[content1]" time="0.000"><failure message="TypeError: the JSON object must be str, bytes or bytearray, not dict">content = {}
+
+    @pytest.mark.parametrize(
+        "content",
+        [None, {}, [], 1, True, bytearray(b"{}"), b"\xff", "\ud800", '"\\udfff"'],
+    )
+    def test_rejects_invalid_input_without_interpreter_errors(content: Any) -&gt; None:
+&gt;       rejected(content, "INPUT_INVALID")
+
+tests\candidates\test_review_output.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\candidates\test_review_output.py:52: in rejected
+    parse(content, **scope)
+tests\candidates\test_review_output.py:44: in parse
+    return parse_review_output(
+backend\karajan\candidates\review_output.py:22: in parse_review_output
+    document = json.loads(content)
+               ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+s = {}, cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+&gt;               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\json\__init__.py:339: TypeError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_invalid_input_without_interpreter_errors[content2]" time="0.000"><failure message="TypeError: the JSON object must be str, bytes or bytearray, not list">content = []
+
+    @pytest.mark.parametrize(
+        "content",
+        [None, {}, [], 1, True, bytearray(b"{}"), b"\xff", "\ud800", '"\\udfff"'],
+    )
+    def test_rejects_invalid_input_without_interpreter_errors(content: Any) -&gt; None:
+&gt;       rejected(content, "INPUT_INVALID")
+
+tests\candidates\test_review_output.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\candidates\test_review_output.py:52: in rejected
+    parse(content, **scope)
+tests\candidates\test_review_output.py:44: in parse
+    return parse_review_output(
+backend\karajan\candidates\review_output.py:22: in parse_review_output
+    document = json.loads(content)
+               ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+s = [], cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+&gt;               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not list
+
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\json\__init__.py:339: TypeError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_invalid_input_without_interpreter_errors[1]" time="0.000"><failure message="TypeError: the JSON object must be str, bytes or bytearray, not int">content = 1
+
+    @pytest.mark.parametrize(
+        "content",
+        [None, {}, [], 1, True, bytearray(b"{}"), b"\xff", "\ud800", '"\\udfff"'],
+    )
+    def test_rejects_invalid_input_without_interpreter_errors(content: Any) -&gt; None:
+&gt;       rejected(content, "INPUT_INVALID")
+
+tests\candidates\test_review_output.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\candidates\test_review_output.py:52: in rejected
+    parse(content, **scope)
+tests\candidates\test_review_output.py:44: in parse
+    return parse_review_output(
+backend\karajan\candidates\review_output.py:22: in parse_review_output
+    document = json.loads(content)
+               ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+s = 1, cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+&gt;               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not int
+
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\json\__init__.py:339: TypeError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_invalid_input_without_interpreter_errors[True]" time="0.000"><failure message="TypeError: the JSON object must be str, bytes or bytearray, not bool">content = True
+
+    @pytest.mark.parametrize(
+        "content",
+        [None, {}, [], 1, True, bytearray(b"{}"), b"\xff", "\ud800", '"\\udfff"'],
+    )
+    def test_rejects_invalid_input_without_interpreter_errors(content: Any) -&gt; None:
+&gt;       rejected(content, "INPUT_INVALID")
+
+tests\candidates\test_review_output.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\candidates\test_review_output.py:52: in rejected
+    parse(content, **scope)
+tests\candidates\test_review_output.py:44: in parse
+    return parse_review_output(
+backend\karajan\candidates\review_output.py:22: in parse_review_output
+    document = json.loads(content)
+               ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+s = True, cls = None, object_hook = None, parse_float = None, parse_int = None
+parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+&gt;               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not bool
+
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\json\__init__.py:339: TypeError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_invalid_input_without_interpreter_errors[content5]" time="0.000"><failure message="KeyError: 'verdict'">content = bytearray(b'{}')
+
+    @pytest.mark.parametrize(
+        "content",
+        [None, {}, [], 1, True, bytearray(b"{}"), b"\xff", "\ud800", '"\\udfff"'],
+    )
+    def test_rejects_invalid_input_without_interpreter_errors(content: Any) -&gt; None:
+&gt;       rejected(content, "INPUT_INVALID")
+
+tests\candidates\test_review_output.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\candidates\test_review_output.py:52: in rejected
+    parse(content, **scope)
+tests\candidates\test_review_output.py:44: in parse
+    return parse_review_output(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = bytearray(b'{}'), allowed_files = frozenset({'src/export.py'})
+allowed_acceptance_refs = frozenset({'acceptance:csv-v1'})
+
+    def parse_review_output(
+        content: str | bytes,
+        *,
+        allowed_files: frozenset[str],
+        allowed_acceptance_refs: frozenset[str],
+    ) -&gt; ParsedReviewOutput:
+        document = json.loads(content)
+        return ParsedReviewOutput.model_validate(
+            {
+                "verdict": {
+                    "pass": "passed",
+                    "changes_requested": "failed",
+                    "inconclusive": "inconclusive",
+&gt;               }[document["verdict"]],
+                  ^^^^^^^^^^^^^^^^^^^
+                "findings": document["findings"],
+            }
+        )
+E       KeyError: 'verdict'
+
+backend\karajan\candidates\review_output.py:29: KeyError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_invalid_input_without_interpreter_errors[\xff]" time="0.000"><failure message="AssertionError: assert None == ('REVIEW_OUTPUT_' + 'INPUT_INVALID')&#10; +  where None = getattr(UnicodeDecodeError('utf-8', b'\xff', 0, 1, 'invalid start byte'), 'code', None)&#10; +    where UnicodeDecodeError('utf-8', b'\xff', 0, 1, 'invalid start byte') = &lt;ExceptionInfo UnicodeDecodeError('utf-8', b'\xff', 0, 1, 'invalid start byte') tblen=4&gt;.value">content = b'\xff'
+
+    @pytest.mark.parametrize(
+        "content",
+        [None, {}, [], 1, True, bytearray(b"{}"), b"\xff", "\ud800", '"\\udfff"'],
+    )
+    def test_rejects_invalid_input_without_interpreter_errors(content: Any) -&gt; None:
+&gt;       rejected(content, "INPUT_INVALID")
+
+tests\candidates\test_review_output.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = b'\xff', code = 'INPUT_INVALID', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+        with pytest.raises(ValueError) as caught:
+            parse(content, **scope)
+&gt;       assert getattr(caught.value, "code", None) == "REVIEW_OUTPUT_" + code
+E       AssertionError: assert None == ('REVIEW_OUTPUT_' + 'INPUT_INVALID')
+E        +  where None = getattr(UnicodeDecodeError('utf-8', b'\xff', 0, 1, 'invalid start byte'), 'code', None)
+E        +    where UnicodeDecodeError('utf-8', b'\xff', 0, 1, 'invalid start byte') = &lt;ExceptionInfo UnicodeDecodeError('utf-8', b'\xff', 0, 1, 'invalid start byte') tblen=4&gt;.value
+
+tests\candidates\test_review_output.py:53: AssertionError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_invalid_input_without_interpreter_errors[\ud800]" time="0.000"><failure message="AssertionError: assert None == ('REVIEW_OUTPUT_' + 'INPUT_INVALID')&#10; +  where None = getattr(JSONDecodeError('Expecting value: line 1 column 1 (char 0)'), 'code', None)&#10; +    where JSONDecodeError('Expecting value: line 1 column 1 (char 0)') = &lt;ExceptionInfo JSONDecodeError('Expecting value: line 1 column 1 (char 0)') tblen=6&gt;.value">content = '\ud800'
+
+    @pytest.mark.parametrize(
+        "content",
+        [None, {}, [], 1, True, bytearray(b"{}"), b"\xff", "\ud800", '"\\udfff"'],
+    )
+    def test_rejects_invalid_input_without_interpreter_errors(content: Any) -&gt; None:
+&gt;       rejected(content, "INPUT_INVALID")
+
+tests\candidates\test_review_output.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '\ud800', code = 'INPUT_INVALID', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+        with pytest.raises(ValueError) as caught:
+            parse(content, **scope)
+&gt;       assert getattr(caught.value, "code", None) == "REVIEW_OUTPUT_" + code
+E       AssertionError: assert None == ('REVIEW_OUTPUT_' + 'INPUT_INVALID')
+E        +  where None = getattr(JSONDecodeError('Expecting value: line 1 column 1 (char 0)'), 'code', None)
+E        +    where JSONDecodeError('Expecting value: line 1 column 1 (char 0)') = &lt;ExceptionInfo JSONDecodeError('Expecting value: line 1 column 1 (char 0)') tblen=6&gt;.value
+
+tests\candidates\test_review_output.py:53: AssertionError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_invalid_input_without_interpreter_errors[&quot;\\udfff&quot;]" time="0.000"><failure message="TypeError: string indices must be integers, not 'str'">content = '"\\udfff"'
+
+    @pytest.mark.parametrize(
+        "content",
+        [None, {}, [], 1, True, bytearray(b"{}"), b"\xff", "\ud800", '"\\udfff"'],
+    )
+    def test_rejects_invalid_input_without_interpreter_errors(content: Any) -&gt; None:
+&gt;       rejected(content, "INPUT_INVALID")
+
+tests\candidates\test_review_output.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\candidates\test_review_output.py:52: in rejected
+    parse(content, **scope)
+tests\candidates\test_review_output.py:44: in parse
+    return parse_review_output(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '"\\udfff"', allowed_files = frozenset({'src/export.py'})
+allowed_acceptance_refs = frozenset({'acceptance:csv-v1'})
+
+    def parse_review_output(
+        content: str | bytes,
+        *,
+        allowed_files: frozenset[str],
+        allowed_acceptance_refs: frozenset[str],
+    ) -&gt; ParsedReviewOutput:
+        document = json.loads(content)
+        return ParsedReviewOutput.model_validate(
+            {
+                "verdict": {
+                    "pass": "passed",
+                    "changes_requested": "failed",
+                    "inconclusive": "inconclusive",
+&gt;               }[document["verdict"]],
+                  ^^^^^^^^^^^^^^^^^^^
+                "findings": document["findings"],
+            }
+        )
+E       TypeError: string indices must be integers, not 'str'
+
+backend\karajan\candidates\review_output.py:29: TypeError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_ambiguous_or_incomplete_json[]" time="0.000"><failure message="AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')&#10; +  where None = getattr(JSONDecodeError('Expecting value: line 1 column 1 (char 0)'), 'code', None)&#10; +    where JSONDecodeError('Expecting value: line 1 column 1 (char 0)') = &lt;ExceptionInfo JSONDecodeError('Expecting value: line 1 column 1 (char 0)') tblen=6&gt;.value">content = ''
+
+    @pytest.mark.parametrize(
+        "content",
+        [
+            "", " ", "{", "{}{}", '```json\n{}\n```', "prefix {}", "{} suffix", "\ufeff{}",
+            '{"verdict":"pass","verdict":"changes_requested","findings":[]}',
+            '{"verdict":"pass","ver\\u0064ict":"pass","findings":[]}',
+            '{"findings":[{"blocking":true,"blocking":false}],"verdict":"pass"}',
+            '{"findings":[{"blocking":true,"block\\u0069ng":false}],"verdict":"pass"}',
+            '{"verdict":"pass","findings":[],}',
+            '{"verdict":"pass" "findings":[]}',
+            '{"verdict":"pass","findings":[]}\x00',
+            '{"verdict":"pass","findings":[],"extra":NaN}',
+            '{"verdict":"pass","findings":[],"extra":Infinity}',
+            '{"verdict":"pass","findings":[],"extra":-Infinity}',
+            '{"verdict":"pass","findings":[],"extra":1e999}',
+            '{"verdict":"pass","findings":[],"extra":-1e999}',
+            '{"verdict":"pass","findings":[],"extra":' + "9" * 5000 + "}",
+        ],
+    )
+    def test_rejects_ambiguous_or_incomplete_json(content: str) -&gt; None:
+&gt;       rejected(content, "JSON_INVALID")
+
+tests\candidates\test_review_output.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '', code = 'JSON_INVALID', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+        with pytest.raises(ValueError) as caught:
+            parse(content, **scope)
+&gt;       assert getattr(caught.value, "code", None) == "REVIEW_OUTPUT_" + code
+E       AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')
+E        +  where None = getattr(JSONDecodeError('Expecting value: line 1 column 1 (char 0)'), 'code', None)
+E        +    where JSONDecodeError('Expecting value: line 1 column 1 (char 0)') = &lt;ExceptionInfo JSONDecodeError('Expecting value: line 1 column 1 (char 0)') tblen=6&gt;.value
+
+tests\candidates\test_review_output.py:53: AssertionError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_ambiguous_or_incomplete_json[ ]" time="0.000"><failure message="AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')&#10; +  where None = getattr(JSONDecodeError('Expecting value: line 1 column 2 (char 1)'), 'code', None)&#10; +    where JSONDecodeError('Expecting value: line 1 column 2 (char 1)') = &lt;ExceptionInfo JSONDecodeError('Expecting value: line 1 column 2 (char 1)') tblen=6&gt;.value">content = ' '
+
+    @pytest.mark.parametrize(
+        "content",
+        [
+            "", " ", "{", "{}{}", '```json\n{}\n```', "prefix {}", "{} suffix", "\ufeff{}",
+            '{"verdict":"pass","verdict":"changes_requested","findings":[]}',
+            '{"verdict":"pass","ver\\u0064ict":"pass","findings":[]}',
+            '{"findings":[{"blocking":true,"blocking":false}],"verdict":"pass"}',
+            '{"findings":[{"blocking":true,"block\\u0069ng":false}],"verdict":"pass"}',
+            '{"verdict":"pass","findings":[],}',
+            '{"verdict":"pass" "findings":[]}',
+            '{"verdict":"pass","findings":[]}\x00',
+            '{"verdict":"pass","findings":[],"extra":NaN}',
+            '{"verdict":"pass","findings":[],"extra":Infinity}',
+            '{"verdict":"pass","findings":[],"extra":-Infinity}',
+            '{"verdict":"pass","findings":[],"extra":1e999}',
+            '{"verdict":"pass","findings":[],"extra":-1e999}',
+            '{"verdict":"pass","findings":[],"extra":' + "9" * 5000 + "}",
+        ],
+    )
+    def test_rejects_ambiguous_or_incomplete_json(content: str) -&gt; None:
+&gt;       rejected(content, "JSON_INVALID")
+
+tests\candidates\test_review_output.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = ' ', code = 'JSON_INVALID', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+        with pytest.raises(ValueError) as caught:
+            parse(content, **scope)
+&gt;       assert getattr(caught.value, "code", None) == "REVIEW_OUTPUT_" + code
+E       AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')
+E        +  where None = getattr(JSONDecodeError('Expecting value: line 1 column 2 (char 1)'), 'code', None)
+E        +    where JSONDecodeError('Expecting value: line 1 column 2 (char 1)') = &lt;ExceptionInfo JSONDecodeError('Expecting value: line 1 column 2 (char 1)') tblen=6&gt;.value
+
+tests\candidates\test_review_output.py:53: AssertionError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_ambiguous_or_incomplete_json[{]" time="0.000"><failure message="AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')&#10; +  where None = getattr(JSONDecodeError('Expecting property name enclosed in double quotes: line 1 column 2 (char 1)'), 'code', None)&#10; +    where JSONDecodeError('Expecting property name enclosed in double quotes: line 1 column 2 (char 1)') = &lt;ExceptionInfo JSONDecodeError('Expecting property name enclosed in double quotes: line 1 column 2 (char 1)') tblen=6&gt;.value">content = '{'
+
+    @pytest.mark.parametrize(
+        "content",
+        [
+            "", " ", "{", "{}{}", '```json\n{}\n```', "prefix {}", "{} suffix", "\ufeff{}",
+            '{"verdict":"pass","verdict":"changes_requested","findings":[]}',
+            '{"verdict":"pass","ver\\u0064ict":"pass","findings":[]}',
+            '{"findings":[{"blocking":true,"blocking":false}],"verdict":"pass"}',
+            '{"findings":[{"blocking":true,"block\\u0069ng":false}],"verdict":"pass"}',
+            '{"verdict":"pass","findings":[],}',
+            '{"verdict":"pass" "findings":[]}',
+            '{"verdict":"pass","findings":[]}\x00',
+            '{"verdict":"pass","findings":[],"extra":NaN}',
+            '{"verdict":"pass","findings":[],"extra":Infinity}',
+            '{"verdict":"pass","findings":[],"extra":-Infinity}',
+            '{"verdict":"pass","findings":[],"extra":1e999}',
+            '{"verdict":"pass","findings":[],"extra":-1e999}',
+            '{"verdict":"pass","findings":[],"extra":' + "9" * 5000 + "}",
+        ],
+    )
+    def test_rejects_ambiguous_or_incomplete_json(content: str) -&gt; None:
+&gt;       rejected(content, "JSON_INVALID")
+
+tests\candidates\test_review_output.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{', code = 'JSON_INVALID', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+        with pytest.raises(ValueError) as caught:
+            parse(content, **scope)
+&gt;       assert getattr(caught.value, "code", None) == "REVIEW_OUTPUT_" + code
+E       AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')
+E        +  where None = getattr(JSONDecodeError('Expecting property name enclosed in double quotes: line 1 column 2 (char 1)'), 'code', None)
+E        +    where JSONDecodeError('Expecting property name enclosed in double quotes: line 1 column 2 (char 1)') = &lt;ExceptionInfo JSONDecodeError('Expecting property name enclosed in double quotes: line 1 column 2 (char 1)') tblen=6&gt;.value
+
+tests\candidates\test_review_output.py:53: AssertionError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_ambiguous_or_incomplete_json[{}{}]" time="0.000"><failure message="AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')&#10; +  where None = getattr(JSONDecodeError('Extra data: line 1 column 3 (char 2)'), 'code', None)&#10; +    where JSONDecodeError('Extra data: line 1 column 3 (char 2)') = &lt;ExceptionInfo JSONDecodeError('Extra data: line 1 column 3 (char 2)') tblen=5&gt;.value">content = '{}{}'
+
+    @pytest.mark.parametrize(
+        "content",
+        [
+            "", " ", "{", "{}{}", '```json\n{}\n```', "prefix {}", "{} suffix", "\ufeff{}",
+            '{"verdict":"pass","verdict":"changes_requested","findings":[]}',
+            '{"verdict":"pass","ver\\u0064ict":"pass","findings":[]}',
+            '{"findings":[{"blocking":true,"blocking":false}],"verdict":"pass"}',
+            '{"findings":[{"blocking":true,"block\\u0069ng":false}],"verdict":"pass"}',
+            '{"verdict":"pass","findings":[],}',
+            '{"verdict":"pass" "findings":[]}',
+            '{"verdict":"pass","findings":[]}\x00',
+            '{"verdict":"pass","findings":[],"extra":NaN}',
+            '{"verdict":"pass","findings":[],"extra":Infinity}',
+            '{"verdict":"pass","findings":[],"extra":-Infinity}',
+            '{"verdict":"pass","findings":[],"extra":1e999}',
+            '{"verdict":"pass","findings":[],"extra":-1e999}',
+            '{"verdict":"pass","findings":[],"extra":' + "9" * 5000 + "}",
+        ],
+    )
+    def test_rejects_ambiguous_or_incomplete_json(content: str) -&gt; None:
+&gt;       rejected(content, "JSON_INVALID")
+
+tests\candidates\test_review_output.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{}{}', code = 'JSON_INVALID', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+        with pytest.raises(ValueError) as caught:
+            parse(content, **scope)
+&gt;       assert getattr(caught.value, "code", None) == "REVIEW_OUTPUT_" + code
+E       AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')
+E        +  where None = getattr(JSONDecodeError('Extra data: line 1 column 3 (char 2)'), 'code', None)
+E        +    where JSONDecodeError('Extra data: line 1 column 3 (char 2)') = &lt;ExceptionInfo JSONDecodeError('Extra data: line 1 column 3 (char 2)') tblen=5&gt;.value
+
+tests\candidates\test_review_output.py:53: AssertionError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_ambiguous_or_incomplete_json[```json\n{}\n```]" time="0.000"><failure message="AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')&#10; +  where None = getattr(JSONDecodeError('Expecting value: line 1 column 1 (char 0)'), 'code', None)&#10; +    where JSONDecodeError('Expecting value: line 1 column 1 (char 0)') = &lt;ExceptionInfo JSONDecodeError('Expecting value: line 1 column 1 (char 0)') tblen=6&gt;.value">content = '```json\n{}\n```'
+
+    @pytest.mark.parametrize(
+        "content",
+        [
+            "", " ", "{", "{}{}", '```json\n{}\n```', "prefix {}", "{} suffix", "\ufeff{}",
+            '{"verdict":"pass","verdict":"changes_requested","findings":[]}',
+            '{"verdict":"pass","ver\\u0064ict":"pass","findings":[]}',
+            '{"findings":[{"blocking":true,"blocking":false}],"verdict":"pass"}',
+            '{"findings":[{"blocking":true,"block\\u0069ng":false}],"verdict":"pass"}',
+            '{"verdict":"pass","findings":[],}',
+            '{"verdict":"pass" "findings":[]}',
+            '{"verdict":"pass","findings":[]}\x00',
+            '{"verdict":"pass","findings":[],"extra":NaN}',
+            '{"verdict":"pass","findings":[],"extra":Infinity}',
+            '{"verdict":"pass","findings":[],"extra":-Infinity}',
+            '{"verdict":"pass","findings":[],"extra":1e999}',
+            '{"verdict":"pass","findings":[],"extra":-1e999}',
+            '{"verdict":"pass","findings":[],"extra":' + "9" * 5000 + "}",
+        ],
+    )
+    def test_rejects_ambiguous_or_incomplete_json(content: str) -&gt; None:
+&gt;       rejected(content, "JSON_INVALID")
+
+tests\candidates\test_review_output.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '```json\n{}\n```', code = 'JSON_INVALID', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+        with pytest.raises(ValueError) as caught:
+            parse(content, **scope)
+&gt;       assert getattr(caught.value, "code", None) == "REVIEW_OUTPUT_" + code
+E       AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')
+E        +  where None = getattr(JSONDecodeError('Expecting value: line 1 column 1 (char 0)'), 'code', None)
+E        +    where JSONDecodeError('Expecting value: line 1 column 1 (char 0)') = &lt;ExceptionInfo JSONDecodeError('Expecting value: line 1 column 1 (char 0)') tblen=6&gt;.value
+
+tests\candidates\test_review_output.py:53: AssertionError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_ambiguous_or_incomplete_json[prefix {}]" time="0.000"><failure message="AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')&#10; +  where None = getattr(JSONDecodeError('Expecting value: line 1 column 1 (char 0)'), 'code', None)&#10; +    where JSONDecodeError('Expecting value: line 1 column 1 (char 0)') = &lt;ExceptionInfo JSONDecodeError('Expecting value: line 1 column 1 (char 0)') tblen=6&gt;.value">content = 'prefix {}'
+
+    @pytest.mark.parametrize(
+        "content",
+        [
+            "", " ", "{", "{}{}", '```json\n{}\n```', "prefix {}", "{} suffix", "\ufeff{}",
+            '{"verdict":"pass","verdict":"changes_requested","findings":[]}',
+            '{"verdict":"pass","ver\\u0064ict":"pass","findings":[]}',
+            '{"findings":[{"blocking":true,"blocking":false}],"verdict":"pass"}',
+            '{"findings":[{"blocking":true,"block\\u0069ng":false}],"verdict":"pass"}',
+            '{"verdict":"pass","findings":[],}',
+            '{"verdict":"pass" "findings":[]}',
+            '{"verdict":"pass","findings":[]}\x00',
+            '{"verdict":"pass","findings":[],"extra":NaN}',
+            '{"verdict":"pass","findings":[],"extra":Infinity}',
+            '{"verdict":"pass","findings":[],"extra":-Infinity}',
+            '{"verdict":"pass","findings":[],"extra":1e999}',
+            '{"verdict":"pass","findings":[],"extra":-1e999}',
+            '{"verdict":"pass","findings":[],"extra":' + "9" * 5000 + "}",
+        ],
+    )
+    def test_rejects_ambiguous_or_incomplete_json(content: str) -&gt; None:
+&gt;       rejected(content, "JSON_INVALID")
+
+tests\candidates\test_review_output.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = 'prefix {}', code = 'JSON_INVALID', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+        with pytest.raises(ValueError) as caught:
+            parse(content, **scope)
+&gt;       assert getattr(caught.value, "code", None) == "REVIEW_OUTPUT_" + code
+E       AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')
+E        +  where None = getattr(JSONDecodeError('Expecting value: line 1 column 1 (char 0)'), 'code', None)
+E        +    where JSONDecodeError('Expecting value: line 1 column 1 (char 0)') = &lt;ExceptionInfo JSONDecodeError('Expecting value: line 1 column 1 (char 0)') tblen=6&gt;.value
+
+tests\candidates\test_review_output.py:53: AssertionError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_ambiguous_or_incomplete_json[{} suffix]" time="0.000"><failure message="AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')&#10; +  where None = getattr(JSONDecodeError('Extra data: line 1 column 4 (char 3)'), 'code', None)&#10; +    where JSONDecodeError('Extra data: line 1 column 4 (char 3)') = &lt;ExceptionInfo JSONDecodeError('Extra data: line 1 column 4 (char 3)') tblen=5&gt;.value">content = '{} suffix'
+
+    @pytest.mark.parametrize(
+        "content",
+        [
+            "", " ", "{", "{}{}", '```json\n{}\n```', "prefix {}", "{} suffix", "\ufeff{}",
+            '{"verdict":"pass","verdict":"changes_requested","findings":[]}',
+            '{"verdict":"pass","ver\\u0064ict":"pass","findings":[]}',
+            '{"findings":[{"blocking":true,"blocking":false}],"verdict":"pass"}',
+            '{"findings":[{"blocking":true,"block\\u0069ng":false}],"verdict":"pass"}',
+            '{"verdict":"pass","findings":[],}',
+            '{"verdict":"pass" "findings":[]}',
+            '{"verdict":"pass","findings":[]}\x00',
+            '{"verdict":"pass","findings":[],"extra":NaN}',
+            '{"verdict":"pass","findings":[],"extra":Infinity}',
+            '{"verdict":"pass","findings":[],"extra":-Infinity}',
+            '{"verdict":"pass","findings":[],"extra":1e999}',
+            '{"verdict":"pass","findings":[],"extra":-1e999}',
+            '{"verdict":"pass","findings":[],"extra":' + "9" * 5000 + "}",
+        ],
+    )
+    def test_rejects_ambiguous_or_incomplete_json(content: str) -&gt; None:
+&gt;       rejected(content, "JSON_INVALID")
+
+tests\candidates\test_review_output.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{} suffix', code = 'JSON_INVALID', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+        with pytest.raises(ValueError) as caught:
+            parse(content, **scope)
+&gt;       assert getattr(caught.value, "code", None) == "REVIEW_OUTPUT_" + code
+E       AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')
+E        +  where None = getattr(JSONDecodeError('Extra data: line 1 column 4 (char 3)'), 'code', None)
+E        +    where JSONDecodeError('Extra data: line 1 column 4 (char 3)') = &lt;ExceptionInfo JSONDecodeError('Extra data: line 1 column 4 (char 3)') tblen=5&gt;.value
+
+tests\candidates\test_review_output.py:53: AssertionError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_ambiguous_or_incomplete_json[\ufeff{}]" time="0.000"><failure message="AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')&#10; +  where None = getattr(JSONDecodeError('Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)'), 'code', None)&#10; +    where JSONDecodeError('Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)') = &lt;ExceptionInfo JSONDecodeError('Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)') tblen=4&gt;.value">content = '\ufeff{}'
+
+    @pytest.mark.parametrize(
+        "content",
+        [
+            "", " ", "{", "{}{}", '```json\n{}\n```', "prefix {}", "{} suffix", "\ufeff{}",
+            '{"verdict":"pass","verdict":"changes_requested","findings":[]}',
+            '{"verdict":"pass","ver\\u0064ict":"pass","findings":[]}',
+            '{"findings":[{"blocking":true,"blocking":false}],"verdict":"pass"}',
+            '{"findings":[{"blocking":true,"block\\u0069ng":false}],"verdict":"pass"}',
+            '{"verdict":"pass","findings":[],}',
+            '{"verdict":"pass" "findings":[]}',
+            '{"verdict":"pass","findings":[]}\x00',
+            '{"verdict":"pass","findings":[],"extra":NaN}',
+            '{"verdict":"pass","findings":[],"extra":Infinity}',
+            '{"verdict":"pass","findings":[],"extra":-Infinity}',
+            '{"verdict":"pass","findings":[],"extra":1e999}',
+            '{"verdict":"pass","findings":[],"extra":-1e999}',
+            '{"verdict":"pass","findings":[],"extra":' + "9" * 5000 + "}",
+        ],
+    )
+    def test_rejects_ambiguous_or_incomplete_json(content: str) -&gt; None:
+&gt;       rejected(content, "JSON_INVALID")
+
+tests\candidates\test_review_output.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '\ufeff{}', code = 'JSON_INVALID', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+        with pytest.raises(ValueError) as caught:
+            parse(content, **scope)
+&gt;       assert getattr(caught.value, "code", None) == "REVIEW_OUTPUT_" + code
+E       AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')
+E        +  where None = getattr(JSONDecodeError('Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)'), 'code', None)
+E        +    where JSONDecodeError('Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)') = &lt;ExceptionInfo JSONDecodeError('Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)') tblen=4&gt;.value
+
+tests\candidates\test_review_output.py:53: AssertionError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_ambiguous_or_incomplete_json[{&quot;verdict&quot;:&quot;pass&quot;,&quot;verdict&quot;:&quot;changes_requested&quot;,&quot;findings&quot;:[]}]" time="0.000"><failure message="Failed: DID NOT RAISE ValueError">content = '{"verdict":"pass","verdict":"changes_requested","findings":[]}'
+
+    @pytest.mark.parametrize(
+        "content",
+        [
+            "", " ", "{", "{}{}", '```json\n{}\n```', "prefix {}", "{} suffix", "\ufeff{}",
+            '{"verdict":"pass","verdict":"changes_requested","findings":[]}',
+            '{"verdict":"pass","ver\\u0064ict":"pass","findings":[]}',
+            '{"findings":[{"blocking":true,"blocking":false}],"verdict":"pass"}',
+            '{"findings":[{"blocking":true,"block\\u0069ng":false}],"verdict":"pass"}',
+            '{"verdict":"pass","findings":[],}',
+            '{"verdict":"pass" "findings":[]}',
+            '{"verdict":"pass","findings":[]}\x00',
+            '{"verdict":"pass","findings":[],"extra":NaN}',
+            '{"verdict":"pass","findings":[],"extra":Infinity}',
+            '{"verdict":"pass","findings":[],"extra":-Infinity}',
+            '{"verdict":"pass","findings":[],"extra":1e999}',
+            '{"verdict":"pass","findings":[],"extra":-1e999}',
+            '{"verdict":"pass","findings":[],"extra":' + "9" * 5000 + "}",
+        ],
+    )
+    def test_rejects_ambiguous_or_incomplete_json(content: str) -&gt; None:
+&gt;       rejected(content, "JSON_INVALID")
+
+tests\candidates\test_review_output.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict":"pass","verdict":"changes_requested","findings":[]}'
+code = 'JSON_INVALID', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+&gt;       with pytest.raises(ValueError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\candidates\test_review_output.py:51: Failed</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_ambiguous_or_incomplete_json[{&quot;verdict&quot;:&quot;pass&quot;,&quot;ver\\u0064ict&quot;:&quot;pass&quot;,&quot;findings&quot;:[]}]" time="0.000"><failure message="Failed: DID NOT RAISE ValueError">content = '{"verdict":"pass","ver\\u0064ict":"pass","findings":[]}'
+
+    @pytest.mark.parametrize(
+        "content",
+        [
+            "", " ", "{", "{}{}", '```json\n{}\n```', "prefix {}", "{} suffix", "\ufeff{}",
+            '{"verdict":"pass","verdict":"changes_requested","findings":[]}',
+            '{"verdict":"pass","ver\\u0064ict":"pass","findings":[]}',
+            '{"findings":[{"blocking":true,"blocking":false}],"verdict":"pass"}',
+            '{"findings":[{"blocking":true,"block\\u0069ng":false}],"verdict":"pass"}',
+            '{"verdict":"pass","findings":[],}',
+            '{"verdict":"pass" "findings":[]}',
+            '{"verdict":"pass","findings":[]}\x00',
+            '{"verdict":"pass","findings":[],"extra":NaN}',
+            '{"verdict":"pass","findings":[],"extra":Infinity}',
+            '{"verdict":"pass","findings":[],"extra":-Infinity}',
+            '{"verdict":"pass","findings":[],"extra":1e999}',
+            '{"verdict":"pass","findings":[],"extra":-1e999}',
+            '{"verdict":"pass","findings":[],"extra":' + "9" * 5000 + "}",
+        ],
+    )
+    def test_rejects_ambiguous_or_incomplete_json(content: str) -&gt; None:
+&gt;       rejected(content, "JSON_INVALID")
+
+tests\candidates\test_review_output.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict":"pass","ver\\u0064ict":"pass","findings":[]}'
+code = 'JSON_INVALID', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+&gt;       with pytest.raises(ValueError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\candidates\test_review_output.py:51: Failed</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_ambiguous_or_incomplete_json[{&quot;findings&quot;:[{&quot;blocking&quot;:true,&quot;blocking&quot;:false}],&quot;verdict&quot;:&quot;pass&quot;}]" time="0.000"><failure message="AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')&#10; +  where None = getattr(6 validation errors for ParsedReviewOutput\nfindings.0.severity\n  Field required [type=missing, input_value={'blocking'...alue={'blocking': False}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing, 'code', None)&#10; +    where 6 validation errors for ParsedReviewOutput\nfindings.0.severity\n  Field required [type=missing, input_value={'blocking'...alue={'blocking': False}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing = &lt;ExceptionInfo 6 validation errors for ParsedReviewOutput\nfindings.0.severity\n  Field required [type=missing, input_va...ocking': False}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing tblen=4&gt;.value">content = '{"findings":[{"blocking":true,"blocking":false}],"verdict":"pass"}'
+
+    @pytest.mark.parametrize(
+        "content",
+        [
+            "", " ", "{", "{}{}", '```json\n{}\n```', "prefix {}", "{} suffix", "\ufeff{}",
+            '{"verdict":"pass","verdict":"changes_requested","findings":[]}',
+            '{"verdict":"pass","ver\\u0064ict":"pass","findings":[]}',
+            '{"findings":[{"blocking":true,"blocking":false}],"verdict":"pass"}',
+            '{"findings":[{"blocking":true,"block\\u0069ng":false}],"verdict":"pass"}',
+            '{"verdict":"pass","findings":[],}',
+            '{"verdict":"pass" "findings":[]}',
+            '{"verdict":"pass","findings":[]}\x00',
+            '{"verdict":"pass","findings":[],"extra":NaN}',
+            '{"verdict":"pass","findings":[],"extra":Infinity}',
+            '{"verdict":"pass","findings":[],"extra":-Infinity}',
+            '{"verdict":"pass","findings":[],"extra":1e999}',
+            '{"verdict":"pass","findings":[],"extra":-1e999}',
+            '{"verdict":"pass","findings":[],"extra":' + "9" * 5000 + "}",
+        ],
+    )
+    def test_rejects_ambiguous_or_incomplete_json(content: str) -&gt; None:
+&gt;       rejected(content, "JSON_INVALID")
+
+tests\candidates\test_review_output.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"findings":[{"blocking":true,"blocking":false}],"verdict":"pass"}'
+code = 'JSON_INVALID', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+        with pytest.raises(ValueError) as caught:
+            parse(content, **scope)
+&gt;       assert getattr(caught.value, "code", None) == "REVIEW_OUTPUT_" + code
+E       AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')
+E        +  where None = getattr(6 validation errors for ParsedReviewOutput\nfindings.0.severity\n  Field required [type=missing, input_value={'blocking'...alue={'blocking': False}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing, 'code', None)
+E        +    where 6 validation errors for ParsedReviewOutput\nfindings.0.severity\n  Field required [type=missing, input_value={'blocking'...alue={'blocking': False}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing = &lt;ExceptionInfo 6 validation errors for ParsedReviewOutput\nfindings.0.severity\n  Field required [type=missing, input_va...ocking': False}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing tblen=4&gt;.value
+
+tests\candidates\test_review_output.py:53: AssertionError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_ambiguous_or_incomplete_json[{&quot;findings&quot;:[{&quot;blocking&quot;:true,&quot;block\\u0069ng&quot;:false}],&quot;verdict&quot;:&quot;pass&quot;}]" time="0.000"><failure message="AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')&#10; +  where None = getattr(6 validation errors for ParsedReviewOutput\nfindings.0.severity\n  Field required [type=missing, input_value={'blocking'...alue={'blocking': False}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing, 'code', None)&#10; +    where 6 validation errors for ParsedReviewOutput\nfindings.0.severity\n  Field required [type=missing, input_value={'blocking'...alue={'blocking': False}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing = &lt;ExceptionInfo 6 validation errors for ParsedReviewOutput\nfindings.0.severity\n  Field required [type=missing, input_va...ocking': False}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing tblen=4&gt;.value">content = '{"findings":[{"blocking":true,"block\\u0069ng":false}],"verdict":"pass"}'
+
+    @pytest.mark.parametrize(
+        "content",
+        [
+            "", " ", "{", "{}{}", '```json\n{}\n```', "prefix {}", "{} suffix", "\ufeff{}",
+            '{"verdict":"pass","verdict":"changes_requested","findings":[]}',
+            '{"verdict":"pass","ver\\u0064ict":"pass","findings":[]}',
+            '{"findings":[{"blocking":true,"blocking":false}],"verdict":"pass"}',
+            '{"findings":[{"blocking":true,"block\\u0069ng":false}],"verdict":"pass"}',
+            '{"verdict":"pass","findings":[],}',
+            '{"verdict":"pass" "findings":[]}',
+            '{"verdict":"pass","findings":[]}\x00',
+            '{"verdict":"pass","findings":[],"extra":NaN}',
+            '{"verdict":"pass","findings":[],"extra":Infinity}',
+            '{"verdict":"pass","findings":[],"extra":-Infinity}',
+            '{"verdict":"pass","findings":[],"extra":1e999}',
+            '{"verdict":"pass","findings":[],"extra":-1e999}',
+            '{"verdict":"pass","findings":[],"extra":' + "9" * 5000 + "}",
+        ],
+    )
+    def test_rejects_ambiguous_or_incomplete_json(content: str) -&gt; None:
+&gt;       rejected(content, "JSON_INVALID")
+
+tests\candidates\test_review_output.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"findings":[{"blocking":true,"block\\u0069ng":false}],"verdict":"pass"}'
+code = 'JSON_INVALID', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+        with pytest.raises(ValueError) as caught:
+            parse(content, **scope)
+&gt;       assert getattr(caught.value, "code", None) == "REVIEW_OUTPUT_" + code
+E       AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')
+E        +  where None = getattr(6 validation errors for ParsedReviewOutput\nfindings.0.severity\n  Field required [type=missing, input_value={'blocking'...alue={'blocking': False}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing, 'code', None)
+E        +    where 6 validation errors for ParsedReviewOutput\nfindings.0.severity\n  Field required [type=missing, input_value={'blocking'...alue={'blocking': False}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing = &lt;ExceptionInfo 6 validation errors for ParsedReviewOutput\nfindings.0.severity\n  Field required [type=missing, input_va...ocking': False}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing tblen=4&gt;.value
+
+tests\candidates\test_review_output.py:53: AssertionError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_ambiguous_or_incomplete_json[{&quot;verdict&quot;:&quot;pass&quot;,&quot;findings&quot;:[],}]" time="0.000"><failure message="AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')&#10; +  where None = getattr(JSONDecodeError('Expecting property name enclosed in double quotes: line 1 column 33 (char 32)'), 'code', None)&#10; +    where JSONDecodeError('Expecting property name enclosed in double quotes: line 1 column 33 (char 32)') = &lt;ExceptionInfo JSONDecodeError('Expecting property name enclosed in double quotes: line 1 column 33 (char 32)') tblen=6&gt;.value">content = '{"verdict":"pass","findings":[],}'
+
+    @pytest.mark.parametrize(
+        "content",
+        [
+            "", " ", "{", "{}{}", '```json\n{}\n```', "prefix {}", "{} suffix", "\ufeff{}",
+            '{"verdict":"pass","verdict":"changes_requested","findings":[]}',
+            '{"verdict":"pass","ver\\u0064ict":"pass","findings":[]}',
+            '{"findings":[{"blocking":true,"blocking":false}],"verdict":"pass"}',
+            '{"findings":[{"blocking":true,"block\\u0069ng":false}],"verdict":"pass"}',
+            '{"verdict":"pass","findings":[],}',
+            '{"verdict":"pass" "findings":[]}',
+            '{"verdict":"pass","findings":[]}\x00',
+            '{"verdict":"pass","findings":[],"extra":NaN}',
+            '{"verdict":"pass","findings":[],"extra":Infinity}',
+            '{"verdict":"pass","findings":[],"extra":-Infinity}',
+            '{"verdict":"pass","findings":[],"extra":1e999}',
+            '{"verdict":"pass","findings":[],"extra":-1e999}',
+            '{"verdict":"pass","findings":[],"extra":' + "9" * 5000 + "}",
+        ],
+    )
+    def test_rejects_ambiguous_or_incomplete_json(content: str) -&gt; None:
+&gt;       rejected(content, "JSON_INVALID")
+
+tests\candidates\test_review_output.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict":"pass","findings":[],}', code = 'JSON_INVALID', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+        with pytest.raises(ValueError) as caught:
+            parse(content, **scope)
+&gt;       assert getattr(caught.value, "code", None) == "REVIEW_OUTPUT_" + code
+E       AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')
+E        +  where None = getattr(JSONDecodeError('Expecting property name enclosed in double quotes: line 1 column 33 (char 32)'), 'code', None)
+E        +    where JSONDecodeError('Expecting property name enclosed in double quotes: line 1 column 33 (char 32)') = &lt;ExceptionInfo JSONDecodeError('Expecting property name enclosed in double quotes: line 1 column 33 (char 32)') tblen=6&gt;.value
+
+tests\candidates\test_review_output.py:53: AssertionError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_ambiguous_or_incomplete_json[{&quot;verdict&quot;:&quot;pass&quot; &quot;findings&quot;:[]}]" time="0.000"><failure message="assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')&#10; +  where None = getattr(JSONDecodeError(&quot;Expecting ',' delimiter: line 1 column 19 (char 18)&quot;), 'code', None)&#10; +    where JSONDecodeError(&quot;Expecting ',' delimiter: line 1 column 19 (char 18)&quot;) = &lt;ExceptionInfo JSONDecodeError(&quot;Expecting ',' delimiter: line 1 column 19 (char 18)&quot;) tblen=6&gt;.value">content = '{"verdict":"pass" "findings":[]}'
+
+    @pytest.mark.parametrize(
+        "content",
+        [
+            "", " ", "{", "{}{}", '```json\n{}\n```', "prefix {}", "{} suffix", "\ufeff{}",
+            '{"verdict":"pass","verdict":"changes_requested","findings":[]}',
+            '{"verdict":"pass","ver\\u0064ict":"pass","findings":[]}',
+            '{"findings":[{"blocking":true,"blocking":false}],"verdict":"pass"}',
+            '{"findings":[{"blocking":true,"block\\u0069ng":false}],"verdict":"pass"}',
+            '{"verdict":"pass","findings":[],}',
+            '{"verdict":"pass" "findings":[]}',
+            '{"verdict":"pass","findings":[]}\x00',
+            '{"verdict":"pass","findings":[],"extra":NaN}',
+            '{"verdict":"pass","findings":[],"extra":Infinity}',
+            '{"verdict":"pass","findings":[],"extra":-Infinity}',
+            '{"verdict":"pass","findings":[],"extra":1e999}',
+            '{"verdict":"pass","findings":[],"extra":-1e999}',
+            '{"verdict":"pass","findings":[],"extra":' + "9" * 5000 + "}",
+        ],
+    )
+    def test_rejects_ambiguous_or_incomplete_json(content: str) -&gt; None:
+&gt;       rejected(content, "JSON_INVALID")
+
+tests\candidates\test_review_output.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict":"pass" "findings":[]}', code = 'JSON_INVALID', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+        with pytest.raises(ValueError) as caught:
+            parse(content, **scope)
+&gt;       assert getattr(caught.value, "code", None) == "REVIEW_OUTPUT_" + code
+E       assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')
+E        +  where None = getattr(JSONDecodeError("Expecting ',' delimiter: line 1 column 19 (char 18)"), 'code', None)
+E        +    where JSONDecodeError("Expecting ',' delimiter: line 1 column 19 (char 18)") = &lt;ExceptionInfo JSONDecodeError("Expecting ',' delimiter: line 1 column 19 (char 18)") tblen=6&gt;.value
+
+tests\candidates\test_review_output.py:53: AssertionError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_ambiguous_or_incomplete_json[{&quot;verdict&quot;:&quot;pass&quot;,&quot;findings&quot;:[]}\x00]" time="0.000"><failure message="AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')&#10; +  where None = getattr(JSONDecodeError('Extra data: line 1 column 33 (char 32)'), 'code', None)&#10; +    where JSONDecodeError('Extra data: line 1 column 33 (char 32)') = &lt;ExceptionInfo JSONDecodeError('Extra data: line 1 column 33 (char 32)') tblen=5&gt;.value">content = '{"verdict":"pass","findings":[]}\x00'
+
+    @pytest.mark.parametrize(
+        "content",
+        [
+            "", " ", "{", "{}{}", '```json\n{}\n```', "prefix {}", "{} suffix", "\ufeff{}",
+            '{"verdict":"pass","verdict":"changes_requested","findings":[]}',
+            '{"verdict":"pass","ver\\u0064ict":"pass","findings":[]}',
+            '{"findings":[{"blocking":true,"blocking":false}],"verdict":"pass"}',
+            '{"findings":[{"blocking":true,"block\\u0069ng":false}],"verdict":"pass"}',
+            '{"verdict":"pass","findings":[],}',
+            '{"verdict":"pass" "findings":[]}',
+            '{"verdict":"pass","findings":[]}\x00',
+            '{"verdict":"pass","findings":[],"extra":NaN}',
+            '{"verdict":"pass","findings":[],"extra":Infinity}',
+            '{"verdict":"pass","findings":[],"extra":-Infinity}',
+            '{"verdict":"pass","findings":[],"extra":1e999}',
+            '{"verdict":"pass","findings":[],"extra":-1e999}',
+            '{"verdict":"pass","findings":[],"extra":' + "9" * 5000 + "}",
+        ],
+    )
+    def test_rejects_ambiguous_or_incomplete_json(content: str) -&gt; None:
+&gt;       rejected(content, "JSON_INVALID")
+
+tests\candidates\test_review_output.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict":"pass","findings":[]}\x00', code = 'JSON_INVALID'
+scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+        with pytest.raises(ValueError) as caught:
+            parse(content, **scope)
+&gt;       assert getattr(caught.value, "code", None) == "REVIEW_OUTPUT_" + code
+E       AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')
+E        +  where None = getattr(JSONDecodeError('Extra data: line 1 column 33 (char 32)'), 'code', None)
+E        +    where JSONDecodeError('Extra data: line 1 column 33 (char 32)') = &lt;ExceptionInfo JSONDecodeError('Extra data: line 1 column 33 (char 32)') tblen=5&gt;.value
+
+tests\candidates\test_review_output.py:53: AssertionError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_ambiguous_or_incomplete_json[{&quot;verdict&quot;:&quot;pass&quot;,&quot;findings&quot;:[],&quot;extra&quot;:NaN}]" time="0.000"><failure message="Failed: DID NOT RAISE ValueError">content = '{"verdict":"pass","findings":[],"extra":NaN}'
+
+    @pytest.mark.parametrize(
+        "content",
+        [
+            "", " ", "{", "{}{}", '```json\n{}\n```', "prefix {}", "{} suffix", "\ufeff{}",
+            '{"verdict":"pass","verdict":"changes_requested","findings":[]}',
+            '{"verdict":"pass","ver\\u0064ict":"pass","findings":[]}',
+            '{"findings":[{"blocking":true,"blocking":false}],"verdict":"pass"}',
+            '{"findings":[{"blocking":true,"block\\u0069ng":false}],"verdict":"pass"}',
+            '{"verdict":"pass","findings":[],}',
+            '{"verdict":"pass" "findings":[]}',
+            '{"verdict":"pass","findings":[]}\x00',
+            '{"verdict":"pass","findings":[],"extra":NaN}',
+            '{"verdict":"pass","findings":[],"extra":Infinity}',
+            '{"verdict":"pass","findings":[],"extra":-Infinity}',
+            '{"verdict":"pass","findings":[],"extra":1e999}',
+            '{"verdict":"pass","findings":[],"extra":-1e999}',
+            '{"verdict":"pass","findings":[],"extra":' + "9" * 5000 + "}",
+        ],
+    )
+    def test_rejects_ambiguous_or_incomplete_json(content: str) -&gt; None:
+&gt;       rejected(content, "JSON_INVALID")
+
+tests\candidates\test_review_output.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict":"pass","findings":[],"extra":NaN}', code = 'JSON_INVALID'
+scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+&gt;       with pytest.raises(ValueError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\candidates\test_review_output.py:51: Failed</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_ambiguous_or_incomplete_json[{&quot;verdict&quot;:&quot;pass&quot;,&quot;findings&quot;:[],&quot;extra&quot;:Infinity}]" time="0.000"><failure message="Failed: DID NOT RAISE ValueError">content = '{"verdict":"pass","findings":[],"extra":Infinity}'
+
+    @pytest.mark.parametrize(
+        "content",
+        [
+            "", " ", "{", "{}{}", '```json\n{}\n```', "prefix {}", "{} suffix", "\ufeff{}",
+            '{"verdict":"pass","verdict":"changes_requested","findings":[]}',
+            '{"verdict":"pass","ver\\u0064ict":"pass","findings":[]}',
+            '{"findings":[{"blocking":true,"blocking":false}],"verdict":"pass"}',
+            '{"findings":[{"blocking":true,"block\\u0069ng":false}],"verdict":"pass"}',
+            '{"verdict":"pass","findings":[],}',
+            '{"verdict":"pass" "findings":[]}',
+            '{"verdict":"pass","findings":[]}\x00',
+            '{"verdict":"pass","findings":[],"extra":NaN}',
+            '{"verdict":"pass","findings":[],"extra":Infinity}',
+            '{"verdict":"pass","findings":[],"extra":-Infinity}',
+            '{"verdict":"pass","findings":[],"extra":1e999}',
+            '{"verdict":"pass","findings":[],"extra":-1e999}',
+            '{"verdict":"pass","findings":[],"extra":' + "9" * 5000 + "}",
+        ],
+    )
+    def test_rejects_ambiguous_or_incomplete_json(content: str) -&gt; None:
+&gt;       rejected(content, "JSON_INVALID")
+
+tests\candidates\test_review_output.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict":"pass","findings":[],"extra":Infinity}'
+code = 'JSON_INVALID', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+&gt;       with pytest.raises(ValueError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\candidates\test_review_output.py:51: Failed</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_ambiguous_or_incomplete_json[{&quot;verdict&quot;:&quot;pass&quot;,&quot;findings&quot;:[],&quot;extra&quot;:-Infinity}]" time="0.000"><failure message="Failed: DID NOT RAISE ValueError">content = '{"verdict":"pass","findings":[],"extra":-Infinity}'
+
+    @pytest.mark.parametrize(
+        "content",
+        [
+            "", " ", "{", "{}{}", '```json\n{}\n```', "prefix {}", "{} suffix", "\ufeff{}",
+            '{"verdict":"pass","verdict":"changes_requested","findings":[]}',
+            '{"verdict":"pass","ver\\u0064ict":"pass","findings":[]}',
+            '{"findings":[{"blocking":true,"blocking":false}],"verdict":"pass"}',
+            '{"findings":[{"blocking":true,"block\\u0069ng":false}],"verdict":"pass"}',
+            '{"verdict":"pass","findings":[],}',
+            '{"verdict":"pass" "findings":[]}',
+            '{"verdict":"pass","findings":[]}\x00',
+            '{"verdict":"pass","findings":[],"extra":NaN}',
+            '{"verdict":"pass","findings":[],"extra":Infinity}',
+            '{"verdict":"pass","findings":[],"extra":-Infinity}',
+            '{"verdict":"pass","findings":[],"extra":1e999}',
+            '{"verdict":"pass","findings":[],"extra":-1e999}',
+            '{"verdict":"pass","findings":[],"extra":' + "9" * 5000 + "}",
+        ],
+    )
+    def test_rejects_ambiguous_or_incomplete_json(content: str) -&gt; None:
+&gt;       rejected(content, "JSON_INVALID")
+
+tests\candidates\test_review_output.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict":"pass","findings":[],"extra":-Infinity}'
+code = 'JSON_INVALID', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+&gt;       with pytest.raises(ValueError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\candidates\test_review_output.py:51: Failed</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_ambiguous_or_incomplete_json[{&quot;verdict&quot;:&quot;pass&quot;,&quot;findings&quot;:[],&quot;extra&quot;:1e999}]" time="0.000"><failure message="Failed: DID NOT RAISE ValueError">content = '{"verdict":"pass","findings":[],"extra":1e999}'
+
+    @pytest.mark.parametrize(
+        "content",
+        [
+            "", " ", "{", "{}{}", '```json\n{}\n```', "prefix {}", "{} suffix", "\ufeff{}",
+            '{"verdict":"pass","verdict":"changes_requested","findings":[]}',
+            '{"verdict":"pass","ver\\u0064ict":"pass","findings":[]}',
+            '{"findings":[{"blocking":true,"blocking":false}],"verdict":"pass"}',
+            '{"findings":[{"blocking":true,"block\\u0069ng":false}],"verdict":"pass"}',
+            '{"verdict":"pass","findings":[],}',
+            '{"verdict":"pass" "findings":[]}',
+            '{"verdict":"pass","findings":[]}\x00',
+            '{"verdict":"pass","findings":[],"extra":NaN}',
+            '{"verdict":"pass","findings":[],"extra":Infinity}',
+            '{"verdict":"pass","findings":[],"extra":-Infinity}',
+            '{"verdict":"pass","findings":[],"extra":1e999}',
+            '{"verdict":"pass","findings":[],"extra":-1e999}',
+            '{"verdict":"pass","findings":[],"extra":' + "9" * 5000 + "}",
+        ],
+    )
+    def test_rejects_ambiguous_or_incomplete_json(content: str) -&gt; None:
+&gt;       rejected(content, "JSON_INVALID")
+
+tests\candidates\test_review_output.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict":"pass","findings":[],"extra":1e999}'
+code = 'JSON_INVALID', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+&gt;       with pytest.raises(ValueError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\candidates\test_review_output.py:51: Failed</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_ambiguous_or_incomplete_json[{&quot;verdict&quot;:&quot;pass&quot;,&quot;findings&quot;:[],&quot;extra&quot;:-1e999}]" time="0.000"><failure message="Failed: DID NOT RAISE ValueError">content = '{"verdict":"pass","findings":[],"extra":-1e999}'
+
+    @pytest.mark.parametrize(
+        "content",
+        [
+            "", " ", "{", "{}{}", '```json\n{}\n```', "prefix {}", "{} suffix", "\ufeff{}",
+            '{"verdict":"pass","verdict":"changes_requested","findings":[]}',
+            '{"verdict":"pass","ver\\u0064ict":"pass","findings":[]}',
+            '{"findings":[{"blocking":true,"blocking":false}],"verdict":"pass"}',
+            '{"findings":[{"blocking":true,"block\\u0069ng":false}],"verdict":"pass"}',
+            '{"verdict":"pass","findings":[],}',
+            '{"verdict":"pass" "findings":[]}',
+            '{"verdict":"pass","findings":[]}\x00',
+            '{"verdict":"pass","findings":[],"extra":NaN}',
+            '{"verdict":"pass","findings":[],"extra":Infinity}',
+            '{"verdict":"pass","findings":[],"extra":-Infinity}',
+            '{"verdict":"pass","findings":[],"extra":1e999}',
+            '{"verdict":"pass","findings":[],"extra":-1e999}',
+            '{"verdict":"pass","findings":[],"extra":' + "9" * 5000 + "}",
+        ],
+    )
+    def test_rejects_ambiguous_or_incomplete_json(content: str) -&gt; None:
+&gt;       rejected(content, "JSON_INVALID")
+
+tests\candidates\test_review_output.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict":"pass","findings":[],"extra":-1e999}'
+code = 'JSON_INVALID', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+&gt;       with pytest.raises(ValueError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\candidates\test_review_output.py:51: Failed</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_ambiguous_or_incomplete_json[{&quot;verdict&quot;:&quot;pass&quot;,&quot;findings&quot;:[],&quot;extra&quot;:99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999}]" time="0.000"><failure message="AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')&#10; +  where None = getattr(ValueError('Exceeds the limit (4300 digits) for integer string conversion: value has 5000 digits; use sys.set_int_max_str_digits() to increase the limit'), 'code', None)&#10; +    where ValueError('Exceeds the limit (4300 digits) for integer string conversion: value has 5000 digits; use sys.set_int_max_str_digits() to increase the limit') = &lt;ExceptionInfo ValueError('Exceeds the limit (4300 digits) for integer string conversion: value has 5000 digits; use sys.set_int_max_str_digits() to increase the limit') tblen=6&gt;.value">content = '{"verdict":"pass","findings":[],"extra":99999999999999999999999999999999999999999999999999999999999999999999999999999...999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999}'
+
+    @pytest.mark.parametrize(
+        "content",
+        [
+            "", " ", "{", "{}{}", '```json\n{}\n```', "prefix {}", "{} suffix", "\ufeff{}",
+            '{"verdict":"pass","verdict":"changes_requested","findings":[]}',
+            '{"verdict":"pass","ver\\u0064ict":"pass","findings":[]}',
+            '{"findings":[{"blocking":true,"blocking":false}],"verdict":"pass"}',
+            '{"findings":[{"blocking":true,"block\\u0069ng":false}],"verdict":"pass"}',
+            '{"verdict":"pass","findings":[],}',
+            '{"verdict":"pass" "findings":[]}',
+            '{"verdict":"pass","findings":[]}\x00',
+            '{"verdict":"pass","findings":[],"extra":NaN}',
+            '{"verdict":"pass","findings":[],"extra":Infinity}',
+            '{"verdict":"pass","findings":[],"extra":-Infinity}',
+            '{"verdict":"pass","findings":[],"extra":1e999}',
+            '{"verdict":"pass","findings":[],"extra":-1e999}',
+            '{"verdict":"pass","findings":[],"extra":' + "9" * 5000 + "}",
+        ],
+    )
+    def test_rejects_ambiguous_or_incomplete_json(content: str) -&gt; None:
+&gt;       rejected(content, "JSON_INVALID")
+
+tests\candidates\test_review_output.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict":"pass","findings":[],"extra":99999999999999999999999999999999999999999999999999999999999999999999999999999...999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999}'
+code = 'JSON_INVALID', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+        with pytest.raises(ValueError) as caught:
+            parse(content, **scope)
+&gt;       assert getattr(caught.value, "code", None) == "REVIEW_OUTPUT_" + code
+E       AssertionError: assert None == ('REVIEW_OUTPUT_' + 'JSON_INVALID')
+E        +  where None = getattr(ValueError('Exceeds the limit (4300 digits) for integer string conversion: value has 5000 digits; use sys.set_int_max_str_digits() to increase the limit'), 'code', None)
+E        +    where ValueError('Exceeds the limit (4300 digits) for integer string conversion: value has 5000 digits; use sys.set_int_max_str_digits() to increase the limit') = &lt;ExceptionInfo ValueError('Exceeds the limit (4300 digits) for integer string conversion: value has 5000 digits; use sys.set_int_max_str_digits() to increase the limit') tblen=6&gt;.value
+
+tests\candidates\test_review_output.py:53: AssertionError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_excessive_depth_before_recursive_decoding[[[[[]]]]]" time="0.000"><failure message="TypeError: list indices must be integers or slices, not str">content = '[[[[]]]]'
+
+    @pytest.mark.parametrize("content", ["[[[[]]]]", "[" * 12000 + "]" * 12000])
+    def test_rejects_excessive_depth_before_recursive_decoding(content: str) -&gt; None:
+&gt;       rejected(content, "LIMIT_EXCEEDED")
+
+tests\candidates\test_review_output.py:97: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\candidates\test_review_output.py:52: in rejected
+    parse(content, **scope)
+tests\candidates\test_review_output.py:44: in parse
+    return parse_review_output(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '[[[[]]]]', allowed_files = frozenset({'src/export.py'})
+allowed_acceptance_refs = frozenset({'acceptance:csv-v1'})
+
+    def parse_review_output(
+        content: str | bytes,
+        *,
+        allowed_files: frozenset[str],
+        allowed_acceptance_refs: frozenset[str],
+    ) -&gt; ParsedReviewOutput:
+        document = json.loads(content)
+        return ParsedReviewOutput.model_validate(
+            {
+                "verdict": {
+                    "pass": "passed",
+                    "changes_requested": "failed",
+                    "inconclusive": "inconclusive",
+&gt;               }[document["verdict"]],
+                  ^^^^^^^^^^^^^^^^^^^
+                "findings": document["findings"],
+            }
+        )
+E       TypeError: list indices must be integers or slices, not str
+
+backend\karajan\candidates\review_output.py:29: TypeError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_rejects_excessive_depth_before_recursive_decoding[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]" time="0.001"><failure message="RecursionError: maximum recursion depth exceeded while decoding a JSON array from a unicode string">content = '[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[...]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]'
+
+    @pytest.mark.parametrize("content", ["[[[[]]]]", "[" * 12000 + "]" * 12000])
+    def test_rejects_excessive_depth_before_recursive_decoding(content: str) -&gt; None:
+&gt;       rejected(content, "LIMIT_EXCEEDED")
+
+tests\candidates\test_review_output.py:97: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\candidates\test_review_output.py:52: in rejected
+    parse(content, **scope)
+tests\candidates\test_review_output.py:44: in parse
+    return parse_review_output(
+backend\karajan\candidates\review_output.py:22: in parse_review_output
+    document = json.loads(content)
+               ^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\json\__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\json\decoder.py:338: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;json.decoder.JSONDecoder object at 0x000001EFDE6290D0&gt;
+s = '[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[...]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]'
+idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+&gt;           obj, end = self.scan_once(s, idx)
+                       ^^^^^^^^^^^^^^^^^^^^^^
+E           RecursionError: maximum recursion depth exceeded while decoding a JSON array from a unicode string
+
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\json\decoder.py:354: RecursionError</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_decoded_lone_surrogates_are_rejected_before_schema[{&quot;verdict&quot;:&quot;pass&quot;,&quot;findings&quot;:[],&quot;\\ud800&quot;:&quot;x&quot;}]" time="0.000"><failure message="Failed: DID NOT RAISE ValueError">content = '{"verdict":"pass","findings":[],"\\ud800":"x"}'
+
+    @pytest.mark.parametrize(
+        "content",
+        [
+            '{"verdict":"pass","findings":[],"\\ud800":"x"}',
+            '{"verdict":"pass","findings":[{"behavior":"\\ud800"}]}',
+        ],
+    )
+    def test_decoded_lone_surrogates_are_rejected_before_schema(content: str) -&gt; None:
+&gt;       rejected(content, "INPUT_INVALID")
+
+tests\candidates\test_review_output.py:108: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict":"pass","findings":[],"\\ud800":"x"}'
+code = 'INPUT_INVALID', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+&gt;       with pytest.raises(ValueError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\candidates\test_review_output.py:51: Failed</failure></testcase><testcase classname="tests.candidates.test_review_output" name="test_decoded_lone_surrogates_are_rejected_before_schema[{&quot;verdict&quot;:&quot;pass&quot;,&quot;findings&quot;:[{&quot;behavior&quot;:&quot;\\ud800&quot;}]}]" time="0.000"><failure message="AssertionError: assert None == ('REVIEW_OUTPUT_' + 'INPUT_INVALID')&#10; +  where None = getattr(7 validation errors for ParsedReviewOutput\nfindings.0.severity\n  Field required [type=missing, input_value={'behavior'...e={'behavior': '\ud800'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing, 'code', None)&#10; +    where 7 validation errors for ParsedReviewOutput\nfindings.0.severity\n  Field required [type=missing, input_value={'behavior'...e={'behavior': '\ud800'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing = &lt;ExceptionInfo 7 validation errors for ParsedReviewOutput\nfindings.0.severity\n  Field required [type=missing, input_va...ior': '\ud800'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing tblen=4&gt;.value">content = '{"verdict":"pass","findings":[{"behavior":"\\ud800"}]}'
+
+    @pytest.mark.parametrize(
+        "content",
+        [
+            '{"verdict":"pass","findings":[],"\\ud800":"x"}',
+            '{"verdict":"pass","findings":[{"behavior":"\\ud800"}]}',
+        ],
+    )
+    def test_decoded_lone_surrogates_are_rejected_before_schema(content: str) -&gt; None:
+&gt;       rejected(content, "INPUT_INVALID")
+
+tests\candidates\test_review_output.py:108: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict":"pass","findings":[{"behavior":"\\ud800"}]}'
+code = 'INPUT_INVALID', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -&gt; None:
+        with pytest.raises(ValueError) as caught:
+            parse(content, **scope)
+&gt;       assert getattr(caught.value, "code", None) == "REVIEW_OUTPUT_" + code
+E       AssertionError: assert None == ('REVIEW_OUTPUT_' + 'INPUT_INVALID')
+E        +  where None = getattr(7 validation errors for ParsedReviewOutput\nfindings.0.severity\n  Field required [type=missing, input_value={'behavior'...e={'behavior': '\ud800'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing, 'code', None)
+E        +    where 7 validation errors for ParsedReviewOutput\nfindings.0.severity\n  Field required [type=missing, input_value={'behavior'...e={'behavior': '\ud800'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing = &lt;ExceptionInfo 7 validation errors for ParsedReviewOutput\nfindings.0.severity\n  Field required [type=missing, input_va...ior': '\ud800'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing tblen=4&gt;.value
+
+tests\candidates\test_review_output.py:53: AssertionError</failure></testcase></testsuite></testsuites>

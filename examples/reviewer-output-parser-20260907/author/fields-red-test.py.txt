@@ -1,0 +1,228 @@
+"""The public model-text boundary; no source qualification or review authorization."""
+
+import json
+from typing import Any
+
+import pytest
+from karajan.candidates.review_output import parse_review_output
+
+
+@pytest.mark.parametrize(
+    ("wire", "stored"),
+    [("pass", "passed"), ("changes_requested", "failed"), ("inconclusive", "inconclusive")],
+)
+def test_maps_only_review_content(wire: str, stored: str) -> None:
+    result = parse_review_output(
+        '{"verdict":"' + wire + '","findings":[]}',
+        allowed_files=frozenset(),
+        allowed_acceptance_refs=frozenset(),
+    )
+    assert result.model_dump() == {"verdict": stored, "findings": []}
+
+
+FILES = frozenset({"src/export.py"})
+ACCEPTANCE = frozenset({"acceptance:csv-v1"})
+
+
+def finding(**changes: Any) -> dict[str, Any]:
+    return {
+        "severity": "high",
+        "file": "src/export.py",
+        "line": 27,
+        "behavior": "空结果没有输出批准的表头",
+        "trigger": "查询没有匹配行时调用导出",
+        "acceptance_ref": "acceptance:csv-v1",
+        "blocking": True,
+    } | changes
+
+
+def wire(*findings: dict[str, Any], verdict: str = "changes_requested") -> str:
+    return json.dumps({"verdict": verdict, "findings": list(findings)}, ensure_ascii=False)
+
+
+def parse(content: Any, **scope: Any) -> Any:
+    return parse_review_output(
+        content,
+        **({"allowed_files": FILES, "allowed_acceptance_refs": ACCEPTANCE} | scope),
+    )
+
+
+def rejected(content: Any, code: str, **scope: Any) -> None:
+    with pytest.raises(ValueError) as caught:
+        parse(content, **scope)
+    assert getattr(caught.value, "code", None) == "REVIEW_OUTPUT_" + code
+
+
+def test_unicode_escapes_and_findings_order_are_preserved() -> None:
+    first = finding(behavior='\t文字 { [ \\" quoted\n😺 e\u0301', blocking=False)
+    second = finding(severity="low", behavior="  第二条\r\n保留  ", blocking=False)
+    text = " \r\n\t" + wire(first, second, verdict="pass") + "\n "
+    result = parse(text.encode("utf-8"))
+    assert result.model_dump() == {"verdict": "passed", "findings": [first, second]}
+
+
+@pytest.mark.parametrize(
+    "content",
+    [None, {}, [], 1, True, bytearray(b"{}"), b"\xff", "\ud800", '"\\udfff"'],
+)
+def test_rejects_invalid_input_without_interpreter_errors(content: Any) -> None:
+    rejected(content, "INPUT_INVALID")
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        "", " ", "{", "{}{}", '```json\n{}\n```', "prefix {}", "{} suffix", "\ufeff{}",
+        '{"verdict":"pass","verdict":"changes_requested","findings":[]}',
+        '{"verdict":"pass","ver\\u0064ict":"pass","findings":[]}',
+        '{"findings":[{"blocking":true,"blocking":false}],"verdict":"pass"}',
+        '{"findings":[{"blocking":true,"block\\u0069ng":false}],"verdict":"pass"}',
+        '{"verdict":"pass","findings":[],}',
+        '{"verdict":"pass" "findings":[]}',
+        '{"verdict":"pass","findings":[]}\x00',
+        '{"verdict":"pass","findings":[],"extra":NaN}',
+        '{"verdict":"pass","findings":[],"extra":Infinity}',
+        '{"verdict":"pass","findings":[],"extra":-Infinity}',
+        '{"verdict":"pass","findings":[],"extra":1e999}',
+        '{"verdict":"pass","findings":[],"extra":-1e999}',
+        '{"verdict":"pass","findings":[],"extra":' + "9" * 5000 + "}",
+    ],
+)
+def test_rejects_ambiguous_or_incomplete_json(content: str) -> None:
+    rejected(content, "JSON_INVALID")
+
+
+@pytest.mark.parametrize(
+    "content", ["[[[[]]]]", "[" * 12000 + "]" * 12000], ids=["depth-four", "extreme"]
+)
+def test_rejects_excessive_depth_before_recursive_decoding(content: str) -> None:
+    rejected(content, "LIMIT_EXCEEDED")
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        '{"verdict":"pass","findings":[],"\\ud800":"x"}',
+        '{"verdict":"pass","findings":[{"behavior":"\\ud800"}]}',
+    ],
+)
+def test_decoded_lone_surrogates_are_rejected_before_schema(content: str) -> None:
+    rejected(content, "INPUT_INVALID")
+
+
+@pytest.mark.parametrize(
+    "document",
+    [
+        None, [], True, 1, "text", {}, {"verdict": "pass"}, {"findings": []},
+        {"verdict": "pass", "findings": [], "summary": "x"},
+        {"verdict": "pass", "findings": None},
+        {"verdict": "pass", "findings": {}},
+        {"verdict": "pass", "findings": "[]"},
+        {"verdict": None, "findings": []},
+        {"verdict": {}, "findings": []},
+        {"verdict": 1, "findings": []},
+        {"verdict": "pass", "findings": [None]},
+        {"verdict": "pass", "findings": [[]]},
+        {"verdict": "pass", "findings": [1]},
+    ],
+)
+def test_requires_exact_top_and_finding_shapes(document: Any) -> None:
+    rejected(json.dumps(document), "SCHEMA_INVALID")
+
+
+@pytest.mark.parametrize("verdict", ["passed", "failed", "PASS", "unknown", " pass", ""])
+def test_rejects_other_wire_verdicts(verdict: str) -> None:
+    rejected(wire(verdict=verdict), "SCHEMA_INVALID")
+
+
+@pytest.mark.parametrize(
+    "field", ["severity", "file", "line", "behavior", "trigger", "acceptance_ref", "blocking"]
+)
+def test_every_finding_field_is_required(field: str) -> None:
+    item = finding()
+    del item[field]
+    rejected(wire(item), "SCHEMA_INVALID")
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("severity", "HIGH"), ("severity", "info"), ("severity", None),
+        ("file", None), ("file", 1), ("acceptance_ref", False),
+        ("line", True), ("line", False), ("line", 1.0), ("line", "1"),
+        ("line", None), ("line", 0), ("line", -1),
+        ("blocking", 0), ("blocking", 1), ("blocking", "false"), ("blocking", None),
+        ("behavior", None), ("behavior", 0), ("behavior", ""), ("behavior", " \n\t\r"),
+        ("trigger", None), ("trigger", False), ("trigger", ""), ("trigger", "\u2003"),
+    ],
+)
+def test_finding_types_and_existing_enums_are_strict(field: str, value: Any) -> None:
+    rejected(wire(finding(**{field: value})), "SCHEMA_INVALID")
+
+
+@pytest.mark.parametrize("field", ["behavior", "trigger"])
+@pytest.mark.parametrize("codepoint", [i for i in range(32) if i not in (9, 10, 13)])
+def test_free_text_rejects_disallowed_c0_controls(field: str, codepoint: int) -> None:
+    rejected(wire(finding(**{field: "x" + chr(codepoint)})), "SCHEMA_INVALID")
+
+
+@pytest.mark.parametrize("field", ["behavior", "trigger"])
+def test_description_limits_count_decoded_codepoints(field: str) -> None:
+    item = finding(**{field: "😺" * 2048})
+    assert parse(wire(item)).findings[0].model_dump() == item
+    rejected(wire(finding(**{field: "😺" * 2049})), "LIMIT_EXCEEDED")
+
+
+def test_line_has_a_bounded_strict_integer_representation() -> None:
+    assert parse(wire(finding(line=2_147_483_647))).findings[0].line == 2_147_483_647
+    rejected(wire(finding(line=2_147_483_648)), "LIMIT_EXCEEDED")
+
+
+def test_findings_limit_rejects_whole_response() -> None:
+    items = [finding(behavior=f"Problem {index}") for index in range(32)]
+    assert [f.behavior for f in parse(wire(*items)).findings] == [
+        f"Problem {index}" for index in range(32)
+    ]
+    rejected(wire(*items, finding()), "LIMIT_EXCEEDED")
+
+
+@pytest.mark.parametrize("as_bytes", [False, True])
+def test_total_limit_measures_utf8_bytes_including_json_whitespace(as_bytes: bool) -> None:
+    content = wire(finding(behavior="中文😺"))
+    content += " " * (65_536 - len(content.encode("utf-8")))
+    assert len(content) < 65_536
+    assert len(content.encode("utf-8")) == 65_536
+    assert parse(content.encode("utf-8") if as_bytes else content).verdict == "failed"
+    oversized = content + " "
+    rejected(oversized.encode("utf-8") if as_bytes else oversized, "LIMIT_EXCEEDED")
+
+
+@pytest.mark.parametrize(("field", "limit"), [("file", 4096), ("acceptance_ref", 256)])
+def test_reference_length_limits_precede_identifier_schema(field: str, limit: int) -> None:
+    item = finding(**{field: "a" * limit})
+    scope = {"allowed_files" if field == "file" else "allowed_acceptance_refs":
+             frozenset({"a" * limit})}
+    assert parse(wire(item), **scope).findings[0].model_dump() == item
+    rejected(wire(finding(**{field: "a" * (limit + 1)})), "LIMIT_EXCEEDED")
+
+
+@pytest.mark.parametrize("position", [0, 15, 31])
+def test_pass_cannot_hide_a_blocker_at_any_position(position: int) -> None:
+    items = [finding(blocking=False) for _ in range(32)]
+    items[position]["blocking"] = True
+    rejected(wire(*items, verdict="pass"), "VERDICT_CONFLICT")
+
+
+@pytest.mark.parametrize("severity", ["critical", "high", "medium", "low"])
+def test_severity_does_not_override_explicit_nonblocking_or_inconclusive(severity: str) -> None:
+    assert parse(wire(finding(severity=severity, blocking=False), verdict="pass")).verdict == "passed"
+    assert parse(wire(finding(severity=severity), verdict="inconclusive")).verdict == "inconclusive"
+
+
+def test_field_shapes_precede_limits_and_typed_limits_precede_reference_syntax() -> None:
+    # Each pair separates the final spec's precedence; the overlong ID must not be
+    # swallowed by Finding's existing Identifier validator.
+    rejected(wire(finding(behavior="x" * 2049, line=True)), "SCHEMA_INVALID")
+    rejected(wire(finding(acceptance_ref=" " * 257)), "LIMIT_EXCEEDED")
+    rejected(wire(finding(file="../x", behavior="x" * 2049)), "LIMIT_EXCEEDED")
+    rejected(wire(finding(acceptance_ref="has space")), "REFERENCE_DENIED")

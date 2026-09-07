@@ -1,0 +1,1151 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Users\Chooo\Playground\Karajan\.cache\review-output-parser
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 266 items
+
+tests\candidates\test_review_output.py ................................. [ 12%]
+........................................................................ [ 39%]
+................................................................FFF..... [ 66%]
+.......F..FFF..FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF........................ [ 93%]
+............F....                                                        [100%]
+
+================================== FAILURES ===================================
+___________ test_model_file_must_be_legal_and_exactly_allowed[src] ____________
+
+path = 'src'
+
+    @pytest.mark.parametrize(
+        "path",
+        ["src/", "src", "src/other.py", "SRC/export.py", "src/*.py", "../export.py",
+         "/src/export.py", "C:/src/export.py", "src\\export.py", "src/../export.py",
+         "src/.git/config", "src/.GIT/config", "src//export.py", "./src/export.py",
+         "src/export.py ", "src/export.py.", "src/%65xport.py", ""],
+    )
+    def test_model_file_must_be_legal_and_exactly_allowed(path: str) -> None:
+>       rejected(wire(finding(file=path)), "REFERENCE_DENIED")
+
+tests\candidates\test_review_output.py:249: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": [{"severity": "high", "file": "src", "line": 27, "behavior": "�ս��û�������׼�ı�ͷ", "trigger": "��ѯû��ƥ����ʱ���õ���", "acceptance_ref": "acceptance:csv-v1", "blocking": true}]}'
+code = 'REFERENCE_DENIED', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_______ test_model_file_must_be_legal_and_exactly_allowed[src/other.py] _______
+
+path = 'src/other.py'
+
+    @pytest.mark.parametrize(
+        "path",
+        ["src/", "src", "src/other.py", "SRC/export.py", "src/*.py", "../export.py",
+         "/src/export.py", "C:/src/export.py", "src\\export.py", "src/../export.py",
+         "src/.git/config", "src/.GIT/config", "src//export.py", "./src/export.py",
+         "src/export.py ", "src/export.py.", "src/%65xport.py", ""],
+    )
+    def test_model_file_must_be_legal_and_exactly_allowed(path: str) -> None:
+>       rejected(wire(finding(file=path)), "REFERENCE_DENIED")
+
+tests\candidates\test_review_output.py:249: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": [{"severity": "high", "file": "src/other.py", "line": 27, "behavior": "�ս��û�������׼�ı�ͷ", "trigger": "��ѯû��ƥ����ʱ���õ���", "acceptance_ref": "acceptance:csv-v1", "blocking": true}]}'
+code = 'REFERENCE_DENIED', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+______ test_model_file_must_be_legal_and_exactly_allowed[SRC/export.py] _______
+
+path = 'SRC/export.py'
+
+    @pytest.mark.parametrize(
+        "path",
+        ["src/", "src", "src/other.py", "SRC/export.py", "src/*.py", "../export.py",
+         "/src/export.py", "C:/src/export.py", "src\\export.py", "src/../export.py",
+         "src/.git/config", "src/.GIT/config", "src//export.py", "./src/export.py",
+         "src/export.py ", "src/export.py.", "src/%65xport.py", ""],
+    )
+    def test_model_file_must_be_legal_and_exactly_allowed(path: str) -> None:
+>       rejected(wire(finding(file=path)), "REFERENCE_DENIED")
+
+tests\candidates\test_review_output.py:249: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": [{"severity": "high", "file": "SRC/export.py", "line": 27, "behavior": "�ս��û�������׼�ı�ͷ", "trigger": "��ѯû��ƥ����ʱ���õ���", "acceptance_ref": "acceptance:csv-v1", "blocking": true}]}'
+code = 'REFERENCE_DENIED', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_____ test_model_file_must_be_legal_and_exactly_allowed[src/%65xport.py] ______
+
+path = 'src/%65xport.py'
+
+    @pytest.mark.parametrize(
+        "path",
+        ["src/", "src", "src/other.py", "SRC/export.py", "src/*.py", "../export.py",
+         "/src/export.py", "C:/src/export.py", "src\\export.py", "src/../export.py",
+         "src/.git/config", "src/.GIT/config", "src//export.py", "./src/export.py",
+         "src/export.py ", "src/export.py.", "src/%65xport.py", ""],
+    )
+    def test_model_file_must_be_legal_and_exactly_allowed(path: str) -> None:
+>       rejected(wire(finding(file=path)), "REFERENCE_DENIED")
+
+tests\candidates\test_review_output.py:249: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": [{"severity": "high", "file": "src/%65xport.py", "line": 27, "behavior": "�ս��û�������׼�ı�ͷ", "trigger": "��ѯû��ƥ����ʱ���õ���", "acceptance_ref": "acceptance:csv-v1", "blocking": true}]}'
+code = 'REFERENCE_DENIED', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+____ test_model_acceptance_ref_is_exact_and_not_cleaned[ACCEPTANCE:csv-v1] ____
+
+ref = 'ACCEPTANCE:csv-v1'
+
+    @pytest.mark.parametrize("ref", ["", "ACCEPTANCE:csv-v1", "acceptance:csv", "x*", "has space", "x\n"])
+    def test_model_acceptance_ref_is_exact_and_not_cleaned(ref: str) -> None:
+>       rejected(wire(finding(acceptance_ref=ref)), "REFERENCE_DENIED")
+
+tests\candidates\test_review_output.py:254: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": [{"severity": "high", "file": "src/export.py", "line": 27, "behavior": "�ս��û�������׼�ı�ͷ", "trigger": "��ѯû��ƥ����ʱ���õ���", "acceptance_ref": "ACCEPTANCE:csv-v1", "blocking": true}]}'
+code = 'REFERENCE_DENIED', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_____ test_model_acceptance_ref_is_exact_and_not_cleaned[acceptance:csv] ______
+
+ref = 'acceptance:csv'
+
+    @pytest.mark.parametrize("ref", ["", "ACCEPTANCE:csv-v1", "acceptance:csv", "x*", "has space", "x\n"])
+    def test_model_acceptance_ref_is_exact_and_not_cleaned(ref: str) -> None:
+>       rejected(wire(finding(acceptance_ref=ref)), "REFERENCE_DENIED")
+
+tests\candidates\test_review_output.py:254: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": [{"severity": "high", "file": "src/export.py", "line": 27, "behavior": "�ս��û�������׼�ı�ͷ", "trigger": "��ѯû��ƥ����ʱ���õ���", "acceptance_ref": "acceptance:csv", "blocking": true}]}'
+code = 'REFERENCE_DENIED', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+___________ test_model_acceptance_ref_is_exact_and_not_cleaned[x*] ____________
+
+ref = 'x*'
+
+    @pytest.mark.parametrize("ref", ["", "ACCEPTANCE:csv-v1", "acceptance:csv", "x*", "has space", "x\n"])
+    def test_model_acceptance_ref_is_exact_and_not_cleaned(ref: str) -> None:
+>       rejected(wire(finding(acceptance_ref=ref)), "REFERENCE_DENIED")
+
+tests\candidates\test_review_output.py:254: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": [{"severity": "high", "file": "src/export.py", "line": 27, "behavior": "�ս��û�������׼�ı�ͷ", "trigger": "��ѯû��ƥ����ʱ���õ���", "acceptance_ref": "x*", "blocking": true}]}'
+code = 'REFERENCE_DENIED', scope = {}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+____ test_empty_scope_is_deny_all_but_allows_zero_findings[allowed_files] _____
+
+scope_name = 'allowed_files'
+
+    @pytest.mark.parametrize("scope_name", ["allowed_files", "allowed_acceptance_refs"])
+    def test_empty_scope_is_deny_all_but_allows_zero_findings(scope_name: str) -> None:
+        scope = {scope_name: frozenset()}
+        assert parse(wire(), **scope).model_dump() == {"verdict": "failed", "findings": []}
+>       rejected(wire(finding()), "REFERENCE_DENIED", **scope)
+
+tests\candidates\test_review_output.py:261: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": [{"severity": "high", "file": "src/export.py", "line": 27, "behavior": "�ս��û�������׼�ı�ͷ", "trigger": "��ѯû��ƥ����ʱ���õ���", "acceptance_ref": "acceptance:csv-v1", "blocking": true}]}'
+code = 'REFERENCE_DENIED', scope = {'allowed_files': frozenset()}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_ test_empty_scope_is_deny_all_but_allows_zero_findings[allowed_acceptance_refs] _
+
+scope_name = 'allowed_acceptance_refs'
+
+    @pytest.mark.parametrize("scope_name", ["allowed_files", "allowed_acceptance_refs"])
+    def test_empty_scope_is_deny_all_but_allows_zero_findings(scope_name: str) -> None:
+        scope = {scope_name: frozenset()}
+        assert parse(wire(), **scope).model_dump() == {"verdict": "failed", "findings": []}
+>       rejected(wire(finding()), "REFERENCE_DENIED", **scope)
+
+tests\candidates\test_review_output.py:261: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": [{"severity": "high", "file": "src/export.py", "line": 27, "behavior": "�ս��û�������׼�ı�ͷ", "trigger": "��ѯû��ƥ����ʱ���õ���", "acceptance_ref": "acceptance:csv-v1", "blocking": true}]}'
+code = 'REFERENCE_DENIED', scope = {'allowed_acceptance_refs': frozenset()}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_ test_controller_scopes_require_exact_frozensets_of_strings[None-allowed_files] _
+
+scope_name = 'allowed_files', value = None
+
+    @pytest.mark.parametrize("scope_name", ["allowed_files", "allowed_acceptance_refs"])
+    @pytest.mark.parametrize("value", [None, "src/export.py", [], set(), {}, frozenset({1}),
+                                       frozenset({b"x"}), frozenset({None})])
+    def test_controller_scopes_require_exact_frozensets_of_strings(scope_name: str, value: Any) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: value})
+
+tests\candidates\test_review_output.py:268: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_files': None}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_ test_controller_scopes_require_exact_frozensets_of_strings[None-allowed_acceptance_refs] _
+
+scope_name = 'allowed_acceptance_refs', value = None
+
+    @pytest.mark.parametrize("scope_name", ["allowed_files", "allowed_acceptance_refs"])
+    @pytest.mark.parametrize("value", [None, "src/export.py", [], set(), {}, frozenset({1}),
+                                       frozenset({b"x"}), frozenset({None})])
+    def test_controller_scopes_require_exact_frozensets_of_strings(scope_name: str, value: Any) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: value})
+
+tests\candidates\test_review_output.py:268: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_acceptance_refs': None}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_ test_controller_scopes_require_exact_frozensets_of_strings[src/export.py-allowed_files] _
+
+scope_name = 'allowed_files', value = 'src/export.py'
+
+    @pytest.mark.parametrize("scope_name", ["allowed_files", "allowed_acceptance_refs"])
+    @pytest.mark.parametrize("value", [None, "src/export.py", [], set(), {}, frozenset({1}),
+                                       frozenset({b"x"}), frozenset({None})])
+    def test_controller_scopes_require_exact_frozensets_of_strings(scope_name: str, value: Any) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: value})
+
+tests\candidates\test_review_output.py:268: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_files': 'src/export.py'}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_ test_controller_scopes_require_exact_frozensets_of_strings[src/export.py-allowed_acceptance_refs] _
+
+scope_name = 'allowed_acceptance_refs', value = 'src/export.py'
+
+    @pytest.mark.parametrize("scope_name", ["allowed_files", "allowed_acceptance_refs"])
+    @pytest.mark.parametrize("value", [None, "src/export.py", [], set(), {}, frozenset({1}),
+                                       frozenset({b"x"}), frozenset({None})])
+    def test_controller_scopes_require_exact_frozensets_of_strings(scope_name: str, value: Any) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: value})
+
+tests\candidates\test_review_output.py:268: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_acceptance_refs': 'src/export.py'}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_ test_controller_scopes_require_exact_frozensets_of_strings[value2-allowed_files] _
+
+scope_name = 'allowed_files', value = []
+
+    @pytest.mark.parametrize("scope_name", ["allowed_files", "allowed_acceptance_refs"])
+    @pytest.mark.parametrize("value", [None, "src/export.py", [], set(), {}, frozenset({1}),
+                                       frozenset({b"x"}), frozenset({None})])
+    def test_controller_scopes_require_exact_frozensets_of_strings(scope_name: str, value: Any) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: value})
+
+tests\candidates\test_review_output.py:268: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_files': []}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_ test_controller_scopes_require_exact_frozensets_of_strings[value2-allowed_acceptance_refs] _
+
+scope_name = 'allowed_acceptance_refs', value = []
+
+    @pytest.mark.parametrize("scope_name", ["allowed_files", "allowed_acceptance_refs"])
+    @pytest.mark.parametrize("value", [None, "src/export.py", [], set(), {}, frozenset({1}),
+                                       frozenset({b"x"}), frozenset({None})])
+    def test_controller_scopes_require_exact_frozensets_of_strings(scope_name: str, value: Any) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: value})
+
+tests\candidates\test_review_output.py:268: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_acceptance_refs': []}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_ test_controller_scopes_require_exact_frozensets_of_strings[value3-allowed_files] _
+
+scope_name = 'allowed_files', value = set()
+
+    @pytest.mark.parametrize("scope_name", ["allowed_files", "allowed_acceptance_refs"])
+    @pytest.mark.parametrize("value", [None, "src/export.py", [], set(), {}, frozenset({1}),
+                                       frozenset({b"x"}), frozenset({None})])
+    def test_controller_scopes_require_exact_frozensets_of_strings(scope_name: str, value: Any) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: value})
+
+tests\candidates\test_review_output.py:268: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_files': set()}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_ test_controller_scopes_require_exact_frozensets_of_strings[value3-allowed_acceptance_refs] _
+
+scope_name = 'allowed_acceptance_refs', value = set()
+
+    @pytest.mark.parametrize("scope_name", ["allowed_files", "allowed_acceptance_refs"])
+    @pytest.mark.parametrize("value", [None, "src/export.py", [], set(), {}, frozenset({1}),
+                                       frozenset({b"x"}), frozenset({None})])
+    def test_controller_scopes_require_exact_frozensets_of_strings(scope_name: str, value: Any) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: value})
+
+tests\candidates\test_review_output.py:268: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_acceptance_refs': set()}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_ test_controller_scopes_require_exact_frozensets_of_strings[value4-allowed_files] _
+
+scope_name = 'allowed_files', value = {}
+
+    @pytest.mark.parametrize("scope_name", ["allowed_files", "allowed_acceptance_refs"])
+    @pytest.mark.parametrize("value", [None, "src/export.py", [], set(), {}, frozenset({1}),
+                                       frozenset({b"x"}), frozenset({None})])
+    def test_controller_scopes_require_exact_frozensets_of_strings(scope_name: str, value: Any) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: value})
+
+tests\candidates\test_review_output.py:268: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_files': {}}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_ test_controller_scopes_require_exact_frozensets_of_strings[value4-allowed_acceptance_refs] _
+
+scope_name = 'allowed_acceptance_refs', value = {}
+
+    @pytest.mark.parametrize("scope_name", ["allowed_files", "allowed_acceptance_refs"])
+    @pytest.mark.parametrize("value", [None, "src/export.py", [], set(), {}, frozenset({1}),
+                                       frozenset({b"x"}), frozenset({None})])
+    def test_controller_scopes_require_exact_frozensets_of_strings(scope_name: str, value: Any) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: value})
+
+tests\candidates\test_review_output.py:268: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_acceptance_refs': {}}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_ test_controller_scopes_require_exact_frozensets_of_strings[value5-allowed_files] _
+
+scope_name = 'allowed_files', value = frozenset({1})
+
+    @pytest.mark.parametrize("scope_name", ["allowed_files", "allowed_acceptance_refs"])
+    @pytest.mark.parametrize("value", [None, "src/export.py", [], set(), {}, frozenset({1}),
+                                       frozenset({b"x"}), frozenset({None})])
+    def test_controller_scopes_require_exact_frozensets_of_strings(scope_name: str, value: Any) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: value})
+
+tests\candidates\test_review_output.py:268: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_files': frozenset({1})}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_ test_controller_scopes_require_exact_frozensets_of_strings[value5-allowed_acceptance_refs] _
+
+scope_name = 'allowed_acceptance_refs', value = frozenset({1})
+
+    @pytest.mark.parametrize("scope_name", ["allowed_files", "allowed_acceptance_refs"])
+    @pytest.mark.parametrize("value", [None, "src/export.py", [], set(), {}, frozenset({1}),
+                                       frozenset({b"x"}), frozenset({None})])
+    def test_controller_scopes_require_exact_frozensets_of_strings(scope_name: str, value: Any) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: value})
+
+tests\candidates\test_review_output.py:268: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_acceptance_refs': frozenset({1})}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_ test_controller_scopes_require_exact_frozensets_of_strings[value6-allowed_files] _
+
+scope_name = 'allowed_files', value = frozenset({b'x'})
+
+    @pytest.mark.parametrize("scope_name", ["allowed_files", "allowed_acceptance_refs"])
+    @pytest.mark.parametrize("value", [None, "src/export.py", [], set(), {}, frozenset({1}),
+                                       frozenset({b"x"}), frozenset({None})])
+    def test_controller_scopes_require_exact_frozensets_of_strings(scope_name: str, value: Any) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: value})
+
+tests\candidates\test_review_output.py:268: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_files': frozenset({b'x'})}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_ test_controller_scopes_require_exact_frozensets_of_strings[value6-allowed_acceptance_refs] _
+
+scope_name = 'allowed_acceptance_refs', value = frozenset({b'x'})
+
+    @pytest.mark.parametrize("scope_name", ["allowed_files", "allowed_acceptance_refs"])
+    @pytest.mark.parametrize("value", [None, "src/export.py", [], set(), {}, frozenset({1}),
+                                       frozenset({b"x"}), frozenset({None})])
+    def test_controller_scopes_require_exact_frozensets_of_strings(scope_name: str, value: Any) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: value})
+
+tests\candidates\test_review_output.py:268: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_acceptance_refs': frozenset({b'x'})}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_ test_controller_scopes_require_exact_frozensets_of_strings[value7-allowed_files] _
+
+scope_name = 'allowed_files', value = frozenset({None})
+
+    @pytest.mark.parametrize("scope_name", ["allowed_files", "allowed_acceptance_refs"])
+    @pytest.mark.parametrize("value", [None, "src/export.py", [], set(), {}, frozenset({1}),
+                                       frozenset({b"x"}), frozenset({None})])
+    def test_controller_scopes_require_exact_frozensets_of_strings(scope_name: str, value: Any) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: value})
+
+tests\candidates\test_review_output.py:268: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_files': frozenset({None})}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_ test_controller_scopes_require_exact_frozensets_of_strings[value7-allowed_acceptance_refs] _
+
+scope_name = 'allowed_acceptance_refs', value = frozenset({None})
+
+    @pytest.mark.parametrize("scope_name", ["allowed_files", "allowed_acceptance_refs"])
+    @pytest.mark.parametrize("value", [None, "src/export.py", [], set(), {}, frozenset({1}),
+                                       frozenset({b"x"}), frozenset({None})])
+    def test_controller_scopes_require_exact_frozensets_of_strings(scope_name: str, value: Any) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: value})
+
+tests\candidates\test_review_output.py:268: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_acceptance_refs': frozenset({None})}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_____ test_invalid_controller_reference_is_always_scope_error[empty-file] _____
+
+scope_name = 'allowed_files', values = {''}
+
+    @pytest.mark.parametrize(
+        ("scope_name", "values"),
+        [
+            ("allowed_files", {""}), ("allowed_files", {".."}), ("allowed_files", {"src/"}),
+            ("allowed_files", {"*.py"}), ("allowed_files", {".git/x"}),
+            ("allowed_files", {"/tmp/x"}), ("allowed_files", {"x" * 4097}),
+            ("allowed_files", {"A.py", "a.py"}), ("allowed_files", {"\xdf.py", "ss.py"}),
+            ("allowed_files", {"\ud800"}),
+            ("allowed_acceptance_refs", {""}), ("allowed_acceptance_refs", {"has space"}),
+            ("allowed_acceptance_refs", {"x" * 257}), ("allowed_acceptance_refs", {"\ud800"}),
+        ],
+        ids=["empty-file", "parent", "directory", "glob", "git", "absolute", "long-file",
+             "case-collision", "unicode-case-collision", "file-surrogate", "empty-ref", "space-ref",
+             "long-ref", "ref-surrogate"],
+    )
+    def test_invalid_controller_reference_is_always_scope_error(scope_name: str, values: set[str]) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: frozenset(values)})
+
+tests\candidates\test_review_output.py:287: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_files': frozenset({''})}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_______ test_invalid_controller_reference_is_always_scope_error[parent] _______
+
+scope_name = 'allowed_files', values = {'..'}
+
+    @pytest.mark.parametrize(
+        ("scope_name", "values"),
+        [
+            ("allowed_files", {""}), ("allowed_files", {".."}), ("allowed_files", {"src/"}),
+            ("allowed_files", {"*.py"}), ("allowed_files", {".git/x"}),
+            ("allowed_files", {"/tmp/x"}), ("allowed_files", {"x" * 4097}),
+            ("allowed_files", {"A.py", "a.py"}), ("allowed_files", {"\xdf.py", "ss.py"}),
+            ("allowed_files", {"\ud800"}),
+            ("allowed_acceptance_refs", {""}), ("allowed_acceptance_refs", {"has space"}),
+            ("allowed_acceptance_refs", {"x" * 257}), ("allowed_acceptance_refs", {"\ud800"}),
+        ],
+        ids=["empty-file", "parent", "directory", "glob", "git", "absolute", "long-file",
+             "case-collision", "unicode-case-collision", "file-surrogate", "empty-ref", "space-ref",
+             "long-ref", "ref-surrogate"],
+    )
+    def test_invalid_controller_reference_is_always_scope_error(scope_name: str, values: set[str]) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: frozenset(values)})
+
+tests\candidates\test_review_output.py:287: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_files': frozenset({'..'})}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_____ test_invalid_controller_reference_is_always_scope_error[directory] ______
+
+scope_name = 'allowed_files', values = {'src/'}
+
+    @pytest.mark.parametrize(
+        ("scope_name", "values"),
+        [
+            ("allowed_files", {""}), ("allowed_files", {".."}), ("allowed_files", {"src/"}),
+            ("allowed_files", {"*.py"}), ("allowed_files", {".git/x"}),
+            ("allowed_files", {"/tmp/x"}), ("allowed_files", {"x" * 4097}),
+            ("allowed_files", {"A.py", "a.py"}), ("allowed_files", {"\xdf.py", "ss.py"}),
+            ("allowed_files", {"\ud800"}),
+            ("allowed_acceptance_refs", {""}), ("allowed_acceptance_refs", {"has space"}),
+            ("allowed_acceptance_refs", {"x" * 257}), ("allowed_acceptance_refs", {"\ud800"}),
+        ],
+        ids=["empty-file", "parent", "directory", "glob", "git", "absolute", "long-file",
+             "case-collision", "unicode-case-collision", "file-surrogate", "empty-ref", "space-ref",
+             "long-ref", "ref-surrogate"],
+    )
+    def test_invalid_controller_reference_is_always_scope_error(scope_name: str, values: set[str]) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: frozenset(values)})
+
+tests\candidates\test_review_output.py:287: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_files': frozenset({'src/'})}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+________ test_invalid_controller_reference_is_always_scope_error[glob] ________
+
+scope_name = 'allowed_files', values = {'*.py'}
+
+    @pytest.mark.parametrize(
+        ("scope_name", "values"),
+        [
+            ("allowed_files", {""}), ("allowed_files", {".."}), ("allowed_files", {"src/"}),
+            ("allowed_files", {"*.py"}), ("allowed_files", {".git/x"}),
+            ("allowed_files", {"/tmp/x"}), ("allowed_files", {"x" * 4097}),
+            ("allowed_files", {"A.py", "a.py"}), ("allowed_files", {"\xdf.py", "ss.py"}),
+            ("allowed_files", {"\ud800"}),
+            ("allowed_acceptance_refs", {""}), ("allowed_acceptance_refs", {"has space"}),
+            ("allowed_acceptance_refs", {"x" * 257}), ("allowed_acceptance_refs", {"\ud800"}),
+        ],
+        ids=["empty-file", "parent", "directory", "glob", "git", "absolute", "long-file",
+             "case-collision", "unicode-case-collision", "file-surrogate", "empty-ref", "space-ref",
+             "long-ref", "ref-surrogate"],
+    )
+    def test_invalid_controller_reference_is_always_scope_error(scope_name: str, values: set[str]) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: frozenset(values)})
+
+tests\candidates\test_review_output.py:287: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_files': frozenset({'*.py'})}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+________ test_invalid_controller_reference_is_always_scope_error[git] _________
+
+scope_name = 'allowed_files', values = {'.git/x'}
+
+    @pytest.mark.parametrize(
+        ("scope_name", "values"),
+        [
+            ("allowed_files", {""}), ("allowed_files", {".."}), ("allowed_files", {"src/"}),
+            ("allowed_files", {"*.py"}), ("allowed_files", {".git/x"}),
+            ("allowed_files", {"/tmp/x"}), ("allowed_files", {"x" * 4097}),
+            ("allowed_files", {"A.py", "a.py"}), ("allowed_files", {"\xdf.py", "ss.py"}),
+            ("allowed_files", {"\ud800"}),
+            ("allowed_acceptance_refs", {""}), ("allowed_acceptance_refs", {"has space"}),
+            ("allowed_acceptance_refs", {"x" * 257}), ("allowed_acceptance_refs", {"\ud800"}),
+        ],
+        ids=["empty-file", "parent", "directory", "glob", "git", "absolute", "long-file",
+             "case-collision", "unicode-case-collision", "file-surrogate", "empty-ref", "space-ref",
+             "long-ref", "ref-surrogate"],
+    )
+    def test_invalid_controller_reference_is_always_scope_error(scope_name: str, values: set[str]) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: frozenset(values)})
+
+tests\candidates\test_review_output.py:287: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_files': frozenset({'.git/x'})}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+______ test_invalid_controller_reference_is_always_scope_error[absolute] ______
+
+scope_name = 'allowed_files', values = {'/tmp/x'}
+
+    @pytest.mark.parametrize(
+        ("scope_name", "values"),
+        [
+            ("allowed_files", {""}), ("allowed_files", {".."}), ("allowed_files", {"src/"}),
+            ("allowed_files", {"*.py"}), ("allowed_files", {".git/x"}),
+            ("allowed_files", {"/tmp/x"}), ("allowed_files", {"x" * 4097}),
+            ("allowed_files", {"A.py", "a.py"}), ("allowed_files", {"\xdf.py", "ss.py"}),
+            ("allowed_files", {"\ud800"}),
+            ("allowed_acceptance_refs", {""}), ("allowed_acceptance_refs", {"has space"}),
+            ("allowed_acceptance_refs", {"x" * 257}), ("allowed_acceptance_refs", {"\ud800"}),
+        ],
+        ids=["empty-file", "parent", "directory", "glob", "git", "absolute", "long-file",
+             "case-collision", "unicode-case-collision", "file-surrogate", "empty-ref", "space-ref",
+             "long-ref", "ref-surrogate"],
+    )
+    def test_invalid_controller_reference_is_always_scope_error(scope_name: str, values: set[str]) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: frozenset(values)})
+
+tests\candidates\test_review_output.py:287: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_files': frozenset({'/tmp/x'})}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_____ test_invalid_controller_reference_is_always_scope_error[long-file] ______
+
+scope_name = 'allowed_files'
+values = {'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}
+
+    @pytest.mark.parametrize(
+        ("scope_name", "values"),
+        [
+            ("allowed_files", {""}), ("allowed_files", {".."}), ("allowed_files", {"src/"}),
+            ("allowed_files", {"*.py"}), ("allowed_files", {".git/x"}),
+            ("allowed_files", {"/tmp/x"}), ("allowed_files", {"x" * 4097}),
+            ("allowed_files", {"A.py", "a.py"}), ("allowed_files", {"\xdf.py", "ss.py"}),
+            ("allowed_files", {"\ud800"}),
+            ("allowed_acceptance_refs", {""}), ("allowed_acceptance_refs", {"has space"}),
+            ("allowed_acceptance_refs", {"x" * 257}), ("allowed_acceptance_refs", {"\ud800"}),
+        ],
+        ids=["empty-file", "parent", "directory", "glob", "git", "absolute", "long-file",
+             "case-collision", "unicode-case-collision", "file-surrogate", "empty-ref", "space-ref",
+             "long-ref", "ref-surrogate"],
+    )
+    def test_invalid_controller_reference_is_always_scope_error(scope_name: str, values: set[str]) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: frozenset(values)})
+
+tests\candidates\test_review_output.py:287: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID'
+scope = {'allowed_files': frozenset({'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'})}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+___ test_invalid_controller_reference_is_always_scope_error[case-collision] ___
+
+scope_name = 'allowed_files', values = {'A.py', 'a.py'}
+
+    @pytest.mark.parametrize(
+        ("scope_name", "values"),
+        [
+            ("allowed_files", {""}), ("allowed_files", {".."}), ("allowed_files", {"src/"}),
+            ("allowed_files", {"*.py"}), ("allowed_files", {".git/x"}),
+            ("allowed_files", {"/tmp/x"}), ("allowed_files", {"x" * 4097}),
+            ("allowed_files", {"A.py", "a.py"}), ("allowed_files", {"\xdf.py", "ss.py"}),
+            ("allowed_files", {"\ud800"}),
+            ("allowed_acceptance_refs", {""}), ("allowed_acceptance_refs", {"has space"}),
+            ("allowed_acceptance_refs", {"x" * 257}), ("allowed_acceptance_refs", {"\ud800"}),
+        ],
+        ids=["empty-file", "parent", "directory", "glob", "git", "absolute", "long-file",
+             "case-collision", "unicode-case-collision", "file-surrogate", "empty-ref", "space-ref",
+             "long-ref", "ref-surrogate"],
+    )
+    def test_invalid_controller_reference_is_always_scope_error(scope_name: str, values: set[str]) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: frozenset(values)})
+
+tests\candidates\test_review_output.py:287: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_files': frozenset({'A.py', 'a.py'})}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_ test_invalid_controller_reference_is_always_scope_error[unicode-case-collision] _
+
+scope_name = 'allowed_files', values = {'ss.py', '\xdf.py'}
+
+    @pytest.mark.parametrize(
+        ("scope_name", "values"),
+        [
+            ("allowed_files", {""}), ("allowed_files", {".."}), ("allowed_files", {"src/"}),
+            ("allowed_files", {"*.py"}), ("allowed_files", {".git/x"}),
+            ("allowed_files", {"/tmp/x"}), ("allowed_files", {"x" * 4097}),
+            ("allowed_files", {"A.py", "a.py"}), ("allowed_files", {"\xdf.py", "ss.py"}),
+            ("allowed_files", {"\ud800"}),
+            ("allowed_acceptance_refs", {""}), ("allowed_acceptance_refs", {"has space"}),
+            ("allowed_acceptance_refs", {"x" * 257}), ("allowed_acceptance_refs", {"\ud800"}),
+        ],
+        ids=["empty-file", "parent", "directory", "glob", "git", "absolute", "long-file",
+             "case-collision", "unicode-case-collision", "file-surrogate", "empty-ref", "space-ref",
+             "long-ref", "ref-surrogate"],
+    )
+    def test_invalid_controller_reference_is_always_scope_error(scope_name: str, values: set[str]) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: frozenset(values)})
+
+tests\candidates\test_review_output.py:287: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_files': frozenset({'ss.py', '\xdf.py'})}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+___ test_invalid_controller_reference_is_always_scope_error[file-surrogate] ___
+
+scope_name = 'allowed_files', values = {'\ud800'}
+
+    @pytest.mark.parametrize(
+        ("scope_name", "values"),
+        [
+            ("allowed_files", {""}), ("allowed_files", {".."}), ("allowed_files", {"src/"}),
+            ("allowed_files", {"*.py"}), ("allowed_files", {".git/x"}),
+            ("allowed_files", {"/tmp/x"}), ("allowed_files", {"x" * 4097}),
+            ("allowed_files", {"A.py", "a.py"}), ("allowed_files", {"\xdf.py", "ss.py"}),
+            ("allowed_files", {"\ud800"}),
+            ("allowed_acceptance_refs", {""}), ("allowed_acceptance_refs", {"has space"}),
+            ("allowed_acceptance_refs", {"x" * 257}), ("allowed_acceptance_refs", {"\ud800"}),
+        ],
+        ids=["empty-file", "parent", "directory", "glob", "git", "absolute", "long-file",
+             "case-collision", "unicode-case-collision", "file-surrogate", "empty-ref", "space-ref",
+             "long-ref", "ref-surrogate"],
+    )
+    def test_invalid_controller_reference_is_always_scope_error(scope_name: str, values: set[str]) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: frozenset(values)})
+
+tests\candidates\test_review_output.py:287: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_files': frozenset({'\ud800'})}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_____ test_invalid_controller_reference_is_always_scope_error[empty-ref] ______
+
+scope_name = 'allowed_acceptance_refs', values = {''}
+
+    @pytest.mark.parametrize(
+        ("scope_name", "values"),
+        [
+            ("allowed_files", {""}), ("allowed_files", {".."}), ("allowed_files", {"src/"}),
+            ("allowed_files", {"*.py"}), ("allowed_files", {".git/x"}),
+            ("allowed_files", {"/tmp/x"}), ("allowed_files", {"x" * 4097}),
+            ("allowed_files", {"A.py", "a.py"}), ("allowed_files", {"\xdf.py", "ss.py"}),
+            ("allowed_files", {"\ud800"}),
+            ("allowed_acceptance_refs", {""}), ("allowed_acceptance_refs", {"has space"}),
+            ("allowed_acceptance_refs", {"x" * 257}), ("allowed_acceptance_refs", {"\ud800"}),
+        ],
+        ids=["empty-file", "parent", "directory", "glob", "git", "absolute", "long-file",
+             "case-collision", "unicode-case-collision", "file-surrogate", "empty-ref", "space-ref",
+             "long-ref", "ref-surrogate"],
+    )
+    def test_invalid_controller_reference_is_always_scope_error(scope_name: str, values: set[str]) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: frozenset(values)})
+
+tests\candidates\test_review_output.py:287: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID', scope = {'allowed_acceptance_refs': frozenset({''})}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_____ test_invalid_controller_reference_is_always_scope_error[space-ref] ______
+
+scope_name = 'allowed_acceptance_refs', values = {'has space'}
+
+    @pytest.mark.parametrize(
+        ("scope_name", "values"),
+        [
+            ("allowed_files", {""}), ("allowed_files", {".."}), ("allowed_files", {"src/"}),
+            ("allowed_files", {"*.py"}), ("allowed_files", {".git/x"}),
+            ("allowed_files", {"/tmp/x"}), ("allowed_files", {"x" * 4097}),
+            ("allowed_files", {"A.py", "a.py"}), ("allowed_files", {"\xdf.py", "ss.py"}),
+            ("allowed_files", {"\ud800"}),
+            ("allowed_acceptance_refs", {""}), ("allowed_acceptance_refs", {"has space"}),
+            ("allowed_acceptance_refs", {"x" * 257}), ("allowed_acceptance_refs", {"\ud800"}),
+        ],
+        ids=["empty-file", "parent", "directory", "glob", "git", "absolute", "long-file",
+             "case-collision", "unicode-case-collision", "file-surrogate", "empty-ref", "space-ref",
+             "long-ref", "ref-surrogate"],
+    )
+    def test_invalid_controller_reference_is_always_scope_error(scope_name: str, values: set[str]) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: frozenset(values)})
+
+tests\candidates\test_review_output.py:287: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID'
+scope = {'allowed_acceptance_refs': frozenset({'has space'})}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+______ test_invalid_controller_reference_is_always_scope_error[long-ref] ______
+
+scope_name = 'allowed_acceptance_refs'
+values = {'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}
+
+    @pytest.mark.parametrize(
+        ("scope_name", "values"),
+        [
+            ("allowed_files", {""}), ("allowed_files", {".."}), ("allowed_files", {"src/"}),
+            ("allowed_files", {"*.py"}), ("allowed_files", {".git/x"}),
+            ("allowed_files", {"/tmp/x"}), ("allowed_files", {"x" * 4097}),
+            ("allowed_files", {"A.py", "a.py"}), ("allowed_files", {"\xdf.py", "ss.py"}),
+            ("allowed_files", {"\ud800"}),
+            ("allowed_acceptance_refs", {""}), ("allowed_acceptance_refs", {"has space"}),
+            ("allowed_acceptance_refs", {"x" * 257}), ("allowed_acceptance_refs", {"\ud800"}),
+        ],
+        ids=["empty-file", "parent", "directory", "glob", "git", "absolute", "long-file",
+             "case-collision", "unicode-case-collision", "file-surrogate", "empty-ref", "space-ref",
+             "long-ref", "ref-surrogate"],
+    )
+    def test_invalid_controller_reference_is_always_scope_error(scope_name: str, values: set[str]) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: frozenset(values)})
+
+tests\candidates\test_review_output.py:287: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID'
+scope = {'allowed_acceptance_refs': frozenset({'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'})}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+___ test_invalid_controller_reference_is_always_scope_error[ref-surrogate] ____
+
+scope_name = 'allowed_acceptance_refs', values = {'\ud800'}
+
+    @pytest.mark.parametrize(
+        ("scope_name", "values"),
+        [
+            ("allowed_files", {""}), ("allowed_files", {".."}), ("allowed_files", {"src/"}),
+            ("allowed_files", {"*.py"}), ("allowed_files", {".git/x"}),
+            ("allowed_files", {"/tmp/x"}), ("allowed_files", {"x" * 4097}),
+            ("allowed_files", {"A.py", "a.py"}), ("allowed_files", {"\xdf.py", "ss.py"}),
+            ("allowed_files", {"\ud800"}),
+            ("allowed_acceptance_refs", {""}), ("allowed_acceptance_refs", {"has space"}),
+            ("allowed_acceptance_refs", {"x" * 257}), ("allowed_acceptance_refs", {"\ud800"}),
+        ],
+        ids=["empty-file", "parent", "directory", "glob", "git", "absolute", "long-file",
+             "case-collision", "unicode-case-collision", "file-surrogate", "empty-ref", "space-ref",
+             "long-ref", "ref-surrogate"],
+    )
+    def test_invalid_controller_reference_is_always_scope_error(scope_name: str, values: set[str]) -> None:
+>       rejected(wire(), "SCOPE_INVALID", **{scope_name: frozenset(values)})
+
+tests\candidates\test_review_output.py:287: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = '{"verdict": "changes_requested", "findings": []}'
+code = 'SCOPE_INVALID'
+scope = {'allowed_acceptance_refs': frozenset({'\ud800'})}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+>       with pytest.raises(ReviewOutputError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:61: Failed
+_______ test_scope_is_checked_before_content_and_not_unicode_normalized _______
+
+    def test_scope_is_checked_before_content_and_not_unicode_normalized() -> None:
+>       rejected(b"\xff", "SCOPE_INVALID", allowed_files=frozenset({"../x"}))
+
+tests\candidates\test_review_output.py:291: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+content = b'\xff', code = 'SCOPE_INVALID'
+scope = {'allowed_files': frozenset({'../x'})}
+
+    def rejected(content: Any, code: str, **scope: Any) -> None:
+        with pytest.raises(ReviewOutputError) as caught:
+            parse(content, **scope)
+>       assert getattr(caught.value, "code", None) == "REVIEW_OUTPUT_" + code
+E       AssertionError: assert 'REVIEW_OUTPUT_INPUT_INVALID' == 'REVIEW_OUTPUT_SCOPE_INVALID'
+E         
+E         - REVIEW_OUTPUT_SCOPE_INVALID
+E         ?               ^^^ ^
+E         + REVIEW_OUTPUT_INPUT_INVALID
+E         ?               ^^ ^^
+
+tests\candidates\test_review_output.py:63: AssertionError
+_______________ test_all_failure_categories_are_safe_and_silent _______________
+
+capsys = <_pytest.capture.CaptureFixture object at 0x000001DB82C3C3E0>
+caplog = <_pytest.logging.LogCaptureFixture object at 0x000001DB82C3C320>
+
+    def test_all_failure_categories_are_safe_and_silent(
+        capsys: pytest.CaptureFixture[str], caplog: pytest.LogCaptureFixture
+    ) -> None:
+        canary = "SYNTHETIC-PRIVATE-REVIEW-CANARY"
+        cases = [
+            (wire(), {"allowed_files": frozenset({"../" + canary})}, "SCOPE_INVALID"),
+            ('"' + canary + '\\ud800"', {}, "INPUT_INVALID"),
+            (wire(finding(behavior=canary + "x" * 2048)), {}, "LIMIT_EXCEEDED"),
+            ('{"' + canary + '":1,"' + canary + '":2}', {}, "JSON_INVALID"),
+            (wire(finding(severity=canary)), {}, "SCHEMA_INVALID"),
+            (wire(finding(file=canary)), {}, "REFERENCE_DENIED"),
+            (wire(finding(behavior=canary), verdict="pass"), {}, "VERDICT_CONFLICT"),
+            (json.dumps({"verdict": "pass", "findings": [finding(**{canary: "x"})]}),
+             {}, "SCHEMA_INVALID"),
+            (json.dumps({"verdict": "pass", "findings": [finding(behavior={canary: []})]}),
+             {}, "LIMIT_EXCEEDED"),
+        ]
+        for content, scope, code in cases:
+>           with pytest.raises(ReviewOutputError) as caught:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ReviewOutputError
+
+tests\candidates\test_review_output.py:332: Failed
+- generated xml file: C:\Users\Chooo\Playground\Karajan\.cache\review-output-parser\.cache\review-parser-author\scope-red.xml -
+=========================== short test summary info ===========================
+FAILED tests/candidates/test_review_output.py::test_model_file_must_be_legal_and_exactly_allowed[src]
+FAILED tests/candidates/test_review_output.py::test_model_file_must_be_legal_and_exactly_allowed[src/other.py]
+FAILED tests/candidates/test_review_output.py::test_model_file_must_be_legal_and_exactly_allowed[SRC/export.py]
+FAILED tests/candidates/test_review_output.py::test_model_file_must_be_legal_and_exactly_allowed[src/%65xport.py]
+FAILED tests/candidates/test_review_output.py::test_model_acceptance_ref_is_exact_and_not_cleaned[ACCEPTANCE:csv-v1]
+FAILED tests/candidates/test_review_output.py::test_model_acceptance_ref_is_exact_and_not_cleaned[acceptance:csv]
+FAILED tests/candidates/test_review_output.py::test_model_acceptance_ref_is_exact_and_not_cleaned[x*]
+FAILED tests/candidates/test_review_output.py::test_empty_scope_is_deny_all_but_allows_zero_findings[allowed_files]
+FAILED tests/candidates/test_review_output.py::test_empty_scope_is_deny_all_but_allows_zero_findings[allowed_acceptance_refs]
+FAILED tests/candidates/test_review_output.py::test_controller_scopes_require_exact_frozensets_of_strings[None-allowed_files]
+FAILED tests/candidates/test_review_output.py::test_controller_scopes_require_exact_frozensets_of_strings[None-allowed_acceptance_refs]
+FAILED tests/candidates/test_review_output.py::test_controller_scopes_require_exact_frozensets_of_strings[src/export.py-allowed_files]
+FAILED tests/candidates/test_review_output.py::test_controller_scopes_require_exact_frozensets_of_strings[src/export.py-allowed_acceptance_refs]
+FAILED tests/candidates/test_review_output.py::test_controller_scopes_require_exact_frozensets_of_strings[value2-allowed_files]
+FAILED tests/candidates/test_review_output.py::test_controller_scopes_require_exact_frozensets_of_strings[value2-allowed_acceptance_refs]
+FAILED tests/candidates/test_review_output.py::test_controller_scopes_require_exact_frozensets_of_strings[value3-allowed_files]
+FAILED tests/candidates/test_review_output.py::test_controller_scopes_require_exact_frozensets_of_strings[value3-allowed_acceptance_refs]
+FAILED tests/candidates/test_review_output.py::test_controller_scopes_require_exact_frozensets_of_strings[value4-allowed_files]
+FAILED tests/candidates/test_review_output.py::test_controller_scopes_require_exact_frozensets_of_strings[value4-allowed_acceptance_refs]
+FAILED tests/candidates/test_review_output.py::test_controller_scopes_require_exact_frozensets_of_strings[value5-allowed_files]
+FAILED tests/candidates/test_review_output.py::test_controller_scopes_require_exact_frozensets_of_strings[value5-allowed_acceptance_refs]
+FAILED tests/candidates/test_review_output.py::test_controller_scopes_require_exact_frozensets_of_strings[value6-allowed_files]
+FAILED tests/candidates/test_review_output.py::test_controller_scopes_require_exact_frozensets_of_strings[value6-allowed_acceptance_refs]
+FAILED tests/candidates/test_review_output.py::test_controller_scopes_require_exact_frozensets_of_strings[value7-allowed_files]
+FAILED tests/candidates/test_review_output.py::test_controller_scopes_require_exact_frozensets_of_strings[value7-allowed_acceptance_refs]
+FAILED tests/candidates/test_review_output.py::test_invalid_controller_reference_is_always_scope_error[empty-file]
+FAILED tests/candidates/test_review_output.py::test_invalid_controller_reference_is_always_scope_error[parent]
+FAILED tests/candidates/test_review_output.py::test_invalid_controller_reference_is_always_scope_error[directory]
+FAILED tests/candidates/test_review_output.py::test_invalid_controller_reference_is_always_scope_error[glob]
+FAILED tests/candidates/test_review_output.py::test_invalid_controller_reference_is_always_scope_error[git]
+FAILED tests/candidates/test_review_output.py::test_invalid_controller_reference_is_always_scope_error[absolute]
+FAILED tests/candidates/test_review_output.py::test_invalid_controller_reference_is_always_scope_error[long-file]
+FAILED tests/candidates/test_review_output.py::test_invalid_controller_reference_is_always_scope_error[case-collision]
+FAILED tests/candidates/test_review_output.py::test_invalid_controller_reference_is_always_scope_error[unicode-case-collision]
+FAILED tests/candidates/test_review_output.py::test_invalid_controller_reference_is_always_scope_error[file-surrogate]
+FAILED tests/candidates/test_review_output.py::test_invalid_controller_reference_is_always_scope_error[empty-ref]
+FAILED tests/candidates/test_review_output.py::test_invalid_controller_reference_is_always_scope_error[space-ref]
+FAILED tests/candidates/test_review_output.py::test_invalid_controller_reference_is_always_scope_error[long-ref]
+FAILED tests/candidates/test_review_output.py::test_invalid_controller_reference_is_always_scope_error[ref-surrogate]
+FAILED tests/candidates/test_review_output.py::test_scope_is_checked_before_content_and_not_unicode_normalized
+FAILED tests/candidates/test_review_output.py::test_all_failure_categories_are_safe_and_silent
+======================= 41 failed, 225 passed in 2.18s ========================

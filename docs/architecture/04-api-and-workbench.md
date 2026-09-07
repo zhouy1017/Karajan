@@ -29,6 +29,8 @@
 
 TaskResult 包含状态、产物引用、变更摘要、验收尝试、未决事项和交回原因。声明的文件、测试和模型身份全部视为待核验信息。ReviewResult 包含 findings 与 `pass / changes_requested / inconclusive`，由 gate 转换成业务结论。
 
+模型文本的[严格解析边界](../implementation/reviewer-output-parser.md)将上述 wire 值映射为存储内容 `passed / failed / inconclusive`，拒绝 `pass` 与 blocking finding 的矛盾。该纯解析结果只有 verdict/findings；真实身份、来源、独立性与 Evidence/gate 验证仍由控制器负责，存储 ReviewResult 的既有 JSON 不变。
+
 ## 2. 执行管理接口
 
 | 方法 | 输入 | 返回与幂等语义 |

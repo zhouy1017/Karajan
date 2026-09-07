@@ -1,0 +1,36 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/Chooo/Playground/Karajan/.cache/review-output-parser
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 375 items
+
+tests/candidates/test_baseline_materialization.py ................       [  4%]
+tests/candidates/test_projected_capture.py ...............               [  8%]
+tests/candidates/test_review_output.py ................................. [ 17%]
+........................................................................ [ 36%]
+........................................................................ [ 55%]
+........................................................................ [ 74%]
+....................                                                     [ 80%]
+tests/candidates/test_validation.py .................................... [ 89%]
+...................................F...                                  [100%]
+
+=================================== FAILURES ===================================
+________ test_real_process_probe_reports_failure_and_fixture_boundaries ________
+
+tmp_path = PosixPath('/tmp/karajan-review-parser-104/test_real_process_probe_report0')
+
+>   ???
+E   AssertionError: Traceback (most recent call last):
+E       File "/mnt/c/Users/Chooo/Playground/Karajan/.cache/review-output-parser/examples/candidates/probe_validation.py", line 15, in <module>
+E         from karajan.candidates import CandidateError, CandidateStore
+E     ModuleNotFoundError: No module named 'karajan'
+E     
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['/tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python', '/mnt/c/Users/Chooo/Playground/Karajan/...    from karajan.candidates import CandidateError, CandidateStore\nModuleNotFoundError: No module named \'karajan\'\n').returncode
+
+C:\Users\Chooo\Playground\Karajan\.cache\review-output-parser\tests\candidates\test_validation.py:631: AssertionError
+- generated xml file: /mnt/c/Users/Chooo/Playground/Karajan/.cache/review-output-parser/.cache/review-parser-author/candidate-final-linux.xml -
+=========================== short test summary info ============================
+FAILED tests/candidates/test_validation.py::test_real_process_probe_reports_failure_and_fixture_boundaries
+======================== 1 failed, 374 passed in 10.70s ========================

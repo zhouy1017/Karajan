@@ -1,0 +1,7 @@
+{
+  "backend/karajan/candidates/review_output.py": "8b72d037154f7c4d1a9bb8af95d5713b3851de4122327aa070f3f2562c226733",
+  "tests/candidates/test_review_output.py": "66a4b72f55928a18815373ebeeb9063ac23a4e566b563bd4fc22ac48139f6d6f",
+  "backend/karajan/candidates/models.py": "99e99e5cb8f3ae6d6b02f9f0047e8239e8bc8901670c217e88cc6a6d31180769",
+  "backend/karajan/candidates/store.py": "9096bc2904d34ec01ab3adb22da45f151b94bfda90fd3e942890ba93675243ca",
+  "docs/planning/v1/issues/m3-review-output-parser.md": "7df55698f5a8b07479b597f8cbfa03dbeb0340518f91b1f568944f9943e61e59"
+}

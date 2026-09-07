@@ -1,0 +1,17 @@
+"""The public model-text boundary; no source qualification or review authorization."""
+
+import pytest
+from karajan.candidates.review_output import parse_review_output
+
+
+@pytest.mark.parametrize(
+    ("wire", "stored"),
+    [("pass", "passed"), ("changes_requested", "failed"), ("inconclusive", "inconclusive")],
+)
+def test_maps_only_review_content(wire: str, stored: str) -> None:
+    result = parse_review_output(
+        '{"verdict":"' + wire + '","findings":[]}',
+        allowed_files=frozenset(),
+        allowed_acceptance_refs=frozenset(),
+    )
+    assert result.model_dump() == {"verdict": stored, "findings": []}

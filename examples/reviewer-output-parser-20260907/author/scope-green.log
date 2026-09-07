@@ -1,0 +1,15 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Users\Chooo\Playground\Karajan\.cache\review-output-parser
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 266 items
+
+tests\candidates\test_review_output.py ................................. [ 12%]
+........................................................................ [ 39%]
+........................................................................ [ 66%]
+........................................................................ [ 93%]
+.................                                                        [100%]
+
+- generated xml file: C:\Users\Chooo\Playground\Karajan\.cache\review-output-parser\.cache\review-parser-author\scope-green.xml -
+============================= 266 passed in 1.75s =============================

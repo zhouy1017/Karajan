@@ -1,0 +1,159 @@
+"""Independent pure-C inputs and existing real CAS integration; no provider."""
+
+import builtins
+import json
+import socket
+import sqlite3
+import time
+import traceback
+from copy import deepcopy
+from pathlib import Path
+
+import pytest
+from karajan.candidates import CandidateStore
+from karajan.candidates.models import ReviewResult
+from karajan.candidates.review_output import ReviewOutputError, parse_review_output
+from pydantic import ValidationError
+from test_validation import case, check_record, context, review_record
+
+__all__ = ["case"]
+FILES = frozenset({"app.py"})
+REFS = frozenset({"AC:1"})
+CANARY = "SYNTHETIC_PRIVATE_REVIEW_TEXT_104"
+
+
+def finding(**changes):
+    return {
+        "severity": "high", "file": "app.py", "line": 1,
+        "behavior": CANARY, "trigger": "zero rows", "acceptance_ref": "AC:1",
+        "blocking": False, **changes,
+    }
+
+
+def encoded(items=None, verdict="pass", **extra):
+    return json.dumps({"verdict": verdict, "findings": [] if items is None else items, **extra})
+
+
+def parse(content, files=FILES, refs=REFS):
+    return parse_review_output(content, allowed_files=files, allowed_acceptance_refs=refs)
+
+
+def test_order_escapes_and_last_blocker_are_preserved_at_count_limit():
+    items = [finding(behavior=f"{index}: 引号 \\\" [{{{{ }}]]\n\t") for index in range(32)]
+    raw = encoded(items)
+    first = parse(raw).model_dump()
+    assert first == {"verdict": "passed", "findings": items}
+    assert parse(raw.encode()).model_dump() == first
+    reordered = {"findings": [dict(reversed(tuple(row.items()))) for row in items], "verdict": "pass"}
+    assert parse(json.dumps(reordered, ensure_ascii=False)).model_dump() == first
+    items[-1]["blocking"] = True
+    with pytest.raises(ReviewOutputError) as caught:
+        parse(encoded(items))
+    assert caught.value.code == "REVIEW_OUTPUT_VERDICT_CONFLICT"
+
+
+@pytest.mark.parametrize(
+    ("kind", "expected"),
+    [
+        ("escaped_duplicate", "REVIEW_OUTPUT_JSON_INVALID"),
+        ("nonfinite_unknown", "REVIEW_OUTPUT_JSON_INVALID"),
+        ("surrogate_unknown_key", "REVIEW_OUTPUT_INPUT_INVALID"),
+        ("trusted_identity", "REVIEW_OUTPUT_SCHEMA_INVALID"),
+        ("too_deep", "REVIEW_OUTPUT_LIMIT_EXCEEDED"),
+        ("second_object", "REVIEW_OUTPUT_JSON_INVALID"),
+        ("oversized_integer", "REVIEW_OUTPUT_JSON_INVALID"),
+    ],
+)
+def test_complete_rejection_keeps_errors_and_logs_content_free(kind, expected, capsys, caplog):
+    raw = encoded([finding()])
+    if kind == "escaped_duplicate":
+        raw = raw.replace('"file": "app.py"', '"file": "app.py", "f\\u0069le": "app.py"')
+    elif kind == "nonfinite_unknown":
+        raw = raw[:-1] + ', "untrusted": 1e9999}'
+    elif kind == "surrogate_unknown_key":
+        raw = raw[:-1] + ', "\\ud800": null}'
+    elif kind == "trusted_identity":
+        raw = encoded([finding()], actor={"profile_id": CANARY})
+    elif kind == "too_deep":
+        raw = encoded([finding()], untrusted=[[[CANARY]]])
+    elif kind == "second_object":
+        raw += '{"verdict":"pass","findings":[]}'
+    else:
+        raw = raw.replace('"line": 1', '"line": ' + "9" * 5000)
+    with pytest.raises(ReviewOutputError) as caught:
+        parse(raw)
+    error = caught.value
+    assert error.code == expected
+    assert CANARY not in str(error) + repr(error) + repr(error.args)
+    assert CANARY not in "".join(traceback.format_exception(error))
+    assert capsys.readouterr() == ("", "")
+    assert not caplog.records
+
+
+@pytest.mark.parametrize(
+    ("ref", "expected"),
+    [("A" * 257, "REVIEW_OUTPUT_LIMIT_EXCEEDED"), ("not allowed", "REVIEW_OUTPUT_REFERENCE_DENIED")],
+)
+def test_reference_length_and_syntax_have_distinct_error_stages(ref, expected):
+    with pytest.raises(ReviewOutputError) as caught:
+        parse(encoded([finding(acceptance_ref=ref)]))
+    assert caught.value.code == expected
+    with pytest.raises(ReviewOutputError) as scope_error:
+        parse("not-json", refs=frozenset({ref}))
+    assert scope_error.value.code == "REVIEW_OUTPUT_SCOPE_INVALID"
+
+
+def test_unicode_scope_is_exact_and_casefold_collision_is_denied():
+    with pytest.raises(ReviewOutputError) as caught:
+        parse(encoded([finding(file="caf\u00e9.py")]), files=frozenset({"cafe\u0301.py"}))
+    assert caught.value.code == "REVIEW_OUTPUT_REFERENCE_DENIED"
+    with pytest.raises(ReviewOutputError) as collision:
+        parse(encoded(), files=frozenset({"Stra\u00dfe.py", "STRASSE.py"}))
+    assert collision.value.code == "REVIEW_OUTPUT_SCOPE_INVALID"
+
+
+def test_multibyte_exact_raw_limit_and_detached_results_are_pure(monkeypatch):
+    items = [finding(behavior="\u4e2d\U0001f642\n\t")]
+    raw = json.dumps({"verdict": "pass", "findings": items}, ensure_ascii=False)
+    padded = " " * (65536 - len(raw.encode("utf-8"))) + raw
+    untouched = deepcopy(items)
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("Parser attempted external work")
+
+    with monkeypatch.context() as patch:
+        for target, name in [
+            (builtins, "open"), (Path, "open"), (sqlite3, "connect"),
+            (socket, "socket"), (time, "time"), (time, "monotonic"),
+            (CandidateStore, "__init__"),
+        ]:
+            patch.setattr(target, name, forbidden)
+        first = parse(padded)
+        first.findings[0].behavior = "changed by result reader"
+        first.findings.clear()
+        assert parse(padded.encode()).model_dump() == {"verdict": "passed", "findings": untouched}
+        with pytest.raises(ReviewOutputError) as caught:
+            parse(padded + " ")
+        assert caught.value.code == "REVIEW_OUTPUT_LIMIT_EXCEEDED"
+
+
+@pytest.mark.parametrize(
+    ("wire", "stored"),
+    [("pass", "passed"), ("changes_requested", "failed"), ("inconclusive", "inconclusive")],
+)
+def test_contents_require_existing_trusted_fields_and_keep_storage_gate(case, wire, stored):
+    parsed = parse(encoded([finding()], verdict=wire)).model_dump()
+    assert set(parsed) == {"verdict", "findings"}
+    with pytest.raises(ValidationError):
+        ReviewResult.model_validate(parsed)
+    store = case["store"]
+    candidate = store.freeze(case["workspace"], case["request"])
+    check = store.record_check(check_record(candidate), log=b"explicit fixture check")
+    trusted = review_record(candidate, [check])
+    result = store.record_review({**trusted, **parsed}, log=b"explicit fixture review")
+    assert result["status"] == stored
+    assert result["input"]["findings"] == parsed["findings"]
+    gate = store.gate(candidate["id"], current=context(candidate))
+    assert gate["local_gate_passed"] is (stored == "passed")
+    assert gate["delivery_eligible"] is False
+    assert gate["live_qualification"] == "not_run"
