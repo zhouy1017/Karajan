@@ -132,7 +132,7 @@ def test_resume_uses_only_original_store_records_and_persists_every_stage(tmp_pa
     result = recovery(tmp_path, store).resume()
     assert result["status"] == "completed"
     assert store.starts == 1 and store.gets == 2 and store.revokes == 1
-    assert [path.stem for path in (tmp_path / "receipts").glob("*.json")] == [
+    assert sorted(path.stem for path in (tmp_path / "receipts").glob("*.json")) == [
         "complete",
         "negative_history_observed",
         "positive_claimed",
