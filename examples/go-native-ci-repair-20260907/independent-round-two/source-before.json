@@ -1,0 +1,8 @@
+{
+  "backend/karajan/isolation/go_task.py": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+  "backend/karajan/adapters/opencode/go_relay.py": "088c335d1bfeedc2b69bc2395acc704ea6b32f71b6addcc74c06d87b2400170b",
+  "backend/karajan/orchestration/go_execution_intent.py": "8adb01b2370e6cd3f3a98fc63c3e7f028c4aebb4d15ae86dc2d7b5c970ffad15",
+  "backend/karajan/orchestration/go_task_execution.py": "789e9945a698d6f519f65db35205460ad35a0babf35aee2fbb5c6f82ec095b4d",
+  "tests/isolation/test_go_task.py": "94edba59c1ed986f73260679879bc0af0bab4b7f1bbf92bff5cdddf0b1a09216",
+  "tests/adapters/opencode/test_go_unix_relay.py": "0328c7fdd397eb3412f05e9c4ac6aca0b9783f9528825823d9789ec5b681470f"
+}

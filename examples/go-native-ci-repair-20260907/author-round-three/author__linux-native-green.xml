@@ -1,0 +1,917 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="4" time="143.761" timestamp="2026-09-07T09:47:43.718537+08:00" hostname="ProArt-Zhou"><testcase classname="tests.isolation.test_go_task" name="test_execute_go_task_uses_short_controller_relay_root_on_long_operation_directory" time="2.546"><failure message="AssertionError: {'assistants': [{'completed': True, 'error': False, 'model_matches': True, 'stopped': True}], 'attempt_id': 'task-attempt', 'candidate_validation': 'not_run', 'dispatch_eligible': False, ...}&#10;assert 'failed' == 'completed'&#10;  &#10;  - completed&#10;  + failed">tmp_path = PosixPath('/tmp/karajan-luna-native-round-three-basetemp/test_execute_go_task_uses_shor0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x727e428c1dc0&gt;
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x727e428c2870&gt;
+
+    @pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux runtime required")
+    def test_execute_go_task_uses_short_controller_relay_root_on_long_operation_directory(
+        tmp_path, accounting, monkeypatch
+    ):
+        runtime, task, credential, auth, context = prepared(tmp_path, accounting)
+        relay_roots = []
+        observed_socket_paths: list[Path] = []
+        upstream_values: dict[str, Any] = {}
+    
+        class FakeNative:
+            def __init__(
+                self, runtime, directory, upstream_socket, capability, *_, projection=None, **__
+            ):
+                self.runtime = runtime
+                self.directory = directory
+                self.upstream_socket = upstream_socket
+                self.workspace = directory / "workspace"
+                self.workspace.mkdir(parents=True, exist_ok=True)
+                self.capability = capability
+                self._projection = projection or []
+                self._requests = 0
+                observed_socket_paths.append(upstream_socket)
+    
+            def start(self) -&gt; dict[str, Any]:
+                return self.snapshot()
+    
+            def snapshot(self) -&gt; dict[str, Any]:
+                return {
+                    "state": "running",
+                    "namespace_pid": 1,
+                    "host_mount_visible": False,
+                    "wsl_interop_visible": False,
+                    "native_control_fd_inherited": False,
+                    "network_interfaces": ["lo"],
+                    "ipv4_routes": [],
+                    "no_new_privileges": True,
+                    "capabilities": {
+                        key: "0000000000000000" for key in ("effective", "permitted", "bounding")
+                    },
+                }
+    
+            def request(self, method: str, route: str, body: dict[str, Any] | None = None) -&gt; Any:
+                if method == "GET" and route == "/config":
+                    expected = configuration("&lt;local-capability&gt;", projection=self._projection)
+                    return {
+                        "model": expected["model"],
+                        "permission": expected["permission"],
+                        "fixture": "synthetic",
+                    }
+                if method == "POST" and route == "/session":
+                    return {"id": "session"}
+                if route == "/session/session/prompt_async":
+                    return {}
+                if route.startswith("/session/session/message"):
+                    self._requests += 1
+                    payload = {
+                        "model": "glm-5.3-flash",
+                        "stream": True,
+                        "max_tokens": 4096,
+                        "messages": [{"role": "user", "content": "fixed fixture request"}],
+                    }
+                    with httpx.Client(
+                        transport=httpx.HTTPTransport(uds=str(self.upstream_socket)),
+                        trust_env=False,
+                    ) as client:
+                        upstream = client.post(
+                            "http://relay/v1/chat/completions",
+                            json=payload,
+                            headers={
+                                "Authorization": f"Bearer {self.capability}",
+                                "x-opencode-session": "session",
+                            },
+                        )
+                    assert upstream.status_code == 200
+                    index = self._requests
+                    if index == 2:
+                        (self.workspace / "src/fixture.py").write_bytes(
+                            b"def clamp(value, low, high):\n    return min(low, max(value, high))\n"
+                        )
+                    part = []
+                    if index in (1, 2):
+                        part.append(
+                            {
+                                "type": "tool",
+                                "tool": "read" if index == 1 else "edit",
+                                "state": {
+                                    "status": "completed",
+                                    "input": {
+                                        "filePath": "/workspace/src/fixture.py",
+                                    },
+                                },
+                            }
+                        )
+                    return [
+                        {
+                            "info": {
+                                "role": "assistant",
+                                "modelID": "glm-5.3-flash",
+                                "providerID": "opencode-go",
+                                "time": {"completed": "1"},
+                                "finish": "stop",
+                            },
+                            "parts": part,
+                        }
+                    ]
+                raise AssertionError(f"unexpected route {method} {route}")
+    
+            def capture_projection(self) -&gt; StoppedProjection:
+                projection = tuple(ProjectionEntry(**row) for row in self._projection)
+                return StoppedProjection(
+                    "0" * 64,
+                    projection,
+                    tuple(
+                        (row["path"], (self.workspace / row["path"]).read_bytes())
+                        for row in self._projection
+                    ),
+                    json.dumps({"local_stop": "confirmed"}, sort_keys=True, separators=(",", ":")),
+                )
+    
+            def close(self) -&gt; dict[str, Any]:
+                return {"local_stop": "confirmed"}
+    
+        def synthetic_relay_root():
+            root = Path(tempfile.mkdtemp(prefix="go-relay-root-", dir="/tmp"))
+            relay_roots.append(root)
+            os.chmod(root, 0o700)
+            identity = root.lstat()
+            return go_task_module._RelaySocketRoot(
+                root, identity.st_dev, identity.st_ino, identity.st_uid, stat.S_IMODE(identity.st_mode)
+            )
+    
+        monkeypatch.setattr(go_task_module, "_relay_socket_root", synthetic_relay_root)
+        monkeypatch.setattr(go_task_module, "IsolatedOpenCode", FakeNative)
+    
+        responses = []
+    
+        def receive(request):
+            responses.append(request)
+            return response(1)
+    
+        result = execute_go_task(
+            runtime,
+            tmp_path / ("operation-" + ("x" * 220)),
+            task,
+            credential,
+            auth,
+            context,
+            start_native=lambda native: native.start(),
+            send_guard=permitted,
+            client_factory=lambda: httpx.Client(transport=httpx.MockTransport(receive)),
+        )
+&gt;       assert result.report["status"] == "completed", result.report
+E       AssertionError: {'assistants': [{'completed': True, 'error': False, 'model_matches': True, 'stopped': True}], 'attempt_id': 'task-attempt', 'candidate_validation': 'not_run', 'dispatch_eligible': False, ...}
+E       assert 'failed' == 'completed'
+E         
+E         - completed
+E         + failed
+
+tests/isolation/test_go_task.py:358: AssertionError</failure></testcase><testcase classname="tests.runs.test_go_task_execution_native" name="test_actual_host_child_native_candidate_and_replay[none]" time="58.402"><failure message="sqlite3.OperationalError: unable to open database file">projected = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x727e429d87d0&gt;, 'project_id': 'c327ed9a-8aaf-44ca-8...y': PosixPath('/tmp/karajan-luna-native-round-three-basetemp/test_actual_host_child_native_0/fixture/repository'), ...}
+tmp_path = PosixPath('/tmp/karajan-luna-native-round-three-basetemp/test_actual_host_child_native_0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x727e42917b30&gt;
+artifacts = PosixPath('/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-artifacts')
+fault = 'none'
+
+    @pytest.mark.parametrize("fault", ["none", "grant_reply_lost", "cancel_after_send"])
+    def test_actual_host_child_native_candidate_and_replay(
+        projected,
+        tmp_path,
+        accounting,
+        artifacts,
+        fault,
+    ):
+        repository = projected["repository"]
+        for path, data in {
+            "src/report.py": b"print('approved task')\n",
+            "tests/test_report.py": b"assert True\n",
+            "assets/opaque.bin": b"\x00\xff preserved\x01",
+            "tools/check.sh": b"#!/bin/sh\nexit 0\n",
+        }.items():
+            target = repository / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(data)
+        (repository / "tools/check.sh").chmod(0o755)
+        for arguments in (
+            ["add", "."],
+            [
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "-qm",
+                "Task baseline",
+            ],
+        ):
+            subprocess.run(["git", "-C", str(repository), *arguments], check=True, capture_output=True)
+        projects = projected["projects"]
+        current = projects.get(projected["project_id"])
+        projects.update(
+            current["id"],
+            {
+                "name": current["name"],
+                "base_ref": "main",
+                "target_branch": "main",
+                "allowed_target_branches": ["main"],
+            },
+            expected_revision=current["revision"],
+            principal="owner",
+            command_key="baseline-refresh",
+        )
+        calls = []
+        errors = []
+        services = None
+    
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, *args):
+                pass
+    
+            def do_POST(self):
+                try:
+                    assert self.client_address[0] == "127.0.0.1"
+                    request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+                    operation = services.intents.read(run_id, op_id, principal="owner")
+                    call = services.journal.snapshot(operation["execution"]["intent"]["grant_id"])[
+                        "calls"
+                    ][-1]
+                    assert call["state"] == "send_unknown"
+                    assert call["request_context"]["accounted_input_tokens"] &gt; 0
+                    calls.append(
+                        {
+                            "sequence": call["sequence"],
+                            "prompt_retained": any(
+                                "approved-task-brief" in str(message.get("content"))
+                                for message in request["messages"]
+                            ),
+                            "tool_history": sum(
+                                message["role"] == "tool" for message in request["messages"]
+                            ),
+                        }
+                    )
+                    body = reply(len(calls))
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/event-stream")
+                    self.send_header("Content-Length", str(len(body)))
+                    self.end_headers()
+                    self.wfile.flush()
+                    if fault == "cancel_after_send":
+                        # Headers release Relay's bounded send guard. Withhold body
+                        # while real cancellation revokes/stops the original child.
+                        ApprovedGoTaskExecution(services).cancel(run_id, op_id, principal="owner")
+                        return
+                    self.wfile.write(body)
+                except Exception as error:
+                    errors.append(type(error).__name__)
+                    self.send_error(500)
+    
+        server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        thread = Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            services, run_id, op_id = approved_fixture(
+                projected,
+                tmp_path,
+                runtime_artifact(),
+                accounting,
+                artifacts,
+                server.server_port,
+                fault=fault,
+            )
+            assert services.client_factory is not None
+            facade = ApprovedGoTaskExecution(services)
+            advanced = facade.advance(run_id, op_id, principal="owner")
+            assert advanced["execution"]["phase"] in {"start_unknown", "effect_claimed"}
+            deadline = time.monotonic() + 160
+            while time.monotonic() &lt; deadline:
+&gt;               current = facade.get(run_id, op_id, principal="owner")
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/runs/test_go_task_execution_native.py:174: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/karajan/orchestration/go_task_execution.py:49: in get
+    return self.services.intents.read(run_id, operation_id, principal=principal)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/karajan/orchestration/go_execution_intent.py:288: in read
+    return self.read_operation(self.admissions, run_id, operation_id, principal=principal)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/karajan/orchestration/go_execution_intent.py:237: in read_operation
+    GoExecutionIntents._check_owner(admissions, run_id, operation_id, principal)
+backend/karajan/orchestration/go_execution_intent.py:226: in _check_owner
+    with _connection(planner.database, readonly=True) as db:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = PosixPath('/tmp/karajan-luna-native-round-three-basetemp/test_actual_host_child_native_0/approved-runs.sqlite')
+readonly = True
+
+    @contextmanager
+    def _connection(path: Path, *, readonly: bool) -&gt; Iterator[sqlite3.Connection]:
+        # Neither status nor a reconstructed controller may create a missing ledger.
+&gt;       db = sqlite3.connect(
+            path.resolve().as_uri() + ("?mode=ro" if readonly else "?mode=rw"),
+            uri=True,
+            timeout=10,
+            isolation_level=None,
+        )
+E       sqlite3.OperationalError: unable to open database file
+
+backend/karajan/orchestration/go_execution_intent.py:177: OperationalError
+
+During handling of the above exception, another exception occurred:
+
+projected = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x727e429d87d0&gt;, 'project_id': 'c327ed9a-8aaf-44ca-8...y': PosixPath('/tmp/karajan-luna-native-round-three-basetemp/test_actual_host_child_native_0/fixture/repository'), ...}
+tmp_path = PosixPath('/tmp/karajan-luna-native-round-three-basetemp/test_actual_host_child_native_0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x727e42917b30&gt;
+artifacts = PosixPath('/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-artifacts')
+fault = 'none'
+
+    @pytest.mark.parametrize("fault", ["none", "grant_reply_lost", "cancel_after_send"])
+    def test_actual_host_child_native_candidate_and_replay(
+        projected,
+        tmp_path,
+        accounting,
+        artifacts,
+        fault,
+    ):
+        repository = projected["repository"]
+        for path, data in {
+            "src/report.py": b"print('approved task')\n",
+            "tests/test_report.py": b"assert True\n",
+            "assets/opaque.bin": b"\x00\xff preserved\x01",
+            "tools/check.sh": b"#!/bin/sh\nexit 0\n",
+        }.items():
+            target = repository / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(data)
+        (repository / "tools/check.sh").chmod(0o755)
+        for arguments in (
+            ["add", "."],
+            [
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "-qm",
+                "Task baseline",
+            ],
+        ):
+            subprocess.run(["git", "-C", str(repository), *arguments], check=True, capture_output=True)
+        projects = projected["projects"]
+        current = projects.get(projected["project_id"])
+        projects.update(
+            current["id"],
+            {
+                "name": current["name"],
+                "base_ref": "main",
+                "target_branch": "main",
+                "allowed_target_branches": ["main"],
+            },
+            expected_revision=current["revision"],
+            principal="owner",
+            command_key="baseline-refresh",
+        )
+        calls = []
+        errors = []
+        services = None
+    
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, *args):
+                pass
+    
+            def do_POST(self):
+                try:
+                    assert self.client_address[0] == "127.0.0.1"
+                    request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+                    operation = services.intents.read(run_id, op_id, principal="owner")
+                    call = services.journal.snapshot(operation["execution"]["intent"]["grant_id"])[
+                        "calls"
+                    ][-1]
+                    assert call["state"] == "send_unknown"
+                    assert call["request_context"]["accounted_input_tokens"] &gt; 0
+                    calls.append(
+                        {
+                            "sequence": call["sequence"],
+                            "prompt_retained": any(
+                                "approved-task-brief" in str(message.get("content"))
+                                for message in request["messages"]
+                            ),
+                            "tool_history": sum(
+                                message["role"] == "tool" for message in request["messages"]
+                            ),
+                        }
+                    )
+                    body = reply(len(calls))
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/event-stream")
+                    self.send_header("Content-Length", str(len(body)))
+                    self.end_headers()
+                    self.wfile.flush()
+                    if fault == "cancel_after_send":
+                        # Headers release Relay's bounded send guard. Withhold body
+                        # while real cancellation revokes/stops the original child.
+                        ApprovedGoTaskExecution(services).cancel(run_id, op_id, principal="owner")
+                        return
+                    self.wfile.write(body)
+                except Exception as error:
+                    errors.append(type(error).__name__)
+                    self.send_error(500)
+    
+        server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        thread = Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            services, run_id, op_id = approved_fixture(
+                projected,
+                tmp_path,
+                runtime_artifact(),
+                accounting,
+                artifacts,
+                server.server_port,
+                fault=fault,
+            )
+            assert services.client_factory is not None
+            facade = ApprovedGoTaskExecution(services)
+            advanced = facade.advance(run_id, op_id, principal="owner")
+            assert advanced["execution"]["phase"] in {"start_unknown", "effect_claimed"}
+            deadline = time.monotonic() + 160
+            while time.monotonic() &lt; deadline:
+                current = facade.get(run_id, op_id, principal="owner")
+                snapshot = services.intents.host.inspect(current["planned_attempt_id"])
+                if snapshot.state == "exited":
+                    break
+                time.sleep(0.2)
+            else:
+                pytest.fail("Owned Host child did not finish")
+            result = facade.reconcile(run_id, op_id, principal="owner")
+            (tmp_path / "public-operation.json").write_text(json.dumps(result, indent=2))
+            if fault != "none":
+                assert result["execution"]["effect_claim"] is not None
+                assert result["execution"].get("collection") is None
+                grant = services.journal.snapshot(result["execution"]["intent"]["grant_id"])
+                assert grant["state"] == "revoked"
+                assert grant["request_count"] == (1 if fault == "cancel_after_send" else 0)
+                assert len(calls) == grant["request_count"]
+                if fault == "grant_reply_lost":
+                    assert not (services.work_root / ("operation-" + op_id)).exists()
+                else:
+                    assert result["cancel_requested"] is True
+                    assert grant["calls"][0]["state"] == "send_unknown"
+                before = services.journal.path.read_bytes()
+                for _ in range(2):
+                    facade.advance(run_id, op_id, principal="owner")
+                assert services.journal.path.read_bytes() == before
+                assert len(calls) == grant["request_count"]
+                return
+            diagnostic = tmp_path / "fixture-deployment/fixture-error.json"
+            assert result["execution"]["phase"] == "candidate_recorded", (
+                diagnostic.read_text() if diagnostic.exists() else result["reason_codes"]
+            )
+            assert not errors
+            assert len(calls) == 3
+            assert all(c["prompt_retained"] for c in calls)
+            assert [c["tool_history"] for c in calls] == [0, 1, 2]
+            collection = result["execution"]["collection"]
+            candidate_id = collection["candidate"]["id"]
+            services.candidates.materialize(candidate_id, tmp_path / "materialized")
+            assert (
+                tmp_path / "materialized/src/report.py"
+            ).read_bytes() == b"print('implemented task')\n"
+            assert (repository / "src/report.py").read_bytes() == b"print('approved task')\n"
+            assert (tmp_path / "materialized/assets/opaque.bin").read_bytes() == (
+                repository / "assets/opaque.bin"
+            ).read_bytes()
+            assert (tmp_path / "materialized/tools/check.sh").stat().st_mode &amp; 0o111
+            candidate = services.candidates.get(candidate_id)
+            gate = services.candidates.gate(
+                candidate_id,
+                current={
+                    key: candidate[key]
+                    for key in ("repository_identity", "base_sha", "input_sha256", "policy_sha256")
+                },
+            )
+            assert gate["delivery_eligible"] is gate["local_gate_passed"] is False
+            assert {"CHECK_EVIDENCE_MISSING:tests", "REVIEW_EVIDENCE_MISSING"} &lt;= set(gate["reasons"])
+            journal = services.journal.snapshot(result["execution"]["intent"]["grant_id"])
+            assert journal["state"] == "revoked" and journal["request_count"] == 3
+            assert collection["capture"]["report"]["native_cleanup"]["local_stop"] == "confirmed"
+            for _ in range(2):
+                assert (
+                    facade.advance(run_id, op_id, principal="owner")["execution"]["collection"][
+                        "candidate"
+                    ]["id"]
+                    == candidate_id
+                )
+            assert (
+                len(calls) == 3 and services.journal.snapshot(journal["grant_id"])["request_count"] == 3
+            )
+        finally:
+            if services is not None:
+&gt;               ApprovedGoTaskExecution(services).cancel(run_id, op_id, principal="owner")
+
+tests/runs/test_go_task_execution_native.py:245: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/karajan/orchestration/go_task_execution.py:167: in cancel
+    operation = intents.cancel_intent(run_id, operation_id, principal=principal)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/karajan/orchestration/go_execution_intent.py:981: in cancel_intent
+    self._owner(run_id, operation_id, principal)
+backend/karajan/orchestration/go_execution_intent.py:230: in _owner
+    self._check_owner(self.admissions, run_id, operation_id, principal)
+backend/karajan/orchestration/go_execution_intent.py:226: in _check_owner
+    with _connection(planner.database, readonly=True) as db:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = PosixPath('/tmp/karajan-luna-native-round-three-basetemp/test_actual_host_child_native_0/approved-runs.sqlite')
+readonly = True
+
+    @contextmanager
+    def _connection(path: Path, *, readonly: bool) -&gt; Iterator[sqlite3.Connection]:
+        # Neither status nor a reconstructed controller may create a missing ledger.
+&gt;       db = sqlite3.connect(
+            path.resolve().as_uri() + ("?mode=ro" if readonly else "?mode=rw"),
+            uri=True,
+            timeout=10,
+            isolation_level=None,
+        )
+E       sqlite3.OperationalError: unable to open database file
+
+backend/karajan/orchestration/go_execution_intent.py:177: OperationalError</failure></testcase><testcase classname="tests.runs.test_go_task_execution_native" name="test_actual_host_child_native_candidate_and_replay[grant_reply_lost]" time="26.601"><failure message="sqlite3.OperationalError: unable to open database file">projected = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x727e417e1f40&gt;, 'project_id': '01019d84-366f-46bc-b...y': PosixPath('/tmp/karajan-luna-native-round-three-basetemp/test_actual_host_child_native_0/fixture/repository'), ...}
+tmp_path = PosixPath('/tmp/karajan-luna-native-round-three-basetemp/test_actual_host_child_native_0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x727e42917b30&gt;
+artifacts = PosixPath('/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-artifacts')
+fault = 'grant_reply_lost'
+
+    @pytest.mark.parametrize("fault", ["none", "grant_reply_lost", "cancel_after_send"])
+    def test_actual_host_child_native_candidate_and_replay(
+        projected,
+        tmp_path,
+        accounting,
+        artifacts,
+        fault,
+    ):
+        repository = projected["repository"]
+        for path, data in {
+            "src/report.py": b"print('approved task')\n",
+            "tests/test_report.py": b"assert True\n",
+            "assets/opaque.bin": b"\x00\xff preserved\x01",
+            "tools/check.sh": b"#!/bin/sh\nexit 0\n",
+        }.items():
+            target = repository / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(data)
+        (repository / "tools/check.sh").chmod(0o755)
+        for arguments in (
+            ["add", "."],
+            [
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "-qm",
+                "Task baseline",
+            ],
+        ):
+            subprocess.run(["git", "-C", str(repository), *arguments], check=True, capture_output=True)
+        projects = projected["projects"]
+        current = projects.get(projected["project_id"])
+        projects.update(
+            current["id"],
+            {
+                "name": current["name"],
+                "base_ref": "main",
+                "target_branch": "main",
+                "allowed_target_branches": ["main"],
+            },
+            expected_revision=current["revision"],
+            principal="owner",
+            command_key="baseline-refresh",
+        )
+        calls = []
+        errors = []
+        services = None
+    
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, *args):
+                pass
+    
+            def do_POST(self):
+                try:
+                    assert self.client_address[0] == "127.0.0.1"
+                    request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+                    operation = services.intents.read(run_id, op_id, principal="owner")
+                    call = services.journal.snapshot(operation["execution"]["intent"]["grant_id"])[
+                        "calls"
+                    ][-1]
+                    assert call["state"] == "send_unknown"
+                    assert call["request_context"]["accounted_input_tokens"] &gt; 0
+                    calls.append(
+                        {
+                            "sequence": call["sequence"],
+                            "prompt_retained": any(
+                                "approved-task-brief" in str(message.get("content"))
+                                for message in request["messages"]
+                            ),
+                            "tool_history": sum(
+                                message["role"] == "tool" for message in request["messages"]
+                            ),
+                        }
+                    )
+                    body = reply(len(calls))
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/event-stream")
+                    self.send_header("Content-Length", str(len(body)))
+                    self.end_headers()
+                    self.wfile.flush()
+                    if fault == "cancel_after_send":
+                        # Headers release Relay's bounded send guard. Withhold body
+                        # while real cancellation revokes/stops the original child.
+                        ApprovedGoTaskExecution(services).cancel(run_id, op_id, principal="owner")
+                        return
+                    self.wfile.write(body)
+                except Exception as error:
+                    errors.append(type(error).__name__)
+                    self.send_error(500)
+    
+        server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        thread = Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            services, run_id, op_id = approved_fixture(
+                projected,
+                tmp_path,
+                runtime_artifact(),
+                accounting,
+                artifacts,
+                server.server_port,
+                fault=fault,
+            )
+            assert services.client_factory is not None
+            facade = ApprovedGoTaskExecution(services)
+            advanced = facade.advance(run_id, op_id, principal="owner")
+            assert advanced["execution"]["phase"] in {"start_unknown", "effect_claimed"}
+            deadline = time.monotonic() + 160
+            while time.monotonic() &lt; deadline:
+&gt;               current = facade.get(run_id, op_id, principal="owner")
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/runs/test_go_task_execution_native.py:174: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/karajan/orchestration/go_task_execution.py:49: in get
+    return self.services.intents.read(run_id, operation_id, principal=principal)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/karajan/orchestration/go_execution_intent.py:288: in read
+    return self.read_operation(self.admissions, run_id, operation_id, principal=principal)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/karajan/orchestration/go_execution_intent.py:237: in read_operation
+    GoExecutionIntents._check_owner(admissions, run_id, operation_id, principal)
+backend/karajan/orchestration/go_execution_intent.py:226: in _check_owner
+    with _connection(planner.database, readonly=True) as db:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = PosixPath('/tmp/karajan-luna-native-round-three-basetemp/test_actual_host_child_native_0/approved-runs.sqlite')
+readonly = True
+
+    @contextmanager
+    def _connection(path: Path, *, readonly: bool) -&gt; Iterator[sqlite3.Connection]:
+        # Neither status nor a reconstructed controller may create a missing ledger.
+&gt;       db = sqlite3.connect(
+            path.resolve().as_uri() + ("?mode=ro" if readonly else "?mode=rw"),
+            uri=True,
+            timeout=10,
+            isolation_level=None,
+        )
+E       sqlite3.OperationalError: unable to open database file
+
+backend/karajan/orchestration/go_execution_intent.py:177: OperationalError
+
+During handling of the above exception, another exception occurred:
+
+projected = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x727e417e1f40&gt;, 'project_id': '01019d84-366f-46bc-b...y': PosixPath('/tmp/karajan-luna-native-round-three-basetemp/test_actual_host_child_native_0/fixture/repository'), ...}
+tmp_path = PosixPath('/tmp/karajan-luna-native-round-three-basetemp/test_actual_host_child_native_0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x727e42917b30&gt;
+artifacts = PosixPath('/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-artifacts')
+fault = 'grant_reply_lost'
+
+    @pytest.mark.parametrize("fault", ["none", "grant_reply_lost", "cancel_after_send"])
+    def test_actual_host_child_native_candidate_and_replay(
+        projected,
+        tmp_path,
+        accounting,
+        artifacts,
+        fault,
+    ):
+        repository = projected["repository"]
+        for path, data in {
+            "src/report.py": b"print('approved task')\n",
+            "tests/test_report.py": b"assert True\n",
+            "assets/opaque.bin": b"\x00\xff preserved\x01",
+            "tools/check.sh": b"#!/bin/sh\nexit 0\n",
+        }.items():
+            target = repository / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(data)
+        (repository / "tools/check.sh").chmod(0o755)
+        for arguments in (
+            ["add", "."],
+            [
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "-qm",
+                "Task baseline",
+            ],
+        ):
+            subprocess.run(["git", "-C", str(repository), *arguments], check=True, capture_output=True)
+        projects = projected["projects"]
+        current = projects.get(projected["project_id"])
+        projects.update(
+            current["id"],
+            {
+                "name": current["name"],
+                "base_ref": "main",
+                "target_branch": "main",
+                "allowed_target_branches": ["main"],
+            },
+            expected_revision=current["revision"],
+            principal="owner",
+            command_key="baseline-refresh",
+        )
+        calls = []
+        errors = []
+        services = None
+    
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, *args):
+                pass
+    
+            def do_POST(self):
+                try:
+                    assert self.client_address[0] == "127.0.0.1"
+                    request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+                    operation = services.intents.read(run_id, op_id, principal="owner")
+                    call = services.journal.snapshot(operation["execution"]["intent"]["grant_id"])[
+                        "calls"
+                    ][-1]
+                    assert call["state"] == "send_unknown"
+                    assert call["request_context"]["accounted_input_tokens"] &gt; 0
+                    calls.append(
+                        {
+                            "sequence": call["sequence"],
+                            "prompt_retained": any(
+                                "approved-task-brief" in str(message.get("content"))
+                                for message in request["messages"]
+                            ),
+                            "tool_history": sum(
+                                message["role"] == "tool" for message in request["messages"]
+                            ),
+                        }
+                    )
+                    body = reply(len(calls))
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/event-stream")
+                    self.send_header("Content-Length", str(len(body)))
+                    self.end_headers()
+                    self.wfile.flush()
+                    if fault == "cancel_after_send":
+                        # Headers release Relay's bounded send guard. Withhold body
+                        # while real cancellation revokes/stops the original child.
+                        ApprovedGoTaskExecution(services).cancel(run_id, op_id, principal="owner")
+                        return
+                    self.wfile.write(body)
+                except Exception as error:
+                    errors.append(type(error).__name__)
+                    self.send_error(500)
+    
+        server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        thread = Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            services, run_id, op_id = approved_fixture(
+                projected,
+                tmp_path,
+                runtime_artifact(),
+                accounting,
+                artifacts,
+                server.server_port,
+                fault=fault,
+            )
+            assert services.client_factory is not None
+            facade = ApprovedGoTaskExecution(services)
+            advanced = facade.advance(run_id, op_id, principal="owner")
+            assert advanced["execution"]["phase"] in {"start_unknown", "effect_claimed"}
+            deadline = time.monotonic() + 160
+            while time.monotonic() &lt; deadline:
+                current = facade.get(run_id, op_id, principal="owner")
+                snapshot = services.intents.host.inspect(current["planned_attempt_id"])
+                if snapshot.state == "exited":
+                    break
+                time.sleep(0.2)
+            else:
+                pytest.fail("Owned Host child did not finish")
+            result = facade.reconcile(run_id, op_id, principal="owner")
+            (tmp_path / "public-operation.json").write_text(json.dumps(result, indent=2))
+            if fault != "none":
+                assert result["execution"]["effect_claim"] is not None
+                assert result["execution"].get("collection") is None
+                grant = services.journal.snapshot(result["execution"]["intent"]["grant_id"])
+                assert grant["state"] == "revoked"
+                assert grant["request_count"] == (1 if fault == "cancel_after_send" else 0)
+                assert len(calls) == grant["request_count"]
+                if fault == "grant_reply_lost":
+                    assert not (services.work_root / ("operation-" + op_id)).exists()
+                else:
+                    assert result["cancel_requested"] is True
+                    assert grant["calls"][0]["state"] == "send_unknown"
+                before = services.journal.path.read_bytes()
+                for _ in range(2):
+                    facade.advance(run_id, op_id, principal="owner")
+                assert services.journal.path.read_bytes() == before
+                assert len(calls) == grant["request_count"]
+                return
+            diagnostic = tmp_path / "fixture-deployment/fixture-error.json"
+            assert result["execution"]["phase"] == "candidate_recorded", (
+                diagnostic.read_text() if diagnostic.exists() else result["reason_codes"]
+            )
+            assert not errors
+            assert len(calls) == 3
+            assert all(c["prompt_retained"] for c in calls)
+            assert [c["tool_history"] for c in calls] == [0, 1, 2]
+            collection = result["execution"]["collection"]
+            candidate_id = collection["candidate"]["id"]
+            services.candidates.materialize(candidate_id, tmp_path / "materialized")
+            assert (
+                tmp_path / "materialized/src/report.py"
+            ).read_bytes() == b"print('implemented task')\n"
+            assert (repository / "src/report.py").read_bytes() == b"print('approved task')\n"
+            assert (tmp_path / "materialized/assets/opaque.bin").read_bytes() == (
+                repository / "assets/opaque.bin"
+            ).read_bytes()
+            assert (tmp_path / "materialized/tools/check.sh").stat().st_mode &amp; 0o111
+            candidate = services.candidates.get(candidate_id)
+            gate = services.candidates.gate(
+                candidate_id,
+                current={
+                    key: candidate[key]
+                    for key in ("repository_identity", "base_sha", "input_sha256", "policy_sha256")
+                },
+            )
+            assert gate["delivery_eligible"] is gate["local_gate_passed"] is False
+            assert {"CHECK_EVIDENCE_MISSING:tests", "REVIEW_EVIDENCE_MISSING"} &lt;= set(gate["reasons"])
+            journal = services.journal.snapshot(result["execution"]["intent"]["grant_id"])
+            assert journal["state"] == "revoked" and journal["request_count"] == 3
+            assert collection["capture"]["report"]["native_cleanup"]["local_stop"] == "confirmed"
+            for _ in range(2):
+                assert (
+                    facade.advance(run_id, op_id, principal="owner")["execution"]["collection"][
+                        "candidate"
+                    ]["id"]
+                    == candidate_id
+                )
+            assert (
+                len(calls) == 3 and services.journal.snapshot(journal["grant_id"])["request_count"] == 3
+            )
+        finally:
+            if services is not None:
+&gt;               ApprovedGoTaskExecution(services).cancel(run_id, op_id, principal="owner")
+
+tests/runs/test_go_task_execution_native.py:245: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/karajan/orchestration/go_task_execution.py:167: in cancel
+    operation = intents.cancel_intent(run_id, operation_id, principal=principal)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/karajan/orchestration/go_execution_intent.py:981: in cancel_intent
+    self._owner(run_id, operation_id, principal)
+backend/karajan/orchestration/go_execution_intent.py:230: in _owner
+    self._check_owner(self.admissions, run_id, operation_id, principal)
+backend/karajan/orchestration/go_execution_intent.py:226: in _check_owner
+    with _connection(planner.database, readonly=True) as db:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = PosixPath('/tmp/karajan-luna-native-round-three-basetemp/test_actual_host_child_native_0/approved-runs.sqlite')
+readonly = True
+
+    @contextmanager
+    def _connection(path: Path, *, readonly: bool) -&gt; Iterator[sqlite3.Connection]:
+        # Neither status nor a reconstructed controller may create a missing ledger.
+&gt;       db = sqlite3.connect(
+            path.resolve().as_uri() + ("?mode=ro" if readonly else "?mode=rw"),
+            uri=True,
+            timeout=10,
+            isolation_level=None,
+        )
+E       sqlite3.OperationalError: unable to open database file
+
+backend/karajan/orchestration/go_execution_intent.py:177: OperationalError</failure></testcase><testcase classname="tests.runs.test_go_task_execution_native" name="test_actual_host_child_native_candidate_and_replay[cancel_after_send]" time="52.159" /></testsuite></testsuites>

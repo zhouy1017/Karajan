@@ -1,0 +1,4 @@
+......ss..ssssssssssssss......                                           [100%]
+=========================== short test summary info ============================
+SKIPPED [16] C:\Users\Chooo\Playground\Karajan\.cache\ci-spark-task-native\tests\isolation\test_opencode_go_composition.py:35: Prepared fixed Linux OpenCode artifact is unavailable
+14 passed, 16 skipped in 3.55s

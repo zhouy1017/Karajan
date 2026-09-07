@@ -1,0 +1,23 @@
+{
+  "ruff": {
+    "argv": [
+      "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+      "-m",
+      "ruff",
+      "check",
+      "."
+    ],
+    "returncode": 0,
+    "output": "ruff.log"
+  },
+  "mypy": {
+    "argv": [
+      "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+      "-m",
+      "mypy",
+      "backend"
+    ],
+    "returncode": 0,
+    "output": "mypy.log"
+  }
+}

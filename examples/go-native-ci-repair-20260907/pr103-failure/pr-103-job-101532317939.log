@@ -1,0 +1,990 @@
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	﻿2026-09-06T17:57:46.0736625Z Current runner version: '2.337.0'
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0771962Z ##[group]Runner Image Provisioner
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0773202Z Hosted Compute Agent
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0774268Z Version: 20260828.587
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0775331Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0776809Z Build Date: 2026-08-28T16:44:25Z
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0777952Z Worker ID: {031142cb-76a8-4f98-9922-1d65d0b4f1c6}
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0779077Z Azure Region: centralus
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0780165Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0782094Z ##[group]Operating System
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0783076Z Ubuntu
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0784094Z 24.04.4
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0784910Z LTS
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0786110Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0787097Z ##[group]Runner Image
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0787988Z Image: ubuntu-24.04
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0788988Z Version: 20260831.293.1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0790916Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260831.293/images/ubuntu/Ubuntu2404-Readme.md
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0793748Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260831.293
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0795307Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0797361Z ##[group]GITHUB_TOKEN Permissions
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0800551Z Contents: read
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0801598Z Metadata: read
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0802468Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0805247Z Secret source: Actions
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.0807448Z Prepare workflow directory
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.1196733Z Prepare all required actions
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.1244948Z Getting action download info
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.3803897Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.4765271Z Download action repository 'actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97' (SHA:5fda3b95a4ea91299a34e894583c3862153e4b97)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:46.5660592Z Download action repository 'astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d' (SHA:20cfd1bf945f4377ade1205e4dbc17946fc9a30d)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.0474078Z Download action repository 'actions/setup-node@820762786026740c76f36085b0efc47a31fe5020' (SHA:820762786026740c76f36085b0efc47a31fe5020)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.2398827Z Complete job name: python-quality (ubuntu-24.04, Python 3.12)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3342686Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3343796Z with:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3344283Z   persist-credentials: false
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3344847Z   repository: zhouy1017/Karajan
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3349402Z   token: ***
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3349890Z   ssh-strict: true
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3350368Z   ssh-user: git
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3350821Z   clean: true
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3351304Z   sparse-checkout-cone-mode: true
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3351878Z   fetch-depth: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3352337Z   fetch-tags: false
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3352807Z   show-progress: true
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3353297Z   lfs: false
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3353759Z   submodules: false
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3354273Z   set-safe-directory: true
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3354814Z   allow-unsafe-pr-checkout: false
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3355637Z env:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3356458Z   PYTHONUTF8: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3356925Z   UV_NO_PROGRESS: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3357450Z   UV_PYTHON: 3.12
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3358053Z   KARAJAN_GO_TOKENIZER_DIRECTORY: .cache/go-context-artifacts
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3358793Z   KARAJAN_REQUIRE_GO_TOKENIZER: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3359346Z   HF_HUB_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3359828Z   TRANSFORMERS_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.3360348Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4376460Z Syncing repository: zhouy1017/Karajan
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4378565Z ##[group]Getting Git version info
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4379370Z Working directory is '/home/runner/work/Karajan/Karajan'
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4380536Z [command]/usr/bin/git version
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4415552Z git version 2.55.0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4476949Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4485019Z Temporarily overriding HOME='/home/runner/work/_temp/fbdaa7dd-698f-4672-b127-59883e029e6a' before making global git config changes
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4487730Z Adding repository directory to the temporary git global config as a safe directory
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4491522Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Karajan/Karajan
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4540960Z Deleting the contents of '/home/runner/work/Karajan/Karajan'
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4543272Z ##[group]Determining repository object format
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4544898Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4546386Z ##[group]Initializing the repository
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4549619Z [command]/usr/bin/git init /home/runner/work/Karajan/Karajan
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4621648Z hint: Using 'master' as the name for the initial branch. This default branch name
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4625605Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4627494Z hint: to use in all of your new repositories, which will suppress this warning,
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4628872Z hint: call:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4629634Z hint:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4630550Z hint: 	git config --global init.defaultBranch <name>
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4631641Z hint:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4632657Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4634358Z hint: 'development'. The just-created branch can be renamed via this command:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4635743Z hint:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4636647Z hint: 	git branch -m <name>
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4637528Z hint:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4638619Z hint: Disable this message with "git config set advice.defaultBranchName false"
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4640398Z Initialized empty Git repository in /home/runner/work/Karajan/Karajan/.git/
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4643286Z [command]/usr/bin/git remote add origin https://github.com/zhouy1017/Karajan
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4688301Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4689957Z ##[group]Disabling automatic garbage collection
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4691654Z [command]/usr/bin/git config --local gc.auto 0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4724608Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4726126Z ##[group]Setting up auth
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4727100Z Removing SSH command configuration
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4730366Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.4766836Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.5106676Z Removing HTTP extra header
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.5114122Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.5161002Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.5408324Z Removing includeIf entries pointing to credentials config files
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.5413950Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.5453547Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.5699451Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-e314f1fa-db4c-4b83-98d6-9c48e9fc3227.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.5743439Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/Karajan/Karajan/.git.path /home/runner/work/_temp/git-credentials-e314f1fa-db4c-4b83-98d6-9c48e9fc3227.config
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.5781713Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/Karajan/Karajan/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-e314f1fa-db4c-4b83-98d6-9c48e9fc3227.config
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.5822042Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-e314f1fa-db4c-4b83-98d6-9c48e9fc3227.config
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.5861977Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-e314f1fa-db4c-4b83-98d6-9c48e9fc3227.config
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.5896512Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.5897877Z ##[group]Fetching the repository
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:47.5904676Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +a87030a737b42d20daee1f223774a018dbe8110d:refs/remotes/pull/103/merge
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.2919947Z From https://github.com/zhouy1017/Karajan
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.2922614Z  * [new ref]         a87030a737b42d20daee1f223774a018dbe8110d -> pull/103/merge
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.2928931Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.2930778Z ##[group]Determining the checkout info
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.2932425Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.2938547Z [command]/usr/bin/git sparse-checkout disable
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.2995667Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.3035315Z ##[group]Checking out the ref
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.3038677Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/103/merge
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4360711Z Note: switching to 'refs/remotes/pull/103/merge'.
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4362042Z 
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4363079Z You are in 'detached HEAD' state. You can look around, make experimental
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4366086Z changes and commit them, and you can discard any commits you make in this
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4369216Z state without impacting any branches by switching back to a branch.
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4371064Z 
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4372123Z If you want to create a new branch to retain commits you create, you may
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4374406Z do so (now or later) by using -c with the switch command. Example:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4376293Z 
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4376926Z   git switch -c <new-branch-name>
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4377890Z 
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4378459Z Or undo this operation with:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4379343Z 
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4379886Z   git switch -
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4380578Z 
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4381773Z Turn off this advice by setting config variable advice.detachedHead to false
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4383506Z 
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4385662Z HEAD is now at a87030a Merge c80e41abfdc13b13034f6c82ea3fe47eb71a3b72 into 2e587d1773c514361689e13ebbd16ba62f1cd219
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4391198Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4429819Z [command]/usr/bin/git log -1 --format=%H
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4461759Z a87030a737b42d20daee1f223774a018dbe8110d
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4471896Z ##[group]Removing auth
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4473242Z Removing SSH command configuration
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4476980Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4517949Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4759768Z Removing HTTP extra header
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4763119Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.4806812Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.5047133Z Removing includeIf entries pointing to credentials config files
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.5050086Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.5086095Z includeif.gitdir:/home/runner/work/Karajan/Karajan/.git.path
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.5089067Z includeif.gitdir:/home/runner/work/Karajan/Karajan/.git/worktrees/*.path
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.5091067Z includeif.gitdir:/github/workspace/.git.path
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.5092732Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.5097535Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/Karajan/Karajan/.git.path
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.5125310Z /home/runner/work/_temp/git-credentials-e314f1fa-db4c-4b83-98d6-9c48e9fc3227.config
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.5136109Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/Karajan/Karajan/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-e314f1fa\-db4c\-4b83\-98d6\-9c48e9fc3227\.config
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.5176356Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/Karajan/Karajan/.git/worktrees/*.path
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.5210811Z /home/runner/work/_temp/git-credentials-e314f1fa-db4c-4b83-98d6-9c48e9fc3227.config
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.5219988Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/Karajan/Karajan/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-e314f1fa\-db4c\-4b83\-98d6\-9c48e9fc3227\.config
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.5256865Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.5289210Z /github/runner_temp/git-credentials-e314f1fa-db4c-4b83-98d6-9c48e9fc3227.config
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.5296327Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-e314f1fa\-db4c\-4b83\-98d6\-9c48e9fc3227\.config
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.5334906Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.5363842Z /github/runner_temp/git-credentials-e314f1fa-db4c-4b83-98d6-9c48e9fc3227.config
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.5381241Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-e314f1fa\-db4c\-4b83\-98d6\-9c48e9fc3227\.config
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.5419676Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.5676454Z Removing credentials config '/home/runner/work/_temp/git-credentials-e314f1fa-db4c-4b83-98d6-9c48e9fc3227.config'
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.5684197Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.6039174Z ##[group]Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.6040755Z with:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.6041593Z   python-version: 3.12
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.6042555Z   check-latest: false
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.6051019Z   token: ***
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.6051921Z   update-environment: true
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.6052956Z   allow-prereleases: false
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.6053959Z   freethreaded: false
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.6054857Z env:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.6055652Z   PYTHONUTF8: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.6056706Z   UV_NO_PROGRESS: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.6057601Z   UV_PYTHON: 3.12
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.6058746Z   KARAJAN_GO_TOKENIZER_DIRECTORY: .cache/go-context-artifacts
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.6060184Z   KARAJAN_REQUIRE_GO_TOKENIZER: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.6061260Z   HF_HUB_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.6062213Z   TRANSFORMERS_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.6063171Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7234925Z ##[group]Installed versions
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7308209Z Successfully set up CPython (3.12.14)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7310006Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7643407Z ##[group]Run astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7645701Z with:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7647039Z   version: 0.12.10
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7648271Z   enable-cache: false
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7649585Z   activate-environment: false
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7651083Z   no-project: false
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7652468Z   working-directory: /home/runner/work/Karajan/Karajan
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7661507Z   github-token: ***
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7663689Z   cache-dependency-glob: **/*requirements*.txt
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	**/*requirements*.in
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	**/*constraints*.txt
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	**/*constraints*.in
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	**/pyproject.toml
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	**/uv.lock
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	**/*.py.lock
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7666305Z   restore-cache: true
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7667259Z   save-cache: true
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7668480Z   prune-cache: false
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7669433Z   cache-python: false
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7670424Z   ignore-nothing-to-cache: false
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7671527Z   ignore-empty-workdir: false
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7672669Z   download-from-astral-mirror: true
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7673822Z   add-problem-matchers: true
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7674846Z   quiet: false
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7675763Z   resolution-strategy: highest
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7677116Z env:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7677949Z   PYTHONUTF8: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7678837Z   UV_NO_PROGRESS: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7679739Z   UV_PYTHON: 3.12
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7680897Z   KARAJAN_GO_TOKENIZER_DIRECTORY: .cache/go-context-artifacts
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7682317Z   KARAJAN_REQUIRE_GO_TOKENIZER: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7683381Z   HF_HUB_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7684309Z   TRANSFORMERS_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7685512Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7687408Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7689129Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7690659Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7692231Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7693804Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.7695160Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:48.9488419Z Fetching manifest data from https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson ...
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.0509145Z Downloading uv from "https://releases.astral.sh/github/uv/releases/download/0.12.10/uv-x86_64-unknown-linux-gnu.tar.gz" ...
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.3368945Z [command]/usr/bin/tar xz --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/20d59805-1747-43b5-9ebf-9e05f02806f6 -f /home/runner/work/_temp/6b1858dc-3690-41c6-abc0-8eaa5989802c
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.7450429Z Added /home/runner/.local/bin to the path
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.7455012Z Added /opt/hostedtoolcache/uv/0.12.10/x86_64 to the path
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.7457625Z Set UV_PYTHON_INSTALL_DIR to /home/runner/work/_temp/uv-python-dir
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.7459630Z Added /home/runner/work/_temp/uv-python-dir to the path
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.7469973Z Successfully installed uv version 0.12.10
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9541614Z ##[group]Run uv lock --check
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9542703Z ^[[36;1muv lock --check^[[0m
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9591015Z shell: /usr/bin/bash -e {0}
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9591999Z env:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9592785Z   PYTHONUTF8: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9593619Z   UV_NO_PROGRESS: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9594468Z   UV_PYTHON: 3.12
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9595558Z   KARAJAN_GO_TOKENIZER_DIRECTORY: .cache/go-context-artifacts
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9597125Z   KARAJAN_REQUIRE_GO_TOKENIZER: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9598154Z   HF_HUB_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9599076Z   TRANSFORMERS_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9600218Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9601832Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9603421Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9604866Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9606460Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9607946Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9609458Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9610731Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9779945Z Using CPython 3.12.14 interpreter at: /opt/hostedtoolcache/Python/3.12.14/x64/bin/python3.12
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9789510Z Resolved 46 packages in 0.54ms
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9875195Z ##[group]Run uv sync --frozen --extra dev
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9876564Z ^[[36;1muv sync --frozen --extra dev^[[0m
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9919353Z shell: /usr/bin/bash -e {0}
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9920347Z env:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9921379Z   PYTHONUTF8: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9922230Z   UV_NO_PROGRESS: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9923097Z   UV_PYTHON: 3.12
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9924213Z   KARAJAN_GO_TOKENIZER_DIRECTORY: .cache/go-context-artifacts
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9925586Z   KARAJAN_REQUIRE_GO_TOKENIZER: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9926919Z   HF_HUB_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9927815Z   TRANSFORMERS_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9928962Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9930557Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9932165Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9933609Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9935121Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9936734Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9938285Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:49.9939594Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:50.0086744Z Using CPython 3.12.14 interpreter at: /opt/hostedtoolcache/Python/3.12.14/x64/bin/python3.12
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:50.0088550Z Creating virtual environment at: .venv
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:50.0220362Z    Building karajan-core @ file:///home/runner/work/Karajan/Karajan
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:50.1037737Z Downloading numpy (15.9MiB)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:50.1257222Z Downloading transformers (11.5MiB)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:50.1268126Z Downloading tokenizers (3.2MiB)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:50.1275700Z Downloading pydantic-core (2.0MiB)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:50.1286793Z Downloading pygments (1.2MiB)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:50.1290655Z Downloading mypy (14.1MiB)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:50.1292068Z Downloading ruff (9.8MiB)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:50.1293915Z Downloading hf-xet (4.3MiB)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:50.5028808Z  Downloaded pygments
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:50.5494055Z  Downloaded pydantic-core
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:50.5959436Z  Downloaded tokenizers
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:50.6477169Z  Downloaded hf-xet
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:50.7949129Z  Downloaded ruff
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:50.9025340Z  Downloaded transformers
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:50.9068188Z       Built karajan-core @ file:///home/runner/work/Karajan/Karajan
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:50.9097998Z  Downloaded numpy
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:50.9307587Z  Downloaded mypy
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:50.9309743Z Prepared 45 packages in 920ms
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0266288Z Installed 45 packages in 95ms
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0267052Z  + annotated-doc==0.0.5
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0267500Z  + annotated-types==0.8.0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0267907Z  + anyio==4.15.1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0268360Z  + certifi==2026.7.22
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0268763Z  + click==8.5.0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0269275Z  + fastapi==0.141.1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0269705Z  + filelock==3.32.5
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0270347Z  + fsspec==2026.7.0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0270733Z  + h11==0.16.0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0271072Z  + hf-xet==1.6.0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0271560Z  + httpcore==1.0.9
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0272001Z  + httpx==0.28.1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0272599Z  + huggingface-hub==1.30.0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0273021Z  + idna==3.19
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0273545Z  + iniconfig==2.3.0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0273965Z  + jinja2==3.1.6
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0274951Z  + karajan-core==0.1.0 (from file:///home/runner/work/Karajan/Karajan)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0275686Z  + librt==0.15.0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0276321Z  + markdown-it-py==4.2.0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0276703Z  + markupsafe==3.0.3
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0277220Z  + mdurl==0.1.2
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0277578Z  + mypy==1.20.2
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0277949Z  + mypy-extensions==1.1.0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0278322Z  + numpy==2.5.2
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0278748Z  + packaging==26.3
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0279118Z  + pathspec==1.1.1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0279452Z  + pluggy==1.6.0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0279859Z  + pydantic==2.13.5
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0280554Z  + pydantic-core==2.46.5
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0280852Z  + pygments==2.21.0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0281244Z  + pytest==9.1.1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0281601Z  + pyyaml==6.0.3
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0281941Z  + regex==2026.9.3
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0282534Z  + rich==15.0.0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0282878Z  + ruff==0.16.6
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0283228Z  + safetensors==0.8.0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0283605Z  + shellingham==1.5.4
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0283945Z  + starlette==1.6.0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0284320Z  + tokenizers==0.23.2
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0284705Z  + tqdm==4.70.0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0285071Z  + transformers==5.16.1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0285448Z  + typer==0.27.2
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0286050Z  + typing-extensions==4.16.0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0286497Z  + typing-inspection==0.4.4
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0286754Z  + uvicorn==0.52.4
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0468489Z ##[group]Run python .github/scripts/provision_go_tokenizer.py --directory .cache/go-context-artifacts
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0469308Z ^[[36;1mpython .github/scripts/provision_go_tokenizer.py --directory .cache/go-context-artifacts^[[0m
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0512695Z shell: /usr/bin/bash -e {0}
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0512976Z env:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0513193Z   PYTHONUTF8: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0513421Z   UV_NO_PROGRESS: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0513662Z   UV_PYTHON: 3.12
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0513977Z   KARAJAN_GO_TOKENIZER_DIRECTORY: .cache/go-context-artifacts
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0514348Z   KARAJAN_REQUIRE_GO_TOKENIZER: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0514610Z   HF_HUB_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0514842Z   TRANSFORMERS_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0515160Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0515616Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0516377Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0516873Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0517302Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0517707Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0518134Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:51.0518472Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:52.3013527Z {"artifacts": [{"bytes": 20217442, "name": "tokenizer.json", "sha256": "19e773648cb4e65de8660ea6365e10acca112d42a854923df93db4a6f333a82d", "status": "downloaded"}, {"bytes": 761, "name": "tokenizer_config.json", "sha256": "98b1271574f41abf89427ae2dda030d94dc9478f0edc5a8bd240db213c6fd5fc", "status": "downloaded"}, {"bytes": 10950, "name": "chat_template.jinja", "sha256": "0c4099f3382d6c92700dfb99725025360966fd73032f0ecf32377c0d9e6309c5", "status": "downloaded"}], "schema_version": "karajan.go-tokenizer-provision.v1"}
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:52.3224451Z ##[group]Run actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:52.3224840Z with:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:52.3225051Z   node-version: 24.18.1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:52.3225293Z   check-latest: false
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:52.3227956Z   token: ***
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:52.3228193Z   package-manager-cache: true
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:52.3228448Z env:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:52.3228654Z   PYTHONUTF8: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:52.3228867Z   UV_NO_PROGRESS: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:52.3229094Z   UV_PYTHON: 3.12
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:52.3229379Z   KARAJAN_GO_TOKENIZER_DIRECTORY: .cache/go-context-artifacts
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:52.3229731Z   KARAJAN_REQUIRE_GO_TOKENIZER: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:52.3229984Z   HF_HUB_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:52.3230201Z   TRANSFORMERS_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:52.3230494Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:52.3230920Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:52.3231374Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:52.3231755Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:52.3232124Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:52.3232501Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:52.3232895Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:52.3233221Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:52.4475956Z Attempting to download 24.18.1...
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:53.1009681Z Acquiring 24.18.1 - x64 from https://github.com/actions/node-versions/releases/download/24.18.1-30508414346/node-24.18.1-linux-x64.tar.gz
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:53.6136410Z Extracting ...
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:53.6253858Z [command]/usr/bin/tar xz --strip 1 --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/9346efc8-edeb-4e43-9e3a-31d3581e739d -f /home/runner/work/_temp/1d4730c6-5931-47c1-b674-27b9406f76f8
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:54.9517983Z Adding to the cache ...
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:56.6035342Z ##[group]Environment details
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:56.8267219Z node: v24.18.1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:56.8267612Z npm: 11.16.0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:56.8267917Z yarn: 1.22.22
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:56.8268654Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:56.8447432Z ##[group]Run npm ci --prefix runtimes/opencode --no-audit --no-fund
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:56.8447919Z ^[[36;1mnpm ci --prefix runtimes/opencode --no-audit --no-fund^[[0m
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:56.8488610Z shell: /usr/bin/bash -e {0}
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:56.8488868Z env:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:56.8489090Z   PYTHONUTF8: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:56.8489307Z   UV_NO_PROGRESS: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:56.8489517Z   UV_PYTHON: 3.12
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:56.8489807Z   KARAJAN_GO_TOKENIZER_DIRECTORY: .cache/go-context-artifacts
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:56.8490158Z   KARAJAN_REQUIRE_GO_TOKENIZER: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:56.8490410Z   HF_HUB_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:56.8490625Z   TRANSFORMERS_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:56.8490914Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:56.8491349Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:56.8491768Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:56.8492181Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:56.8492566Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:56.8492941Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:56.8493335Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:57:56.8493661Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.5963594Z 
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.5969346Z added 3 packages in 4s
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.5975546Z npm warn allow-scripts 1 package has install scripts not yet covered by allowScripts:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.5976647Z npm warn allow-scripts   opencode-ai@1.18.29 (postinstall: node ./postinstall.mjs)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.5977135Z npm warn allow-scripts
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.5977841Z npm warn allow-scripts Run `npm approve-scripts --allow-scripts-pending` to review, or `npm approve-scripts <pkg>` to allow.
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6474290Z ##[group]Run sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6474833Z ^[[36;1msudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0^[[0m
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6515079Z shell: /usr/bin/bash -e {0}
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6515339Z env:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6515537Z   PYTHONUTF8: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6515751Z   UV_NO_PROGRESS: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6516186Z   UV_PYTHON: 3.12
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6516480Z   KARAJAN_GO_TOKENIZER_DIRECTORY: .cache/go-context-artifacts
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6516851Z   KARAJAN_REQUIRE_GO_TOKENIZER: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6517099Z   HF_HUB_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6517322Z   TRANSFORMERS_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6517615Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6518040Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6518477Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6518881Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6519250Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6519622Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6520014Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6520336Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6653391Z kernel.apparmor_restrict_unprivileged_userns = 0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6690856Z ##[group]Run uv run --frozen --extra dev ruff check .
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6691442Z ^[[36;1muv run --frozen --extra dev ruff check .^[[0m
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6728281Z shell: /usr/bin/bash -e {0}
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6728539Z env:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6728736Z   PYTHONUTF8: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6728950Z   UV_NO_PROGRESS: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6729163Z   UV_PYTHON: 3.12
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6729469Z   KARAJAN_GO_TOKENIZER_DIRECTORY: .cache/go-context-artifacts
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6729835Z   KARAJAN_REQUIRE_GO_TOKENIZER: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6730096Z   HF_HUB_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6730321Z   TRANSFORMERS_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6730624Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6731065Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6731486Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6731868Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6732301Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6732689Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6733084Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.6733404Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.8073967Z All checks passed!
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.8127723Z ##[group]Run uv run --frozen --extra dev mypy backend/karajan
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.8128193Z ^[[36;1muv run --frozen --extra dev mypy backend/karajan^[[0m
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.8168590Z shell: /usr/bin/bash -e {0}
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.8168845Z env:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.8169049Z   PYTHONUTF8: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.8169267Z   UV_NO_PROGRESS: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.8169480Z   UV_PYTHON: 3.12
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.8169781Z   KARAJAN_GO_TOKENIZER_DIRECTORY: .cache/go-context-artifacts
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.8170135Z   KARAJAN_REQUIRE_GO_TOKENIZER: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.8170386Z   HF_HUB_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.8170600Z   TRANSFORMERS_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.8170904Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.8171351Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.8171775Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.8172188Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.8172555Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.8172927Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.8173322Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:00.8173641Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:32.8340529Z Success: no issues found in 139 source files
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:32.9192497Z ##[group]Run uv run --frozen --extra dev pytest tests
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:32.9192909Z ^[[36;1muv run --frozen --extra dev pytest tests^[[0m
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:32.9233792Z shell: /usr/bin/bash -e {0}
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:32.9234051Z env:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:32.9234254Z   PYTHONUTF8: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:32.9234493Z   UV_NO_PROGRESS: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:32.9234715Z   UV_PYTHON: 3.12
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:32.9235018Z   KARAJAN_GO_TOKENIZER_DIRECTORY: .cache/go-context-artifacts
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:32.9235378Z   KARAJAN_REQUIRE_GO_TOKENIZER: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:32.9235632Z   HF_HUB_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:32.9236105Z   TRANSFORMERS_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:32.9236407Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:32.9236834Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:32.9237258Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:32.9237634Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:32.9238045Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:32.9238426Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:32.9238823Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:32.9239163Z   KARAJAN_REQUIRE_OPENCODE_ISOLATION: 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:32.9239641Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:39.7279938Z ============================= test session starts ==============================
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:39.7282354Z platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:39.7283171Z rootdir: /home/runner/work/Karajan/Karajan
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:39.7283642Z configfile: pyproject.toml
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:39.7284161Z plugins: anyio-4.15.1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:39.7284784Z collected 2167 items
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:39.7285009Z 
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:45.4053248Z tests/adapters/claude/test_claude_replay.py ............................ [  1%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:51.7550874Z ...............................                                          [  2%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:58:51.7613890Z tests/adapters/codex/test_permission_gate.py .....                       [  2%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:59:01.5143831Z tests/adapters/codex/test_replay_cli.py ................................ [  4%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T17:59:02.7983474Z ....                                                                     [  4%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:03.0920185Z tests/adapters/deepseek/test_deepseek_probe.py ................          [  5%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:03.1082463Z tests/adapters/deepseek/test_deepseek_protocol.py ...................... [  6%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:03.1318587Z ................................                                         [  7%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:03.8503182Z tests/adapters/opencode/test_go_context.py ............................. [  9%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:04.5459577Z ..........                                                               [  9%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:04.5547395Z tests/adapters/opencode/test_go_evidence.py ..........                   [ 10%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:04.5934705Z tests/adapters/opencode/test_go_grant_authentication.py ........         [ 10%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:04.8877348Z tests/adapters/opencode/test_go_isolated_cli.py .                        [ 10%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:05.3349246Z tests/adapters/opencode/test_go_journal.py ............................. [ 11%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:05.4485070Z ........................                                                 [ 12%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:05.4521603Z tests/adapters/opencode/test_go_live.py ..                               [ 13%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:05.4676871Z tests/adapters/opencode/test_go_observer_guard.py ...                    [ 13%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:06.0947236Z tests/adapters/opencode/test_go_qualification_grants.py ................ [ 13%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:06.1848332Z ....                                                                     [ 14%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:07.9428988Z tests/adapters/opencode/test_go_qualification_relay.py ................. [ 14%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:08.7703375Z ..................                                                       [ 15%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:11.1048279Z tests/adapters/opencode/test_go_relay.py ............................... [ 17%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:17.9884820Z .......................................                                  [ 18%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:19.5812938Z tests/adapters/opencode/test_go_relay_context.py .............           [ 19%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:19.9090560Z tests/adapters/opencode/test_go_relay_journal.py ...                     [ 19%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:20.8540445Z tests/adapters/opencode/test_go_relay_nullable_names.py .............    [ 20%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:24.2449514Z tests/adapters/opencode/test_go_send_guard.py .........                  [ 20%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:24.3803832Z tests/adapters/opencode/test_go_task_grants.py ......................... [ 21%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:24.7082162Z ............                                                             [ 22%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:24.8627663Z tests/adapters/opencode/test_go_unix_relay.py ...                        [ 22%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:01:25.8729942Z tests/adapters/opencode/test_management.py ..                            [ 22%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:03:24.0298468Z tests/adapters/opencode/test_opencode_probe.py .............             [ 23%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:03:24.9560752Z tests/candidates/test_baseline_materialization.py ................       [ 23%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:03:26.4270554Z tests/candidates/test_capture_recovery.py ...................            [ 24%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:03:26.9866831Z tests/candidates/test_evidence_recovery.py ...........                   [ 25%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:03:27.9177740Z tests/candidates/test_projected_capture.py ...............               [ 26%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:03:30.8018647Z tests/candidates/test_review_rebind.py ................................. [ 27%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:03:31.6327051Z .........                                                                [ 28%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:03:33.4039496Z tests/candidates/test_validation.py .................................... [ 29%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:03:35.6913808Z .......................................                                  [ 31%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:03:36.0467074Z tests/capacity/test_admission_bindings.py ..........................     [ 32%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:03:37.6802914Z tests/capacity/test_capacity_probe.py ......                             [ 32%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:03:37.9525362Z tests/capacity/test_command_receipts.py ....................             [ 33%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:03:38.6087102Z tests/capacity/test_pre_effect_guard.py .................                [ 34%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:03:38.7064523Z tests/capacity/test_resource_view.py .....                               [ 34%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:03:38.7365754Z tests/capacity/test_review_cases.py ..                                   [ 34%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:03:39.2129118Z tests/capacity/test_routing_facts.py ..........................          [ 36%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:03:39.8017873Z tests/capacity/test_shared_capacity.py ................................. [ 37%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:03:39.9037340Z .....                                                                    [ 37%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:03:47.2614003Z tests/contract/test_probe_cli.py .............................           [ 39%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:03:50.5217804Z tests/delivery/test_protocol.py ........................................ [ 41%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:03:50.6417939Z ..                                                                       [ 41%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:03:57.4697512Z tests/execution/test_capture_fence.py .....................              [ 42%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:04:01.5069227Z tests/execution/test_check_manifest.py ........................          [ 43%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:04:01.6221280Z tests/execution/test_control_initialization.py .........                 [ 43%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:04:01.7288208Z tests/execution/test_exact_cancellation.py ........                      [ 44%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:04:03.3221037Z tests/execution/test_runner_identity.py ....                             [ 44%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:04:08.2737575Z tests/execution/test_runner_identity_independent.py ...........          [ 44%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:04:16.7942589Z tests/execution/test_runnerhost.py ..................................... [ 46%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:04:19.0905565Z .......                                                                  [ 46%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:04:45.4040383Z tests/isolation/test_check_runner.py ...................                 [ 47%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:04:45.4492288Z tests/isolation/test_go_probe_task_grant_rejection.py ........           [ 48%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:05:16.8096887Z tests/isolation/test_go_projected_probe.py .............                 [ 48%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:05:41.0911300Z tests/isolation/test_go_task.py ......................                   [ 49%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:05:45.7947285Z tests/isolation/test_isolation_probe.py ......s....s.                    [ 50%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:06:23.1006722Z tests/isolation/test_opencode_go_composition.py ....                     [ 50%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:08:15.3880735Z tests/isolation/test_opencode_projection_capture.py ................     [ 51%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:09:41.5734632Z tests/isolation/test_opencode_runtime.py ..............                  [ 51%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:09:59.4686292Z tests/isolation/test_opencode_task_context.py ..                         [ 51%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:10:36.2506177Z tests/isolation/test_opencode_task_projection.py ........                [ 52%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:10:40.8623433Z tests/orchestration/test_cli.py .....                                    [ 52%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:10:44.3455639Z tests/orchestration/test_pinned_rules.py ..............                  [ 53%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:11:32.9958160Z tests/orchestration/test_serial.py ................................      [ 54%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:11:33.7718213Z tests/projects/test_credential_sources.py ......................         [ 55%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:11:33.7752070Z tests/projects/test_credential_windows_owners.py sssss                   [ 55%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:11:36.5700552Z tests/projects/test_demand_store.py .................................... [ 57%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:11:36.6423792Z .                                                                        [ 57%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:11:38.7883168Z tests/projects/test_execution_policy_v2.py ............................. [ 58%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:11:39.2692705Z .......                                                                  [ 59%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:12:42.8884127Z tests/projects/test_go_projected_suite.py ..................             [ 60%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:13:31.7300118Z tests/projects/test_go_suite.py ..................                       [ 60%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:13:52.4469252Z tests/projects/test_projected_qualification_native.py .                  [ 60%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:13:53.8015017Z tests/projects/test_projected_qualification_store.py ................... [ 61%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:13:54.3858319Z .....                                                                    [ 62%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:13:54.6906505Z tests/projects/test_publication.py .......                               [ 62%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:13:55.8405505Z tests/projects/test_publication_guards.py ........................       [ 63%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:13:55.9981050Z tests/projects/test_publication_migration.py ...                         [ 63%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:13:59.0509507Z tests/projects/test_qualification_store.py ...................           [ 64%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:14:00.1341650Z tests/projects/test_registry.py ........................................ [ 66%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:14:01.0852609Z .................................                                        [ 67%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:14:40.4125046Z tests/projects/test_runtime_qualification_store.py .....                 [ 68%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:14:41.3310793Z tests/resources/test_broker.py ..................................        [ 69%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:14:41.9468126Z tests/resources/test_probe.py .....                                      [ 69%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:14:42.0127889Z tests/routing/test_authorization.py ...........                          [ 70%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:14:42.0292989Z tests/routing/test_budget_input.py .....                                 [ 70%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:14:42.1001568Z tests/routing/test_cash_and_sort.py ..........                           [ 71%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:14:43.4743014Z tests/routing/test_cli.py .....                                          [ 71%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:14:43.4972468Z tests/routing/test_compiler.py ...............                           [ 72%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:14:43.5447772Z tests/routing/test_invalid_inputs.py ..............                      [ 72%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:14:43.7173349Z tests/routing/test_profile_membership.py ............................... [ 74%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:14:43.7248338Z ..                                                                       [ 74%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:14:43.9003886Z tests/routing/test_reserved_profile.py ................................. [ 75%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:14:43.9404341Z ......                                                                   [ 76%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:14:44.0118731Z tests/routing/test_resources.py ..............                           [ 76%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:14:44.0372118Z tests/routing/test_routing.py ....                                       [ 76%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:14:44.0609551Z tests/routing/test_rule_selection.py ......                              [ 77%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:14:44.6197291Z tests/runs/test_admission_guard.py ...                                   [ 77%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:14:45.0151826Z tests/runs/test_approved_routing.py ......                               [ 77%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:14:45.1734295Z tests/runs/test_approved_routing_capacity.py ..                          [ 77%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:14:58.8216398Z tests/runs/test_candidate_checks.py ..........................           [ 78%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:15:06.5145056Z tests/runs/test_candidate_checks_concurrency_native.py .                 [ 78%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:15:34.1972673Z tests/runs/test_candidate_checks_native.py ..                            [ 78%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:15:43.5623035Z tests/runs/test_candidate_subjects.py ................                   [ 79%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:16:17.7116498Z tests/runs/test_candidate_subjects_native.py ..                          [ 79%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:16:19.8324613Z tests/runs/test_check_services_factory.py ...................            [ 80%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:16:20.1243557Z tests/runs/test_existing_task_stores.py ..............                   [ 81%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:16:25.5993325Z tests/runs/test_go_execution_intent.py .......................           [ 82%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:16:28.1250685Z tests/runs/test_go_execution_intent_independent.py .........             [ 82%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:16:28.1525111Z tests/runs/test_go_execution_scope.py .................................. [ 84%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:16:28.1552009Z ...                                                                      [ 84%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:16:35.8796878Z tests/runs/test_go_lifecycle.py ..........................               [ 85%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:16:37.0636660Z tests/runs/test_go_task_binding.py .....                                 [ 85%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:16:37.9982713Z tests/runs/test_go_task_binding_independent.py ....                      [ 86%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:16:39.4571740Z tests/runs/test_go_task_binding_source.py ..                             [ 86%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:16:45.0834597Z tests/runs/test_go_task_collector.py ..................                  [ 87%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:16:47.4912565Z tests/runs/test_go_task_execution.py ...........                         [ 87%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:06.2924034Z tests/runs/test_go_task_execution_native.py F.F                          [ 87%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:11.4667831Z tests/runs/test_go_task_input.py ........................                [ 88%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:14.5251543Z tests/runs/test_go_task_runtime.py ........                              [ 89%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:17.1916325Z tests/runs/test_planning.py ............................................ [ 91%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:17.3928776Z .....                                                                    [ 91%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:18.8249040Z tests/runs/test_projected_go_routing.py ..........                       [ 91%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:20.2734320Z tests/runs/test_reserved_execution_guard.py ..........                   [ 92%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:29.1640138Z tests/runs/test_reviewer_binding.py ..................                   [ 93%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:30.6369486Z tests/runs/test_routing_authorization.py ............................... [ 94%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:30.7475314Z ...                                                                      [ 94%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:31.6275025Z tests/runs/test_task_admission.py .........                              [ 95%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:34.0349800Z tests/runs/test_task_workspace.py .................                      [ 95%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:36.1531374Z tests/tools/test_go_tokenizer_provision.py ........                      [ 96%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:37.0804237Z tests/web/test_approved_routing_http.py ........                         [ 96%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:37.9807864Z tests/web/test_http.py ................                                  [ 97%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:38.4679168Z tests/web/test_resources_http.py ........                                [ 97%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:39.3096618Z tests/web/test_rulebook_http.py ..........                               [ 98%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:39.7422937Z tests/web/test_runs_http.py ...                                          [ 98%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:40.7106762Z tests/web/test_server.py .                                               [ 98%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:42.2981390Z tests/web/test_simulation_http.py .....................                  [ 99%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.0426453Z tests/web/test_task_admission_http.py .......                            [ 99%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9062088Z tests/web/test_v2_approval_workbench.py ......                           [100%]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9062648Z 
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9063013Z =================================== FAILURES ===================================
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9063849Z ___________ test_actual_host_child_native_candidate_and_replay[none] ___________
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9064304Z 
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9066387Z projected = {'projects': <karajan.projects.registry.ProjectRegistry object at 0x7f3fec9c8860>, 'project_id': 'bc777995-9f84-4868-b...e'), 'repository': PosixPath('/tmp/pytest-of-runner/pytest-0/test_actual_host_child_native_0/fixture/repository'), ...}
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9067826Z tmp_path = PosixPath('/tmp/pytest-of-runner/pytest-0/test_actual_host_child_native_0')
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9068556Z accounting = <karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x7f3fec9ca0c0>
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9069289Z artifacts = PosixPath('/home/runner/work/Karajan/Karajan/.cache/go-context-artifacts')
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9069711Z fault = 'none'
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9069839Z 
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9070129Z     @pytest.mark.parametrize("fault", ["none", "grant_reply_lost", "cancel_after_send"])
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9070646Z     def test_actual_host_child_native_candidate_and_replay(
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9070979Z         projected,
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9071196Z         tmp_path,
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9071401Z         accounting,
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9071605Z         artifacts,
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9071804Z         fault,
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9072002Z     ):
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9072259Z         repository = projected["repository"]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9072551Z         for path, data in {
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9072865Z             "src/report.py": b"print('approved task')\n",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9073228Z             "tests/test_report.py": b"assert True\n",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9073589Z             "assets/opaque.bin": b"\x00\xff preserved\x01",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9073943Z             "tools/check.sh": b"#!/bin/sh\nexit 0\n",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9074216Z         }.items():
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9074460Z             target = repository / path
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9074810Z             target.parent.mkdir(parents=True, exist_ok=True)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9075150Z             target.write_bytes(data)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9075483Z         (repository / "tools/check.sh").chmod(0o755)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9075968Z         for arguments in (
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9076267Z             ["add", "."],
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9076490Z             [
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9077232Z                 "-c",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9077494Z                 "user.name=Fixture",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9077765Z                 "-c",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9078040Z                 "user.email=fixture@example.invalid",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9078337Z                 "commit",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9078560Z                 "-qm",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9078804Z                 "Task baseline",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9079044Z             ],
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9079245Z         ):
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9079679Z             subprocess.run(["git", "-C", str(repository), *arguments], check=True, capture_output=True)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9080157Z         projects = projected["projects"]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9080508Z         current = projects.get(projected["project_id"])
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9080825Z         projects.update(
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9081067Z             current["id"],
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9081299Z             {
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9081538Z                 "name": current["name"],
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9081837Z                 "base_ref": "main",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9082127Z                 "target_branch": "main",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9082441Z                 "allowed_target_branches": ["main"],
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9082725Z             },
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9082993Z             expected_revision=current["revision"],
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9083481Z             principal="owner",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9083768Z             command_key="baseline-refresh",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9084033Z         )
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9084224Z         calls = []
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9084430Z         errors = []
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9084649Z         services = None
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9084861Z     
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9085104Z         class Handler(BaseHTTPRequestHandler):
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9085422Z             def log_message(self, *args):
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9085690Z                 pass
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9086108Z     
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9086318Z             def do_POST(self):
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9086552Z                 try:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9086845Z                     assert self.client_address[0] == "127.0.0.1"
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9087365Z                     request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9087948Z                     operation = services.intents.read(run_id, op_id, principal="owner")
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9088550Z                     call = services.journal.snapshot(operation["execution"]["intent"]["grant_id"])[
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9088993Z                         "calls"
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9089237Z                     ][-1]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9089523Z                     assert call["state"] == "send_unknown"
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9089951Z                     assert call["request_context"]["accounted_input_tokens"] > 0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9090329Z                     calls.append(
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9090575Z                         {
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9090850Z                             "sequence": call["sequence"],
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9091191Z                             "prompt_retained": any(
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9091597Z                                 "approved-task-brief" in str(message.get("content"))
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9092022Z                                 for message in request["messages"]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9092343Z                             ),
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9092628Z                             "tool_history": sum(
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9093048Z                                 message["role"] == "tool" for message in request["messages"]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9093420Z                             ),
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9093646Z                         }
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9093860Z                     )
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9094116Z                     body = reply(len(calls))
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9094424Z                     self.send_response(200)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9094805Z                     self.send_header("Content-Type", "text/event-stream")
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9095241Z                     self.send_header("Content-Length", str(len(body)))
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9095735Z                     self.end_headers()
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9096200Z                     self.wfile.flush()
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9096507Z                     if fault == "cancel_after_send":
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9096919Z                         # Headers release Relay's bounded send guard. Withhold body
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9097408Z                         # while real cancellation revokes/stops the original child.
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9097955Z                         ApprovedGoTaskExecution(services).cancel(run_id, op_id, principal="owner")
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9098389Z                         return
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9098654Z                     self.wfile.write(body)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9098954Z                 except Exception as error:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9099278Z                     errors.append(type(error).__name__)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9099600Z                     self.send_error(500)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9099846Z     
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9100136Z         server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9100557Z         thread = Thread(target=server.serve_forever, daemon=True)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9100883Z         thread.start()
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9101094Z         try:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9101366Z             services, run_id, op_id = approved_fixture(
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9101800Z                 projected,
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9102032Z                 tmp_path,
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9102282Z                 runtime_artifact(),
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9102539Z                 accounting,
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9102774Z                 artifacts,
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9103021Z                 server.server_port,
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9103273Z                 fault=fault,
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9103497Z             )
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9103756Z             assert services.client_factory is not None
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9104113Z             facade = ApprovedGoTaskExecution(services)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9104524Z             advanced = facade.advance(run_id, op_id, principal="owner")
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9105045Z             assert advanced["execution"]["phase"] in {"start_unknown", "effect_claimed"}
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9105483Z             deadline = time.monotonic() + 160
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9105963Z             while time.monotonic() < deadline:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9106438Z                 current = facade.get(run_id, op_id, principal="owner")
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9106954Z                 snapshot = services.intents.host.inspect(current["planned_attempt_id"])
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9107396Z                 if snapshot.state == "exited":
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9107667Z                     break
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9107911Z                 time.sleep(0.2)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9108147Z             else:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9108443Z                 pytest.fail("Owned Host child did not finish")
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9108869Z             result = facade.reconcile(run_id, op_id, principal="owner")
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9109385Z             (tmp_path / "public-operation.json").write_text(json.dumps(result, indent=2))
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9109803Z             if fault != "none":
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9110159Z                 assert result["execution"]["effect_claim"] is not None
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9110579Z                 assert result["execution"].get("collection") is None
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9111078Z                 grant = services.journal.snapshot(result["execution"]["intent"]["grant_id"])
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9111534Z                 assert grant["state"] == "revoked"
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9111986Z                 assert grant["request_count"] == (1 if fault == "cancel_after_send" else 0)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9112440Z                 assert len(calls) == grant["request_count"]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9112780Z                 if fault == "grant_reply_lost":
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9113202Z                     assert not (services.work_root / ("operation-" + op_id)).exists()
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9113563Z                 else:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9113855Z                     assert result["cancel_requested"] is True
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9114409Z                     assert grant["calls"][0]["state"] == "send_unknown"
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9114800Z                 before = services.journal.path.read_bytes()
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9115128Z                 for _ in range(2):
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9115466Z                     facade.advance(run_id, op_id, principal="owner")
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9116097Z                 assert services.journal.path.read_bytes() == before
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9116501Z                 assert len(calls) == grant["request_count"]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9116789Z                 return
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9117144Z             diagnostic = tmp_path / "fixture-deployment/fixture-error.json"
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9117661Z >           assert result["execution"]["phase"] == "candidate_recorded", (
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9118185Z                 diagnostic.read_text() if diagnostic.exists() else result["reason_codes"]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9118568Z             )
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9118929Z E           AssertionError: {"code": "TASK_STOPPED_CAPTURE_REQUIRED"}
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9119372Z E           assert 'effect_claimed' == 'candidate_recorded'
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9119663Z E             
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9119915Z E             - candidate_recorded
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9120215Z E             + effect_claimed
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9120367Z 
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9120761Z tests/runs/test_go_task_execution_native.py:202: AssertionError
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9121319Z ____ test_actual_host_child_native_candidate_and_replay[cancel_after_send] _____
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9121625Z 
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9122676Z projected = {'projects': <karajan.projects.registry.ProjectRegistry object at 0x7f3feacd1190>, 'project_id': '9a6e1e6a-71c6-4e09-8...e'), 'repository': PosixPath('/tmp/pytest-of-runner/pytest-0/test_actual_host_child_native_2/fixture/repository'), ...}
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9123830Z tmp_path = PosixPath('/tmp/pytest-of-runner/pytest-0/test_actual_host_child_native_2')
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9124535Z accounting = <karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x7f3fec9ca0c0>
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9125226Z artifacts = PosixPath('/home/runner/work/Karajan/Karajan/.cache/go-context-artifacts')
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9125659Z fault = 'cancel_after_send'
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:43.9125945Z 
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0840276Z     @pytest.mark.parametrize("fault", ["none", "grant_reply_lost", "cancel_after_send"])
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0840969Z     def test_actual_host_child_native_candidate_and_replay(
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0841391Z         projected,
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0841711Z         tmp_path,
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0842015Z         accounting,
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0842325Z         artifacts,
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0842639Z         fault,
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0842915Z     ):
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0843291Z         repository = projected["repository"]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0843729Z         for path, data in {
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0844197Z             "src/report.py": b"print('approved task')\n",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0844847Z             "tests/test_report.py": b"assert True\n",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0845449Z             "assets/opaque.bin": b"\x00\xff preserved\x01",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0846193Z             "tools/check.sh": b"#!/bin/sh\nexit 0\n",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0846630Z         }.items():
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0847004Z             target = repository / path
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0847579Z             target.parent.mkdir(parents=True, exist_ok=True)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0848130Z             target.write_bytes(data)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0848642Z         (repository / "tools/check.sh").chmod(0o755)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0849110Z         for arguments in (
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0849466Z             ["add", "."],
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0849802Z             [
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0850100Z                 "-c",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0850476Z                 "user.name=Fixture",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0850873Z                 "-c",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0851202Z                 "user.email=fixture@example.invalid",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0851504Z                 "commit",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0852074Z                 "-qm",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0852327Z                 "Task baseline",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0852568Z             ],
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0852764Z         ):
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0853200Z             subprocess.run(["git", "-C", str(repository), *arguments], check=True, capture_output=True)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0853690Z         projects = projected["projects"]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0854039Z         current = projects.get(projected["project_id"])
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0854364Z         projects.update(
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0854603Z             current["id"],
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0854828Z             {
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0855062Z                 "name": current["name"],
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0855348Z                 "base_ref": "main",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0855630Z                 "target_branch": "main",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0856153Z                 "allowed_target_branches": ["main"],
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0856431Z             },
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0856691Z             expected_revision=current["revision"],
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0857016Z             principal="owner",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0857302Z             command_key="baseline-refresh",
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0857576Z         )
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0857814Z         calls = []
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0858056Z         errors = []
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0858282Z         services = None
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0858673Z     
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0858932Z         class Handler(BaseHTTPRequestHandler):
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0859262Z             def log_message(self, *args):
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0859529Z                 pass
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0859738Z     
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0859954Z             def do_POST(self):
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0860193Z                 try:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0860486Z                     assert self.client_address[0] == "127.0.0.1"
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0860984Z                     request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0861549Z                     operation = services.intents.read(run_id, op_id, principal="owner")
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0862143Z                     call = services.journal.snapshot(operation["execution"]["intent"]["grant_id"])[
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0862590Z                         "calls"
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0862870Z                     ][-1]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0863164Z                     assert call["state"] == "send_unknown"
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0863613Z                     assert call["request_context"]["accounted_input_tokens"] > 0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0863996Z                     calls.append(
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0864248Z                         {
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0864551Z                             "sequence": call["sequence"],
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0864904Z                             "prompt_retained": any(
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0865317Z                                 "approved-task-brief" in str(message.get("content"))
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0865745Z                                 for message in request["messages"]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0866314Z                             ),
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0866616Z                             "tool_history": sum(
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0867057Z                                 message["role"] == "tool" for message in request["messages"]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0867437Z                             ),
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0867671Z                         }
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0867898Z                     )
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0868166Z                     body = reply(len(calls))
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0868489Z                     self.send_response(200)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0868887Z                     self.send_header("Content-Type", "text/event-stream")
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0869328Z                     self.send_header("Content-Length", str(len(body)))
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0869683Z                     self.end_headers()
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0869965Z                     self.wfile.flush()
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0886486Z                     if fault == "cancel_after_send":
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0887026Z                         # Headers release Relay's bounded send guard. Withhold body
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0887956Z                         # while real cancellation revokes/stops the original child.
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0888773Z                         ApprovedGoTaskExecution(services).cancel(run_id, op_id, principal="owner")
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0889402Z                         return
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0889798Z                     self.wfile.write(body)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0890229Z                 except Exception as error:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0890576Z                     errors.append(type(error).__name__)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0890902Z                     self.send_error(500)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0891159Z     
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0891450Z         server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0891879Z         thread = Thread(target=server.serve_forever, daemon=True)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0892228Z         thread.start()
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0892453Z         try:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0892729Z             services, run_id, op_id = approved_fixture(
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0893040Z                 projected,
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0893275Z                 tmp_path,
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0893533Z                 runtime_artifact(),
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0893795Z                 accounting,
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0894025Z                 artifacts,
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0894274Z                 server.server_port,
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0894719Z                 fault=fault,
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0894949Z             )
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0895220Z             assert services.client_factory is not None
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0895584Z             facade = ApprovedGoTaskExecution(services)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0896143Z             advanced = facade.advance(run_id, op_id, principal="owner")
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0896691Z             assert advanced["execution"]["phase"] in {"start_unknown", "effect_claimed"}
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0897136Z             deadline = time.monotonic() + 160
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0897471Z             while time.monotonic() < deadline:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0897867Z                 current = facade.get(run_id, op_id, principal="owner")
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0898367Z                 snapshot = services.intents.host.inspect(current["planned_attempt_id"])
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0898803Z                 if snapshot.state == "exited":
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0899089Z                     break
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0899351Z                 time.sleep(0.2)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0899592Z             else:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0899891Z                 pytest.fail("Owned Host child did not finish")
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0900326Z             result = facade.reconcile(run_id, op_id, principal="owner")
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0900844Z             (tmp_path / "public-operation.json").write_text(json.dumps(result, indent=2))
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0901261Z             if fault != "none":
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0901597Z                 assert result["execution"]["effect_claim"] is not None
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0902015Z                 assert result["execution"].get("collection") is None
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0902515Z                 grant = services.journal.snapshot(result["execution"]["intent"]["grant_id"])
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0902965Z                 assert grant["state"] == "revoked"
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0903484Z >               assert grant["request_count"] == (1 if fault == "cancel_after_send" else 0)
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0903909Z E               assert 0 == 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0904084Z 
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0904348Z tests/runs/test_go_task_execution_native.py:188: AssertionError
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0904840Z =============================== warnings summary ===============================
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0905312Z .venv/lib/python3.12/site-packages/fastapi/testclient.py:1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0906469Z   /home/runner/work/Karajan/Karajan/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0907427Z     from starlette.testclient import TestClient as TestClient  # noqa
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0907700Z 
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0908091Z .venv/lib/python3.12/site-packages/starlette/testclient.py:53
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0909129Z   /home/runner/work/Karajan/Karajan/.venv/lib/python3.12/site-packages/starlette/testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0910170Z     _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0910520Z 
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0910811Z -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0911353Z =========================== short test summary info ============================
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0911956Z SKIPPED [1] tests/isolation/test_isolation_probe.py:74: Windows cannot qualify Linux namespaces
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0912598Z SKIPPED [1] tests/isolation/test_isolation_probe.py:128: WSL PE control required
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0913244Z SKIPPED [4] tests/projects/test_credential_windows_owners.py:21: Windows security descriptors
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0913919Z SKIPPED [1] tests/projects/test_credential_windows_owners.py:93: Windows security descriptors
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0914959Z FAILED tests/runs/test_go_task_execution_native.py::test_actual_host_child_native_candidate_and_replay[none] - AssertionError: {"code": "TASK_STOPPED_CAPTURE_REQUIRED"}
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0915926Z assert 'effect_claimed' == 'candidate_recorded'
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0916222Z   
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0916423Z   - candidate_recorded
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0916662Z   + effect_claimed
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0917318Z FAILED tests/runs/test_go_task_execution_native.py::test_actual_host_child_native_candidate_and_replay[cancel_after_send] - assert 0 == 1
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.0918087Z ====== 2 failed, 2158 passed, 7 skipped, 2 warnings in 1150.12s (0:19:10) ======
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.4792601Z ##[error]Process completed with exit code 1.
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.4941790Z Post job cleanup.
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.5816693Z [command]/usr/bin/git version
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.5858840Z git version 2.55.0
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.5925535Z Temporarily overriding HOME='/home/runner/work/_temp/8c9621c3-59ea-45b7-94df-726f73b97856' before making global git config changes
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.5927232Z Adding repository directory to the temporary git global config as a safe directory
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.5929200Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Karajan/Karajan
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.5963430Z Removing SSH command configuration
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.5970357Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.6010233Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.6276064Z Removing HTTP extra header
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.6287087Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.6320795Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.6594866Z Removing includeIf entries pointing to credentials config files
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.6602653Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.6654609Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+python-quality (ubuntu-24.04, Python 3.12)	UNKNOWN STEP	2026-09-06T18:17:44.7121439Z Cleaning up orphan processes

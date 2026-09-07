@@ -1,0 +1,52 @@
+{
+  "schema_version": "karajan.native-relay-merge-code-review.v1",
+  "read_finished_at": "2026-09-07T02:32:38.464897+00:00",
+  "scope": "Only current merged go_relay.py, read-only code/AST review; no tests executed",
+  "initial_read": {
+    "head": "78c6dc8654099250bb0a3b7829538816d042cd93",
+    "merge_head": "046045f2d9573c3cae6375c38c8de2f6b4190d70",
+    "relay_sha256": "c45f2784bff518407fc90c3f61d9adf0a92b69f701b77dde1aef86e6b0b5d2cd"
+  },
+  "final_observed_head": "ef440f4e7902bc1d3a262afa9112154cd9690a4a",
+  "final_observed_parents": [
+    "aa384798fb49797cdc5b140130dae93ee8f651b4",
+    "401038d9105731c914d722cf3ad5998f94a875eb"
+  ],
+  "source": {
+    "path": "backend/karajan/adapters/opencode/go_relay.py",
+    "raw_sha256": "c45f2784bff518407fc90c3f61d9adf0a92b69f701b77dde1aef86e6b0b5d2cd",
+    "index_sha256": "c45f2784bff518407fc90c3f61d9adf0a92b69f701b77dde1aef86e6b0b5d2cd",
+    "index_blob": "3e8b388e8541b5c546311442801f48beb236782c",
+    "046_reference_sha256": "b79f1e08afa5aa0931e4b1056dbce7f674014d04606ce64a9d3cd48ced723881",
+    "78_reference_sha256": "088c335d1bfeedc2b69bc2395acc704ea6b32f71b6addcc74c06d87b2400170b"
+  },
+  "method_names_equal_to_046": true,
+  "methods_different_from_046": [
+    "start"
+  ],
+  "start_ast_equal_to_78": true,
+  "send_paths_equal_to_046": {
+    "_handle": true,
+    "_guard_send": true,
+    "_drain_request_body": true,
+    "_set_request_body_budget": true,
+    "_read_request": true,
+    "_recover_context_call": true,
+    "_withdraw_context_sends": true,
+    "_persist_receipt": true,
+    "_error": true
+  },
+  "confirmed_findings": [],
+  "review_notes": [
+    "046 declared-body drain, 0.5s monotonic total deadline, protocol receipt before response, write-failure reset, original call_id recovery retained exactly.",
+    "046 send_guard/ExitStack actual begin-to-stream-entry boundary retained exactly.",
+    "78 start preflight preserved: Linux-only, parent lstat rejects symlink/non-directory, fsencoded path length <=107 before server creation, existing/symlink socket rejection.",
+    "Diff against046 consists only os import, UDS107 constant and start preflight from78."
+  ],
+  "limitations": [
+    "Only Relay bytes reviewed; not full native producer/consumer/testing freeze.",
+    "Merge completed during read; initial MERGE_HEAD disappeared normally. No product mutation by reviewer.",
+    "Luna was editing cross-platform test code at initial read. No author tests rerun or new C/P/G/S result claimed."
+  ],
+  "relay_bytes_unchanged_since_initial_read": true
+}

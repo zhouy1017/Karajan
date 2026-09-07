@@ -1,0 +1,11 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/Chooo/Playground/Karajan/.cache/ci-spark-task-native
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 1 item
+
+tests/runs/test_go_task_execution.py .                                   [100%]
+
+- generated xml file: /mnt/c/Users/Chooo/Playground/Karajan/.cache/ci-spark-task-native/.cache/luna-native-final-linux-consume.xml -
+============================== 1 passed in 30.21s ==============================
