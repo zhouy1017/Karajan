@@ -1221,6 +1221,11 @@ class PlanningAdmissionAuthority:
                     self._budget_live(record)
 
                     def before_reserve() -> None:
+                        # The planning deployment descriptor is itself an
+                        # authority source. Re-read its fixed digest after a
+                        # potentially long Capacity wait, before evaluating
+                        # the sealed commander source and budget.
+                        self._assert_bootstrap_current()
                         self._assert_qualification_live(record, qualification, reobserve=True)
                         self._assert_budget_deadline(record, record["budget_usage"])
 
@@ -1333,6 +1338,7 @@ class PlanningAdmissionAuthority:
                         # observer and protected bootstrap. Capacity performs
                         # its own fresh temporal/evaluate pass only after this
                         # controller callback returns.
+                        self._assert_bootstrap_current()
                         self._assert_qualification_live(record, qualification, reobserve=True)
                         self._assert_budget_deadline(record, record["budget_usage"])
 

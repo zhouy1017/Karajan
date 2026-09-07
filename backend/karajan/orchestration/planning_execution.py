@@ -152,14 +152,18 @@ class PlanningExecution:
 
     @staticmethod
     def _monotonic_admission(previous: object, fresh: dict[str, Any]) -> bool:
-        """Allow only an exact unknown receipt to become its durable completion."""
+        """Allow exact completion or one receipt-proven unknown enrichment."""
         if previous is None:
             return True
         if not isinstance(previous, dict) or previous == fresh:
             return previous == fresh
-        if previous.get("state") != "unknown" or fresh.get("state") not in {"admitted", "denied"}:
+        if previous.get("state") != "unknown" or fresh.get("state") not in {
+            "unknown",
+            "admitted",
+            "denied",
+        }:
             return False
-        return all(
+        immutable = all(
             previous.get(key) == fresh.get(key)
             for key in (
                 "schema_version",
@@ -169,9 +173,30 @@ class PlanningExecution:
                 "budget_ref",
                 "capacity_request",
                 "capacity_command_key",
-                "capacity_activation_request",
                 "capacity_activation_command_key",
             )
+        )
+        if not immutable:
+            return False
+        if fresh.get("state") in {"admitted", "denied"}:
+            return previous.get("capacity_activation_request") == fresh.get(
+                "capacity_activation_request"
+            )
+        # A lost admit reply has no receipt or activation request in the first
+        # read-only evidence. It may be enriched only with the receipt returned
+        # by that exact persisted command and its derived activation identity;
+        # it remains unknown and cannot activate, claim, refund or rebind.
+        receipt = fresh.get("capacity_receipt")
+        return (
+            previous.get("capacity_receipt") is None
+            and previous.get("capacity_activation_request") == {}
+            and previous.get("capacity_activation_receipt") is None
+            and isinstance(receipt, dict)
+            and receipt.get("decision") == "admitted"
+            and isinstance(receipt.get("admission_id"), str)
+            and fresh.get("capacity_activation_request")
+            == {"admission_id": receipt["admission_id"]}
+            and fresh.get("capacity_activation_receipt") is None
         )
 
     @contextmanager

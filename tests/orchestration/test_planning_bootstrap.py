@@ -67,7 +67,14 @@ def deployment(tmp_path: Path) -> tuple[Path, dict[str, str]]:
         principal="owner",
     )
     # These stores are only existence probes here. Their owners open them later.
-    for name in ("planning-execution.sqlite", "planning-admission.sqlite", "capacity.sqlite"):
+    # ``runs.sqlite`` is likewise mandatory: the planning bootstrap now rejects
+    # a missing or aliased Run ledger before its factory can reopen it.
+    for name in (
+        "runs.sqlite",
+        "planning-execution.sqlite",
+        "planning-admission.sqlite",
+        "capacity.sqlite",
+    ):
         sqlite3.connect(state / name).close()
     for path in state.glob("*.sqlite"):
         path.chmod(0o600)
@@ -186,3 +193,7 @@ def test_permission_link_missing_store_and_current_digest_fail_closed(deployment
     with pytest.raises(RunError, match="^PLANNING_ADMISSION_BOOTSTRAP_INVALID$"):
         read_planning_bootstrap(control)
     assert not Path(document["capacity_database"]).exists()
+    Path(values["state_directory"]).joinpath("runs.sqlite").unlink()
+    _write(control, _document(deployment))
+    with pytest.raises(RunError, match="^PLANNING_ADMISSION_BOOTSTRAP_INVALID$"):
+        read_planning_bootstrap(control)

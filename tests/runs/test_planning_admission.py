@@ -725,6 +725,49 @@ def test_controller_accepts_exact_unknown_receipt_completion(
     assert completed["reason_codes"] == ["PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE"]
 
 
+def test_lost_admit_reply_allows_only_receipt_proven_unknown_enrichment(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A read-only admit receipt can add its activation ID without a new effect."""
+    _, authority, _, execution = _case(tmp_path, configured)
+    original_admit = authority.capacity.admit
+
+    def lose_admit_reply(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        original_admit(*args, **kwargs)
+        raise RuntimeError("admit reply lost")
+
+    monkeypatch.setattr(authority.capacity, "admit", lose_admit_reply)
+    with pytest.raises(RuntimeError, match="admit reply lost"):
+        authority.advance(execution["id"], "owner", "admit-lost")
+    controller = PlanningExecution(
+        authority.execution_database,
+        authority.planner,
+        admissions=authority,
+        capacity=authority.capacity,
+        allow_fixture_authorities=True,
+    )
+    assert controller.reconcile(execution["id"], principal="owner")["state"] == "admission_unknown"
+    assert authority.advance(execution["id"], "owner", "admit-recover")["phase"] == (
+        "capacity_activate_unknown"
+    )
+    # This is the receipt-proven unknown -> unknown enrichment: it retains the
+    # original request/key, adds only the exact admission ID, and remains
+    # resumable while activation is still unknown. Recovery does not activate
+    # or otherwise replay an effect under the lost-admit uncertainty.
+    resumed = controller.reconcile(execution["id"], principal="owner")
+    assert resumed["state"] == "admission_unknown"
+    assert resumed["reason_codes"] == ["PLANNING_ADMISSION_UNKNOWN"]
+    assert "PLANNING_ADMISSION_EVIDENCE_CHANGED" not in resumed["reason_codes"]
+    assert (
+        authority.capacity.command_receipt(
+            "activate",
+            {"admission_id": authority.capacity.snapshot()["reservations"][0]["id"]},
+            command_key="planning-activate:" + execution["id"],
+        )
+        is None
+    )
+
+
 def _protected_factory_control(tmp_path: Path, authority: PlanningAdmissionAuthority) -> Path:
     """Copy complete existing stores into a Linux-private controller deployment."""
     state = tmp_path / "protected-state"
