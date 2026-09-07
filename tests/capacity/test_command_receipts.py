@@ -287,3 +287,37 @@ def test_receipt_only_accepts_the_defined_recovery_kinds_and_strict_payloads(led
     with pytest.raises(CapacityError, match="^CAPACITY_INPUT_INVALID$"):
         store.command_receipt("reconcile", {"admission_id": "unknown"}, command_key="unknown")
     assert store.snapshot() == before
+
+
+def test_admit_boundary_callback_skips_exact_historical_receipt(ledger):
+    store, _ = ledger
+    value = request()
+    original = store.admit(value, command_key="historical-admit")
+    callbacks: list[str] = []
+
+    replayed = store.admit(
+        value,
+        command_key="historical-admit",
+        before_reserve=lambda: callbacks.append("called"),
+    )
+
+    assert replayed == original
+    assert callbacks == []
+
+
+def test_admit_boundary_callback_rolls_back_before_reservation_and_receipt(ledger):
+    store, _ = ledger
+    value = request()
+    before = store.snapshot()
+    callbacks: list[str] = []
+
+    def deadline_expired() -> None:
+        callbacks.append("called")
+        raise RuntimeError("RUN_DURATION_LIMIT")
+
+    with pytest.raises(RuntimeError, match="^RUN_DURATION_LIMIT$"):
+        store.admit(value, command_key="deadline-expired", before_reserve=deadline_expired)
+
+    assert callbacks == ["called"]
+    assert store.snapshot() == before
+    assert store.command_receipt("admit", value, command_key="deadline-expired") is None
