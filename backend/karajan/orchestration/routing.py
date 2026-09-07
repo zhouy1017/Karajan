@@ -139,6 +139,7 @@ class ApprovedRunRouting:
         command_key: str,
         worker_operation: dict[str, Any],
         candidates: Any,
+        reviewer_validator: Any,
     ) -> dict[str, Any]:
         """Assess a Reviewer from its recorded Worker lineage.
 
@@ -187,6 +188,7 @@ class ApprovedRunRouting:
                     holds,
                     worker_operation=worker_operation,
                     candidates=candidates,
+                    reviewer_validator=reviewer_validator,
                 )
             receipt["digest"] = digest(receipt)
             db.execute(
@@ -253,6 +255,7 @@ class ApprovedRunRouting:
         context_id: str,
         worker_operation: dict[str, Any],
         candidates: Any,
+        reviewer_validator: Any,
     ) -> Iterator[dict[str, Any]]:
         """Fresh Reviewer guard using the original Worker operation only."""
         for value in (run_id, task_id, principal, attempt_id, context_id):
@@ -283,6 +286,7 @@ class ApprovedRunRouting:
                 holds,
                 worker_operation=worker_operation,
                 candidates=candidates,
+                reviewer_validator=reviewer_validator,
             )
             receipt["digest"] = digest(receipt)
             yield receipt
@@ -366,6 +370,7 @@ class ApprovedRunRouting:
         reserved_profile: dict[str, Any] | None = None,
         worker_operation: dict[str, Any] | None = None,
         candidates: Any | None = None,
+        reviewer_validator: Any | None = None,
     ) -> None:
         if run["schema_version"] != "karajan.run-planning.v2":
             receipt["reason_codes"] = ["APPROVED_ROUTING_V2_REQUIRED"]
@@ -396,11 +401,25 @@ class ApprovedRunRouting:
             return
         reviewer = task["role"] == "reviewer"
         if reviewer:
-            if worker_operation is None or candidates is None:
+            if worker_operation is None or candidates is None or reviewer_validator is None:
                 receipt["reason_codes"] = ["EXECUTION_LINEAGE_REQUIRED"]
                 return
             reviewer_operation = worker_operation
             try:
+                from .go_execution_intent import _connection
+
+                transition = reviewer_operation.get("validation", {}).get("review_binding")
+                if not isinstance(transition, dict):
+                    raise RunError("REVIEWER_BINDING_REQUIRED")
+                with _connection(self.planner.projects.database, readonly=False) as project_db:
+                    project_db.execute("PRAGMA query_only=ON")
+                    reviewer_validator.current_locked(
+                        project_db,
+                        run,
+                        reviewer_operation,
+                        transition,
+                        principal=principal,
+                    )
                 lineage = _reviewer_lineage(run, task, reviewer_operation, candidates)
             except RunError as error:
                 receipt["reason_codes"] = [error.code]
@@ -511,6 +530,28 @@ class ApprovedRunRouting:
                 if reference(ref) not in lineage["reviewer_profiles"]:
                     registration["enabled"] = False
                     qualified["reason_codes"].append("APPROVED_REVIEWER_PROFILE_REQUIRED")
+                expected_source = lineage["reviewer_sources"].get(reference(ref))
+                try:
+                    authentication = observation["observation"]["binding"]["execution_start"][
+                        "authentication_source"
+                    ]
+                    current_source = {
+                        "reviewer": {
+                            "profile_id": ref["id"],
+                            "profile_revision": ref["revision"],
+                            "model_family": registration["model_family"],
+                            "qualification_ref": observation["facts"]["evidence_ref"],
+                        },
+                        "qualification_source_digest": digest(
+                            observation["observation"]["binding"]
+                        ),
+                        "authentication_source_digest": digest(authentication),
+                    }
+                except (KeyError, TypeError):
+                    current_source = None
+                if expected_source != current_source:
+                    registration["enabled"] = False
+                    qualified["reason_codes"].append("REVIEWER_QUALIFICATION_SOURCE_CHANGED")
             else:
                 execution_context, scope_issues = resolve_go_execution(
                     registration,
@@ -748,6 +789,10 @@ def _reviewer_lineage(
         "worker_task": worker_task,
         "authors": compiled_authors,
         "reviewer_profiles": profiles,
+        "reviewer_sources": {
+            (row["reviewer"]["profile_id"], row["reviewer"]["profile_revision"]): row
+            for row in sources
+        },
         "source_candidate": subject["subject"]["candidate"],
         "subject_digest": digest(subject["subject"]),
         "checks_digest": digest(checks),

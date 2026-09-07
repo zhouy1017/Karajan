@@ -244,6 +244,7 @@ class ApprovedTaskAdmission:
                     command_key="admission-assess:" + identity,
                     worker_operation=reviewer_worker,
                     candidates=bindings.candidates,
+                    reviewer_validator=bindings,
                 )
             request = _request(assessment)
             operation = {
@@ -309,6 +310,7 @@ class ApprovedTaskAdmission:
                         context_id=operation["planned_context_id"],
                         worker_operation=reviewer_worker,
                         candidates=bindings.candidates,
+                        reviewer_validator=bindings,
                     )
                 else:
                     guard = self.routing.admission_guard(

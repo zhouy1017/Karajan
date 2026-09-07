@@ -10,6 +10,7 @@ from threading import Event
 import pytest
 from karajan.orchestration.candidate_checks import ApprovedCandidateChecks
 from karajan.projects.qualification import ProfileQualificationStore, QualificationError
+from karajan.routing import evaluate_route
 from karajan.routing.compiler import digest
 from karajan.runs import RunError
 from test_candidate_checks import (
@@ -247,6 +248,204 @@ def test_current_check_change_blocks_reviewer_admission_before_capacity(binding_
     result = intents.admissions.advance(run_id, queued["id"], principal="owner")
     assert result["state"] == "blocked"
     assert result["reason_codes"] == ["REVIEW_SUBJECT_CHECKS_REQUIRED"]
+    assert intents.admissions.routing.capacity.path.read_bytes() == before
+
+
+def test_reviewer_admission_reuses_one_exact_request_after_lost_reply(binding_case, monkeypatch):
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
+    queued = intents.admissions.enqueue(run_id, "review", principal="owner", command_key="lost")
+    capacity = intents.admissions.routing.capacity
+    actual, calls = capacity.admit, []
+
+    def admit_then_lose(request, *, command_key):
+        calls.append((request, command_key))
+        actual(request, command_key=command_key)
+        raise ConnectionResetError("fixture response lost after Capacity commit")
+
+    monkeypatch.setattr(capacity, "admit", admit_then_lose)
+    with pytest.raises(ConnectionResetError, match="response lost"):
+        intents.admissions.advance(run_id, queued["id"], principal="owner")
+    recovered = intents.admissions.advance(run_id, queued["id"], principal="owner")
+    assert recovered["state"] == "reserved"
+    assert calls == [(queued["request"], "task-admit:" + queued["id"])]
+    assert recovered["request"] == queued["request"]
+    assert recovered["capacity_receipt"] == capacity.command_receipt(
+        "admit", queued["request"], command_key="task-admit:" + queued["id"]
+    )
+
+
+def test_concurrent_reviewer_advance_has_one_capacity_admission(binding_case, monkeypatch):
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
+    queued = intents.admissions.enqueue(
+        run_id, "review", principal="owner", command_key="concurrent-reviewer"
+    )
+    capacity = intents.admissions.routing.capacity
+    actual, calls = capacity.admit, []
+
+    def observed(request, *, command_key):
+        calls.append((request, command_key))
+        return actual(request, command_key=command_key)
+
+    monkeypatch.setattr(capacity, "admit", observed)
+    reservations_before = len(capacity.snapshot()["reservations"])
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        results = list(
+            pool.map(
+                lambda _: intents.admissions.advance(run_id, queued["id"], principal="owner"),
+                range(2),
+            )
+        )
+    assert [result["state"] for result in results] == ["reserved", "reserved"]
+    assert calls == [(queued["request"], "task-admit:" + queued["id"])]
+    assert len(capacity.snapshot()["reservations"]) == reservations_before + 1
+
+
+def test_lost_reviewer_activate_reply_requires_reconciliation_without_new_claim(
+    binding_case, monkeypatch
+):
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
+    queued = intents.admissions.enqueue(run_id, "review", principal="owner", command_key="activate")
+    reserved = intents.admissions.advance(run_id, queued["id"], principal="owner")
+    capacity = intents.admissions.routing.capacity
+    actual, calls = capacity.activate, []
+
+    def activate_then_lose(admission_id, *, command_key):
+        calls.append((admission_id, command_key))
+        actual(admission_id, command_key=command_key)
+        raise ConnectionResetError("fixture activate response lost after Capacity commit")
+
+    monkeypatch.setattr(capacity, "activate", activate_then_lose)
+    with pytest.raises(ConnectionResetError, match="activate response lost"):
+        capacity.activate(
+            reserved["capacity_receipt"]["admission_id"], command_key="external-activate"
+        )
+    current = intents.admissions.get(run_id, queued["id"], principal="owner")
+    assert current["state"] == "reconciliation_required"
+    assert current["request"] == queued["request"]
+    assert calls == [(reserved["capacity_receipt"]["admission_id"], "external-activate")]
+    assert intents.admissions.advance(run_id, queued["id"], principal="owner")["state"] == (
+        "reconciliation_required"
+    )
+
+
+def test_reviewer_generation_change_blocks_current_effect_before_capacity(binding_case):
+    service, qualification, intents, (run_id, _), _, _, _ = binding_case
+    intents, _, _, _, _ = _passed_reviewer_subject(binding_case)
+    queued = intents.admissions.enqueue(
+        run_id, "review", principal="owner", command_key="changed-generation"
+    )
+    qualification.generation = 2
+    before = intents.admissions.routing.capacity.path.read_bytes()
+    result = intents.admissions.advance(run_id, queued["id"], principal="owner")
+    assert result["state"] == "blocked"
+    assert result["reason_codes"] == ["REVIEWER_BINDING_CHANGED"]
+    assert intents.admissions.routing.capacity.path.read_bytes() == before
+
+
+def test_reviewer_cancelled_before_advance_never_creates_a_reservation(binding_case):
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
+    queued = intents.admissions.enqueue(run_id, "review", principal="owner", command_key="cancel")
+    before = intents.admissions.routing.capacity.path.read_bytes()
+    cancelled = intents.admissions.cancel(run_id, queued["id"], principal="owner")
+    assert cancelled["state"] == "cancelled"
+    advanced = intents.admissions.advance(run_id, queued["id"], principal="owner")
+    assert advanced["state"] == "cancelled"
+    assert intents.admissions.routing.capacity.path.read_bytes() == before
+
+
+def test_reviewer_window_change_blocks_the_stored_request(binding_case):
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
+    queued = intents.admissions.enqueue(run_id, "review", principal="owner", command_key="window")
+    capacity = intents.admissions.routing.capacity
+    pool = intents.admissions.routing.planner.get(run_id, principal="owner")[
+        "configuration_snapshot"
+    ]["configuration"]["resources"]["quota_pools"][0]
+    reservations_before = len(capacity.snapshot()["reservations"])
+    capacity.clock = lambda: 2001.0
+    capacity.observe(
+        {
+            "pool_id": pool["id"],
+            "window_id": "new-current-window",
+            "observed_at": 2001.0,
+            "reset_at": 2601.0,
+            "source": "fixture",
+            "source_ref": "changed-window-observer",
+            "metric": "remaining",
+            "amount": "80",
+            "limit": "100",
+            "covered_usage_ids": [],
+        },
+        command_key="changed-window-" + pool["id"],
+    )
+    result = intents.admissions.advance(run_id, queued["id"], principal="owner")
+    assert result["state"] == "blocked"
+    assert result["revalidation"]["route"]["snapshots"]["capacity"]["pools"][0][
+        "window_id"
+    ] == "new-current-window"
+    assert len(capacity.snapshot()["reservations"]) == reservations_before
+
+
+def test_public_reviewer_admission_rejects_uploaded_candidate_or_complexity(binding_case):
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
+    before = intents.admissions.database.read_bytes()
+    with pytest.raises(TypeError):
+        intents.admissions.enqueue(
+            run_id,
+            "review",
+            principal="owner",
+            command_key="uploaded-candidate",
+            candidate={"id": "forged"},
+        )
+    with pytest.raises(TypeError):
+        intents.admissions.enqueue(
+            run_id,
+            "review",
+            principal="owner",
+            command_key="uploaded-complexity",
+            complexity="T1",
+        )
+    assert intents.admissions.database.read_bytes() == before
+
+
+def test_reviewer_route_checks_independence_against_every_captured_author(binding_case):
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
+    queued = intents.admissions.enqueue(run_id, "review", principal="owner", command_key="authors")
+    route = queued["assessment"]["route"]
+    task = deepcopy(route["snapshots"]["task"])
+    first = deepcopy(task["authors"][0])
+    first.update(attempt_id="another-author-attempt", context_id="another-author-context")
+    task["authors"].append(first)
+    task["planned_attempt_id"] = "independent-reviewer-attempt"
+    task["planned_context_id"] = "independent-reviewer-context"
+    before = intents.admissions.routing.capacity.path.read_bytes()
+    result = evaluate_route(task, route["snapshots"]["policy"], route["snapshots"]["capacity"])
+    assert result["selected_profile"] is not None
+    assert all(
+        author["attempt_id"] != task["planned_attempt_id"]
+        and author["context_id"] != task["planned_context_id"]
+        for author in result["snapshots"]["task"]["authors"]
+    )
+    assert intents.admissions.routing.capacity.path.read_bytes() == before
+
+
+@pytest.mark.parametrize("family", ["same", None])
+def test_t3_reviewer_same_or_unknown_family_is_rejected_before_capacity(binding_case, family):
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
+    queued = intents.admissions.enqueue(run_id, "review", principal="owner", command_key="t3")
+    route = queued["assessment"]["route"]
+    task, policy = deepcopy(route["snapshots"]["task"]), deepcopy(route["snapshots"]["policy"])
+    task["complexity"] = "T3"
+    profile = task["authors"][0]["profile"]
+    author_family = task["authors"][0]["model_family"]
+    for registration in policy["resources"]["profiles"]:
+        if {"id": registration["id"], "revision": registration["revision"]} == profile:
+            registration["model_family"] = author_family if family == "same" else None
+    if family is None:
+        task["authors"][0]["model_family"] = None
+    before = intents.admissions.routing.capacity.path.read_bytes()
+    result = evaluate_route(task, policy, route["snapshots"]["capacity"])
+    assert result["selected_profile"] is None
+    assert "REVIEW_FAMILY_NOT_INDEPENDENT" in result["candidates"][0]["reason_codes"]
     assert intents.admissions.routing.capacity.path.read_bytes() == before
 
 
