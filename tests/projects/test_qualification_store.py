@@ -105,13 +105,10 @@ def _commander_start(
     identity: str,
     source: dict,
     provenance: str | None,
-    profile_binding: dict | None = None,
 ) -> None:
     """Persist a sealed synthetic #113-shaped record only for reader C negatives."""
     with store._owned(case["project_id"], "owner") as db:
-        bound = profile_binding or store._binding(
-            db, case["project_id"], {"id": "fixture-profile", "revision": 1}
-        )
+        bound = store._binding(db, case["project_id"], {"id": "fixture-profile", "revision": 1})
         start = {
             "qualification_scope": "commander_planning.v1",
             "profile_binding": bound,
@@ -206,22 +203,21 @@ def test_commander_reader_latest_same_profile_binding_mismatch_blocks_old_pass(c
         commander_source=lambda _db, _project, _current, _principal: source,
     )
     _commander_start(store, case, identity="commander-a-pass", source=source, provenance="official")
-    with store._owned(case["project_id"], "owner") as db:
-        changed = copy.deepcopy(
-            store._binding(db, case["project_id"], {"id": "fixture-profile", "revision": 1})
-        )
-    # This is a real same scope/Profile identity with a newer, incompatible
-    # repository binding. It is intentionally incomplete, then the catalog is
-    # still on A when the reader runs: no older A pass may be recovered.
-    changed["registration"]["profile"]["binding"]["channel_id"] = "fixture-channel-b"
+    changed = copy.deepcopy(case["configuration"])
+    changed["resources"]["profiles"][0]["profile"]["binding"]["channel_id"] = (
+        "fixture-channel-b"
+    )
+    # Persist B through the actual catalog, create a newer incomplete start,
+    # then restore A. That B start must still supersede the old A pass.
+    apply(case, changed, key="commander-to-b")
     _commander_start(
         store,
         case,
         identity="commander-b-incomplete",
         source=source,
         provenance=None,
-        profile_binding=changed,
     )
+    apply(case, case["configuration"], key="commander-back-to-a")
     with store.commander_facts_guard(
         case["project_id"],
         case["registration"],
@@ -270,16 +266,16 @@ def test_expiry_and_frozen_identity_mismatch_fail_closed(case: dict) -> None:
         facts(case)
 
 
-def apply(case: dict, configuration: dict) -> None:
+def apply(case: dict, configuration: dict, *, key: str = "changed") -> None:
     projects = case["projects"]
     preview = projects.preview_configuration(
-        case["project_id"], configuration, command_key="changed-preview", principal="owner"
+        case["project_id"], configuration, command_key=key + "-preview", principal="owner"
     )
     projects.apply_configuration(
         case["project_id"],
         preview["preview_id"],
         expected_revision=projects.get(case["project_id"])["revision"],
-        command_key="changed-apply",
+        command_key=key + "-apply",
         principal="owner",
     )
 
