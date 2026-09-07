@@ -11,9 +11,11 @@ from karajan.capacity import CapacityStore
 from karajan.orchestration.planning_execution import PlanningExecution
 from karajan.runs import RunError, RunPlanner
 from karajan.runs.planning import digest
-from test_planning import create_request, proposal
 
-pytest_plugins = ["test_planning"]
+from tests.runs.test_planning import create_request, proposal
+from tests.runs.test_routing_authorization import policy_request, request_v2, submit_request
+
+pytest_plugins = ["tests.runs.test_planning"]
 
 
 class FixtureAuthorities:
@@ -73,6 +75,14 @@ class FixtureAuthorities:
             "artifact_sha256": hashlib.sha256(self.content).hexdigest(),
             "artifact_size": len(self.content),
             "content": self.content,
+        }
+
+    def read_source(self, binding: dict[str, Any]) -> object:
+        return {
+            "schema_version": "karajan.planning-output-source.v1",
+            "binding_sha256": digest(binding),
+            "authority_kind": "fixture",
+            "source_sha256": self.output_source,
         }
 
 
@@ -154,6 +164,7 @@ def planning_case(
         planner,
         admissions=authorities,
         outputs=authorities,
+        capacity=authorities.capacity,
         allow_fixture_authorities=True,
     )
     return service, run, intent, authorities
@@ -188,6 +199,7 @@ def test_id_only_output_consumption_reopens_exact_capacity_receipt_and_plan(
         service.planner,
         admissions=authorities,
         outputs=authorities,
+        capacity=authorities.capacity,
         allow_fixture_authorities=True,
     )
     assert reopened.reconcile(execution["id"], principal="owner") == admitted
@@ -277,3 +289,119 @@ def test_production_label_cannot_promote_a_test_double(configured: dict, tmp_pat
     )()
     blocked = service.reconcile(execution["id"], principal="owner")
     assert blocked["reason_codes"] == ["PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE"]
+
+
+def test_capacity_reader_and_frozen_output_source_reject_substitution(
+    configured: dict, tmp_path: Path
+) -> None:
+    registry = configured["registry"]
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authorities)
+    original = authorities.read_admission
+
+    def unrelated_receipt(binding: dict[str, Any]) -> object:
+        value = original(binding)
+        value["capacity_command_key"] = "never-issued-command"
+        value["capacity_receipt"] = {"unrelated": "receipt"}
+        return value
+
+    authorities.read_admission = unrelated_receipt  # type: ignore[method-assign]
+    rejected = service.reconcile(execution["id"], principal="owner")
+    assert rejected["submission"] is None
+    assert rejected["reason_codes"] == ["PLANNING_CAPACITY_RECEIPT_MISMATCH"]
+
+    (tmp_path / "source").mkdir()
+    service, run, intent, authorities = planning_case(
+        tmp_path / "source", {**configured, "registry": registry}
+    )
+    execution = begin(service, run, intent, authorities)
+    assert service.reconcile(execution["id"], principal="owner")["state"] == "awaiting_output"
+    authorities.output_source = "c" * 64
+    rejected = service.submit(execution["id"], principal="owner", command_key="submit")
+    assert rejected["submission"] is None
+    assert rejected["reason_codes"] == ["PLANNING_OUTPUT_BINDING_MISMATCH"]
+    assert service.planner.get(run["id"], principal="owner")["plans"] == []
+
+
+def test_exact_run_receipt_recovers_lost_reply_without_resubmission(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authorities)
+    original = service.planner._submit_planning_execution_plan
+
+    def lose_reply(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        original(*args, **kwargs)
+        raise RuntimeError("reply lost after RunPlanner commit")
+
+    monkeypatch.setattr(service.planner, "_submit_planning_execution_plan", lose_reply)
+    with pytest.raises(RuntimeError, match="reply lost"):
+        service.submit(execution["id"], principal="owner", command_key="submit")
+    recovered = PlanningExecution(
+        service.database,
+        service.planner,
+        admissions=authorities,
+        outputs=authorities,
+        allow_fixture_authorities=True,
+    ).submit(execution["id"], principal="owner", command_key="submit")
+    assert recovered["state"] == "submitted"
+    assert service.planner.get(run["id"], principal="owner")["plans"] == [
+        recovered["submission"]
+    ]
+
+
+def test_cancellation_observed_before_run_submit_prevents_plan(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authorities)
+    original = service.planner._submit_planning_execution_plan
+
+    def cancel_at_boundary(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        result = service.cancel(execution["id"], principal="owner", command_key="cancel")
+        assert result["cancel_requested"]
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(service.planner, "_submit_planning_execution_plan", cancel_at_boundary)
+    result = service.submit(execution["id"], principal="owner", command_key="submit")
+    assert result["submission"] is None
+    assert service.planner.get(run["id"], principal="owner")["plans"] == []
+
+
+def test_begin_replay_survives_original_intent_state_change(
+    configured: dict, tmp_path: Path
+) -> None:
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authorities)
+    service.submit(execution["id"], principal="owner", command_key="submit")
+    assert (
+        service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
+        == execution
+    )
+
+
+def test_v2_output_uses_the_versioned_parser_and_run_submission(
+    project: tuple[Any, dict[str, Any], Path], tmp_path: Path
+) -> None:
+    registry, configured, _ = project
+    policy = registry.register_execution_policy(
+        configured["id"], policy_request(configured), command_key="policy", principal="owner"
+    )
+    planner = RunPlanner(tmp_path / "v2-runs.sqlite", registry)
+    run = planner.create(request_v2(configured, policy), command_key="run", principal="owner")
+    intent = planner.planning_intent(run["id"], term=1, command_key="intent", principal="lead")
+    authorities = FixtureAuthorities(capacity_store(tmp_path / "v2-capacity"))
+    service = PlanningExecution(
+        tmp_path / "v2-planning-execution.sqlite",
+        planner,
+        admissions=authorities,
+        outputs=authorities,
+        capacity=authorities.capacity,
+        allow_fixture_authorities=True,
+    )
+    execution = service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
+    content = json.dumps(submit_request(run, intent)["plan"], separators=(",", ":")).encode()
+    authorities.prepare(execution["binding"], content)
+    submitted = service.submit(execution["id"], principal="owner", command_key="submit")
+    assert submitted["state"] == "submitted"
+    assert submitted["submission"]["routing_binding"]["execution_policy"]["id"] == policy["id"]

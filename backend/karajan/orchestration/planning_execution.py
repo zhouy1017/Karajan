@@ -17,6 +17,7 @@ from typing import Any, Literal, Protocol
 
 from pydantic import Field, ValidationError
 
+from karajan.capacity import CapacityStore
 from karajan.contracts.probe import Contract
 from karajan.runs import RunError, RunPlanner
 from karajan.runs.planning import digest, encoded, identifier
@@ -51,11 +52,22 @@ class PlanningOutputEvidence(Contract):
     content: bytes
 
 
+class PlanningOutputSource(Contract):
+    """Source identity frozen before an output is consumed."""
+
+    schema_version: Literal["karajan.planning-output-source.v1"]
+    binding_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    authority_kind: Literal["fixture", "production"]
+    source_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
 class PlanningAdmissionAuthority(Protocol):
     def read_admission(self, binding: dict[str, Any]) -> object: ...
 
 
 class PlanningOutputAuthority(Protocol):
+    def read_source(self, binding: dict[str, Any]) -> object: ...
+
     def read_output(self, execution_id: str, binding: dict[str, Any]) -> object: ...
 
 
@@ -69,6 +81,7 @@ class PlanningExecution:
         *,
         admissions: PlanningAdmissionAuthority | None = None,
         outputs: PlanningOutputAuthority | None = None,
+        capacity: CapacityStore | None = None,
         allow_fixture_authorities: bool = False,
         existing_only: bool = False,
         clock: Callable[[], float] | None = None,
@@ -79,6 +92,7 @@ class PlanningExecution:
         self.planner = planner
         self.admissions = admissions
         self.outputs = outputs
+        self.capacity = capacity
         self.allow_fixture_authorities = allow_fixture_authorities
         self.existing_only = existing_only
         self.clock = planner.clock if clock is None else clock
@@ -214,7 +228,19 @@ class PlanningExecution:
     ) -> dict[str, Any]:
         for value in (run_id, intent_id, principal, command_key):
             identifier(value)
-        run, intent = self._owner_run(run_id, principal), None
+        # Authenticate the owner before checking the command ledger.  A replay is
+        # the original approved command, even after its intent has become admitted.
+        run = self._owner_run(run_id, principal)
+        replay_payload = ["begin", run_id, intent_id]
+        with self._transaction() as db:
+            prior = db.execute(
+                "SELECT payload,result FROM commands WHERE principal=? AND key=?",
+                (principal, command_key),
+            ).fetchone()
+            if prior is not None:
+                if prior["payload"] != encoded(replay_payload):
+                    raise RunError("IDEMPOTENCY_CONFLICT")
+                return dict(json.loads(prior["result"]))
         intent = self._intent(run, intent_id)
         with self._transaction() as db:
             def create() -> dict[str, Any]:
@@ -247,7 +273,7 @@ class PlanningExecution:
                 return result
 
             return self._command(
-                db, principal, command_key, ["begin", run_id, intent_id], create
+                db, principal, command_key, replay_payload, create
             )
 
     def get(self, execution_id: str, *, principal: str) -> dict[str, Any]:
@@ -266,7 +292,17 @@ class PlanningExecution:
             self._owner_run(execution["run_id"], principal)
 
             def cancel() -> dict[str, Any]:
-                if execution["submission"] is None:
+                if execution["submission"] is None and execution["state"] in {
+                    "submit_claimed",
+                    "submission_unknown",
+                }:
+                    # A durable claim may already have crossed into the Run store.
+                    # Record the request, but never promise that it cancelled a plan.
+                    execution["cancel_requested"] = True
+                    execution["state"] = "submission_unknown"
+                    execution["reason_codes"] = ["PLANNING_EXECUTION_SUBMISSION_UNKNOWN"]
+                    self._save(db, execution)
+                elif execution["submission"] is None:
                     execution["cancel_requested"] = True
                     execution["state"] = "cancelled"
                     execution["reason_codes"] = ["PLANNING_EXECUTION_CANCELLED"]
@@ -298,6 +334,8 @@ class PlanningExecution:
             return self._blocked(
                 execution_id, principal, "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE"
             )
+        if self.capacity is None:
+            return self._blocked(execution_id, principal, "PLANNING_CAPACITY_AUTHORITY_UNAVAILABLE")
         if (
             evidence["binding_sha256"] != execution["binding_sha256"]
             or evidence["budget_ref"] != execution["binding"]["budget_ref"]
@@ -315,6 +353,36 @@ class PlanningExecution:
             or evidence["capacity_request"].get("purpose") != "lead"
         ):
             return self._blocked(execution_id, principal, "PLANNING_ADMISSION_BINDING_MISMATCH")
+        try:
+            receipt = self.capacity.command_receipt(
+                "admit",
+                evidence["capacity_request"],
+                command_key=evidence["capacity_command_key"],
+            )
+        except ValueError:
+            return self._blocked(execution_id, principal, "PLANNING_CAPACITY_RECEIPT_INVALID")
+        if (
+            receipt is None
+            or receipt != evidence["capacity_receipt"]
+            or receipt.get("decision") != "admitted"
+        ):
+            return self._blocked(execution_id, principal, "PLANNING_CAPACITY_RECEIPT_MISMATCH")
+        if self.outputs is None:
+            return self._blocked(execution_id, principal, "PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE")
+        try:
+            source = PlanningOutputSource.model_validate(
+                self.outputs.read_source(execution["binding"])
+            ).model_dump()
+        except (ValidationError, TypeError, ValueError):
+            return self._blocked(execution_id, principal, "PLANNING_OUTPUT_SOURCE_INVALID")
+        if source["authority_kind"] == "fixture" and not self.allow_fixture_authorities:
+            return self._blocked(execution_id, principal, "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN")
+        if source["authority_kind"] == "production":
+            return self._blocked(
+                execution_id, principal, "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE"
+            )
+        if source["binding_sha256"] != execution["binding_sha256"]:
+            return self._blocked(execution_id, principal, "PLANNING_OUTPUT_SOURCE_BINDING_MISMATCH")
         with self._transaction() as db:
             current = self._load(db, execution_id)
             if current["cancel_requested"]:
@@ -322,6 +390,9 @@ class PlanningExecution:
             if current["admission"] not in (None, evidence):
                 return self._blocked_locked(db, current, "PLANNING_ADMISSION_EVIDENCE_CHANGED")
             current["admission"] = evidence
+            if current.get("output_source_sha256") not in (None, source["source_sha256"]):
+                return self._blocked_locked(db, current, "PLANNING_OUTPUT_SOURCE_CHANGED")
+            current["output_source_sha256"] = source["source_sha256"]
             current["state"] = (
                 "awaiting_output" if evidence["state"] == "admitted" else "admission_unknown"
             )
@@ -347,36 +418,48 @@ class PlanningExecution:
         return execution
 
     def submit(self, execution_id: str, *, principal: str, command_key: str) -> dict[str, Any]:
-        """Consume one sealed output through the parser and existing plan validator."""
+        """Consume a sealed output, then recover one fixed Run submission by receipt."""
         for value in (execution_id, principal, command_key):
             identifier(value)
         execution = self.reconcile(execution_id, principal=principal)
-        if execution["state"] != "awaiting_output":
-            return execution
+        if execution["state"] == "awaiting_output":
+            execution = self._capture_output(execution, principal, command_key)
+        if execution["state"] == "output_captured":
+            execution = self._claim_submission(execution_id, principal, command_key)
+        if execution["state"] in {"submit_claimed", "submission_unknown"}:
+            return self._recover_or_submit(execution_id, principal)
+        return execution
+
+    def _capture_output(
+        self, execution: dict[str, Any], principal: str, command_key: str
+    ) -> dict[str, Any]:
         if self.outputs is None:
-            return self._blocked(execution_id, principal, "PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE")
+            return self._blocked(
+                execution["id"], principal, "PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE"
+            )
         try:
             evidence = PlanningOutputEvidence.model_validate(
-                self.outputs.read_output(execution_id, execution["binding"])
+                self.outputs.read_output(execution["id"], execution["binding"])
             ).model_dump()
         except (ValidationError, TypeError, ValueError):
-            return self._blocked(execution_id, principal, "PLANNING_OUTPUT_EVIDENCE_INVALID")
+            return self._blocked(execution["id"], principal, "PLANNING_OUTPUT_EVIDENCE_INVALID")
         content: bytes = evidence.pop("content")
         actual_sha256 = hashlib.sha256(content).hexdigest()
         if evidence["authority_kind"] == "fixture" and not self.allow_fixture_authorities:
-            return self._blocked(execution_id, principal, "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN")
+            return self._blocked(execution["id"], principal, "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN")
         if evidence["authority_kind"] == "production":
             return self._blocked(
-                execution_id, principal, "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE"
+                execution["id"], principal, "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE"
             )
         if (
-            evidence["execution_id"] != execution_id
+            evidence["execution_id"] != execution["id"]
             or evidence["binding_sha256"] != execution["binding_sha256"]
+            or evidence["source_sha256"] != execution.get("output_source_sha256")
             or not evidence["completed"]
             or evidence["artifact_size"] != len(content)
             or evidence["artifact_sha256"] != actual_sha256
         ):
-            return self._blocked(execution_id, principal, "PLANNING_OUTPUT_BINDING_MISMATCH")
+            return self._blocked(execution["id"], principal, "PLANNING_OUTPUT_BINDING_MISMATCH")
         try:
             from karajan.runs.planning_output import parse_planning_output
 
@@ -386,39 +469,124 @@ class PlanningExecution:
                 else parse_planning_output(content, version="v1").model_dump()
             )
         except (UnicodeError, ValueError, ValidationError):
-            return self._blocked(execution_id, principal, "PLANNING_OUTPUT_REJECTED")
+            return self._blocked(execution["id"], principal, "PLANNING_OUTPUT_REJECTED")
         sealed = {**evidence, "content_sha256": actual_sha256}
+        run = self._owner_run(execution["run_id"], principal)
+        request: dict[str, Any] = {
+            "run_id": execution["run_id"],
+            "term": execution["binding"]["term"],
+            "intent_id": execution["intent_id"],
+            "expected_plan_revision": run["latest_plan_revision"],
+            "plan": plan,
+        }
+        if run["schema_version"] == "karajan.run-planning.v2":
+            request["schema_version"] = "karajan.submit-plan.v2"
         with self._transaction() as db:
-            current = self._load(db, execution_id)
+            current = self._load(db, execution["id"])
             self._owner_run(current["run_id"], principal)
-            def submit() -> dict[str, Any]:
+
+            def capture() -> dict[str, Any]:
                 if current["cancel_requested"]:
                     return current
                 if current["output"] not in (None, sealed):
                     return self._blocked_locked(db, current, "PLANNING_OUTPUT_EVIDENCE_CHANGED")
                 current["output"] = sealed
+                current["submission_request"] = request
+                current["submission_command_key"] = "planning-execution-submit:" + current["id"]
+                current["submission_principal"] = current["binding"]["principal"]
                 current["state"] = "output_captured"
                 self._save(db, current)
                 return current
-            current = self._command(
-                db, principal, command_key, ["submit", execution_id, sealed], submit
+
+            return self._command(
+                db, principal, command_key, ["submit", execution["id"], sealed], capture
             )
-        if current["submission"] is not None or current["state"] != "output_captured":
+
+    def _claim_submission(
+        self, execution_id: str, principal: str, command_key: str
+    ) -> dict[str, Any]:
+        with self._transaction() as db:
+            current = self._load(db, execution_id)
+            self._owner_run(current["run_id"], principal)
+            if current["cancel_requested"]:
+                return current
+            if current["state"] == "output_captured":
+                current["state"] = "submit_claimed"
+                current["submission_started"] = False
+                current["reason_codes"] = []
+                self._save(db, current)
             return current
+
+    def _recover_or_submit(self, execution_id: str, principal: str) -> dict[str, Any]:
+        with self._transaction() as db:
+            current = self._load(db, execution_id)
+            self._owner_run(current["run_id"], principal)
+            request = current.get("submission_request")
+            key = current.get("submission_command_key")
+            submission_principal = current.get("submission_principal")
+            if (
+                not isinstance(request, dict)
+                or not isinstance(key, str)
+                or not isinstance(submission_principal, str)
+            ):
+                return self._blocked_locked(db, current, "PLANNING_SUBMISSION_BINDING_MISSING")
         try:
-            submission = self.planner._submit_planning_execution_plan(
-                current["run_id"],
-                current["intent_id"],
-                plan,
-                execution_id=execution_id,
-                binding_sha256=current["binding_sha256"],
-                principal=principal,
-                command_key="planning-execution-submit:" + execution_id,
+            receipt = self.planner.command_receipt(
+                "submit_plan", request, principal=submission_principal, command_key=key
             )
         except RunError as error:
             return self._blocked(execution_id, principal, error.code)
+        if receipt is not None:
+            return self._record_submission(execution_id, principal, receipt)
         with self._transaction() as db:
             current = self._load(db, execution_id)
+            if current["state"] == "submission_unknown":
+                return current
+            if current["cancel_requested"]:
+                return current
+            if current.get("submission_started"):
+                current["state"] = "submission_unknown"
+                current["reason_codes"] = ["PLANNING_EXECUTION_SUBMISSION_UNKNOWN"]
+                self._save(db, current)
+                return current
+            current["submission_started"] = True
+            self._save(db, current)
+        try:
+            submission = self.planner._submit_planning_execution_plan(
+                request["run_id"],
+                current["intent_id"],
+                request,
+                execution_id=execution_id,
+                binding_sha256=current["binding_sha256"],
+                principal=principal,
+                command_key=key,
+                submission_guard=lambda: self._submission_allowed(execution_id, principal),
+            )
+        except RunError as error:
+            return self._blocked(execution_id, principal, error.code)
+        except Exception:
+            with self._transaction() as db:
+                current = self._load(db, execution_id)
+                if current["submission"] is None:
+                    current["state"] = "submission_unknown"
+                    current["reason_codes"] = ["PLANNING_EXECUTION_SUBMISSION_UNKNOWN"]
+                    self._save(db, current)
+            raise
+        return self._record_submission(execution_id, principal, submission)
+
+    def _submission_allowed(self, execution_id: str, principal: str) -> None:
+        with self._transaction() as db:
+            current = self._load(db, execution_id)
+            self._owner_run(current["run_id"], principal)
+            if current["cancel_requested"]:
+                raise RunError("PLANNING_EXECUTION_CANCELLED")
+
+    def _record_submission(
+        self, execution_id: str, principal: str, submission: dict[str, Any]
+    ) -> dict[str, Any]:
+        with self._transaction() as db:
+            current = self._load(db, execution_id)
+            self._owner_run(current["run_id"], principal)
             if current["submission"] is None:
                 current["submission"] = submission
                 current["state"] = "submitted"
