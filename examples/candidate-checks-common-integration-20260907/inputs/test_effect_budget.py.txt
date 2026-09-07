@@ -1,0 +1,249 @@
+"""Real operation/Run/Capacity/Host/Journal/CAS; explicit qualification/runner doubles.
+
+The consumer cases exercise production start_native/send_guard callbacks through
+its public entry. They do not execute a model runtime or send HTTP requests.
+"""
+
+import sqlite3
+import sys
+from contextlib import contextmanager
+from pathlib import Path
+
+import pytest
+from karajan.adapters.opencode.go_journal import GoCallJournal
+from karajan.candidates import CandidateStore
+from karajan.execution import ProcessIdentity, ProcessSpec, RunnerHost
+from karajan.orchestration.execution_budget import RunExecutionBudget
+from karajan.orchestration.go_execution_intent import GoExecutionIntents, GoLaunchSpec
+from karajan.orchestration.go_task_binding import execution_source, task_host_manifest
+from karajan.orchestration.go_task_collector import ApprovedGoCollector
+from karajan.orchestration.go_task_execution import (
+    ApprovedGoTaskExecution,
+    GoTaskServices,
+    consume_go_task,
+)
+from karajan.runs import RunError
+from test_candidate_checks import SourceFixture, check_case
+from test_go_execution_intent import case, projected, ready, reservation
+from test_go_task_collector import captured_case, collection_case, workspace_case
+
+__all__ = [
+    "case",
+    "projected",
+    "ready",
+    "reservation",
+    "captured_case",
+    "collection_case",
+    "workspace_case",
+    "check_case",
+]
+
+
+class ChildIdentityBoundary(RunnerHost):
+    """Only the direct-child authority is synthetic, not persistence or approval."""
+
+    runner = ProcessIdentity(42, "synthetic-budget-child")
+
+    def wait_for_runner_registration(self, attempt_id, *, timeout_seconds=10):
+        return self.runner
+
+    @contextmanager
+    def current_runner_guard(self, attempt_id, *, fence, authorization_ref):
+        if getattr(self, "after_identity_wait", None) is not None:
+            self.after_identity_wait()
+        yield self.runner
+
+
+@pytest.fixture
+def writer(ready, projected, tmp_path):
+    admissions, _, run, operation, workspace = ready
+    mechanism = workspace["source_binding"]["profile_source"]["qualification"]["observation"][
+        "binding"
+    ]["execution_start"]["source"]["runtime_source"]
+    source = {"native_task": {"qualified_mechanism_descriptor": mechanism}, "fixture_only": True}
+    host = ChildIdentityBoundary(tmp_path / "budget-host")
+    candidates = CandidateStore(tmp_path / "candidates", existing_only=True)
+    journal = GoCallJournal(tmp_path / "budget-journal.sqlite", clock=lambda: 1000.0)
+    spec = ProcessSpec((sys._base_executable, "-c", "pass"), tmp_path)
+    intents = GoExecutionIntents(
+        admissions,
+        source=execution_source(source),
+        host=host,
+        journal=journal,
+        candidates=candidates,
+        launch_compiler=lambda op: GoLaunchSpec(spec, "c" * 64),
+    )
+    services = GoTaskServices(
+        intents,
+        candidates,
+        journal,
+        projected["credentials"],
+        Path("unused-fixture-runtime"),
+        object(),
+        tmp_path / "no-native-directory",
+        lambda: source,
+        lambda *args: spec,
+    )
+    args = run["id"], operation["id"]
+    intents.prepare_intent(*args, principal="owner", command_key="budget-prepare")
+    return ApprovedGoTaskExecution(services), args, spec
+
+
+def budget_end(intents, run_id):
+    budget = RunExecutionBudget(intents.admissions).get(run_id, principal="owner")
+    return budget["started_at"] + budget["max_duration_seconds"]
+
+
+@pytest.mark.parametrize("history", ["expired", "old_schema"])
+def test_public_writer_advance_refuses_new_activation_after_queue_or_missing_history(
+    writer, monkeypatch, history
+):
+    facade, args, _ = writer
+    intents = facade.services.intents
+    if history == "expired":
+        now = budget_end(intents, args[0])
+        monkeypatch.setattr(intents.admissions.routing.planner, "clock", lambda: now)
+        expected = "RUN_DURATION_LIMIT"
+    else:
+        with sqlite3.connect(intents.admissions.database) as db:
+            db.execute("DROP TABLE run_execution_budgets")
+        expected = "RUN_EXECUTION_HISTORY_RECONCILIATION_REQUIRED"
+        assert RunExecutionBudget(intents.admissions).get(args[0], principal="owner") is None
+    capacity = intents.admissions.routing.capacity.path
+    original_capacity = capacity.read_bytes()
+    original_journal = facade.services.journal.path.read_bytes()
+    assert facade.get(*args, principal="owner")["execution"]["phase"] == "prepared"
+    with pytest.raises(RunError, match=expected):
+        facade.advance(*args, principal="owner")
+    assert capacity.read_bytes() == original_capacity
+    assert facade.services.journal.path.read_bytes() == original_journal
+    assert intents.host.reconcile() == []
+    assert not facade.services.work_root.exists()
+    assert facade.reconcile(*args, principal="owner")["execution"]["effect_claim"] is None
+
+
+def prepare_consumer(facade, args, spec):
+    intents = facade.services.intents
+    operation = facade.get(*args, principal="owner")
+    intent = operation["execution"]["intent"]
+    intents.admissions.routing.capacity.activate(
+        intent["admission_id"], command_key=intent["activation_key"]
+    )
+    intents.activation_recorded(*args, principal="owner")
+    operation = intents.freeze_launch(*args, principal="owner")
+    intents.host.prepare(task_host_manifest(operation), intent["start_key"], spec)
+    intents.host.initialize_control_once(
+        intent["attempt_id"],
+        prepared_id=intent["start_key"],
+        fence=1,
+        authorization_ref=intent["authorization_ref"],
+    )
+    intents.record_host_prepared(*args, principal="owner")
+    intents.mark_start_unknown(*args, principal="owner")
+
+
+@pytest.mark.parametrize("expire_at", ["native", "host_wait", "send", "never"])
+def test_public_consumer_rechecks_shared_deadline_at_native_and_send_effect_ports(
+    writer, monkeypatch, expire_at
+):
+    facade, args, spec = writer
+    prepare_consumer(facade, args, spec)
+    services = facade.services
+    effects = []
+    now = budget_end(services.intents, args[0])
+
+    class EndOfBoundaryTest(Exception):
+        pass
+
+    class NativeBoundary:
+        def start(self):
+            effects.append("native")
+            return {"fixture_only": True}
+
+    def producer(*arguments, start_native, send_guard, **kwargs):
+        if expire_at == "native":
+            monkeypatch.setattr(services.intents.admissions.routing.planner, "clock", lambda: now)
+        if expire_at == "host_wait":
+            # Time consumed acquiring the final Host authority follows the
+            # earlier operation/Run/Capacity checks in the actual effect path.
+            services.intents.host.after_identity_wait = lambda: monkeypatch.setattr(
+                services.intents.admissions.routing.planner, "clock", lambda: now
+            )
+        start_native(NativeBoundary())
+        if expire_at == "send":
+            monkeypatch.setattr(services.intents.admissions.routing.planner, "clock", lambda: now)
+        with send_guard():
+            effects.append("send")
+        raise EndOfBoundaryTest()
+
+    monkeypatch.setattr("karajan.orchestration.go_task_execution.execute_go_task", producer)
+    if expire_at == "never":
+        with pytest.raises(EndOfBoundaryTest):
+            consume_go_task(services, *args, principal="owner")
+        assert effects == ["native", "send"]
+    else:
+        with pytest.raises(RunError, match="RUN_DURATION_LIMIT"):
+            consume_go_task(services, *args, principal="owner")
+        assert effects == ([] if expire_at in {"native", "host_wait"} else ["native"])
+    operation = facade.get(*args, principal="owner")
+    grant = services.journal.snapshot(operation["execution"]["intent"]["grant_id"])
+    assert grant["state"] == "revoked" and grant["request_count"] == 0
+    assert operation["execution"]["effect_claim"] is not None
+    before = list(effects)
+    consume_go_task(services, *args, principal="owner")
+    assert effects == before
+
+
+def test_deadline_does_not_discard_a_valid_late_capture(collection_case, monkeypatch):
+    intents, args, candidates, journal, result = collection_case
+    now = budget_end(intents, args[0])
+    monkeypatch.setattr(intents.admissions.routing.planner, "clock", lambda: now)
+    original_budget = RunExecutionBudget(intents.admissions).get(args[0], principal="owner")
+    original_journal = journal.path.read_bytes()
+    collector = ApprovedGoCollector(intents, candidates, journal, source_check=lambda: None)
+    saved = collector.collect(*args, principal="owner", runner=intents.host.runner, result=result)
+    assert collector.recover(*args, principal="owner") == saved
+    assert candidates.get(saved["id"])["id"] == saved["id"]
+    assert intents.read(*args, principal="owner")["execution"]["phase"] == "candidate_recorded"
+    assert RunExecutionBudget(intents.admissions).get(args[0], principal="owner") == original_budget
+    assert journal.path.read_bytes() == original_journal
+
+
+@pytest.mark.parametrize("phase", ["prepared", "host_prepared", "old_schema"])
+def test_public_checks_queue_cannot_start_with_expired_or_missing_shared_budget(
+    check_case, tmp_path, monkeypatch, phase
+):
+    from karajan.orchestration.candidate_checks import ApprovedCandidateChecks, CheckLaunchSpec
+
+    intents, args, candidates, _ = check_case
+    host = RunnerHost(tmp_path / "check-budget-host")
+    checks = ApprovedCandidateChecks(
+        intents.admissions,
+        candidates,
+        runner=SourceFixture(),
+        host=host,
+        controller_source=lambda: {"schema_version": "synthetic.check-controller.v1"},
+        launch_compiler=lambda execution: CheckLaunchSpec(
+            ProcessSpec((sys._base_executable, "-c", "pass"), tmp_path),
+            "b" * 64,
+        ),
+    )
+    checks.advance(*args, principal="owner")
+    if phase == "host_prepared":
+        checks.advance(*args, principal="owner")
+        checks.advance(*args, principal="owner")
+    if phase == "old_schema":
+        with sqlite3.connect(intents.admissions.database) as db:
+            db.execute("DROP TABLE run_execution_budgets")
+        expected = "RUN_EXECUTION_HISTORY_RECONCILIATION_REQUIRED"
+    else:
+        now = budget_end(intents, args[0])
+        monkeypatch.setattr(intents.admissions.routing.planner, "clock", lambda: now)
+        expected = "RUN_DURATION_LIMIT"
+    original = checks.get(*args, principal="owner")
+    budget_before = RunExecutionBudget(intents.admissions).get(args[0], principal="owner")
+    with pytest.raises(RunError, match=expected):
+        checks.advance(*args, principal="owner")
+    assert checks.get(*args, principal="owner") == original
+    assert all(snapshot.supervisor is None for snapshot in host.reconcile())
+    assert RunExecutionBudget(intents.admissions).get(args[0], principal="owner") == budget_before

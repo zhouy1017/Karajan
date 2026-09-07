@@ -1,0 +1,10 @@
+{
+  "same_bytes_across_heads": {
+    "backend/karajan/orchestration/go_execution_intent.py": true,
+    "backend/karajan/orchestration/go_task_execution.py": true,
+    "backend/karajan/orchestration/execution_budget.py": true,
+    "backend/karajan/orchestration/admission.py": true,
+    "backend/karajan/orchestration/go_task_collector.py": true
+  },
+  "note": "P is still independently executed against each full branch controller source."
+}

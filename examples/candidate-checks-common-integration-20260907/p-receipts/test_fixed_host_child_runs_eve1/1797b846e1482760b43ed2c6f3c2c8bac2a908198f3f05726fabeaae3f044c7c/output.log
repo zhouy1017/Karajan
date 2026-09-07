@@ -1,0 +1,5 @@
+karajan-check-log.v1
+merged_stdout_stderr:
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+AssertionError
