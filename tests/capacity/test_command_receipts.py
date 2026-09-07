@@ -454,7 +454,7 @@ def test_admit_rejects_when_reservation_encoding_consumes_its_lifetime(ledger, m
     assert store.snapshot()["reservations"] == []
 
 
-def test_admit_rejects_a_clock_that_regresses_after_its_creation_sample(ledger, monkeypatch):
+def test_admit_rolls_back_when_a_clock_regresses_after_its_creation_sample(ledger, monkeypatch):
     store, clock = ledger
     original = capacity_store.encoded
 
@@ -468,15 +468,17 @@ def test_admit_rejects_a_clock_that_regresses_after_its_creation_sample(ledger, 
         clock[0] = 1001.0
 
     monkeypatch.setattr(capacity_store, "encoded", regress_after_encoding)
-    rejected = store.admit(
-        request(),
-        command_key="encoding-regresses-after-creation",
-        before_reservation_write=advance_controller_clock,
-    )
+    with pytest.raises(CapacityError, match="^CAPACITY_CLOCK_REGRESSED$"):
+        store.admit(
+            request(),
+            command_key="encoding-regresses-after-creation",
+            before_reservation_write=advance_controller_clock,
+        )
 
-    assert rejected["decision"] == "rejected"
-    assert rejected["reason_codes"] == ["CAPACITY_CLOCK_REGRESSED"]
     assert store.snapshot()["reservations"] == []
+    assert store.command_receipt(
+        "admit", request(), command_key="encoding-regresses-after-creation"
+    ) is None
 
 
 def test_admit_rolls_back_an_earlier_expiry_when_a_recheck_clock_regresses(ledger):
@@ -505,6 +507,89 @@ def test_admit_rolls_back_an_earlier_expiry_when_a_recheck_clock_regresses(ledge
         store.command_receipt("admit", request("candidate"), command_key="regressed-recheck")
         is None
     )
+
+
+def test_admit_rolls_back_an_earlier_expiry_when_its_final_clock_regresses(
+    ledger, monkeypatch
+):
+    store, clock = ledger
+    held = store.admit(
+        {**request("final-held"), "duration_seconds": 3}, command_key="final-short-lived-held"
+    )
+    clock[0] = 1004.0
+    before = store.snapshot()
+    original = capacity_store.encoded
+
+    def regress_after_new_reservation_encoding(value):
+        result = original(value)
+        if isinstance(value, dict) and value.get("state") == "reserved":
+            clock[0] = 1002.0
+        return result
+
+    monkeypatch.setattr(capacity_store, "encoded", regress_after_new_reservation_encoding)
+    with pytest.raises(CapacityError, match="^CAPACITY_CLOCK_REGRESSED$"):
+        store.admit(request("final-candidate"), command_key="final-regressed-recheck")
+
+    assert store.snapshot() == before
+    assert store.snapshot()["reservations"] == [
+        {**before["reservations"][0], "id": held["admission_id"], "state": "reserved"}
+    ]
+    assert (
+        store.command_receipt(
+            "admit", request("final-candidate"), command_key="final-regressed-recheck"
+        )
+        is None
+    )
+
+
+@pytest.mark.parametrize("phase", ["post_evaluation", "creation", "final"])
+def test_admit_rolls_back_an_earlier_expiry_at_every_late_clock_sample(
+    ledger, monkeypatch, phase
+):
+    store, clock = ledger
+    held = store.admit(
+        {**request("late-held-" + phase), "duration_seconds": 3},
+        command_key="late-short-lived-held-" + phase,
+    )
+    clock[0] = 1004.0
+    before = store.snapshot()
+    kwargs = {}
+
+    if phase == "post_evaluation":
+        original_evaluation = store._admission_evaluation
+
+        def regress_after_evaluation(*args):
+            result = original_evaluation(*args)
+            clock[0] = 1002.0
+            return result
+
+        monkeypatch.setattr(store, "_admission_evaluation", regress_after_evaluation)
+    elif phase == "creation":
+
+        def regress_before_creation() -> None:
+            clock[0] = 1002.0
+
+        kwargs["before_reservation_write"] = regress_before_creation
+    else:
+        original_encoding = capacity_store.encoded
+
+        def regress_after_encoding(value):
+            result = original_encoding(value)
+            if isinstance(value, dict) and value.get("state") == "reserved":
+                clock[0] = 1002.0
+            return result
+
+        monkeypatch.setattr(capacity_store, "encoded", regress_after_encoding)
+
+    candidate = request("late-candidate-" + phase)
+    with pytest.raises(CapacityError, match="^CAPACITY_CLOCK_REGRESSED$"):
+        store.admit(candidate, command_key="late-regressed-" + phase, **kwargs)
+
+    assert store.snapshot() == before
+    assert store.snapshot()["reservations"] == [
+        {**before["reservations"][0], "id": held["admission_id"], "state": "reserved"}
+    ]
+    assert store.command_receipt("admit", candidate, command_key="late-regressed-" + phase) is None
 
 
 def test_admit_rechecks_time_and_uses_the_post_callback_reservation_clock(ledger):
