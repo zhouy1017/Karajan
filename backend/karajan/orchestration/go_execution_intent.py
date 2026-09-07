@@ -664,7 +664,7 @@ class GoExecutionIntents:
             or request["allowed_paths"] != workspace["write_paths"]
             or request["writer"]["attempt_id"] != intent["attempt_id"]
             or request["writer"]["fence"] != intent["fence"]
-            or len(request["authors"]) != 1
+            or not request["authors"]
             or any(
                 request["authors"][0][key] != value
                 for key, value in {

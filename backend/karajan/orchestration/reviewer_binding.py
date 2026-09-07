@@ -54,6 +54,7 @@ class ApprovedReviewerBindings:
             candidates,
             qualifications,
         )
+        admissions.set_reviewer_bindings(self)
 
     @staticmethod
     def _view(operation: dict[str, Any]) -> dict[str, Any] | None:
