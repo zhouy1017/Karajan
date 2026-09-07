@@ -16,12 +16,21 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
-
 RECORDS = {
     "0576491aab6106cbb485b088d68289600f55d24a21067bcd96d8eb78e0251e77": "attempt2",
     "bb4c42d0921726457c16e0bdb4ea022053c0f3dd35c0222d0a864cc710925019": "attempt3",
     "8e162b7af73b060e507a3c61677bfdc25cc16603abbec4bf7845acb4f2eeb58a": "attempt4",
 }
+type JournalIndex = dict[tuple[str, str], list[dict[str, Any]]]
+FINDING_FIELDS = (
+    "blocking",
+    "severity",
+    "file",
+    "line",
+    "behavior",
+    "trigger",
+    "acceptance_ref",
+)
 
 
 def digest(value: object) -> str:
@@ -32,8 +41,8 @@ def connect_read_only(path: Path) -> sqlite3.Connection:
     return sqlite3.connect(f"file:{path}?mode=ro", uri=True)
 
 
-def journal_index(connection: sqlite3.Connection) -> dict[tuple[str, str], list[dict[str, Any]]]:
-    result: dict[tuple[str, str], list[dict[str, Any]]] = {}
+def journal_index(connection: sqlite3.Connection) -> JournalIndex:
+    result: JournalIndex = {}
     for grant_id, call_id, receipt_raw in connection.execute(
         "SELECT grant_id, call_id, receipt FROM go_calls"
     ):
@@ -51,7 +60,7 @@ def journal_index(connection: sqlite3.Connection) -> dict[tuple[str, str], list[
     return result
 
 
-def project_record(record_raw: str, record_digest: str, journal: dict[tuple[str, str], list[dict[str, Any]]]) -> dict[str, Any]:
+def project_record(record_raw: str, record_digest: str, journal: JournalIndex) -> dict[str, Any]:
     record = json.loads(record_raw)
     scenarios: list[dict[str, Any]] = []
     for scenario_entry in record["observation"]["scenarios"]:
@@ -82,13 +91,7 @@ def project_record(record_raw: str, record_digest: str, journal: dict[tuple[str,
                 }
             )
         parsed = observation["parsed_review"]
-        findings = [
-            {
-                key: finding[key]
-                for key in ("blocking", "severity", "file", "line", "behavior", "trigger", "acceptance_ref")
-            }
-            for finding in parsed["findings"]
-        ]
+        findings = [{key: finding[key] for key in FINDING_FIELDS} for finding in parsed["findings"]]
         scenarios.append(
             {
                 "scenario": scenario_entry["scenario"],
@@ -113,11 +116,14 @@ def main() -> None:
     parser.add_argument("--controller-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    with connect_read_only(args.controller_root / "projects.sqlite") as projects, connect_read_only(
-        args.controller_root / "journal.sqlite"
-    ) as journal_db:
+    with (
+        connect_read_only(args.controller_root / "projects.sqlite") as projects,
+        connect_read_only(args.controller_root / "journal.sqlite") as journal_db,
+    ):
         journal = journal_index(journal_db)
-        rows = projects.execute("SELECT record, digest FROM profile_qualification_records").fetchall()
+        rows = projects.execute(
+            "SELECT record, digest FROM profile_qualification_records"
+        ).fetchall()
     projected = [
         project_record(record, record_digest, journal)
         for record, record_digest in rows
@@ -134,9 +140,12 @@ def main() -> None:
         "new_consumer_effects": 0,
         "records": projected,
     }
-    canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+    canonical = json.dumps(
+        payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode()
     payload["payload_sha256"] = hashlib.sha256(canonical).hexdigest()
-    args.output.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    rendered = json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+    args.output.write_text(rendered, encoding="utf-8")
 
 
 if __name__ == "__main__":
