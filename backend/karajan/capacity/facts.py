@@ -8,6 +8,7 @@ import hashlib
 import json
 import sqlite3
 from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation
 from typing import TYPE_CHECKING, Any
 
 from pydantic import TypeAdapter, ValidationError
@@ -25,6 +26,22 @@ _MAX_QUANTITY = units("9223372036854.775807")
 
 def _encoded(value: object) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
+
+
+def _aggregate_units(value: object) -> int:
+    """Parse a ledger-produced aggregate without applying input quantity bounds."""
+    if not isinstance(value, str):
+        raise ValueError
+    try:
+        amount = Decimal(value)
+    except InvalidOperation:
+        raise ValueError from None
+    if not amount.is_finite() or amount < 0:
+        raise ValueError
+    rounded = amount.quantize(Decimal("0.000001"))
+    if rounded != amount:
+        raise ValueError
+    return int(rounded * Decimal(1_000_000))
 
 
 @dataclass(frozen=True, slots=True)
@@ -104,7 +121,7 @@ def derive_capacity_boundary_facts(
             if pool is None:
                 raise ValueError
             remaining = max(0, units(amount) - consumed.get(pool_id, 0))
-            future = units(pool["future_reserved"])
+            future = _aggregate_units(pool["future_reserved"])
             if future < remaining:
                 raise ValueError
             pool["future_reserved"] = money(future - remaining)
