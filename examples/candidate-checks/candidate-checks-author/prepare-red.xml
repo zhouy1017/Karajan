@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="2.422" timestamp="2026-09-06T23:20:23.001548+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_candidate_checks" name="test_prepare_compiles_check_from_original_approval_and_full_candidate" time="1.390"><failure message="TypeError: ApprovedCandidateChecks.__init__() got an unexpected keyword argument 'controller_source'">check_case = (&lt;karajan.orchestration.go_execution_intent.GoExecutionIntents object at 0x00000252FFA31490&gt;, ('473b6bc9-51c4-45c4-87b...2c057e23c0', 'revision': 1, 'content_sha256': '406274e528d9dccc1f03c0acd875b4340983757111abf6140798323beebda315', ...})
+
+    def test_prepare_compiles_check_from_original_approval_and_full_candidate(check_case):
+        from karajan.orchestration.candidate_checks import ApprovedCandidateChecks
+        from karajan.orchestration.execution_budget import RunExecutionBudget
+    
+        intents, args, candidates, captured = check_case
+&gt;       checks = ApprovedCandidateChecks(
+            intents.admissions,
+            candidates,
+            runner=SourceFixture(),
+            controller_source=lambda: {"schema_version": "synthetic.check-controller.v1"},
+        )
+E       TypeError: ApprovedCandidateChecks.__init__() got an unexpected keyword argument 'controller_source'
+
+tests\runs\test_candidate_checks.py:96: TypeError</failure></testcase></testsuite></testsuites>

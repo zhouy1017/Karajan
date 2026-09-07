@@ -1,0 +1,33 @@
+{
+  "1aa91c962d65d4fa6bf39a14178d8b98f6afb503574d8a5bff31c8ba48119c11": {
+    "controller_sources": {
+      "_check_environment.py": "56e8773a179eacd11810e145409448334a16fe65448e70a91cb000d9094d3565",
+      "_check_namespace.py": "09db7084625729c4ec43acb915790e05d92a6f986f610dc81cc3c7d0f9c38cbb",
+      "_namespace.py": "4490d9e3e2d8243e09dbe09841bfe0a84994b1b41d5e0d019237a5ab8dc7ac40",
+      "check_runner.py": "6dbb03373ddcd2262f861c6598aa911522ca52954c83028fc39bb7700af66935",
+      "execution/_platform.py": "5fbbdc1ddcc9fca1d77167f01b6e8f3f243af48417f161d0acbb22da8e2b2ff9"
+    },
+    "environment_sha256": "1aa91c962d65d4fa6bf39a14178d8b98f6afb503574d8a5bff31c8ba48119c11",
+    "filesystem": "candidate_copy",
+    "image_bytes": 89803271,
+    "image_files": 666,
+    "image_manifest_sha256": "8bf20061243de52e26c8c7afe753c143e55fb76a2e107d6513f77efa54f03c36",
+    "isolation": "user-mount-pid-net-chroot-no-capabilities",
+    "kernel_release": "6.18.33.2-microsoft-standard-WSL2",
+    "launcher_assets": {
+      "/usr/bin/mount": "fde2b1540ca79ea42df942653bdfd09b9b3e3ff1d4713602bd280f754033957a",
+      "/usr/bin/python3": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118",
+      "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118",
+      "/usr/bin/unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c"
+    },
+    "limits": {
+      "max_log_bytes": 8388608,
+      "temporary_bytes": 33554432,
+      "workspace_bytes": 134217728
+    },
+    "network": "none",
+    "platform": "linux_x64",
+    "runtime_kind": "python312-stdlib",
+    "schema_version": "karajan.python-check-environment.v1"
+  }
+}

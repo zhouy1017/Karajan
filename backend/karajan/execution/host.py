@@ -16,10 +16,11 @@ from pathlib import Path
 
 from pydantic import TypeAdapter
 
-from karajan.contracts.probe import AttemptManifest, Identifier, PositiveInteger
+from karajan.contracts.probe import Identifier, PositiveInteger
 from karajan.storage import require_schema
 
 from ._platform import ProcessGroup, ProcessIdentity, observe_process, process_identity
+from .manifest import CheckAttemptManifest, HostManifest, parse_host_manifest_json
 
 _identifier: TypeAdapter[str] = TypeAdapter(Identifier)
 _positive_integer: TypeAdapter[int] = TypeAdapter(PositiveInteger)
@@ -215,10 +216,12 @@ class RunnerHost:
         finally:
             connection.close()
 
-    def prepare(self, manifest: AttemptManifest, start_key: str, spec: ProcessSpec) -> Snapshot:
+    def prepare(self, manifest: HostManifest, start_key: str, spec: ProcessSpec) -> Snapshot:
         if not start_key or len(start_key) > 256:
             raise ValueError("Invalid start key.")
         manifest_json = manifest.model_dump_json()
+        # Revalidate persisted bytes, including objects changed after construction.
+        manifest = parse_host_manifest_json(manifest_json)
         spec_json = encoded(spec.document())
         digest = hashlib.sha256(
             encoded([json.loads(manifest_json), json.loads(spec_json)]).encode()
@@ -296,7 +299,7 @@ class RunnerHost:
             ).fetchone()
             if row is None:
                 raise KeyError(attempt_id)
-            manifest = AttemptManifest.model_validate_json(row["manifest"])
+            manifest = parse_host_manifest_json(row["manifest"])
             if (
                 row["start_key"] != prepared_id
                 or manifest.id != attempt_id
@@ -359,7 +362,7 @@ class RunnerHost:
             ):
                 raise LaunchDenied("CAPTURE_START_REQUIRED")
             try:
-                attempt = AttemptManifest.model_validate_json(row["manifest"])
+                attempt = parse_host_manifest_json(row["manifest"])
                 activation = Activation(**json.loads(row["activation"]))
             except (ValueError, TypeError):
                 raise LaunchDenied("CAPTURE_START_BINDING_INVALID") from None
@@ -386,13 +389,27 @@ class RunnerHost:
                 or authorization_ref != control["authorization_ref"]
             ):
                 raise LaunchDenied("CAPTURE_FENCE_NOT_CURRENT")
+            subject: dict[str, object]
+            if isinstance(attempt, CheckAttemptManifest):
+                subject = {
+                    "environment": {
+                        "id": attempt.environment_id,
+                        "revision": attempt.environment_revision,
+                        "source_sha256": attempt.environment_source_sha256,
+                    },
+                    "execution_sha256": attempt.execution_sha256,
+                }
+            else:
+                subject = {
+                    "profile": {"id": attempt.profile_id, "revision": attempt.profile_revision}
+                }
             yield {
                 "scope": "current_host_fence",
                 "attempt_id": attempt.id,
                 "prepared_id": row["start_key"],
                 "fence": attempt.fence,
                 "authorization_ref": attempt.authorization_ref,
-                "profile": {"id": attempt.profile_id, "revision": attempt.profile_revision},
+                **subject,
                 "activation_id": activation.id,
                 "activation_allowed": False,
             }
@@ -487,7 +504,7 @@ class RunnerHost:
             ).fetchone()
             if row is None:
                 raise KeyError(prepared_id)
-            attempt = AttemptManifest.model_validate_json(row["manifest"])
+            attempt = parse_host_manifest_json(row["manifest"])
             if row["activation_digest"] is not None:
                 if row["activation_digest"] != activation_digest:
                     raise StartConflict("ACTIVATION_PAYLOAD_MISMATCH")
@@ -680,7 +697,7 @@ class RunnerHost:
                 if existing["payload"] != payload:
                     raise StartConflict("RESULT_EVENT_PAYLOAD_MISMATCH")
                 return ResultDecision(bool(existing["accepted"]), existing["reason"])
-            attempt = AttemptManifest.model_validate_json(row["manifest"])
+            attempt = parse_host_manifest_json(row["manifest"])
             control = connection.execute(
                 "SELECT * FROM controls WHERE attempt_id=?", (attempt_id,)
             ).fetchone()

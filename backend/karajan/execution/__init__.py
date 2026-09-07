@@ -11,6 +11,12 @@ from .host import (
     Snapshot,
     StartConflict,
 )
+from .manifest import (
+    CheckAttemptManifest,
+    HostManifest,
+    parse_host_manifest,
+    parse_host_manifest_json,
+)
 
 __all__ = [
     "Activation",
@@ -22,5 +28,9 @@ __all__ = [
     "RunnerHost",
     "Snapshot",
     "StartConflict",
+    "CheckAttemptManifest",
+    "HostManifest",
     "observe_process",
+    "parse_host_manifest",
+    "parse_host_manifest_json",
 ]

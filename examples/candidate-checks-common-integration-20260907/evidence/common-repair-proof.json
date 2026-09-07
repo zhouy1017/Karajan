@@ -1,0 +1,14 @@
+{
+  "backend/karajan/adapters/opencode/go_relay.py": {
+    "common_repair_sha256": "c45f2784bff518407fc90c3f61d9adf0a92b69f701b77dde1aef86e6b0b5d2cd",
+    "current_sha256": "c45f2784bff518407fc90c3f61d9adf0a92b69f701b77dde1aef86e6b0b5d2cd",
+    "exact_common_repair_bytes": true,
+    "working_bytes_equal": true
+  },
+  "backend/karajan/isolation/go_task.py": {
+    "common_repair_sha256": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+    "current_sha256": "8bd911b79030dcdcd7d6c52941b592d4671235efcf648620e0905868441d4ef8",
+    "exact_common_repair_bytes": true,
+    "working_bytes_equal": true
+  }
+}

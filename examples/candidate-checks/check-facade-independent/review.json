@@ -1,0 +1,71 @@
+{
+  "schema_version": "karajan.independent-review.v1",
+  "scope": "#94 ApprovedCandidateChecks public claim, recovery, cancellation and Evidence submission",
+  "finding_count": 0,
+  "source_before": {
+    "backend/karajan/orchestration/candidate_checks.py": "346014ca0410b90acecc3139a87a2b45f81b93d5839e56040bcc00a0958b4d5b",
+    "backend/karajan/orchestration/execution_budget.py": "dcbc042da90c931cf2f39a7d69f99420f391dde47e31dddd98bcd1f0c4fbdb8c",
+    "backend/karajan/candidates/store.py": "bca6518cbf7f01ab08bbfa4592141e250d123a1c375d29b2476a055273967683",
+    "backend/karajan/execution/host.py": "5e3d0f8d8f84649690854ddd672a6a2643d4ad923f79b2eff584c4cdf73164f1",
+    "tests/runs/test_candidate_checks.py": "8700de3e1db95a6ec2bbd9c097b4b91b486c7207a453bcf88b222648d5c3c9c4",
+    "tests/runs/candidate_checks_case.py": "4ab3ecfb1207ceb92fb7156056de08cb22cc52a03eb9fa002ae1dea63522fdb7"
+  },
+  "source_after": {
+    "backend/karajan/orchestration/candidate_checks.py": "346014ca0410b90acecc3139a87a2b45f81b93d5839e56040bcc00a0958b4d5b",
+    "backend/karajan/orchestration/execution_budget.py": "dcbc042da90c931cf2f39a7d69f99420f391dde47e31dddd98bcd1f0c4fbdb8c",
+    "backend/karajan/candidates/store.py": "bca6518cbf7f01ab08bbfa4592141e250d123a1c375d29b2476a055273967683",
+    "backend/karajan/execution/host.py": "5e3d0f8d8f84649690854ddd672a6a2643d4ad923f79b2eff584c4cdf73164f1",
+    "tests/runs/test_candidate_checks.py": "8700de3e1db95a6ec2bbd9c097b4b91b486c7207a453bcf88b222648d5c3c9c4",
+    "tests/runs/candidate_checks_case.py": "4ab3ecfb1207ceb92fb7156056de08cb22cc52a03eb9fa002ae1dea63522fdb7"
+  },
+  "source_unchanged": true,
+  "results": {
+    "windows-first.xml": {
+      "tests": "3",
+      "failures": "1",
+      "errors": "0",
+      "skipped": "0",
+      "time": "6.443"
+    },
+    "windows-final.xml": {
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "6.834"
+    },
+    "linux-final.xml": {
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "6.480"
+    },
+    "windows-original.xml": {
+      "tests": "26",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "40.669"
+    }
+  },
+  "initial_failure": "Reviewer test used nonexistent CandidateStore.database property; no product finding. Initial source/XML retained.",
+  "limits": [
+    "Native Check/Host child identity fault-boundary doubles are explicit; Host-start-reply-loss uses a real local Python subprocess.",
+    "Reviewer authored Host manifest/union earlier; this report does not claim independent review of that implementation.",
+    "No provider/model/key/network calls.",
+    "Revision-1 capture subject only; #95 subject rebind and full Checks rerun remain pending.",
+    "No complete Review/quality-gate/PR-delivery or current-head CI completion claim."
+  ],
+  "evidence_sha256": {
+    "README.md": "02bc80767e5461e1739dd790132d92c9a060417548f8d5acad05e672e9a383d4",
+    "test_facade_boundaries.py": "621e688a70eff9f91ab0a2d2b72074bd4e5b332a799c3f9643960f1abe0f470b",
+    "test-initial.py.txt": "bd0cc5b6b639c4b35393227be167c90ed63ff840661f545b0aadbd1e072e81c8",
+    "source-before.json": "2b74886f794df4cf64fa264f74d99f5a110fe792ab81894909cdb084a68d61e2",
+    "windows-first.xml": "d92907c4fa19ed22a2230ede947819f4135465f14401201e0918bced2e8699ee",
+    "windows-final.xml": "f18da88d8d4979d7c7d4d405d485f61bc5ae3fc33885376348366146371a2ddb",
+    "linux-final.xml": "d32a61cd909cfa36136f025178698965b25eb8410fabae054ec0467e2b91628b",
+    "windows-original.xml": "309b20dc7386cf6cfe7cbce551de099c59aa6e64a539e40acff9d6787728bb7a"
+  },
+  "timing_note": "Windows final same invocation terminal summary is 9.23s, retained JUnit time is 6.834s; report preserves both timings without asserting a cause."
+}

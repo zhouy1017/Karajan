@@ -1,0 +1,8 @@
+{
+  "review_type": "independent code-only",
+  "files": {
+    "backend/karajan/orchestration/check_services_factory.py": "a442b41e3cabc95bd6481a27837f7a8f32a329adc8a5364b29fb47912dcbefaa",
+    "backend/karajan/orchestration/_candidate_check_runner.py": "873ca29851ab5151b7d459f651fc5af8091bee8d3996074feac3facd8c0fed17",
+    "tests/runs/test_check_services_factory.py": "fd6844edc5ebb37eea6bcbd7febf9ce3cbe744e04963e0486426b4a96882f004"
+  }
+}

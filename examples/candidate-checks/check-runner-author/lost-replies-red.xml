@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="2.633" timestamp="2026-09-06T23:34:23.957574+08:00" hostname="ProArt-Zhou"><testcase classname="tests.isolation.test_check_runner" name="test_lost_actual_popen_reply_never_claims_not_started_or_launches_again" time="1.151"><failure message="AssertionError: assert ('unknown' == 'unknown'&#10;  &#10;    unknown and 'not_started' != 'not_started')&#10; +  where 'not_started' = CheckObservation(execution_digest='0bba211553f2a04e29f52068bd9c6d0a8878dbb2a84b11916454a30dea7a714b', outcome='unknown...nt_sha256='555129dd0007905fcd5a49325f760b5b93fccb56d79abc1bb32827b5fe41bea9', reason_codes=('CHECK_EXECUTION_FAILED',)).local_stop">tests/isolation/test_check_runner.py:366: in test_lost_actual_popen_reply_never_claims_not_started_or_launches_again
+    assert observed.outcome == "unknown" and observed.local_stop != "not_started"
+E   AssertionError: assert ('unknown' == 'unknown'
+E     
+E       unknown and 'not_started' != 'not_started')
+E    +  where 'not_started' = CheckObservation(execution_digest='0bba211553f2a04e29f52068bd9c6d0a8878dbb2a84b11916454a30dea7a714b', outcome='unknown...nt_sha256='555129dd0007905fcd5a49325f760b5b93fccb56d79abc1bb32827b5fe41bea9', reason_codes=('CHECK_EXECUTION_FAILED',)).local_stop</failure></testcase><testcase classname="tests.isolation.test_check_runner" name="test_lost_result_commit_reply_recovers_readonly_and_log_corruption_blocks" time="0.283"><failure message="NameError: name 'os' is not defined. Did you forget to import 'os'">tests/isolation/test_check_runner.py:381: in test_lost_result_commit_reply_recovers_readonly_and_log_corruption_blocks
+    original = os.replace
+               ^^
+E   NameError: name 'os' is not defined. Did you forget to import 'os'</failure></testcase></testsuite></testsuites>

@@ -1,0 +1,119 @@
+{
+  "schema_version": "karajan.common-repair-downstream-review.v1",
+  "date": "2026-09-07",
+  "reviewer": "ui_spec_finalize",
+  "review_method": "One independent reviewer reports Standards and Spec separately; no claim of two different reviewers. Existing tests were executed independently, with exact historical independent shared-budget input reused. No new test-design count is claimed.",
+  "implementation_commit": "552dd6b5c78279efc398126e417969c41688232d",
+  "base_commit": "45ff0651517333225666353076a23c9cad85833c",
+  "common_repair": "ef440f4e7902bc1d3a262afa9112154cd9690a4a",
+  "status": "scoped C/P integration passed",
+  "findings": {
+    "Standards": {
+      "documented_rule_findings": [],
+      "judgment_findings": [],
+      "sources": [
+        "AGENTS.md",
+        "docs/agents/issue-tracker.md",
+        "CONTEXT.md",
+        "C:/Users/Chooo/.agents/skills/code-review/SKILL.md"
+      ],
+      "assessment": "No confirmed integration-specific standard breach. Stable allowlisted diagnostic persistence remains separate from effect authority and existing cleanup/replay. Fowler smell baseline used as judgment, not as a hard rule; static-tool checks reported separately."
+    },
+    "Spec": {
+      "confirmed_findings": [],
+      "assessment": "Both auto-merged orchestration files retain the prior budget and capture APIs. Existing functions are AST-identical except consume_go_task, whose added diagnostic call precedes Collector rejection. Public boundary and actual Check process tests passed on the pinned source."
+    }
+  },
+  "results": [
+    {
+      "phase": "c-win",
+      "tests": 118,
+      "passed": 117,
+      "failed": 0,
+      "errors": 0,
+      "skipped": [
+        {
+          "name": "test_consume_preserves_native_failure_when_collector_rejects_missing_capture",
+          "reason": "Fixed Linux runtime required"
+        }
+      ],
+      "junit_time": "153.795",
+      "exit_code": 0,
+      "source_before_after_equal": true,
+      "xml": "c-win.xml"
+    },
+    {
+      "phase": "c-linux",
+      "tests": 118,
+      "passed": 118,
+      "failed": 0,
+      "errors": 0,
+      "skipped": [],
+      "junit_time": "90.069",
+      "exit_code": 0,
+      "source_before_after_equal": true,
+      "xml": "c-linux.xml"
+    },
+    {
+      "phase": "p-linux",
+      "tests": 3,
+      "passed": 3,
+      "failed": 0,
+      "errors": 0,
+      "skipped": [],
+      "junit_time": "98.080",
+      "exit_code": 0,
+      "source_before_after_equal": true,
+      "xml": "p-linux.xml"
+    }
+  ],
+  "static": [
+    {
+      "command": [
+        "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "."
+      ],
+      "cwd": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-task-validation",
+      "exit_code": 0,
+      "stdout": "ruff.stdout.txt"
+    },
+    {
+      "command": [
+        "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "backend/karajan"
+      ],
+      "cwd": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-task-validation",
+      "exit_code": 0,
+      "stdout": "mypy.stdout.txt"
+    }
+  ],
+  "source_evidence": [
+    "merge-source-audit.json",
+    "common-core-comparison.json",
+    "common-repair-proof.json",
+    "p-controller-source-check.json"
+  ],
+  "p_scope": "Actual Linux production Check factory, Host child and fixed namespace Checks; planning, Writer and model-role qualification remain explicit fixtures. Valid and defective candidates both run all required Checks; an actually running check is cancelled while two advances race.",
+  "evidence_levels": {
+    "C": "passed for the selected affected public contracts",
+    "P": "passed for the selected actual local Check processes",
+    "S": "not_run; no provider/key access; no real Reviewer qualification asserted",
+    "G": "not_run here; old CI is not inherited by these new heads"
+  },
+  "remaining_limits": [
+    "No real Commander planning or Reviewer model was executed.",
+    "Missing Reviewer Evidence continues to block delivery; passing Checks is not a completed PR pipeline.",
+    "Shared-budget deadline checks bound controller effect admission; they do not claim a hard deadline inside every later runtime/transport operation.",
+    "Windows/Linux repeats and the two branches overlap; the counts are execution results, not unique new tests."
+  ],
+  "history": [
+    "launch-history.json records two failures before pytest: sandbox WSL access and Windows Git worktree path interpretation. Explicit existing Git paths corrected only the evidence wrapper; no product/test inputs changed."
+  ],
+  "unchanged_products_and_tests": true,
+  "no_product_or_git_writes": true
+}

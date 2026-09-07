@@ -1,0 +1,25 @@
+[
+  {
+    "command": [
+      "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+      "-m",
+      "ruff",
+      "check",
+      "."
+    ],
+    "cwd": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-task-validation",
+    "exit_code": 0,
+    "stdout": "ruff.stdout.txt"
+  },
+  {
+    "command": [
+      "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+      "-m",
+      "mypy",
+      "backend/karajan"
+    ],
+    "cwd": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-task-validation",
+    "exit_code": 0,
+    "stdout": "mypy.stdout.txt"
+  }
+]

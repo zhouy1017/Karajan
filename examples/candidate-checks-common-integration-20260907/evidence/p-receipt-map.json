@@ -1,0 +1,183 @@
+{
+  "copies": [
+    {
+      "source": "/tmp/karajan-common-downstream-valid-p-linux-20260907/test_fixed_host_child_runs_eve0/work/5ac599d790471edfa9a0058bdce41b0bb30a107411976ee8d2973dd9f11a76df/result.json",
+      "target": "p-receipts/test_fixed_host_child_runs_eve0/5ac599d790471edfa9a0058bdce41b0bb30a107411976ee8d2973dd9f11a76df/result.json",
+      "sha256": "556c68e5bfd124d3ef3f0fbb96b8d27e43fe603959e68f9293c9dcd473c5b247",
+      "bytes": 531,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-valid-p-linux-20260907/test_fixed_host_child_runs_eve0/work/5ac599d790471edfa9a0058bdce41b0bb30a107411976ee8d2973dd9f11a76df/namespace-init.json",
+      "target": "p-receipts/test_fixed_host_child_runs_eve0/5ac599d790471edfa9a0058bdce41b0bb30a107411976ee8d2973dd9f11a76df/namespace-init.json",
+      "sha256": "4400e03d4b49c7727cf00f00136423e96b4052e015481ddc3c299bd92f98d859",
+      "bytes": 161,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-valid-p-linux-20260907/test_fixed_host_child_runs_eve0/work/5ac599d790471edfa9a0058bdce41b0bb30a107411976ee8d2973dd9f11a76df/started.json",
+      "target": "p-receipts/test_fixed_host_child_runs_eve0/5ac599d790471edfa9a0058bdce41b0bb30a107411976ee8d2973dd9f11a76df/started.json",
+      "sha256": "a60b52eeffa7a2a2ad9b2e84bcba0239e0195166b74a0f70ef05fc096f151213",
+      "bytes": 73,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-valid-p-linux-20260907/test_fixed_host_child_runs_eve0/work/5ac599d790471edfa9a0058bdce41b0bb30a107411976ee8d2973dd9f11a76df/output.log",
+      "target": "p-receipts/test_fixed_host_child_runs_eve0/5ac599d790471edfa9a0058bdce41b0bb30a107411976ee8d2973dd9f11a76df/output.log",
+      "sha256": "bcf80edb3dd154e8aa62f4b72b0e0f06c57c92044b9927a0e7d5319e1077763b",
+      "bytes": 55,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-valid-p-linux-20260907/test_fixed_host_child_runs_eve0/work/d122ac9b12c39c893dc3a834e2c384b94a518d23636f4e1dd91ff8affda728cb/result.json",
+      "target": "p-receipts/test_fixed_host_child_runs_eve0/d122ac9b12c39c893dc3a834e2c384b94a518d23636f4e1dd91ff8affda728cb/result.json",
+      "sha256": "f1668a181092438029a4cb44a3bc9574f63c5d20e8c5dd87c6784806a8157530",
+      "bytes": 531,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-valid-p-linux-20260907/test_fixed_host_child_runs_eve0/work/d122ac9b12c39c893dc3a834e2c384b94a518d23636f4e1dd91ff8affda728cb/namespace-init.json",
+      "target": "p-receipts/test_fixed_host_child_runs_eve0/d122ac9b12c39c893dc3a834e2c384b94a518d23636f4e1dd91ff8affda728cb/namespace-init.json",
+      "sha256": "0d78fe5718b4c96e00395cc4676b3d08a80d67078a954bcc76cbcb84b500efb1",
+      "bytes": 161,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-valid-p-linux-20260907/test_fixed_host_child_runs_eve0/work/d122ac9b12c39c893dc3a834e2c384b94a518d23636f4e1dd91ff8affda728cb/started.json",
+      "target": "p-receipts/test_fixed_host_child_runs_eve0/d122ac9b12c39c893dc3a834e2c384b94a518d23636f4e1dd91ff8affda728cb/started.json",
+      "sha256": "f95044e4d0c55b9c0a2a1f71645da27e0f6dd0cd8094b40501c98f124b251f48",
+      "bytes": 73,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-valid-p-linux-20260907/test_fixed_host_child_runs_eve0/work/d122ac9b12c39c893dc3a834e2c384b94a518d23636f4e1dd91ff8affda728cb/output.log",
+      "target": "p-receipts/test_fixed_host_child_runs_eve0/d122ac9b12c39c893dc3a834e2c384b94a518d23636f4e1dd91ff8affda728cb/output.log",
+      "sha256": "0685788b240abf5fdab04d066d18a0e822a9fbcc791a40883c8286271a8cb947",
+      "bytes": 43,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-valid-p-linux-20260907/test_fixed_host_child_runs_eve1/work/1797b846e1482760b43ed2c6f3c2c8bac2a908198f3f05726fabeaae3f044c7c/result.json",
+      "target": "p-receipts/test_fixed_host_child_runs_eve1/1797b846e1482760b43ed2c6f3c2c8bac2a908198f3f05726fabeaae3f044c7c/result.json",
+      "sha256": "13117b1d5d640bbcc2c919b783666ac5ac451b5b47d2675c9e0ebfa81cfcf504",
+      "bytes": 532,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-valid-p-linux-20260907/test_fixed_host_child_runs_eve1/work/1797b846e1482760b43ed2c6f3c2c8bac2a908198f3f05726fabeaae3f044c7c/namespace-init.json",
+      "target": "p-receipts/test_fixed_host_child_runs_eve1/1797b846e1482760b43ed2c6f3c2c8bac2a908198f3f05726fabeaae3f044c7c/namespace-init.json",
+      "sha256": "ffe61b9d9f7bc34b1abe012520ec8d34b393a25e6b01ffd85fc34628e5df39e7",
+      "bytes": 161,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-valid-p-linux-20260907/test_fixed_host_child_runs_eve1/work/1797b846e1482760b43ed2c6f3c2c8bac2a908198f3f05726fabeaae3f044c7c/started.json",
+      "target": "p-receipts/test_fixed_host_child_runs_eve1/1797b846e1482760b43ed2c6f3c2c8bac2a908198f3f05726fabeaae3f044c7c/started.json",
+      "sha256": "0c77718e3f7009f44d77a1622556a5e631363112ac95b3c213a484295709d24f",
+      "bytes": 73,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-valid-p-linux-20260907/test_fixed_host_child_runs_eve1/work/1797b846e1482760b43ed2c6f3c2c8bac2a908198f3f05726fabeaae3f044c7c/output.log",
+      "target": "p-receipts/test_fixed_host_child_runs_eve1/1797b846e1482760b43ed2c6f3c2c8bac2a908198f3f05726fabeaae3f044c7c/output.log",
+      "sha256": "a7f618a659975c545971aecd51ad5ffe0b6089ec9974a91e9adacec775d1c166",
+      "bytes": 132,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-valid-p-linux-20260907/test_fixed_host_child_runs_eve1/work/3e23679734f84616b3ce026ad8eeb94b536ede1e808edf7c7fa72310a99e0765/result.json",
+      "target": "p-receipts/test_fixed_host_child_runs_eve1/3e23679734f84616b3ce026ad8eeb94b536ede1e808edf7c7fa72310a99e0765/result.json",
+      "sha256": "7f24ff828e5d0827c55be987cddc4acd14734a03780f63add93e12232c1c464b",
+      "bytes": 531,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-valid-p-linux-20260907/test_fixed_host_child_runs_eve1/work/3e23679734f84616b3ce026ad8eeb94b536ede1e808edf7c7fa72310a99e0765/namespace-init.json",
+      "target": "p-receipts/test_fixed_host_child_runs_eve1/3e23679734f84616b3ce026ad8eeb94b536ede1e808edf7c7fa72310a99e0765/namespace-init.json",
+      "sha256": "b56ee458dcefcd132e15a0df44bb4d727b991ec83e79f29081210071b500c734",
+      "bytes": 161,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-valid-p-linux-20260907/test_fixed_host_child_runs_eve1/work/3e23679734f84616b3ce026ad8eeb94b536ede1e808edf7c7fa72310a99e0765/started.json",
+      "target": "p-receipts/test_fixed_host_child_runs_eve1/3e23679734f84616b3ce026ad8eeb94b536ede1e808edf7c7fa72310a99e0765/started.json",
+      "sha256": "8f9a95076cbd556007eb8ef3389fe87ea362324eb5b3a1967e2ae553fc3a7364",
+      "bytes": 73,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-valid-p-linux-20260907/test_fixed_host_child_runs_eve1/work/3e23679734f84616b3ce026ad8eeb94b536ede1e808edf7c7fa72310a99e0765/output.log",
+      "target": "p-receipts/test_fixed_host_child_runs_eve1/3e23679734f84616b3ce026ad8eeb94b536ede1e808edf7c7fa72310a99e0765/output.log",
+      "sha256": "0685788b240abf5fdab04d066d18a0e822a9fbcc791a40883c8286271a8cb947",
+      "bytes": 43,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-valid-p-linux-20260907/test_running_check_two_advance0/work/bf07616ff07e6dde126be698cc0bcd68b7c04e04f086e7064c16725582f837f4/result.json",
+      "target": "p-receipts/test_running_check_two_advance0/bf07616ff07e6dde126be698cc0bcd68b7c04e04f086e7064c16725582f837f4/result.json",
+      "sha256": "c2404b250e81c2b3766e99cd45bc200d3d89faa5e5e434cbd7feb5ca639469f7",
+      "bytes": 532,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-valid-p-linux-20260907/test_running_check_two_advance0/work/bf07616ff07e6dde126be698cc0bcd68b7c04e04f086e7064c16725582f837f4/namespace-init.json",
+      "target": "p-receipts/test_running_check_two_advance0/bf07616ff07e6dde126be698cc0bcd68b7c04e04f086e7064c16725582f837f4/namespace-init.json",
+      "sha256": "74cf63644c1f98fbc5a3459383e5316684f8e8aec0d9cfb31395514e7408d45c",
+      "bytes": 161,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-valid-p-linux-20260907/test_running_check_two_advance0/work/bf07616ff07e6dde126be698cc0bcd68b7c04e04f086e7064c16725582f837f4/started.json",
+      "target": "p-receipts/test_running_check_two_advance0/bf07616ff07e6dde126be698cc0bcd68b7c04e04f086e7064c16725582f837f4/started.json",
+      "sha256": "8040e4307c6b3546a38f1d312afe3d90c3ffbf74b86a3dbc3b56a609aea456fc",
+      "bytes": 73,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-valid-p-linux-20260907/test_running_check_two_advance0/work/bf07616ff07e6dde126be698cc0bcd68b7c04e04f086e7064c16725582f837f4/output.log",
+      "target": "p-receipts/test_running_check_two_advance0/bf07616ff07e6dde126be698cc0bcd68b7c04e04f086e7064c16725582f837f4/output.log",
+      "sha256": "5bb819d196e144d826285b9a97f59dde32f5482c6505e14a57640da2fe15651f",
+      "bytes": 80,
+      "byte_equal": true,
+      "scope": "actual fixed Check runner output/receipt, synthetic project data"
+    },
+    {
+      "source": "/tmp/karajan-common-downstream-valid-p-linux-20260907/test_running_check_two_advance0/race-observation.json",
+      "target": "p-receipts/test_running_check_two_advance0/race-observation.json",
+      "sha256": "4eddc91bbdc74bae315bc831210eb19cba2ad11c3717791a62f9539bc2d32c60",
+      "bytes": 68994,
+      "byte_equal": true,
+      "scope": "test-saved public validation observation; all project/qualification data synthetic"
+    }
+  ],
+  "copy_count": 21,
+  "actual_check_logs": 5,
+  "all_byte_equal": true,
+  "excluded": [
+    "SQLite databases",
+    "bootstrap files",
+    "environment images",
+    "host state",
+    "credentials",
+    "entire temp directories"
+  ]
+}
