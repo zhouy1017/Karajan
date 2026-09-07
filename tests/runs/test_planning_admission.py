@@ -190,7 +190,9 @@ def _case(
             {
                 "profile": binding["profile"],
                 "profile_digest": digest(
-                    run["configuration_snapshot"]["configuration"]["resources"]["profiles"][0]["profile"]
+                    run["configuration_snapshot"]["configuration"]["resources"]["profiles"][0][
+                        "profile"
+                    ]
                 ),
                 "runtime_version": "1",
                 "roles": ["commander"],
@@ -236,8 +238,7 @@ def test_two_intents_share_the_original_frozen_planning_budget(
     assert first_result["phase"] == "admitted", first_result["reason_codes"]
     assert first_result["route_sources"]["route"]["rule_id"] == "lead-planning"
     assert (
-        first_result["route_sources"]["reserved"]["selected_profile"]
-        == first["binding"]["profile"]
+        first_result["route_sources"]["reserved"]["selected_profile"] == first["binding"]["profile"]
     )
     task = first_result["route_sources"]["route"]["snapshots"]["task"]
     assert (task["duration_seconds"], task["context_tokens"], task["reserved_output_tokens"]) == (
@@ -336,7 +337,9 @@ def test_two_runs_contend_for_commander_protected_full_capacity_vector(
     facts = {
         "profile": profile,
         "profile_digest": digest(
-            runs[0]["configuration_snapshot"]["configuration"]["resources"]["profiles"][0]["profile"]
+            runs[0]["configuration_snapshot"]["configuration"]["resources"]["profiles"][0][
+                "profile"
+            ]
         ),
         "runtime_version": "1",
         "roles": ["commander"],
@@ -419,6 +422,44 @@ def test_missing_commander_fact_is_a_production_zero_reservation_denial(
     assert COMMANDER_QUALIFICATION_SCOPE == "commander_planning.v1"
 
 
+def test_estimate_cannot_widen_selected_rule_reserve_access(
+    configured: dict, tmp_path: Path
+) -> None:
+    _, authority, run, execution = _case(tmp_path, configured)
+    binding = execution["binding"]
+    authority.register_estimate(
+        run["id"],
+        binding["budget_ref"],
+        binding["profile"],
+        demand={"service-fixture": "5"},
+        expected_capacity={
+            "policy_revision": 1,
+            "pool_windows": {"service-fixture": "fixture-window"},
+            # The selected lead rule grants this access. A provisioner cannot
+            # weaken or widen it by substituting an estimate expectation.
+            "lead_reserve_access": False,
+        },
+        duration_seconds=25,
+        max_requests=5,
+        max_duration_seconds=100,
+        principal="owner",
+        command_key="mismatched-reserve-estimate",
+    )
+    denied = authority.advance(execution["id"], "owner", "mismatched-reserve-advance")
+    assert denied["reason_codes"] == ["PLANNING_LEAD_RESERVE_ACCESS_MISMATCH"]
+    assert authority.capacity.snapshot()["reservations"] == []
+
+
+def test_cancelled_execution_cannot_create_planning_capacity_effect(
+    configured: dict, tmp_path: Path
+) -> None:
+    service, authority, _, execution = _case(tmp_path, configured)
+    service.cancel(execution["id"], principal="owner", command_key="cancel-before-admit")
+    with pytest.raises(RunError, match="^PLANNING_EXECUTION_CANCELLED$"):
+        authority.advance(execution["id"], "owner", "cancelled-advance")
+    assert authority.capacity.snapshot()["reservations"] == []
+
+
 @pytest.mark.parametrize("field,value", [("valid_until", 0.0), ("binding_sha256", "0" * 64)])
 def test_stale_or_misbinding_commander_fact_cannot_reserve_capacity(
     configured: dict, tmp_path: Path, field: str, value: object
@@ -488,6 +529,36 @@ def test_capacity_boundary_rechecks_commander_expiry_before_reservation(
     monkeypatch.setattr(authority.capacity, "admit", expire_while_capacity_is_held)
     denied = authority.advance(execution["id"], "owner", "advance")
     assert denied["reason_codes"] == ["COMMANDER_QUALIFICATION_EXPIRED"]
+    assert authority.capacity.snapshot()["reservations"] == []
+
+
+def test_capacity_boundary_rechecks_nested_commander_profile_facts_expiry(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    now = [1000.0]
+    _, authority, _, execution = _case(tmp_path, configured, clock=lambda: now[0])
+    commander = authority.qualifications
+    assert isinstance(commander, FixtureCommander)
+    commander.valid_until = 1100.0
+    commander.profile_facts["valid_until"] = 1001.0
+    original = authority.capacity.admit
+
+    def expire_while_capacity_is_held(
+        request: dict[str, Any],
+        *,
+        command_key: str,
+        before_reserve: Callable[[], None] | None = None,
+    ) -> dict[str, Any]:
+        def expired_callback() -> None:
+            now[0] = 1002.0
+            assert before_reserve is not None
+            before_reserve()
+
+        return original(request, command_key=command_key, before_reserve=expired_callback)
+
+    monkeypatch.setattr(authority.capacity, "admit", expire_while_capacity_is_held)
+    denied = authority.advance(execution["id"], "owner", "advance")
+    assert denied["reason_codes"] == ["COMMANDER_PROFILE_FACTS_EXPIRED"]
     assert authority.capacity.snapshot()["reservations"] == []
 
 
@@ -765,6 +836,140 @@ def test_persistent_reader_observes_material_sealed_current_generation(
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
+def test_capacity_boundary_reobserves_material_sealed_commander_source(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A changed sealed key rejects before Capacity writes its reservation."""
+    _, authority, run, execution = _case(tmp_path, configured)
+    key = tmp_path / "synthetic-boundary.key"
+    key.write_text("synthetic-boundary-key\n", encoding="utf-8")
+    key.chmod(0o600)
+    private = tmp_path / "synthetic-boundary-private"
+    profile_record = run["configuration_snapshot"]["configuration"]["resources"]["profiles"][0]
+    auth_ref = profile_record["profile"]["auth_ref"]
+    CredentialSourceStore(
+        authority.planner.projects,
+        sources={(run["project_id"], auth_ref): LocalKeyFile("synthetic-boundary", key)},
+        private_directory=private,
+        clock=lambda: 1000.0,
+    ).register(
+        run["project_id"], auth_ref, principal="owner", command_key="synthetic-boundary-register"
+    )
+    # Initialize the reader ledger before reopening every production dependency
+    # in existing-only mode.  The record itself is an explicit test producer;
+    # production cannot create it from a caller supplied pass.
+    ProfileQualificationStore(authority.planner.projects)
+    control = tmp_path / "go-boundary-control"
+    control.mkdir(mode=0o700)
+    settings = GoTaskSettings(
+        control,
+        tmp_path,
+        tmp_path / "candidates",
+        tmp_path / "host",
+        tmp_path / "journal.sqlite",
+        tmp_path / "qualification",
+        tmp_path / "task-work",
+        tmp_path / "python",
+        tmp_path / "runtime",
+        Path(os.environ["KARAJAN_GO_TOKENIZER_DIRECTORY"]),
+        private,
+        tuple(authority.planner.projects.allowed_roots),
+        (GoTaskCredentialSource(run["project_id"], auth_ref, "synthetic-boundary", key),),
+    )
+    write_go_task_bootstrap(settings)
+    monkeypatch.setattr(
+        "karajan.orchestration.go_task_runtime.deployment_source",
+        lambda _settings, _accounting: {"runtime": "synthetic-boundary-observed"},
+    )
+    projects = ProjectRegistry(
+        authority.planner.projects.database,
+        authority.planner.projects.allowed_roots,
+        existing_only=True,
+    )
+    planner = RunPlanner(authority.planner.database, projects, existing_only=True)
+    qualifications = ProfileQualificationStore(projects, commander_reader_only=True)
+    reader = PersistentCommanderQualificationReader(
+        planner, qualifications, control_directory=control
+    )
+    qualifications.commander_source = reader._current_source
+    with projects._transaction() as db:
+        source = reader._current_source(
+            db, run["project_id"], {"registration": profile_record}, "owner"
+        )
+    with qualifications._owned(run["project_id"], "owner") as db:
+        bound = qualifications._binding(
+            db,
+            run["project_id"],
+            {"id": profile_record["id"], "revision": profile_record["revision"]},
+        )
+        start = {
+            "qualification_scope": COMMANDER_QUALIFICATION_SCOPE,
+            "profile_binding": bound,
+            "source": source,
+            "execution_start": {"synthetic": "capacity-boundary"},
+        }
+        facts = authority.qualifications.read_commander(
+            execution["binding"],
+            scope=COMMANDER_QUALIFICATION_SCOPE,
+            reader_version="karajan.commander-qualification-reader.v1",
+        )
+        assert facts is not None
+        record = {
+            "id": "synthetic-capacity-boundary",
+            "binding": start,
+            "qualification_scope": COMMANDER_QUALIFICATION_SCOPE,
+            "status": "passed",
+            "provenance": "official",
+            "observed_at": 1000.0,
+            "valid_until": facts["valid_until"],
+            "commander_facts": {
+                "profile_facts": facts["profile_facts"],
+                "capability_evidence": facts["capability_evidence"],
+                "source_generation_sha256": digest(source),
+            },
+        }
+        db.execute(
+            "INSERT INTO profile_qualification_starts VALUES (?,?,?,?,?,?)",
+            (
+                record["id"],
+                run["project_id"],
+                "owner",
+                "synthetic-boundary",
+                record["id"],
+                json.dumps(start),
+            ),
+        )
+        db.execute(
+            "INSERT INTO profile_qualification_start_seals VALUES (?,?)",
+            (record["id"], digest(start)),
+        )
+        db.execute(
+            "INSERT INTO profile_qualification_records VALUES (?,?,?)",
+            (record["id"], json.dumps(record), digest(record)),
+        )
+    authority.qualifications = reader
+    original = authority.capacity.admit
+
+    def mutate_key_while_capacity_is_held(
+        request: dict[str, Any],
+        *,
+        command_key: str,
+        before_reserve: Callable[[], None] | None = None,
+    ) -> dict[str, Any]:
+        def recheck() -> None:
+            key.write_text("synthetic-boundary-key-changed\n", encoding="utf-8")
+            assert before_reserve is not None
+            before_reserve()
+
+        return original(request, command_key=command_key, before_reserve=recheck)
+
+    monkeypatch.setattr(authority.capacity, "admit", mutate_key_while_capacity_is_held)
+    denied = authority.advance(execution["id"], "owner", "synthetic-boundary-advance")
+    assert denied["reason_codes"] == ["COMMANDER_QUALIFICATION_CHANGED"]
+    assert authority.capacity.snapshot()["reservations"] == []
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
 def test_persistent_factory_rebuilds_production_reader_and_reserves_nothing_without_commander(
     configured: dict, tmp_path: Path
 ) -> None:
@@ -775,7 +980,8 @@ def test_persistent_factory_rebuilds_production_reader_and_reserves_nothing_with
     production = service.admissions.advance(execution["id"], "owner", "factory-admit")
     assert production["phase"] == "denied"
     assert production["reason_codes"] == ["COMMANDER_QUALIFICATION_REQUIRED"]
-    assert authority.capacity.snapshot()["reservations"] == []
+    assert service.capacity is not None
+    assert service.capacity.snapshot()["reservations"] == []
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
@@ -789,6 +995,19 @@ def test_persistent_factory_requires_complete_existing_store_set(
     with pytest.raises(RunError, match="^PLANNING_ADMISSION_BOOTSTRAP_INVALID$"):
         PlanningExecution.from_trusted_factory(control)
     assert not missing.exists()
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
+def test_persistent_factory_rejects_run_database_alias(configured: dict, tmp_path: Path) -> None:
+    _, authority, _, _ = _case(tmp_path, configured)
+    control = _protected_factory_control(tmp_path, authority)
+    state = tmp_path / "protected-state"
+    target = tmp_path / "repository-controlled-runs.sqlite"
+    shutil.copy2(state / "runs.sqlite", target)
+    (state / "runs.sqlite").unlink()
+    (state / "runs.sqlite").symlink_to(target)
+    with pytest.raises(RunError, match="^PLANNING_ADMISSION_BOOTSTRAP_INVALID$"):
+        PlanningExecution.from_trusted_factory(control)
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")

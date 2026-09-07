@@ -57,6 +57,17 @@ class QualificationError(ValueError):
         return str(self)
 
 
+class _CommanderFacts(dict[str, Any]):
+    """A private Project-locked Commander fact with an external-source refresh."""
+
+    def __init__(self, value: dict[str, Any], refresh: Callable[[], dict[str, Any] | None]) -> None:
+        super().__init__(value)
+        self._refresh = refresh
+
+    def recheck(self) -> dict[str, Any] | None:
+        return self._refresh()
+
+
 def _safe_root(path: Path) -> Path:
     path = path.absolute()
     for candidate in (path, *path.parents):
@@ -993,20 +1004,28 @@ class ProfileQualificationStore:
             if not self.commander_store_available or self.commander_source is None:
                 yield None
                 return
-            try:
-                frozen = RegisteredProfile.model_validate(frozen_registration).model_dump()
-                current = self._binding(
-                    db,
-                    project_id,
-                    {"id": frozen["id"], "revision": frozen["revision"]},
-                )
-                current_source = self.commander_source(db, project_id, current, principal)
-                result = self._commander_facts_locked(
-                    db, project_id, frozen_registration, scope, current_source
-                )
-            except (QualificationError, TypeError, ValueError):
-                result = None
-            yield result
+            source = self.commander_source
+
+            def refresh() -> dict[str, Any] | None:
+                # Material is external to this Project transaction. A later
+                # recheck can fail its seal after the first observation; that
+                # becomes a no-fact at the Capacity boundary.
+                try:
+                    frozen = RegisteredProfile.model_validate(frozen_registration).model_dump()
+                    current = self._binding(
+                        db,
+                        project_id,
+                        {"id": frozen["id"], "revision": frozen["revision"]},
+                    )
+                    current_source = source(db, project_id, current, principal)
+                    return self._commander_facts_locked(
+                        db, project_id, frozen_registration, scope, current_source
+                    )
+                except (QualificationError, TypeError, ValueError):
+                    return None
+
+            result = refresh()
+            yield _CommanderFacts(result, refresh) if result is not None else None
 
     def _commander_facts_locked(
         self,
@@ -1054,6 +1073,10 @@ class ProfileQualificationStore:
             record = self._record(db, latest["id"])
         except QualificationError:
             return None
+        commander_record = record.get("commander_facts")
+        facts = (
+            commander_record.get("profile_facts") if isinstance(commander_record, dict) else None
+        )
         if (
             record.get("binding") != start
             or record.get("qualification_scope") != scope
@@ -1063,8 +1086,12 @@ class ProfileQualificationStore:
                 "SELECT 1 FROM profile_qualification_revocations WHERE id=?", (record["id"],)
             ).fetchone()
             is not None
-            or not record.get("observed_at", float("inf")) <= self._now()
+            or not record.get("observed_at", float("inf"))
+            <= self._now()
             < record.get("valid_until", float("-inf"))
+            or not isinstance(facts, dict)
+            or not isinstance(facts.get("valid_until"), (int, float))
+            or facts["valid_until"] <= self._now()
         ):
             return None
         commander = record.get("commander_facts")
@@ -1089,6 +1116,7 @@ class ProfileQualificationStore:
             "valid_until": record["valid_until"],
             "provenance": "official",
         }
+
     @contextmanager
     def routing_facts_guard(
         self,

@@ -149,6 +149,12 @@ def _parse_settings(control: Path, value: dict[str, Any]) -> PlanningBootstrapSe
     if paths["state_directory"] == control or control.is_relative_to(paths["state_directory"]):
         raise _invalid()
     state = paths["state_directory"]
+    # ``runs.sqlite`` is not named by the small planning descriptor, but the
+    # production authority necessarily opens it. Subject it to the same exact
+    # spelling/no-alias/private-state checks as the explicitly named ledgers.
+    # Otherwise a symlink below an otherwise valid state directory could make
+    # a repository-controlled compatible Run store authoritative.
+    _canonical_existing(str(state / "runs.sqlite"), directory=False)
     if any(not paths[name].is_relative_to(state) for name in _PATH_FIELDS[1:]):
         raise _invalid()
     if any(not path.is_file() for path in paths.values() if path != state):
@@ -172,9 +178,7 @@ def _registered_repositories(database: Path, roots: tuple[Path, ...]) -> tuple[P
     """Read only the known ProjectRegistry table and its saved repository roots."""
     try:
         require_schema(database, _PROJECT_SCHEMA)
-        connection = sqlite3.connect(
-            database.resolve().as_uri() + "?mode=ro", uri=True, timeout=10
-        )
+        connection = sqlite3.connect(database.resolve().as_uri() + "?mode=ro", uri=True, timeout=10)
         try:
             connection.execute("PRAGMA query_only=ON")
             connection.execute("BEGIN")

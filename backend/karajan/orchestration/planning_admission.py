@@ -8,7 +8,7 @@ frozen planning budget, never to a Plan, an intent, or a transport grant.
 
 import json
 import sqlite3
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager, nullcontext
 from copy import deepcopy
 from pathlib import Path
@@ -36,6 +36,17 @@ from .routing import _capacity_snapshot
 
 COMMANDER_QUALIFICATION_SCOPE = "commander_planning.v1"
 COMMANDER_QUALIFICATION_READER_VERSION = "karajan.commander-qualification-reader.v1"
+
+
+class _CurrentCommanderQualification(dict[str, Any]):
+    """Private effect lease that can re-observe external source material."""
+
+    def __init__(self, value: dict[str, Any], recheck: Callable[[], dict[str, Any] | None]) -> None:
+        super().__init__(value)
+        self._recheck = recheck
+
+    def recheck(self) -> dict[str, Any] | None:
+        return self._recheck()
 
 
 class CommanderQualificationReader(Protocol):
@@ -70,9 +81,8 @@ class PersistentCommanderQualificationReader:
 
             settings, _ = _read_bootstrap(self.control_directory)
             if (
-                (settings.state_directory / "projects.sqlite").resolve()
-                != self.planner.projects.database.resolve()
-            ):
+                settings.state_directory / "projects.sqlite"
+            ).resolve() != self.planner.projects.database.resolve():
                 raise RunError("COMMANDER_SOURCE_STATE_MISMATCH")
             self._credentials = CredentialSourceStore(
                 self.planner.projects,
@@ -126,9 +136,7 @@ class PersistentCommanderQualificationReader:
         }
 
     @staticmethod
-    def _registration(
-        run: dict[str, Any], binding: dict[str, Any]
-    ) -> dict[str, Any] | None:
+    def _registration(run: dict[str, Any], binding: dict[str, Any]) -> dict[str, Any] | None:
         """Resolve the frozen Commander profile without inventing a Plan."""
         return next(
             (
@@ -168,13 +176,24 @@ class PersistentCommanderQualificationReader:
             if current is None:
                 yield None
                 return
-            yield {
-                "schema_version": "karajan.commander-qualification.v1",
-                "scope": scope,
-                "reader_version": reader_version,
-                "binding_sha256": digest(binding),
-                **current,
-            }
+
+            def envelope(value: dict[str, Any]) -> dict[str, Any]:
+                return {
+                    "schema_version": "karajan.commander-qualification.v1",
+                    "scope": scope,
+                    "reader_version": reader_version,
+                    "binding_sha256": digest(binding),
+                    **value,
+                }
+
+            refreshed = getattr(current, "recheck", None)
+            if callable(refreshed):
+                yield _CurrentCommanderQualification(
+                    envelope(current),
+                    lambda: None if (next_value := refreshed()) is None else envelope(next_value),
+                )
+            else:
+                yield envelope(current)
 
     def read_commander(
         self, binding: dict[str, Any], *, scope: str, reader_version: str
@@ -470,25 +489,15 @@ class PlanningAdmissionAuthority:
         execution = run["execution_policy_snapshot"]
         ceiling = run["authorization_ceiling"]
         constraints = execution["constraints"]
-        permitted = {
-            (row["id"], row["revision"])
-            for row in constraints["profile_refs"]
-        } & {
-            (row["id"], row["revision"])
-            for row in ceiling["profile_refs"]
+        permitted = {(row["id"], row["revision"]) for row in constraints["profile_refs"]} & {
+            (row["id"], row["revision"]) for row in ceiling["profile_refs"]
         }
         profiles = [
-            row
-            for row in constraints["profile_refs"]
-            if (row["id"], row["revision"]) in permitted
+            row for row in constraints["profile_refs"] if (row["id"], row["revision"]) in permitted
         ]
         rulebook = run["configuration_snapshot"]["configuration"]["rulebook"]
         approved_groups = {
-            group: [
-                row
-                for row in members
-                if (row["id"], row["revision"]) in permitted
-            ]
+            group: [row for row in members if (row["id"], row["revision"]) in permitted]
             for group, members in rulebook["profile_groups"].items()
         }
         return {
@@ -500,8 +509,7 @@ class PlanningAdmissionAuthority:
                 set(constraints["data_destinations"]) & set(ceiling["data_destinations"])
             ),
             "required_capabilities": sorted(
-                set(constraints["required_capabilities"])
-                | set(ceiling["required_capabilities"])
+                set(constraints["required_capabilities"]) | set(ceiling["required_capabilities"])
             ),
             "min_isolation": "tool_sandboxed",
             "allowed_stages": ["normal"],
@@ -624,9 +632,19 @@ class PlanningAdmissionAuthority:
             reserved = evaluate_reserved_profile(task, policy, capacity, binding["profile"])
         except (RoutingError, KeyError, TypeError, ValueError):
             raise RunError("PLANNING_ROUTE_INPUT_INVALID") from None
+        selected_rule = next(
+            (row for row in fixed["rulebook"]["rules"] if row["id"] == route["rule_id"]),
+            None,
+        )
+        if not isinstance(selected_rule, dict):
+            raise RunError("PLANNING_ROUTE_INPUT_INVALID")
         return {
             "route": route,
             "reserved": reserved,
+            # The estimate witnesses the exact Capacity observation, but a
+            # caller cannot use it to widen the selected frozen rule's reserve
+            # permission.  Capacity receives this rule-derived bit below.
+            "lead_reserve_access": selected_rule.get("lead_reserve_access") is not False,
             "capacity_facts_sha256": facts.sha256,
             "capacity_diagnostics": diagnostics,
             "task_sha256": digest(task),
@@ -794,13 +812,27 @@ class PlanningAdmissionAuthority:
             )
         )
 
-    def _assert_qualification_live(self, record: dict[str, Any], current: object) -> None:
+    def _assert_qualification_live(
+        self, record: dict[str, Any], current: object, *, reobserve: bool = False
+    ) -> dict[str, Any]:
         """Reject source/fact drift or expiry at the actual Capacity boundary."""
+        if reobserve:
+            refresh = getattr(current, "recheck", None)
+            if callable(refresh):
+                current = refresh()
         if not isinstance(current, dict) or current != record.get("qualification"):
             raise RunError("COMMANDER_QUALIFICATION_CHANGED")
         valid_until = current.get("valid_until")
         if not isinstance(valid_until, (int, float)) or valid_until <= self.planner.clock():
             raise RunError("COMMANDER_QUALIFICATION_EXPIRED")
+        facts = current.get("profile_facts")
+        facts_valid_until = facts.get("valid_until") if isinstance(facts, dict) else None
+        if (
+            not isinstance(facts_valid_until, (int, float))
+            or facts_valid_until <= self.planner.clock()
+        ):
+            raise RunError("COMMANDER_PROFILE_FACTS_EXPIRED")
+        return current
 
     @staticmethod
     def _budget(run: dict[str, Any], budget_ref: str) -> tuple[dict[str, Any], str]:
@@ -951,11 +983,17 @@ class PlanningAdmissionAuthority:
             return current
 
     def advance(self, execution_id: str, principal: str, command_key: str) -> dict[str, Any]:
-        """Recover exactly one original request; no receipt can be caller-supplied."""
+        """Fence cancellation through every planning admission mutation."""
         for value in (execution_id, principal, command_key):
             identifier(value)
         self._assert_bootstrap_current()
-        binding = self._execution_binding(execution_id, principal)
+        with self._execution_guard(execution_id, principal) as binding:
+            return self._advance_locked(execution_id, principal, command_key, binding)
+
+    def _advance_locked(
+        self, execution_id: str, principal: str, command_key: str, binding: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Perform one admission while the private execution cancellation fence is held."""
         run = self.planner.get(binding["run_id"], principal=principal)
         payload = encoded([execution_id, digest(binding)])
         prior = self._claim_command(principal, command_key, payload)
@@ -1147,6 +1185,21 @@ class PlanningAdmissionAuthority:
                 command_key,
                 payload,
             )
+        rule_access = record.get("route_sources", {}).get("lead_reserve_access")
+        if (
+            type(rule_access) is not bool
+            or request["expected_capacity"].get("lead_reserve_access") is not rule_access
+        ):
+            return self._finish_command(
+                self._deny(record, "PLANNING_LEAD_RESERVE_ACCESS_MISMATCH"),
+                principal,
+                command_key,
+                payload,
+            )
+        request["expected_capacity"] = {
+            **request["expected_capacity"],
+            "lead_reserve_access": rule_access,
+        }
         dispatch_admit = False
         with self._transaction() as db:
             record = self._load(db, execution_id) or record
@@ -1168,7 +1221,7 @@ class PlanningAdmissionAuthority:
                     self._budget_live(record)
 
                     def before_reserve() -> None:
-                        self._assert_qualification_live(record, qualification)
+                        self._assert_qualification_live(record, qualification, reobserve=True)
                         self._assert_budget_deadline(record, record["budget_usage"])
 
                     receipt = self.capacity.command_receipt(
@@ -1259,9 +1312,12 @@ class PlanningAdmissionAuthority:
         """Fresh, non-reusable authorization around one owned transport effect."""
         for value in (execution_id, principal, effect_id):
             identifier(value)
+        self._assert_bootstrap_current()
+        # Admission owns its own execution fence. Reopen it only after that
+        # mutation completes, so a cancellation between admission and effect
+        # still wins before any transport boundary is entered.
+        record = self.advance(execution_id, principal, "planning-guard:" + effect_id)
         with self._execution_guard(execution_id, principal) as binding:
-            self._assert_bootstrap_current()
-            record = self.advance(execution_id, principal, "planning-guard:" + effect_id)
             if record["phase"] != "admitted" or record["binding"] != binding:
                 raise RunError("PLANNING_EFFECT_NOT_ADMITTED")
             # Keep execution -> Run -> Project/qualification -> Capacity in
@@ -1279,7 +1335,7 @@ class PlanningAdmissionAuthority:
                         record["capacity_receipt"]["admission_id"],
                         expected_request=record["capacity_request"],
                     ) as capacity:
-                        self._assert_qualification_live(record, qualification)
+                        self._assert_qualification_live(record, qualification, reobserve=True)
                         self._assert_budget_deadline(record, record["budget_usage"])
                         yield {
                             "execution_id": execution_id,
