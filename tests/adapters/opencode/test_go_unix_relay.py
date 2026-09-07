@@ -1,5 +1,6 @@
 """Real pathname Unix HTTP transport; the upstream is explicitly synthetic."""
 
+import contextlib
 import sys
 from pathlib import Path
 
@@ -10,6 +11,44 @@ from test_go_relay import CANARY, SECRET, answer, payload
 from test_go_relay_journal import authorization
 
 pytestmark = pytest.mark.skipif(sys.platform != "linux", reason="Linux namespace transport")
+
+
+def _socket_path_with_length(root: Path, target_length: int) -> Path:
+    base = root / "path"
+    base.mkdir()
+    index = 0
+    while True:
+        path = base / ("a" * index) / "inference.sock"
+        actual = len(str(path))
+        if actual == target_length:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            return path
+        if actual > target_length:
+            raise ValueError("PATH_LENGTH_TARGET_UNREACHABLE")
+        index += 1
+
+
+def test_unix_relay_path_length_bounds(tmp_path):
+    relay = GoRelay(SECRET, CANARY)
+    try:
+        allowed = _socket_path_with_length(tmp_path, 107)
+        relay.start(unix_socket=allowed)
+        assert len(str(allowed)) == 107
+        assert relay.close()["status"] == "closed"
+        assert not allowed.exists()
+    finally:
+        with contextlib.suppress(FileNotFoundError):
+            relay.close()
+
+
+def test_unix_relay_rejects_overlong_path(tmp_path):
+    relay = GoRelay(SECRET, CANARY)
+    overlong = _socket_path_with_length(tmp_path, 108)
+    assert len(str(overlong)) == 108
+    with pytest.raises(RuntimeError, match="UNIX_RELAY_PATH_TOO_LONG"):
+        relay.start(unix_socket=overlong)
+    assert not overlong.exists()
+    assert relay.close()["status"] == "closed"
 
 
 def test_unix_relay_keeps_the_same_fixed_endpoint_and_capability_boundary(tmp_path: Path) -> None:

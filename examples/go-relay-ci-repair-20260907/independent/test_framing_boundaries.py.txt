@@ -1,0 +1,86 @@
+"""Independent real TCP controls for the narrow rejection framing contract."""
+
+import socket
+from urllib.parse import urlsplit
+
+import pytest
+from karajan.adapters.opencode.go_relay import GoRelay
+from test_rejection_boundary import journaled
+
+
+@pytest.mark.parametrize("framing", ["duplicate_length", "transfer_encoding", "invalid_length"])
+def test_ambiguous_framing_has_no_speculative_drain_or_authority(tmp_path, monkeypatch, framing):
+    reads = []
+    original = GoRelay._read_request
+
+    class Reader:
+        def __init__(self, wrapped):
+            self.wrapped = wrapped
+
+        def read1(self, count=-1):
+            reads.append(count)
+            return self.wrapped.read1(count)
+
+        def __getattr__(self, name):
+            return getattr(self.wrapped, name)
+
+    def observe(self, handler):
+        handler.rfile = Reader(handler.rfile)
+        return original(self, handler)
+
+    monkeypatch.setattr(GoRelay, "_read_request", observe)
+    framing_headers = {
+        "duplicate_length": "Content-Length: 20\r\nContent-Length: 20\r\n",
+        "transfer_encoding": "Content-Length: 20\r\nTransfer-Encoding: chunked\r\n",
+        "invalid_length": "Content-Length: twenty\r\n",
+    }[framing]
+    with journaled(tmp_path) as (relay, _, _):
+        request = (
+            "POST /v1/chat/completions HTTP/1.1\r\nHost: localhost\r\n"
+            "Authorization: Bearer wrong-capability\r\n"
+            + framing_headers
+            + "\r\n"
+        ).encode()
+        with socket.create_connection(("127.0.0.1", urlsplit(relay.url).port)) as peer:
+            peer.sendall(request)
+            peer.settimeout(2)
+            assert b" 403 " in peer.recv(2048).split(b"\r\n", 1)[0]
+        assert reads == []
+
+
+def test_declared_oversized_body_is_drained_only_to_existing_request_cap(tmp_path, monkeypatch):
+    reads = []
+    original = GoRelay._read_request
+
+    class Reader:
+        def __init__(self, wrapped):
+            self.wrapped = wrapped
+
+        def read1(self, count=-1):
+            data = self.wrapped.read1(count)
+            reads.append((count, len(data)))
+            return data
+
+        def __getattr__(self, name):
+            return getattr(self.wrapped, name)
+
+    def observe(self, handler):
+        handler.rfile = Reader(handler.rfile)
+        return original(self, handler)
+
+    monkeypatch.setattr(GoRelay, "_read_request", observe)
+    cap = 262144
+    with journaled(tmp_path) as (relay, _, _):
+        request = (
+            "POST /v1/chat/completions HTTP/1.1\r\nHost: localhost\r\n"
+            f"Authorization: Bearer {relay.capability}\r\n"
+            f"Content-Length: {cap + 100}\r\n\r\n"
+        ).encode()
+        with socket.create_connection(("127.0.0.1", urlsplit(relay.url).port)) as peer:
+            # Deliberately keep write-open: completion must follow the byte cap,
+            # rather than half-close or a read for the remainder of the declaration.
+            peer.sendall(request + b"x" * cap)
+            peer.settimeout(2)
+            assert b" 413 " in peer.recv(2048).split(b"\r\n", 1)[0]
+        assert sum(count for _, count in reads) == cap
+        assert all(0 < requested <= min(16384, cap) for requested, _ in reads)

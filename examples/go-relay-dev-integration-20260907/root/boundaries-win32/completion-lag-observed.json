@@ -1,0 +1,10 @@
+{
+  "barrier": "public injected HTTP transport close; no receipt/Journal writes mocked",
+  "client_status": 200,
+  "declared_content_length": 446,
+  "journal_outcome": null,
+  "journal_state": "send_unknown",
+  "protocol_passed": true,
+  "received_body_bytes": 446,
+  "relay_completed": true
+}

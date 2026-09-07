@@ -1,0 +1,27 @@
+{
+  "argv": [
+    "/tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/adapters/opencode/test_go_relay.py",
+    "tests/adapters/opencode/test_go_relay_context.py",
+    "tests/adapters/opencode/test_go_relay_nullable_names.py",
+    "tests/adapters/opencode/test_go_relay_journal.py",
+    "tests/adapters/opencode/test_go_context.py",
+    "tests/adapters/opencode/test_go_journal.py",
+    "tests/adapters/opencode/test_go_send_guard.py",
+    "tests/adapters/opencode/test_go_unix_relay.py",
+    "tests/isolation/test_go_task.py",
+    "tests/runs/test_go_task_binding_source.py",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "-o",
+    "pythonpath=backend tests/projects tests/runs tests/web tests/isolation tests/adapters/opencode tests/candidates tests/execution",
+    "--junitxml=/mnt/c/Users/Chooo/Playground/Karajan/.cache/ci-spark-relay/.cache/relay-dev-merge-root/linux/tests.xml"
+  ],
+  "cwd": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/ci-spark-relay",
+  "tokenizer": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-artifacts",
+  "platform": "linux",
+  "scope": "Local C/P; synthetic credentials and HTTP; no official provider calls."
+}

@@ -1,0 +1,1 @@
+Initial static-check harness was rejected before process start due to malformed workdir; no checks executed.

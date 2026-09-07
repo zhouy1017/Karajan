@@ -15,7 +15,7 @@ from karajan.adapters.opencode.go_relay import GoRelayAuthorization
 from karajan.candidates import CandidateStore
 from karajan.contracts.probe import AttemptManifest
 from karajan.execution import Activation, ProcessIdentity, ProcessSpec
-from karajan.isolation.go_task import execute_go_task
+from karajan.isolation.go_task import _STABLE_FAILURE_CODES, execute_go_task
 from karajan.isolation.opencode_runtime import IsolatedOpenCode
 from karajan.projects.credential_sources import CredentialSourceStore, ResolvedCredential
 from karajan.runs import RunError
@@ -423,6 +423,9 @@ def consume_go_task(
             send_guard=send_guard,
             client_factory=services.client_factory,
         )
+        _record_native_failure_diagnostic(
+            intents, run_id, operation_id, principal=principal, runner=runner, result=result
+        )
         from .go_task_collector import ApprovedGoCollector
 
         ApprovedGoCollector(
@@ -440,6 +443,44 @@ def consume_go_task(
                 pass
         _observe_failure(services, run_id, operation_id, principal, "runner")
         raise
+
+
+def _record_native_failure_diagnostic(
+    intents: GoExecutionIntents,
+    run_id: str,
+    operation_id: str,
+    *,
+    principal: str,
+    runner: ProcessIdentity,
+    result: Any,
+) -> None:
+    """Carry only the fixed producer failure facts across Collector rejection."""
+    if getattr(result, "capture", object()) is not None:
+        return
+    report = result.report
+    candidates = [report.get("error_reason_code")]
+    candidates.extend(report.get("reason_codes", []))
+    reason_code = next((value for value in candidates if value in _STABLE_FAILURE_CODES), None)
+    error_type = report.get("error_type", "Exception")
+    native_stop = report.get("native_cleanup", {}).get("local_stop")
+    relay_status = report.get("relay_cleanup", {}).get("status")
+    if (
+        reason_code is None
+        or not isinstance(error_type, str)
+        or native_stop not in {"confirmed", "not_started", "unknown"}
+        or relay_status not in {"closed", "unknown"}
+    ):
+        return
+    intents.record_failure_diagnostic(
+        run_id,
+        operation_id,
+        principal=principal,
+        runner=runner,
+        reason_code=reason_code,
+        error_type=error_type,
+        native_stop=native_stop,
+        relay_status=relay_status,
+    )
 
 
 def _credential_identity(credential: ResolvedCredential, source: dict[str, Any]) -> None:
