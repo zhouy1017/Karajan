@@ -1,0 +1,35 @@
+"""Public fixed Reviewer observer: real native/Journal, local HTTP fixtures only."""
+
+from karajan.isolation.go_reviewer_probe import reviewer_probe_spec
+from test_go_context import accounting as accounting
+from test_go_context import artifacts as artifacts
+
+
+def test_fixed_reviewer_spec_is_readonly_bounded_and_detached(accounting):
+    spec = reviewer_probe_spec(accounting)
+    assert spec["suite_ref"] == {
+        "id": "opencode-go-readonly-review-linux",
+        "revision": 1,
+    }
+    assert spec["scenarios"] == ["clean_review", "defect_review", "denied_read"]
+    assert spec["max_requests"] == 6
+    assert spec["max_total_requests"] == 18
+    assert spec["scenario_timeout_seconds"] == 150
+    assert spec["suite_timeout_seconds"] == 600
+    assert spec["context"]["approved_input_tokens"] == 12288
+    assert spec["context"]["reserved_output_tokens"] == 4096
+    assert spec["context"]["operating_context_tokens"] == 16384
+    assert spec["context"]["fixed_margin"] == 2048
+    assert spec["context"]["ratio_margin_basis_points"] == 2000
+    for case in spec["cases"].values():
+        assert [(row["path"], row["writable"]) for row in case["projection"]] == [
+            ("acceptance.md", False),
+            ("src/range.py", False),
+        ]
+        assert case["allowed_acceptance_refs"] == ["acceptance:clamp-v1"]
+        assert all("content" not in row for row in case["files"])
+    assert spec["cases"]["clean_review"]["files"] != spec["cases"]["defect_review"]["files"]
+    spec["cases"]["clean_review"]["projection"][0]["writable"] = True
+    assert reviewer_probe_spec(accounting)["cases"]["clean_review"]["projection"][0][
+        "writable"
+    ] is False

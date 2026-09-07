@@ -1,0 +1,4 @@
+.................................................................s       [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\projects\test_go_reviewer_suite.py:879: Actual readonly Store suite requires Linux
+65 passed, 1 skipped in 3.11s

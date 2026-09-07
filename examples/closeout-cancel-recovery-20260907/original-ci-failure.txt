@@ -1,0 +1,366 @@
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	﻿2026-09-07T03:42:04.3812337Z ##[group]Run uv run --frozen --extra dev pytest tests
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:04.3812665Z ^[[36;1muv run --frozen --extra dev pytest tests^[[0m
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:04.3834262Z shell: /usr/bin/bash -e {0}
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:04.3834485Z env:
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:04.3834661Z   PYTHONUTF8: 1
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:04.3834840Z   UV_NO_PROGRESS: 1
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:04.3835014Z   UV_PYTHON: 3.12
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:04.3835249Z   KARAJAN_GO_TOKENIZER_DIRECTORY: .cache/go-context-artifacts
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:04.3835545Z   KARAJAN_REQUIRE_GO_TOKENIZER: 1
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:04.3835747Z   HF_HUB_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:04.3835924Z   TRANSFORMERS_OFFLINE: 1
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:04.3836165Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:04.3836497Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:04.3836845Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:04.3837143Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:04.3837439Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:04.3837777Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:04.3838283Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:04.3838562Z   KARAJAN_REQUIRE_OPENCODE_ISOLATION: 1
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:04.3838780Z ##[endgroup]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:10.1123168Z ============================= test session starts ==============================
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:10.1124836Z platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:10.1126485Z rootdir: /home/runner/work/Karajan/Karajan
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:10.1126872Z configfile: pyproject.toml
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:10.1127155Z plugins: anyio-4.15.1
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:10.1127593Z collected 2192 items
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:10.1127719Z 
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:14.3185372Z tests/adapters/claude/test_claude_replay.py ............................ [  1%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:18.9661123Z ...............................                                          [  2%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:18.9713201Z tests/adapters/codex/test_permission_gate.py .....                       [  2%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:26.2451376Z tests/adapters/codex/test_replay_cli.py ................................ [  4%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:42:27.1938438Z ....                                                                     [  4%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:19.4443091Z tests/adapters/deepseek/test_deepseek_probe.py ................          [  5%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:19.4564226Z tests/adapters/deepseek/test_deepseek_protocol.py ...................... [  6%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:19.4756902Z ................................                                         [  7%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:20.0347168Z tests/adapters/opencode/test_go_context.py ............................. [  9%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:20.5715842Z ..........                                                               [  9%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:20.5779925Z tests/adapters/opencode/test_go_evidence.py ..........                   [  9%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:20.6950300Z tests/adapters/opencode/test_go_grant_authentication.py ........         [ 10%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:20.9292651Z tests/adapters/opencode/test_go_isolated_cli.py .                        [ 10%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:21.9115803Z tests/adapters/opencode/test_go_journal.py ............................. [ 11%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:22.0906238Z ........................                                                 [ 12%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:22.0933850Z tests/adapters/opencode/test_go_live.py ..                               [ 12%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:22.1091310Z tests/adapters/opencode/test_go_observer_guard.py ...                    [ 13%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:22.5995710Z tests/adapters/opencode/test_go_qualification_grants.py ................ [ 13%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:22.6689116Z ....                                                                     [ 13%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:24.3295427Z tests/adapters/opencode/test_go_qualification_relay.py ................. [ 14%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:25.1757062Z ..................                                                       [ 15%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:28.2727317Z tests/adapters/opencode/test_go_relay.py ............................... [ 16%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:35.3792984Z ...........................................                              [ 18%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:36.9979204Z tests/adapters/opencode/test_go_relay_context.py ..............          [ 19%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:37.3124600Z tests/adapters/opencode/test_go_relay_journal.py ...                     [ 19%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:38.2400864Z tests/adapters/opencode/test_go_relay_nullable_names.py .............    [ 20%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:41.9151087Z tests/adapters/opencode/test_go_send_guard.py .........                  [ 20%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:42.1711793Z tests/adapters/opencode/test_go_task_grants.py ......................... [ 21%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:43.1350727Z ............                                                             [ 22%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:43.3373600Z tests/adapters/opencode/test_go_unix_relay.py .....                      [ 22%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:44:44.3431400Z tests/adapters/opencode/test_management.py ..                            [ 22%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:46:33.3057718Z tests/adapters/opencode/test_opencode_probe.py .............             [ 23%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:46:34.3252208Z tests/candidates/test_baseline_materialization.py ................       [ 24%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:46:36.0666757Z tests/candidates/test_capture_recovery.py ...................            [ 24%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:46:37.2174330Z tests/candidates/test_evidence_recovery.py ...........                   [ 25%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:46:38.0352757Z tests/candidates/test_projected_capture.py ...............               [ 26%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:46:41.5333871Z tests/candidates/test_review_rebind.py ................................. [ 27%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:46:42.2789595Z .........                                                                [ 28%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:46:43.7877952Z tests/candidates/test_validation.py .................................... [ 29%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:46:45.7300945Z .......................................                                  [ 31%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:46:46.1377892Z tests/capacity/test_admission_bindings.py ..........................     [ 32%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:46:47.2914165Z tests/capacity/test_capacity_probe.py ......                             [ 32%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:46:47.5904867Z tests/capacity/test_command_receipts.py ....................             [ 33%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:46:48.2595349Z tests/capacity/test_pre_effect_guard.py .................                [ 34%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:46:48.3628865Z tests/capacity/test_resource_view.py .....                               [ 34%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:46:48.4183423Z tests/capacity/test_review_cases.py ..                                   [ 34%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:46:48.8952886Z tests/capacity/test_routing_facts.py ..........................          [ 36%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:46:49.5824034Z tests/capacity/test_shared_capacity.py ................................. [ 37%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:46:49.6969112Z .....                                                                    [ 37%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:46:54.7969295Z tests/contract/test_probe_cli.py .............................           [ 39%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:46:57.0996257Z tests/delivery/test_protocol.py ........................................ [ 40%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:46:57.1770023Z ..                                                                       [ 41%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:47:03.5086330Z tests/execution/test_capture_fence.py .....................              [ 42%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:47:07.9198583Z tests/execution/test_check_manifest.py ........................          [ 43%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:47:08.0831835Z tests/execution/test_control_initialization.py .........                 [ 43%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:47:08.2314597Z tests/execution/test_exact_cancellation.py ........                      [ 43%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:47:09.5315431Z tests/execution/test_runner_identity.py ....                             [ 44%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:47:14.1660284Z tests/execution/test_runner_identity_independent.py ...........          [ 44%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:47:23.0233896Z tests/execution/test_runnerhost.py ..................................... [ 46%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:47:24.8883549Z .......                                                                  [ 46%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:47:50.8809247Z tests/isolation/test_check_runner.py ...................                 [ 47%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:47:50.9494436Z tests/isolation/test_go_probe_task_grant_rejection.py ........           [ 47%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:48:19.1841920Z tests/isolation/test_go_projected_probe.py .............                 [ 48%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:48:41.5575195Z tests/isolation/test_go_task.py ............................             [ 49%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:48:45.3272143Z tests/isolation/test_isolation_probe.py ......s....s.                    [ 50%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:49:18.8267841Z tests/isolation/test_opencode_go_composition.py ....                     [ 50%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:51:04.9341673Z tests/isolation/test_opencode_projection_capture.py ................     [ 51%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:52:27.2219096Z tests/isolation/test_opencode_runtime.py ..............                  [ 51%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:52:43.8758808Z tests/isolation/test_opencode_task_context.py ..                         [ 51%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:53:17.9379120Z tests/isolation/test_opencode_task_projection.py ........                [ 52%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:53:21.9621215Z tests/orchestration/test_cli.py .....                                    [ 52%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:53:26.4334982Z tests/orchestration/test_pinned_rules.py ..............                  [ 53%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:54:14.0152616Z tests/orchestration/test_serial.py ................................      [ 54%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:54:14.8912200Z tests/projects/test_credential_sources.py ......................         [ 55%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:54:14.8937483Z tests/projects/test_credential_windows_owners.py sssss                   [ 55%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:54:17.6343906Z tests/projects/test_demand_store.py .................................... [ 57%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:54:17.6954795Z .                                                                        [ 57%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:54:19.7086325Z tests/projects/test_execution_policy_v2.py ............................. [ 58%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:54:20.1419153Z .......                                                                  [ 59%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:55:17.4401947Z tests/projects/test_go_projected_suite.py ..................             [ 59%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:56:02.2443877Z tests/projects/test_go_suite.py ..................                       [ 60%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:56:21.2979365Z tests/projects/test_projected_qualification_native.py .                  [ 60%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:56:23.1894233Z tests/projects/test_projected_qualification_store.py ................... [ 61%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:56:23.7554361Z .....                                                                    [ 61%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:56:24.1097469Z tests/projects/test_publication.py .......                               [ 62%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:56:25.3841643Z tests/projects/test_publication_guards.py ........................       [ 63%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:56:25.5531041Z tests/projects/test_publication_migration.py ...                         [ 63%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:56:29.2353351Z tests/projects/test_qualification_store.py ...................           [ 64%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:56:30.0421050Z tests/projects/test_registry.py ........................................ [ 66%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:56:30.7645661Z .................................                                        [ 67%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:57:06.6224829Z tests/projects/test_runtime_qualification_store.py .....                 [ 67%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:57:07.6132434Z tests/resources/test_broker.py ..................................        [ 69%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:57:08.0874558Z tests/resources/test_probe.py .....                                      [ 69%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:57:08.1419418Z tests/routing/test_authorization.py ...........                          [ 70%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:57:08.1557179Z tests/routing/test_budget_input.py .....                                 [ 70%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:57:08.2133636Z tests/routing/test_cash_and_sort.py ..........                           [ 70%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:57:09.2767139Z tests/routing/test_cli.py .....                                          [ 71%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:57:09.2948750Z tests/routing/test_compiler.py ...............                           [ 71%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:57:09.3341304Z tests/routing/test_invalid_inputs.py ..............                      [ 72%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:57:09.4747417Z tests/routing/test_profile_membership.py ............................... [ 73%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:57:09.4806216Z ..                                                                       [ 73%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:57:09.6231918Z tests/routing/test_reserved_profile.py ................................. [ 75%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:57:09.6555559Z ......                                                                   [ 75%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:57:09.7127554Z tests/routing/test_resources.py ..............                           [ 76%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:57:09.7334573Z tests/routing/test_routing.py ....                                       [ 76%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:57:09.7526460Z tests/routing/test_rule_selection.py ......                              [ 76%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:57:10.3072759Z tests/runs/test_admission_guard.py ...                                   [ 76%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:57:10.6744071Z tests/runs/test_approved_routing.py ......                               [ 77%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:57:10.8257978Z tests/runs/test_approved_routing_capacity.py ..                          [ 77%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:57:25.0796107Z tests/runs/test_candidate_checks.py ..........................           [ 78%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:57:32.0317891Z tests/runs/test_candidate_checks_concurrency_native.py .                 [ 78%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:57:56.1764049Z tests/runs/test_candidate_checks_native.py ..                            [ 78%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:58:05.1527403Z tests/runs/test_candidate_subjects.py ................                   [ 79%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:58:47.1447601Z tests/runs/test_candidate_subjects_native.py .F                          [ 79%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:58:49.3874635Z tests/runs/test_check_services_factory.py ...................            [ 80%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:58:49.6523596Z tests/runs/test_existing_task_stores.py ..............                   [ 80%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:58:54.9557612Z tests/runs/test_go_execution_intent.py .......................           [ 82%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:58:57.3389914Z tests/runs/test_go_execution_intent_independent.py .........             [ 82%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:58:57.3601779Z tests/runs/test_go_execution_scope.py .................................. [ 83%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:58:57.3622270Z ...                                                                      [ 84%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:59:05.0664887Z tests/runs/test_go_lifecycle.py ..........................               [ 85%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:59:07.9426061Z tests/runs/test_go_native_diagnostic_contract.py ...........             [ 85%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:59:09.1160018Z tests/runs/test_go_task_binding.py .....                                 [ 86%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:59:10.0107446Z tests/runs/test_go_task_binding_independent.py ....                      [ 86%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:59:11.3393533Z tests/runs/test_go_task_binding_source.py ..                             [ 86%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:59:17.7646825Z tests/runs/test_go_task_collector.py ..................                  [ 87%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T03:59:26.1132941Z tests/runs/test_go_task_execution.py ............                        [ 87%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:02.5823375Z tests/runs/test_go_task_execution_native.py ...                          [ 87%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:07.4711447Z tests/runs/test_go_task_input.py ........................                [ 88%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:10.3250987Z tests/runs/test_go_task_runtime.py ........                              [ 89%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:12.7652523Z tests/runs/test_planning.py ............................................ [ 91%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:12.9433945Z .....                                                                    [ 91%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:15.0072821Z tests/runs/test_projected_go_routing.py ..........                       [ 91%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:16.7245202Z tests/runs/test_reserved_execution_guard.py ..........                   [ 92%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:28.2674847Z tests/runs/test_reviewer_binding.py ..................                   [ 93%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:29.7616840Z tests/runs/test_routing_authorization.py ............................... [ 94%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:30.0254395Z ...                                                                      [ 94%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:31.2557185Z tests/runs/test_task_admission.py .........                              [ 95%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:34.4773848Z tests/runs/test_task_workspace.py .................                      [ 95%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:36.3149195Z tests/tools/test_go_tokenizer_provision.py ........                      [ 96%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:37.3914427Z tests/web/test_approved_routing_http.py ........                         [ 96%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:38.4600918Z tests/web/test_http.py ................                                  [ 97%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:39.3926484Z tests/web/test_resources_http.py ........                                [ 97%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:40.7436514Z tests/web/test_rulebook_http.py ..........                               [ 98%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:41.0776925Z tests/web/test_runs_http.py ...                                          [ 98%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:41.8620506Z tests/web/test_server.py .                                               [ 98%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:43.8072852Z tests/web/test_simulation_http.py .....................                  [ 99%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.0505371Z tests/web/test_task_admission_http.py .......                            [ 99%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8287257Z tests/web/test_v2_approval_workbench.py ......                           [100%]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8288615Z 
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8289145Z =================================== FAILURES ===================================
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8290610Z _____ test_active_old_namespace_blocks_ready_subject_and_concurrent_cancel _____
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8291199Z 
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8293300Z projected = {'projects': <karajan.projects.registry.ProjectRegistry object at 0x7fd75f6cdbb0>, 'project_id': 'ce3e6c4e-f1e6-4c9b-a...e'), 'repository': PosixPath('/tmp/pytest-of-runner/pytest-0/test_active_old_namespace_bloc0/fixture/repository'), ...}
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8295697Z tmp_path = PosixPath('/tmp/pytest-of-runner/pytest-0/test_active_old_namespace_bloc0')
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8296332Z 
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8296956Z     def test_active_old_namespace_blocks_ready_subject_and_concurrent_cancel(projected, tmp_path):
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8297853Z         import threading
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8298618Z         from concurrent.futures import ThreadPoolExecutor
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8299205Z     
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8299713Z         from karajan.execution import ProcessIdentity
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8300508Z         from karajan.execution._platform import observe_process
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8301461Z         from karajan.orchestration.candidate_checks import execution_document
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8302278Z         from karajan.runs import RunError
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8302788Z     
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8303301Z         marker_text = "old-subject-check-is-actually-running"
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8304160Z         image = PythonCheckEnvironment.provision(tmp_path / "image")
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8304922Z         reference = {"id": "stdlib", "revision": 1}
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8305453Z         environment = {
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8305861Z             **reference,
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8306341Z             "runtime_kind": "python312-stdlib",
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8306981Z             "platform": "linux_x64",
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8307619Z             "source_sha256": image.source()["environment_sha256"],
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8308446Z             "filesystem": "candidate_copy",
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8308974Z             "network": "none",
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8309415Z             "env": {},
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8309855Z             "max_log_bytes": 16384,
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8310292Z         }
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8310623Z         command = (
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8311120Z             "from pathlib import Path; import time; "
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8314402Z             f"print({marker_text!r}, flush=True); "
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8315196Z             f"Path('progress.marker').write_text({marker_text!r}); time.sleep(45)"
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8315881Z         )
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8316304Z         approved = approved_check_candidate(
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8316798Z             projected,
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8317183Z             tmp_path / "approved",
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8317579Z             environment=environment,
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8318199Z             checks=[
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8318586Z                 {
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8318986Z                     "id": "running",
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8319495Z                     "revision": 1,
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8320043Z                     "environment_ref": reference,
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8320619Z                     "timeout_seconds": 60,
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8321254Z                     "argv": ["python3.12", "-I", "-c", command],
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8321791Z                 },
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8322152Z                 {
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8322582Z                     "id": "must-not-run",
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8323092Z                     "revision": 1,
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8323618Z                     "environment_ref": reference,
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8324197Z                     "timeout_seconds": 60,
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8324978Z                     "argv": ["python3.12", "-I", "-c", "raise AssertionError('second check')"],
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8325689Z                 },
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8326049Z             ],
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8326388Z         )
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8326858Z         settings = deploy(approved, tmp_path, image)
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8327416Z         ids = approved.args
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8328547Z         services = fixture_services(
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8329077Z             open_check_services(
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8329876Z                 settings, run_id=ids[0], operation_id=ids[1], principal="owner", for_execution=True
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8330642Z             )
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8330973Z         )
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8331293Z         try:
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8331683Z             for _ in range(4):
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8332275Z                 before = services.advance(*ids, principal="owner")
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8332923Z             first = before["checks"]["runs"][0]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8333424Z             runtime = (
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8334207Z                 settings.check_work_root / hashlib.sha256(first["check_run_id"].encode()).hexdigest()
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8334980Z             )
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8335405Z             deadline = time.monotonic() + 65
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8335915Z             identity = None
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8336417Z             while time.monotonic() < deadline:
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8336938Z                 try:
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8337595Z                     report = json.loads((runtime / "namespace-init.json").read_text())
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8338667Z                     candidate = ProcessIdentity(report["pid"], report["birth"])
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8339680Z                     marker = Path(f"/proc/{candidate.pid}/root/workspace/progress.marker")
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8340401Z                     if (
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8341017Z                         report["execution_digest"] == first["execution_digest"]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8341807Z                         and observe_process(candidate) == "running"
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8342502Z                         and marker.read_text() == marker_text
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8342978Z                         and observe_process(candidate) == "running"
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8343333Z                     ):
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8343603Z                         identity = candidate
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8343918Z                         break
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8344394Z                 except (FileNotFoundError, ProcessLookupError, json.JSONDecodeError):
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8344851Z                     pass
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8345126Z                 time.sleep(0.05)
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8345860Z             assert identity is not None, "The actual old Check never emitted its synchronization marker"
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8346504Z             # Deliberately bypass only the producer's quiescence check. The real
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8347079Z             # consumer must independently reject this ready receipt while A runs.
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8347518Z             synthetic_transition(
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8348164Z                 replace(approved, admissions=services.admissions, candidates=services.candidates)
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8348651Z             )
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8349057Z             with pytest.raises(RunError, match="REVIEW_SUBJECT_CHECK_STOP_REQUIRED"):
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8349549Z                 services.advance(*ids, principal="owner")
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8349950Z             barrier = threading.Barrier(3)
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8350240Z     
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8350456Z             def advance():
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8350742Z                 barrier.wait(10)
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8350990Z                 try:
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8351340Z                     return services.advance(*ids, principal="owner")
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8351750Z                 except RunError as error:
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8352073Z                     assert error.code in {
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8352431Z                         "REVIEW_SUBJECT_CHECK_STOP_REQUIRED",
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8352835Z                         "CANDIDATE_CHECKS_CANCELLED",
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8353169Z                     }
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8353446Z                     return error.code
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8353737Z     
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8353961Z             def cancel():
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8354250Z                 barrier.wait(10)
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8354614Z                 return services.cancel(*ids, principal="owner")
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8355134Z     
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8355423Z             with ThreadPoolExecutor(max_workers=3) as pool:
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8355947Z                 futures = [pool.submit(advance), pool.submit(advance), pool.submit(cancel)]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8356422Z                 for future in futures:
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8356741Z                     future.result(25)
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8357088Z             deadline = time.monotonic() + 12
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8357450Z             while time.monotonic() < deadline:
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8357851Z                 final = services.reconcile(*ids, principal="owner")
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8358523Z                 if final["checks"]["phase"] == "cancelled" and final["checks"]["runs"][0].get(
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8358980Z                     "observation"
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8359245Z                 ):
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8359470Z                     break
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8359742Z                 time.sleep(0.05)
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8360257Z             (tmp_path / "active-subject-report.json").write_text(json.dumps(final, indent=2))
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8360882Z             assert final["subject"] == before["subject"] and not final.get("history")
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8361444Z             assert observe_process(identity) in {"exited", "identity_mismatch"}
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8361926Z             first_final, second = final["checks"]["runs"]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8362410Z >           assert first_final["observation"]["local_stop"] == "confirmed"
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8362849Z                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8363279Z E           TypeError: 'NoneType' object is not subscriptable
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8363566Z 
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8363831Z tests/runs/test_candidate_subjects_native.py:295: TypeError
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8364340Z =============================== warnings summary ===============================
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8364830Z .venv/lib/python3.12/site-packages/fastapi/testclient.py:1
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8365948Z   /home/runner/work/Karajan/Karajan/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8367180Z     from starlette.testclient import TestClient as TestClient  # noqa
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8367480Z 
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8367731Z .venv/lib/python3.12/site-packages/starlette/testclient.py:53
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8369026Z   /home/runner/work/Karajan/Karajan/.venv/lib/python3.12/site-packages/starlette/testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8370172Z     _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8370584Z 
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8370937Z -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8371547Z =========================== short test summary info ============================
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8372255Z SKIPPED [1] tests/isolation/test_isolation_probe.py:74: Windows cannot qualify Linux namespaces
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8372955Z SKIPPED [1] tests/isolation/test_isolation_probe.py:128: WSL PE control required
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8373647Z SKIPPED [4] tests/projects/test_credential_windows_owners.py:21: Windows security descriptors
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8374448Z SKIPPED [1] tests/projects/test_credential_windows_owners.py:93: Windows security descriptors
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8375618Z FAILED tests/runs/test_candidate_subjects_native.py::test_active_old_namespace_blocks_ready_subject_and_concurrent_cancel - TypeError: 'NoneType' object is not subscriptable
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:45.8376556Z ====== 1 failed, 2184 passed, 7 skipped, 2 warnings in 1119.98s (0:18:39) ======
+python-quality (ubuntu-24.04, Python 3.12)	Run tests, including contract tests	2026-09-07T04:00:46.0585408Z ##[error]Process completed with exit code 1.
+quality-gate	Require every upstream check to succeed	﻿2026-09-07T04:10:51.8712225Z ##[group]Run python3 - <<'PY'
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.8713321Z ^[[36;1mpython3 - <<'PY'^[[0m
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.8713972Z ^[[36;1mimport json^[[0m
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.8714582Z ^[[36;1mimport os^[[0m
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.8715188Z ^[[36;1mimport sys^[[0m
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.8715891Z ^[[36;1m^[[0m
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.8716610Z ^[[36;1mresults = json.loads(os.environ["NEEDS_RESULTS"])^[[0m
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.8717491Z ^[[36;1mrequired = {"python-quality", "frontend-quality"}^[[0m
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.8718371Z ^[[36;1mif set(results) != required:^[[0m
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.8719381Z ^[[36;1m    print("Required checks are missing or the gate dependency list is inconsistent.")^[[0m
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.8720337Z ^[[36;1m    sys.exit(1)^[[0m
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.8721002Z ^[[36;1munsuccessful = {^[[0m
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.8721896Z ^[[36;1m    job: outcome.get("result", "missing")^[[0m
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.8722721Z ^[[36;1m    for job, outcome in results.items()^[[0m
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.8723539Z ^[[36;1m    if outcome.get("result") != "success"^[[0m
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.8724376Z ^[[36;1m}^[[0m
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.8724925Z ^[[36;1mif unsuccessful:^[[0m
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.8725680Z ^[[36;1m    print(f"Required checks did not succeed: {unsuccessful}")^[[0m
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.8726613Z ^[[36;1m    sys.exit(1)^[[0m
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.8727275Z ^[[36;1mprint("All required checks succeeded.")^[[0m
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.8728024Z ^[[36;1mPY^[[0m
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.9193985Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.9195455Z env:
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.9196100Z   PYTHONUTF8: 1
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.9196831Z   UV_NO_PROGRESS: 1
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.9197526Z   UV_PYTHON: 3.12
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.9198928Z   NEEDS_RESULTS: {
+quality-gate	Require every upstream check to succeed	  "python-quality": {
+quality-gate	Require every upstream check to succeed	    "result": "failure",
+quality-gate	Require every upstream check to succeed	    "outputs": {}
+quality-gate	Require every upstream check to succeed	  },
+quality-gate	Require every upstream check to succeed	  "frontend-quality": {
+quality-gate	Require every upstream check to succeed	    "result": "success",
+quality-gate	Require every upstream check to succeed	    "outputs": {}
+quality-gate	Require every upstream check to succeed	  }
+quality-gate	Require every upstream check to succeed	}
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.9200428Z ##[endgroup]
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.9637353Z Required checks did not succeed: {'python-quality': 'failure'}
+quality-gate	Require every upstream check to succeed	2026-09-07T04:10:51.9683635Z ##[error]Process completed with exit code 1.

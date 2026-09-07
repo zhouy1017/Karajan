@@ -1,0 +1,88 @@
+FFF                                                                      [100%]
+================================== FAILURES ===================================
+______ test_lost_create_reply_revokes_only_preallocated_owned_grants[1] _______
+
+synthetic_suite = (<karajan.projects.go_reviewer_suite.FixedGoReviewerSuite object at 0x0000018277152F90>, <karajan.adapters.opencode.go...o-channel', 'account_id': 'go-account', 'billing_path': 'subscription_only', 'approved_data_destination': True}}, ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000182771221B0>
+lost_index = 1
+
+    @pytest.mark.parametrize("lost_index", [1, 2, 3])
+    def test_lost_create_reply_revokes_only_preallocated_owned_grants(
+        synthetic_suite, monkeypatch, lost_index
+    ):
+        suite, journal, start = synthetic_suite
+        original, count = journal.create_grant, 0
+    
+        def lost(binding, *, grant_id):
+            nonlocal count
+            result = original(binding, grant_id=grant_id)
+            count += 1
+            if count == lost_index:
+                raise ConnectionError(credential().reveal())
+            return result
+    
+        monkeypatch.setattr(journal, "create_grant", lost)
+>       result = suite.observe(start, credential())
+                 ^^^^^^^^^^^^^
+E       AttributeError: 'FixedGoReviewerSuite' object has no attribute 'observe'
+
+tests\projects\test_go_reviewer_suite.py:143: AttributeError
+______ test_lost_create_reply_revokes_only_preallocated_owned_grants[2] _______
+
+synthetic_suite = (<karajan.projects.go_reviewer_suite.FixedGoReviewerSuite object at 0x0000018277153170>, <karajan.adapters.opencode.go...o-channel', 'account_id': 'go-account', 'billing_path': 'subscription_only', 'approved_data_destination': True}}, ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000182771533B0>
+lost_index = 2
+
+    @pytest.mark.parametrize("lost_index", [1, 2, 3])
+    def test_lost_create_reply_revokes_only_preallocated_owned_grants(
+        synthetic_suite, monkeypatch, lost_index
+    ):
+        suite, journal, start = synthetic_suite
+        original, count = journal.create_grant, 0
+    
+        def lost(binding, *, grant_id):
+            nonlocal count
+            result = original(binding, grant_id=grant_id)
+            count += 1
+            if count == lost_index:
+                raise ConnectionError(credential().reveal())
+            return result
+    
+        monkeypatch.setattr(journal, "create_grant", lost)
+>       result = suite.observe(start, credential())
+                 ^^^^^^^^^^^^^
+E       AttributeError: 'FixedGoReviewerSuite' object has no attribute 'observe'
+
+tests\projects\test_go_reviewer_suite.py:143: AttributeError
+______ test_lost_create_reply_revokes_only_preallocated_owned_grants[3] _______
+
+synthetic_suite = (<karajan.projects.go_reviewer_suite.FixedGoReviewerSuite object at 0x000001827716C920>, <karajan.adapters.opencode.go...o-channel', 'account_id': 'go-account', 'billing_path': 'subscription_only', 'approved_data_destination': True}}, ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001827716C530>
+lost_index = 3
+
+    @pytest.mark.parametrize("lost_index", [1, 2, 3])
+    def test_lost_create_reply_revokes_only_preallocated_owned_grants(
+        synthetic_suite, monkeypatch, lost_index
+    ):
+        suite, journal, start = synthetic_suite
+        original, count = journal.create_grant, 0
+    
+        def lost(binding, *, grant_id):
+            nonlocal count
+            result = original(binding, grant_id=grant_id)
+            count += 1
+            if count == lost_index:
+                raise ConnectionError(credential().reveal())
+            return result
+    
+        monkeypatch.setattr(journal, "create_grant", lost)
+>       result = suite.observe(start, credential())
+                 ^^^^^^^^^^^^^
+E       AttributeError: 'FixedGoReviewerSuite' object has no attribute 'observe'
+
+tests\projects\test_go_reviewer_suite.py:143: AttributeError
+=========================== short test summary info ===========================
+FAILED tests/projects/test_go_reviewer_suite.py::test_lost_create_reply_revokes_only_preallocated_owned_grants[1]
+FAILED tests/projects/test_go_reviewer_suite.py::test_lost_create_reply_revokes_only_preallocated_owned_grants[2]
+FAILED tests/projects/test_go_reviewer_suite.py::test_lost_create_reply_revokes_only_preallocated_owned_grants[3]
+3 failed, 1 deselected in 1.08s

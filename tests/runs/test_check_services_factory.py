@@ -167,3 +167,39 @@ def test_history_factory_rejects_changed_bootstrap(check_deployment):
     target.write_text(json.dumps(replacement.document()), encoding="utf-8")
     with pytest.raises(RunError, match="CHECK_BOOTSTRAP_CHANGED"):
         open_check_services(settings, run_id=args[0], operation_id=args[1], principal="owner")
+
+
+def test_factory_rechecks_real_qualification_before_installing_fixture_rebind(
+    projected, tmp_path, monkeypatch
+):
+    from types import SimpleNamespace
+
+    from test_candidate_checks import check_workflow, run_next_boundary_check
+    from test_candidate_checks_native import deploy
+    from test_candidate_subjects import synthetic_transition
+
+    approved, original, _, boundary_host = check_workflow(projected, tmp_path)
+    run_next_boundary_check(approved, original, boundary_host)
+    assert original.advance(*approved.args, principal="owner")["checks"]["phase"] == "checks_passed"
+    synthetic_transition(approved)
+    deployment = tmp_path / "deployment"
+    deployment.mkdir(mode=0o700)
+    settings = deploy(
+        approved, deployment, SimpleNamespace(directory=tmp_path / "unavailable-image")
+    )
+    service = open_check_services(
+        settings, run_id=approved.args[0], operation_id=approved.args[1], principal="owner"
+    )
+
+    def unexpected_host_effect(*args, **kwargs):
+        raise AssertionError("Synthetic Reviewer facts must not enable a production Check")
+
+    monkeypatch.setattr(service.host, "prepare", unexpected_host_effect)
+    before = service.get(*approved.args, principal="owner")
+    assert before["subject"]["revision"] == 1
+    with pytest.raises(RunError, match="^REVIEWER_QUALIFICATION_REQUIRED$"):
+        service.advance(*approved.args, principal="owner")
+    after = service.get(*approved.args, principal="owner")
+    assert after == before
+    assert after["subject_transition"]["phase"] == "ready"
+    assert not after["local_gate_passed"]

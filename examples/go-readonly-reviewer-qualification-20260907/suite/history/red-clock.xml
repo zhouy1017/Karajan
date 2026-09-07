@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="1.104" timestamp="2026-09-07T11:51:38.397821+08:00" hostname="ProArt-Zhou"><testcase classname="tests.projects.test_go_reviewer_suite" name="test_clock_becomes_unavailable_after_effect_retains_cleanup" time="0.056"><failure message="OSError: synthetic clock unavailable">synthetic_suite = (&lt;karajan.projects.go_reviewer_suite.FixedGoReviewerSuite object at 0x0000023956B1FF50&gt;, &lt;karajan.adapters.opencode.go...o-channel', 'account_id': 'go-account', 'billing_path': 'subscription_only', 'approved_data_destination': True}}, ...})
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000023956B1FDA0&gt;
+
+    def test_clock_becomes_unavailable_after_effect_retains_cleanup(synthetic_suite, monkeypatch):
+        suite, journal, start = synthetic_suite
+    
+        def observed(runtime, directory, secret, authorization, *, scenario, **kwargs):
+            report = synthetic_observation(suite, authorization, scenario)
+    
+            def missing():
+                raise OSError("synthetic clock unavailable")
+    
+            suite.clock = missing
+            return report
+    
+        install_observer(monkeypatch, observed)
+&gt;       result = suite.observe(start, credential())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\projects\test_go_reviewer_suite.py:458: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+backend\karajan\projects\go_reviewer_suite.py:292: in observe
+    now = self.clock()
+          ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def missing():
+&gt;       raise OSError("synthetic clock unavailable")
+E       OSError: synthetic clock unavailable
+
+tests\projects\test_go_reviewer_suite.py:452: OSError</failure></testcase></testsuite></testsuites>

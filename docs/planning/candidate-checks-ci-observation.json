@@ -1,0 +1,22 @@
+[
+  {
+    "pr": 97,
+    "issue": 94,
+    "head": "45ff0651517333225666353076a23c9cad85833c",
+    "run": 34046471265,
+    "failed_job": 101522339717,
+    "G": "failed",
+    "original_AC_preserved": true,
+    "remote_bodies_verified": true
+  },
+  {
+    "pr": 98,
+    "issue": 96,
+    "head": "f1919a97ec4a0ef609105fcdc9a30374cb9d6c34",
+    "run": 34046726520,
+    "failed_job": 101523026554,
+    "G": "failed",
+    "original_AC_preserved": true,
+    "remote_bodies_verified": true
+  }
+]

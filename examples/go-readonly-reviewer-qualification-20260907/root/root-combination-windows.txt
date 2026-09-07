@@ -1,0 +1,7 @@
+......................ss................................................ [ 47%]
+........................................................................ [ 94%]
+........                                                                 [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\projects\test_runtime_qualification_store.py:151: Fixed native Go qualification requires Linux namespaces
+SKIPPED [1] tests\projects\test_runtime_qualification_store.py:172: Fixed native Go qualification requires Linux namespaces
+150 passed, 2 skipped in 138.60s (0:02:18)

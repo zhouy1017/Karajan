@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="16.672" timestamp="2026-09-07T11:50:59.511556+08:00" hostname="ProArt-Zhou"><testcase classname="tests.isolation.test_go_reviewer_probe" name="test_actual_readonly_review_has_new_session_complete_final_and_retained_reads[clean_review]" time="14.216"><failure message="AssertionError: {'schema_version': 'karajan.go-readonly-reviewer-observation.v1', 'scope': 'readonly_reviewer_tools_fixture', 'observation_origin': 'http_fixture', 'scenario': 'clean_review', ...}&#10;assert 'failed' == 'passed'&#10;  &#10;  - passed&#10;  + failed">tmp_path = PosixPath('/tmp/karajan-reviewer-observer-clean/test_actual_readonly_review_ha0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x78da14170530&gt;
+scenario = 'clean_review'
+
+    @pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux native required")
+    @pytest.mark.parametrize("scenario", ["clean_review", "defect_review", "denied_read"])
+    def test_actual_readonly_review_has_new_session_complete_final_and_retained_reads(
+        tmp_path, accounting, scenario
+    ):
+        from karajan.isolation.go_reviewer_probe import observe_go_reviewer_tools
+    
+        runtime = runtime_artifact()
+        authorization = reviewer_authorization(tmp_path, accounting, runtime, scenario)
+        payloads = []
+    
+        def receive(request):
+            payloads.append(json.loads(request.content))
+            assert (
+                authorization.journal.snapshot(authorization.grant_id)["calls"][-1]["state"]
+                == "send_unknown"
+            )
+            return reviewer_response(len(payloads), scenario)
+    
+        result = observe_go_reviewer_tools(
+            runtime,
+            tmp_path / "observation",
+            SECRET,
+            authorization,
+            scenario=scenario,
+            accounting=accounting,
+            client_factory=lambda: httpx.Client(transport=httpx.MockTransport(receive)),
+        )
+        (tmp_path / "public-report.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
+        (tmp_path / "synthetic-wire.json").write_text(json.dumps(payloads, indent=2), encoding="utf-8")
+&gt;       assert result["status"] == "passed", result
+E       AssertionError: {'schema_version': 'karajan.go-readonly-reviewer-observation.v1', 'scope': 'readonly_reviewer_tools_fixture', 'observation_origin': 'http_fixture', 'scenario': 'clean_review', ...}
+E       assert 'failed' == 'passed'
+E         
+E         - passed
+E         + failed
+
+tests/isolation/test_go_reviewer_probe.py:196: AssertionError</failure></testcase></testsuite></testsuites>

@@ -1,0 +1,13 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/Chooo/Playground/Karajan/.cache/go-reviewer-qualification
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 34 items
+
+tests/isolation/test_go_reviewer_probe.py .....                          [ 14%]
+tests/isolation/test_go_reviewer_probe_boundaries.py ................... [ 70%]
+..........                                                               [100%]
+
+- generated xml file: /mnt/c/Users/Chooo/Playground/Karajan/.cache/go-reviewer-qualification/.cache/reviewer-observer-author/first-complete-linux.xml -
+============================= 34 passed in 47.95s ==============================

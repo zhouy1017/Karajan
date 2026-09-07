@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="1.712" timestamp="2026-09-07T11:33:26.952955+08:00" hostname="ProArt-Zhou"><testcase classname="tests.adapters.opencode.test_go_reviewer_qualification_grants" name="test_reviewer_first_send_requires_measurement_and_reopen_cannot_send_again" time="0.432"><failure message="karajan.adapters.opencode.go_journal.GoJournalError: GO_JOURNAL_INPUT_INVALID">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-973/test_reviewer_first_send_requi0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000001BCD2857470&gt;
+
+    def test_reviewer_first_send_requires_measurement_and_reopen_cannot_send_again(
+        tmp_path, accounting
+    ):
+        bound = reviewer_binding(accounting)
+        journal = GoCallJournal(tmp_path / "calls.sqlite", clock=lambda: 1000.0)
+&gt;       grant = journal.create_grant(bound, grant_id="reviewer")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\adapters\opencode\test_go_reviewer_qualification_grants.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+backend\karajan\adapters\opencode\go_journal.py:310: in create_grant
+    value = _binding(binding)
+            ^^^^^^^^^^^^^^^^^
+backend\karajan\adapters\opencode\go_journal.py:198: in _binding
+    return _validated(_QualificationGrantV2, value)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+model = &lt;class 'karajan.adapters.opencode.go_journal._QualificationGrantV2'&gt;
+value = {'qualification_id': 'qualification-1', 'attempt_id': 'attempt-1', 'fence': 1, 'profile_digest': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', ...}
+
+    def _validated(model: type[BaseModel], value: object) -&gt; dict[str, Any]:
+        try:
+            return model.model_validate(value).model_dump(exclude_none=True)
+        except (ValidationError, TypeError, ValueError):
+&gt;           raise GoJournalError("GO_JOURNAL_INPUT_INVALID") from None
+E           karajan.adapters.opencode.go_journal.GoJournalError: GO_JOURNAL_INPUT_INVALID
+
+backend\karajan\adapters\opencode\go_journal.py:187: GoJournalError</failure></testcase></testsuite></testsuites>

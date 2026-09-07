@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+    "-m",
+    "pytest",
+    "-p",
+    "no:cacheprovider",
+    "-o",
+    "pythonpath=backend tests/candidates",
+    ".cache/review-parser-independent/test_parser_contract.py",
+    "-q",
+    "--junitxml=.cache/review-parser-independent/first-windows.xml"
+  ],
+  "returncode": 0
+}

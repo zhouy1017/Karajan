@@ -1,0 +1,40 @@
+{
+  "date": "2026-09-07",
+  "base_dev": "bea6c2b2d92417361db616355aa0da7cb8383b16",
+  "prepared_head": "a2d1373fb551894e9bf5ca7091782f6d2ca4b08b",
+  "integrated_dependencies": [
+    "7190a61f4f51ac2fee29c494b26f39cc7d79502c",
+    "de1a116e92397666f56d3f8cd19308371c75cf86"
+  ],
+  "implementation": "not_started",
+  "provider_calls": 0,
+  "issues": [
+    {
+      "number": 106,
+      "url": "https://github.com/zhouy1017/Karajan/issues/106",
+      "title": "实现切片｜固定 Go 只读 Reviewer 机制资格与受限事实消费",
+      "spec": "docs/planning/v1/issues/m3-reviewer-qualification.md",
+      "spec_sha256": "a83f521fee5eb26dc40a9d2fde9892d6d4aa0a96cc479065c0279945e4b1c698",
+      "evidence_scope": "C/P/G",
+      "state": "open",
+      "parent_verified": 95,
+      "blocked_by_verified": [
+        104,
+        100
+      ]
+    },
+    {
+      "number": 107,
+      "url": "https://github.com/zhouy1017/Karajan/issues/107",
+      "title": "验收切片｜当前固定 Go 只读 Reviewer 机制的官方来源资格",
+      "spec": "docs/planning/v1/issues/m3-reviewer-qualification-official.md",
+      "spec_sha256": "e128a3bd52593f4f8bec04381ba1265b94484fe20d48ca629e5cb9ec086f9506",
+      "evidence_scope": "S/G",
+      "state": "open",
+      "parent_verified": 95,
+      "blocked_by_verified": [
+        106
+      ]
+    }
+  ]
+}

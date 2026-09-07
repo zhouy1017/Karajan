@@ -1,0 +1,42 @@
+{
+  "reviewer": "root",
+  "base": "2e587d1773c514361689e13ebbd16ba62f1cd219",
+  "legacy_full_results_verified": 14,
+  "comparisons": [
+    {
+      "case": "normal",
+      "route_identical": true,
+      "reserved_identical": true
+    },
+    {
+      "case": "quota_block",
+      "route_identical": true,
+      "reserved_identical": true
+    },
+    {
+      "case": "missing_facts",
+      "route_identical": true,
+      "reserved_identical": true
+    },
+    {
+      "case": "denied_group",
+      "route_identical": true,
+      "reserved_identical": true
+    },
+    {
+      "case": "quality_missing",
+      "route_identical": true,
+      "reserved_identical": true
+    },
+    {
+      "case": "quality",
+      "route_identical": true,
+      "reserved_identical": true
+    },
+    {
+      "case": "reserved_other",
+      "route_identical": true,
+      "reserved_identical": true
+    }
+  ]
+}

@@ -19,6 +19,11 @@ def main() -> int:
         return 2
     try:
         from karajan.execution._platform import process_identity
+        from karajan.orchestration.candidate_subjects import (
+            check_is_current,
+            cycles,
+            transition_pending,
+        )
         from karajan.orchestration.check_services_factory import (
             load_check_services_from_fixed_bootstrap,
         )
@@ -31,13 +36,17 @@ def main() -> int:
         operation = GoExecutionIntents.read_operation(
             history.admissions, run_id, operation_id, principal=principal
         )
-        rows = operation.get("validation", {}).get("checks", {}).get("runs", [])
+        rows = [row for cycle in cycles(operation) for row in cycle["checks"]["runs"]]
         selected = [row for row in rows if row.get("check_run_id") == check_run_id]
         if len(selected) != 1:
             print("CHECK_RUNNER_RECORD_REQUIRED")
             return 1
         original = selected[0]
-        if operation["cancel_requested"] or any(
+        if (
+            operation["cancel_requested"]
+            or not check_is_current(operation, check_run_id)
+            or transition_pending(operation)
+        ) or any(
             original.get(key) is not None for key in ("native_claim", "observation", "evidence")
         ):
             history.reconcile(run_id, operation_id, principal=principal)

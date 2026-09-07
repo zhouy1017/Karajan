@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="3.798" timestamp="2026-09-07T11:36:20.701016+08:00" hostname="ProArt-Zhou"><testcase classname="tests.isolation.test_go_reviewer_probe" name="test_source_binds_fixed_readonly_config_and_parser" time="0.622"><failure message="ImportError: cannot import name 'reviewer_runtime_source' from 'karajan.isolation.go_reviewer_probe' (/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-reviewer-qualification/backend/karajan/isolation/go_reviewer_probe.py)">accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x7c2aa21186b0&gt;
+
+    @pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux source required")
+    def test_source_binds_fixed_readonly_config_and_parser(accounting):
+&gt;       from karajan.isolation.go_reviewer_probe import reviewer_runtime_source
+E       ImportError: cannot import name 'reviewer_runtime_source' from 'karajan.isolation.go_reviewer_probe' (/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-reviewer-qualification/backend/karajan/isolation/go_reviewer_probe.py)
+
+tests/isolation/test_go_reviewer_probe.py:44: ImportError</failure></testcase></testsuite></testsuites>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="1.491" timestamp="2026-09-07T12:01:14.831281+08:00" hostname="ProArt-Zhou"><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_sensitive_native_strings_are_detected_before_json_escaping[synthetic&quot;private-material]" time="0.442"><failure message="AssertionError: assert 'SENSITIVE_NATIVE_OUTPUT' in ['NATIVE_ASSISTANT_IDENTITY_MISMATCH', 'PROVIDER_PROTOCOL_INCOMPLETE', 'MEASURED_WIRE_RETENTION_INCOMPLETE']">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-993/test_sensitive_native_strings_0')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x00000164FFF8B320&gt;
+boundary = {'created': 1, 'started': 1, 'prompted': 1, 'mutate': &lt;function test_sensitive_native_strings_are_detected_before_json_escaping.&lt;locals&gt;.&lt;lambda&gt; at 0x00000164FFF86980&gt;, ...}
+secret = 'synthetic"private-material'
+
+    @pytest.mark.parametrize("secret", ['synthetic"private-material', "synthetic\\private-material"])
+    def test_sensitive_native_strings_are_detected_before_json_escaping(
+        tmp_path, accounting, boundary, secret
+    ):
+        boundary["mutate"] = lambda messages: messages[-1]["info"].update(error={"message": secret})
+        auth = reviewer_authorization(tmp_path, accounting, Path("synthetic-ELF"), "clean_review")
+        result = probe.observe_go_reviewer_tools(
+            Path("synthetic-ELF"), tmp_path / "observation", secret, auth,
+            scenario="clean_review", accounting=accounting, client_factory=lambda: None,
+        )
+&gt;       assert "SENSITIVE_NATIVE_OUTPUT" in result["reason_codes"]
+E       AssertionError: assert 'SENSITIVE_NATIVE_OUTPUT' in ['NATIVE_ASSISTANT_IDENTITY_MISMATCH', 'PROVIDER_PROTOCOL_INCOMPLETE', 'MEASURED_WIRE_RETENTION_INCOMPLETE']
+
+tests\isolation\test_go_reviewer_probe_boundaries.py:294: AssertionError</failure></testcase><testcase classname="tests.isolation.test_go_reviewer_probe_boundaries" name="test_sensitive_native_strings_are_detected_before_json_escaping[synthetic\\private-material]" time="0.016"><failure message="AssertionError: assert 'SENSITIVE_NATIVE_OUTPUT' in ['NATIVE_ASSISTANT_IDENTITY_MISMATCH', 'PROVIDER_PROTOCOL_INCOMPLETE', 'MEASURED_WIRE_RETENTION_INCOMPLETE']">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-993/test_sensitive_native_strings_1')
+accounting = &lt;karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x00000164FFF8B320&gt;
+boundary = {'created': 1, 'started': 1, 'prompted': 1, 'mutate': &lt;function test_sensitive_native_strings_are_detected_before_json_escaping.&lt;locals&gt;.&lt;lambda&gt; at 0x000001649537B740&gt;, ...}
+secret = 'synthetic\\private-material'
+
+    @pytest.mark.parametrize("secret", ['synthetic"private-material', "synthetic\\private-material"])
+    def test_sensitive_native_strings_are_detected_before_json_escaping(
+        tmp_path, accounting, boundary, secret
+    ):
+        boundary["mutate"] = lambda messages: messages[-1]["info"].update(error={"message": secret})
+        auth = reviewer_authorization(tmp_path, accounting, Path("synthetic-ELF"), "clean_review")
+        result = probe.observe_go_reviewer_tools(
+            Path("synthetic-ELF"), tmp_path / "observation", secret, auth,
+            scenario="clean_review", accounting=accounting, client_factory=lambda: None,
+        )
+&gt;       assert "SENSITIVE_NATIVE_OUTPUT" in result["reason_codes"]
+E       AssertionError: assert 'SENSITIVE_NATIVE_OUTPUT' in ['NATIVE_ASSISTANT_IDENTITY_MISMATCH', 'PROVIDER_PROTOCOL_INCOMPLETE', 'MEASURED_WIRE_RETENTION_INCOMPLETE']
+
+tests\isolation\test_go_reviewer_probe_boundaries.py:294: AssertionError</failure></testcase></testsuite></testsuites>

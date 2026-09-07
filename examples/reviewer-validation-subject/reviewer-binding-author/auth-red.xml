@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="4" time="6.560" timestamp="2026-09-07T01:17:15.259080+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_reviewer_binding" name="test_unknown_or_foreign_authentication_source_does_not_compile_a_binding[missing]" time="1.404"><failure message="AssertionError: {'activation_allowed': False, 'assessment': {'actual_reviewer_attempt': None, 'membership': {'activation_allowed': Fal....}, 'preparation_identity_only': True, 'qualification_issues': []}, 'dispatch_enabled': False, 'reason_codes': [], ...}&#10;assert 'prepared' == 'blocked'&#10;  &#10;  - blocked&#10;  + prepared">binding_case = (&lt;karajan.orchestration.reviewer_binding.ApprovedReviewerBindings object at 0x000001A4B4C6AA50&gt;, &lt;test_reviewer_bindin...328d5', 'revision': 1, 'content_sha256': 'c58ce1c5ea78397378645d4558fc71660061853c560bac4c310d1ee9965b9234', ...}, ...)
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001A4B4C68F20&gt;
+change = 'missing'
+
+    @pytest.mark.parametrize("change", ["missing", "foreign_project", "foreign_auth", "unknown_generation"])
+    def test_unknown_or_foreign_authentication_source_does_not_compile_a_binding(
+        binding_case, monkeypatch, change
+    ):
+        service, qualifications, _, args, _, _, _ = binding_case
+        original = qualifications._facts
+    
+        def altered(*args, **kwargs):
+            observed = original(*args, **kwargs)
+            start = observed["observation"]["binding"]["execution_start"]
+            if change == "missing":
+                start["authentication_source"] = None
+            elif change == "foreign_project":
+                start["authentication_source"]["project_id"] = "another-project"
+            elif change == "foreign_auth":
+                start["authentication_source"]["auth_ref"] = "another-auth"
+            else:
+                start["authentication_source"]["generation"] = None
+            return observed
+    
+        monkeypatch.setattr(qualifications, "_facts", altered)
+        result = service.advance(*args, principal="owner")
+&gt;       assert result["state"] == "blocked", result
+E       AssertionError: {'activation_allowed': False, 'assessment': {'actual_reviewer_attempt': None, 'membership': {'activation_allowed': Fal....}, 'preparation_identity_only': True, 'qualification_issues': []}, 'dispatch_enabled': False, 'reason_codes': [], ...}
+E       assert 'prepared' == 'blocked'
+E         
+E         - blocked
+E         + prepared
+
+tests\runs\test_reviewer_binding.py:322: AssertionError</failure></testcase><testcase classname="tests.runs.test_reviewer_binding" name="test_unknown_or_foreign_authentication_source_does_not_compile_a_binding[foreign_project]" time="1.360"><failure message="AssertionError: {'activation_allowed': False, 'assessment': {'actual_reviewer_attempt': None, 'membership': {'activation_allowed': Fal....}, 'preparation_identity_only': True, 'qualification_issues': []}, 'dispatch_enabled': False, 'reason_codes': [], ...}&#10;assert 'prepared' == 'blocked'&#10;  &#10;  - blocked&#10;  + prepared">binding_case = (&lt;karajan.orchestration.reviewer_binding.ApprovedReviewerBindings object at 0x000001A4B4DC52B0&gt;, &lt;test_reviewer_bindin...9ca86', 'revision': 1, 'content_sha256': '5b51191c5fef9f404b5b0c99856467028450248c752de820b214a056755bd797', ...}, ...)
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001A4B4DC5F40&gt;
+change = 'foreign_project'
+
+    @pytest.mark.parametrize("change", ["missing", "foreign_project", "foreign_auth", "unknown_generation"])
+    def test_unknown_or_foreign_authentication_source_does_not_compile_a_binding(
+        binding_case, monkeypatch, change
+    ):
+        service, qualifications, _, args, _, _, _ = binding_case
+        original = qualifications._facts
+    
+        def altered(*args, **kwargs):
+            observed = original(*args, **kwargs)
+            start = observed["observation"]["binding"]["execution_start"]
+            if change == "missing":
+                start["authentication_source"] = None
+            elif change == "foreign_project":
+                start["authentication_source"]["project_id"] = "another-project"
+            elif change == "foreign_auth":
+                start["authentication_source"]["auth_ref"] = "another-auth"
+            else:
+                start["authentication_source"]["generation"] = None
+            return observed
+    
+        monkeypatch.setattr(qualifications, "_facts", altered)
+        result = service.advance(*args, principal="owner")
+&gt;       assert result["state"] == "blocked", result
+E       AssertionError: {'activation_allowed': False, 'assessment': {'actual_reviewer_attempt': None, 'membership': {'activation_allowed': Fal....}, 'preparation_identity_only': True, 'qualification_issues': []}, 'dispatch_enabled': False, 'reason_codes': [], ...}
+E       assert 'prepared' == 'blocked'
+E         
+E         - blocked
+E         + prepared
+
+tests\runs\test_reviewer_binding.py:322: AssertionError</failure></testcase><testcase classname="tests.runs.test_reviewer_binding" name="test_unknown_or_foreign_authentication_source_does_not_compile_a_binding[foreign_auth]" time="1.383"><failure message="AssertionError: {'activation_allowed': False, 'assessment': {'actual_reviewer_attempt': None, 'membership': {'activation_allowed': Fal....}, 'preparation_identity_only': True, 'qualification_issues': []}, 'dispatch_enabled': False, 'reason_codes': [], ...}&#10;assert 'prepared' == 'blocked'&#10;  &#10;  - blocked&#10;  + prepared">binding_case = (&lt;karajan.orchestration.reviewer_binding.ApprovedReviewerBindings object at 0x000001A4B4C05430&gt;, &lt;test_reviewer_bindin...599d5', 'revision': 1, 'content_sha256': '6c85d0f261bf70eb4eb6dd14a0b07424051731095acbaebe2d6d428183faddfc', ...}, ...)
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001A4B4C04DD0&gt;
+change = 'foreign_auth'
+
+    @pytest.mark.parametrize("change", ["missing", "foreign_project", "foreign_auth", "unknown_generation"])
+    def test_unknown_or_foreign_authentication_source_does_not_compile_a_binding(
+        binding_case, monkeypatch, change
+    ):
+        service, qualifications, _, args, _, _, _ = binding_case
+        original = qualifications._facts
+    
+        def altered(*args, **kwargs):
+            observed = original(*args, **kwargs)
+            start = observed["observation"]["binding"]["execution_start"]
+            if change == "missing":
+                start["authentication_source"] = None
+            elif change == "foreign_project":
+                start["authentication_source"]["project_id"] = "another-project"
+            elif change == "foreign_auth":
+                start["authentication_source"]["auth_ref"] = "another-auth"
+            else:
+                start["authentication_source"]["generation"] = None
+            return observed
+    
+        monkeypatch.setattr(qualifications, "_facts", altered)
+        result = service.advance(*args, principal="owner")
+&gt;       assert result["state"] == "blocked", result
+E       AssertionError: {'activation_allowed': False, 'assessment': {'actual_reviewer_attempt': None, 'membership': {'activation_allowed': Fal....}, 'preparation_identity_only': True, 'qualification_issues': []}, 'dispatch_enabled': False, 'reason_codes': [], ...}
+E       assert 'prepared' == 'blocked'
+E         
+E         - blocked
+E         + prepared
+
+tests\runs\test_reviewer_binding.py:322: AssertionError</failure></testcase><testcase classname="tests.runs.test_reviewer_binding" name="test_unknown_or_foreign_authentication_source_does_not_compile_a_binding[unknown_generation]" time="1.384"><failure message="AssertionError: {'activation_allowed': False, 'assessment': {'actual_reviewer_attempt': None, 'membership': {'activation_allowed': Fal....}, 'preparation_identity_only': True, 'qualification_issues': []}, 'dispatch_enabled': False, 'reason_codes': [], ...}&#10;assert 'prepared' == 'blocked'&#10;  &#10;  - blocked&#10;  + prepared">binding_case = (&lt;karajan.orchestration.reviewer_binding.ApprovedReviewerBindings object at 0x000001A4B4B67650&gt;, &lt;test_reviewer_bindin...db0a4', 'revision': 1, 'content_sha256': '2a4999927cbcec7103ba9cb5ea993bd149505d01958c80519603ddc9fb42671b', ...}, ...)
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001A484BA61B0&gt;
+change = 'unknown_generation'
+
+    @pytest.mark.parametrize("change", ["missing", "foreign_project", "foreign_auth", "unknown_generation"])
+    def test_unknown_or_foreign_authentication_source_does_not_compile_a_binding(
+        binding_case, monkeypatch, change
+    ):
+        service, qualifications, _, args, _, _, _ = binding_case
+        original = qualifications._facts
+    
+        def altered(*args, **kwargs):
+            observed = original(*args, **kwargs)
+            start = observed["observation"]["binding"]["execution_start"]
+            if change == "missing":
+                start["authentication_source"] = None
+            elif change == "foreign_project":
+                start["authentication_source"]["project_id"] = "another-project"
+            elif change == "foreign_auth":
+                start["authentication_source"]["auth_ref"] = "another-auth"
+            else:
+                start["authentication_source"]["generation"] = None
+            return observed
+    
+        monkeypatch.setattr(qualifications, "_facts", altered)
+        result = service.advance(*args, principal="owner")
+&gt;       assert result["state"] == "blocked", result
+E       AssertionError: {'activation_allowed': False, 'assessment': {'actual_reviewer_attempt': None, 'membership': {'activation_allowed': Fal....}, 'preparation_identity_only': True, 'qualification_issues': []}, 'dispatch_enabled': False, 'reason_codes': [], ...}
+E       assert 'prepared' == 'blocked'
+E         
+E         - blocked
+E         + prepared
+
+tests\runs\test_reviewer_binding.py:322: AssertionError</failure></testcase></testsuite></testsuites>

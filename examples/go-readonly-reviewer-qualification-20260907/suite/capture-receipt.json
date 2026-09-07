@@ -1,0 +1,11 @@
+{
+  "original_case": "/tmp/karajan-reviewer-store-final-20260907-a/test_actual_store_suite_three_0",
+  "source_before_sha256": "9aa6817d7ac37b957c52c103d94c66495ffdb2932ececaf1d3c55516ac4e462c",
+  "source_after_sha256": "9aa6817d7ac37b957c52c103d94c66495ffdb2932ececaf1d3c55516ac4e462c",
+  "backend_source_count": 145,
+  "files": {
+    "native-record.json": "066f94ca2329d7ff0e8b8d4b09204a9a2e203d38c471d8ed01ddbb7f38989c64",
+    "assertions.json": "fbae78b5c19fe0a5ad1c9fb4a3dcde8bc7ac6e450c2459e9dd053a16bfca877d",
+    "source-map.json": "9aa6817d7ac37b957c52c103d94c66495ffdb2932ececaf1d3c55516ac4e462c"
+  }
+}

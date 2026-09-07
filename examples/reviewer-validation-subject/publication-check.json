@@ -1,0 +1,84 @@
+{
+  "schema_version": "karajan.publication-check.v1",
+  "implementation_commit": "1fc97849697cfe89a79595cba07e9ec028c6d0b2",
+  "publication_map_sha256": "422ae2008e662b0cae668de37834027fbcb0ce43d38ff3baacc53b5c5692eec9",
+  "copied_files": 55,
+  "all_copies_byte_identical": true,
+  "original_freeze_and_review_references_resolve": true,
+  "log_whitelist_count": 5,
+  "all_raw_copy_git_text_attributes": "unset",
+  "protected_commit_and_worktree_inputs": 145,
+  "protected_inputs_match": true,
+  "backend_before_after_entries": 139,
+  "backend_before_after_entries_equal": true,
+  "new_text_lf_and_no_trailing_whitespace": true,
+  "git_diff_check": {
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "scope": "pre-staging tracked implementation-document diff only; then-untracked archive not covered",
+    "effective_tracked_paths": [
+      "docs/implementation/candidate-validation-subject.md",
+      "docs/implementation/m3-candidate-checks-runtime.md",
+      "docs/implementation/m3-candidate-checks.md"
+    ],
+    "full_publication_whitespace_pass": false
+  },
+  "behavior_tests": "not_run",
+  "ruff": "not_run; documents and evidence only",
+  "published_files_including_generated": 59,
+  "cached_git_diff_check": {
+    "command": [
+      "git",
+      "diff",
+      "--cached",
+      "--check"
+    ],
+    "scope": "current staged index, including raw evidence from this publication and other staged evidence",
+    "exit_code": 2,
+    "diagnostic_count": 937,
+    "reported_file_count": 10,
+    "reason_counts": {
+      "trailing whitespace.": 937
+    },
+    "this_publication_file_count": 10,
+    "other_staged_file_count": 0,
+    "reported_files": [
+      "examples/reviewer-validation-subject/reviewer-binding-author/auth-red.xml",
+      "examples/reviewer-validation-subject/reviewer-binding-author/first-red.xml",
+      "examples/reviewer-validation-subject/subject-author/backend-source-before.json",
+      "examples/reviewer-validation-subject/subject-author/behavior-red.xml",
+      "examples/reviewer-validation-subject/subject-author/fault-first.xml",
+      "examples/reviewer-validation-subject/subject-author/initial.xml",
+      "examples/reviewer-validation-subject/subject-author/late-observation-red.xml",
+      "examples/reviewer-validation-subject/subject-independent-review/review.json",
+      "examples/reviewer-validation-subject/subject-independent-review/source-before.json",
+      "examples/reviewer-validation-subject/subject-independent-review/windows-first.xml"
+    ],
+    "stderr_summary": "",
+    "interpretation": "Preserved original CRLF/XML/historical Python text contains whitespace diagnostics. Raw bytes and whitespace rules are unchanged. This is not a product or behavior-test CI failure.",
+    "raw_diagnostic_output_retained_in_report": false
+  },
+  "new_text_check": {
+    "scope": "newly authored implementation documents and generated publication metadata only",
+    "paths": [
+      "docs/implementation/candidate-validation-subject.md",
+      "docs/implementation/m3-candidate-checks-runtime.md",
+      "docs/implementation/m3-candidate-checks.md",
+      "examples/reviewer-validation-subject/README.md",
+      "examples/reviewer-validation-subject/.gitattributes",
+      "examples/reviewer-validation-subject/publication-map.json",
+      "examples/reviewer-validation-subject/publication-check.json"
+    ],
+    "excluded": "all 55 byte-preserved copied artifacts",
+    "lf_only": true,
+    "no_trailing_whitespace": true
+  },
+  "readme_scope_correction": {
+    "path": "README.md",
+    "previous_map_sha256": "f79051ef7c34c56dd28af8bd3c4ed1a7f78e0718cdf2911e1b121e01d58baaff",
+    "current_sha256": "ec058ad6b1b46eb4b7f8f5239494c355c2c319b3c1dd7df4de5ec4c16559fc67",
+    "publication_map_unchanged": false,
+    "raw_copy_hashes_unchanged": true
+  }
+}

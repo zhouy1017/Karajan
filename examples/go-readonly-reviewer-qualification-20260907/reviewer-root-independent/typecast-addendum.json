@@ -1,0 +1,10 @@
+{
+  "final_store_sha256": "5faa73df7095e76141bc44974b977e8d3253eea0d2fddd6717617c7eb7154ad2",
+  "previous_tested_store_sha256": "8deff58bc06979775c33763742114cf997ecdc27a2c86c3a2a2405c742c16778",
+  "reconstructed_two_cast_edits_sha256": "9f3338f003e629b3120d7b32303f5551e0b1515a4d6a464e72d71d0aab6b7b81",
+  "reconstructed_crlf_sha256": "8deff58bc06979775c33763742114cf997ecdc27a2c86c3a2a2405c742c16778",
+  "reconstructed_lf_sha256": "26bfc1cd16f52463c40d4f7ee57631f79a57d533c12eb198b3f593d3513b30a4",
+  "raw_crlf": 1360,
+  "note": "Independent reverse comparison confirms precisely two typing.cast edits plus line-ending changes. Normalized original CRLF bytes hash exactly to the prior tested source. Readonly mandatory current_guard branch behavior unchanged; no6C rerun.",
+  "only_two_cast_edits_plus_line_endings_confirmed": true
+}

@@ -1,0 +1,5 @@
+{
+  "backend/karajan/adapters/opencode/go_journal.py": "2951d54809e417a701a4bb357ee54b8f36494e06206c0d81ca6d181c75592e99",
+  "backend/karajan/adapters/opencode/go_relay.py": "c45f2784bff518407fc90c3f61d9adf0a92b69f701b77dde1aef86e6b0b5d2cd",
+  "tests/adapters/opencode/test_go_reviewer_qualification_grants.py": "e81b257d6d07b5a1f2128701dd77184964bb420e70b2b083c344453fceaa8a94"
+}

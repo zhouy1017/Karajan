@@ -1,0 +1,23 @@
+{
+  "provenance": "Commands reconstructed from the actual executed tool arguments; result XML/stdout retain original bytes.",
+  "worktree": "C:/Users/Chooo/Playground/Karajan/.cache/go-reviewer-qualification",
+  "windows_python": "C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe",
+  "linux_python": "/tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python",
+  "pythonpath_option": "backend tests/adapters/opencode tests/isolation",
+  "environment": {
+    "PYTHONPATH": "<worktree>/backend",
+    "KARAJAN_GO_TOKENIZER_DIRECTORY": "<ROOT>/.cache/go-task-execution/.cache/go-context-artifacts",
+    "KARAJAN_REQUIRE_GO_TOKENIZER": "1",
+    "KARAJAN_OPENCODE_LINUX_BINARY": "<ROOT>/.cache/go-linux-runtime/package/bin/opencode",
+    "KARAJAN_REQUIRE_OPENCODE_ISOLATION": "1 for native cases",
+    "HF_HUB_OFFLINE": "1",
+    "TRANSFORMERS_OFFLINE": "1"
+  },
+  "final_linux": "python -m pytest -p no:cacheprovider -o 'pythonpath=backend tests/adapters/opencode tests/isolation' tests/isolation/test_go_reviewer_probe.py tests/isolation/test_go_reviewer_probe_boundaries.py tests/isolation/test_go_reviewer_probe_negative.py -k 'not test_actual_readonly_review_has_new_session_complete_final_and_retained_reads' --junitxml=.cache/reviewer-observer-author/final-negative-linux.xml --basetemp=/tmp/karajan-reviewer-negative-final",
+  "final_windows": "python -m pytest -p no:cacheprovider -o 'pythonpath=backend tests/adapters/opencode tests/isolation' tests/isolation/test_go_reviewer_probe.py tests/isolation/test_go_reviewer_probe_boundaries.py tests/isolation/test_go_reviewer_probe_negative.py --junitxml=.cache/reviewer-observer-author/final-negative-windows.xml",
+  "earlier_three_positive_linux": "python -m pytest -p no:cacheprovider -o 'pythonpath=backend tests/adapters/opencode tests/isolation' tests/isolation/test_go_reviewer_probe.py tests/isolation/test_go_reviewer_probe_boundaries.py --junitxml=.cache/reviewer-observer-author/first-complete-linux.xml --basetemp=/tmp/karajan-reviewer-observer-three",
+  "static_scope": [
+    "ruff check and ruff format --check: three owned products and three formal test files",
+    "mypy --follow-imports=silent: go_reviewer_probe.py, _go_reviewer_evidence.py, opencode_runtime.py"
+  ]
+}

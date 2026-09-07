@@ -1,0 +1,14 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/Chooo/Playground/Karajan/.cache/go-reviewer-qualification
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 44 items / 3 deselected / 41 selected
+
+tests/isolation/test_go_reviewer_probe.py ..                             [  4%]
+tests/isolation/test_go_reviewer_probe_boundaries.py ................... [ 51%]
+...............                                                          [ 87%]
+tests/isolation/test_go_reviewer_probe_negative.py .....                 [100%]
+
+- generated xml file: /mnt/c/Users/Chooo/Playground/Karajan/.cache/go-reviewer-qualification/.cache/reviewer-observer-author/final-negative-linux.xml -
+================= 41 passed, 3 deselected in 70.40s (0:01:10) ==================

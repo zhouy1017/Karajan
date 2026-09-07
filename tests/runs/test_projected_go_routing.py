@@ -142,7 +142,12 @@ def approved_task(projected, tmp_path, *, change=None):
     )
     submission = submit_request(run, intent)
     for task in submission["plan"]["tasks"]:
-        task.update(tools=["read", "edit"], complexity="T1", risk="standard", context_tokens=6000)
+        task.update(
+            tools=["read"] if task["role"] == "reviewer" else ["read", "edit"],
+            complexity="T1",
+            risk="standard",
+            context_tokens=6000,
+        )
     if change == "T3":
         submission["plan"]["tasks"][0]["risk"] = "critical"
     plan = planner.submit_plan(run["id"], submission, principal="lead", command_key="plan")

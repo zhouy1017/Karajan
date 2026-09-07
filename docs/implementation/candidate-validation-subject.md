@@ -3,7 +3,11 @@
 关联 [#94 全部可信 Checks](https://github.com/zhouy1017/Karajan/issues/94) 与
 [#95 只读 Reviewer](https://github.com/zhouy1017/Karajan/issues/95)。本文件固定两个实现
 切片之间的接口要求。CAS policy-rebind 原语在 [#96](https://github.com/zhouy1017/Karajan/issues/96)
-独立切片中完成了本地验证；Reviewer 绑定编译及本运行入口的版本消费仍未实现，不作为通过证据。
+独立切片提供存储原语。[#100](https://github.com/zhouy1017/Karajan/issues/100) 的 ID-only
+绑定编译器和 [#101](https://github.com/zhouy1017/Karajan/issues/101) 的版本消费者已在
+`1fc97849697cfe89a79595cba07e9ec028c6d0b2` 实现并完成本地 C/P 验证，见
+[发布证据](../../examples/reviewer-validation-subject/README.md)。正向角色资格使用明确替身；
+正式 Reviewer 资格、模型 Review、S、当前 PR 的 G 与生产部署配置仍未完成。
 
 ## 已有来源与两个身份
 
@@ -24,14 +28,27 @@ Freeze request 中的作者、Writer 停止观察、路径与任务等级。
 
 ## 可信 Reviewer 绑定
 
-#95 从原批准 Reviewer Task、依赖 Worker 的完整作者历史、当前 Rulebook grants 和
-当前角色资格编译 `validation.review_binding`。不接受 Web 请求指定 Profile、作者、
+`ApprovedReviewerBindings.advance/get/reconcile(run_id, worker_operation_id, *, principal)`
+从原批准 Reviewer Task、依赖 Worker 的完整作者历史、当前 Rulebook normal-stage grants 和
+当前角色资格编译绑定。不接受 Web 请求指定 Profile、作者、
 候选路径、资格字符串或新的检查政策。
 
 绑定包含版本、来源 Candidate 全身份、Reviewer Task 与批准摘要、规则来源、允许的
 Profile revision / model family / qualification ref、实际资格来源与认证 generation 的
 摘要。允许集合必须来自规则与资格的交集；这一预备绑定不预留 Capacity、不授予模型启动。
 实际 Reviewer admission 仍等待新的全部 Check Evidence 通过。
+
+原 operation 的 `validation.subject_transition` 使用
+`karajan.candidate-subject-transition.v1`，阶段为 `prepared` → `rebind_claimed` →
+`ready` → `installed`。完整 ReviewerBinding、预期旧 subject 摘要、固定 command_key、
+语义摘要与精确 Candidate 收据共同保存。只有原 claim 提交明确返回成功的调用可首次执行
+CAS；已 claimed 的重开只查精确历史，缺收据保持待核对，不重发。
+
+尚未 claim 的 prepared 意图可因当前来源变化在同一 operation 事务内归档至
+`validation.intent_history` 并换用全新 ID/key；claimed/ready 不可替换。安装时
+`validation.review_binding` 保存完整 installed transition，其 `.binding` 是编译结果。
+新的 incoming transition 不覆盖当前已安装 binding。当前来源验证使用传入的 Project
+事务，不嵌套另一组同库锁，也不把稳定准备身份当作真实 Reviewer Attempt。
 
 ## CAS policy-rebind 存储边界
 
@@ -52,7 +69,7 @@ CandidateStore 提供受控内部接口，以来源 Candidate 的精确身份、
 
 ## Checks 消费与切换顺序
 
-#95 先持久化绑定与 rebind 意图，再提交 Candidate，最后只读核对并关联新 subject。
+#100 先持久化绑定与 rebind 意图，再提交 Candidate，最后只读核对并关联新 subject。
 跨 Candidate/operation 两个数据库不宣称原子提交。Checks 从原 operation 中读取该可信
 关联，并核对来源 capture、绑定和新 Candidate 的完整身份；公开接口仍只有 Run、
 operation 与 principal。
@@ -63,9 +80,22 @@ Check Attempt/start/evidence key。所有必需 Checks 重跑并计入同一 Run
 不得复制旧版本的通过记录。随后 Review 绑定新 Candidate 和实际最终 Check Evidence
 ID 集。没有合格 Reviewer 或绑定未完成时，质量门和交付资格继续为 false。
 
-## 尚待验证的交接条件
+消费者在 ready 安装及已安装版本的新 Check 效果前调用生产者的 `current_locked`，
+复查原批准、规则、资格和认证来源。缺验证器或不合格来源明确拒绝。`validation.history`
+保留各旧 cycle；历史 child 只能恢复旧记录，晚到的观察和 Evidence 只更新对应旧 cycle。
+A→B→C 中原 capture 始终锚定 A，而新 binding 的直接前驱是 B。停止未知时即使旧 Evidence
+已 recorded 也不能切换；已确认停止但尚未提交 Evidence 的旧观察可归档后继续精确提交。
 
-#94 当前仅实现原 capture 的 subject revision 1。完成上述交接需补充：精确 rebind 与
-丢回复恢复、来源内容不变与旧指针不变、全部 Checks 重跑、预算不重置、运行中的旧版本
-不可切换，以及新 Evidence ID 集使旧 Review 失效。两票均保留这些原验收条件，不能用
-这份接口文档替代行为证据或据此关闭 Issue。
+## 当前证据与保留范围
+
+生产者 18 项 C 在 Windows/WSL 通过；消费者 16 项 C 与两项真实 Linux P 通过。P 中
+A、B 各运行两项批准检查，使用不同 Attempt/Evidence，完整 CAS、用户树、原 capture 与
+共享预算起点保留。另一项 P 观察到活跃 namespace PID/birth 和固定命令标记后验证拒绝
+切换，再并发两个 advance 与 cancel，确认停止且第二项无 claim。独立审查未发现确认问题；
+精确安装提交丢回复、旧 Evidence 晚到等故障证据分别保留，不重复计数。
+
+这两项 P 使用独立的固定测试 child 和资格替身，child 字节摘要进入实际执行来源；正式
+factory 没有 fixture 开关。正常 factory 的真实资格 Store 对未获 Reviewer 资格的 ready
+版本以 `REVIEWER_QUALIFICATION_REQUIRED` 拒绝，且不准备 Host。正式可接受的 Reviewer
+suite/认证配置、只读 Reviewer 进程及 Review Evidence、真实规划桥 #93、整链 S 和当前
+候选 G 不由上述 C/P 代替；旧 Review 不可转用新 Evidence 身份，实际 Review 消费仍属 #95。

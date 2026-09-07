@@ -1,0 +1,25 @@
+"""Supplied qualification facts define members without quota, selection or effects."""
+
+from copy import deepcopy
+
+from karajan.routing import evaluate_profile_membership, evaluate_route
+
+from .test_routing import sample
+
+
+def test_membership_needs_no_capacity_and_does_not_select_or_authorize() -> None:
+    task, policy, capacity = sample()
+    capacity["pools"][0]["reported_remaining"] = "0"
+    before = deepcopy((task, policy))
+    result = evaluate_profile_membership(task, policy, as_of=1000)
+    assert result["eligible_profiles"] == [{"id": "fixture-profile", "revision": 1}]
+    assert result["reason_codes"] == []
+    assert result["selected_profile"] is None
+    assert result["activation_allowed"] is result["dispatch_enabled"] is False
+    assert result["live_qualification"] == "not_run"
+    assert result["scope"] == "supplied_profile_facts_membership"
+    assert set(result["snapshots"]) == {"task", "policy"}
+    assert not {"pool_evaluations", "sort_inputs", "rank"} & result["candidates"][0].keys()
+    assert evaluate_route(task, policy, capacity)["selected_profile"] is None
+    result["snapshots"]["task"]["authors"].append({"untrusted": "result mutation"})
+    assert (task, policy) == before

@@ -1,0 +1,50 @@
+{
+  "scope": [
+    {
+      "path": "backend/karajan/projects/qualification.py",
+      "sha256": "8deff58bc06979775c33763742114cf997ecdc27a2c86c3a2a2405c742c16778"
+    },
+    {
+      "path": "backend/karajan/orchestration/go_reviewer_scope.py",
+      "sha256": "56505ed557b4a247f2de9e6bb66ea10a25681d501c8471af9807760643b4a7ad"
+    },
+    {
+      "path": "backend/karajan/orchestration/reviewer_binding.py",
+      "sha256": "a633abb64373df7b76c77386cf21a5ff0d061166deeee6ffba4ba9aab749d4b9"
+    },
+    {
+      "path": "backend/karajan/orchestration/qualification_services.py",
+      "sha256": "d8dc02c208d3319a5174c7aace317d5b26f94726d097ec187d65013313db3a4d"
+    },
+    {
+      "path": "backend/karajan/orchestration/check_services_factory.py",
+      "sha256": "0cc6a69bc95a6d4cf160bcdc9417f1746fba7e608baa8a0dcfbfa2ceb5385849"
+    }
+  ],
+  "standards": {
+    "open_findings": 0
+  },
+  "spec": {
+    "open_findings": 0,
+    "closed_independently_reproduced": [
+      "CURRENT-EXPIRY-001"
+    ],
+    "root_identified_code_confirmed_closed": [
+      "mid-suite current authority"
+    ]
+  },
+  "evidence": {
+    "level": "C",
+    "platform": "Windows",
+    "passed": 6,
+    "failed": 0,
+    "skipped": 0,
+    "pytest_seconds": 5.96,
+    "source_before_after_equal": true,
+    "native": false,
+    "provider_calls": 0
+  },
+  "author_oracles": "source and observer explicit test substitutes; report validation outside authority scope",
+  "same_independent_reviewer_both_axes": true,
+  "initial_mixed_source_failure_is_product_red": false
+}

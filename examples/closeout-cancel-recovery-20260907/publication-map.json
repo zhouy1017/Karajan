@@ -1,0 +1,80 @@
+[
+  {
+    "source": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\ci-resume-20260907\\subject-dev97\\failed-linux.txt",
+    "path": "original-ci-failure.txt",
+    "sha256": "5a398eed31af02a7fa451bd9a3375c90a7cb47af66aaa911293ffb4d2edb42d7",
+    "bytes": 60396
+  },
+  {
+    "source": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-validation-subject\\.cache\\ci-cancel-final\\README.md",
+    "path": "author-history.md",
+    "sha256": "ddf1554d35c2322b27acb9bfa437cf3ded5cb84e0d1b4a7492e12c2702285a1a",
+    "bytes": 3720
+  },
+  {
+    "source": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-reviewer-qualification\\.cache\\closeout-native-linux.xml",
+    "path": "closeout-native-linux.xml",
+    "sha256": "e2e9dd6e6bcf37c06cfb31d2b6e133b28f091df25bacce1e8a18ff1200014953",
+    "bytes": 684
+  },
+  {
+    "source": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-reviewer-qualification\\.cache\\closeout-native-linux.txt",
+    "path": "closeout-native-linux.txt",
+    "sha256": "c5fc54d412bdd4b4692921d8b5bd9f4c93d43441f8a7e7765849377a28baba4c",
+    "bytes": 101
+  },
+  {
+    "source": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-reviewer-qualification\\.cache\\closeout-ruff.txt",
+    "path": "closeout-ruff.txt",
+    "sha256": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0",
+    "bytes": 20
+  },
+  {
+    "source": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-reviewer-qualification\\.cache\\closeout-mypy.txt",
+    "path": "closeout-mypy.txt",
+    "sha256": "8cc045265129bcb862be4f8d0bc55932de455fc9b49c38fc85a5613cf038175b",
+    "bytes": 46
+  },
+  {
+    "source": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-reviewer-qualification\\.cache\\closeout-source.json",
+    "path": "closeout-source.json",
+    "sha256": "6f0d59e412a50ac6ecc484a27660b815a78af2bc2353f9d81244b9d3b3934905",
+    "bytes": 17083
+  },
+  {
+    "source": "37daff5fa16322c4453bde40d342776f8a1b4fa7:backend/karajan/orchestration/candidate_checks.py",
+    "path": "before-candidate_checks.py.txt",
+    "sha256": "f333cd61105837424e23a0ba32b2eed1597d379144ba0d91cd615bc79dd292c7",
+    "bytes": 48589
+  },
+  {
+    "source": "37daff5fa16322c4453bde40d342776f8a1b4fa7:tests/runs/test_candidate_checks.py",
+    "path": "before-test_candidate_checks.py.txt",
+    "sha256": "8700de3e1db95a6ec2bbd9c097b4b91b486c7207a453bcf88b222648d5c3c9c4",
+    "bytes": 26462
+  },
+  {
+    "source": "9d2ee17551361f0b451f36a0ab188a76c03681f5:backend/karajan/orchestration/candidate_checks.py",
+    "path": "after-candidate_checks.py.txt",
+    "sha256": "7e8e2c3ef2a90090e64fabc253334e9fc2442d96e463863e49d61af773ee014e",
+    "bytes": 49247
+  },
+  {
+    "source": "9d2ee17551361f0b451f36a0ab188a76c03681f5:tests/runs/test_candidate_checks.py",
+    "path": "after-test_candidate_checks.py.txt",
+    "sha256": "7ee76501ae92d4a0cd3c2272a62b1b0cc81dc51fc297ce03f9eb26c9b57b9d22",
+    "bytes": 29964
+  },
+  {
+    "source": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-reviewer-qualification\\.cache\\closeout-combination-windows.xml",
+    "path": "closeout-combination-windows.xml",
+    "sha256": "c017375c13eb3e995b3a971bc837b12334efd87222660df3b394ac6493937ee8",
+    "bytes": 89418
+  },
+  {
+    "source": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-reviewer-qualification\\.cache\\closeout-combination-windows.txt",
+    "path": "closeout-combination-windows.txt",
+    "sha256": "9996f691b0282dc91b8fe29d36365fe70cd381200590617c0a23447bfc2572a0",
+    "bytes": 881
+  }
+]

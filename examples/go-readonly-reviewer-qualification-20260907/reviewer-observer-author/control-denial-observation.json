@@ -1,0 +1,7 @@
+{
+  "path": "/control/opencode.json",
+  "native_permission_denied": true,
+  "feedback_sha256": "1d8864cb7580e4bdde0e71f8de4642148f6f503d3f97c1c9e2fe0645dbcebd79",
+  "requests": 2,
+  "evidence_layer": "P_http_fixture"
+}

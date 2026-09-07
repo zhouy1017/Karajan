@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="1.098" timestamp="2026-09-07T12:06:07.172403+08:00" hostname="ProArt-Zhou"><testcase classname="tests.projects.test_go_reviewer_suite" name="test_current_guard_stops_next_scenario_without_holding_lock_during_observation" time="0.021"><failure message="TypeError: FixedGoReviewerSuite.observe() got an unexpected keyword argument 'current_guard'">synthetic_suite = (&lt;karajan.projects.go_reviewer_suite.FixedGoReviewerSuite object at 0x000001A47CF2BE60&gt;, &lt;karajan.adapters.opencode.go...o-channel', 'account_id': 'go-account', 'billing_path': 'subscription_only', 'approved_data_destination': True}}, ...})
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001A47CF2BFB0&gt;
+
+    def test_current_guard_stops_next_scenario_without_holding_lock_during_observation(
+        synthetic_suite, monkeypatch
+    ):
+        suite, journal, start = synthetic_suite
+        state = {"held": False, "current": True}
+    
+        @contextmanager
+        def current_guard():
+            if not state["current"]:
+                raise ValueError("AUTHENTICATION_SOURCE_MISMATCH")
+            assert not state["held"]
+            state["held"] = True
+            try:
+                yield
+            finally:
+                state["held"] = False
+    
+        def observed(runtime, directory, secret, authorization, *, scenario, **kwargs):
+            assert not state["held"]
+            assert kwargs["current_guard"] is current_guard
+            result = synthetic_observation(suite, authorization, scenario)
+            state["current"] = False
+            return result
+    
+        install_observer(monkeypatch, observed)
+&gt;       result = suite.observe(start, credential(), current_guard=current_guard)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: FixedGoReviewerSuite.observe() got an unexpected keyword argument 'current_guard'
+
+tests\projects\test_go_reviewer_suite.py:838: TypeError</failure></testcase><testcase classname="tests.projects.test_go_reviewer_suite" name="test_current_guard_is_required_and_rejects_before_any_grant" time="0.030"><failure message="Failed: DID NOT RAISE TypeError">synthetic_suite = (&lt;karajan.projects.go_reviewer_suite.FixedGoReviewerSuite object at 0x000001A47CFD98E0&gt;, &lt;karajan.adapters.opencode.go...o-channel', 'account_id': 'go-account', 'billing_path': 'subscription_only', 'approved_data_destination': True}}, ...})
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001A47CFD8AA0&gt;
+
+    def test_current_guard_is_required_and_rejects_before_any_grant(synthetic_suite, monkeypatch):
+        from karajan.adapters.opencode.go_journal import GoJournalError
+    
+        suite, journal, start = synthetic_suite
+        called = []
+        install_observer(monkeypatch, lambda *args, **kwargs: called.append(True))
+&gt;       with pytest.raises(TypeError, match="current_guard"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE TypeError
+
+tests\projects\test_go_reviewer_suite.py:851: Failed</failure></testcase></testsuite></testsuites>

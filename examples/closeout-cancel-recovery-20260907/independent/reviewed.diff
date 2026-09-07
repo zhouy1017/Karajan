@@ -1,0 +1,191 @@
+diff --git a/backend/karajan/orchestration/candidate_checks.py b/backend/karajan/orchestration/candidate_checks.py
+index 913c486..f219a30 100644
+--- a/backend/karajan/orchestration/candidate_checks.py
++++ b/backend/karajan/orchestration/candidate_checks.py
+@@ -381,22 +381,40 @@ class ApprovedCandidateChecks:
+ 
+     def _cleanup(self, run_id: str, operation_id: str, row: dict[str, Any]) -> None:
+         cleanup = deepcopy(row.get("cleanup", {}))
++        native_observed = None
+         if row.get("native_claim") is not None and self.runner is not None:
+             try:
+-                observed = self.runner.cancel(execution_document(row))
++                native_observed = self.runner.cancel(execution_document(row))
+                 cleanup["native"] = {
+-                    "local_stop": observed.local_stop if observed is not None else "unknown"
++                    "local_stop": (
++                        native_observed.local_stop if native_observed is not None else "unknown"
++                    )
+                 }
+-                if observed is not None and row.get("observation") is None:
++                if native_observed is not None and row.get("observation") is None:
+                     self._save_observation(
+-                        run_id, operation_id, row["check_run_id"], execution_document(row), observed
++                        run_id,
++                        operation_id,
++                        row["check_run_id"],
++                        execution_document(row),
++                        native_observed,
+                     )
+             except Exception:
+                 cleanup["native"] = {
+                     "local_stop": "unknown",
+                     "reason": "CANDIDATE_CHECK_CLEANUP_UNAVAILABLE",
+                 }
+-        if row.get("host_prepared_id") is not None and self.host is not None:
++        # A native claim owns a publisher that may still be writing its result
++        # after runner.cancel returns. Killing its Host here can lose the
++        # receipt; reconcile will inspect it and perform Host cleanup later.
++        if (
++            row.get("host_prepared_id") is not None
++            and self.host is not None
++            and (
++                row.get("native_claim") is None
++                or native_observed is not None
++                or row.get("observation") is not None
++            )
++        ):
+             try:
+                 stopped = self.host.cancel(
+                     row["attempt_id"],
+diff --git a/tests/runs/test_candidate_checks.py b/tests/runs/test_candidate_checks.py
+index 720a2de..d9c8763 100644
+--- a/tests/runs/test_candidate_checks.py
++++ b/tests/runs/test_candidate_checks.py
+@@ -13,7 +13,8 @@ from concurrent.futures import ThreadPoolExecutor
+ from contextlib import contextmanager
+ 
+ import pytest
+-from karajan.execution import LaunchDenied, ProcessIdentity, ProcessSpec, RunnerHost
++from karajan.execution import LaunchDenied, ProcessIdentity, ProcessSpec, RunnerHost, Snapshot
++from karajan.orchestration.candidate_checks import ApprovedCandidateChecks
+ from karajan.orchestration.go_task_collector import ApprovedGoCollector
+ from karajan.runs import RunError
+ from test_go_task_collector import (
+@@ -372,6 +373,43 @@ class CheckProcessBoundary(SourceFixture):
+         return self.logs.get(execution["check_run_id"])
+ 
+ 
++class LateReceiptBoundary(CheckProcessBoundary):
++    def __init__(self):
++        super().__init__()
++        self.started = threading.Event()
++        self.release = threading.Event()
++        self.cancel_calls = 0
++
++    def run(self, execution, *, start_guard, cancelled):
++        from karajan.isolation.check_runner import CheckObservation
++        from karajan.routing.compiler import digest
++
++        with start_guard():
++            self.starts += 1
++        self.started.set()
++        assert self.release.wait(10)
++        log = b"late trusted-runner boundary observation\n"
++        observed = CheckObservation(
++            digest(execution),
++            "cancelled",
++            -15,
++            "confirmed",
++            True,
++            hashlib.sha256(log).hexdigest(),
++            len(log),
++            "late-observation:" + execution["check_run_id"],
++            "late-check-runner",
++            execution["environment"]["source_sha256"],
++        )
++        self.observations[execution["check_run_id"]] = observed
++        self.logs[execution["check_run_id"]] = log
++        return observed
++
++    def cancel(self, execution):
++        self.cancel_calls += 1
++        return None if self.cancel_calls == 1 else self.inspect(execution)
++
++
+ class CheckHostIdentityBoundary(RunnerHost):
+     """Only direct-child authority is synthetic; prepare/start/ledger are actual Host."""
+ 
+@@ -385,7 +423,7 @@ class CheckHostIdentityBoundary(RunnerHost):
+         yield self.identity
+ 
+ 
+-def check_workflow(projected, tmp_path, exits=(0,)):
++def check_workflow(projected, tmp_path, exits=(0,), runner=None):
+     from candidate_checks_case import approved_check_candidate
+     from karajan.orchestration.candidate_checks import ApprovedCandidateChecks, CheckLaunchSpec
+ 
+@@ -415,7 +453,7 @@ def check_workflow(projected, tmp_path, exits=(0,)):
+             for index in range(len(exits))
+         ],
+     )
+-    runner = CheckProcessBoundary(exits)
++    runner = runner or CheckProcessBoundary(exits)
+     host = CheckHostIdentityBoundary(tmp_path / "boundary-host")
+     service = ApprovedCandidateChecks(
+         case.admissions,
+@@ -430,6 +468,64 @@ def check_workflow(projected, tmp_path, exits=(0,)):
+     return case, service, runner, host
+ 
+ 
++def test_public_cancel_retains_host_until_native_receipt_arrives(projected, tmp_path, monkeypatch):
++    case, service, runner, host = check_workflow(projected, tmp_path, runner=LateReceiptBoundary())
++    for _ in range(5):
++        state = service.advance(*case.args, principal="owner")
++        row = state["checks"]["runs"][0]
++        if row["phase"] == "host_started":
++            break
++    else:
++        pytest.fail("approved check did not reach host_started")
++    check_id = row["check_run_id"]
++    worker = threading.Thread(
++        target=service.consume_check,
++        args=(*case.args, check_id),
++        kwargs={"principal": "owner", "runner_identity": host.identity},
++    )
++    worker.start()
++    assert runner.started.wait(5)
++    host_calls = []
++    monkeypatch.setattr(
++        host,
++        "cancel",
++        lambda *args, **kwargs: (
++            host_calls.append(args),
++            Snapshot("prepared", row["attempt_id"], "exited", None),
++        )[1],
++    )
++    service.cancel(*case.args, principal="owner")
++    assert host_calls == []
++    runner.release.set()
++    worker.join(10)
++    assert not worker.is_alive()
++    assert service.get(*case.args, principal="owner")["checks"]["runs"][0]["observation"]
++    service.reconcile(*case.args, principal="owner")
++    assert host_calls == [(row["attempt_id"], "cancel:" + check_id)]
++
++
++def test_public_history_cancel_stops_host_from_persisted_observation(
++    projected, tmp_path, monkeypatch
++):
++    case, service, runner, host = check_workflow(projected, tmp_path)
++    final = run_next_boundary_check(case, service, host)
++    row = final["checks"]["runs"][0]
++    assert row["observation"] is not None
++    assert row.get("host_prepared_id") is not None
++    host_calls = []
++    monkeypatch.setattr(
++        host,
++        "cancel",
++        lambda *args, **kwargs: (
++            host_calls.append(args),
++            Snapshot("prepared", row["attempt_id"], "exited", None),
++        )[1],
++    )
++    history = ApprovedCandidateChecks(case.admissions, case.candidates, host=host)
++    history.cancel(*case.args, principal="owner")
++    assert host_calls == [(row["attempt_id"], "cancel:" + row["check_run_id"])]
++
++
+ def run_next_boundary_check(case, service, host):
+     for _ in range(5):
+         state = service.advance(*case.args, principal="owner")

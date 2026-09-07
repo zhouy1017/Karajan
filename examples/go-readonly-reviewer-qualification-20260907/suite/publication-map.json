@@ -1,0 +1,123 @@
+{
+  "schema_version": "karajan.byte-copy-publication-map.v1",
+  "base_commit": "a2d1373fb551894e9bf5ca7091782f6d2ca4b08b",
+  "implementation_commit": null,
+  "files": {
+    "native-record.json": {
+      "original": ".cache/go-reviewer-suite-final/public-store-p/native-record.json",
+      "sha256": "066f94ca2329d7ff0e8b8d4b09204a9a2e203d38c471d8ed01ddbb7f38989c64"
+    },
+    "assertions.json": {
+      "original": ".cache/go-reviewer-suite-final/public-store-p/assertions.json",
+      "sha256": "fbae78b5c19fe0a5ad1c9fb4a3dcde8bc7ac6e450c2459e9dd053a16bfca877d"
+    },
+    "source-map.json": {
+      "original": ".cache/go-reviewer-suite-final/public-store-p/source-map.json",
+      "sha256": "9aa6817d7ac37b957c52c103d94c66495ffdb2932ececaf1d3c55516ac4e462c"
+    },
+    "capture-receipt.json": {
+      "original": ".cache/go-reviewer-suite-final/public-store-p/capture-receipt.json",
+      "sha256": "d1daa88f73336656865e4566cca04ec5aa8e5ff3a388bc4edb60388f94768e14"
+    },
+    "linux.xml": {
+      "original": ".cache/go-reviewer-suite-final/final-store-linux.xml",
+      "sha256": "e0c6592b0c944f4f915b2d6236ce7ae77d1f496b9a147a51210b4b68f584744f"
+    },
+    "linux.log": {
+      "original": ".cache/go-reviewer-suite-final/final-store-linux.log",
+      "sha256": "b7452fe778725422bd9cd61cfa5173e70e92a2da7106b15839ec3ea04ac7661c"
+    },
+    "windows.xml": {
+      "original": ".cache/go-reviewer-suite-final/tool-finish-final.xml",
+      "sha256": "8ed6c61e907fa794ea3bbc2e38b273086092342290ef38dabbbab57477019c60"
+    },
+    "windows.log": {
+      "original": ".cache/go-reviewer-suite-final/tool-finish-final.log",
+      "sha256": "dbf6c06c2f83f09fb7fff9e9b492eb6436b550c6270d22ae7533665b0219edaa"
+    },
+    "ruff.log": {
+      "original": ".cache/go-reviewer-suite-final/ruff-final.log",
+      "sha256": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0"
+    },
+    "mypy-windows.log": {
+      "original": ".cache/go-reviewer-suite-final/mypy-final-win.log",
+      "sha256": "8e63ae22e8213e327a5e9cbd584067681681bd8ef7f25c869877887ccdcfc4ff"
+    },
+    "mypy-linux.log": {
+      "original": ".cache/go-reviewer-suite-final/mypy-final-linux.log",
+      "sha256": "8e63ae22e8213e327a5e9cbd584067681681bd8ef7f25c869877887ccdcfc4ff"
+    },
+    "test_go_reviewer_suite.py.txt": {
+      "original": "tests/projects/test_go_reviewer_suite.py",
+      "sha256": "1097d3cbdd431991380f6bc32028f42c28dc0d083474b5e164e9bad81160f7c3"
+    },
+    "history/red-source.xml": {
+      "original": ".cache/go-reviewer-suite-author/red-source.xml",
+      "sha256": "b7198fd5e126f4ce472a7cd13214b28400f2a4e86561bf5c681d5f9a3bbeebdb"
+    },
+    "history/red-source.log": {
+      "original": ".cache/go-reviewer-suite-author/red-source.log",
+      "sha256": "89394a315678b478ed80a1edfc9e8dd0e39d80fc1b920d0e019421c71bc2b821"
+    },
+    "history/red-create.xml": {
+      "original": ".cache/go-reviewer-suite-author/red-create.xml",
+      "sha256": "6a3dcf1bdbb057b9ecf4e739c3539dd11c70466ca1980da8b9f9e0d88e8f23fa"
+    },
+    "history/red-create.log": {
+      "original": ".cache/go-reviewer-suite-author/red-create.log",
+      "sha256": "25ab448cad0c49f8a04147801592c9402707589575f845975b8fcd032d11b81e"
+    },
+    "history/red-report.xml": {
+      "original": ".cache/go-reviewer-suite-author/red-report.xml",
+      "sha256": "104e13fbc02463724ee18566b762d2e49570961a17d3b91aec06ea523705734a"
+    },
+    "history/red-report.log": {
+      "original": ".cache/go-reviewer-suite-author/red-report.log",
+      "sha256": "2a0abcd10bf930ef9c003682a9fb9dcebb485f4096a914bc422859afef3fa05c"
+    },
+    "history/red-clock.xml": {
+      "original": ".cache/go-reviewer-suite-author/red-clock.xml",
+      "sha256": "0ce62fe14009b86c12ecebcc24f4590123a5fa31aa97fd82df6697fbf67130b8"
+    },
+    "history/red-clock.log": {
+      "original": ".cache/go-reviewer-suite-author/red-clock.log",
+      "sha256": "7972321d78b9488f28235dfe13b905e46ce4f33a178c17a41a32ca1863d80e9c"
+    },
+    "history/green-clock.xml": {
+      "original": ".cache/go-reviewer-suite-author/green-clock.xml",
+      "sha256": "e9f5a7359e830c4df1a36900bd8fffeb69d58c095330962fc65b27b4df5a9b3f"
+    },
+    "history/red-parts.xml": {
+      "original": ".cache/go-reviewer-suite-final/red-parts.xml",
+      "sha256": "14d5d47985e61afa1ed7e241b01a9ef66ef874d6b236d6d4d33ea5eedd806099"
+    },
+    "history/red-parts.log": {
+      "original": ".cache/go-reviewer-suite-final/red-parts.log",
+      "sha256": "23b27465f78c9990112ba258cc28107e9c7c0114c31675bb07dae791a6669816"
+    },
+    "history/red-current.xml": {
+      "original": ".cache/go-reviewer-suite-final/red-current.xml",
+      "sha256": "6aa6c46f8bec0578ce934fbaa971b2356ea1cc0989f5f709a294b00d9d0f2709"
+    },
+    "history/red-current.log": {
+      "original": ".cache/go-reviewer-suite-final/red-current.log",
+      "sha256": "b2521648dff78882a068456f438a5124dea932c62ee1aba20f9e5f0ea74dfc50"
+    },
+    "history/red-tool-finish.xml": {
+      "original": ".cache/go-reviewer-suite-final/red-tool-finish.xml",
+      "sha256": "a30161d8ebdfac9f373f90a6240bdceac472bc78f92ba6286f63b8d9e027cd7b"
+    },
+    "history/red-tool-finish.log": {
+      "original": ".cache/go-reviewer-suite-final/red-tool-finish.log",
+      "sha256": "0ca59670daa4f3ce469738d9b23a469cf7a7d3ca218f21df69f3289768a78546"
+    },
+    "history/test-before-textpart-timing.py.txt": {
+      "original": ".cache/go-reviewer-suite-final/test-before-textpart-timing.py.txt",
+      "sha256": "35e88cee41089cf1ad686fa64447ae6c857ee510621594cc7db322cd850cd408"
+    },
+    "history/before-guard.source.py.txt": {
+      "original": ".cache/go-reviewer-suite-final/before-guard.source.py.txt",
+      "sha256": "f9783ce353e8ecb469ed74d149e21db351291b410e1f7ad6a5e323941be3b0a5"
+    }
+  }
+}

@@ -1,0 +1,100 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Users\Chooo\Playground\Karajan\.cache\go-reviewer-qualification
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 29 items
+
+tests\isolation\test_go_reviewer_probe_boundaries.py ..............FF... [ 65%]
+.......F..                                                               [100%]
+
+================================== FAILURES ===================================
+__ test_ambiguous_or_unfinished_native_parts_are_never_parsed[foreign_part] ___
+
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-989/test_ambiguous_or_unfinished_n4')
+accounting = <karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000001A3349ED6D0>
+boundary = {'created': 1, 'started': 1, 'prompted': 1, 'mutate': <function test_ambiguous_or_unfinished_native_parts_are_never_parsed.<locals>.mutate at 0x000001A334A19800>, ...}
+change = 'foreign_part'
+
+    @pytest.mark.parametrize("change", ["duplicate_final", "duplicate_text", "tool_only", "unfinished_tool",
+                                       "foreign_part", "unfinished_text"])
+    def test_ambiguous_or_unfinished_native_parts_are_never_parsed(
+        tmp_path, accounting, boundary, change
+    ):
+        def mutate(messages):
+            parts = messages[-1]["parts"]
+            if change == "duplicate_final":
+                messages.append(copy.deepcopy(messages[-1]))
+            elif change == "duplicate_text":
+                parts.append(copy.deepcopy(parts[0]))
+            elif change == "tool_only":
+                parts[:] = [{"type": "tool", "tool": "read", "state": {"status": "completed"}}]
+            elif change == "unfinished_tool":
+                parts.append({"type": "tool", "tool": "read", "state": {"status": "running"}})
+            elif change == "foreign_part":
+                parts[0]["messageID"] = "msg_foreign"
+            else:
+                parts[0]["time"].pop("end")
+        boundary["mutate"] = mutate
+        result = observe(tmp_path, accounting)
+>       assert result["parsed_review"] is None
+E       AssertionError: assert {'verdict': 'passed', 'findings': []} is None
+
+tests\isolation\test_go_reviewer_probe_boundaries.py:165: AssertionError
+_ test_ambiguous_or_unfinished_native_parts_are_never_parsed[unfinished_text] _
+
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-989/test_ambiguous_or_unfinished_n5')
+accounting = <karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000001A3349ED6D0>
+boundary = {'created': 1, 'started': 1, 'prompted': 1, 'mutate': <function test_ambiguous_or_unfinished_native_parts_are_never_parsed.<locals>.mutate at 0x000001A335D84040>, ...}
+change = 'unfinished_text'
+
+    @pytest.mark.parametrize("change", ["duplicate_final", "duplicate_text", "tool_only", "unfinished_tool",
+                                       "foreign_part", "unfinished_text"])
+    def test_ambiguous_or_unfinished_native_parts_are_never_parsed(
+        tmp_path, accounting, boundary, change
+    ):
+        def mutate(messages):
+            parts = messages[-1]["parts"]
+            if change == "duplicate_final":
+                messages.append(copy.deepcopy(messages[-1]))
+            elif change == "duplicate_text":
+                parts.append(copy.deepcopy(parts[0]))
+            elif change == "tool_only":
+                parts[:] = [{"type": "tool", "tool": "read", "state": {"status": "completed"}}]
+            elif change == "unfinished_tool":
+                parts.append({"type": "tool", "tool": "read", "state": {"status": "running"}})
+            elif change == "foreign_part":
+                parts[0]["messageID"] = "msg_foreign"
+            else:
+                parts[0]["time"].pop("end")
+        boundary["mutate"] = mutate
+        result = observe(tmp_path, accounting)
+>       assert result["parsed_review"] is None
+E       AssertionError: assert {'verdict': 'passed', 'findings': []} is None
+
+tests\isolation\test_go_reviewer_probe_boundaries.py:165: AssertionError
+_ test_grant_mismatch_is_zero_native_and_does_not_revoke_foreign_binding[update2] _
+
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-989/test_grant_mismatch_is_zero_na2')
+accounting = <karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x000001A3349ED6D0>
+boundary = {'created': 0, 'started': 0, 'prompted': 0, 'mutate': <function boundary.<locals>.<lambda> at 0x000001A335DD3920>, ...}
+update = {'scenario': 'defect_review'}
+
+    @pytest.mark.parametrize("update", [
+        {"runtime_digest": "b" * 64}, {"probe_spec_digest": "b" * 64},
+        {"scenario": "defect_review"}, {"max_requests": 5},
+    ])
+    def test_grant_mismatch_is_zero_native_and_does_not_revoke_foreign_binding(
+        tmp_path, accounting, boundary, update
+    ):
+>       auth = reviewer_authorization(tmp_path, accounting, Path("synthetic-ELF"), "clean_review", **update)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: reviewer_authorization() got multiple values for argument 'scenario'
+
+tests\isolation\test_go_reviewer_probe_boundaries.py:212: TypeError
+- generated xml file: C:\Users\Chooo\Playground\Karajan\.cache\go-reviewer-qualification\.cache\reviewer-observer-author\boundaries-initial.xml -
+=========================== short test summary info ===========================
+FAILED tests/isolation/test_go_reviewer_probe_boundaries.py::test_ambiguous_or_unfinished_native_parts_are_never_parsed[foreign_part]
+FAILED tests/isolation/test_go_reviewer_probe_boundaries.py::test_ambiguous_or_unfinished_native_parts_are_never_parsed[unfinished_text]
+FAILED tests/isolation/test_go_reviewer_probe_boundaries.py::test_grant_mismatch_is_zero_native_and_does_not_revoke_foreign_binding[update2]
+======================== 3 failed, 26 passed in 2.22s =========================

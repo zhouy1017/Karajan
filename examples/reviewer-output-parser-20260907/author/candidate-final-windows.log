@@ -1,0 +1,21 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Users\Chooo\Playground\Karajan\.cache\review-output-parser
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 375 items
+
+tests\candidates\test_baseline_materialization.py ................       [  4%]
+tests\candidates\test_projected_capture.py ...............               [  8%]
+tests\candidates\test_review_output.py ................................. [ 17%]
+........................................................................ [ 36%]
+........................................................................ [ 55%]
+........................................................................ [ 74%]
+....................                                                     [ 80%]
+tests\candidates\test_validation.py .................................... [ 89%]
+....................................sss                                  [100%]
+
+- generated xml file: C:\Users\Chooo\Playground\Karajan\.cache\review-output-parser\.cache\review-parser-author\candidate-final-windows.xml -
+=========================== short test summary info ===========================
+SKIPPED [3] tests\candidates\test_validation.py:640: POSIX permission bits require a real POSIX filesystem
+================== 372 passed, 3 skipped in 66.82s (0:01:06) ==================

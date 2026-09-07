@@ -1,0 +1,7 @@
+........................................................................ [ 47%]
+............................................ss.......................... [ 94%]
+.........                                                                [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\runs\test_reviewer_qualification_factory.py:141: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [1] tests\runs\test_reviewer_qualification_factory.py:185: Pinned official tokenizer artifacts have not been provisioned locally
+151 passed, 2 skipped in 128.94s (0:02:08)

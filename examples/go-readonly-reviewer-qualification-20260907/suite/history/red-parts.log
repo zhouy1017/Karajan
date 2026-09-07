@@ -1,0 +1,228 @@
+FFFFFFF                                                                  [100%]
+================================== FAILURES ===================================
+_ test_complete_text_part_requires_native_identity_and_end_time[text_part_id-] _
+
+synthetic_suite = (<karajan.projects.go_reviewer_suite.FixedGoReviewerSuite object at 0x000001A100660470>, <karajan.adapters.opencode.go...o-channel', 'account_id': 'go-account', 'billing_path': 'subscription_only', 'approved_data_destination': True}}, ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001A1006602C0>
+field = 'text_part_id', value = ''
+
+    @pytest.mark.parametrize("field,value", [
+        ("text_part_id", ""), ("text_part_message_id", "unrelated-message"),
+        ("text_part_session_id", "old-session"), ("text_part_started_at", None),
+        ("text_part_completed_at", None), ("text_part_completed_at", 99000),
+        ("text_part_completed_at", 102000),
+    ])
+    def test_complete_text_part_requires_native_identity_and_end_time(
+        synthetic_suite, monkeypatch, field, value
+    ):
+        suite, journal, start = synthetic_suite
+    
+        def observed(runtime, directory, secret, authorization, *, scenario, **kwargs):
+            report = synthetic_observation(suite, authorization, scenario)
+            report["native_final"][field] = value
+            return report
+    
+        install_observer(monkeypatch, observed)
+        result = suite.observe(start, credential())
+>       assert result["status"] == "failed"
+E       AssertionError: assert 'passed' == 'failed'
+E         
+E         - failed
+E         + passed
+
+tests\projects\test_go_reviewer_suite.py:800: AssertionError
+_ test_complete_text_part_requires_native_identity_and_end_time[text_part_message_id-unrelated-message] _
+
+synthetic_suite = (<karajan.projects.go_reviewer_suite.FixedGoReviewerSuite object at 0x000001A1006E2510>, <karajan.adapters.opencode.go...o-channel', 'account_id': 'go-account', 'billing_path': 'subscription_only', 'approved_data_destination': True}}, ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001A1006E2990>
+field = 'text_part_message_id', value = 'unrelated-message'
+
+    @pytest.mark.parametrize("field,value", [
+        ("text_part_id", ""), ("text_part_message_id", "unrelated-message"),
+        ("text_part_session_id", "old-session"), ("text_part_started_at", None),
+        ("text_part_completed_at", None), ("text_part_completed_at", 99000),
+        ("text_part_completed_at", 102000),
+    ])
+    def test_complete_text_part_requires_native_identity_and_end_time(
+        synthetic_suite, monkeypatch, field, value
+    ):
+        suite, journal, start = synthetic_suite
+    
+        def observed(runtime, directory, secret, authorization, *, scenario, **kwargs):
+            report = synthetic_observation(suite, authorization, scenario)
+            report["native_final"][field] = value
+            return report
+    
+        install_observer(monkeypatch, observed)
+        result = suite.observe(start, credential())
+>       assert result["status"] == "failed"
+E       AssertionError: assert 'passed' == 'failed'
+E         
+E         - failed
+E         + passed
+
+tests\projects\test_go_reviewer_suite.py:800: AssertionError
+_ test_complete_text_part_requires_native_identity_and_end_time[text_part_session_id-old-session] _
+
+synthetic_suite = (<karajan.projects.go_reviewer_suite.FixedGoReviewerSuite object at 0x000001A14FC39070>, <karajan.adapters.opencode.go...o-channel', 'account_id': 'go-account', 'billing_path': 'subscription_only', 'approved_data_destination': True}}, ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001A14FC392E0>
+field = 'text_part_session_id', value = 'old-session'
+
+    @pytest.mark.parametrize("field,value", [
+        ("text_part_id", ""), ("text_part_message_id", "unrelated-message"),
+        ("text_part_session_id", "old-session"), ("text_part_started_at", None),
+        ("text_part_completed_at", None), ("text_part_completed_at", 99000),
+        ("text_part_completed_at", 102000),
+    ])
+    def test_complete_text_part_requires_native_identity_and_end_time(
+        synthetic_suite, monkeypatch, field, value
+    ):
+        suite, journal, start = synthetic_suite
+    
+        def observed(runtime, directory, secret, authorization, *, scenario, **kwargs):
+            report = synthetic_observation(suite, authorization, scenario)
+            report["native_final"][field] = value
+            return report
+    
+        install_observer(monkeypatch, observed)
+        result = suite.observe(start, credential())
+>       assert result["status"] == "failed"
+E       AssertionError: assert 'passed' == 'failed'
+E         
+E         - failed
+E         + passed
+
+tests\projects\test_go_reviewer_suite.py:800: AssertionError
+_ test_complete_text_part_requires_native_identity_and_end_time[text_part_started_at-None] _
+
+synthetic_suite = (<karajan.projects.go_reviewer_suite.FixedGoReviewerSuite object at 0x000001A1006E14C0>, <karajan.adapters.opencode.go...o-channel', 'account_id': 'go-account', 'billing_path': 'subscription_only', 'approved_data_destination': True}}, ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001A1006E3C80>
+field = 'text_part_started_at', value = None
+
+    @pytest.mark.parametrize("field,value", [
+        ("text_part_id", ""), ("text_part_message_id", "unrelated-message"),
+        ("text_part_session_id", "old-session"), ("text_part_started_at", None),
+        ("text_part_completed_at", None), ("text_part_completed_at", 99000),
+        ("text_part_completed_at", 102000),
+    ])
+    def test_complete_text_part_requires_native_identity_and_end_time(
+        synthetic_suite, monkeypatch, field, value
+    ):
+        suite, journal, start = synthetic_suite
+    
+        def observed(runtime, directory, secret, authorization, *, scenario, **kwargs):
+            report = synthetic_observation(suite, authorization, scenario)
+            report["native_final"][field] = value
+            return report
+    
+        install_observer(monkeypatch, observed)
+        result = suite.observe(start, credential())
+>       assert result["status"] == "failed"
+E       AssertionError: assert 'passed' == 'failed'
+E         
+E         - failed
+E         + passed
+
+tests\projects\test_go_reviewer_suite.py:800: AssertionError
+_ test_complete_text_part_requires_native_identity_and_end_time[text_part_completed_at-None] _
+
+synthetic_suite = (<karajan.projects.go_reviewer_suite.FixedGoReviewerSuite object at 0x000001A1006E1FD0>, <karajan.adapters.opencode.go...o-channel', 'account_id': 'go-account', 'billing_path': 'subscription_only', 'approved_data_destination': True}}, ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001A1006E37D0>
+field = 'text_part_completed_at', value = None
+
+    @pytest.mark.parametrize("field,value", [
+        ("text_part_id", ""), ("text_part_message_id", "unrelated-message"),
+        ("text_part_session_id", "old-session"), ("text_part_started_at", None),
+        ("text_part_completed_at", None), ("text_part_completed_at", 99000),
+        ("text_part_completed_at", 102000),
+    ])
+    def test_complete_text_part_requires_native_identity_and_end_time(
+        synthetic_suite, monkeypatch, field, value
+    ):
+        suite, journal, start = synthetic_suite
+    
+        def observed(runtime, directory, secret, authorization, *, scenario, **kwargs):
+            report = synthetic_observation(suite, authorization, scenario)
+            report["native_final"][field] = value
+            return report
+    
+        install_observer(monkeypatch, observed)
+        result = suite.observe(start, credential())
+>       assert result["status"] == "failed"
+E       AssertionError: assert 'passed' == 'failed'
+E         
+E         - failed
+E         + passed
+
+tests\projects\test_go_reviewer_suite.py:800: AssertionError
+_ test_complete_text_part_requires_native_identity_and_end_time[text_part_completed_at-99000] _
+
+synthetic_suite = (<karajan.projects.go_reviewer_suite.FixedGoReviewerSuite object at 0x000001A1007779B0>, <karajan.adapters.opencode.go...o-channel', 'account_id': 'go-account', 'billing_path': 'subscription_only', 'approved_data_destination': True}}, ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001A100777B30>
+field = 'text_part_completed_at', value = 99000
+
+    @pytest.mark.parametrize("field,value", [
+        ("text_part_id", ""), ("text_part_message_id", "unrelated-message"),
+        ("text_part_session_id", "old-session"), ("text_part_started_at", None),
+        ("text_part_completed_at", None), ("text_part_completed_at", 99000),
+        ("text_part_completed_at", 102000),
+    ])
+    def test_complete_text_part_requires_native_identity_and_end_time(
+        synthetic_suite, monkeypatch, field, value
+    ):
+        suite, journal, start = synthetic_suite
+    
+        def observed(runtime, directory, secret, authorization, *, scenario, **kwargs):
+            report = synthetic_observation(suite, authorization, scenario)
+            report["native_final"][field] = value
+            return report
+    
+        install_observer(monkeypatch, observed)
+        result = suite.observe(start, credential())
+>       assert result["status"] == "failed"
+E       AssertionError: assert 'passed' == 'failed'
+E         
+E         - failed
+E         + passed
+
+tests\projects\test_go_reviewer_suite.py:800: AssertionError
+_ test_complete_text_part_requires_native_identity_and_end_time[text_part_completed_at-102000] _
+
+synthetic_suite = (<karajan.projects.go_reviewer_suite.FixedGoReviewerSuite object at 0x000001A100776240>, <karajan.adapters.opencode.go...o-channel', 'account_id': 'go-account', 'billing_path': 'subscription_only', 'approved_data_destination': True}}, ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001A100775940>
+field = 'text_part_completed_at', value = 102000
+
+    @pytest.mark.parametrize("field,value", [
+        ("text_part_id", ""), ("text_part_message_id", "unrelated-message"),
+        ("text_part_session_id", "old-session"), ("text_part_started_at", None),
+        ("text_part_completed_at", None), ("text_part_completed_at", 99000),
+        ("text_part_completed_at", 102000),
+    ])
+    def test_complete_text_part_requires_native_identity_and_end_time(
+        synthetic_suite, monkeypatch, field, value
+    ):
+        suite, journal, start = synthetic_suite
+    
+        def observed(runtime, directory, secret, authorization, *, scenario, **kwargs):
+            report = synthetic_observation(suite, authorization, scenario)
+            report["native_final"][field] = value
+            return report
+    
+        install_observer(monkeypatch, observed)
+        result = suite.observe(start, credential())
+>       assert result["status"] == "failed"
+E       AssertionError: assert 'passed' == 'failed'
+E         
+E         - failed
+E         + passed
+
+tests\projects\test_go_reviewer_suite.py:800: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/projects/test_go_reviewer_suite.py::test_complete_text_part_requires_native_identity_and_end_time[text_part_id-]
+FAILED tests/projects/test_go_reviewer_suite.py::test_complete_text_part_requires_native_identity_and_end_time[text_part_message_id-unrelated-message]
+FAILED tests/projects/test_go_reviewer_suite.py::test_complete_text_part_requires_native_identity_and_end_time[text_part_session_id-old-session]
+FAILED tests/projects/test_go_reviewer_suite.py::test_complete_text_part_requires_native_identity_and_end_time[text_part_started_at-None]
+FAILED tests/projects/test_go_reviewer_suite.py::test_complete_text_part_requires_native_identity_and_end_time[text_part_completed_at-None]
+FAILED tests/projects/test_go_reviewer_suite.py::test_complete_text_part_requires_native_identity_and_end_time[text_part_completed_at-99000]
+FAILED tests/projects/test_go_reviewer_suite.py::test_complete_text_part_requires_native_identity_and_end_time[text_part_completed_at-102000]
+7 failed, 55 deselected in 1.60s

@@ -1,0 +1,4 @@
+Ruff check: all checks passed (six owned source/test files).
+Ruff format --check: six files already formatted.
+Mypy --follow-imports=silent: success, no issues found in three backend source files.
+All six files use LF.

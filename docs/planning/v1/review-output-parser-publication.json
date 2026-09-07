@@ -1,0 +1,24 @@
+{
+  "issue": 104,
+  "url": "https://github.com/zhouy1017/Karajan/issues/104",
+  "parent_issue": 95,
+  "native_parent_verified": true,
+  "base_sha": "2e587d1773c514361689e13ebbd16ba62f1cd219",
+  "spec": "docs/planning/v1/issues/m3-review-output-parser.md",
+  "spec_sha256": "457952adf9d7fa3fbea79e049f979ccab14b5281bb5a22ce8f11de750dd0e9e2",
+  "state": "open",
+  "implementation": "implemented",
+  "evidence": {
+    "C": "passed",
+    "P": "not_applicable",
+    "S": "not_applicable",
+    "G": "pending_current_CI"
+  },
+  "implementation_commit": "4ab3e64a403943e53a3e06c78f20e9c5756020e1",
+  "independent_review": "accepted_standards_and_spec",
+  "evidence_archive": "examples/reviewer-output-parser-20260907",
+  "branch": "codex/m3-review-output-parser",
+  "current_status": "in_progress_pending_current_CI_and_owner_merge",
+  "published_spec_raw_sha256": "7df55698f5a8b07479b597f8cbfa03dbeb0340518f91b1f568944f9943e61e59",
+  "spec_normalization": "CRLF to LF only; published wording and acceptance criteria unchanged"
+}

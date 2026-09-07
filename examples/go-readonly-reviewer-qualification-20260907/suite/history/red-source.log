@@ -1,0 +1,16 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+________ test_source_and_profile_are_fixed_readonly_and_fixture_marked ________
+
+tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-reviewer-qualification/.cache/go-reviewer-suite-author/tmp-red-source/test_source_and_profile_are_fi0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000026B01061250>
+
+    def test_source_and_profile_are_fixed_readonly_and_fixture_marked(tmp_path, monkeypatch):
+        from karajan.isolation.go_reviewer_probe import reviewer_probe_spec
+>       from karajan.projects.go_reviewer_suite import FixedGoReviewerSuite
+E       ModuleNotFoundError: No module named 'karajan.projects.go_reviewer_suite'
+
+tests\projects\test_go_reviewer_suite.py:48: ModuleNotFoundError
+=========================== short test summary info ===========================
+FAILED tests/projects/test_go_reviewer_suite.py::test_source_and_profile_are_fixed_readonly_and_fixture_marked
+1 failed in 1.08s

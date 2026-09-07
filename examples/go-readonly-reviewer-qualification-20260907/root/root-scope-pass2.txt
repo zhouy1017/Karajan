@@ -1,0 +1,73 @@
+........FF
+================================== FAILURES ===================================
+________ test_pure_scope_rejects_unqualified_approved_task_limits[T2] _________
+
+binding_case = (<karajan.orchestration.reviewer_binding.ApprovedReviewerBindings object at 0x000001EBFBAF10A0>, <test_reviewer_bindin...8d1a0', 'revision': 1, 'content_sha256': '9395ac8d3ea1d71735dc76ffa9fee87d8eac0b7d15cd9f00170df29fea66bd80', ...}, ...)
+fault = 'T2'
+
+    @pytest.mark.parametrize("fault", ["T2", "T3", "edit", "wrong_source", "small_margin", "small_ratio", "O", "I", "C"])
+    def test_pure_scope_rejects_unqualified_approved_task_limits(binding_case, fault):
+>       registration, observation, task, execution = resolver_inputs(binding_case)
+                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\runs\test_readonly_reviewer_scope.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+binding_case = (<karajan.orchestration.reviewer_binding.ApprovedReviewerBindings object at 0x000001EBFBAF10A0>, <test_reviewer_bindin...8d1a0', 'revision': 1, 'content_sha256': '9395ac8d3ea1d71735dc76ffa9fee87d8eac0b7d15cd9f00170df29fea66bd80', ...}, ...)
+
+    def resolver_inputs(binding_case):
+        service, _, _, args, _, _, _ = binding_case
+        first = service.advance(*args, principal="owner")
+        assert first["state"] == "prepared", first
+        membership = first["assessment"]["membership"]
+        task = deepcopy(membership["snapshots"]["task"])
+        operation = service.admissions.get(*args, principal="owner")
+        source = operation["workspace"]["source_binding"]
+        execution = source["execution_policy"]
+        fixed = source["profile_registration"]
+        with service.qualifications.projects._transaction() as db:
+            observation = service.qualifications._facts(
+>               db, operation["project_id"], fixed, "runtime_tools", None
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+            )
+E           KeyError: 'project_id'
+
+tests\runs\test_readonly_reviewer_scope.py:29: KeyError
+________ test_pure_scope_rejects_unqualified_approved_task_limits[T3] _________
+
+binding_case = (<karajan.orchestration.reviewer_binding.ApprovedReviewerBindings object at 0x000001EBFBB30F80>, <test_reviewer_bindin...2252c', 'revision': 1, 'content_sha256': '2b186fc6e904b6ace0498cf5788cdb8f3b76c6ce2156e17960b0d7043b08444d', ...}, ...)
+fault = 'T3'
+
+    @pytest.mark.parametrize("fault", ["T2", "T3", "edit", "wrong_source", "small_margin", "small_ratio", "O", "I", "C"])
+    def test_pure_scope_rejects_unqualified_approved_task_limits(binding_case, fault):
+>       registration, observation, task, execution = resolver_inputs(binding_case)
+                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\runs\test_readonly_reviewer_scope.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+binding_case = (<karajan.orchestration.reviewer_binding.ApprovedReviewerBindings object at 0x000001EBFBB30F80>, <test_reviewer_bindin...2252c', 'revision': 1, 'content_sha256': '2b186fc6e904b6ace0498cf5788cdb8f3b76c6ce2156e17960b0d7043b08444d', ...}, ...)
+
+    def resolver_inputs(binding_case):
+        service, _, _, args, _, _, _ = binding_case
+        first = service.advance(*args, principal="owner")
+        assert first["state"] == "prepared", first
+        membership = first["assessment"]["membership"]
+        task = deepcopy(membership["snapshots"]["task"])
+        operation = service.admissions.get(*args, principal="owner")
+        source = operation["workspace"]["source_binding"]
+        execution = source["execution_policy"]
+        fixed = source["profile_registration"]
+        with service.qualifications.projects._transaction() as db:
+            observation = service.qualifications._facts(
+>               db, operation["project_id"], fixed, "runtime_tools", None
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+            )
+E           KeyError: 'project_id'
+
+tests\runs\test_readonly_reviewer_scope.py:29: KeyError
+=========================== short test summary info ===========================
+FAILED tests/runs/test_readonly_reviewer_scope.py::test_pure_scope_rejects_unqualified_approved_task_limits[T2]
+FAILED tests/runs/test_readonly_reviewer_scope.py::test_pure_scope_rejects_unqualified_approved_task_limits[T3]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 2 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+2 failed, 8 passed in 18.44s

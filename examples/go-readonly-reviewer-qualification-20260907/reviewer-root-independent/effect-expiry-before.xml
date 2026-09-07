@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="1.800" timestamp="2026-09-07T12:11:20.324280+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.reviewer-root-independent.test_effect_expiry" name="test_source_validation_cannot_carry_effect_beyond_original_expiry" time="0.799"><failure message="AssertionError: {'guarded_effects_after_expiry': [{'at': 1700.0, 'expiry': 1600.0}]}&#10;assert [{'at': 1700....iry': 1600.0}] == []&#10;  &#10;  Left contains one more item: {'at': 1700.0, 'expiry': 1600.0}&#10;  Use -v to get more diff">reviewer_case = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x000001BB28C67380&gt;, 'project_id': '6a8ff526-3c5e-40...:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-1000/test_source_validation_cannot_0/fixture/repository'), ...}
+artifacts = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-artifacts')
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-1000/test_source_validation_cannot_0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001BB28E63650&gt;
+
+    def test_source_validation_cannot_carry_effect_beyond_original_expiry(
+        reviewer_case, artifacts, tmp_path, monkeypatch
+    ):
+        case = reviewer_case
+        work = tmp_path / "deadline-suite"
+        work.mkdir(mode=0o700)
+        suite = FixedGoReviewerSuite(
+            tmp_path / "inert-runtime", work, case["suite"].journal,
+            accounting=GoRequestAccounting(artifacts), clock=lambda: case["clock"][0],
+        )
+        source = deepcopy(case["reviewer_suite"].source())
+        control = {"cross_expiry_on_source_read": False}
+    
+        def source_read():
+            if control["cross_expiry_on_source_read"]:
+                case["clock"][0] = 1700.0
+            return deepcopy(source)
+    
+        monkeypatch.setattr(suite, "source", source_read)
+        monkeypatch.setattr(suite, "_validate_report", lambda *args: [])
+        case["store"] = ProfileQualificationStore(
+            case["projects"], clock=lambda: case["clock"][0],
+            credentials=case["credentials"], reviewer_suite=suite,
+        )
+        effects = []
+    
+        def observer(runtime, directory, secret, authorization, *, current_guard, **kwargs):
+            # Equivalent C seam to the observer's guarded native.start. No process starts.
+            control["cross_expiry_on_source_read"] = True
+            with current_guard():
+                effects.append({"at": case["clock"][0], "expiry": authorization.binding["expires_at"]})
+            return {"session": {"id": "synthetic-deadline"}, "test_double": True}
+    
+        monkeypatch.setattr("karajan.isolation.go_reviewer_probe.observe_go_reviewer_tools", observer)
+        result = qualify(case)
+        assert result["status"] == "failed"
+        assert result["observation"]["grant_cleanup"]
+&gt;       assert effects == [], {"guarded_effects_after_expiry": effects}
+E       AssertionError: {'guarded_effects_after_expiry': [{'at': 1700.0, 'expiry': 1600.0}]}
+E       assert [{'at': 1700....iry': 1600.0}] == []
+E         
+E         Left contains one more item: {'at': 1700.0, 'expiry': 1600.0}
+E         Use -v to get more diff
+
+.cache\reviewer-root-independent\test_effect_expiry.py:51: AssertionError</failure></testcase></testsuite></testsuites>

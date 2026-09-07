@@ -1,0 +1,7 @@
+{
+  "backend/karajan/isolation/go_reviewer_probe.py": "cf3608e6fd93faf6199fe6efc4dce5d31e8c6688ed1076907b28a460d7950367",
+  "backend/karajan/isolation/_go_reviewer_evidence.py": "f80f64a2eeb08ddcab41702527ee7f6b2a6bcc85d5f7a8767947298657cb4987",
+  "backend/karajan/isolation/opencode_runtime.py": "213de2adf2ada620e3382ccdae099935a4644927a04b3e4c0b59cfb4295bb003",
+  "tests/isolation/test_go_reviewer_probe.py": "afc1b8434038e9fad3c5c8d2b71814d216af0979dd3d6ecbbb904a08ec083b12",
+  "tests/isolation/test_go_reviewer_probe_boundaries.py": "5c7f83ac5cd267dd6b6932c4cf4c6a538ef8545cb9e630a49d4d5139282b69ea"
+}

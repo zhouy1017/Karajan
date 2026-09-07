@@ -1,0 +1,579 @@
+"""Fixed readonly Reviewer observations, not Task admission or Review Evidence.
+
+The trusted observer supplies native facts. This suite independently reads the
+Journal and parses the complete final text before the QualificationStore seals
+anything. Fixture origin remains explicit and cannot qualify a production role.
+"""
+
+import copy
+import hashlib
+import json
+import math
+import re
+import time
+from collections.abc import Callable
+from pathlib import Path
+from typing import Any
+
+import httpx
+
+from karajan.adapters.opencode.go_context import ContextMeasurement, GoRequestAccounting
+from karajan.adapters.opencode.go_journal import GoCallJournal, GoJournalError
+from karajan.adapters.opencode.go_relay import GoRelayAuthorization
+from karajan.candidates.review_output import PARSER_REVISION, ReviewOutputError, parse_review_output
+from karajan.isolation.go_probe import source_digest
+
+from .credential_sources import ResolvedCredential
+
+SUITE_REF = {"id": "opencode-go-readonly-review-linux", "revision": 1}
+SCENARIOS = ("clean_review", "defect_review", "denied_read")
+
+
+def _require(condition: bool) -> None:
+    if not condition:
+        raise ValueError("REVIEWER_EVIDENCE_INVALID")
+
+
+class FixedGoReviewerSuite:
+    def __init__(
+        self,
+        runtime: Path,
+        work_root: Path,
+        journal: GoCallJournal,
+        *,
+        accounting: GoRequestAccounting,
+        client_factory: Callable[[], httpx.Client] | None = None,
+        clock: Callable[[], float] = time.time,
+    ) -> None:
+        if not isinstance(accounting, GoRequestAccounting):
+            raise ValueError("REVIEWER_GO_ACCOUNTING_REQUIRED")
+        self.runtime = runtime.resolve()
+        self.work_root = work_root.resolve()
+        self.journal = journal
+        self.accounting = accounting
+        self.client_factory = client_factory
+        self.clock = clock
+
+    def source(self) -> dict[str, Any]:
+        from karajan.isolation.go_reviewer_probe import reviewer_runtime_source
+
+        runtime = reviewer_runtime_source(self.runtime, self.accounting)
+        fixture = self.client_factory is not None
+        spec = copy.deepcopy(runtime["probe_spec"])
+        return {
+            "schema_version": "karajan.fixed-go-reviewer-suite-source.v1",
+            "suite_ref": dict(SUITE_REF),
+            "observation_origin": "http_fixture" if fixture else "official_go",
+            "qualification_scope": "readonly_reviewer_tools_fixture"
+            if fixture
+            else "readonly_reviewer_tools",
+            "runtime_source": runtime,
+            "runtime_digest": source_digest(runtime),
+            "probe_spec": spec,
+            "probe_spec_digest": source_digest(spec),
+            "work_root": {"path": str(self.work_root)},
+            "journal": {"path": str(self.journal.path.resolve())},
+            "producer_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        }
+
+    def validate_profile(self, profile_binding: dict[str, Any]) -> None:
+        try:
+            registration = profile_binding["registration"]
+            profile = registration["profile"]
+            binding = profile["binding"]
+            account, channel = profile_binding["account"], profile_binding["channel"]
+            valid = (
+                registration["id"] == profile["id"]
+                and type(registration["revision"]) is int
+                and type(profile["revision"]) is int
+                and registration["revision"] == profile["revision"]
+                and profile["required_permissions"] == ["read"]
+                and binding["model_id"] == "glm-5.3-flash"
+                and binding["runtime_kind"] == "opencode-go-isolated"
+                and binding["runtime_version"] == "1.18.29"
+                and binding["auth_mode"] == "api_key"
+                and binding["native_settings"] == {"suite_ref": SUITE_REF}
+                and type(binding["native_settings"]["suite_ref"]["revision"]) is int
+                and binding["account_id"] == account["id"] == channel["account_id"]
+                and account["provider_id"] == "opencode-go"
+                and profile["auth_ref"] == account["secret_ref"]
+                and binding["channel_id"] == channel["id"]
+                and binding["billing_path"] == channel["billing_path"]
+                and channel["approved_data_destination"] is True
+            )
+        except (KeyError, TypeError):
+            valid = False
+        if not valid:
+            raise ValueError("FIXED_GO_REVIEWER_PROFILE_UNSUPPORTED")
+
+    def _validate_start(self, start: dict[str, Any], credential: ResolvedCredential) -> None:
+        self.validate_profile(start.get("profile_binding", {}))
+        try:
+            profile = start["profile_binding"]["registration"]["profile"]
+            authentication = start["authentication_source"]
+            started, expires, now = start["started_at"], start["expires_at"], self.clock()
+            valid = (
+                start["suite_ref"] == SUITE_REF
+                and type(start["suite_ref"]["revision"]) is int
+                and start["source"] == self.source()
+                and start["profile_digest"] == source_digest(profile)
+                and isinstance(credential, ResolvedCredential)
+                and credential.project_id == start["project_id"] == authentication["project_id"]
+                and credential.auth_ref == profile["auth_ref"] == authentication["auth_ref"]
+                and credential.generation
+                == start["auth_generation"]
+                == authentication["generation"]
+                and credential.source_id
+                == start["credential_source_id"]
+                == authentication["source"]["id"]
+                and authentication["source"]["kind"] == "controller_local_key_file"
+                and authentication["schema_version"] == "karajan.credential-generation.v1"
+                and all(
+                    type(value) in (int, float) and math.isfinite(value)
+                    for value in (started, expires, now)
+                )
+                and 0 < started <= now < expires <= started + 600
+                and [item["scenario"] for item in start["scenarios"]] == list(SCENARIOS)
+            )
+            ids = [start["qualification_id"], start["project_id"]]
+            attempts, grants = [], []
+            for scenario in start["scenarios"]:
+                attempts.append(scenario["attempt_id"])
+                grants.append(scenario["grant_id"])
+                ids.extend((scenario["attempt_id"], scenario["grant_id"]))
+                expected = {
+                    "schema_version": "karajan.go-reviewer-qualification-grant.v1",
+                    "qualification_id": start["qualification_id"],
+                    "attempt_id": scenario["attempt_id"],
+                    "fence": scenario["fence"],
+                    "profile_digest": start["profile_digest"],
+                    "runtime_digest": start["source"]["runtime_digest"],
+                    "channel": profile["binding"]["channel_id"],
+                    "model": "glm-5.3-flash",
+                    "auth_generation": start["auth_generation"],
+                    "expires_at": expires,
+                    "max_requests": 6,
+                    "probe_spec_digest": source_digest(start["source"]["probe_spec"]),
+                    "scenario": scenario["scenario"],
+                    "context": start["source"]["probe_spec"]["context"],
+                }
+                valid = (
+                    valid
+                    and type(scenario["fence"]) is int
+                    and 0 < scenario["fence"] < 2**63
+                    and source_digest(scenario["grant_binding"]) == source_digest(expected)
+                )
+            valid = (
+                valid
+                and len(set(attempts)) == len(set(grants)) == 3
+                and all(
+                    isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9_.:-]{1,160}", value)
+                    for value in ids
+                )
+            )
+        except (KeyError, TypeError, AttributeError, ValueError):
+            valid = False
+        if not valid:
+            raise ValueError("FIXED_GO_REVIEWER_START_BINDING_MISMATCH")
+
+    def observe(self, start: dict[str, Any], credential: ResolvedCredential) -> dict[str, Any]:
+        """Consume the precommitted identities once, never recovering capability.
+
+        Current credential material is checked by the owning Store before and
+        after this call. Source/time are checked again before each observation.
+        No exception text or credential is included in the returned envelope.
+        """
+        start = copy.deepcopy(start)
+        self._validate_start(start, credential)
+        directory = self.work_root / ("r" + source_digest({"id": start["qualification_id"]})[:20])
+        try:
+            directory.mkdir(mode=0o700)
+        except FileExistsError:
+            raise ValueError("NEW_CONTROLLER_DIRECTORY_REQUIRED") from None
+        result: dict[str, Any] = {
+            "schema_version": "karajan.fixed-go-reviewer-suite-observation.v1",
+            "suite_ref": dict(SUITE_REF),
+            "qualification_id": start["qualification_id"],
+            "source": start["source"],
+            "observation_origin": start["source"]["observation_origin"],
+            "qualification_scope": start["source"]["qualification_scope"],
+            "runtime_tools_status": "not_run",
+            "dispatch_eligible": False,
+            "provider_remote_stop": "unknown",
+            "billing_limit_qualification": "not_run",
+            "scenarios": [
+                {
+                    "scenario": row["scenario"],
+                    "attempt_id": row["attempt_id"],
+                    "fence": row["fence"],
+                    "grant_id": row["grant_id"],
+                    "status": "not_run",
+                    "reason_codes": ["PRIOR_STAGE_INCOMPLETE"],
+                }
+                for row in start["scenarios"]
+            ],
+            "reason_codes": [],
+            "grant_cleanup": [],
+        }
+        try:
+            grants = []
+            for scenario in start["scenarios"]:
+                grant = self.journal.create_grant(
+                    scenario["grant_binding"], grant_id=scenario["grant_id"]
+                )
+                if grant["capability"] is None:
+                    raise ValueError("FRESH_GRANT_CAPABILITY_REQUIRED")
+                grants.append(grant)
+            for index, scenario in enumerate(start["scenarios"]):
+                self._validate_start(start, credential)
+                from karajan.isolation.go_reviewer_probe import observe_go_reviewer_tools
+
+                authorization = GoRelayAuthorization(
+                    self.journal,
+                    scenario["grant_id"],
+                    scenario["grant_binding"],
+                    grants[index]["capability"],
+                )
+                result["scenarios"][index].update(
+                    status="failed", reason_codes=["SCENARIO_OBSERVATION_INCOMPLETE"]
+                )
+                report = observe_go_reviewer_tools(
+                    self.runtime,
+                    directory / str(index),
+                    credential.reveal(),
+                    authorization,
+                    scenario=scenario["scenario"],
+                    accounting=self.accounting,
+                    client_factory=self.client_factory,
+                )
+                if credential.reveal() in json.dumps(report, ensure_ascii=False):
+                    raise ValueError("REVIEWER_CREDENTIAL_ECHO")
+                issues = self._validate_report(start, scenario, report)
+                if any(
+                    old.get("observation", {}).get("session", {}).get("id")
+                    == report.get("session", {}).get("id")
+                    for old in result["scenarios"][:index]
+                ):
+                    issues.append("REVIEWER_SESSION_REUSED")
+                result["scenarios"][index].update(
+                    status="failed" if issues else "passed", reason_codes=issues, observation=report
+                )
+                if issues:
+                    result["reason_codes"].append("FIXED_REVIEWER_SCENARIO_FAILED")
+                    break
+        except Exception:
+            result["reason_codes"].append("FIXED_REVIEWER_SUITE_EXECUTION_FAILED")
+        finally:
+            for scenario in start["scenarios"]:
+                cleanup = {"grant_id": scenario["grant_id"], "state": "unknown"}
+                try:
+                    actual = self.journal.snapshot(scenario["grant_id"])
+                    if actual["binding"] != scenario["grant_binding"]:
+                        cleanup["state"] = "not_owned"
+                        result["reason_codes"].append("GRANT_CLEANUP_BINDING_MISMATCH")
+                    else:
+                        self.journal.revoke_grant(scenario["grant_id"])
+                        if self.journal.snapshot(scenario["grant_id"])["state"] != "revoked":
+                            raise ValueError("GRANT_REVOCATION_UNCONFIRMED")
+                        cleanup["state"] = "revoked"
+                except GoJournalError as error:
+                    if str(error) == "GRANT_NOT_FOUND":
+                        cleanup["state"] = "not_created"
+                    else:
+                        result["reason_codes"].append("GRANT_REVOCATION_FAILED")
+                except Exception:
+                    result["reason_codes"].append("GRANT_REVOCATION_FAILED")
+                result["grant_cleanup"].append(cleanup)
+        try:
+            if start["source"] != self.source():
+                result["reason_codes"].append("SUITE_SOURCE_CHANGED")
+        except Exception:
+            result["reason_codes"].append("SUITE_SOURCE_UNAVAILABLE")
+        try:
+            now = self.clock()
+            _require(
+                type(now) in (int, float)
+                and math.isfinite(now)
+                and start["started_at"] <= now < start["expires_at"]
+            )
+        except Exception:
+            result["reason_codes"].append("SUITE_TIME_BOUNDARY_INVALID")
+        result["reason_codes"] = sorted(set(result["reason_codes"]))
+        passed = not result["reason_codes"] and all(
+            row["status"] == "passed" for row in result["scenarios"]
+        )
+        result["status"] = "passed" if passed else "failed"
+        result["validation"] = {
+            key: result["status"]
+            for key in (
+                "readonly_reviewer_tools",
+                "context_accounting",
+                "structured_findings",
+                "readonly_projection",
+            )
+        }
+        result["validation"].update(runtime_tools="not_run", budget="unknown", dispatch=False)
+        return result
+
+    def _validate_report(
+        self, start: dict[str, Any], scenario: dict[str, Any], report: dict[str, Any]
+    ) -> list[str]:
+        reasons = []
+        source = start["source"]
+        try:
+            actual = self.journal.snapshot(scenario["grant_id"])
+            _require(
+                report["schema_version"] == "karajan.go-readonly-reviewer-observation.v1"
+                and report["status"] == "passed"
+                and report["reason_codes"] == []
+                and report["scenario"] == scenario["scenario"]
+                and report["grant_id"] == scenario["grant_id"]
+                and report["scope"] == source["qualification_scope"]
+                and report["observation_origin"] == source["observation_origin"]
+                and report["runtime_source"] == source["runtime_source"]
+                and report["runtime_digest"] == source["runtime_digest"]
+                and report["probe_spec"] == source["probe_spec"]
+                and report["probe_spec_digest"] == source["probe_spec_digest"]
+                and report["artifact_sha256"] == source["runtime_source"]["artifact_sha256"]
+                and report["source_sha256"] == source["runtime_source"]["source_sha256"]
+                and report["runtime_tools_status"] == "not_run"
+                and report["dispatch_eligible"] is False
+                and report["real_credential_passed_to_runtime"] is False
+                and report["provider_remote_stop"] == "unknown"
+                and report["billing_limit_qualification"] == "not_run"
+                and report["effective_configuration_matches"] is True
+                and report["journal"] == actual
+                and actual["binding"] == scenario["grant_binding"]
+                and actual["state"] == "revoked"
+                and 2 <= actual["request_count"] <= 6
+            )
+            self._journal_context(source["probe_spec"], scenario, actual, report)
+        except Exception:
+            reasons.append("REVIEWER_JOURNAL_OR_CONTEXT_INVALID")
+        try:
+            runtime = report["runtime"]
+            _require(
+                runtime["state"] == "running"
+                and runtime["runtime_version"] == "1.18.29"
+                and runtime["runtime_sha256"] == source["runtime_source"]["artifact_sha256"]
+                and type(runtime["namespace_pid"]) is int
+                and runtime["namespace_pid"] == 1
+                and set(runtime["namespaces"]) == {"user", "mnt", "pid", "net"}
+                and all(
+                    isinstance(value, str) and value for value in runtime["namespaces"].values()
+                )
+                and runtime["host_mount_visible"] is False
+                and runtime["wsl_interop_visible"] is False
+                and runtime["native_control_fd_inherited"] is False
+                and runtime["network_interfaces"] == ["lo"]
+                and runtime["ipv4_routes"] == []
+                and runtime["no_new_privileges"] is True
+                and runtime["capabilities"]
+                == dict.fromkeys(("effective", "permitted", "bounding"), "0000000000000000")
+                and report["native_cleanup"]["local_stop"] == "confirmed"
+                and report["native_cleanup"]["namespace_init_stopped"] is True
+                and report["relay_cleanup"]["status"] == "closed"
+            )
+            case = source["probe_spec"]["cases"][scenario["scenario"]]
+            readonly = report["readonly"]
+            _require(
+                readonly["unchanged"] is True
+                and readonly["before"] == readonly["after"] == case["files"]
+                and len(readonly["mounts"]) == len(case["files"])
+            )
+            _require(
+                sorted(row["path"] for row in readonly["mounts"])
+                == sorted(row["path"] for row in case["files"])
+            )
+            for mount in readonly["mounts"]:
+                _require(
+                    mount["readonly"] is True
+                    and mount["host_identity_matches"] is True
+                    and type(mount["mount_flags"]) is int
+                    and mount["mount_flags"] & 1 == 1
+                    and type(mount["device"]) is int
+                    and mount["device"] >= 0
+                    and type(mount["inode"]) is int
+                    and mount["inode"] > 0
+                )
+            self._tools(scenario["scenario"], case, report["tools"])
+        except Exception:
+            reasons.append("REVIEWER_READONLY_OR_STOP_INVALID")
+        try:
+            self._completed_review(start, scenario, report)
+        except ReviewOutputError as error:
+            reasons.append(error.code)
+        except Exception:
+            reasons.append("REVIEWER_FINAL_OR_FINDINGS_INVALID")
+        return sorted(set(reasons))
+
+    def _journal_context(
+        self,
+        spec: dict[str, Any],
+        scenario: dict[str, Any],
+        actual: dict[str, Any],
+        report: dict[str, Any],
+    ) -> None:
+        receipts, calls, retention = report["requests"], actual["calls"], report["retention"]
+        _require(
+            len(receipts) == len(calls) == actual["request_count"] == len(retention["requests"])
+        )
+        previous_count = 0
+        previous_reads: set[tuple[str, str]] = set()
+        case = spec["cases"][scenario["scenario"]]
+        expected_reads = {(row["path"], row["sha256"]) for row in case["files"]}
+        for index, (receipt, call, retained) in enumerate(
+            zip(receipts, calls, retention["requests"], strict=True), start=1
+        ):
+            outcome = call["outcome"]
+            _require(
+                receipt["journal_call_id"] == call["call_id"]
+                and receipt["sequence"] == call["sequence"] == index
+                and call["state"] == "response_received"
+                and receipt["upstream_send_attempted"] is True
+                and receipt["upstream_response_complete"] is True
+                and receipt["relay_completed"] is True
+                and receipt["stream_terminated"] is True
+                and receipt["reported_models"] == ["glm-5.3-flash"]
+                and receipt["requested_model"] == "glm-5.3-flash"
+                and receipt["denied_canary_in_request"] is False
+                and set(receipt["tool_names"]) <= {"read"}
+                and receipt["finish_reason"] == ("stop" if index == len(calls) else "tool_calls")
+                and receipt["protocol_passed"] is True
+                and outcome["protocol_passed"] is True
+                and outcome["reason_codes"] == []
+            )
+            _require(
+                all(
+                    receipt[key] == outcome[key]
+                    for key in (
+                        "upstream_status",
+                        "response_bytes",
+                        "usage",
+                        "protocol_passed",
+                        "reason_codes",
+                    )
+                )
+            )
+            measured = ContextMeasurement.model_validate(call["request_context"]).model_dump()
+            _require(
+                measured == receipt["request_context"]
+                and all(measured[key] == value for key, value in spec["context"].items())
+                and measured["requested_output_tokens"] == spec["context"]["reserved_output_tokens"]
+            )
+            usage = outcome["usage"]
+            _require(
+                type(usage.get("prompt_tokens")) is int
+                and 0 <= usage["prompt_tokens"] <= measured["accounted_input_tokens"]
+                and type(usage.get("completion_tokens")) is int
+                and 0 <= usage["completion_tokens"] <= measured["requested_output_tokens"]
+            )
+            _require(
+                retained["sequence"] == index
+                and retained["request_digest"] == measured["request_digest"]
+                and type(retained["message_count"]) is int
+                and retained["message_count"] > previous_count
+                and re.fullmatch(r"[a-f0-9]{64}", retained["messages_digest"]) is not None
+                and retained["initial_input_retained"] is True
+                and retained["prior_messages_retained"] is True
+                and retained["denied_canary_present"] is False
+            )
+            reads = {(row["path"], row["content_sha256"]) for row in retained["read_results"]}
+            _require(
+                len(reads) == len(retained["read_results"])
+                and previous_reads <= reads <= expected_reads
+            )
+            previous_count, previous_reads = retained["message_count"], reads
+        _require(
+            retention["final_request_digest"] == calls[-1]["request_context"]["request_digest"]
+        )
+        if scenario["scenario"] != "denied_read":
+            _require(previous_reads == expected_reads)
+
+    @staticmethod
+    def _tools(scenario: str, case: dict[str, Any], tools: list[dict[str, Any]]) -> None:
+        _require(bool(tools) and len({row["call_id"] for row in tools}) == len(tools))
+        for tool in tools:
+            _require(tool["name"] == "read" and bool(tool["message_id"]) and bool(tool["call_id"]))
+            if scenario == "denied_read":
+                _require(
+                    tool["path"] == "outside_projection"
+                    and tool["status"] in ("error", "completed")
+                    and (tool["permission_denied"] is True or tool["os_not_found"] is True)
+                )
+            else:
+                _require(
+                    tool["path"] in case["allowed_files"]
+                    and tool["status"] == "completed"
+                    and tool["permission_denied"] is False
+                    and tool["os_not_found"] is False
+                )
+        if scenario == "denied_read":
+            _require(len(tools) == 1)
+        else:
+            _require({row["path"] for row in tools} == set(case["allowed_files"]))
+
+    @staticmethod
+    def _completed_review(
+        start: dict[str, Any], scenario: dict[str, Any], report: dict[str, Any]
+    ) -> None:
+        session, final = report["session"], report["native_final"]
+        case = start["source"]["probe_spec"]["cases"][scenario["scenario"]]
+        _require(
+            type(session["initial_message_count"]) is int
+            and session["initial_message_count"] == 0
+            and session["initial_messages_sha256"] == source_digest({"messages": []})
+            and bool(session["id"])
+            and bool(session["prompt_message_id"])
+            and final["session_id"] == session["id"]
+            and final["parent_id"] == final["prompt_message_id"] == session["prompt_message_id"]
+            and bool(final["assistant_message_id"])
+            and final["assistant_message_id"] != session["prompt_message_id"]
+            and final["provider_id"] == "opencode-go"
+            and final["model_id"] == "glm-5.3-flash"
+            and type(final["completed_at"]) in (int, float)
+            and math.isfinite(final["completed_at"])
+            and start["started_at"] * 1000 <= final["completed_at"] < start["expires_at"] * 1000
+            and final["finish"] == "stop"
+            and final["error"] is None
+            and type(final["text_part_count"]) is int
+            and final["text_part_count"] == 1
+            and type(final["text_part_id"]) is str
+            and bool(final["text_part_id"])
+            and final["text_part_message_id"] == final["assistant_message_id"]
+            and final["text_part_session_id"] == session["id"]
+            and all(
+                type(final[key]) in (int, float) and math.isfinite(final[key])
+                for key in ("text_part_started_at", "text_part_completed_at")
+            )
+            and start["started_at"] * 1000
+            <= final["text_part_started_at"]
+            <= final["text_part_completed_at"]
+            < start["expires_at"] * 1000
+            and type(final["text"]) is str
+            and final["text_sha256"] == hashlib.sha256(final["text"].encode()).hexdigest()
+            and report["parser_revision"]
+            == PARSER_REVISION
+            == start["source"]["probe_spec"]["parser_revision"]
+        )
+        parsed = parse_review_output(
+            final["text"],
+            allowed_files=frozenset(case["allowed_files"]),
+            allowed_acceptance_refs=frozenset(case["allowed_acceptance_refs"]),
+        )
+        _require(
+            parsed.model_dump(mode="json") == report["parsed_review"]
+            and parsed.verdict == case["expected"]["verdict"]
+        )
+        if scenario["scenario"] == "defect_review":
+            _require(
+                any(
+                    item.blocking
+                    and item.file == "src/range.py"
+                    and item.line == 2
+                    and item.acceptance_ref == "acceptance:clamp-v1"
+                    for item in parsed.findings
+                )
+            )
+        else:
+            _require(not parsed.findings)

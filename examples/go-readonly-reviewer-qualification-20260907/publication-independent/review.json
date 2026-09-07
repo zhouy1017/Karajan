@@ -1,0 +1,39 @@
+{
+  "schema_version": "karajan.documentation-archive-independent-review.v1",
+  "scope": "Independent documentation/archive Standards and Spec only; not Suite code review or new execution",
+  "head": "a453aa9080a084f935985627f7608fa8b500fa6f",
+  "inputs": {
+    "docs/implementation/go-readonly-reviewer-qualification.md": "5f71a534845f1457642716e27db119d173c80b1715b0f89662b060c3a2cd0d57",
+    "examples/go-readonly-reviewer-qualification-20260907/README.md": "722be333672dc59b746d38775c60292450271623e3b5b5f149b5f02bb877f3f3",
+    "examples/go-readonly-reviewer-qualification-20260907/publication-map.json": "45c00e3953fb19426abdf8176a26122c7d4dc3e5e8d513d69449246fc5144ac8",
+    "examples/go-readonly-reviewer-qualification-20260907/source-to-code.json": "a55c82d4a7ee3ead27cd60f7c5f64b5eb9253b8d2c10925058183aa8337b48a6"
+  },
+  "standards": {
+    "findings": [],
+    "conclusion": "Documented provenance and archive byte-preservation requirements satisfied for the reviewed inputs."
+  },
+  "spec": {
+    "findings": [],
+    "conclusion": "The original Issue106 C/P scope is represented without promotion to official S107, Reviewer Task, Review Evidence or completed remote G."
+  },
+  "confirmed": {
+    "publication_files_verified": 203,
+    "P_source_modules_verified": 145,
+    "exact_source_modules": 144,
+    "only_line_ending_difference": "backend/karajan/projects/qualification.py",
+    "code_commit": "1a000c5600108cab2b0128d272dd01e3510f1aea",
+    "integration_commit": "a453aa9080a084f935985627f7608fa8b500fa6f",
+    "backend_tests_frontend_trees_identical": true,
+    "asserted_xml_counts_match": true,
+    "archive_inputs_unchanged_during_review": true
+  },
+  "limits": [
+    "No product behavior re-review or self-review of the Suite implementation.",
+    "No new tests, namespace/P execution, provider/API calls, CI query, Git mutation or remote write.",
+    "CRLF-to-LF mapping is a source-lineage/semantic comparison; it is not an exact unchanged qualification record or new S/G pass."
+  ],
+  "machine_evidence": {
+    "path": "checks.json",
+    "sha256": "cc946e1e7ffde53160a5d0e7795b2746c8a1f36e535994eaa49dffbaaa2e2dfc"
+  }
+}

@@ -1,0 +1,11 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/Chooo/Playground/Karajan/.cache/go-reviewer-qualification
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 5 items / 4 deselected / 1 selected
+
+tests/isolation/test_go_reviewer_probe.py .                              [100%]
+
+- generated xml file: /mnt/c/Users/Chooo/Playground/Karajan/.cache/go-reviewer-qualification/.cache/reviewer-observer-author/provisional-clean-corrected.xml -
+======================= 1 passed, 4 deselected in 16.00s =======================

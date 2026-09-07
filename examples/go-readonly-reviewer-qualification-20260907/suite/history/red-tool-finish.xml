@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="1.239" timestamp="2026-09-07T12:13:32.979733+08:00" hostname="ProArt-Zhou"><testcase classname="tests.projects.test_go_reviewer_suite" name="test_passed_observer_cannot_override_missing_or_mismatched_facts[erased_tool_names]" time="0.075"><failure message="AssertionError: assert 'passed' == 'failed'&#10;  &#10;  - failed&#10;  + passed">synthetic_suite = (&lt;karajan.projects.go_reviewer_suite.FixedGoReviewerSuite object at 0x00000213D1DA4260&gt;, &lt;karajan.adapters.opencode.go...o-channel', 'account_id': 'go-account', 'billing_path': 'subscription_only', 'approved_data_destination': True}}, ...})
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x00000213D25BEAB0&gt;
+change = 'erased_tool_names'
+
+    @pytest.mark.parametrize(
+        "change",
+        [
+            "journal_call",
+            "usage",
+            "request_digest",
+            "history",
+            "missing_read",
+            "canary",
+            "session",
+            "initial_messages",
+            "parent",
+            "model",
+            "finish",
+            "incomplete",
+            "text_parts",
+            "truncated",
+            "tool_json",
+            "parsed_output",
+            "parser_revision",
+            "writable",
+            "changed_file",
+            "mount_identity",
+            "stop_unknown",
+            "open_relay",
+            "control_fd",
+            "network",
+            "shell",
+            "relay_not_complete",
+            "last_tool_response",
+            "erased_tool_names",
+        ],
+    )
+    def test_passed_observer_cannot_override_missing_or_mismatched_facts(
+        synthetic_suite, monkeypatch, change
+    ):
+        suite, journal, start = synthetic_suite
+    
+        def observed(runtime, directory, secret, authorization, *, scenario, **kwargs):
+            report = synthetic_observation(suite, authorization, scenario)
+            if change == "journal_call":
+                report["requests"][0]["journal_call_id"] = "unrelated-call"
+            elif change == "usage":
+                report["requests"][0]["usage"] = {"prompt_tokens": 1}
+            elif change == "request_digest":
+                report["retention"]["requests"][-1]["request_digest"] = "e" * 64
+            elif change == "history":
+                report["retention"]["requests"][-1]["prior_messages_retained"] = False
+            elif change == "missing_read":
+                report["retention"]["requests"][-1]["read_results"] = []
+            elif change == "canary":
+                report["retention"]["requests"][-1]["denied_canary_present"] = True
+            elif change == "session":
+                report["native_final"]["session_id"] = "old-session"
+            elif change == "initial_messages":
+                report["session"]["initial_message_count"] = 1
+            elif change == "parent":
+                report["native_final"]["parent_id"] = "old-prompt"
+            elif change == "model":
+                report["native_final"]["model_id"] = "other-model"
+            elif change == "finish":
+                report["native_final"]["finish"] = "length"
+            elif change == "incomplete":
+                report["native_final"]["completed_at"] = None
+            elif change == "text_parts":
+                report["native_final"]["text_part_count"] = 2
+            elif change in ("truncated", "tool_json"):
+                text = report["native_final"]["text"]
+                text = text[:-1] if change == "truncated" else "tool result: " + text
+                report["native_final"]["text"] = text
+                report["native_final"]["text_sha256"] = hashlib.sha256(text.encode()).hexdigest()
+            elif change == "parsed_output":
+                report["parsed_review"]["verdict"] = "inconclusive"
+            elif change == "parser_revision":
+                report["parser_revision"] = "old-parser"
+            elif change == "writable":
+                report["readonly"]["mounts"][0]["mount_flags"] = 0
+            elif change == "changed_file":
+                report["readonly"]["after"][0]["sha256"] = "e" * 64
+            elif change == "mount_identity":
+                report["readonly"]["mounts"][0]["host_identity_matches"] = False
+            elif change == "stop_unknown":
+                report["native_cleanup"]["local_stop"] = "unknown"
+            elif change == "open_relay":
+                report["relay_cleanup"]["status"] = "closing"
+            elif change == "control_fd":
+                report["runtime"]["native_control_fd_inherited"] = True
+            elif change == "network":
+                report["runtime"]["network_interfaces"].append("eth0")
+            elif change == "shell":
+                report["tools"][0]["name"] = "bash"
+            elif change == "relay_not_complete":
+                report["requests"][-1]["relay_completed"] = False
+            elif change == "last_tool_response":
+                report["requests"][-1]["finish_reason"] = "tool_calls"
+            elif change == "erased_tool_names":
+                report["requests"][0]["tool_names"] = []
+            return report
+    
+        install_observer(monkeypatch, observed)
+        result = suite.observe(start, credential(), current_guard=nullcontext)
+&gt;       assert result["status"] == "failed"
+E       AssertionError: assert 'passed' == 'failed'
+E         
+E         - failed
+E         + passed
+
+tests\projects\test_go_reviewer_suite.py:652: AssertionError</failure></testcase></testsuite></testsuites>

@@ -21,7 +21,7 @@ import uuid
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from pydantic import ValidationError
 
@@ -33,10 +33,12 @@ from .registry import ProjectRegistry, encoded, identifier
 
 if TYPE_CHECKING:
     from .credential_sources import CredentialSourceStore
+    from .go_reviewer_suite import FixedGoReviewerSuite
     from .go_suite import FixedGoSuite
 
 LOCAL_SUITE = {"id": "fixed-local-fixture-qualification", "revision": 1}
 PROJECTED_GO_SUITE = {"id": "opencode-go-native-read-edit-linux", "revision": 2}
+READONLY_GO_SUITE = {"id": "opencode-go-readonly-review-linux", "revision": 1}
 
 
 def _source_scope(binding: dict[str, Any]) -> tuple[str, dict[str, Any]]:
@@ -104,6 +106,7 @@ class ProfileQualificationStore:
         clock: Callable[[], float] = time.time,
         credentials: "CredentialSourceStore | None" = None,
         go_suite: "FixedGoSuite | None" = None,
+        reviewer_suite: "FixedGoReviewerSuite | None" = None,
     ) -> None:
         self.projects = projects
         self.clock = clock
@@ -111,6 +114,7 @@ class ProfileQualificationStore:
             raise QualificationError("CREDENTIAL_PROJECT_STORE_MISMATCH")
         self.credentials = credentials
         self.go_suite = go_suite
+        self.reviewer_suite = reviewer_suite
         if projects.existing_only:
             require_schema(
                 projects.database,
@@ -247,14 +251,15 @@ class ProfileQualificationStore:
                     raise QualificationError("IDEMPOTENCY_CONFLICT")
                 self._checked_start(db, previous)
                 return self._record(db, previous["id"])
-            if self.go_suite is None or self.credentials is None:
+            suite = self.reviewer_suite if suite_ref == READONLY_GO_SUITE else self.go_suite
+            if suite is None or self.credentials is None:
                 raise QualificationError("RUNTIME_QUALIFICATION_SOURCE_UNCONFIGURED")
-            source = copy.deepcopy(self.go_suite.source())
+            source = copy.deepcopy(suite.source())
             if source["suite_ref"] != suite_ref:
                 raise QualificationError("QUALIFICATION_SUITE_UNSUPPORTED")
             scope = self._go_scope(source)
             bound = self._binding(db, project_id, profile_ref)
-            self.go_suite.validate_profile(bound)
+            suite.validate_profile(bound)
             authentication = self.credentials.current_locked(
                 db, project_id, bound["registration"]["profile"]["auth_ref"], principal=principal
             )
@@ -272,10 +277,15 @@ class ProfileQualificationStore:
                 "authentication_source": authentication,
                 "source": source,
                 "started_at": now,
-                "expires_at": now + 420,
+                "expires_at": now + (600 if suite_ref == READONLY_GO_SUITE else 420),
                 "scenarios": [],
             }
-            for scenario in ("edit", "denied_read"):
+            scenarios = (
+                ("clean_review", "defect_review", "denied_read")
+                if suite_ref == READONLY_GO_SUITE
+                else ("edit", "denied_read")
+            )
+            for scenario in scenarios:
                 attempt_id, grant_id = str(uuid.uuid4()), str(uuid.uuid4())
                 start["scenarios"].append(
                     {
@@ -300,6 +310,13 @@ class ProfileQualificationStore:
                 if suite_ref == PROJECTED_GO_SUITE:
                     start["scenarios"][-1]["grant_binding"].update(
                         schema_version="karajan.go-qualification-grant.v2",
+                        probe_spec_digest=digest(source["probe_spec"]),
+                        scenario=scenario,
+                        context=copy.deepcopy(source["probe_spec"]["context"]),
+                    )
+                elif suite_ref == READONLY_GO_SUITE:
+                    start["scenarios"][-1]["grant_binding"].update(
+                        schema_version="karajan.go-reviewer-qualification-grant.v1",
                         probe_spec_digest=digest(source["probe_spec"]),
                         scenario=scenario,
                         context=copy.deepcopy(source["probe_spec"]["context"]),
@@ -330,7 +347,15 @@ class ProfileQualificationStore:
             credential = self.credentials.resolve_exact(
                 project_id, profile["auth_ref"], authentication["generation"], principal=principal
             )
-            observation = self.go_suite.observe(start, credential)
+            if suite_ref == READONLY_GO_SUITE:
+                assert self.reviewer_suite is not None
+                observation = self.reviewer_suite.observe(
+                    start,
+                    credential,
+                    current_guard=lambda: self._reviewer_current_guard(start, principal),
+                )
+            else:
+                observation = cast("FixedGoSuite", suite).observe(start, credential)
         except Exception:
             # Exception strings can carry file paths, provider text, or secrets.
             observation = {
@@ -366,7 +391,10 @@ class ProfileQualificationStore:
             try:
                 if self._binding(db, project_id, profile_ref) != bound:
                     raise QualificationError("PROFILE_IDENTITY_MISMATCH")
-                if self.go_suite.source() != source:
+                current_suite = (
+                    self.reviewer_suite if suite_ref == READONLY_GO_SUITE else self.go_suite
+                )
+                if current_suite is None or current_suite.source() != source:
                     raise QualificationError("QUALIFICATION_RUNTIME_MISMATCH")
                 if (
                     binding["controller_sha256"]
@@ -382,6 +410,8 @@ class ProfileQualificationStore:
                     raise QualificationError("AUTHENTICATION_SOURCE_MISMATCH")
                 if now < start["started_at"]:
                     raise QualificationError("QUALIFICATION_CLOCK_INVALID")
+                if suite_ref == READONLY_GO_SUITE:
+                    self._reviewer_current_locked(db, start, principal)
             except Exception:
                 record["status"] = "failed"
                 record["reason_codes"].append("QUALIFICATION_SOURCE_CHANGED")
@@ -399,14 +429,136 @@ class ProfileQualificationStore:
                 if record["status"] == "passed" and scope == "projected_native_tools":
                     record["runtime_tools_status"] = "passed"
                     record["live_qualified"] = True
+            elif suite_ref == READONLY_GO_SUITE:
+                record["limitations"] = [
+                    "Only fixed readonly mechanism samples and existing files for T1 are covered.",
+                    "No approved Reviewer Task, business Candidate review, or Review Evidence ran.",
+                    "T2/T3, edits, new files, capture, Commander and cash bounds are unqualified.",
+                    "The small input does not measure the maximum model context window.",
+                    "Current binding, Task authorization and effect gates remain required.",
+                    "Provider remote stop remains unknown.",
+                ]
+                if not self._readonly_observation_passed(start, observation):
+                    record["status"] = "failed"
+                    record["reason_codes"].append("READONLY_REVIEWER_EVIDENCE_INCOMPLETE")
+                if record["status"] == "passed" and scope == "readonly_reviewer_tools":
+                    record["runtime_tools_status"] = "passed"
+                    record["live_qualified"] = True
             db.execute(
                 "INSERT INTO profile_qualification_records VALUES (?,?,?)",
                 (observation_id, encoded(record), digest(record)),
             )
         return record
 
+    @contextmanager
+    def _reviewer_current_guard(self, start: dict[str, Any], principal: str) -> Iterator[None]:
+        """Hold current qualification authority through a short actual effect boundary.
+
+        Only the concrete readonly Suite receives this callback. Native observation
+        and response streaming occur after it exits, so revocation is not blocked
+        for a whole scenario. Journal admission keeps the Project → Journal order.
+        """
+        with self._owned(start["project_id"], principal) as db:
+            self._reviewer_current_locked(db, start, principal)
+            yield
+
+    def _reviewer_current_locked(
+        self, db: sqlite3.Connection, start: dict[str, Any], principal: str
+    ) -> None:
+        self._reviewer_validate_locked(db, start, principal)
+        # Hashing sources and reading credentials can cross the deadline.
+        if not start["started_at"] <= self._now() < start["expires_at"]:
+            raise QualificationError("QUALIFICATION_EXPIRED")
+
+    def _reviewer_validate_locked(
+        self, db: sqlite3.Connection, start: dict[str, Any], principal: str
+    ) -> None:
+        row = db.execute(
+            "SELECT * FROM profile_qualification_starts WHERE id=? AND principal=?",
+            (start["qualification_id"], principal),
+        ).fetchone()
+        if row is None:
+            raise QualificationError("QUALIFICATION_START_MISSING")
+        binding = self._checked_start(db, row)
+        if (
+            binding["execution_start"] != start
+            or start["suite_ref"] != READONLY_GO_SUITE
+            or binding["controller_sha256"]
+            != hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+        ):
+            raise QualificationError("QUALIFICATION_SOURCE_CHANGED")
+        if db.execute(
+            "SELECT 1 FROM profile_qualification_records WHERE id=?", (start["qualification_id"],)
+        ).fetchone():
+            raise QualificationError("QUALIFICATION_ALREADY_COMPLETED")
+        if db.execute(
+            "SELECT 1 FROM profile_qualification_revocations WHERE id=?",
+            (start["qualification_id"],),
+        ).fetchone():
+            raise QualificationError("QUALIFICATION_REVOKED")
+        now = self._now()
+        if not start["started_at"] <= now < start["expires_at"]:
+            raise QualificationError("QUALIFICATION_EXPIRED")
+        registration = start["profile_binding"]["registration"]
+        starts = db.execute(
+            "SELECT * FROM profile_qualification_starts WHERE project_id=? ORDER BY rowid DESC",
+            (start["project_id"],),
+        ).fetchall()
+        for candidate in starts:
+            candidate_binding = self._checked_start(db, candidate)
+            candidate_profile = candidate_binding["profile_binding"]["registration"]
+            if (
+                _source_scope(candidate_binding) == _source_scope(binding)
+                and candidate_profile["id"] == registration["id"]
+                and candidate_profile["revision"] == registration["revision"]
+            ):
+                if candidate["id"] != start["qualification_id"]:
+                    raise QualificationError("QUALIFICATION_SUPERSEDED")
+                break
+        ref = {"id": registration["id"], "revision": registration["revision"]}
+        if self._binding(db, start["project_id"], ref) != start["profile_binding"]:
+            raise QualificationError("PROFILE_IDENTITY_MISMATCH")
+        if self.reviewer_suite is None or self.reviewer_suite.source() != start["source"]:
+            raise QualificationError("QUALIFICATION_RUNTIME_MISMATCH")
+        if (
+            self.credentials is None
+            or self.credentials.current_locked(
+                db,
+                start["project_id"],
+                registration["profile"]["auth_ref"],
+                principal=principal,
+            )
+            != start["authentication_source"]
+        ):
+            raise QualificationError("AUTHENTICATION_SOURCE_MISMATCH")
+
     @staticmethod
     def _go_scope(source: dict[str, Any]) -> str:
+        if source.get("suite_ref") == READONLY_GO_SUITE:
+            from karajan.adapters.opencode.go_journal import GoQualificationLimits
+            from karajan.candidates.review_output import PARSER_REVISION
+
+            try:
+                context = GoQualificationLimits.model_validate(source["probe_spec"]["context"])
+                origin = source["observation_origin"]
+                scope = "readonly_reviewer_tools" + ("_fixture" if origin == "http_fixture" else "")
+                if (
+                    source["schema_version"] != "karajan.fixed-go-reviewer-suite-source.v1"
+                    or origin not in {"official_go", "http_fixture"}
+                    or source["qualification_scope"] != scope
+                    or source["probe_spec"]["parser_revision"] != PARSER_REVISION
+                    or source["probe_spec"]["scenarios"]
+                    != ["clean_review", "defect_review", "denied_read"]
+                    or context.approved_input_tokens != 12288
+                    or context.reserved_output_tokens != 4096
+                    or context.operating_context_tokens != 16384
+                    or context.fixed_margin != 2048
+                    or context.ratio_margin_basis_points != 2000
+                ):
+                    raise ValueError
+            except (KeyError, TypeError, ValueError):
+                raise QualificationError("QUALIFICATION_SOURCE_UNSUPPORTED") from None
+            return scope
         projected = source.get("suite_ref") == PROJECTED_GO_SUITE
         if not projected and source.get("suite_ref") != {
             "id": "opencode-go-native-read-edit-linux",
@@ -430,6 +582,51 @@ class ProfileQualificationStore:
         if projected and source.get("qualification_scope") != scope:
             raise QualificationError("QUALIFICATION_SOURCE_UNSUPPORTED")
         return scope
+
+    @staticmethod
+    def _readonly_observation_passed(start: dict[str, Any], observation: dict[str, Any]) -> bool:
+        """Bind the concrete Suite's verified native result to the original durable start."""
+        try:
+            validation = observation["validation"]
+            expected = start["scenarios"]
+            return bool(
+                observation["schema_version"] == "karajan.fixed-go-reviewer-suite-observation.v1"
+                and observation["qualification_id"] == start["qualification_id"]
+                and observation["suite_ref"] == start["suite_ref"] == READONLY_GO_SUITE
+                and observation["source"] == start["source"]
+                and observation["observation_origin"] == start["source"]["observation_origin"]
+                and observation["qualification_scope"] == start["source"]["qualification_scope"]
+                and observation["status"] == "passed"
+                and observation["reason_codes"] == []
+                and all(
+                    validation[key] == "passed"
+                    for key in (
+                        "readonly_reviewer_tools",
+                        "context_accounting",
+                        "structured_findings",
+                        "readonly_projection",
+                    )
+                )
+                and validation["runtime_tools"] == "not_run"
+                and validation["budget"] == "unknown"
+                and validation["dispatch"] is False
+                and [row["scenario"] for row in expected]
+                == ["clean_review", "defect_review", "denied_read"]
+                and len(observation["scenarios"]) == 3
+                and all(
+                    result["status"] == "passed"
+                    and result["reason_codes"] == []
+                    and all(
+                        result[key] == scenario[key]
+                        for key in ("scenario", "attempt_id", "fence", "grant_id")
+                    )
+                    for result, scenario in zip(observation["scenarios"], expected, strict=True)
+                )
+                and observation["grant_cleanup"]
+                == [{"grant_id": row["grant_id"], "state": "revoked"} for row in expected]
+            )
+        except (KeyError, TypeError, ValueError):
+            return False
 
     @staticmethod
     def _projected_observation_passed(start: dict[str, Any], observation: dict[str, Any]) -> bool:
@@ -713,9 +910,21 @@ class ProfileQualificationStore:
         identifier(reason)
         identifier(observation_id)
         with self._owned(project_id, principal) as db:
-            record = self._record(db, observation_id)
-            if record["project_id"] != project_id:
+            row = db.execute(
+                "SELECT * FROM profile_qualification_starts WHERE id=?", (observation_id,)
+            ).fetchone()
+            if row is None:
+                raise QualificationError("QUALIFICATION_IN_PROGRESS_OR_UNKNOWN")
+            if row["project_id"] != project_id:
                 raise QualificationError("QUALIFICATION_PROJECT_MISMATCH")
+            binding = self._checked_start(db, row)
+            if (
+                _source_scope(binding)[1] != READONLY_GO_SUITE
+                or db.execute(
+                    "SELECT 1 FROM profile_qualification_records WHERE id=?", (observation_id,)
+                ).fetchone()
+            ):
+                self._record(db, observation_id)
             revocation = {
                 "id": observation_id,
                 "principal": principal,
@@ -801,8 +1010,18 @@ class ProfileQualificationStore:
     ) -> dict[str, Any]:
         from karajan.routing.models import ProfileFacts
 
+        try:
+            frozen = RegisteredProfile.model_validate(frozen_registration).model_dump()
+        except ValidationError:
+            raise QualificationError("PROFILE_IDENTITY_MISMATCH") from None
         runtime_read = scope != "local_fixture"
         if runtime_read:
+            profile = frozen["profile"]
+            readonly = (
+                isinstance(profile, dict)
+                and profile["binding"]["native_settings"].get("suite_ref") == READONLY_GO_SUITE
+            )
+            suite = self.reviewer_suite if readonly else self.go_suite
             if (
                 scope
                 not in {
@@ -811,13 +1030,15 @@ class ProfileQualificationStore:
                     "fixed_native_tools_fixture",
                     "projected_native_tools",
                     "projected_native_tools_fixture",
+                    "readonly_reviewer_tools",
+                    "readonly_reviewer_tools_fixture",
                 }
-                or self.go_suite is None
+                or suite is None
                 or self.credentials is None
             ):
                 raise QualificationError("RUNTIME_TOOLS_NOT_QUALIFIED")
             try:
-                current_source = self.go_suite.source()
+                current_source = suite.source()
             except Exception:
                 raise QualificationError("QUALIFICATION_RUNTIME_MISMATCH") from None
             source_scope = self._go_scope(current_source)
@@ -833,10 +1054,6 @@ class ProfileQualificationStore:
             wanted_scope, wanted_suite = "local_fixture", LOCAL_SUITE
         if not runtime_read and fixture_root is None:
             raise QualificationError("FIXTURE_ROOT_REQUIRED")
-        try:
-            frozen = RegisteredProfile.model_validate(frozen_registration).model_dump()
-        except ValidationError:
-            raise QualificationError("PROFILE_IDENTITY_MISMATCH") from None
         ref = {"id": frozen["id"], "revision": frozen["revision"]}
         current = self._binding(db, project_id, ref)
         if current["registration"] != frozen:
@@ -950,6 +1167,8 @@ class ProfileQualificationStore:
             raise QualificationError("AUTHENTICATION_SOURCE_MISMATCH") from None
         if start["suite_ref"] == PROJECTED_GO_SUITE:
             return self._projected_facts(frozen, record, start)
+        if start["suite_ref"] == READONLY_GO_SUITE:
+            return self._readonly_facts(frozen, record, start)
         # ProfileFacts cannot express path constraints yet. A fixed fixture
         # observation must never satisfy a general Run's read/edit requirements.
         if requested_scope == "runtime_tools":
@@ -1055,6 +1274,80 @@ class ProfileQualificationStore:
                 "context": context,
                 "max_requests": 6,
                 "candidate_capture": True,
+            }
+            result["context_evidence"] = {
+                "provider_declared": {"context_tokens": 1000000, "max_output_tokens": 131072},
+                "adapter_limits": {
+                    "operating_context_tokens": context["operating_context_tokens"],
+                    "reserved_output_tokens": context["reserved_output_tokens"],
+                    "output_policy": "fixed_native_limit",
+                },
+                "observed": "bounded_small_input_accepted",
+                "maximum_context_observed": False,
+            }
+        return result
+
+    def _readonly_facts(
+        self, frozen: dict[str, Any], record: dict[str, Any], start: dict[str, Any]
+    ) -> dict[str, Any]:
+        from karajan.candidates.review_output import PARSER_REVISION
+        from karajan.routing.models import ProfileFacts
+
+        if not self._readonly_observation_passed(start, record["observation"]):
+            raise QualificationError("READONLY_REVIEWER_EVIDENCE_INCOMPLETE")
+        fixture = record["qualification_scope"].endswith("_fixture")
+        profile = frozen["profile"]
+        context = copy.deepcopy(start["source"]["probe_spec"]["context"])
+        evidence_ref = "readonly-go-reviewer-qualification:" + record["id"]
+        result = {
+            "facts": ProfileFacts.model_validate(
+                {
+                    "profile": {"id": frozen["id"], "revision": frozen["revision"]},
+                    "profile_digest": digest(profile),
+                    "runtime_version": profile["binding"]["runtime_version"],
+                    "roles": [] if fixture else ["reviewer"],
+                    "tools": [] if fixture else ["read"],
+                    "context_tokens": None if fixture else context["operating_context_tokens"],
+                    "data_destination": "http_fixture" if fixture else "opencode-go",
+                    "budget_enforcement": "unknown",
+                    "provenance": record["provenance"],
+                    "evidence_ref": evidence_ref,
+                    "observed_at": record["observed_at"],
+                    "valid_until": record["valid_until"],
+                }
+            ).model_dump(),
+            "qualification_scope": record["qualification_scope"],
+            "runtime_tools_status": "not_run" if fixture else "passed",
+            "dispatch_eligible": False,
+            "observation": record,
+            "capability_evidence": []
+            if fixture
+            else [
+                {
+                    "capability": capability,
+                    "status": "passed",
+                    "profile_digest": digest(profile),
+                    "runtime_version": profile["binding"]["runtime_version"],
+                    "evidence_ref": evidence_ref,
+                    "provenance": record["provenance"],
+                }
+                for capability in ("code_review", "structured_findings")
+            ],
+        }
+        if not fixture:
+            result["executor_scope"] = {
+                "schema_version": "karajan.go-readonly-reviewer-executor-scope.v1",
+                "suite_ref": READONLY_GO_SUITE.copy(),
+                "projection": "existing_regular_files",
+                "new_files_supported": False,
+                "tools": ["read"],
+                "supported_roles": ["reviewer"],
+                "task_classes": ["T1"],
+                "context": context,
+                "output_policy": "fixed_native_limit",
+                "max_requests": 6,
+                "candidate_capture": False,
+                "output_parser_revision": PARSER_REVISION,
             }
             result["context_evidence"] = {
                 "provider_declared": {"context_tokens": 1000000, "max_output_tokens": 131072},

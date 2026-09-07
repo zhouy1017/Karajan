@@ -1,0 +1,23 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Users\Chooo\Playground\Karajan\.cache\review-output-parser
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 0 items / 1 error
+
+=================================== ERRORS ====================================
+___________ ERROR collecting tests/candidates/test_review_output.py ___________
+ImportError while importing test module 'C:\Users\Chooo\Playground\Karajan\.cache\review-output-parser\tests\candidates\test_review_output.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\candidates\test_review_output.py:4: in <module>
+    from karajan.candidates.review_output import parse_review_output
+E   ModuleNotFoundError: No module named 'karajan.candidates.review_output'
+- generated xml file: C:\Users\Chooo\Playground\Karajan\.cache\review-output-parser\.cache\review-parser-author\initial-missing-entry.xml -
+=========================== short test summary info ===========================
+ERROR tests/candidates/test_review_output.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+============================== 1 error in 0.23s ===============================

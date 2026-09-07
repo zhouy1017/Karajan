@@ -1,0 +1,237 @@
+FFF                                                                      [100%]
+================================== FAILURES ===================================
+_______ test_changed_current_authority_stops_before_next_scenario[none] _______
+
+reviewer_case = {'projects': <karajan.projects.registry.ProjectRegistry object at 0x000001976A3D1E80>, 'project_id': '9a2dd714-0d65-42...C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-996/test_changed_current_authority0/fixture/repository'), ...}
+artifacts = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-artifacts')
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-996/test_changed_current_authority0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001976B0BA900>
+change = 'none'
+
+    @pytest.mark.parametrize("change", ["none", "credential_revoke", "profile_disabled"])
+    def test_changed_current_authority_stops_before_next_scenario(
+        reviewer_case, artifacts, tmp_path, monkeypatch, change
+    ):
+        case = reviewer_case
+        work = tmp_path / "concrete-suite"
+        work.mkdir(mode=0o700)
+        suite = FixedGoReviewerSuite(
+            tmp_path / "inert-runtime",
+            work,
+            case["suite"].journal,
+            accounting=GoRequestAccounting(artifacts),
+            clock=lambda: case["clock"][0],
+        )
+        source = deepcopy(case["reviewer_suite"].source())
+        monkeypatch.setattr(suite, "source", lambda: deepcopy(source))
+        # Result checking is outside this specific authority scheduling boundary.
+        monkeypatch.setattr(suite, "_validate_report", lambda *args: [])
+        case["store"] = ProfileQualificationStore(
+            case["projects"],
+            clock=lambda: case["clock"][0],
+            credentials=case["credentials"],
+            go_suite=case["suite"],
+            reviewer_suite=suite,
+        )
+        entered = []
+    
+        def observer(runtime, directory, secret, authorization, *, scenario, **kwargs):
+            entered.append(scenario)
+            if len(entered) == 1 and change == "credential_revoke":
+                case["credentials"].revoke(
+                    case["project_id"],
+                    "secret:go",
+                    authorization.binding["auth_generation"],
+                    principal="owner",
+                    command_key="independent-revoke",
+                )
+            elif len(entered) == 1 and change == "profile_disabled":
+                projects = case["projects"]
+                config = projects.get_configuration(case["project_id"])["configuration"]
+                reviewer = next(
+                    row for row in config["resources"]["profiles"] if row["id"] == "readonly-reviewer"
+                )
+                reviewer["enabled"] = False
+                preview = projects.preview_configuration(
+                    case["project_id"], config, command_key="disable-preview", principal="owner"
+                )
+                projects.apply_configuration(
+                    case["project_id"],
+                    preview["preview_id"],
+                    expected_revision=projects.get(case["project_id"])["revision"],
+                    command_key="disable-apply",
+                    principal="owner",
+                )
+            return {"session": {"id": "synthetic-" + scenario}, "test_double": True}
+    
+        monkeypatch.setattr(
+            "karajan.isolation.go_reviewer_probe.observe_go_reviewer_tools", observer
+        )
+        result = qualify(case)
+>       assert result["status"] == ("passed" if change == "none" else "failed"), result
+E       AssertionError: {'schema_version': 'karajan.profile-qualification.v1', 'id': '6c1778a4-816c-4e6f-9115-b610a72d5bf5', 'project_id': '9a2dd714-0d65-42e0-b5a2-e5f8bc80ecf9', 'principal': 'owner', ...}
+E       assert 'failed' == 'passed'
+E         
+E         - passed
+E         + failed
+
+.cache\reviewer-root-independent\test_current_authority.py:109: AssertionError
+_ test_changed_current_authority_stops_before_next_scenario[credential_revoke] _
+
+reviewer_case = {'projects': <karajan.projects.registry.ProjectRegistry object at 0x000001976B0C7770>, 'project_id': 'fe9bdf18-c1af-49...C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-996/test_changed_current_authority1/fixture/repository'), ...}
+artifacts = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-artifacts')
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-996/test_changed_current_authority1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001976B07E0C0>
+change = 'credential_revoke'
+
+    @pytest.mark.parametrize("change", ["none", "credential_revoke", "profile_disabled"])
+    def test_changed_current_authority_stops_before_next_scenario(
+        reviewer_case, artifacts, tmp_path, monkeypatch, change
+    ):
+        case = reviewer_case
+        work = tmp_path / "concrete-suite"
+        work.mkdir(mode=0o700)
+        suite = FixedGoReviewerSuite(
+            tmp_path / "inert-runtime",
+            work,
+            case["suite"].journal,
+            accounting=GoRequestAccounting(artifacts),
+            clock=lambda: case["clock"][0],
+        )
+        source = deepcopy(case["reviewer_suite"].source())
+        monkeypatch.setattr(suite, "source", lambda: deepcopy(source))
+        # Result checking is outside this specific authority scheduling boundary.
+        monkeypatch.setattr(suite, "_validate_report", lambda *args: [])
+        case["store"] = ProfileQualificationStore(
+            case["projects"],
+            clock=lambda: case["clock"][0],
+            credentials=case["credentials"],
+            go_suite=case["suite"],
+            reviewer_suite=suite,
+        )
+        entered = []
+    
+        def observer(runtime, directory, secret, authorization, *, scenario, **kwargs):
+            entered.append(scenario)
+            if len(entered) == 1 and change == "credential_revoke":
+                case["credentials"].revoke(
+                    case["project_id"],
+                    "secret:go",
+                    authorization.binding["auth_generation"],
+                    principal="owner",
+                    command_key="independent-revoke",
+                )
+            elif len(entered) == 1 and change == "profile_disabled":
+                projects = case["projects"]
+                config = projects.get_configuration(case["project_id"])["configuration"]
+                reviewer = next(
+                    row for row in config["resources"]["profiles"] if row["id"] == "readonly-reviewer"
+                )
+                reviewer["enabled"] = False
+                preview = projects.preview_configuration(
+                    case["project_id"], config, command_key="disable-preview", principal="owner"
+                )
+                projects.apply_configuration(
+                    case["project_id"],
+                    preview["preview_id"],
+                    expected_revision=projects.get(case["project_id"])["revision"],
+                    command_key="disable-apply",
+                    principal="owner",
+                )
+            return {"session": {"id": "synthetic-" + scenario}, "test_double": True}
+    
+        monkeypatch.setattr(
+            "karajan.isolation.go_reviewer_probe.observe_go_reviewer_tools", observer
+        )
+        result = qualify(case)
+        assert result["status"] == ("passed" if change == "none" else "failed"), result
+>       assert result["observation"]["grant_cleanup"] == [
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            {"grant_id": row["grant_id"], "state": "revoked"}
+            for row in result["binding"]["execution_start"]["scenarios"]
+        ]
+E       KeyError: 'grant_cleanup'
+
+.cache\reviewer-root-independent\test_current_authority.py:110: KeyError
+_ test_changed_current_authority_stops_before_next_scenario[profile_disabled] _
+
+reviewer_case = {'projects': <karajan.projects.registry.ProjectRegistry object at 0x000001976B0B4F80>, 'project_id': 'f48d83f8-8b7b-4e...C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-996/test_changed_current_authority2/fixture/repository'), ...}
+artifacts = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/go-task-execution/.cache/go-context-artifacts')
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-996/test_changed_current_authority2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001976B0B93D0>
+change = 'profile_disabled'
+
+    @pytest.mark.parametrize("change", ["none", "credential_revoke", "profile_disabled"])
+    def test_changed_current_authority_stops_before_next_scenario(
+        reviewer_case, artifacts, tmp_path, monkeypatch, change
+    ):
+        case = reviewer_case
+        work = tmp_path / "concrete-suite"
+        work.mkdir(mode=0o700)
+        suite = FixedGoReviewerSuite(
+            tmp_path / "inert-runtime",
+            work,
+            case["suite"].journal,
+            accounting=GoRequestAccounting(artifacts),
+            clock=lambda: case["clock"][0],
+        )
+        source = deepcopy(case["reviewer_suite"].source())
+        monkeypatch.setattr(suite, "source", lambda: deepcopy(source))
+        # Result checking is outside this specific authority scheduling boundary.
+        monkeypatch.setattr(suite, "_validate_report", lambda *args: [])
+        case["store"] = ProfileQualificationStore(
+            case["projects"],
+            clock=lambda: case["clock"][0],
+            credentials=case["credentials"],
+            go_suite=case["suite"],
+            reviewer_suite=suite,
+        )
+        entered = []
+    
+        def observer(runtime, directory, secret, authorization, *, scenario, **kwargs):
+            entered.append(scenario)
+            if len(entered) == 1 and change == "credential_revoke":
+                case["credentials"].revoke(
+                    case["project_id"],
+                    "secret:go",
+                    authorization.binding["auth_generation"],
+                    principal="owner",
+                    command_key="independent-revoke",
+                )
+            elif len(entered) == 1 and change == "profile_disabled":
+                projects = case["projects"]
+                config = projects.get_configuration(case["project_id"])["configuration"]
+                reviewer = next(
+                    row for row in config["resources"]["profiles"] if row["id"] == "readonly-reviewer"
+                )
+                reviewer["enabled"] = False
+                preview = projects.preview_configuration(
+                    case["project_id"], config, command_key="disable-preview", principal="owner"
+                )
+                projects.apply_configuration(
+                    case["project_id"],
+                    preview["preview_id"],
+                    expected_revision=projects.get(case["project_id"])["revision"],
+                    command_key="disable-apply",
+                    principal="owner",
+                )
+            return {"session": {"id": "synthetic-" + scenario}, "test_double": True}
+    
+        monkeypatch.setattr(
+            "karajan.isolation.go_reviewer_probe.observe_go_reviewer_tools", observer
+        )
+        result = qualify(case)
+        assert result["status"] == ("passed" if change == "none" else "failed"), result
+>       assert result["observation"]["grant_cleanup"] == [
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            {"grant_id": row["grant_id"], "state": "revoked"}
+            for row in result["binding"]["execution_start"]["scenarios"]
+        ]
+E       KeyError: 'grant_cleanup'
+
+.cache\reviewer-root-independent\test_current_authority.py:110: KeyError
+=========================== short test summary info ===========================
+FAILED .cache/reviewer-root-independent/test_current_authority.py::test_changed_current_authority_stops_before_next_scenario[none]
+FAILED .cache/reviewer-root-independent/test_current_authority.py::test_changed_current_authority_stops_before_next_scenario[credential_revoke]
+FAILED .cache/reviewer-root-independent/test_current_authority.py::test_changed_current_authority_stops_before_next_scenario[profile_disabled]
+3 failed in 3.69s

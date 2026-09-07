@@ -1,0 +1,57 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Users\Chooo\Playground\Karajan\.cache\go-reviewer-qualification
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 31 items / 29 deselected / 2 selected
+
+tests\isolation\test_go_reviewer_probe_boundaries.py FF                  [100%]
+
+================================== FAILURES ===================================
+_ test_sensitive_native_strings_are_detected_before_json_escaping[synthetic"private-material] _
+
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-993/test_sensitive_native_strings_0')
+accounting = <karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x00000164FFF8B320>
+boundary = {'created': 1, 'started': 1, 'prompted': 1, 'mutate': <function test_sensitive_native_strings_are_detected_before_json_escaping.<locals>.<lambda> at 0x00000164FFF86980>, ...}
+secret = 'synthetic"private-material'
+
+    @pytest.mark.parametrize("secret", ['synthetic"private-material', "synthetic\\private-material"])
+    def test_sensitive_native_strings_are_detected_before_json_escaping(
+        tmp_path, accounting, boundary, secret
+    ):
+        boundary["mutate"] = lambda messages: messages[-1]["info"].update(error={"message": secret})
+        auth = reviewer_authorization(tmp_path, accounting, Path("synthetic-ELF"), "clean_review")
+        result = probe.observe_go_reviewer_tools(
+            Path("synthetic-ELF"), tmp_path / "observation", secret, auth,
+            scenario="clean_review", accounting=accounting, client_factory=lambda: None,
+        )
+>       assert "SENSITIVE_NATIVE_OUTPUT" in result["reason_codes"]
+E       AssertionError: assert 'SENSITIVE_NATIVE_OUTPUT' in ['NATIVE_ASSISTANT_IDENTITY_MISMATCH', 'PROVIDER_PROTOCOL_INCOMPLETE', 'MEASURED_WIRE_RETENTION_INCOMPLETE']
+
+tests\isolation\test_go_reviewer_probe_boundaries.py:294: AssertionError
+_ test_sensitive_native_strings_are_detected_before_json_escaping[synthetic\\private-material] _
+
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-993/test_sensitive_native_strings_1')
+accounting = <karajan.adapters.opencode.go_context.GoRequestAccounting object at 0x00000164FFF8B320>
+boundary = {'created': 1, 'started': 1, 'prompted': 1, 'mutate': <function test_sensitive_native_strings_are_detected_before_json_escaping.<locals>.<lambda> at 0x000001649537B740>, ...}
+secret = 'synthetic\\private-material'
+
+    @pytest.mark.parametrize("secret", ['synthetic"private-material', "synthetic\\private-material"])
+    def test_sensitive_native_strings_are_detected_before_json_escaping(
+        tmp_path, accounting, boundary, secret
+    ):
+        boundary["mutate"] = lambda messages: messages[-1]["info"].update(error={"message": secret})
+        auth = reviewer_authorization(tmp_path, accounting, Path("synthetic-ELF"), "clean_review")
+        result = probe.observe_go_reviewer_tools(
+            Path("synthetic-ELF"), tmp_path / "observation", secret, auth,
+            scenario="clean_review", accounting=accounting, client_factory=lambda: None,
+        )
+>       assert "SENSITIVE_NATIVE_OUTPUT" in result["reason_codes"]
+E       AssertionError: assert 'SENSITIVE_NATIVE_OUTPUT' in ['NATIVE_ASSISTANT_IDENTITY_MISMATCH', 'PROVIDER_PROTOCOL_INCOMPLETE', 'MEASURED_WIRE_RETENTION_INCOMPLETE']
+
+tests\isolation\test_go_reviewer_probe_boundaries.py:294: AssertionError
+- generated xml file: C:\Users\Chooo\Playground\Karajan\.cache\go-reviewer-qualification\.cache\reviewer-observer-author\sensitive-string-red.xml -
+=========================== short test summary info ===========================
+FAILED tests/isolation/test_go_reviewer_probe_boundaries.py::test_sensitive_native_strings_are_detected_before_json_escaping[synthetic"private-material]
+FAILED tests/isolation/test_go_reviewer_probe_boundaries.py::test_sensitive_native_strings_are_detected_before_json_escaping[synthetic\\private-material]
+====================== 2 failed, 29 deselected in 1.59s =======================

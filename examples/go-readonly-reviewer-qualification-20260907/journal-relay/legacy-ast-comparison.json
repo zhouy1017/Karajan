@@ -1,0 +1,31 @@
+{
+  "go_journal.py": {
+    "_CommonGrantBinding": true,
+    "_GrantBinding": true,
+    "_TaskSubject": true,
+    "_TaskGrantBinding": true,
+    "GoQualificationLimits": true,
+    "_QualificationGrantV2": true,
+    "_Outcome": true,
+    "_validated": true,
+    "_encoded": true,
+    "GoCallJournal.create_grant": true,
+    "GoCallJournal.revoke_grant": true,
+    "GoCallJournal.complete_call": true,
+    "GoCallJournal.authenticate_grant": true,
+    "GoCallJournal.call_receipt": true,
+    "GoCallJournal.snapshot": true
+  },
+  "go_relay.py": {
+    "GoRelayContext": true,
+    "GoQualificationContext": true,
+    "GoRelay._guard_send": true,
+    "GoRelay._recover_context_call": true,
+    "GoRelay._withdraw_context_sends": true,
+    "GoRelay._complete_journal": true,
+    "GoRelay._read_request": true,
+    "GoRelay._drain_request_body": true,
+    "GoRelay.start": true,
+    "GoRelay.close": true
+  }
+}
