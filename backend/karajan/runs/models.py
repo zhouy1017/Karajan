@@ -51,7 +51,7 @@ class PlanningReceipt(Contract):
     profile: ProfileRef
     budget_ref: Identifier
     state: Literal["admitted", "denied", "unknown"]
-    provenance: Literal["fixture", "imported_observation"]
+    provenance: Literal["fixture", "imported_observation", "planning_execution"]
 
 
 class PlanTask(Contract):

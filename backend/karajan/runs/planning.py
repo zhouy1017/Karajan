@@ -508,6 +508,64 @@ class RunPlanner:
 
         return self._command("submit_plan", request, principal, command_key, apply)
 
+    def _submit_planning_execution_plan(
+        self,
+        run_id: str,
+        intent_id: str,
+        plan: dict[str, Any],
+        *,
+        execution_id: str,
+        binding_sha256: str,
+        principal: str,
+        command_key: str,
+    ) -> dict[str, Any]:
+        """Internal controller port; no HTTP route accepts this material.
+
+        The planning-execution controller has already read and sealed a trusted
+        output.  This method only turns that sealed identity into the existing
+        receipt state and immediately reuses the normal plan validator.
+        """
+        for value in (run_id, intent_id, execution_id, binding_sha256, principal, command_key):
+            identifier(value)
+        with self._transaction() as db:
+            run = self._get(db, run_id)
+            self._owner(run, principal)
+            intent = next((row for row in run["planning_intents"] if row["id"] == intent_id), None)
+            if intent is None:
+                raise RunError("PLANNING_INTENT_NOT_FOUND")
+            self._term(run, intent["term"])
+            if intent["principal"] != run["commander"]["principal"]:
+                raise RunError("ONLY_CURRENT_COMMANDER_CAN_SUBMIT")
+            receipt_ref = "planning-execution:" + execution_id
+            receipt = {
+                "receipt_ref": receipt_ref,
+                "authority_revision": binding_sha256,
+                "run_id": run_id,
+                "intent_id": intent_id,
+                "term": intent["term"],
+                "principal": intent["principal"],
+                "profile": intent["profile"],
+                "budget_ref": intent["budget_ref"],
+                "state": "admitted",
+                "provenance": "planning_execution",
+            }
+            if intent["receipt"] is None:
+                intent["receipt"], intent["state"] = receipt, "admitted"
+                self._save(db, run)
+            elif intent["receipt"] != receipt or intent["state"] != "admitted":
+                raise RunError("PLANNING_EXECUTION_RECEIPT_CONFLICT")
+        request: dict[str, Any] = {
+            "term": receipt["term"],
+            "intent_id": intent_id,
+            "expected_plan_revision": self.get(run_id, principal=principal)["latest_plan_revision"],
+            "plan": plan,
+        }
+        if self.get(run_id, principal=principal)["schema_version"] == "karajan.run-planning.v2":
+            request["schema_version"] = "karajan.submit-plan.v2"
+        return self.submit_plan(
+            run_id, request, principal=receipt["principal"], command_key=command_key
+        )
+
     def approve_plan(
         self, run_id: str, request: dict[str, Any], *, command_key: str, principal: str
     ) -> dict[str, Any]:
