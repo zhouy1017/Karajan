@@ -15,8 +15,9 @@ from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from email.message import Message
 from pathlib import Path
-from typing import IO, BinaryIO, cast
+from typing import IO, Any, BinaryIO, cast
 from urllib.error import HTTPError, URLError
+from urllib.request import Request
 
 import pytest
 
@@ -502,6 +503,21 @@ def test_certificate_failure_is_deterministic_and_not_retried(
         SCRIPT.provision(tmp_path, open_url=connect)
 
     assert calls == 1
+
+
+def test_https_redirect_preserves_the_original_absolute_deadline() -> None:
+    original = Request("https://origin.invalid/start")
+    deadline = 123.45
+    cast(Any, original)._karajan_deadline = deadline
+    headers = Message()
+    headers["Location"] = "https://origin.invalid/final"
+
+    redirected = SCRIPT._HTTPSRedirects().redirect_request(
+        original, io.BytesIO(), 302, "Found", headers, "https://origin.invalid/final"
+    )
+
+    assert redirected is not None
+    assert cast(Any, redirected)._karajan_deadline == deadline
 
 
 def test_bad_digest_is_deterministic_and_never_retried(

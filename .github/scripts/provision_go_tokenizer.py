@@ -76,7 +76,10 @@ class _HTTPSRedirects(HTTPRedirectHandler):
         destination = urlsplit(newurl)
         if destination.scheme != "https" or destination.username or destination.password:
             raise ProvisionError("TOKENIZER_INSECURE_REDIRECT")
-        return super().redirect_request(req, fp, code, msg, headers, newurl)
+        redirected = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if redirected is not None and hasattr(req, "_karajan_deadline"):
+            cast(Any, redirected)._karajan_deadline = cast(Any, req)._karajan_deadline
+        return redirected
 
 
 def _open(url: str, *, timeout: float = 30.0) -> AbstractContextManager[BinaryIO]:
@@ -88,6 +91,7 @@ def _open(url: str, *, timeout: float = 30.0) -> AbstractContextManager[BinaryIO
     request = Request(
         url, headers={"User-Agent": "Karajan-tokenizer-provision/1", "Accept-Encoding": "identity"}
     )
+    cast(Any, request)._karajan_deadline = time.monotonic() + timeout
     return cast(AbstractContextManager[BinaryIO], opener.open(request, timeout=timeout))
 
 
@@ -181,8 +185,11 @@ class _DeadlineConnectionMixin:
     sock: Any
 
     def __init__(self, *args: object, **kwargs: object) -> None:
+        deadline = cast(float | None, kwargs.pop("deadline", None))
         timeout = cast(float | None, kwargs.get("timeout"))
-        self._deadline = None if timeout is None else time.monotonic() + timeout
+        self._deadline = deadline
+        if self._deadline is None and timeout is not None:
+            self._deadline = time.monotonic() + timeout
         super().__init__(*args, **kwargs)
 
     def connect(self) -> None:
@@ -200,11 +207,23 @@ class _DeadlineHTTPSConnection(_DeadlineConnectionMixin, HTTPSConnection):
 
 
 class _DeadlineHTTPHandler(HTTPHandler):
+    def do_open(self, http_class: Any, req: Request, **http_conn_args: Any) -> HTTPResponse:
+        deadline = getattr(req, "_karajan_deadline", None)
+        if deadline is not None:
+            http_conn_args["deadline"] = deadline
+        return super().do_open(http_class, req, **http_conn_args)
+
     def http_open(self, req: Request) -> HTTPResponse:
         return self.do_open(_DeadlineHTTPConnection, req)
 
 
 class _DeadlineHTTPSHandler(HTTPSHandler):
+    def do_open(self, http_class: Any, req: Request, **http_conn_args: Any) -> HTTPResponse:
+        deadline = getattr(req, "_karajan_deadline", None)
+        if deadline is not None:
+            http_conn_args["deadline"] = deadline
+        return super().do_open(http_class, req, **http_conn_args)
+
     def https_open(self, req: Request) -> HTTPResponse:
         context = cast(Any, self)._context
         return self.do_open(
