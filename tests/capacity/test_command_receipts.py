@@ -300,6 +300,7 @@ def test_admit_boundary_callback_skips_exact_historical_receipt(ledger):
         command_key="historical-admit",
         before_reserve=lambda: callbacks.append("called"),
         after_capacity_facts=lambda _: callbacks.append("facts"),
+        before_reservation_write=lambda: callbacks.append("write"),
     )
 
     assert replayed == original
@@ -357,6 +358,51 @@ def test_admit_facts_callback_failure_rolls_back_reservation_and_receipt(ledger)
 
     assert store.snapshot() == before
     assert store.command_receipt("admit", value, command_key="boundary-facts-failure") is None
+
+
+def test_admit_final_callback_runs_after_capacity_reads_and_rechecks_its_clock(ledger, monkeypatch):
+    store, clock = ledger
+    reads: list[str] = []
+    original = store._observation
+
+    def delayed_observation(*args):
+        observed = original(*args)
+        reads.append("observation")
+        clock[0] = 1005.0
+        return observed
+
+    monkeypatch.setattr(store, "_observation", delayed_observation)
+    callbacks: list[str] = []
+    rejected = store.admit(
+        request(),
+        command_key="final-capacity-temporal",
+        before_reservation_write=lambda: callbacks.append("write"),
+    )
+
+    assert reads
+    assert callbacks == []
+    assert rejected["decision"] == "rejected"
+    assert "OBSERVATION_STALE:short" in rejected["reason_codes"]
+    assert store.snapshot()["reservations"] == []
+
+
+def test_admit_final_callback_failure_rolls_back_reservation_and_receipt(ledger):
+    store, _ = ledger
+    value = request()
+    before = store.snapshot()
+
+    def expired_run_deadline() -> None:
+        raise RuntimeError("RUN_DURATION_LIMIT")
+
+    with pytest.raises(RuntimeError, match="^RUN_DURATION_LIMIT$"):
+        store.admit(
+            value,
+            command_key="final-capacity-deadline",
+            before_reservation_write=expired_run_deadline,
+        )
+
+    assert store.snapshot() == before
+    assert store.command_receipt("admit", value, command_key="final-capacity-deadline") is None
 
 
 def test_admit_rechecks_time_and_uses_the_post_callback_reservation_clock(ledger):
