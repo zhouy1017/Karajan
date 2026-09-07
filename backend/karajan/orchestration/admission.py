@@ -179,9 +179,14 @@ class ApprovedTaskAdmission:
             )
             if receipt is not None:
                 activation["receipt"] = receipt
-                operation["reason_codes"] = []
+                if receipt.get("decision") == "capacity_revalidated":
+                    operation["reason_codes"] = []
+                    self._save(db, operation)
+                    return operation
+                # Keep the immutable rejected receipt, then derive the current
+                # reservation state below. A past rejection cannot mask expiry.
+                operation["reason_codes"] = list(receipt.get("reason_codes", []))
                 self._save(db, operation)
-                return operation
         facts = self.routing.capacity.routing_facts()
         admission_id = operation["capacity_receipt"]["admission_id"]
         current = next(
@@ -364,6 +369,12 @@ class ApprovedTaskAdmission:
 
                             def check_budget_at_reservation() -> None:
                                 admission_allowed(db, run, now=self.routing.planner.clock())
+                                self.routing.reviewer_boundary_guard(
+                                    current,
+                                    worker_operation=reviewer_worker,
+                                    candidates=bindings.candidates,
+                                    now=self.routing.capacity.clock(),
+                                )
 
                             try:
                                 receipt = self.routing.capacity.admit(
@@ -439,7 +450,7 @@ class ApprovedTaskAdmission:
             if receipt is not None:
                 activation["receipt"] = receipt
                 self._save(db, operation)
-                return operation
+                return self._refresh(db, operation)
         # The intent is already durable. A retry uses this same key and
         # Capacity's idempotent receipt; it cannot create another activation.
         receipt = self.routing.capacity.activate(
@@ -452,7 +463,7 @@ class ApprovedTaskAdmission:
                 raise RunError("REVIEWER_ACTIVATION_INTENT_CHANGED")
             current["receipt"] = receipt
             self._save(db, operation)
-            return operation
+            return self._refresh(db, operation)
 
     def reconcile_reviewer(
         self, run_id: str, operation_id: str, *, principal: str
@@ -586,6 +597,12 @@ class ApprovedTaskAdmission:
                         capacity_receipt["admission_id"], expected_request=request
                     ) as capacity:
                         now = self.routing.planner.clock()
+                        self.routing.reviewer_boundary_guard(
+                            current,
+                            worker_operation=worker_operation,
+                            candidates=bindings.candidates,
+                            now=capacity["checked_at"],
+                        )
                         try:
                             current_process(
                                 db,

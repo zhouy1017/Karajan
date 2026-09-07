@@ -150,13 +150,32 @@ def _passed_reviewer_subject(binding_case):
     service.advance(*args, principal="owner")
     checks.advance(*args, principal="owner")  # Install the current bound subject.
     # This fixture has no native Check runner.  Make the already-controller-owned
-    # current Check cycle explicit C evidence, then exercise real admission and
-    # Capacity persistence below.
+    # current Check cycle explicit C evidence, including the CandidateStore log
+    # receipt that production revalidates at the Capacity boundary.
     with sqlite3.connect(intents.admissions.database) as db:
         row = db.execute("SELECT data FROM operations WHERE id=?", (args[1],)).fetchone()
         worker = json.loads(row[0])
         for check in worker["validation"]["checks"]["runs"]:
-            check.update(phase="recorded", evidence={"status": "passed"})
+            candidate = check["candidate"]
+            request = {
+                "evidence_key": "fixture-check-evidence:" + check["check_run_id"],
+                "candidate_id": candidate["id"],
+                "policy_sha256": candidate["policy_sha256"],
+                "input_sha256": candidate["input_sha256"],
+                "environment_sha256": check["environment"]["source_sha256"],
+                "observation_ref": check["check_run_id"],
+                "provenance": "fixture",
+                "check_id": check["check"]["id"],
+                "check_revision": check["check"]["revision"],
+                "executor_ref": "fixture-check-runner",
+                "exit_code": 0,
+                "outcome": "completed",
+            }
+            check.update(
+                phase="recorded",
+                evidence_request=request,
+                evidence=candidates.record_check(request, log=b"fixture check passed\n"),
+            )
         worker["validation"]["checks"]["phase"] = "checks_passed"
         db.execute("UPDATE operations SET data=? WHERE id=?", (json.dumps(worker), args[1]))
     routing = intents.admissions.routing
@@ -485,6 +504,43 @@ def test_reviewer_admission_rechecks_run_deadline_after_capacity_lock_wait(
     assert capacity.path.read_bytes() == before
 
 
+def test_reviewer_admission_holds_project_binding_until_capacity_reserve_boundary(
+    binding_case, monkeypatch
+):
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
+    reviewer = intents.admissions.enqueue(
+        run_id, "review", principal="owner", command_key="project-lock-at-reserve"
+    )
+    routing, capacity = intents.admissions.routing, intents.admissions.routing.capacity
+    project_id = routing.planner.get(run_id, principal="owner")["project_id"]
+    actual = capacity.admit
+    started = Event()
+    reads = []
+
+    def read_project():
+        started.set()
+        return routing.planner.projects.get_configuration(project_id)
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        def admission_with_probe(request, *, command_key, before_reserve=None):
+            assert before_reserve is not None
+
+            def held_before_reserve():
+                future = pool.submit(read_project)
+                reads.append(future)
+                assert started.wait(2)
+                with pytest.raises(TimeoutError):
+                    future.result(timeout=0.15)
+                before_reserve()
+
+            return actual(request, command_key=command_key, before_reserve=held_before_reserve)
+
+        monkeypatch.setattr(capacity, "admit", admission_with_probe)
+        reserved = intents.admissions.advance(run_id, reviewer["id"], principal="owner")
+        assert reserved["state"] == "reserved"
+        assert reads[0].result(timeout=5)["project_id"] == project_id
+
+
 def test_multiple_credible_worker_operations_are_rejected_before_capacity(binding_case):
     intents, (run_id, worker_operation_id), _, _, _ = _passed_reviewer_subject(binding_case)
     with sqlite3.connect(intents.admissions.database) as db:
@@ -529,6 +585,142 @@ def test_current_check_change_blocks_reviewer_admission_before_capacity(binding_
     assert result["state"] == "blocked"
     assert result["reason_codes"] == ["REVIEW_SUBJECT_CHECKS_REQUIRED"]
     assert intents.admissions.routing.capacity.path.read_bytes() == before
+
+
+def test_missing_current_final_check_artifact_blocks_reviewer_capacity_admission(binding_case):
+    intents, (run_id, _), candidates, _, _ = _passed_reviewer_subject(binding_case)
+    queued = intents.admissions.enqueue(
+        run_id, "review", principal="owner", command_key="missing-check-artifact"
+    )
+    before = intents.admissions.routing.capacity.path.read_bytes()
+    retained = candidates.objects.with_name("retained-check-artifacts")
+    candidates.objects.rename(retained)
+    try:
+        blocked = intents.admissions.advance(run_id, queued["id"], principal="owner")
+    finally:
+        retained.rename(candidates.objects)
+    assert blocked["state"] == "blocked"
+    assert blocked["reason_codes"] == ["REVIEW_SUBJECT_CHECKS_REQUIRED"]
+    assert intents.admissions.routing.capacity.path.read_bytes() == before
+
+
+@pytest.mark.parametrize(
+    ("source", "reason"),
+    [
+        ("qualification", "REVIEWER_QUALIFICATION_EXPIRED"),
+        ("estimate", "REVIEWER_ESTIMATE_EXPIRED"),
+    ],
+)
+def test_reviewer_elapsed_source_expiry_after_capacity_lock_blocks_reservation(
+    binding_case, monkeypatch, source, reason
+):
+    _, qualification, intents, (run_id, _), _, _, _ = binding_case
+    _passed_reviewer_subject(binding_case)
+    queued = intents.admissions.enqueue(
+        run_id, "review", principal="owner", command_key="elapsed-" + source
+    )
+    routing, capacity = intents.admissions.routing, intents.admissions.routing.capacity
+    if source == "qualification":
+        qualification.mutate = lambda observed: observed["facts"].update(valid_until=1001.0)
+    else:
+        original = routing.estimates.estimate_locked
+
+        def short_lived(*args, **kwargs):
+            result = deepcopy(original(*args, **kwargs))
+            if result["source_binding"] is not None:
+                result["source_binding"]["valid_until"] = 1001.0
+            return result
+
+        monkeypatch.setattr(routing.estimates, "estimate_locked", short_lived)
+    actual = capacity.admit
+
+    def after_capacity_lock(request, *, command_key, before_reserve=None):
+        capacity.clock = lambda: 1001.0
+        return actual(request, command_key=command_key, before_reserve=before_reserve)
+
+    monkeypatch.setattr(capacity, "admit", after_capacity_lock)
+    before = capacity.path.read_bytes()
+    blocked = intents.admissions.advance(run_id, queued["id"], principal="owner")
+    assert blocked["state"] == "blocked"
+    assert blocked["reason_codes"] == [reason]
+    assert capacity.path.read_bytes() == before
+
+
+def test_rejected_reviewer_activation_does_not_mask_later_reservation_expiry(binding_case):
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
+    reviewer = intents.admissions.advance(
+        run_id,
+        intents.admissions.enqueue(
+            run_id, "review", principal="owner", command_key="rejected-activation"
+        )["id"],
+        principal="owner",
+    )
+    capacity = intents.admissions.routing.capacity
+    policy = capacity.snapshot()["policies"][-1]["policy"]
+    capacity.activate_policy(policy, expected_revision=1, command_key="changed-before-activation")
+    rejected = intents.admissions.activate_reviewer(run_id, reviewer["id"], principal="owner")
+    assert rejected["state"] == "reserved"
+    assert rejected["reviewer_activation"]["receipt"]["decision"] == "rejected"
+    assert rejected["reason_codes"] == ["CAPACITY_POLICY_REVISION_CHANGED"]
+    capacity.clock = lambda: rejected["reviewer_activation"]["receipt"]["expires_at"] + 1.0
+    expired = intents.admissions.get(run_id, reviewer["id"], principal="owner")
+    assert expired["state"] == "expired"
+    assert expired["reason_codes"] == ["RESERVATION_EXPIRED_UNSENT"]
+    reopened = intents.admissions.enqueue(
+        run_id, "review", principal="owner", command_key="after-rejected-expiry"
+    )
+    assert reopened["state"] == "queued"
+
+
+@pytest.mark.parametrize(
+    ("source", "reason"),
+    [
+        ("qualification", "REVIEWER_QUALIFICATION_EXPIRED"),
+        ("estimate", "REVIEWER_ESTIMATE_EXPIRED"),
+    ],
+)
+def test_reviewer_elapsed_source_expiry_after_capacity_effect_lock_blocks_execution_guard(
+    binding_case, monkeypatch, source, reason
+):
+    _, qualification, intents, (run_id, _), _, _, _ = binding_case
+    _passed_reviewer_subject(binding_case)
+    routing, capacity = intents.admissions.routing, intents.admissions.routing.capacity
+    if source == "qualification":
+        qualification.mutate = lambda observed: observed["facts"].update(valid_until=1001.0)
+    else:
+        original_estimate = routing.estimates.estimate_locked
+
+        def short_lived(*args, **kwargs):
+            result = deepcopy(original_estimate(*args, **kwargs))
+            if result["source_binding"] is not None:
+                result["source_binding"]["valid_until"] = 1001.0
+            return result
+
+        monkeypatch.setattr(routing.estimates, "estimate_locked", short_lived)
+    reviewer = intents.admissions.advance(
+        run_id,
+        intents.admissions.enqueue(
+            run_id, "review", principal="owner", command_key="effect-elapsed-" + source
+        )["id"],
+        principal="owner",
+    )
+    _activate_reviewer_reservation(intents, run_id, reviewer)
+    actual = capacity.pre_effect_guard
+
+    @contextmanager
+    def after_capacity_lock(*args, **kwargs):
+        capacity.clock = lambda: 1001.0
+        with actual(*args, **kwargs) as held:
+            yield held
+
+    monkeypatch.setattr(capacity, "pre_effect_guard", after_capacity_lock)
+    before = capacity.snapshot()
+    with pytest.raises(RunError, match=reason):
+        with intents.admissions.reviewer_reserved_effect_guard(
+            run_id, reviewer["id"], principal="owner"
+        ):
+            pytest.fail("expired source entered the Reviewer effect guard")
+    assert capacity.snapshot() == before
 
 
 def test_reviewer_admission_reuses_one_exact_request_after_lost_reply(binding_case, monkeypatch):

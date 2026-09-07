@@ -490,6 +490,61 @@ class ApprovedRunRouting:
             receipt["digest"] = digest(receipt)
             yield receipt
 
+    def reviewer_boundary_guard(
+        self,
+        assessment: dict[str, Any],
+        *,
+        worker_operation: dict[str, Any],
+        candidates: Any,
+        now: float,
+    ) -> None:
+        """Recheck elapsed Reviewer facts while the caller still holds Project and Capacity.
+
+        The caller owns operation -> Run -> Project and invokes this only after
+        Capacity has acquired its boundary transaction.  Project writes cannot
+        replace the locked source; elapsed qualification/estimate facts and
+        Candidate artifacts still need a fresh read at this moment.
+        """
+        if assessment.get("state") != "selected":
+            raise RunError("RESERVED_REVIEWER_ROUTE_NOT_CURRENT")
+        route = assessment.get("route")
+        sources = assessment.get("sources")
+        if not isinstance(route, dict) or not isinstance(sources, dict):
+            raise RunError("RESERVED_REVIEWER_ROUTE_NOT_CURRENT")
+        selected = route.get("selected_profile")
+        if not isinstance(selected, dict):
+            raise RunError("RESERVED_REVIEWER_ROUTE_NOT_CURRENT")
+        if type(now) not in (int, float):
+            raise RunError("REVIEWER_BOUNDARY_CLOCK_INVALID")
+        profile = next(
+            (
+                row.get("qualification")
+                for row in sources.get("profiles", [])
+                if row.get("profile") == selected
+            ),
+            None,
+        )
+        facts = profile.get("facts") if isinstance(profile, dict) else None
+        if (
+            not isinstance(facts, dict)
+            or not facts.get("observed_at", now + 1) <= now < facts.get("valid_until", now)
+        ):
+            raise RunError("REVIEWER_QUALIFICATION_EXPIRED")
+        estimate = next(
+            (
+                row.get("source_binding")
+                for row in sources.get("estimates", [])
+                if row.get("profile") == selected
+            ),
+            None,
+        )
+        if (
+            not isinstance(estimate, dict)
+            or not estimate.get("created_at", now + 1) <= now < estimate.get("valid_until", now)
+        ):
+            raise RunError("REVIEWER_ESTIMATE_EXPIRED")
+        _current_reviewer_check_artifacts(worker_operation, candidates)
+
     def _build(
         self,
         receipt: dict[str, Any],
@@ -824,6 +879,48 @@ def _current_binding(frozen: dict[str, Any], catalog: dict[str, Any], row: dict[
             if before is None or before != after:
                 return False
     return registered["enabled"] is True
+
+
+def _current_reviewer_check_artifacts(worker_operation: dict[str, Any], candidates: Any) -> None:
+    """Require every persisted final Check log through CandidateStore's current gate."""
+    from karajan.candidates import CandidateError
+
+    checks = worker_operation.get("validation", {}).get("checks", {})
+    rows = checks.get("runs") if isinstance(checks, dict) else None
+    if not isinstance(rows, list) or not rows:
+        raise RunError("REVIEW_SUBJECT_CHECKS_REQUIRED")
+    try:
+        for row in rows:
+            evidence = row["evidence"]
+            candidate = candidates.get(row["evidence_request"]["candidate_id"])
+            current = {
+                key: candidate[key]
+                for key in ("repository_identity", "base_sha", "input_sha256", "policy_sha256")
+            }
+            gate = candidates.gate(candidate["id"], current=current)
+            stored = next(
+                (
+                    item
+                    for item in gate["evidence"]
+                    if item.get("kind") == "check" and item.get("id") == evidence.get("id")
+                ),
+                None,
+            )
+            if (
+                evidence.get("status") != "passed"
+                or stored is None
+                or stored.get("effective_status") != "passed"
+                or "ARTIFACT_UNAVAILABLE" in gate["reasons"]
+                or any(
+                    reason.startswith("CHECK_EVIDENCE_MISSING:")
+                    or reason.startswith("CHECK_NOT_PASSED:")
+                    for reason in gate["reasons"]
+                )
+            ):
+                raise RunError("REVIEW_SUBJECT_CHECKS_REQUIRED")
+    except (CandidateError, KeyError, TypeError):
+        raise RunError("REVIEW_SUBJECT_CHECKS_REQUIRED") from None
+
 
 
 def _reviewer_lineage(
