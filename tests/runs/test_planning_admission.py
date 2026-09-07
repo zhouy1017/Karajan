@@ -34,9 +34,15 @@ def configured(project: tuple[Any, dict, Path]) -> dict:
 
 
 class FixtureCommander:
-    def __init__(self, profile_facts: dict[str, Any], available: bool = True) -> None:
+    def __init__(
+        self,
+        profile_facts: dict[str, Any],
+        available: bool = True,
+        valid_until: float = 2_000_000_000.0,
+    ) -> None:
         self.available = available
         self.profile_facts = profile_facts
+        self.valid_until = valid_until
 
     def read_commander(
         self, binding: dict[str, Any], *, scope: str, reader_version: str
@@ -50,7 +56,7 @@ class FixtureCommander:
             "binding_sha256": digest(binding),
             "record_sha256": "a" * 64,
             "source_generation_sha256": "b" * 64,
-            "valid_until": 2_000_000_000.0,
+            "valid_until": self.valid_until,
             "capabilities": ["design_reasoning", "structured_plan_output"],
             "provenance": "fixture",
             "profile_facts": self.profile_facts,
@@ -285,12 +291,16 @@ def test_two_runs_contend_for_commander_protected_full_capacity_vector(
         principal="owner",
     )
     runs = [
-        planner.create(request_v2(configured, fixed), command_key="two-runs-" + label, principal="owner")
+        planner.create(
+            request_v2(configured, fixed), command_key="two-runs-" + label, principal="owner"
+        )
         for label in ("one", "two")
     ]
     execution_service = PlanningExecution(tmp_path / "two-runs-execution.sqlite", planner)
     intents = [
-        planner.planning_intent(run["id"], term=1, command_key="two-intent-" + str(index), principal="lead")
+        planner.planning_intent(
+            run["id"], term=1, command_key="two-intent-" + str(index), principal="lead"
+        )
         for index, run in enumerate(runs, start=1)
     ]
     executions = [
@@ -436,6 +446,35 @@ def test_effect_guard_rechecks_the_original_run_budget_deadline(
     with pytest.raises(RunError, match="PLANNING_BUDGET_EXPIRED"):
         with authority.effect_guard(execution["id"], "owner", "start"):
             pass
+
+
+def test_capacity_boundary_rechecks_commander_expiry_before_reservation(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    now = [1000.0]
+    _, authority, _, execution = _case(tmp_path, configured, clock=lambda: now[0])
+    commander = authority.qualifications
+    assert isinstance(commander, FixtureCommander)
+    commander.valid_until = 1001.0
+    original = authority.capacity.admit
+
+    def expire_while_capacity_is_held(
+        request: dict[str, Any],
+        *,
+        command_key: str,
+        before_reserve: Callable[[], None] | None = None,
+    ) -> dict[str, Any]:
+        def expired_callback() -> None:
+            now[0] = 1001.0
+            assert before_reserve is not None
+            before_reserve()
+
+        return original(request, command_key=command_key, before_reserve=expired_callback)
+
+    monkeypatch.setattr(authority.capacity, "admit", expire_while_capacity_is_held)
+    denied = authority.advance(execution["id"], "owner", "advance")
+    assert denied["reason_codes"] == ["COMMANDER_QUALIFICATION_EXPIRED"]
+    assert authority.capacity.snapshot()["reservations"] == []
 
 
 def test_lost_activation_reply_reopens_the_original_capacity_command(

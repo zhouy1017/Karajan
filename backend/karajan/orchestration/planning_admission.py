@@ -745,6 +745,39 @@ class PlanningAdmissionAuthority:
         ):
             raise RunError("PLANNING_BUDGET_EXPIRED")
 
+    def _current_qualification_guard(
+        self, binding: dict[str, Any], held_run: dict[str, Any]
+    ) -> Any:
+        """Keep an actual current Commander fact locked through Capacity.
+
+        Persistent readers supply a private Run-locked Project guard. Fixture
+        readers retain the legacy C seam, but still return a fresh fact that is
+        checked again at the Capacity boundary.
+        """
+        reader_guard = getattr(self.qualifications, "current_guard_locked", None)
+        if callable(reader_guard):
+            return reader_guard(
+                binding,
+                held_run,
+                scope=COMMANDER_QUALIFICATION_SCOPE,
+                reader_version=COMMANDER_QUALIFICATION_READER_VERSION,
+            )
+        return nullcontext(
+            self.qualifications.read_commander(
+                binding,
+                scope=COMMANDER_QUALIFICATION_SCOPE,
+                reader_version=COMMANDER_QUALIFICATION_READER_VERSION,
+            )
+        )
+
+    def _assert_qualification_live(self, record: dict[str, Any], current: object) -> None:
+        """Reject source/fact drift or expiry at the actual Capacity boundary."""
+        if not isinstance(current, dict) or current != record.get("qualification"):
+            raise RunError("COMMANDER_QUALIFICATION_CHANGED")
+        valid_until = current.get("valid_until")
+        if not isinstance(valid_until, (int, float)) or valid_until <= self.planner.clock():
+            raise RunError("COMMANDER_QUALIFICATION_EXPIRED")
+
     @staticmethod
     def _budget(run: dict[str, Any], budget_ref: str) -> tuple[dict[str, Any], str]:
         configuration = run["configuration_snapshot"]
@@ -1106,16 +1139,21 @@ class PlanningAdmissionAuthority:
             # cannot create a late reservation.
             with self.planner.activation_guard(binding["run_id"]) as held_run:
                 self._run_intent_from_run(held_run, binding, principal)
-                self._budget_live(record)
-                receipt = self.capacity.command_receipt(
-                    "admit", request, command_key=record["capacity_command_key"]
-                ) or self.capacity.admit(
-                    request,
-                    command_key=record["capacity_command_key"],
-                    before_reserve=lambda: self._assert_budget_deadline(
-                        record, record["budget_usage"]
-                    ),
-                )
+                with self._current_qualification_guard(binding, held_run) as qualification:
+                    self._assert_qualification_live(record, qualification)
+                    self._budget_live(record)
+
+                    def before_reserve() -> None:
+                        self._assert_qualification_live(record, qualification)
+                        self._assert_budget_deadline(record, record["budget_usage"])
+
+                    receipt = self.capacity.command_receipt(
+                        "admit", request, command_key=record["capacity_command_key"]
+                    ) or self.capacity.admit(
+                        request,
+                        command_key=record["capacity_command_key"],
+                        before_reserve=before_reserve,
+                    )
         except (CapacityError, RunError) as error:
             return self._finish_command(
                 self._deny(record, str(error)), principal, command_key, payload
@@ -1207,31 +1245,8 @@ class PlanningAdmissionAuthority:
             # guard supplies its snapshot so no public getter re-enters it.
             with self.planner.activation_guard(binding["run_id"]) as held_run:
                 self._run_intent_from_run(held_run, binding, principal)
-                reader_guard = getattr(self.qualifications, "current_guard_locked", None)
-                qualification_guard = (
-                    reader_guard(
-                        binding,
-                        held_run,
-                        scope=COMMANDER_QUALIFICATION_SCOPE,
-                        reader_version=COMMANDER_QUALIFICATION_READER_VERSION,
-                    )
-                    if callable(reader_guard)
-                    else nullcontext(
-                        self.qualifications.read_commander(
-                            binding,
-                            scope=COMMANDER_QUALIFICATION_SCOPE,
-                            reader_version=COMMANDER_QUALIFICATION_READER_VERSION,
-                        )
-                    )
-                )
-                with qualification_guard as qualification:
-                    if (
-                        not isinstance(qualification, dict)
-                        or qualification != record["qualification"]
-                    ):
-                        raise RunError("COMMANDER_QUALIFICATION_CHANGED")
-                    if qualification["valid_until"] <= self.planner.clock():
-                        raise RunError("COMMANDER_QUALIFICATION_EXPIRED")
+                with self._current_qualification_guard(binding, held_run) as qualification:
+                    self._assert_qualification_live(record, qualification)
                     # Project qualification remains held until Capacity has
                     # revalidated the reservation and the caller's effect
                     # exits. The deadline is deliberately checked after the
@@ -1240,6 +1255,7 @@ class PlanningAdmissionAuthority:
                         record["capacity_receipt"]["admission_id"],
                         expected_request=record["capacity_request"],
                     ) as capacity:
+                        self._assert_qualification_live(record, qualification)
                         self._assert_budget_deadline(record, record["budget_usage"])
                         yield {
                             "execution_id": execution_id,
