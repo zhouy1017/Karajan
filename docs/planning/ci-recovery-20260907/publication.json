@@ -1,0 +1,30 @@
+{
+  "schema_version": "karajan.ci-recovery-publication.v1",
+  "captured_at_utc": "2026-09-07T06:54:00.053545+00:00",
+  "base_commit": "6cf89abc1a6ca8cb99d76f82191dc7d82efeb05b",
+  "relationship": "Standalone CI repair tasks related to #10 and current delivery PRs; no new parent requirement or relaxation of original acceptance criteria.",
+  "issues": [
+    {
+      "number": 122,
+      "url": "https://github.com/zhouy1017/Karajan/issues/122",
+      "title": "CI修复｜Luna Windows 全量质量门执行预算",
+      "body_file": "issue-122.md",
+      "body_sha256": "9e10ff664751bc559e0ba85c6b5d20b804018fa421dfd10e5e2821ff89cebbb7",
+      "worker": "gpt-5.6-luna",
+      "reviewer": "gpt-6-astra high",
+      "blocked_by_observed": [],
+      "status_authority": "GitHub Issues"
+    },
+    {
+      "number": 123,
+      "url": "https://github.com/zhouy1017/Karajan/issues/123",
+      "title": "CI修复｜Terra CheckRunner 丢进程回复后的 init 文件竞态",
+      "body_file": "issue-123.md",
+      "body_sha256": "905837829616b9ba2ac68aa77b5686d358356a4dd68a62e1632be079f480908a",
+      "worker": "gpt-5.6-terra",
+      "reviewer": "gpt-6-astra high",
+      "blocked_by_observed": [],
+      "status_authority": "GitHub Issues"
+    }
+  ]
+}
