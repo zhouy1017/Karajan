@@ -234,6 +234,31 @@ def test_local_path_is_exact(path: str) -> None:
         assert not requests
 
 
+def test_wrong_path_with_a_streaming_body_returns_404_without_upstream() -> None:
+    body = b"x" * 200_000
+
+    def chunks():
+        for offset in range(0, len(body), 1024):
+            yield body[offset : offset + 1024]
+            time.sleep(0.002)
+
+    with running() as (relay, requests), httpx.Client(trust_env=False, timeout=5) as client:
+        response = client.post(
+            relay.url + "/models",
+            headers={
+                "Authorization": f"Bearer {relay.capability}",
+                "x-opencode-session": "ses_test",
+                "Content-Length": str(len(body)),
+                "Content-Type": "application/json",
+            },
+            content=chunks(),
+        )
+        assert response.status_code == 404
+        assert response.json() == {"error": {"type": "INVALID_PATH"}}
+        assert not requests
+        assert not relay.receipts
+
+
 def test_capability_and_session_are_required_and_never_forward_arbitrary_headers() -> None:
     with running() as (relay, requests):
         response = post(
