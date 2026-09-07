@@ -1,8 +1,11 @@
 # Issue 107 ordered execution handoff
 
-This is a future execution handoff, not authorization and not new S evidence.
-The only reviewed command is the following; it enters `main -> execute` in the
-ordered driver and must not be substituted with `run_official_issue107.run`.
+This was the reviewed execution handoff, not authorization and not new S
+evidence.  The command below was consumed as immutable attempt4.  Its suite
+completed with six official requests, but the process did not persist a binding
+positive control or subsequent revoke before the start expired.  It must not be
+replayed or substituted with `run_official_issue107.run`; see
+`ISSUE-107-ATTEMPT4-INTERRUPTED.md` for its retained outcome.
 
 ```text
 wsl.exe -d Ubuntu -- bash -lc 'cd /mnt/c/Users/Chooo/Playground/Karajan/.cache/dispatch-reviewer-official && /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python examples/go-readonly-reviewer-qualification-20260907/run_issue107_ordered_consumer.py execute --private-root /home/chow/karajan-issue107-controller --report examples/go-readonly-reviewer-qualification-20260907/issue107-ordered-attempt4-evidence.json'
