@@ -12,6 +12,7 @@ import argparse
 import copy
 import hashlib
 import json
+import sqlite3
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -202,6 +203,22 @@ def open_controller(
         reviewer,
         journal,
     )
+
+
+def open_existing_controller(private_root: Path) -> tuple[ProfileQualificationStore, str]:
+    """Re-open the fixed qualification authority without creating a project or credential."""
+    p = paths(private_root)
+    registry = ProjectRegistry(p["state"], [p["repo"]], existing_only=True)
+    with sqlite3.connect(p["state"].resolve().as_uri() + "?mode=ro", uri=True) as database:
+        rows = database.execute("SELECT id, snapshot FROM projects").fetchall()
+    matches = [
+        project_id
+        for project_id, snapshot in rows
+        if json.loads(snapshot).get("name") == "Issue 107 fixed Reviewer qualification"
+    ]
+    if len(matches) != 1:
+        raise QualificationError("QUALIFICATION_START_NOT_FOUND")
+    return ProfileQualificationStore(registry), matches[0]
 
 
 def scenario_summary(row: dict[str, Any]) -> dict[str, Any]:

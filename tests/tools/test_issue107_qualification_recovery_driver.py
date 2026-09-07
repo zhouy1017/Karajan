@@ -31,6 +31,35 @@ def _competing_stage_writer(directory: str, status: str) -> str:
     return "accepted"
 
 
+def _competing_recovery(directory: str) -> str:
+    """A separate process races the entire effect decision, not just one receipt."""
+    root = Path(directory)
+
+    class ProcessStore(Store):
+        pass
+
+    def positive() -> dict[str, Any]:
+        with (root / "positive-effects.log").open("a", encoding="utf-8") as stream:
+            stream.write("effect\n")
+            stream.flush()
+        return {"state": "ready"}
+
+    result = driver.QualificationRecovery(
+        driver.ReceiptLedger(root / "receipts"),
+        ProcessStore(),
+        project_id="project",
+        positive_history=lambda: None,
+        positive=positive,
+        negative=lambda: {
+            "expected_revoke_reason_observed": True,
+            "result": {"state": "blocked", "reason_codes": ["QUALIFICATION_REVOKED"]},
+            "qualification_issues": [{"reason_code": "QUALIFICATION_REVOKED"}],
+        },
+        now=lambda: 1000.0,
+    ).resume()
+    return str(result["status"])
+
+
 class Store:
     def __init__(self, *, expires_at: float = 2000.0, status: str = "passed") -> None:
         self.start = {"id": "start", "qualification_id": "record", "expires_at": expires_at}
@@ -85,7 +114,15 @@ def recovery(
         project_id="project",
         positive_history=(lambda: None) if history is None else history,
         positive=(lambda: {"state": "ready"}) if positive is None else positive,
-        negative=(lambda: {"reason": "QUALIFICATION_REVOKED"}) if negative is None else negative,
+        negative=(
+            lambda: {
+                "expected_revoke_reason_observed": True,
+                "result": {"state": "blocked", "reason_codes": ["QUALIFICATION_REVOKED"]},
+                "qualification_issues": [{"reason_code": "QUALIFICATION_REVOKED"}],
+            }
+        )
+        if negative is None
+        else negative,
         now=lambda: 1000.0,
     )
 
@@ -98,6 +135,7 @@ def test_resume_uses_only_original_store_records_and_persists_every_stage(tmp_pa
     assert [path.stem for path in (tmp_path / "receipts").glob("*.json")] == [
         "complete",
         "negative_history_observed",
+        "positive_claimed",
         "positive_observed",
         "preflight",
         "qualification_observed",
@@ -179,7 +217,12 @@ def test_revoked_record_with_persisted_positive_recovery_runs_only_negative_hist
         tmp_path,
         store,
         positive=lambda: calls.append("positive"),
-        negative=lambda: calls.append("negative") or {"reason": "QUALIFICATION_REVOKED"},
+        negative=lambda: calls.append("negative")
+        or {
+            "expected_revoke_reason_observed": True,
+            "result": {"state": "blocked", "reason_codes": ["QUALIFICATION_REVOKED"]},
+            "qualification_issues": [{"reason_code": "QUALIFICATION_REVOKED"}],
+        },
         history=lambda: {"state": "ready", "transition": "original"},
     ).resume()
     assert result["status"] == "completed"
@@ -209,6 +252,32 @@ def test_multiprocess_stage_race_preserves_the_first_committed_receipt(tmp_path:
     assert sorted(outcomes) == ["accepted", "conflict"]
     receipt = driver.ReceiptLedger(tmp_path / "receipts").read("positive_observed")
     assert receipt is not None and receipt["status"] in {"passed", "unknown"}
+
+
+def test_multiprocess_resume_claims_and_calls_positive_once(tmp_path: Path) -> None:
+    """The recovery lock spans history, claim, effect and durable observation."""
+    with ProcessPoolExecutor(max_workers=2) as pool:
+        statuses = list(pool.map(_competing_recovery, [str(tmp_path)] * 2))
+    assert statuses == ["completed", "completed"]
+    assert (tmp_path / "positive-effects.log").read_text(encoding="utf-8").splitlines() == [
+        "effect"
+    ]
+    claim = driver.ReceiptLedger(tmp_path / "receipts").read("positive_claimed")
+    assert claim is not None and claim["status"] == "claimed"
+
+
+def test_legacy_unknown_is_imported_before_any_new_sqlite_stage(tmp_path: Path) -> None:
+    legacy = {
+        "schema_version": "karajan.issue107-recovery-stage.v1",
+        "stage": "positive_observed",
+        "status": "unknown",
+    }
+    (tmp_path / "positive_observed.json").write_text(json.dumps(legacy), encoding="utf-8")
+    ledger = driver.ReceiptLedger(tmp_path)
+    assert ledger.read("positive_observed") == legacy
+    with pytest.raises(driver.RecoveryError, match="RESUME_RECEIPT_CONFLICT"):
+        ledger.write("positive_observed", {"status": "passed"})
+    assert ledger.read("positive_observed") == legacy
 
 
 def test_execute_prepares_before_the_one_qualification_call_and_then_reuses_resume(
@@ -340,7 +409,12 @@ def test_actual_store_views_use_bound_start_expiry_and_separate_revoke_receipt(
         tmp_path,
         ActualStore(),
         positive=lambda: calls.append("positive"),
-        negative=lambda: calls.append("negative"),
+        negative=lambda: calls.append("negative")
+        or {
+            "expected_revoke_reason_observed": True,
+            "result": {"state": "blocked", "reason_codes": ["QUALIFICATION_REVOKED"]},
+            "qualification_issues": [{"reason_code": "QUALIFICATION_REVOKED"}],
+        },
         history=lambda: {"state": "ready", "membership_only": True},
     ).resume()
     assert result["status"] == "completed"
@@ -446,7 +520,11 @@ def test_real_profile_store_revoke_commit_reply_loss_is_read_back_without_repeat
         project_id=actual_case["project_id"],
         positive_history=lambda: None,
         positive=lambda: {"state": "ready"},
-        negative=lambda: {"reason": "QUALIFICATION_REVOKED"},
+        negative=lambda: {
+            "expected_revoke_reason_observed": True,
+            "result": {"state": "blocked", "reason_codes": ["QUALIFICATION_REVOKED"]},
+            "qualification_issues": [{"reason_code": "QUALIFICATION_REVOKED"}],
+        },
         now=lambda: actual_case["clock"][0],
     ).resume()
     assert result["status"] == "completed"

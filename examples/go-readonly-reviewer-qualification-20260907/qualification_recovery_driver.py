@@ -10,13 +10,16 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import inspect
 import json
 import os
 import sqlite3
 import sys
 import tempfile
+import threading
 import time
 from collections.abc import Callable
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Protocol, cast
 
@@ -34,6 +37,15 @@ SAFE_CODES = {
     "MEMBERSHIP_HISTORY_UNAVAILABLE",
     "UNCLASSIFIED",
 }
+_LOCAL_LOCKS: dict[str, threading.RLock] = {}
+_LOCAL_LOCKS_GUARD = threading.Lock()
+
+
+def _posix_lock(descriptor: int, mode: str) -> None:
+    import fcntl
+
+    flag = fcntl.LOCK_EX if mode == "exclusive" else fcntl.LOCK_UN  # type: ignore[attr-defined]
+    fcntl.flock(descriptor, flag)  # type: ignore[attr-defined]
 
 
 class RecoveryError(ValueError):
@@ -106,17 +118,36 @@ def _qualification_ref(record: dict[str, Any]) -> str:
     return prefix + ":" + str(record["id"])
 
 
-def _matching_history(value: dict[str, Any] | None, record: dict[str, Any]) -> bool:
-    # Real SQLite consumer receipts always carry this source-bound reference.
-    # Small internal adapters without a source field cannot be mistaken for a
-    # foreign receipt because they are not used by the production entrypoint.
-    return bool(
-        value
-        and (
-            "qualification_ref" not in value
-            or value.get("qualification_ref") == _qualification_ref(record)
-        )
-    )
+def _identity(start: dict[str, Any], record: dict[str, Any]) -> dict[str, Any]:
+    """The immutable qualification identity which owns this consumer effect."""
+    execution = start.get("binding", {}).get("execution_start", {})
+    immutable_record = {key: value for key, value in record.items() if key != "revocation"}
+    return {
+        "command": COMMAND,
+        "record_id": record.get("id"),
+        "qualification_ref": _qualification_ref(record),
+        "start_sha256": _sha(start),
+        "record_sha256": _sha(immutable_record),
+        "execution_start_sha256": _sha(execution) if isinstance(execution, dict) else None,
+    }
+
+
+def _matching_history(
+    value: dict[str, Any] | None,
+    record: dict[str, Any],
+    identity: dict[str, Any],
+    *,
+    strict: bool,
+) -> bool:
+    """Accept only a receipt explicitly bound to this original command identity."""
+    if not isinstance(value, dict):
+        return False
+    if not strict:
+        return value.get("membership_only") is True or value.get("state") == "ready"
+    if value.get("qualification_ref") != _qualification_ref(record):
+        return False
+    observed = value.get("qualification_identity")
+    return isinstance(observed, dict) and observed == identity and value.get("membership_only") is True
 
 
 def _record_view(value: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any] | None]:
@@ -156,15 +187,7 @@ class ReceiptLedger:
         )
         return database
 
-    def read(self, stage: str) -> dict[str, Any] | None:
-        with self._connection() as database:
-            row = database.execute("SELECT receipt FROM stages WHERE stage=?", (stage,)).fetchone()
-        if row is not None:
-            try:
-                value = json.loads(row[0])
-            except (TypeError, json.JSONDecodeError):
-                raise RecoveryError("RESUME_RECEIPT_CONFLICT") from None
-            return value if isinstance(value, dict) else None
+    def _legacy(self, stage: str) -> dict[str, Any] | None:
         path = self.directory / f"{stage}.json"
         if not path.exists():
             return None
@@ -172,21 +195,95 @@ class ReceiptLedger:
             value = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, UnicodeDecodeError, json.JSONDecodeError):
             raise RecoveryError("RESUME_RECEIPT_CONFLICT") from None
-        return value if isinstance(value, dict) else None
+        if not isinstance(value, dict) or value.get("stage") != stage:
+            raise RecoveryError("RESUME_RECEIPT_CONFLICT")
+        return value
 
-    def write(self, stage: str, receipt: dict[str, Any]) -> dict[str, Any]:
+    @staticmethod
+    def _decoded(value: object) -> dict[str, Any]:
+        try:
+            decoded = json.loads(cast(str, value))
+        except (TypeError, json.JSONDecodeError):
+            raise RecoveryError("RESUME_RECEIPT_CONFLICT") from None
+        if not isinstance(decoded, dict):
+            raise RecoveryError("RESUME_RECEIPT_CONFLICT")
+        return decoded
+
+    def _import_legacy(self, database: sqlite3.Connection, stage: str) -> dict[str, Any] | None:
+        """Make the original JSON receipt authoritative before any new SQLite fact."""
+        legacy = self._legacy(stage)
+        row = database.execute("SELECT receipt FROM stages WHERE stage=?", (stage,)).fetchone()
+        current = None if row is None else self._decoded(row[0])
+        if legacy is None:
+            return current
+        if current is None:
+            database.execute(
+                "INSERT INTO stages VALUES (?,?)",
+                (stage, json.dumps(legacy, ensure_ascii=False, sort_keys=True, separators=(",", ":"))),
+            )
+            return legacy
+        if current != legacy:
+            raise RecoveryError("RESUME_RECEIPT_CONFLICT")
+        return legacy
+
+    @contextmanager
+    def recovery_lock(self) -> Any:
+        """Serialize the complete decide/claim/effect/reconcile transaction across processes."""
+        self.directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+        key = str(self.directory.resolve())
+        with _LOCAL_LOCKS_GUARD:
+            thread_lock = _LOCAL_LOCKS.setdefault(key, threading.RLock())
+        with thread_lock:
+            lock_path = self.directory / ".recovery.lock"
+            descriptor = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+            try:
+                if os.fstat(descriptor).st_size == 0:
+                    os.write(descriptor, b"0")
+                os.lseek(descriptor, 0, os.SEEK_SET)
+                if os.name == "nt":
+                    import msvcrt
+
+                    msvcrt.locking(descriptor, msvcrt.LK_LOCK, 1)
+                else:
+                    _posix_lock(descriptor, "exclusive")
+                yield
+            finally:
+                try:
+                    os.lseek(descriptor, 0, os.SEEK_SET)
+                    if os.name == "nt":
+                        import msvcrt
+
+                        msvcrt.locking(descriptor, msvcrt.LK_UNLCK, 1)
+                    else:
+                        _posix_lock(descriptor, "unlock")
+                finally:
+                    os.close(descriptor)
+
+    def read(self, stage: str) -> dict[str, Any] | None:
+        database = self._connection()
+        try:
+            database.execute("BEGIN IMMEDIATE")
+            value = self._import_legacy(database, stage)
+            database.commit()
+            return value
+        except BaseException:
+            database.rollback()
+            raise
+        finally:
+            database.close()
+
+    def _write(self, stage: str, receipt: dict[str, Any]) -> tuple[dict[str, Any], bool]:
         value = {"schema_version": "karajan.issue107-recovery-stage.v1", "stage": stage, **receipt}
         encoded = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         database = self._connection()
         try:
             database.execute("BEGIN IMMEDIATE")
-            row = database.execute("SELECT receipt FROM stages WHERE stage=?", (stage,)).fetchone()
-            if row is not None:
-                previous = json.loads(row[0])
+            previous = self._import_legacy(database, stage)
+            if previous is not None:
                 if previous != value:
                     raise RecoveryError("RESUME_RECEIPT_CONFLICT")
                 database.commit()
-                return cast(dict[str, Any], previous)
+                return previous, False
             database.execute("INSERT INTO stages VALUES (?,?)", (stage, encoded))
             database.commit()
         except BaseException:
@@ -194,6 +291,13 @@ class ReceiptLedger:
             raise
         finally:
             database.close()
+        self._publish(stage, encoded)
+        return value, True
+
+    def _publish(self, stage: str, encoded: str) -> None:
+        path = self.directory / f"{stage}.json"
+        if path.exists():
+            return
         descriptor, temporary = tempfile.mkstemp(prefix=f".{stage}.", dir=self.directory)
         try:
             with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as stream:
@@ -201,7 +305,7 @@ class ReceiptLedger:
                 stream.write("\n")
                 stream.flush()
                 os.fsync(stream.fileno())
-            os.link(temporary, self.directory / f"{stage}.json")
+            os.link(temporary, path)
             os.unlink(temporary)
         except OSError:
             try:
@@ -209,7 +313,12 @@ class ReceiptLedger:
             except OSError:
                 pass
             raise RecoveryError("UNCLASSIFIED") from None
-        return value
+
+    def write(self, stage: str, receipt: dict[str, Any]) -> dict[str, Any]:
+        return self._write(stage, receipt)[0]
+
+    def claim(self, stage: str, receipt: dict[str, Any]) -> tuple[dict[str, Any], bool]:
+        return self._write(stage, receipt)
 
 
 class QualificationRecovery:
@@ -219,8 +328,8 @@ class QualificationRecovery:
         store: QualificationReader,
         *,
         project_id: str,
-        positive_history: Callable[[], dict[str, Any] | None],
-        positive: Callable[[], dict[str, Any]],
+        positive_history: Callable[..., dict[str, Any] | None],
+        positive: Callable[..., dict[str, Any]],
         negative: Callable[[], dict[str, Any]],
         now: Callable[[], float] = time.time,
     ) -> None:
@@ -252,7 +361,19 @@ class QualificationRecovery:
         )
 
     def resume(self) -> dict[str, Any]:
-        """Recover the original command only.  This method never creates a start."""
+        """Recover the original command only. This method never creates a start."""
+        with self.ledger.recovery_lock():
+            return self._resume_locked()
+
+    def _history(self, identity: dict[str, Any]) -> tuple[dict[str, Any] | None, Exception | None]:
+        try:
+            if inspect.signature(self.positive_history).parameters:
+                return self.positive_history(identity), None
+            return self.positive_history(), None
+        except Exception as error:
+            return None, error
+
+    def _resume_locked(self) -> dict[str, Any]:
         self.preflight()
         try:
             start = self.store.get_command_start(self.project_id, COMMAND, principal=PRINCIPAL)
@@ -264,32 +385,41 @@ class QualificationRecovery:
             return self.ledger.write(
                 "start_observed", {"status": "unknown", "reason_code": _safe_error(error)}
             )
+        identity = _identity(start, record)
         self.ledger.write("start_observed", {"status": "observed", "start": _summary(start)})
         self.ledger.write(
             "qualification_observed", {"status": "observed", "record": _summary(record)}
         )
         positive_stage = self.ledger.read("positive_observed")
         positive_reconciled = self.ledger.read("positive_reconciled")
-        history_error: Exception | None = None
+        claim = self.ledger.read("positive_claimed")
         if positive_stage is None or positive_stage.get("status") == "unknown":
-            try:
-                historical_positive = self.positive_history()
-            except Exception as error:
-                historical_positive = None
-                history_error = error
-            else:
-                history_error = None
-            if _matching_history(historical_positive, record):
+            historical_positive, history_error = self._history(identity)
+            strict_history = bool(inspect.signature(self.positive_history).parameters)
+            if _matching_history(historical_positive, record, identity, strict=strict_history):
                 target = "positive_observed" if positive_stage is None else "positive_reconciled"
-                positive_reconciled = self.ledger.write(
-                    target, {"status": "recovered", "receipt_sha256": _sha(historical_positive)}
+                recovered = self.ledger.write(
+                    target,
+                    {
+                        "status": "recovered",
+                        "receipt_sha256": _sha(cast(dict[str, Any], historical_positive)),
+                        "qualification_identity": identity,
+                    },
                 )
                 if target == "positive_observed":
-                    positive_stage = positive_reconciled
+                    positive_stage = recovered
+                else:
+                    positive_reconciled = recovered
             elif history_error is not None:
                 return self.ledger.write(
                     "positive_observed",
                     {"status": "unknown", "reason_code": _safe_error(history_error)},
+                )
+            elif claim is not None or (positive_stage is not None and positive_stage.get("status") == "unknown"):
+                # A committed claim or an ambiguous reply is irrevocable: only original
+                # membership history may resolve it. Never infer a missing effect.
+                return positive_stage or self.ledger.write(
+                    "positive_observed", {"status": "unknown", "reason_code": "UNCLASSIFIED"}
                 )
         positive_ready = (
             positive_stage is not None and positive_stage.get("status") in {"passed", "recovered"}
@@ -307,26 +437,33 @@ class QualificationRecovery:
                 return self.ledger.write(
                     "complete", {"status": "unknown", "reason_code": "QUALIFICATION_UNKNOWN"}
                 )
+            _claim, new_claim = self.ledger.claim(
+                "positive_claimed", {"status": "claimed", "qualification_identity": identity}
+            )
+            if not new_claim:
+                return self.ledger.write(
+                    "positive_observed", {"status": "unknown", "reason_code": "UNCLASSIFIED"}
+                )
             try:
-                positive = self.positive()
+                positive = self.positive(identity) if inspect.signature(self.positive).parameters else self.positive()
             except Exception as error:
-                # Preserve the original unknown reply. A later resume alone
-                # may reconcile it through the original SQLite membership.
                 return self.ledger.write(
                     "positive_observed", {"status": "unknown", "reason_code": _safe_error(error)}
                 )
-            if positive is not None:
-                self.ledger.write(
-                    "positive_observed", {"status": "passed", "receipt_sha256": _sha(positive)}
-                )
+            self.ledger.write(
+                "positive_observed",
+                {
+                    "status": "passed",
+                    "receipt_sha256": _sha(positive),
+                    "qualification_identity": identity,
+                },
+            )
         if _expiry(start, record) <= self.now() and not revocation:
             return self.ledger.write(
                 "complete", {"status": "expired", "reason_code": "QUALIFICATION_EXPIRED"}
             )
         revoked_stage = self.ledger.read("revoked_observed")
         if revoked_stage is None:
-            # The record-revoke effect can commit before this driver's receipt
-            # write. Re-open its original identity before attempting a revoke.
             try:
                 record, revocation = _record_view(
                     self.store.get(self.project_id, record_id, principal=PRINCIPAL)
@@ -342,15 +479,9 @@ class QualificationRecovery:
         if revoked_stage is None:
             try:
                 revoked = self.store.revoke(
-                    self.project_id,
-                    record_id,
-                    principal=PRINCIPAL,
-                    reason="issue107-driver-post-positive",
+                    self.project_id, record_id, principal=PRINCIPAL, reason="issue107-driver-post-positive"
                 )
             except Exception as error:
-                # A SQLite transaction may have committed while the response
-                # path failed. Read the immutable fact once before classifying
-                # the original revoke as unknown; never invoke it a second time.
                 try:
                     _record, recovered_revocation = _record_view(
                         self.store.get(self.project_id, record_id, principal=PRINCIPAL)
@@ -378,24 +509,31 @@ class QualificationRecovery:
                 negative = self.negative()
             except Exception as error:
                 return self.ledger.write(
-                    "negative_history_observed",
-                    {"status": "unknown", "reason_code": _safe_error(error)},
+                    "negative_history_observed", {"status": "unknown", "reason_code": _safe_error(error)}
                 )
-            result = negative.get("result") if isinstance(negative, dict) else None
-            reasons = result.get("reason_codes") if isinstance(result, dict) else []
-            reasons = reasons if isinstance(reasons, list) else []
-            if isinstance(result, dict) and (
+            if not isinstance(negative, dict):
+                return self.ledger.write(
+                    "negative_history_observed", {"status": "unknown", "reason_code": "QUALIFICATION_REVOKED"}
+                )
+            result = negative.get("result")
+            reasons = result.get("reason_codes") if isinstance(result, dict) else None
+            issues = negative.get("qualification_issues")
+            revoked_issue = isinstance(issues, list) and any(
+                isinstance(row, dict) and row.get("reason_code") == "QUALIFICATION_REVOKED" for row in issues
+            )
+            if (
                 negative.get("expected_revoke_reason_observed") is not True
-                or result.get("state") == "ready"
+                or not isinstance(result, dict)
+                or result.get("state") not in {"blocked", "rejected"}
+                or not isinstance(reasons, list)
                 or "QUALIFICATION_REVOKED" not in reasons
+                or not revoked_issue
             ):
                 return self.ledger.write(
-                    "negative_history_observed",
-                    {"status": "unknown", "reason_code": "QUALIFICATION_REVOKED"},
+                    "negative_history_observed", {"status": "unknown", "reason_code": "QUALIFICATION_REVOKED"}
                 )
             self.ledger.write(
-                "negative_history_observed",
-                {"status": "observed", "receipt_sha256": _sha(negative)},
+                "negative_history_observed", {"status": "observed", "receipt_sha256": _sha(negative)}
             )
         elif negative_stage.get("status") != "observed":
             return negative_stage
@@ -412,6 +550,22 @@ def execute(
     prepare_fixture: Callable[[], dict[str, Any]],
 ) -> dict[str, Any]:
     """The sole future start path; each pre-effect and post-effect fact is durable."""
+    with recovery.ledger.recovery_lock():
+        return _execute_locked(
+            recovery, store, profile_ref=profile_ref, suite_ref=suite_ref,
+            source=source, prepare_fixture=prepare_fixture,
+        )
+
+
+def _execute_locked(
+    recovery: QualificationRecovery,
+    store: QualificationWriter,
+    *,
+    profile_ref: dict[str, Any],
+    suite_ref: dict[str, Any],
+    source: Callable[[], dict[str, Any]],
+    prepare_fixture: Callable[[], dict[str, Any]],
+) -> dict[str, Any]:
     recovery.preflight()
     try:
         fixture = prepare_fixture()
@@ -455,11 +609,11 @@ def execute(
         # The Store persists start intent before resolving credentials or doing
         # the suite. A lost reply must be recovered only through that original
         # command; resume never calls the qualification effect.
-        return recovery.resume()
+        return recovery._resume_locked()
     recovery.ledger.write(
         "qualification_observed", {"status": "observed", "record": _summary(record)}
     )
-    return recovery.resume()
+    return recovery._resume_locked()
 
 
 def main() -> None:
@@ -475,7 +629,11 @@ def main() -> None:
     import prepare_issue107_consumer as consumer
     import run_official_issue107 as controller
 
-    store, project_id, _reviewer, _journal = controller.open_controller(args.private_root)
+    if args.mode == "resume":
+        store, project_id = controller.open_existing_controller(args.private_root)
+        reviewer: dict[str, Any] | None = None
+    else:
+        store, project_id, reviewer, _journal = controller.open_controller(args.private_root)
 
     def negative() -> dict[str, Any]:
         report = args.receipts / "consumer-negative-private.json"
@@ -489,8 +647,8 @@ def main() -> None:
         ReceiptLedger(args.receipts),
         store,
         project_id=project_id,
-        positive_history=lambda: consumer.positive_history(args.private_root),
-        positive=lambda: consumer.positive_result(args.private_root),
+        positive_history=lambda identity: consumer.positive_history(args.private_root, identity),
+        positive=lambda identity: consumer.positive_result(args.private_root, identity),
         negative=negative,
     )
     try:
@@ -499,10 +657,12 @@ def main() -> None:
         elif args.mode == "resume":
             result = recovery.resume()
         else:
+            if reviewer is None:
+                raise RecoveryError("QUALIFICATION_START_NOT_FOUND")
             result = execute(
                 recovery,
                 store,
-                profile_ref={"id": _reviewer["id"], "revision": _reviewer["revision"]},
+                profile_ref={"id": reviewer["id"], "revision": reviewer["revision"]},
                 suite_ref={"id": "opencode-go-readonly-review-linux", "revision": 1},
                 source=lambda: store.reviewer_suite.source(),
                 prepare_fixture=lambda: consumer.ensure_fixture(args.private_root)[2],

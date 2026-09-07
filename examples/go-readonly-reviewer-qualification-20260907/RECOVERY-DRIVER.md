@@ -26,6 +26,17 @@ negative/history observation; it never represents that as a current
 qualification. `execute` is a future separately authorized effect and is not
 run by this C/P slice.
 
+Before a membership positive callback, the driver writes `positive_claimed`
+under a process-wide receipt lock. Only the invocation that committed that claim
+may call the consumer. A lost reply, an old `positive_observed=unknown`, or a
+pre-existing claim can only be reconciled by the original admission and
+CandidateStore receipt; absence remains unknown. Legacy JSON receipts are
+validated and imported into SQLite before any SQLite stage is written, so an
+older unknown receipt cannot be hidden by a newer passed value. The negative
+observer reopens the original fixture stores in `existing_only` mode and checks
+the current consumer guard under its operation, Run, and Project locks. A ready
+history alone is never a revoke refusal.
+
 ## C/P acceptance matrix
 
 | Boundary | Local evidence | Result | Scope |
@@ -36,6 +47,8 @@ run by this C/P slice.
 | Public Store revoke reply loss | real `ProfileQualificationStore` / SQLite local-fixture record commits revoke before injected reply loss; resume reads it once | passed | C/P |
 | Qualification reply loss | fixed command is read back and resumed; no second qualification call | passed | C/P |
 | Receipt publication failure | `os.replace` failure leaves no partial stage receipt | passed | C/P |
+| Ambiguous membership positive | durable `positive_claimed` and a two-process resume race observe exactly one consumer callback | passed | C/P |
+| Legacy receipt migration | an old JSON `unknown` is imported before SQLite and rejects a conflicting `passed` write | passed | C/P |
 | Expired or unknown original state | no consumer or revoke call; status remains expired/unknown | passed | C/P |
 
 Run the local evidence without a Go suite:

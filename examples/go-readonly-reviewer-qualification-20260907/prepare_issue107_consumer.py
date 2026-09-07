@@ -18,11 +18,14 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
-from karajan.candidates import CandidateStore
+from karajan.candidates import CandidateError, CandidateStore
+from karajan.capacity import CapacityStore
 from karajan.orchestration.admission import ApprovedTaskAdmission
 from karajan.orchestration.reviewer_binding import ApprovedReviewerBindings
 from karajan.orchestration.routing import ApprovedRunRouting
+from karajan.projects import ProjectRegistry
 from karajan.projects.demand import AttemptEstimateStore
+from karajan.projects.qualification import ProfileQualificationStore
 from karajan.routing.compiler import digest
 from karajan.runs import RunPlanner
 
@@ -604,20 +607,85 @@ def ensure_fixture(
     )
 
 
+def open_existing_fixture(
+    private_root: Path,
+) -> tuple[ApprovedReviewerBindings, tuple[str, str], dict[str, Any]]:
+    """Open the original fixture stores read-only-by-construction; never configure them."""
+    fixture_root = private_root / "consumer-fixture"
+    p = paths(private_root)
+    registry = ProjectRegistry(p["state"], [p["repo"]], existing_only=True)
+    qualifications = ProfileQualificationStore(registry)
+    planner = RunPlanner(fixture_root / "runs.sqlite", registry, existing_only=True)
+    routing = ApprovedRunRouting(
+        planner,
+        qualifications,
+        CapacityStore(fixture_root / "capacity.sqlite", existing_only=True),
+        estimates=AttemptEstimateStore(planner),
+    )
+    admissions = ApprovedTaskAdmission(
+        fixture_root / "admission.sqlite", routing, existing_only=True
+    )
+    candidates = CandidateStore(fixture_root / "candidates", existing_only=True)
+    admission_uri = (fixture_root / "admission.sqlite").resolve().as_uri() + "?mode=ro"
+    with sqlite3.connect(admission_uri, uri=True) as db:
+        row = db.execute(
+            "SELECT run_id, data FROM operations WHERE id=?", ("issue107-fixed-consumer-operation",)
+        ).fetchone()
+    if row is None:
+        raise ConsumerHistoryError("MEMBERSHIP_HISTORY_UNAVAILABLE")
+    operation = json.loads(row[1])
+    source = operation.get("workspace", {}).get("source_binding", {}).get("profile_source")
+    if not isinstance(source, dict):
+        raise ConsumerHistoryError("MEMBERSHIP_HISTORY_UNAVAILABLE")
+    return (
+        ApprovedReviewerBindings(admissions, candidates, qualifications),
+        (row[0], "issue107-fixed-consumer-operation"),
+        {"source": source, "operation": operation},
+    )
+
+
 def negative(private_root: Path, report: Path) -> None:
-    service, args, facts = ensure_fixture(private_root)
+    """Observe current revoke refusal on the original consumer; never rebuild it."""
+    service, args, facts = open_existing_fixture(private_root)
     before = facts["source"]
-    result = service.advance(*args, principal=FIXTURE_OWNER)
-    assessment = result.get("assessment") or {}
+    operation = facts["operation"]
     diagnostic: dict[str, Any]
-    operation = service.admissions.get(*args, principal=FIXTURE_OWNER)
     try:
         with service._current(operation, FIXTURE_OWNER) as (project_db, run):
             compiled = service._compiled(project_db, run, operation, FIXTURE_OWNER)
+            transition = operation.get("validation", {}).get("subject_transition")
+            if not isinstance(transition, dict):
+                raise ConsumerHistoryError("MEMBERSHIP_HISTORY_UNAVAILABLE")
+            try:
+                service.current_locked(
+                    project_db, run, operation, transition, principal=FIXTURE_OWNER
+                )
+            except Exception as error:
+                current_error = getattr(error, "code", "UNCLASSIFIED")
+            else:
+                current_error = None
+        assessment = compiled.get("assessment") or {}
+        issues = assessment.get("qualification_issues")
+        issue_codes = {
+            row.get("reason_code") for row in issues if isinstance(row, dict)
+        } if isinstance(issues, list) else set()
+        blocked = (
+            compiled.get("binding") is None
+            and current_error == "REVIEWER_QUALIFICATION_REQUIRED"
+        )
+        result = {
+            "state": "blocked" if blocked else "unknown",
+            "reason_codes": (
+                ["QUALIFICATION_REVOKED"] if "QUALIFICATION_REVOKED" in issue_codes else []
+            ),
+            "transition": transition,
+            "actual_reviewer_attempt": assessment.get("actual_reviewer_attempt"),
+        }
         diagnostic = {
             "compiled": compiled["binding"] is not None,
+            "current_guard_error": current_error,
             "reason_codes": compiled["reason_codes"],
-            "qualification_issues": compiled["assessment"]["qualification_issues"],
+            "qualification_issues": issues,
         }
     except Exception as error:
         # Reports are an external evidence boundary. Never copy exception text:
@@ -647,8 +715,8 @@ def negative(private_root: Path, report: Path) -> None:
                 "fixture": "controller_fixed_plan_candidate_only",
                 "no_commander_or_worker_execution": True,
                 "current_source": {
-                    "origin": before["observation_origin"],
-                    "suite_ref": before["suite_ref"],
+                    "origin": before.get("observation_origin"),
+                    "suite_ref": before.get("suite_ref"),
                     "source_digest": digest(before),
                 },
                 "result": {
@@ -657,8 +725,8 @@ def negative(private_root: Path, report: Path) -> None:
                     "transition": result.get("transition"),
                     "actual_reviewer_attempt": assessment.get("actual_reviewer_attempt"),
                 },
-                "expected_revoke_reason_observed": "QUALIFICATION_REVOKED"
-                in {row.get("reason_code") for row in assessment.get("qualification_issues", [])},
+                "expected_revoke_reason_observed": result["state"] == "blocked"
+                and "QUALIFICATION_REVOKED" in result["reason_codes"],
                 "qualification_issues": assessment.get("qualification_issues"),
                 "direct_consumer_diagnostic": diagnostic,
             },
@@ -670,12 +738,10 @@ def negative(private_root: Path, report: Path) -> None:
     )
 
 
-def positive_result(private_root: Path) -> dict[str, Any]:
-    """Consume current facts through the real membership-only binding callback.
-
-    This intentionally stops after the CandidateStore membership receipt. It
-    never prepares a Reviewer Task or invokes any Check/Review/Evidence service.
-    """
+def positive_result(
+    private_root: Path, qualification_identity: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Consume the membership-only effect and bind its exact owning qualification."""
     service, args, _facts = ensure_fixture(private_root)
     prepared = service.advance(*args, principal=FIXTURE_OWNER)
     ready = service.advance(*args, principal=FIXTURE_OWNER)
@@ -686,6 +752,15 @@ def positive_result(private_root: Path) -> dict[str, Any]:
         or ready.get("assessment", {}).get("actual_reviewer_attempt") is not None
     ):
         raise RuntimeError("ISSUE107_POSITIVE_BINDING_NOT_READY")
+    if qualification_identity is not None:
+        with service.admissions._transaction() as database:
+            operation = service.admissions._load(database, *args)
+            validation = operation.setdefault("validation", {})
+            existing = validation.get("issue107_recovery_identity")
+            if existing is not None and existing != qualification_identity:
+                raise RuntimeError("ISSUE107_POSITIVE_IDENTITY_CONFLICT")
+            validation["issue107_recovery_identity"] = qualification_identity
+            service.admissions._save(database, operation)
     return {
         "prepared_state": prepared["state"],
         "ready_state": ready["state"],
@@ -693,6 +768,7 @@ def positive_result(private_root: Path) -> dict[str, Any]:
         "reviewer_sources": ready["transition"]["binding"]["reviewer_sources"],
         "actual_reviewer_attempt": ready["assessment"]["actual_reviewer_attempt"],
         "membership_only": True,
+        "qualification_identity": qualification_identity,
     }
 
 
@@ -700,9 +776,12 @@ class ConsumerHistoryError(RuntimeError):
     code = "MEMBERSHIP_HISTORY_UNAVAILABLE"
 
 
-def positive_history(private_root: Path) -> dict[str, Any] | None:
-    """Read the original membership receipt without rebuilding fixture state."""
-    path = private_root / "consumer-fixture" / "admission.sqlite"
+def positive_history(
+    private_root: Path, qualification_identity: dict[str, Any] | None = None
+) -> dict[str, Any] | None:
+    """Read and verify the original membership receipt without rebuilding it."""
+    fixture_root = private_root / "consumer-fixture"
+    path = fixture_root / "admission.sqlite"
     if not path.is_file():
         return None
     try:
@@ -724,29 +803,39 @@ def positive_history(private_root: Path) -> dict[str, Any] | None:
             binding_status.get("state") != "ready"
             or not isinstance(transition, dict)
             or transition.get("phase") != "ready"
+            or not isinstance(transition.get("receipt"), dict)
+            or not isinstance(transition.get("binding"), dict)
             or assessment.get("actual_reviewer_attempt") is not None
         ):
             return None
-        sources = transition.get("binding", {}).get("reviewer_sources")
+        sources = transition["binding"].get("reviewer_sources")
         references = (
-            {
-                row.get("reviewer", {}).get("qualification_ref")
-                for row in sources
-                if isinstance(row, dict) and isinstance(row.get("reviewer"), dict)
-            }
-            if isinstance(sources, list)
-            else set()
+            {row.get("reviewer", {}).get("qualification_ref") for row in sources
+             if isinstance(row, dict) and isinstance(row.get("reviewer"), dict)}
+            if isinstance(sources, list) else set()
         )
         if len(references) != 1 or not isinstance(next(iter(references)), str):
             return None
-        return {
+        if qualification_identity is not None:
+            if validation.get("issue107_recovery_identity") != qualification_identity:
+                return None
+            candidate = CandidateStore(fixture_root / "candidates", existing_only=True)
+            receipt = candidate.lookup_review_rebind(
+                transition["binding"], command_key=transition.get("command_key", "")
+            )
+            if receipt != transition["receipt"]:
+                return None
+        result = {
             "state": "ready",
             "transition": transition,
             "membership_only": True,
             "actual_reviewer_attempt": None,
             "qualification_ref": next(iter(references)),
         }
-    except (OSError, sqlite3.Error, TypeError, ValueError, json.JSONDecodeError):
+        if qualification_identity is not None:
+            result["qualification_identity"] = qualification_identity
+        return result
+    except (OSError, sqlite3.Error, TypeError, ValueError, json.JSONDecodeError, CandidateError):
         raise ConsumerHistoryError("MEMBERSHIP_HISTORY_UNAVAILABLE") from None
 
 
