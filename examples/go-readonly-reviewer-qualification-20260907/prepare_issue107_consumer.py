@@ -381,15 +381,46 @@ def negative(private_root: Path, report: Path) -> None:
     }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def positive_result(private_root: Path) -> dict[str, Any]:
+    """Consume current facts through the real membership-only binding callback.
+
+    This intentionally stops after the CandidateStore membership receipt. It
+    never prepares a Reviewer Task or invokes any Check/Review/Evidence service.
+    """
+    service, args, _facts = ensure_fixture(private_root)
+    prepared = service.advance(*args, principal=FIXTURE_OWNER)
+    ready = service.advance(*args, principal=FIXTURE_OWNER)
+    if (
+        prepared.get("state") != "prepared"
+        or ready.get("state") != "ready"
+        or ready.get("transition", {}).get("phase") != "ready"
+        or ready.get("assessment", {}).get("actual_reviewer_attempt") is not None
+    ):
+        raise RuntimeError("ISSUE107_POSITIVE_BINDING_NOT_READY")
+    return {
+        "prepared_state": prepared["state"], "ready_state": ready["state"],
+        "transition_phase": ready["transition"]["phase"],
+        "reviewer_sources": ready["transition"]["binding"]["reviewer_sources"],
+        "actual_reviewer_attempt": ready["assessment"]["actual_reviewer_attempt"],
+        "membership_only": True,
+    }
+
+
 def main() -> None:
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=("negative", "inspect_config"))
+    parser.add_argument("mode", choices=("negative", "positive", "inspect_config"))
     parser.add_argument("--private-root", required=True, type=Path)
     parser.add_argument("--report", required=True, type=Path)
     args = parser.parse_args()
     if args.mode == "negative":
         negative(args.private_root, args.report)
+    elif args.mode == "positive":
+        args.report.write_text(json.dumps({
+            "schema_version": "karajan.issue107-consumer-positive.v1", "issue": 107,
+            "fixture": "controller_fixed_plan_candidate_only",
+            "result": positive_result(args.private_root),
+        }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     else:
         store, project_id, _reviewer, _journal = open_controller(args.private_root)
         project = store.projects.get(project_id)
