@@ -68,6 +68,57 @@ def test_exactly_one_slot_and_one_demand_are_not_charged_again_for_the_same_admi
     assert len(before["lifecycle"]) == 1
 
 
+def test_pre_effect_callback_rechecks_observation_expiry_before_yield(ledger):
+    store, clock = ledger
+    value = bound_request(store)
+    admission_id = store.admit(value, command_key="reserve")["admission_id"]
+    store.activate(admission_id, command_key="activate")
+    before = store.snapshot()
+
+    def delayed_controller_read() -> None:
+        clock[0] = 1005.0
+
+    with pytest.raises(CapacityError, match="^OBSERVATION_STALE:short$"):
+        with store.pre_effect_guard(
+            admission_id, expected_request=value, before_effect=delayed_controller_read
+        ):
+            pytest.fail("stale Capacity facts entered the effect guard")
+    assert store.snapshot() == before
+
+
+def test_pre_effect_callback_uses_post_callback_checked_at(ledger):
+    store, clock = ledger
+    value = bound_request(store)
+    admission_id = store.admit(value, command_key="reserve")["admission_id"]
+    store.activate(admission_id, command_key="activate")
+
+    def delayed_controller_read() -> None:
+        clock[0] = 1001.0
+
+    with store.pre_effect_guard(
+        admission_id, expected_request=value, before_effect=delayed_controller_read
+    ) as current:
+        assert current["checked_at"] == 1001.0
+
+
+def test_pre_effect_callback_failure_changes_no_active_hold(ledger):
+    store, _ = ledger
+    value = bound_request(store)
+    admission_id = store.admit(value, command_key="reserve")["admission_id"]
+    store.activate(admission_id, command_key="activate")
+    before = store.snapshot()
+
+    def unavailable_controller_read() -> None:
+        raise RuntimeError("CANDIDATE_ARTIFACT_UNAVAILABLE")
+
+    with pytest.raises(RuntimeError, match="^CANDIDATE_ARTIFACT_UNAVAILABLE$"):
+        with store.pre_effect_guard(
+            admission_id, expected_request=value, before_effect=unavailable_controller_read
+        ):
+            pytest.fail("failed controller read entered the effect guard")
+    assert store.snapshot() == before
+
+
 @pytest.mark.parametrize("other_state", ["reserved", "active", "unknown"])
 def test_other_runs_holds_remain_charged_when_excluding_only_the_original_admission(
     ledger, other_state

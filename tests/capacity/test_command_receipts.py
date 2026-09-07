@@ -321,3 +321,38 @@ def test_admit_boundary_callback_rolls_back_before_reservation_and_receipt(ledge
     assert callbacks == ["called"]
     assert store.snapshot() == before
     assert store.command_receipt("admit", value, command_key="deadline-expired") is None
+
+
+def test_admit_rechecks_time_and_uses_the_post_callback_reservation_clock(ledger):
+    store, clock = ledger
+    calls: list[str] = []
+
+    def delayed_controller_read() -> None:
+        calls.append("called")
+        clock[0] = 1001.0
+
+    admitted = store.admit(
+        request(), command_key="post-callback-clock", before_reserve=delayed_controller_read
+    )
+    reservation = store.snapshot()["reservations"][0]
+    assert calls == ["called"]
+    assert admitted["decision"] == "admitted"
+    assert reservation["created_at"] == 1001.0
+    assert reservation["expires_at"] == 1031.0
+
+
+def test_admit_rechecks_observation_expiry_after_a_blocking_callback(ledger):
+    store, clock = ledger
+    calls: list[str] = []
+
+    def delayed_controller_read() -> None:
+        calls.append("called")
+        clock[0] = 1005.0
+
+    rejected = store.admit(
+        request(), command_key="post-callback-stale", before_reserve=delayed_controller_read
+    )
+    assert calls == ["called"]
+    assert rejected["decision"] == "rejected"
+    assert "OBSERVATION_STALE:short" in rejected["reason_codes"]
+    assert store.snapshot()["reservations"] == []

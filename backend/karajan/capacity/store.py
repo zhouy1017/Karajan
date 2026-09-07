@@ -411,37 +411,22 @@ class CapacityStore:
         value = _admission_payload(request)
 
         def apply(db: sqlite3.Connection) -> dict[str, Any]:
-            if (
-                db.execute(
-                    "SELECT 1 FROM reservations WHERE attempt_id=?", (value["attempt_id"],)
-                ).fetchone()
-                is not None
-            ):
-                raise CapacityError("ATTEMPT_ALREADY_RESERVED")
-            profile_row = db.execute(
-                "SELECT data FROM profiles WHERE id=? AND revision=?",
-                (value["profile_id"], value["profile_revision"]),
-            ).fetchone()
-            if profile_row is None:
-                raise CapacityError("PROFILE_UNKNOWN")
-            profile = json.loads(profile_row[0])
-            policy_row = db.execute(
-                "SELECT revision,data FROM policies WHERE account_id=? "
-                "ORDER BY revision DESC LIMIT 1",
-                (profile["account_id"],),
-            ).fetchone()
-            if policy_row is None:
-                raise CapacityError("CAPACITY_POLICY_REQUIRED")
-            policy = json.loads(policy_row["data"])
-            now = self._now()
-            held = self._held(db, profile["account_id"], now)
-            reasons, observations, availability = self._evaluate(
-                db, value, profile, policy, held, now, policy_revision=policy_row["revision"]
+            profile, policy_revision, now, reasons, observations, availability = (
+                self._admission_evaluation(db, value)
             )
+            if not reasons and before_reserve is not None:
+                before_reserve()
+                # The callback may have waited on a controller-owned source.
+                # Re-read every temporal Capacity input while this transaction
+                # is still held; its initial assessment cannot authorize a
+                # reservation at a later clock value.
+                profile, policy_revision, now, reasons, observations, availability = (
+                    self._admission_evaluation(db, value)
+                )
             decision: dict[str, Any] = {
                 "decision": "rejected" if reasons else "admitted",
                 "reason_codes": reasons,
-                "policy_revision": policy_row["revision"],
+                "policy_revision": policy_revision,
                 "request": value,
                 "observations": observations,
                 "available_before": availability,
@@ -451,8 +436,6 @@ class CapacityStore:
                 "live_qualification": "not_run",
             }
             if not reasons:
-                if before_reserve is not None:
-                    before_reserve()
                 identity = str(uuid4())
                 reservation = {
                     "id": identity,
@@ -461,7 +444,7 @@ class CapacityStore:
                     "account_id": profile["account_id"],
                     "created_at": now,
                     "expires_at": now + value["duration_seconds"],
-                    "policy_revision": policy_row["revision"],
+                    "policy_revision": policy_revision,
                     "observations": observations,
                 }
                 db.execute(
@@ -472,6 +455,38 @@ class CapacityStore:
             return decision
 
         return self._command("admit", value, command_key, apply)
+
+    def _admission_evaluation(
+        self, db: sqlite3.Connection, value: dict[str, Any]
+    ) -> tuple[dict[str, Any], int, float, list[str], dict[str, Any], dict[str, str]]:
+        """Read the complete Capacity decision at one instant under its held lock."""
+        if (
+            db.execute(
+                "SELECT 1 FROM reservations WHERE attempt_id=?", (value["attempt_id"],)
+            ).fetchone()
+            is not None
+        ):
+            raise CapacityError("ATTEMPT_ALREADY_RESERVED")
+        profile_row = db.execute(
+            "SELECT data FROM profiles WHERE id=? AND revision=?",
+            (value["profile_id"], value["profile_revision"]),
+        ).fetchone()
+        if profile_row is None:
+            raise CapacityError("PROFILE_UNKNOWN")
+        profile = json.loads(profile_row[0])
+        policy_row = db.execute(
+            "SELECT revision,data FROM policies WHERE account_id=? ORDER BY revision DESC LIMIT 1",
+            (profile["account_id"],),
+        ).fetchone()
+        if policy_row is None:
+            raise CapacityError("CAPACITY_POLICY_REQUIRED")
+        policy = json.loads(policy_row["data"])
+        now = self._now()
+        held = self._held(db, profile["account_id"], now)
+        reasons, observations, availability = self._evaluate(
+            db, value, profile, policy, held, now, policy_revision=policy_row["revision"]
+        )
+        return profile, policy_row["revision"], now, reasons, observations, availability
 
     @staticmethod
     def _reservation(db: sqlite3.Connection, identity: str) -> dict[str, Any]:
@@ -564,7 +579,11 @@ class CapacityStore:
 
     @contextmanager
     def pre_effect_guard(
-        self, admission_id: str, *, expected_request: dict[str, Any]
+        self,
+        admission_id: str,
+        *,
+        expected_request: dict[str, Any],
+        before_effect: Callable[[], None] | None = None,
     ) -> Iterator[dict[str, Any]]:
         """Hold a fresh capacity check across the caller's bounded effect boundary.
 
@@ -581,6 +600,11 @@ class CapacityStore:
             item = self._reservation(db, identity)
             if item["request"] != expected:
                 raise CapacityError("ADMISSION_REQUEST_MISMATCH")
+            if before_effect is not None:
+                before_effect()
+            # ``before_effect`` can wait on controller evidence.  A fresh
+            # Capacity read below is the one that protects the yielded effect.
+            item = self._reservation(db, identity)
             if item["state"] != "active":
                 raise CapacityError("ADMISSION_NOT_ACTIVE")
             now = self._now()
