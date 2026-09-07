@@ -1,0 +1,37 @@
+"""Interrupt only this audit's long running DrvFs pytest to preserve its failures."""
+
+import json
+import os
+import signal
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+expected = (
+    "--basetemp=/mnt/c/Users/Chooo/Playground/Karajan/.cache/"
+    "reviewer-candidate-rebind/.cache/common-repair-downstream/linux/tmp"
+)
+matches = []
+for entry in Path("/proc").iterdir():
+    if not entry.name.isdigit():
+        continue
+    try:
+        argv = (entry / "cmdline").read_bytes().decode().strip("\0").split("\0")
+    except (OSError, UnicodeDecodeError):
+        continue
+    if expected in argv and ["-m", "pytest", "tests/candidates"] == argv[1:4]:
+        matches.append((int(entry.name), argv))
+if len(matches) != 1:
+    raise RuntimeError("EXPECTED_EXACTLY_ONE_OWNED_TEST_PROCESS")
+pid, argv = matches[0]
+os.kill(pid, signal.SIGINT)
+record = {
+    "at": datetime.now(timezone.utc).isoformat(),
+    "pid": pid,
+    "argv": argv,
+    "signal": "SIGINT",
+    "reason": "Collect first actual failures from wrong-filesystem test environment",
+}
+destination = Path(__file__).parent / "linux" / "interrupt.json"
+destination.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8", newline="\n")
+print(json.dumps(record))

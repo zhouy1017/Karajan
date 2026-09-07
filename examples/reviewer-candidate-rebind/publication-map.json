@@ -1,0 +1,268 @@
+{
+  "schema_version": "karajan.reviewer-candidate-rebind-publication.v1",
+  "date": "2026-09-07",
+  "timezone": "Asia/Hong_Kong",
+  "issue": 96,
+  "issue_url": "https://github.com/zhouy1017/Karajan/issues/96",
+  "parent_issue": 95,
+  "base_commit": "624ad8b8490003f155baf7842ba91b9975b9526a",
+  "implementation_commit": "58eafc337b7a2350c9e983d550e14ce50b2dc5e9",
+  "scope": "Local C/P same-content Candidate reviewer policy rebind; no Reviewer runtime or S claim",
+  "github_current_ci": "not_verified_by_this_publication",
+  "original_author_freeze_sha256": "d87cf35a8fc4b4eed0ee47622c818445a22a1b393e72585773f1a91e5c67880d",
+  "copied_files": [
+    {
+      "source": ".cache/review-rebind-author/README.md",
+      "published": "examples/reviewer-candidate-rebind/author/README.md",
+      "sha256": "e6ed5a64dd3df240e68f578b3e2c64b7cd529f268767bc0e0adb7a6c2ad961f7",
+      "bytes": 6168,
+      "byte_identical": true
+    },
+    {
+      "source": ".cache/review-rebind-author/freeze.json",
+      "published": "examples/reviewer-candidate-rebind/author/freeze.json",
+      "sha256": "d87cf35a8fc4b4eed0ee47622c818445a22a1b393e72585773f1a91e5c67880d",
+      "bytes": 3624,
+      "byte_identical": true
+    },
+    {
+      "source": ".cache/review-rebind-author/first-red.xml",
+      "published": "examples/reviewer-candidate-rebind/author/first-red.xml",
+      "sha256": "7a70ce62fe8f5952a7e18cc0579fdfdf7861d993fd64fb85e870eb57565dd233",
+      "bytes": 1638,
+      "byte_identical": true
+    },
+    {
+      "source": ".cache/review-rebind-author/first-green.xml",
+      "published": "examples/reviewer-candidate-rebind/author/first-green.xml",
+      "sha256": "9063964976dff5f5baa1d9b84f6d44c59de6e838095cca078709792a48d5ce15",
+      "bytes": 400,
+      "byte_identical": true
+    },
+    {
+      "source": ".cache/review-rebind-author/boundaries.xml",
+      "published": "examples/reviewer-candidate-rebind/author/boundaries.xml",
+      "sha256": "40f94170540ad93d285d145837166707f6df666ca40bcbec68cf4b69df8b0923",
+      "bytes": 5997,
+      "byte_identical": true
+    },
+    {
+      "source": ".cache/review-rebind-author/faults.xml",
+      "published": "examples/reviewer-candidate-rebind/author/faults.xml",
+      "sha256": "218f5a36fa65e4b39b61c3ce9a7a4f6cdf9d83cebad59fa4bbc7ce330eb6bba9",
+      "bytes": 682,
+      "byte_identical": true
+    },
+    {
+      "source": ".cache/review-rebind-author/final-windows.xml",
+      "published": "examples/reviewer-candidate-rebind/author/final-windows.xml",
+      "sha256": "375c48eaa6a9b7d886ead35ba2d315accb9987c1dd26291bb55921301eb25cfb",
+      "bytes": 26728,
+      "byte_identical": true
+    },
+    {
+      "source": ".cache/review-rebind-author/final-wsl.xml",
+      "published": "examples/reviewer-candidate-rebind/author/final-wsl.xml",
+      "sha256": "f512f41ab49e7b2f5bfb686abe5e22d2e90191d3f1bea36e69c01fb46ffca336",
+      "bytes": 25911,
+      "byte_identical": true
+    },
+    {
+      "source": ".cache/review-rebind-author/ruff.txt",
+      "published": "examples/reviewer-candidate-rebind/author/ruff.txt",
+      "sha256": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0",
+      "bytes": 20,
+      "byte_identical": true
+    },
+    {
+      "source": ".cache/review-rebind-author/format.txt",
+      "published": "examples/reviewer-candidate-rebind/author/format.txt",
+      "sha256": "55b5a2cb0bdd55641f1b6dad60805a4c29520e41d507781e75aa8ec8d6ed9a10",
+      "bytes": 27,
+      "byte_identical": true
+    },
+    {
+      "source": ".cache/review-rebind-author/mypy-windows.txt",
+      "published": "examples/reviewer-candidate-rebind/author/mypy-windows.txt",
+      "sha256": "281a094c39385b4d7b53e5db635f52158036861433c2a4975b9039e77a627a24",
+      "bytes": 44,
+      "byte_identical": true
+    },
+    {
+      "source": ".cache/review-rebind-author/mypy-linux.txt",
+      "published": "examples/reviewer-candidate-rebind/author/mypy-linux.txt",
+      "sha256": "281a094c39385b4d7b53e5db635f52158036861433c2a4975b9039e77a627a24",
+      "bytes": 44,
+      "byte_identical": true
+    },
+    {
+      "source": "tests/candidates/test_review_rebind.py",
+      "published": "examples/reviewer-candidate-rebind/inputs/test_review_rebind.py.txt",
+      "sha256": "ae76b86abb4e7eac5c086a560b59a6c4b7096f06218dcd3f4eb2c8e3311d7693",
+      "bytes": 17232,
+      "byte_identical": true
+    },
+    {
+      "source": ".cache/root-review.md",
+      "published": "examples/reviewer-candidate-rebind/review/root-review.md",
+      "sha256": "7685dbf0bf3a2b41aff060cf724d63bc9588aecf2d80f60c70232b79a25604cd",
+      "bytes": 2014,
+      "byte_identical": true
+    },
+    {
+      "source": ".cache/root-review.xml",
+      "published": "examples/reviewer-candidate-rebind/review/root-review.xml",
+      "sha256": "7c516fc6ba50ad16a300d7303d916eea42de94dd21d09b43808fabd2cb3ac38a",
+      "bytes": 1307,
+      "byte_identical": true
+    }
+  ],
+  "generated_files": [
+    {
+      "path": "examples/reviewer-candidate-rebind/README.md",
+      "sha256": "e80e146aabd32c737bfc19ea664ea9b6a6985c1d77197da07b42d02db736ba42",
+      "bytes": 3292
+    },
+    {
+      "path": "examples/reviewer-candidate-rebind/.gitattributes",
+      "sha256": "5cb90c7433cd475d7b5b6c0f0de7f81ffecc30a517dd68adc3d0042608a311d5",
+      "bytes": 395
+    },
+    {
+      "path": "examples/reviewer-candidate-rebind/publication/diff-check.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "examples/reviewer-candidate-rebind/publication/ruff-check.txt",
+      "sha256": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0",
+      "bytes": 20
+    },
+    {
+      "path": "examples/reviewer-candidate-rebind/publication/checks.json",
+      "sha256": "012fc870d4b28453272d2821e7cdf1308626ee4f91b1ede077cab586daaf6409",
+      "bytes": 65
+    },
+    {
+      "path": "docs/implementation/m3-reviewer-candidate-rebind.md",
+      "sha256": "5283bbd4a390a154a00e1398e7d0fb28a5d531abd6e8f93f12fbe15ac64357f9",
+      "bytes": 4385
+    }
+  ],
+  "repository_inputs": [
+    {
+      "path": "backend/karajan/candidates/_review_binding.py",
+      "kind": "owned",
+      "sha256": "ea6da0ecbf0d3683dd033a5991c740d79138d16e1723b5752bed88c339bf1283",
+      "bytes": 9758,
+      "matches_original_freeze": true
+    },
+    {
+      "path": "backend/karajan/candidates/models.py",
+      "kind": "owned",
+      "sha256": "e5a94a8042d33c46fdd3af58c3bbd8e616895e2b35ee127e19c2757e64c43fb9",
+      "bytes": 4301,
+      "matches_original_freeze": true
+    },
+    {
+      "path": "backend/karajan/candidates/store.py",
+      "kind": "owned",
+      "sha256": "e2833cf7d039dc36c4a03467d66b4ac6eed21886a406b38402c707db26a38eeb",
+      "bytes": 38742,
+      "matches_original_freeze": true
+    },
+    {
+      "path": "tests/candidates/test_review_rebind.py",
+      "kind": "owned",
+      "sha256": "ae76b86abb4e7eac5c086a560b59a6c4b7096f06218dcd3f4eb2c8e3311d7693",
+      "bytes": 17232,
+      "matches_original_freeze": true
+    },
+    {
+      "path": "backend/karajan/candidates/_capture_lookup.py",
+      "kind": "support",
+      "sha256": "ea524d6973801a7583648357252070ff28657f2454730a4c063240daab3cd608",
+      "bytes": 4432,
+      "matches_original_freeze": true
+    },
+    {
+      "path": "backend/karajan/isolation/_opencode_projection.py",
+      "kind": "support",
+      "sha256": "cac01b05d8aae1ab1916b30d6f50500585fdce3dfd07fe956ffb002243274c57",
+      "bytes": 2393,
+      "matches_original_freeze": true
+    },
+    {
+      "path": "tests/candidates/test_baseline_materialization.py",
+      "kind": "support",
+      "sha256": "3c1f8c272377942319995bceac8daaa5c8008bd62fcc6a6477e35f4e6c10bfdc",
+      "bytes": 9462,
+      "matches_original_freeze": true
+    },
+    {
+      "path": "tests/candidates/test_projected_capture.py",
+      "kind": "support",
+      "sha256": "a5928c04b76d32cbfe513a0affe1c8a1e9ad5f5b0ee511dbf45f9a65b794d11b",
+      "bytes": 5734,
+      "matches_original_freeze": true
+    },
+    {
+      "path": "tests/candidates/test_validation.py",
+      "kind": "support",
+      "sha256": "e38d83470be4056206805ea0ce6527c391fa5bfca3d9f0dadf98b9ca567c0f2b",
+      "bytes": 26633,
+      "matches_original_freeze": true
+    }
+  ],
+  "omitted_original_freeze_references": [
+    {
+      "path": ".cache/review-rebind-author/freeze.py",
+      "sha256": "8754226f108b34cc24847f193a7d2db9be2362cfb3739020ca77dabcf34543bf",
+      "reason": "Historical manifest generator is not published; no helper implementation is copied."
+    }
+  ],
+  "repository_helper_policy": "Sibling test fixtures and source helpers remain in their normal repository paths; only the final public test input is archived as .py.txt.",
+  "verification": {
+    "copied_files_byte_identical": 15,
+    "repository_inputs_match_original_freeze": true,
+    "ruff_check_exit_code": 0,
+    "git_diff_check_exit_code": 0,
+    "author_new_tests": 42,
+    "author_windows": {
+      "passed": 164,
+      "skipped": 3
+    },
+    "author_wsl": {
+      "passed": 167,
+      "skipped": 0
+    },
+    "independent_existing_cases": {
+      "passed": 7,
+      "deselected": 35
+    },
+    "publication_does_not_repeat_runtime_tests": true
+  },
+  "excluded_material": [
+    "keys",
+    "credentials",
+    "SQLite databases",
+    "test state",
+    "temporary Git repositories",
+    "runtime directories",
+    "fixture helper code"
+  ],
+  "independent_publication_review": {
+    "reviewer": "capacity_facts",
+    "date": "2026-09-07",
+    "findings": [],
+    "scope": "Read-only publication boundary review; no product edit or repeated runtime test",
+    "verified": [
+      "15 exact original copies",
+      "6 generated files",
+      "9 repository inputs",
+      "Original acceptance scope and repository reproduction dependencies"
+    ],
+    "pre_finalization_manifest_sha256": "78004674825226438e421d7fe876ddd207c62cad1848540a425235f936bf2004",
+    "post_review_changes": "Root filled the actual code commit and updated generated documentation hashes only"
+  }
+}

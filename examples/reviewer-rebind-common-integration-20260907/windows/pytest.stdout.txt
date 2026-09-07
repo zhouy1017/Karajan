@@ -1,0 +1,6 @@
+........................................................................ [ 43%]
+........................................................................ [ 86%]
+....................sss                                                  [100%]
+=========================== short test summary info ===========================
+SKIPPED [3] tests\candidates\test_validation.py:640: POSIX permission bits require a real POSIX filesystem
+164 passed, 3 skipped in 147.18s (0:02:27)

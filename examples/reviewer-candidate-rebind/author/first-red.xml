@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="1.164" timestamp="2026-09-07T00:03:04.171116+08:00" hostname="ProArt-Zhou"><testcase classname="tests.candidates.test_review_rebind" name="test_rebind_preserves_complete_candidate_and_requires_new_check_evidence" time="1.040"><failure message="AttributeError: 'CandidateStore' object has no attribute 'rebind_reviewers'">registered = (&lt;karajan.candidates.store.CandidateStore object at 0x00000211CD0F96D0&gt;, {'repository_identity': 'baseline-fixture', '... 'docs/untouched.md': b'Preserve this unprojected file.\n', 'data/bytes.bin': b'\x00\xff\x80\r\n', '.empty': b'', ...})
+tmp_path = WindowsPath('C:/Users/Chooo/Playground/Karajan/.cache/reviewer-candidate-rebind/.cache/review-rebind-red-tmp-b/test_rebind_preserves_complete0')
+
+    def test_rebind_preserves_complete_candidate_and_requires_new_check_evidence(registered, tmp_path):
+        store, baseline, files = registered
+        projection, contents, request = inputs(baseline, files)
+        original = store.freeze_projection(projection, contents, request)
+        evidence = store.record_check(check_record(original), log=b"synthetic check observation\n")
+        binding = binding_for(original)
+&gt;       rebound = store.rebind_reviewers(binding, command_key="review-binding-1")
+                  ^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'CandidateStore' object has no attribute 'rebind_reviewers'
+
+tests\candidates\test_review_rebind.py:59: AttributeError</failure></testcase></testsuite></testsuites>

@@ -1,0 +1,21 @@
+{
+  "head": "f7d42455752a5fe040d6670361ec6d18de0f9051",
+  "argv": [
+    "/tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/candidates",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "-o",
+    "pythonpath=backend tests/candidates",
+    "--basetemp=/tmp/karajan-rebind-f7d-20260907-0243",
+    "--junitxml=/mnt/c/Users/Chooo/Playground/Karajan/.cache/reviewer-candidate-rebind/.cache/common-repair-downstream/linux-posix/tests.xml"
+  ],
+  "cwd": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/reviewer-candidate-rebind",
+  "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+  "PYTHONPATH": "/mnt/c/Users/Chooo/Playground/Karajan/.cache/reviewer-candidate-rebind/backend",
+  "filesystem": "Linux /tmp; no DrvFs temp files",
+  "offline": true
+}

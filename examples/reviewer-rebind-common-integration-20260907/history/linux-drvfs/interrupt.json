@@ -1,0 +1,19 @@
+{
+  "at": "2026-09-07T02:41:22.912523+00:00",
+  "pid": 132615,
+  "argv": [
+    "/tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/candidates",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "-o",
+    "pythonpath=backend tests/candidates",
+    "--basetemp=/mnt/c/Users/Chooo/Playground/Karajan/.cache/reviewer-candidate-rebind/.cache/common-repair-downstream/linux/tmp",
+    "--junitxml=/mnt/c/Users/Chooo/Playground/Karajan/.cache/reviewer-candidate-rebind/.cache/common-repair-downstream/linux/tests.xml"
+  ],
+  "signal": "SIGINT",
+  "reason": "Collect first actual failures from wrong-filesystem test environment"
+}

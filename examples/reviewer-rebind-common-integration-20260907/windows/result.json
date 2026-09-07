@@ -1,0 +1,25 @@
+{
+  "head": "f7d42455752a5fe040d6670361ec6d18de0f9051",
+  "results": [
+    {
+      "command": "pytest",
+      "exit_code": 0,
+      "started_at": "2026-09-07T02:36:35.938669+00:00",
+      "finished_at": "2026-09-07T02:39:03.793883+00:00"
+    },
+    {
+      "command": "ruff",
+      "exit_code": 0,
+      "started_at": "2026-09-07T02:39:03.793883+00:00",
+      "finished_at": "2026-09-07T02:39:03.884212+00:00"
+    },
+    {
+      "command": "mypy",
+      "exit_code": 0,
+      "started_at": "2026-09-07T02:39:03.884212+00:00",
+      "finished_at": "2026-09-07T02:39:05.829154+00:00"
+    }
+  ],
+  "sources_equal": true,
+  "source_count": 136
+}
