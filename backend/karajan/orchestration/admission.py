@@ -191,9 +191,24 @@ class ApprovedTaskAdmission:
             raise RunError("REVIEWER_OPERATION_REQUIRED")
 
     def _refresh(self, db: sqlite3.Connection, operation: dict[str, Any]) -> dict[str, Any]:
-        if "execution" in operation or operation["state"] != "reserved":
-            return operation
         activation = operation.get("reviewer_activation")
+        request = operation.get("request")
+        reviewer_recovery = (
+            isinstance(request, dict)
+            and request.get("role") == "reviewer"
+            and operation["state"] == "reconciliation_required"
+            and isinstance(operation.get("capacity_receipt"), dict)
+            and isinstance(activation, dict)
+            and activation.get("admission_id")
+            == operation["capacity_receipt"].get("admission_id")
+            and isinstance(activation.get("command_key"), str)
+            and isinstance(activation.get("receipt"), dict)
+            and activation["receipt"].get("decision") == "capacity_revalidated"
+        )
+        if "execution" in operation or (
+            operation["state"] != "reserved" and not reviewer_recovery
+        ):
+            return operation
         if isinstance(activation, dict):
             receipt = self.routing.capacity.command_receipt(
                 "activate",
