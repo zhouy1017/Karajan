@@ -5,9 +5,10 @@
     "bytes": 6049
   },
   {
-    "path": "check_archive.py",
+    "path": "check_archive.py.txt",
     "sha256": "02803beac0320aa1f01c7fbd41c748a1735d98b1258a098c53e09d3c7a1cd0e2",
-    "bytes": 4948
+    "bytes": 4948,
+    "original": "check_archive.py"
   },
   {
     "path": "freeze.json",
