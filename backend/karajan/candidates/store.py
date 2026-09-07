@@ -15,7 +15,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 from uuid import uuid4
 
 from pydantic import ValidationError
@@ -460,6 +460,22 @@ class CandidateStore:
             "directory": str(target),
         }
 
+    def rebind_reviewers(self, binding: object, *, command_key: str) -> dict[str, Any]:
+        """Append only a reviewer-set policy revision under the caller's current guards.
+
+        This controller-only port grants no Reviewer qualification or authority.
+        New effects verify the complete CAS; exact replay returns original history.
+        """
+        from ._review_binding import rebind
+
+        return rebind(self, binding, command_key=command_key)
+
+    def lookup_review_rebind(self, binding: object, *, command_key: str) -> dict[str, Any] | None:
+        """Read one exact immutable commit without artifacts, Git, clock or writes."""
+        from ._review_binding import lookup
+
+        return lookup(self, binding, command_key=command_key)
+
     def materialize_baseline(self, baseline_id: str, destination: Path) -> dict[str, Any]:
         """Restore a registered baseline without consulting the source repository."""
         baseline = self.get_baseline(baseline_id)
@@ -856,6 +872,73 @@ class CandidateStore:
             "recorded_at": timestamp(),
         }
         return self._save_evidence(record, "review")
+
+    def lookup_evidence(
+        self,
+        request: object,
+        *,
+        kind: Literal["check", "review"],
+        log_sha256: str | None,
+        log_size: int | None,
+    ) -> dict[str, Any] | None:
+        """Read an exact committed observation without touching its artifacts.
+
+        The controller persists the full request and observed log identity before
+        record_check/review. A lost reply can then be recovered without another
+        process/model invocation or artifact write. This is historical identity,
+        not proof of current authorization, log availability or gate validity.
+        """
+        if kind not in {"check", "review"}:
+            raise CandidateError("EVIDENCE_LOOKUP_INVALID")
+        canonical(request)
+        try:
+            spec = (
+                CheckResult.model_validate(request)
+                if kind == "check"
+                else ReviewResult.model_validate(request)
+            )
+        except ValidationError:
+            raise CandidateError("EVIDENCE_LOOKUP_INVALID") from None
+        absent = log_sha256 is None and log_size is None
+        if not absent and (
+            not isinstance(log_sha256, str)
+            or len(log_sha256) != 64
+            or any(char not in "0123456789abcdef" for char in log_sha256)
+            or type(log_size) is not int
+            or not 0 <= log_size <= MAX_FILE_BYTES
+        ):
+            raise CandidateError("EVIDENCE_LOOKUP_INVALID")
+        with self._connection(readonly=True) as connection:
+            row = connection.execute(
+                "SELECT id,evidence_key,candidate_id,kind,subject,data "
+                "FROM evidence WHERE evidence_key=?",
+                (spec.evidence_key,),
+            ).fetchone()
+        if row is None:
+            return None
+        try:
+            record = json.loads(row[5])
+            stored_input = record["input"]
+            if (
+                record["id"] != row[0]
+                or stored_input["evidence_key"] != row[1]
+                or stored_input["candidate_id"] != row[2]
+                or record["kind"] != row[3]
+                or (stored_input["check_id"] if row[3] == "check" else "review") != row[4]
+            ):
+                raise CandidateError("EVIDENCE_IDENTITY_INVALID")
+            log = record["log"]
+            expected_log = None if absent else (log_sha256, log_size)
+            stored_log = None if log is None else (log["sha256"], log["size"])
+            if (
+                record["kind"] != kind
+                or stored_input != spec.model_dump()
+                or (stored_log != expected_log)
+            ):
+                raise CandidateError("EVIDENCE_KEY_CONFLICT")
+            return dict(record)
+        except (ValueError, TypeError, KeyError):
+            raise CandidateError("EVIDENCE_IDENTITY_INVALID") from None
 
     def _save_evidence(self, record: dict[str, Any], subject: str) -> dict[str, Any]:
         request = record["input"]

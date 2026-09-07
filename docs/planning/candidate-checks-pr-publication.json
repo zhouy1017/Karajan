@@ -1,0 +1,15 @@
+{
+  "issue": 94,
+  "pull_request": {
+    "baseRefName": "dev",
+    "headRefOid": "3beb8074bc102b2e96f30ed207c5eba10d90a2f5",
+    "isDraft": true,
+    "number": 97,
+    "state": "OPEN",
+    "url": "https://github.com/zhouy1017/Karajan/pull/97"
+  },
+  "implementation_commit": "0d63cde8cc4098894ecf4eec01109a1b7d3b7a70",
+  "scope": "Original capture subject revision 1 C/P; #94 remains incomplete",
+  "remote_issue_body_verified": true,
+  "merged": false
+}

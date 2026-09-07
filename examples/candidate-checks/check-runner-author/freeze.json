@@ -1,0 +1,46 @@
+{
+  "scope": "#94 fixed Linux Check runner author C/P slice",
+  "product_sources": {
+    "backend/karajan/isolation/check_runner.py": "6dbb03373ddcd2262f861c6598aa911522ca52954c83028fc39bb7700af66935",
+    "backend/karajan/isolation/_check_environment.py": "56e8773a179eacd11810e145409448334a16fe65448e70a91cb000d9094d3565",
+    "backend/karajan/isolation/_check_namespace.py": "09db7084625729c4ec43acb915790e05d92a6f986f610dc81cc3c7d0f9c38cbb",
+    "tests/isolation/test_check_runner.py": "f0a0cbfea6acfd6a1e9f8c15a273c0a1b8619b9789def96a8378f33723ee9400"
+  },
+  "files": {
+    "binding-green.xml": "e8a587a846553dc879bec9cb4f3a786b021814a5169349bed39aa87962dd3bce",
+    "binding-red.xml": "a27767ed7a3a39550d4f34217cf6a664ca678d204e3f4d4cfbf8858f87e833da",
+    "check_runner.first-freeze.py.txt": "486f35b6bb7601fa2bd7390009ad4f4e2322eae1ec597c67332047b999745c39",
+    "claim-concurrency.xml": "40a2b84351617c76639e0f61f6878d65705c145049e5a6383a7d67944b267065",
+    "deadline-write-green.xml": "8b47949626b8953fdc81b2a4b30e61bfa6128909e5f74a7d5eb96d2e5bfc5290",
+    "deadline-write-red.xml": "bcb8ae0c78776973a4421c0499b337b972c5fc5cc9145a8b0e096c6f6c7ce366",
+    "environment-sources.json": "78c3eeb8c10851273c0f2fb4f8b1e53b333d5c232595cb6eaa203796cab6ff8e",
+    "final-linux.xml": "82213cb680aea080121977fd12ec11ce3e57b3eea1485afe63c007bf34e9176d",
+    "first-freeze-linux18.xml": "3358b54cd28c6dcc4c84015de8c98822c51da4ad5a427a88e72b5ff2bad6954a",
+    "first-full-with-harness-failures.xml": "9229264724c7dde163f18d3bbd7c52302ea24eacd4b269407a3a752a731e2160",
+    "first-linux.xml": "2cfcb64de2c5356ba05e658600b19ca7b0a3c9c2f312ebf2d4d170170e9f0ee0",
+    "first-red.xml": "48445613e612397fa2d48c688fdb9b09f8ed4f4a9e41c5b29c302b13151bab0b",
+    "lost-replies-after-with-harness-error.xml": "21bb987834b501ba40565bf9e5e2fa25827e903c4cbafa5534a82910780b0020",
+    "lost-replies-green.xml": "f24be8ba17992bbfc9376591b1d972f276fdbd4260b653e30b12dad021c5fdd6",
+    "lost-replies-red.xml": "b02f5ec980cb494e4d33f8959e2748183daef7833912239c88b6e39d1f1d129b",
+    "mypy-linux.txt": "281a094c39385b4d7b53e5db635f52158036861433c2a4975b9039e77a627a24",
+    "mypy-windows.txt": "281a094c39385b4d7b53e5db635f52158036861433c2a4975b9039e77a627a24",
+    "README.md": "122bda358f6c1de62a9a46d5fd8eb21398ba79ba0f99c85a758ddfb9f32ef72d",
+    "real-boundaries.xml": "2e51fc443b2d44349df911c37b306ff1ed4e1278194e826c9aa957315d198ffa",
+    "results-summary.json": "603df1e43a9745cb745b410e6f3a87aa19297b05f2cd667bd76b021427bde8ba",
+    "ruff.txt": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0",
+    "silent-green.xml": "5dfc1aa05fd77bf4103b47269203f53d9c7f7c354f93d9bd0931fcac9727bec5",
+    "silent-red.xml": "7045b0b1ebcc6f361cf4ca921c3ebfb54905f9943e5272abc3dc37fd3ab874d5",
+    "snapshot-binding-green.xml": "bf3f7d482a0695117b124ba999572f69aee5e9c0aec491b06971c31da8273927",
+    "snapshot-binding-red.xml": "167f43d9ad8dc96edc1aa235638f6fd78ab7786b6715e7c1d4c9a3e3e7b7e933",
+    "summarize.py": "08420dde6b5d7bd659ce4dcc1c12acebe2c471fca6101514e53c88e9d9babc64",
+    "test_check_runner.first18.py.txt": "498c31fadde779ff799f54df48c96a0ca96cffd1656200a9e05f0cae5e1123a9",
+    "windows-import.xml": "d9927a6df0e9092b53df43f346666f2edcc98cdd66cb8a671719ee3e7df9cd16"
+  },
+  "results": {
+    "linux_author": "19 passed / 48.88s",
+    "ruff": "passed",
+    "mypy_windows": "passed, 3 sources",
+    "mypy_linux_platform": "passed, 3 sources; executed with installed Windows mypy",
+    "provider_calls": 0
+  }
+}

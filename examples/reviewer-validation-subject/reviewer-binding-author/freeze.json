@@ -1,0 +1,53 @@
+{
+  "base_commit": "3d47194147edf153a0a48a183b34ff7222d674d4",
+  "evidence": {
+    ".cache/reviewer-binding-author/README.md": "16b4c66d7e38035096453e4eb0909aa0433e7cde87e0e1786b12eb68d4be1d03",
+    ".cache/reviewer-binding-author/auth-green.xml": "f91f3bcba00978db784ffaae4bd83ff051440438c3745519cbe6db7ba0756a6c",
+    ".cache/reviewer-binding-author/auth-red.xml": "d05c344f85dd8090f89c9ef8ae90ac86d9ecc00bc41b078b8a38fc4f6e1fbb25",
+    ".cache/reviewer-binding-author/faults.xml": "a2a3d5908509457149d1fd64c4096fe5e1ca4c012d5bd2169b8e03c4accf10ca",
+    ".cache/reviewer-binding-author/final-linux.xml": "9efceb6c63c62e4fa13ea6e957a5233704440c6d284803e0cb29e20cf2a2bca1",
+    ".cache/reviewer-binding-author/final-win.xml": "a4805d1fa27fa20146a9fc41c376a1b33c6aa386dd366fc671e69cbb74c14097",
+    ".cache/reviewer-binding-author/first-green.xml": "5b4e36d3f2b51d94efacb646f231284ac13671b70ccec38889024ed5fc543a71",
+    ".cache/reviewer-binding-author/first-red.xml": "f051500ff272bbde7bee484d43f006d4602805aefc6b2721fb305b9e9739494c",
+    ".cache/reviewer-binding-author/positive.xml": "0e5bc9d1ed8c8e8b7e5965f3f18ce1e2b3869b95668041c83bdb484ec51053ba",
+    ".cache/reviewer-binding-author/reviewer_binding.auth-before.py.txt": "862b457c4a14c997a41379f16975ee1991063f7a72e880b347e0801b95f2fcd8",
+    ".cache/reviewer-binding-author/source-after-linux.json": "df64afaa46b4cbf1700d586377cddc8b1587c6669026f37a1d175d34940fd300",
+    ".cache/reviewer-binding-author/source-before-linux.json": "df64afaa46b4cbf1700d586377cddc8b1587c6669026f37a1d175d34940fd300",
+    ".cache/reviewer-binding-author/static-results.json": "63c1a767b35b614a34a54dd2c2c66cd6c9102fc754dd9c4cc48d00b618681356",
+    ".cache/reviewer-binding-author/test_reviewer_binding.auth-before.py.txt": "c435acc75bcfafe5f7cc5834d19971077c268907d04ba813820442bc702e22f7",
+    ".cache/reviewer-binding-author/test_reviewer_binding.final.py.txt": "1588894b50a2cbc6ddf2d7a2740f7b9d054a7f3b491199f3423566465c9b9fd3"
+  },
+  "evidence_level": "C",
+  "implementation_commit": null,
+  "issue": 100,
+  "junit": {
+    "final-linux.xml": {
+      "errors": "0",
+      "failures": "0",
+      "hostname": "ProArt-Zhou",
+      "name": "pytest",
+      "skipped": "0",
+      "tests": "18",
+      "time": "15.654",
+      "timestamp": "2026-09-07T01:21:26.296972+08:00"
+    },
+    "final-win.xml": {
+      "errors": "0",
+      "failures": "0",
+      "hostname": "ProArt-Zhou",
+      "name": "pytest",
+      "skipped": "0",
+      "tests": "18",
+      "time": "27.377",
+      "timestamp": "2026-09-07T01:19:02.892262+08:00"
+    }
+  },
+  "owned_source": {
+    "backend/karajan/orchestration/reviewer_binding.py": "cb7835eebea6e685d15267dee445f754762a0d674864ac4eb601a683863a7543",
+    "tests/runs/test_reviewer_binding.py": "1588894b50a2cbc6ddf2d7a2740f7b9d054a7f3b491199f3423566465c9b9fd3"
+  },
+  "parent_issue": 95,
+  "production_reviewer_qualification": "not_run",
+  "schema_version": "karajan.reviewer-binding-author-evidence.v1",
+  "source_lf_only": true
+}

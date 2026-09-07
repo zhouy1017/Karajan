@@ -1,0 +1,21 @@
+{
+  "reviewer": "capacity_facts",
+  "scope": "New CandidateStore.lookup_evidence controller-only historical identity port; not facade authorization or execution",
+  "findings": [],
+  "windows": {
+    "passed": 5,
+    "failed": 0,
+    "seconds": 2.95
+  },
+  "source_unchanged": true,
+  "source_sha256": {
+    "backend/karajan/candidates/store.py": "bca6518cbf7f01ab08bbfa4592141e250d123a1c375d29b2476a055273967683",
+    "tests/candidates/test_evidence_recovery.py": "142bce650ebbb259e5d7301eb00b45f4479a36fe84a0c82440e5145804966061"
+  },
+  "evidence_sha256": {
+    "test_independent_lookup.py": "ac6d0ba6c122d4d89c0a306f9603dc599387f46ad35095e2414f143ce9fa1747",
+    "windows.xml": "03b31f5fc47b09c1665baa6d8b26525060d571f7ad9a8327bb2b256f3a8d3abe"
+  },
+  "provider_calls": 0,
+  "real_credential_access": false
+}

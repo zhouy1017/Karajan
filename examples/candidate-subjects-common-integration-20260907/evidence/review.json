@@ -1,0 +1,102 @@
+{
+  "schema_version": "karajan.common-repair-downstream-review.v1",
+  "date": "2026-09-07",
+  "reviewer": "ui_spec_finalize",
+  "review_method": "One independent reviewer reports Standards and Spec separately; no claim of two different reviewers. Existing tests were executed independently, with exact historical independent shared-budget input reused. No new test-design count is claimed.",
+  "implementation_commit": "8b0d12a18b40ca0b339444efb789f0753a572c31",
+  "base_commit": "d314b8d545e7862e608ac1d782507f568b30d67d",
+  "common_repair": "ef440f4e7902bc1d3a262afa9112154cd9690a4a",
+  "status": "scoped C/P integration passed",
+  "findings": {
+    "Standards": {
+      "documented_rule_findings": [],
+      "judgment_findings": [],
+      "sources": [
+        "AGENTS.md",
+        "docs/agents/issue-tracker.md",
+        "CONTEXT.md",
+        "C:/Users/Chooo/.agents/skills/code-review/SKILL.md"
+      ],
+      "assessment": "No confirmed integration-specific standard breach. Stable allowlisted diagnostic persistence remains separate from effect authority and existing cleanup/replay. Fowler smell baseline used as judgment, not as a hard rule; static-tool checks reported separately."
+    },
+    "Spec": {
+      "confirmed_findings": [],
+      "assessment": "Both auto-merged orchestration files retain the prior budget and capture APIs. Existing functions are AST-identical except consume_go_task, whose added diagnostic call precedes Collector rejection. Public boundary and actual Check process tests passed on the pinned source."
+    }
+  },
+  "results": [
+    {
+      "phase": "c-win",
+      "tests": 89,
+      "passed": 89,
+      "failed": 0,
+      "errors": 0,
+      "skipped": [],
+      "junit_time": "148.423",
+      "exit_code": 0,
+      "source_before_after_equal": true,
+      "xml": "c-win.xml"
+    },
+    {
+      "phase": "p-linux",
+      "tests": 2,
+      "passed": 2,
+      "failed": 0,
+      "errors": 0,
+      "skipped": [],
+      "junit_time": "92.790",
+      "exit_code": 0,
+      "source_before_after_equal": true,
+      "xml": "p-linux.xml"
+    }
+  ],
+  "static": [
+    {
+      "command": [
+        "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "."
+      ],
+      "cwd": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-validation-subject",
+      "exit_code": 0,
+      "stdout": "ruff.stdout.txt"
+    },
+    {
+      "command": [
+        "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "backend/karajan"
+      ],
+      "cwd": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-validation-subject",
+      "exit_code": 0,
+      "stdout": "mypy.stdout.txt"
+    }
+  ],
+  "source_evidence": [
+    "merge-source-audit.json",
+    "common-core-comparison.json",
+    "common-repair-proof.json",
+    "p-controller-source-check.json"
+  ],
+  "p_scope": "Actual Linux Host and fixed namespace Checks; synthetic fixed child/qualification adapter explicitly included in execution source. A and B each execute both approved Checks; active A + two advances + cancellation blocks switching and further starts.",
+  "evidence_levels": {
+    "C": "passed for the selected affected public contracts",
+    "P": "passed for the selected actual local Check processes",
+    "S": "not_run; no provider/key access; no real Reviewer qualification asserted",
+    "G": "not_run here; old CI is not inherited by these new heads"
+  },
+  "remaining_limits": [
+    "No real Commander planning or Reviewer model was executed.",
+    "Missing Reviewer Evidence continues to block delivery; passing Checks is not a completed PR pipeline.",
+    "Shared-budget deadline checks bound controller effect admission; they do not claim a hard deadline inside every later runtime/transport operation.",
+    "Windows/Linux repeats and the two branches overlap; the counts are execution results, not unique new tests."
+  ],
+  "history": [
+    "No initial behavior-test failures in this scoped run. VALID launch setup history belongs to that branch report."
+  ],
+  "unchanged_products_and_tests": true,
+  "no_product_or_git_writes": true
+}

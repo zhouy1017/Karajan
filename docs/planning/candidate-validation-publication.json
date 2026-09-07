@@ -1,0 +1,32 @@
+{
+  "date": "2026-09-06",
+  "implementation_base": "624ad8b8490003f155baf7842ba91b9975b9526a",
+  "issues": [
+    {
+      "number": 93,
+      "url": "https://github.com/zhouy1017/Karajan/issues/93",
+      "parent_verified": 12,
+      "blocked_by_verified": [],
+      "snapshot": "commander-planning-bridge-issue.md"
+    },
+    {
+      "number": 94,
+      "url": "https://github.com/zhouy1017/Karajan/issues/94",
+      "parent_verified": 13,
+      "blocked_by_verified": [
+        90
+      ],
+      "snapshot": "candidate-checks-issue.md"
+    },
+    {
+      "number": 95,
+      "url": "https://github.com/zhouy1017/Karajan/issues/95",
+      "parent_verified": 13,
+      "blocked_by_verified": [
+        94,
+        93
+      ],
+      "snapshot": "candidate-reviewer-issue.md"
+    }
+  ]
+}

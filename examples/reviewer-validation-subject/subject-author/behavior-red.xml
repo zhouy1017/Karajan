@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="2.602" timestamp="2026-09-07T00:58:47.111182+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_candidate_subjects" name="test_ready_subject_replaces_terminal_cycle_without_reusing_evidence" time="1.610"><failure message="assert 1 == 2">projected = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x00000280B7088BC0&gt;, 'project_id': 'd11a4d36-41f0-4e...C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-929/test_ready_subject_replaces_te0/fixture/repository'), ...}
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-929/test_ready_subject_replaces_te0')
+
+    def test_ready_subject_replaces_terminal_cycle_without_reusing_evidence(projected, tmp_path):
+        case, service, runner, host = check_workflow(projected, tmp_path)
+        run_next_boundary_check(case, service, host)
+        before = service.advance(*case.args, principal="owner")
+        assert before["checks"]["phase"] == "checks_passed"
+        synthetic_transition(case)
+        service.subject_validator = synthetic_current
+        after = service.advance(*case.args, principal="owner")
+&gt;       assert after["subject"]["revision"] == 2
+E       assert 1 == 2
+
+tests\runs\test_candidate_subjects.py:91: AssertionError</failure></testcase></testsuite></testsuites>

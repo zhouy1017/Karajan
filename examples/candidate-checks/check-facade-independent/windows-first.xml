@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="3" time="6.443" timestamp="2026-09-07T00:13:16.753386+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.check-facade-independent.test_facade_boundaries" name="test_two_evidence_advances_and_cancel_keep_one_submission_and_cancelled_history" time="1.869" /><testcase classname=".cache.check-facade-independent.test_facade_boundaries" name="test_lost_actual_host_start_reply_is_recovered_without_source_or_second_process" time="1.858" /><testcase classname=".cache.check-facade-independent.test_facade_boundaries" name="test_changed_log_bytes_cannot_create_an_evidence_claim_or_pass" time="1.653"><failure message="AttributeError: 'CandidateStore' object has no attribute 'database'">projected = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x00000279C5392E40&gt;, 'project_id': '12de5c64-91b2-4a...C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-923/test_changed_log_bytes_cannot_0/fixture/repository'), ...}
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-923/test_changed_log_bytes_cannot_0')
+
+    def test_changed_log_bytes_cannot_create_an_evidence_claim_or_pass(projected, tmp_path):
+        case, service, runner, host = check_workflow(projected, tmp_path)
+        observed = run_next_boundary_check(case, service, host)
+        row = observed["checks"]["runs"][0]
+        runner.logs[row["check_run_id"]] = b"forged passed output instead of original bytes\n"
+&gt;       before = case.candidates.database.read_bytes()
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'CandidateStore' object has no attribute 'database'
+
+.cache\check-facade-independent\test_facade_boundaries.py:116: AttributeError</failure></testcase></testsuite></testsuites>

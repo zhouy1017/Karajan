@@ -1,0 +1,33 @@
+from pathlib import Path
+import hashlib,json,sys
+TREE=Path(__file__).resolve().parents[2]
+OUT=Path(__file__).resolve().parent
+subject=TREE.name=='reviewer-validation-subject'
+base=Path('/tmp')/('karajan-common-downstream-'+('subject' if subject else 'valid')+'-p-linux-20260907')
+copy_root=OUT/'p-receipts'
+copy_root.mkdir(exist_ok=True)
+records=[]
+for case in sorted(base.iterdir()):
+    if not case.is_dir() or case.is_symlink():continue
+    work=case/'work'
+    if work.exists():
+        for execution in sorted(work.iterdir()):
+            if not execution.is_dir() or execution.is_symlink():continue
+            for filename in ('result.json','namespace-init.json','started.json','output.log'):
+                source=execution/filename
+                if not source.exists():continue
+                target=copy_root/case.name/execution.name/filename
+                target.parent.mkdir(parents=True,exist_ok=True)
+                data=source.read_bytes();target.write_bytes(data)
+                records.append({'source':str(source),'target':str(target.relative_to(OUT)),'sha256':hashlib.sha256(data).hexdigest(),'bytes':len(data),'byte_equal':source.read_bytes()==target.read_bytes(),'scope':'actual fixed Check runner output/receipt, synthetic project data'})
+    for filename in ('race-observation.json','subject-native-report.json','active-subject-report.json'):
+        source=case/filename
+        if source.exists():
+            target=copy_root/case.name/filename;target.parent.mkdir(parents=True,exist_ok=True)
+            data=source.read_bytes();target.write_bytes(data)
+            records.append({'source':str(source),'target':str(target.relative_to(OUT)),'sha256':hashlib.sha256(data).hexdigest(),'bytes':len(data),'byte_equal':source.read_bytes()==target.read_bytes(),'scope':'test-saved public validation observation; all project/qualification data synthetic'})
+logs=[r for r in records if r['target'].endswith('/output.log')]
+assert len(logs)==5,(len(logs),records)
+result={'copies':records,'copy_count':len(records),'actual_check_logs':len(logs),'all_byte_equal':all(r['byte_equal'] for r in records),'excluded':['SQLite databases','bootstrap files','environment images','host state','credentials','entire temp directories']}
+(OUT/'p-receipt-map.json').write_text(json.dumps(result,indent=2)+'\n',encoding='utf-8',newline='\n')
+print(json.dumps({k:v for k,v in result.items() if k!='copies'}))

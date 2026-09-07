@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="2.611" timestamp="2026-09-07T01:03:47.718630+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_candidate_subjects" name="test_stopped_old_observation_can_record_late_evidence_without_overwriting_new_cycle" time="1.595"><failure message="TypeError: 'NoneType' object is not subscriptable">projected = {'projects': &lt;karajan.projects.registry.ProjectRegistry object at 0x00000254FCAF9520&gt;, 'project_id': 'f4717f64-110c-47...C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-934/test_stopped_old_observation_c0/fixture/repository'), ...}
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-934/test_stopped_old_observation_c0')
+
+    def test_stopped_old_observation_can_record_late_evidence_without_overwriting_new_cycle(projected, tmp_path):
+        case, service, runner, host = check_workflow(projected, tmp_path)
+        observed = run_next_boundary_check(case, service, host)
+        assert observed["checks"]["runs"][0]["phase"] == "observed"
+        synthetic_transition(case)
+        service.subject_validator = synthetic_current
+        installed = service.advance(*case.args, principal="owner")
+        assert installed["history"][0]["checks"]["runs"][0]["evidence"] is None
+        recovered = service.reconcile(*case.args, principal="owner")
+&gt;       assert recovered["history"][0]["checks"]["runs"][0]["evidence"]["status"] == "passed"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'NoneType' object is not subscriptable
+
+tests\runs\test_candidate_subjects.py:235: TypeError</failure></testcase></testsuite></testsuites>

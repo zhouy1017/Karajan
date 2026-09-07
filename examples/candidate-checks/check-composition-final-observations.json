@@ -1,0 +1,238 @@
+{
+  "scope": "C/P fixed production Check factory -> Host direct child -> Linux namespace -> Candidate Evidence",
+  "planning_qualification_and_worker": "explicit synthetic fixtures; not S",
+  "official_provider_calls": 0,
+  "backend_source_unchanged": true,
+  "runs": [
+    {
+      "test": "test_fixed_host_child_runs_eve0",
+      "run_id": "6d4d753a-8dcc-41e0-acb4-9e54fa58eb4b",
+      "operation_id": "756db96d-8eb3-4333-8511-66e54ffc7058",
+      "subject": {
+        "approval_digest": "c9c476628851368ee38e01961fa9552a7919bd10d1a02c6e7c141ae44cdd950a",
+        "candidate": {
+          "base_sha": "cc6a87201e85394aab462b351ee53fe421575136",
+          "baseline_id": "e4650573b576ca55f4ddbacc63b400486403b42a9234df096195d61cae29b8a7",
+          "content_sha256": "4e168cdd3a7c703b5696578f7bc33a51dc898ab3d073d7e4143f8c010a21afe8",
+          "id": "b890d47d-65dd-4d29-bde7-f30a2a91655a",
+          "input_sha256": "cc135c39f7aed1270aac574eaf5a77d463b11698007b69886539bc8a0cc3dc3c",
+          "manifest_sha256": "77478afc2424c440b991d1f980ad1beb4956f79c8c4005d283d92c8236394946",
+          "policy_sha256": "d83c077dfc4e32bc7104a93b2f426058aba377ffd95cbbec4587222ea5821f0c",
+          "repository_identity": "81b4797dcbc3e5f7949e61ec32b9171fc957c24039354d7b9ce5f54b1561e1eb",
+          "revision": 1,
+          "series_id": "go-task-candidate:756db96d-8eb3-4333-8511-66e54ffc7058",
+          "tree_sha": "bc427e1fb8e545f9629c3c5ae769c9bde666dd9c"
+        },
+        "execution_policy_digest": "dfba9683dfffeb56e3864086700f418dc62ece471164567103063f95016df431",
+        "plan_digest": "ecf174fb01a51ffd660933ce5d59e1749e73b99e6d1123449b7e481f532e17ed",
+        "revision": 1,
+        "schema_version": "karajan.candidate-validation-subject.v1",
+        "source_candidate": {
+          "base_sha": "cc6a87201e85394aab462b351ee53fe421575136",
+          "baseline_id": "e4650573b576ca55f4ddbacc63b400486403b42a9234df096195d61cae29b8a7",
+          "content_sha256": "4e168cdd3a7c703b5696578f7bc33a51dc898ab3d073d7e4143f8c010a21afe8",
+          "id": "b890d47d-65dd-4d29-bde7-f30a2a91655a",
+          "input_sha256": "cc135c39f7aed1270aac574eaf5a77d463b11698007b69886539bc8a0cc3dc3c",
+          "manifest_sha256": "77478afc2424c440b991d1f980ad1beb4956f79c8c4005d283d92c8236394946",
+          "policy_sha256": "d83c077dfc4e32bc7104a93b2f426058aba377ffd95cbbec4587222ea5821f0c",
+          "repository_identity": "81b4797dcbc3e5f7949e61ec32b9171fc957c24039354d7b9ce5f54b1561e1eb",
+          "revision": 1,
+          "series_id": "go-task-candidate:756db96d-8eb3-4333-8511-66e54ffc7058",
+          "tree_sha": "bc427e1fb8e545f9629c3c5ae769c9bde666dd9c"
+        },
+        "source_capture_digest": "37d96cae4e366ebfdf25a0ae9de5bc0de35ee344133c1bcd27ca321652f8ceb1"
+      },
+      "checks": [
+        {
+          "check_id": "behavior",
+          "check_revision": 1,
+          "approved_argv": [
+            "python3.12",
+            "-I",
+            "-c",
+            "from pathlib import Path; assert Path('src/report.py').read_bytes() == b\"print('collected')\\n\"; print('behavior-ok')"
+          ],
+          "approved_timeout_seconds": 60,
+          "check_run_id": "check:47c264cf-e114-4532-9340-f0d1f847688b",
+          "attempt_id": "check-attempt:47c264cf-e114-4532-9340-f0d1f847688b",
+          "execution_digest": "360d77e5249950808aee9bf96821a1a6628373c6ae3766e17c9d4aabd77a3e2e",
+          "runner_identity": {
+            "birth": "6c826f68-21f8-4fe0-8956-b7942ed46a44:10726023",
+            "pid": 103257
+          },
+          "observation": {
+            "environment_sha256": "1aa91c962d65d4fa6bf39a14178d8b98f6afb503574d8a5bff31c8ba48119c11",
+            "execution_digest": "360d77e5249950808aee9bf96821a1a6628373c6ae3766e17c9d4aabd77a3e2e",
+            "executor_ref": "fixed-python-check.v1",
+            "exit_code": 0,
+            "local_stop": "confirmed",
+            "log_complete": true,
+            "log_sha256": "bcf80edb3dd154e8aa62f4b72b0e0f06c57c92044b9927a0e7d5319e1077763b",
+            "log_size": 55,
+            "observation_ref": "check-observation:360d77e5249950808aee9bf96821a1a6628373c6ae3766e17c9d4aabd77a3e2e",
+            "outcome": "completed",
+            "reason_codes": []
+          },
+          "evidence_id": "80db2810-8c6f-4178-883c-fed3adefd503",
+          "evidence_sha256": "7fc311ab6d598abc5ffeef2aadff915645d7986d4cb2b31f361b103cb345e0b9",
+          "evidence_status": "passed",
+          "evidence_provenance": "trusted_observation"
+        },
+        {
+          "check_id": "syntax",
+          "check_revision": 1,
+          "approved_argv": [
+            "python3.12",
+            "-I",
+            "-m",
+            "py_compile",
+            "src/report.py"
+          ],
+          "approved_timeout_seconds": 60,
+          "check_run_id": "check:4b7896a0-bd57-420b-87c6-d508c6b8821b",
+          "attempt_id": "check-attempt:4b7896a0-bd57-420b-87c6-d508c6b8821b",
+          "execution_digest": "779bf44c41c03f39183c9c8b9d523ac9b9593258837c02cd90ed3e42ca224f07",
+          "runner_identity": {
+            "birth": "6c826f68-21f8-4fe0-8956-b7942ed46a44:10727598",
+            "pid": 103301
+          },
+          "observation": {
+            "environment_sha256": "1aa91c962d65d4fa6bf39a14178d8b98f6afb503574d8a5bff31c8ba48119c11",
+            "execution_digest": "779bf44c41c03f39183c9c8b9d523ac9b9593258837c02cd90ed3e42ca224f07",
+            "executor_ref": "fixed-python-check.v1",
+            "exit_code": 0,
+            "local_stop": "confirmed",
+            "log_complete": true,
+            "log_sha256": "0685788b240abf5fdab04d066d18a0e822a9fbcc791a40883c8286271a8cb947",
+            "log_size": 43,
+            "observation_ref": "check-observation:779bf44c41c03f39183c9c8b9d523ac9b9593258837c02cd90ed3e42ca224f07",
+            "outcome": "completed",
+            "reason_codes": []
+          },
+          "evidence_id": "b5eb8499-7faa-4da4-b196-1b3554604be4",
+          "evidence_sha256": "2da40e39dfc4078afe8e364359c2e452c90e9239da045243f65222667d384b82",
+          "evidence_status": "passed",
+          "evidence_provenance": "trusted_observation"
+        }
+      ],
+      "cancelled_by_test_finally_cleanup": true,
+      "local_gate_passed": false,
+      "delivery_eligible": false
+    },
+    {
+      "test": "test_fixed_host_child_runs_eve1",
+      "run_id": "6c508dc5-67b2-4803-b171-e0a63374cffd",
+      "operation_id": "29c24375-0624-48fe-b35e-40f218db3023",
+      "subject": {
+        "approval_digest": "ad4d06d4aeb894920547ba16a8c25bb439461d74c9ed2ca7cd2b986c2d130558",
+        "candidate": {
+          "base_sha": "af8bf52c2f1053afd2a28143b99e9901b27ea8f4",
+          "baseline_id": "f2e87fa94b37bbcbfc6088ed0c411551b3551bb7c76f2d82ee5d2f7695fa8d4a",
+          "content_sha256": "d9b4bcc0ff262647d05949bf4cea86e1fcb533fb0a19935bf5eda0c17c11fe89",
+          "id": "b6b733cf-7456-42fc-9ecb-49033c9c8bd9",
+          "input_sha256": "0fbe4ed395b08d5aa264e60b5f11013333bb2dd057a675e5e7c506b419e97237",
+          "manifest_sha256": "51c5ffbdc15b90bf9f35a248504bc96c47fee0f18db1e50716c267fb723b1449",
+          "policy_sha256": "d83c077dfc4e32bc7104a93b2f426058aba377ffd95cbbec4587222ea5821f0c",
+          "repository_identity": "6ee38e7bc63a47ad65315948082c36019163bda4c71f294791e90f58ae3a3e36",
+          "revision": 1,
+          "series_id": "go-task-candidate:29c24375-0624-48fe-b35e-40f218db3023",
+          "tree_sha": "3466e360331f3b2b3fe6c20fb37e8a64a8d21b88"
+        },
+        "execution_policy_digest": "dfba9683dfffeb56e3864086700f418dc62ece471164567103063f95016df431",
+        "plan_digest": "58d8dbfa65a17693a051092e275c69012ae43f80cb9da829b62856389cf4831f",
+        "revision": 1,
+        "schema_version": "karajan.candidate-validation-subject.v1",
+        "source_candidate": {
+          "base_sha": "af8bf52c2f1053afd2a28143b99e9901b27ea8f4",
+          "baseline_id": "f2e87fa94b37bbcbfc6088ed0c411551b3551bb7c76f2d82ee5d2f7695fa8d4a",
+          "content_sha256": "d9b4bcc0ff262647d05949bf4cea86e1fcb533fb0a19935bf5eda0c17c11fe89",
+          "id": "b6b733cf-7456-42fc-9ecb-49033c9c8bd9",
+          "input_sha256": "0fbe4ed395b08d5aa264e60b5f11013333bb2dd057a675e5e7c506b419e97237",
+          "manifest_sha256": "51c5ffbdc15b90bf9f35a248504bc96c47fee0f18db1e50716c267fb723b1449",
+          "policy_sha256": "d83c077dfc4e32bc7104a93b2f426058aba377ffd95cbbec4587222ea5821f0c",
+          "repository_identity": "6ee38e7bc63a47ad65315948082c36019163bda4c71f294791e90f58ae3a3e36",
+          "revision": 1,
+          "series_id": "go-task-candidate:29c24375-0624-48fe-b35e-40f218db3023",
+          "tree_sha": "3466e360331f3b2b3fe6c20fb37e8a64a8d21b88"
+        },
+        "source_capture_digest": "f3027523bca6384ab75296e267128924a784e3723eb31faea02374ec91fba1f8"
+      },
+      "checks": [
+        {
+          "check_id": "behavior",
+          "check_revision": 1,
+          "approved_argv": [
+            "python3.12",
+            "-I",
+            "-c",
+            "from pathlib import Path; assert Path('src/report.py').read_bytes() == b\"print('collected')\\n\"; print('behavior-ok')"
+          ],
+          "approved_timeout_seconds": 60,
+          "check_run_id": "check:f985d084-2b9e-4d9e-b791-16f5da47dac4",
+          "attempt_id": "check-attempt:f985d084-2b9e-4d9e-b791-16f5da47dac4",
+          "execution_digest": "75146fa38352e50fbe3da3069af867dd8264e7fefbb63d9b40d51f7dc509f0df",
+          "runner_identity": {
+            "birth": "6c826f68-21f8-4fe0-8956-b7942ed46a44:10729545",
+            "pid": 103870
+          },
+          "observation": {
+            "environment_sha256": "1aa91c962d65d4fa6bf39a14178d8b98f6afb503574d8a5bff31c8ba48119c11",
+            "execution_digest": "75146fa38352e50fbe3da3069af867dd8264e7fefbb63d9b40d51f7dc509f0df",
+            "executor_ref": "fixed-python-check.v1",
+            "exit_code": 1,
+            "local_stop": "confirmed",
+            "log_complete": true,
+            "log_sha256": "a7f618a659975c545971aecd51ad5ffe0b6089ec9974a91e9adacec775d1c166",
+            "log_size": 132,
+            "observation_ref": "check-observation:75146fa38352e50fbe3da3069af867dd8264e7fefbb63d9b40d51f7dc509f0df",
+            "outcome": "completed",
+            "reason_codes": []
+          },
+          "evidence_id": "ef533cb3-31c2-4c1e-8531-bce64fb00a82",
+          "evidence_sha256": "990bbccddb436de14fa486ec6e593b2c7fd2b936271ea3ea2669187d458b2c1e",
+          "evidence_status": "failed",
+          "evidence_provenance": "trusted_observation"
+        },
+        {
+          "check_id": "syntax",
+          "check_revision": 1,
+          "approved_argv": [
+            "python3.12",
+            "-I",
+            "-m",
+            "py_compile",
+            "src/report.py"
+          ],
+          "approved_timeout_seconds": 60,
+          "check_run_id": "check:cb243ef3-d0f5-40d0-a8b7-cbc1a531163b",
+          "attempt_id": "check-attempt:cb243ef3-d0f5-40d0-a8b7-cbc1a531163b",
+          "execution_digest": "fe787b2655abd909bc281e56e3fe187c4a835274c88d279648c6cf1ad9b9d1e8",
+          "runner_identity": {
+            "birth": "6c826f68-21f8-4fe0-8956-b7942ed46a44:10731125",
+            "pid": 103919
+          },
+          "observation": {
+            "environment_sha256": "1aa91c962d65d4fa6bf39a14178d8b98f6afb503574d8a5bff31c8ba48119c11",
+            "execution_digest": "fe787b2655abd909bc281e56e3fe187c4a835274c88d279648c6cf1ad9b9d1e8",
+            "executor_ref": "fixed-python-check.v1",
+            "exit_code": 0,
+            "local_stop": "confirmed",
+            "log_complete": true,
+            "log_sha256": "0685788b240abf5fdab04d066d18a0e822a9fbcc791a40883c8286271a8cb947",
+            "log_size": 43,
+            "observation_ref": "check-observation:fe787b2655abd909bc281e56e3fe187c4a835274c88d279648c6cf1ad9b9d1e8",
+            "outcome": "completed",
+            "reason_codes": []
+          },
+          "evidence_id": "38ab8a0d-7fb5-4f01-aac5-39e8a09f21cc",
+          "evidence_sha256": "ca7b0119be76d4463a227bc3da57db2dd93f000350ec8eeb09c575505a7a9a1b",
+          "evidence_status": "passed",
+          "evidence_provenance": "trusted_observation"
+        }
+      ],
+      "cancelled_by_test_finally_cleanup": true,
+      "local_gate_passed": false,
+      "delivery_eligible": false
+    }
+  ]
+}

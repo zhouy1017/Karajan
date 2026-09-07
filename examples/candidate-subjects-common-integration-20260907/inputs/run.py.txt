@@ -1,0 +1,39 @@
+from pathlib import Path
+import hashlib,json,os,platform,subprocess,sys,time
+TREE=Path(__file__).resolve().parents[2]
+OUT=Path(__file__).resolve().parent
+ROOT=TREE.parents[1]
+SUBJECT=TREE.name=='reviewer-validation-subject'
+HEAD='8b0d12a18b40ca0b339444efb789f0753a572c31' if SUBJECT else '552dd6b5c78279efc398126e417969c41688232d'
+BASE='d314b8d545e7862e608ac1d782507f568b30d67d' if SUBJECT else '45ff0651517333225666353076a23c9cad85833c'
+def write(name,data):
+    (OUT/name).write_text(json.dumps(data,indent=2,ensure_ascii=False)+'\n',encoding='utf-8',newline='\n')
+def snapshot():
+    files={str(p.relative_to(TREE)).replace('\\','/'):hashlib.sha256(p.read_bytes()).hexdigest() for folder in ('backend/karajan','tests') for p in sorted((TREE/folder).rglob('*.py')) if '__pycache__' not in p.parts}
+    return {'implementation':HEAD,'base':BASE,'files':files}
+phase=sys.argv[1]
+assert phase in ('c-win','c-linux','p-linux')
+actual=subprocess.check_output(['git','rev-parse','HEAD'],cwd=TREE,text=True).strip()
+assert actual==HEAD,(actual,HEAD)
+assert not (OUT/(phase+'.xml')).exists(),'Refuse overwrite previous test result'
+env=os.environ.copy()
+env.update({'PYTHONPATH':str(TREE/'backend'),'KARAJAN_GO_TOKENIZER_DIRECTORY':str(ROOT/'.cache/go-task-execution/.cache/go-context-artifacts'),'KARAJAN_REQUIRE_GO_TOKENIZER':'1','KARAJAN_OPENCODE_LINUX_BINARY':str(ROOT/'.cache/go-linux-runtime/package/bin/opencode'),'KARAJAN_REQUIRE_OPENCODE_ISOLATION':'1','HF_HUB_OFFLINE':'1','TRANSFORMERS_OFFLINE':'1','PYTHONUTF8':'1'})
+if phase.startswith('c-'):
+    tests=['tests/runs/test_candidate_checks.py','tests/runs/test_check_services_factory.py','.cache/common-repair-downstream/test_effect_budget.py']
+    if SUBJECT:
+        tests+=['tests/runs/test_candidate_subjects.py','tests/runs/test_reviewer_binding.py']
+    else:
+        tests+=['tests/runs/test_go_execution_intent.py','tests/runs/test_go_task_execution.py','tests/runs/test_go_native_diagnostic_contract.py','tests/runs/test_go_task_collector.py']
+else:
+    tests=['tests/runs/test_candidate_subjects_native.py'] if SUBJECT else ['tests/runs/test_candidate_checks_native.py','tests/runs/test_candidate_checks_concurrency_native.py']
+base_temp=(Path('/tmp')/('karajan-common-downstream-'+('subject' if SUBJECT else 'valid')+'-'+phase+'-20260907')) if sys.platform=='linux' else OUT/(phase+'-tmp')
+command=[sys.executable,'-m','pytest','-p','no:cacheprovider','-o','pythonpath=backend tests/projects tests/runs tests/web tests/isolation tests/adapters/opencode tests/candidates tests/execution','--basetemp',str(base_temp),'--junitxml',str(OUT/(phase+'.xml')),'-q',*tests]
+write(phase+'-source-before.json',snapshot())
+write(phase+'-command.json',{'command':command,'cwd':str(TREE),'env':{k:env[k] for k in ('PYTHONPATH','KARAJAN_GO_TOKENIZER_DIRECTORY','KARAJAN_REQUIRE_GO_TOKENIZER','KARAJAN_OPENCODE_LINUX_BINARY','KARAJAN_REQUIRE_OPENCODE_ISOLATION','HF_HUB_OFFLINE','TRANSFORMERS_OFFLINE','PYTHONUTF8')},'platform':platform.platform(),'actual_head':actual,'claim':'Offline local fixture validation; no provider credentials are read.'})
+started=time.time()
+with (OUT/(phase+'.stdout.txt')).open('wb') as output:
+    result=subprocess.run(command,cwd=TREE,env=env,stdout=output,stderr=subprocess.STDOUT)
+write(phase+'-source-after.json',snapshot())
+write(phase+'-result.json',{'exit_code':result.returncode,'duration_seconds':time.time()-started,'source_before_after_equal':json.loads((OUT/(phase+'-source-before.json')).read_text())==snapshot(),'head_after':subprocess.check_output(['git','rev-parse','HEAD'],cwd=TREE,text=True).strip()})
+print((OUT/(phase+'.stdout.txt')).read_text(encoding='utf-8',errors='replace')[-12000:])
+raise SystemExit(result.returncode)

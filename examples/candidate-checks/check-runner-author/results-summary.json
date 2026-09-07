@@ -1,0 +1,220 @@
+[
+  {
+    "case_directory": "test_actual_failure_is_never_a0",
+    "observation": {
+      "execution_digest": "7ed5ee2e9035906f1cac834a5828e78b7f3c99347e4aad5cc8354377b8917374",
+      "outcome": "completed",
+      "exit_code": 7,
+      "local_stop": "confirmed",
+      "log_complete": true,
+      "log_sha256": "6851d03ddca938a4e111b90d97d466ca57b8f86e99abf6e18ae0ee17f33ddb51",
+      "log_size": 63,
+      "observation_ref": "check-observation:7ed5ee2e9035906f1cac834a5828e78b7f3c99347e4aad5cc8354377b8917374",
+      "executor_ref": "fixed-python-check.v1",
+      "environment_sha256": "1aa91c962d65d4fa6bf39a14178d8b98f6afb503574d8a5bff31c8ba48119c11",
+      "reason_codes": []
+    }
+  },
+  {
+    "case_directory": "test_actual_failure_is_never_a1",
+    "observation": {
+      "execution_digest": "e94221928af9fc078d5366247bfde885765965074614e72927452e4773cc1581",
+      "outcome": "timed_out",
+      "exit_code": -9,
+      "local_stop": "confirmed",
+      "log_complete": true,
+      "log_sha256": "5ad07fff157d0e171f5f62a58b37bde11122acb5336b7e06f4385051e9605c2d",
+      "log_size": 51,
+      "observation_ref": "check-observation:e94221928af9fc078d5366247bfde885765965074614e72927452e4773cc1581",
+      "executor_ref": "fixed-python-check.v1",
+      "environment_sha256": "1aa91c962d65d4fa6bf39a14178d8b98f6afb503574d8a5bff31c8ba48119c11",
+      "reason_codes": []
+    }
+  },
+  {
+    "case_directory": "test_actual_failure_is_never_a2",
+    "observation": {
+      "execution_digest": "6d3111ff8a2095150744c24a267394457dce86a77d93a123e98889fb31f2e2c0",
+      "outcome": "unknown",
+      "exit_code": 0,
+      "local_stop": "confirmed",
+      "log_complete": false,
+      "log_sha256": "8d5a969a620e049f7f15cec4e3c8d896fb57956f4a9d7e77d3ba0e502e414e49",
+      "log_size": 1024,
+      "observation_ref": "check-observation:6d3111ff8a2095150744c24a267394457dce86a77d93a123e98889fb31f2e2c0",
+      "executor_ref": "fixed-python-check.v1",
+      "environment_sha256": "1aa91c962d65d4fa6bf39a14178d8b98f6afb503574d8a5bff31c8ba48119c11",
+      "reason_codes": [
+        "CHECK_LOG_LIMIT_EXCEEDED"
+      ]
+    }
+  },
+  {
+    "case_directory": "test_cancel_poll_is_outside_bu0",
+    "observation": {
+      "execution_digest": "9cc8ba846055181ea46282cc210b756af733cbf88e4f635aad44f15495c88adb",
+      "outcome": "cancelled",
+      "exit_code": -9,
+      "local_stop": "confirmed",
+      "log_complete": true,
+      "log_sha256": "7633092dcd36381e7d4e55b9d4560ae6b725b7be2fc583084d53e9ce3861c419",
+      "log_size": 51,
+      "observation_ref": "check-observation:9cc8ba846055181ea46282cc210b756af733cbf88e4f635aad44f15495c88adb",
+      "executor_ref": "fixed-python-check.v1",
+      "environment_sha256": "1aa91c962d65d4fa6bf39a14178d8b98f6afb503574d8a5bff31c8ba48119c11",
+      "reason_codes": []
+    }
+  },
+  {
+    "case_directory": "test_durable_write_cannot_carr0",
+    "observation": {
+      "execution_digest": "d3d94dfd3c67ebc9784360f46824b3dad1c2c22cfe6c7102019908a7d23d1179",
+      "outcome": "unknown",
+      "exit_code": null,
+      "local_stop": "not_started",
+      "log_complete": false,
+      "log_sha256": "0685788b240abf5fdab04d066d18a0e822a9fbcc791a40883c8286271a8cb947",
+      "log_size": 43,
+      "observation_ref": "check-observation:d3d94dfd3c67ebc9784360f46824b3dad1c2c22cfe6c7102019908a7d23d1179",
+      "executor_ref": "fixed-python-check.v1",
+      "environment_sha256": "1aa91c962d65d4fa6bf39a14178d8b98f6afb503574d8a5bff31c8ba48119c11",
+      "reason_codes": [
+        "CHECK_START_REJECTED"
+      ]
+    }
+  },
+  {
+    "case_directory": "test_lost_actual_popen_reply_n0",
+    "observation": {
+      "execution_digest": "5b6a904194a75c20477606d9e0dd5d11665c42b5c3c536462edf6b6ba7aef126",
+      "outcome": "unknown",
+      "exit_code": null,
+      "local_stop": "unknown",
+      "log_complete": false,
+      "log_sha256": "0685788b240abf5fdab04d066d18a0e822a9fbcc791a40883c8286271a8cb947",
+      "log_size": 43,
+      "observation_ref": "check-observation:5b6a904194a75c20477606d9e0dd5d11665c42b5c3c536462edf6b6ba7aef126",
+      "executor_ref": "fixed-python-check.v1",
+      "environment_sha256": "1aa91c962d65d4fa6bf39a14178d8b98f6afb503574d8a5bff31c8ba48119c11",
+      "reason_codes": [
+        "CHECK_EXECUTION_FAILED"
+      ]
+    }
+  },
+  {
+    "case_directory": "test_lost_result_commit_reply_0",
+    "observation": {
+      "execution_digest": "73b418e94710178303f8833f30c7c293dd3a2a57239316f7635faf04e019eb58",
+      "outcome": "completed",
+      "exit_code": 0,
+      "local_stop": "confirmed",
+      "log_complete": true,
+      "log_sha256": "b5f9182014b289a75ec4943574af9805deb589e5684819d3a6271e666980aee6",
+      "log_size": 58,
+      "observation_ref": "check-observation:73b418e94710178303f8833f30c7c293dd3a2a57239316f7635faf04e019eb58",
+      "executor_ref": "fixed-python-check.v1",
+      "environment_sha256": "1aa91c962d65d4fa6bf39a14178d8b98f6afb503574d8a5bff31c8ba48119c11",
+      "reason_codes": []
+    }
+  },
+  {
+    "case_directory": "test_real_check_logs_and_resta0",
+    "observation": {
+      "execution_digest": "7b8b05171fe0903b5ebfc61e6eadee693384b7c469b4383c6421e17977611053",
+      "outcome": "completed",
+      "exit_code": 0,
+      "local_stop": "confirmed",
+      "log_complete": true,
+      "log_sha256": "7a0eec8f22aea28c913cf2bad26779217f1271cee20eb9110123c44fd58131d5",
+      "log_size": 85,
+      "observation_ref": "check-observation:7b8b05171fe0903b5ebfc61e6eadee693384b7c469b4383c6421e17977611053",
+      "executor_ref": "fixed-python-check.v1",
+      "environment_sha256": "1aa91c962d65d4fa6bf39a14178d8b98f6afb503574d8a5bff31c8ba48119c11",
+      "reason_codes": []
+    }
+  },
+  {
+    "case_directory": "test_real_sandbox_denies_host_0",
+    "observation": {
+      "execution_digest": "1b92e6b7952853796caf1960ce05148647f17ded18adca19565a22a84f4c4518",
+      "outcome": "completed",
+      "exit_code": 0,
+      "local_stop": "confirmed",
+      "log_complete": true,
+      "log_sha256": "c4837f86c262debd7aa38738ef83a3bff7f7f4194ec5af23de817b68270a3a01",
+      "log_size": 76,
+      "observation_ref": "check-observation:1b92e6b7952853796caf1960ce05148647f17ded18adca19565a22a84f4c4518",
+      "executor_ref": "fixed-python-check.v1",
+      "environment_sha256": "1aa91c962d65d4fa6bf39a14178d8b98f6afb503574d8a5bff31c8ba48119c11",
+      "reason_codes": []
+    }
+  },
+  {
+    "case_directory": "test_refused_business_guard_ha0",
+    "observation": {
+      "execution_digest": "0df083563498c24e3dc5d89d48edc1f39fee1c47bcb668d326c33283fc172323",
+      "outcome": "unknown",
+      "exit_code": null,
+      "local_stop": "not_started",
+      "log_complete": false,
+      "log_sha256": "0685788b240abf5fdab04d066d18a0e822a9fbcc791a40883c8286271a8cb947",
+      "log_size": 43,
+      "observation_ref": "check-observation:0df083563498c24e3dc5d89d48edc1f39fee1c47bcb668d326c33283fc172323",
+      "executor_ref": "fixed-python-check.v1",
+      "environment_sha256": "1aa91c962d65d4fa6bf39a14178d8b98f6afb503574d8a5bff31c8ba48119c11",
+      "reason_codes": [
+        "CHECK_EXECUTION_FAILED"
+      ]
+    }
+  },
+  {
+    "case_directory": "test_silent_success_has_a_comp0",
+    "observation": {
+      "execution_digest": "60d6c4ba4b29f78a58db2ab49dcf7bae17ee0071a9119586e7351698ebf475b6",
+      "outcome": "completed",
+      "exit_code": 0,
+      "local_stop": "confirmed",
+      "log_complete": true,
+      "log_sha256": "0685788b240abf5fdab04d066d18a0e822a9fbcc791a40883c8286271a8cb947",
+      "log_size": 43,
+      "observation_ref": "check-observation:60d6c4ba4b29f78a58db2ab49dcf7bae17ee0071a9119586e7351698ebf475b6",
+      "executor_ref": "fixed-python-check.v1",
+      "environment_sha256": "1aa91c962d65d4fa6bf39a14178d8b98f6afb503574d8a5bff31c8ba48119c11",
+      "reason_codes": []
+    }
+  },
+  {
+    "case_directory": "test_snapshot_changed_after_ma0",
+    "observation": {
+      "execution_digest": "20bc7c2a6ff8df695045d0fa57a23e30bf97e3dcc1f8525f47a56763b2b2c048",
+      "outcome": "completed",
+      "exit_code": 1,
+      "local_stop": "confirmed",
+      "log_complete": true,
+      "log_sha256": "02d0d9820c680c82a64521d1f635d27e80dabe9eb874f959cbf58dad72ba5bc0",
+      "log_size": 466,
+      "observation_ref": "check-observation:20bc7c2a6ff8df695045d0fa57a23e30bf97e3dcc1f8525f47a56763b2b2c048",
+      "executor_ref": "fixed-python-check.v1",
+      "environment_sha256": "1aa91c962d65d4fa6bf39a14178d8b98f6afb503574d8a5bff31c8ba48119c11",
+      "reason_codes": []
+    }
+  },
+  {
+    "case_directory": "test_two_callers_and_cancel_sh0",
+    "observation": {
+      "execution_digest": "950bbf178f72b7b6c558fab4779e3f335f773cb7fd99c1c86fca28b10f95a59d",
+      "outcome": "unknown",
+      "exit_code": null,
+      "local_stop": "not_started",
+      "log_complete": false,
+      "log_sha256": "0685788b240abf5fdab04d066d18a0e822a9fbcc791a40883c8286271a8cb947",
+      "log_size": 43,
+      "observation_ref": "check-observation:950bbf178f72b7b6c558fab4779e3f335f773cb7fd99c1c86fca28b10f95a59d",
+      "executor_ref": "fixed-python-check.v1",
+      "environment_sha256": "1aa91c962d65d4fa6bf39a14178d8b98f6afb503574d8a5bff31c8ba48119c11",
+      "reason_codes": [
+        "CHECK_START_REJECTED"
+      ]
+    }
+  }
+]

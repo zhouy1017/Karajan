@@ -1,0 +1,48 @@
+{
+  "actual_processes": 5,
+  "backend_sources_per_execution": 139,
+  "all_five_execution_sources_match": true,
+  "qualifier": "explicit_test_double",
+  "a_and_b_statuses": [
+    "passed",
+    "passed",
+    "passed",
+    "passed"
+  ],
+  "a_and_b_budget_claims": 5,
+  "cancel": {
+    "business_phase": "cancelled",
+    "native_outcome": "completed",
+    "exit_code": -9,
+    "local_stop": "confirmed",
+    "started_receipts": 1,
+    "second_claimed": false
+  },
+  "logs": [
+    {
+      "file": "check-a-behavior.log",
+      "sha256": "bcf80edb3dd154e8aa62f4b72b0e0f06c57c92044b9927a0e7d5319e1077763b",
+      "bytes": 55
+    },
+    {
+      "file": "check-a-syntax.log",
+      "sha256": "0685788b240abf5fdab04d066d18a0e822a9fbcc791a40883c8286271a8cb947",
+      "bytes": 43
+    },
+    {
+      "file": "check-b-behavior.log",
+      "sha256": "bcf80edb3dd154e8aa62f4b72b0e0f06c57c92044b9927a0e7d5319e1077763b",
+      "bytes": 55
+    },
+    {
+      "file": "check-b-syntax.log",
+      "sha256": "0685788b240abf5fdab04d066d18a0e822a9fbcc791a40883c8286271a8cb947",
+      "bytes": 43
+    },
+    {
+      "file": "active-cancel.log",
+      "sha256": "cb5c20ffc25fec9cadf3176ab5488040fefff6b4f4102da3f413415b617f0951",
+      "bytes": 81
+    }
+  ]
+}

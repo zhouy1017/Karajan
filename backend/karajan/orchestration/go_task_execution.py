@@ -121,6 +121,7 @@ class ApprovedGoTaskExecution:
                             expected_request=held["request"],
                         ):
                             _check_source(self.services, held)
+                            intents.assert_effect_deadline(held)
                             intents.host.start(
                                 intent["start_key"],
                                 Activation(**held["execution"]["launch"]["activation"]),
@@ -297,6 +298,7 @@ def _effect_guard(
                     if current != runner:
                         raise RunError("TASK_EXECUTION_RUNNER_CHANGED")
                     _check_source(services, operation)
+                    intents.assert_effect_deadline(operation)
                     yield
 
 
@@ -365,6 +367,7 @@ def consume_go_task(
                     ) as current:
                         if current != runner:
                             raise RunError("TASK_EXECUTION_RUNNER_CHANGED")
+                        intents.assert_effect_deadline(held)
         claimed = intents.effect_start_claim(
             run_id,
             operation_id,

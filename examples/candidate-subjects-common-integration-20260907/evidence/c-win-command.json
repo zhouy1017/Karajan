@@ -1,0 +1,35 @@
+{
+  "command": [
+    "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+    "-m",
+    "pytest",
+    "-p",
+    "no:cacheprovider",
+    "-o",
+    "pythonpath=backend tests/projects tests/runs tests/web tests/isolation tests/adapters/opencode tests/candidates tests/execution",
+    "--basetemp",
+    "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-validation-subject\\.cache\\common-repair-downstream\\c-win-tmp",
+    "--junitxml",
+    "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-validation-subject\\.cache\\common-repair-downstream\\c-win.xml",
+    "-q",
+    "tests/runs/test_candidate_checks.py",
+    "tests/runs/test_check_services_factory.py",
+    ".cache/common-repair-downstream/test_effect_budget.py",
+    "tests/runs/test_candidate_subjects.py",
+    "tests/runs/test_reviewer_binding.py"
+  ],
+  "cwd": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-validation-subject",
+  "env": {
+    "PYTHONPATH": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-validation-subject\\backend",
+    "KARAJAN_GO_TOKENIZER_DIRECTORY": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-task-execution\\.cache\\go-context-artifacts",
+    "KARAJAN_REQUIRE_GO_TOKENIZER": "1",
+    "KARAJAN_OPENCODE_LINUX_BINARY": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\go-linux-runtime\\package\\bin\\opencode",
+    "KARAJAN_REQUIRE_OPENCODE_ISOLATION": "1",
+    "HF_HUB_OFFLINE": "1",
+    "TRANSFORMERS_OFFLINE": "1",
+    "PYTHONUTF8": "1"
+  },
+  "platform": "Windows-11-10.0.26200-SP0",
+  "actual_head": "8b0d12a18b40ca0b339444efb789f0753a572c31",
+  "claim": "Offline local fixture validation; no provider credentials are read."
+}

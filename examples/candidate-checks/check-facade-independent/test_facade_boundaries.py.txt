@@ -1,0 +1,124 @@
+"""Independent #94 fault ordering using real stores/Host and explicit native doubles."""
+
+import sys
+import time
+from concurrent.futures import ThreadPoolExecutor
+from threading import Event
+
+import pytest
+from karajan.execution import ProcessSpec
+from karajan.orchestration.candidate_checks import ApprovedCandidateChecks, CheckLaunchSpec
+from karajan.orchestration.go_execution_intent import GoExecutionIntents
+from karajan.runs import RunError
+from test_candidate_checks import check_workflow, run_next_boundary_check
+from test_projected_go_routing import case, projected
+
+__all__ = ["case", "projected"]
+
+
+def test_two_evidence_advances_and_cancel_keep_one_submission_and_cancelled_history(
+    projected, tmp_path, monkeypatch
+):
+    case, service, runner, host = check_workflow(projected, tmp_path)
+    run_next_boundary_check(case, service, host)
+    entered, release = Event(), Event()
+    record = case.candidates.record_check
+    submissions = []
+
+    def held_record(request, *, log):
+        submissions.append(request)
+        entered.set()
+        assert release.wait(10)
+        return record(request, log=log)
+
+    monkeypatch.setattr(case.candidates, "record_check", held_record)
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        first = pool.submit(service.advance, *case.args, principal="owner")
+        try:
+            assert entered.wait(10)
+            second = pool.submit(service.advance, *case.args, principal="owner").result(10)
+            cancelled = pool.submit(service.cancel, *case.args, principal="owner").result(10)
+            assert second["checks"]["runs"][0]["evidence_submit_claim"] is not None
+            assert second["checks"]["runs"][0]["evidence"] is None
+            assert cancelled["checks"]["phase"] == "cancelled"
+        finally:
+            release.set()
+        late = first.result(10)
+    assert len(submissions) == runner.starts == 1
+    assert late["checks"]["runs"][0]["evidence"]["status"] == "passed"
+    assert late["checks"]["phase"] == "cancelled"
+    assert late["local_gate_passed"] is late["delivery_eligible"] is False
+    original = GoExecutionIntents.read_operation(case.admissions, *case.args, principal="owner")
+    assert original["cancel_requested"] is True
+    historical = ApprovedCandidateChecks(case.admissions, case.candidates)
+    assert historical.reconcile(*case.args, principal="owner")["checks"]["phase"] == "cancelled"
+    assert len(submissions) == runner.starts == 1
+
+
+def test_lost_actual_host_start_reply_is_recovered_without_source_or_second_process(
+    projected, tmp_path, monkeypatch
+):
+    case, service, runner, host = check_workflow(projected, tmp_path)
+    marker = tmp_path / "actual-check-host-start-count"
+    command = f"from pathlib import Path; Path({str(marker)!r}).open('a').write('started\\n')"
+    service.launch_compiler = lambda execution: CheckLaunchSpec(
+        ProcessSpec((sys._base_executable, "-c", command), tmp_path),
+        "b" * 64,
+    )
+    for _ in range(3):
+        original = service.advance(*case.args, principal="owner")
+    attempt = original["checks"]["runs"][0]["attempt_id"]
+    start, starts = host.start, []
+
+    def lost_reply(*args, **kwargs):
+        starts.append(args[0])
+        start(*args, **kwargs)
+        raise OSError("synthetic actual Host start reply loss")
+
+    monkeypatch.setattr(host, "start", lost_reply)
+    with pytest.raises(OSError, match="synthetic actual Host start reply loss"):
+        service.advance(*case.args, principal="owner")
+    until = time.monotonic() + 8
+    while (
+        not marker.exists() or host.inspect(attempt).state != "exited"
+    ) and time.monotonic() < until:
+        time.sleep(0.02)
+    assert marker.read_text() == "started\n"
+    assert host.inspect(attempt).supervisor is not None and host.inspect(attempt).state == "exited"
+
+    def forbidden(*args):
+        pytest.fail("Recovery must not resolve current executable or source")
+
+    monkeypatch.setattr(runner, "source", forbidden)
+    historical = ApprovedCandidateChecks(
+        case.admissions,
+        case.candidates,
+        runner=runner,
+        host=host,
+        controller_source=forbidden,
+    )
+    for _ in range(2):
+        recovered = historical.advance(*case.args, principal="owner")
+    row = recovered["checks"]["runs"][0]
+    assert recovered["checks"]["phase"] == "reconciliation_required"
+    assert row["attempt_id"] == attempt
+    assert "CANDIDATE_CHECK_HOST_EXITED_WITHOUT_RESULT" in row["reason_codes"]
+    assert row["native_claim"] is row["evidence"] is None
+    assert len(starts) == 1 and runner.starts == 0
+    assert marker.read_text() == "started\n"
+
+
+def test_changed_log_bytes_cannot_create_an_evidence_claim_or_pass(projected, tmp_path):
+    case, service, runner, host = check_workflow(projected, tmp_path)
+    observed = run_next_boundary_check(case, service, host)
+    row = observed["checks"]["runs"][0]
+    runner.logs[row["check_run_id"]] = b"forged passed output instead of original bytes\n"
+    database = case.candidates.directory / "candidates.sqlite"
+    before = database.read_bytes()
+    with pytest.raises(RunError, match="CANDIDATE_CHECK_LOG_MISMATCH"):
+        service.advance(*case.args, principal="owner")
+    current = service.get(*case.args, principal="owner")["checks"]["runs"][0]
+    assert current["evidence"] is None and current.get("evidence_submit_claim") is None
+    assert database.read_bytes() == before
+    assert runner.starts == 1
+    assert service.get(*case.args, principal="owner")["local_gate_passed"] is False

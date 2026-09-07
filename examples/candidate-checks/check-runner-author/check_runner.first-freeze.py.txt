@@ -1,0 +1,480 @@
+"""One fixed, isolated Check execution inside a controller-owned Host child.
+
+The caller supplies current business guards from that child, never HTTP payloads.
+Private files hold only this execution's one-shot receipt/results, not scheduling
+or authority. Reopening never repeats Popen, even when a start reply was lost.
+"""
+
+import hashlib
+import json
+import math
+import os
+import selectors
+import signal
+import subprocess
+import sys
+import time
+import uuid
+from collections.abc import Callable, Iterator
+from contextlib import AbstractContextManager, contextmanager
+from dataclasses import asdict, dataclass, replace
+from pathlib import Path
+from typing import Any, Literal
+
+from pydantic import ValidationError
+
+from karajan.candidates import CandidateStore
+from karajan.execution._platform import ProcessIdentity, observe_process, process_identity
+from karajan.projects.execution_policy import ValidationEnvironment
+
+from ._check_environment import (
+    KIND,
+    LOG_HEADER,
+    MAX_LOG_BYTES,
+    PythonCheckEnvironment,
+    digest,
+    regular,
+    supported_platform,
+)
+
+__all__ = ["CheckObservation", "FixedCheckRunner", "PythonCheckEnvironment"]
+
+
+@dataclass(frozen=True)
+class CheckObservation:
+    execution_digest: str
+    outcome: Literal["completed", "timed_out", "cancelled", "unknown"]
+    exit_code: int | None
+    local_stop: Literal["confirmed", "unknown", "not_started"]
+    log_complete: bool
+    log_sha256: str | None
+    log_size: int
+    observation_ref: str
+    executor_ref: str
+    environment_sha256: str
+    reason_codes: tuple[str, ...] = ()
+
+
+def _write(path: Path, data: bytes) -> None:
+    temporary = path.with_name(path.name + "." + uuid.uuid4().hex)
+    with temporary.open("xb") as stream:
+        stream.write(data)
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(temporary, path)
+    if sys.platform == "linux":
+        fd = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+
+
+@contextmanager
+def _lock(directory: Path) -> Iterator[None]:
+    if sys.platform != "linux":
+        raise ValueError("CHECK_ENVIRONMENT_UNSUPPORTED")
+    import fcntl
+
+    with (directory / "claim.json").open("rb") as stream:
+        fcntl.flock(stream, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(stream, fcntl.LOCK_UN)
+
+
+def _kill(identity: ProcessIdentity) -> None:
+    if sys.platform != "linux":
+        raise ValueError("CHECK_ENVIRONMENT_UNSUPPORTED")
+    if observe_process(identity) != "running":
+        return
+    try:
+        descriptor = os.pidfd_open(identity.pid)
+    except ProcessLookupError:
+        return
+    try:
+        if process_identity(identity.pid) == identity:
+            signal.pidfd_send_signal(descriptor, signal.SIGKILL)
+    finally:
+        os.close(descriptor)
+
+
+class FixedCheckRunner:
+    def __init__(
+        self,
+        directory: Path,
+        candidates: CandidateStore,
+        *,
+        environments: dict[tuple[str, int], PythonCheckEnvironment],
+    ) -> None:
+        self.directory = directory.absolute()
+        if self.directory.is_symlink() or self.directory.resolve() != self.directory:
+            raise ValueError("CHECK_RESULT_PATH_INVALID")
+        self.candidates = candidates
+        self.environments = dict(environments)
+
+    def source(self, environment: dict[str, Any]) -> dict[str, Any]:
+        supported_platform()
+        try:
+            checked = ValidationEnvironment.model_validate(environment)
+        except ValidationError:
+            raise ValueError("CHECK_ENVIRONMENT_INVALID") from None
+        image = self.environments.get((checked.id, checked.revision))
+        if image is None or checked.runtime_kind != KIND or checked.platform != "linux_x64":
+            raise ValueError("CHECK_ENVIRONMENT_UNSUPPORTED")
+        if not len(LOG_HEADER) <= checked.max_log_bytes <= MAX_LOG_BYTES:
+            raise ValueError("CHECK_LOG_LIMIT_UNSUPPORTED")
+        if any(
+            name in {"PATH", "HOME", "PYTHONNOUSERSITE", "PYTHONDONTWRITEBYTECODE"}
+            or name.startswith(("LD_", "PYTHON", "GIT_", "WSL"))
+            for name in checked.env
+        ):
+            raise ValueError("CHECK_ENVIRONMENT_VARIABLE_UNSUPPORTED")
+        current = image.source()
+        if current["environment_sha256"] != checked.source_sha256:
+            raise ValueError("CHECK_ENVIRONMENT_SOURCE_CHANGED")
+        return current
+
+    def _directory(self, execution: dict[str, Any]) -> Path:
+        if execution.get("schema_version") != "karajan.candidate-check-execution.v1":
+            raise ValueError("CHECK_EXECUTION_INVALID")
+        identity = execution.get("check_run_id")
+        if not isinstance(identity, str) or not identity:
+            raise ValueError("CHECK_EXECUTION_INVALID")
+        return self.directory / hashlib.sha256(identity.encode()).hexdigest()
+
+    def _bound(self, execution: dict[str, Any]) -> Path | None:
+        directory = self._directory(execution)
+        if not directory.exists():
+            return None
+        if directory.is_symlink() or directory.resolve() != directory:
+            raise ValueError("CHECK_RESULT_PATH_INVALID")
+        if json.loads(regular(directory / "claim.json")) != execution:
+            raise ValueError("CHECK_EXECUTION_IDENTITY_CONFLICT")
+        return directory
+
+    def _unknown(self, execution: dict[str, Any], *reasons: str) -> CheckObservation:
+        identity = digest(execution)
+        return CheckObservation(
+            identity,
+            "unknown",
+            None,
+            "unknown",
+            False,
+            None,
+            0,
+            "check-observation:" + identity,
+            "fixed-python-check.v1",
+            execution["environment"]["source_sha256"],
+            tuple(reasons),
+        )
+
+    def inspect(self, execution: dict[str, Any]) -> CheckObservation | None:
+        directory = self._bound(execution)
+        if directory is None or not (directory / "result.json").exists():
+            return None
+        value = json.loads(regular(directory / "result.json"))
+        value["reason_codes"] = tuple(value["reason_codes"])
+        observed = CheckObservation(**value)
+        if observed.execution_digest != digest(execution):
+            raise ValueError("CHECK_RESULT_IDENTITY_CONFLICT")
+        if self.read_log(execution, observed) is None:
+            return replace(
+                observed,
+                outcome="unknown",
+                log_complete=False,
+                reason_codes=(*observed.reason_codes, "CHECK_LOG_UNAVAILABLE"),
+            )
+        return observed
+
+    def read_log(self, execution: dict[str, Any], observation: CheckObservation) -> bytes | None:
+        directory = self._bound(execution)
+        if directory is None or observation.execution_digest != digest(execution):
+            raise ValueError("CHECK_RESULT_IDENTITY_CONFLICT")
+        try:
+            data = regular(directory / "output.log", max_bytes=MAX_LOG_BYTES)
+        except (OSError, ValueError):
+            return None
+        if (
+            len(data) != observation.log_size
+            or hashlib.sha256(data).hexdigest() != observation.log_sha256
+        ):
+            return None
+        return data
+
+    def _init(self, directory: Path, execution: dict[str, Any]) -> ProcessIdentity | None:
+        try:
+            value = json.loads(regular(directory / "namespace-init.json"))
+        except FileNotFoundError:
+            return None
+        if value["execution_digest"] != digest(execution):
+            raise ValueError("CHECK_NAMESPACE_IDENTITY_CONFLICT")
+        return ProcessIdentity(value["pid"], value["birth"])
+
+    def cancel(self, execution: dict[str, Any]) -> CheckObservation | None:
+        directory = self._bound(execution)
+        if directory is None:
+            return None
+        with _lock(directory):
+            _write(directory / "cancelled", b"cancelled")
+            identity = self._init(directory, execution)
+            if identity is not None:
+                _kill(identity)
+            if (directory / "started.json").exists():
+                value = json.loads(regular(directory / "started.json"))
+                _kill(ProcessIdentity(value["pid"], value["birth"]))
+        return self.inspect(execution)
+
+    def run(
+        self,
+        execution: dict[str, Any],
+        *,
+        start_guard: Callable[[], AbstractContextManager[None]],
+        cancelled: Callable[[], bool],
+    ) -> CheckObservation:
+        if not callable(start_guard) or not callable(cancelled):
+            raise ValueError("CHECK_CONTROLLER_GUARDS_REQUIRED")
+        execution = json.loads(json.dumps(execution, sort_keys=True, allow_nan=False))
+        old = self._bound(execution)
+        if old is not None:
+            return self.inspect(execution) or self._unknown(
+                execution, "CHECK_START_ALREADY_CLAIMED"
+            )
+        if self.source(execution["environment"]) != execution["source"]["runner"]:
+            raise ValueError("CHECK_ENVIRONMENT_SOURCE_CHANGED")
+        if set(execution["candidate"]) != {
+            "id",
+            "series_id",
+            "revision",
+            "repository_identity",
+            "base_sha",
+            "tree_sha",
+            "content_sha256",
+            "manifest_sha256",
+            "input_sha256",
+            "policy_sha256",
+            "baseline_id",
+        }:
+            raise ValueError("CHECK_CANDIDATE_IDENTITY_CONFLICT")
+        candidate = self.candidates.get(execution["candidate"]["id"])
+        actual = {key: candidate[key] for key in execution["candidate"] if key != "baseline_id"}
+        actual["baseline_id"] = candidate["request"]["baseline_id"]
+        if actual != execution["candidate"]:
+            raise ValueError("CHECK_CANDIDATE_IDENTITY_CONFLICT")
+        check = execution["check"]
+        approved = [
+            row
+            for row in candidate["request"]["policy"]["checks"]
+            if row["id"] == check["id"] and row["revision"] == check["revision"]
+        ]
+        if (
+            len(approved) != 1
+            or approved[0]["argv"] != check["argv"]
+            or approved[0]["environment_sha256"] != execution["environment"]["source_sha256"]
+            or check["environment_ref"]
+            != {
+                "id": execution["environment"]["id"],
+                "revision": execution["environment"]["revision"],
+            }
+        ):
+            raise ValueError("CHECK_SPEC_NOT_APPROVED")
+        if check["argv"][0] not in {
+            "python",
+            "python3",
+            "python3.12",
+            "/usr/bin/python",
+            "/usr/bin/python3",
+            "/usr/bin/python3.12",
+        }:
+            raise ValueError("CHECK_COMMAND_UNSUPPORTED")
+        seconds = execution.get("effective_timeout_seconds", check["timeout_seconds"])
+        if (
+            type(seconds) not in (int, float)
+            or not math.isfinite(seconds)
+            or not 0 < seconds <= check["timeout_seconds"]
+        ):
+            raise ValueError("CHECK_TIMEOUT_INVALID")
+        self.directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+        directory = self._directory(execution)
+        try:
+            directory.mkdir(mode=0o700)
+        except FileExistsError:
+            # Another runner already owns this exact identity; never mint a second start.
+            return self.inspect(execution) or self._unknown(
+                execution, "CHECK_START_ALREADY_CLAIMED"
+            )
+        _write(directory / "claim.json", json.dumps(execution, sort_keys=True).encode())
+        self.candidates.materialize(candidate["id"], directory / "snapshot")
+        environment = execution["environment"]
+        image = self.environments[(environment["id"], environment["revision"])]
+        _write(
+            directory / "launch.json",
+            json.dumps(
+                {
+                    "image_root": str(image.root),
+                    "image_manifest_sha256": execution["source"]["runner"]["image_manifest_sha256"],
+                    "execution_digest": digest(execution),
+                    "argv": check["argv"],
+                    "env": environment["env"],
+                    "snapshot_manifest_sha256": digest(
+                        sorted(
+                            [
+                                {
+                                    "path": row["path"],
+                                    "mode": int(row["mode"], 8) & 0o777,
+                                    "size": row["artifact"]["size"],
+                                    "sha256": row["artifact"]["sha256"],
+                                }
+                                for row in candidate["manifest"]
+                            ],
+                            key=lambda row: row["path"],
+                        )
+                    ),
+                }
+            ).encode(),
+        )
+        return self._execute(directory, execution, seconds, start_guard, cancelled)
+
+    def _execute(
+        self,
+        directory: Path,
+        execution: dict[str, Any],
+        seconds: float,
+        start_guard: Callable[[], AbstractContextManager[None]],
+        cancelled: Callable[[], bool],
+    ) -> CheckObservation:
+        process: subprocess.Popen[bytes] | None = None
+        spawn_intent = False
+        output = bytearray(LOG_HEADER)
+        complete, outcome = True, "completed"
+        reasons: list[str] = []
+        try:
+            if cancelled():
+                raise ValueError("CHECK_START_REJECTED")
+            with start_guard(), _lock(directory):
+                if self.source(execution["environment"]) != execution["source"]["runner"]:
+                    raise ValueError("CHECK_ENVIRONMENT_SOURCE_CHANGED")
+                remaining = min(seconds, execution["deadline"] - time.time())
+                if (directory / "cancelled").exists() or remaining <= 0:
+                    raise ValueError("CHECK_START_REJECTED")
+                deadline = time.monotonic() + remaining
+                command = [
+                    "/usr/bin/unshare",
+                    "--user",
+                    "--map-root-user",
+                    "--mount",
+                    "--propagation",
+                    "private",
+                    "--pid",
+                    "--fork",
+                    "--kill-child=KILL",
+                    "--net",
+                    "/usr/bin/python3",
+                    "-I",
+                    str(Path(__file__).with_name("_check_namespace.py")),
+                    str(directory),
+                ]
+                _write(
+                    directory / "spawn-intent.json",
+                    json.dumps({"execution_digest": digest(execution)}).encode(),
+                )
+                spawn_intent = True
+                process = subprocess.Popen(
+                    command,
+                    cwd=directory,
+                    env={"PATH": "/usr/bin:/bin", "LANG": "C.UTF-8"},
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    close_fds=True,
+                )
+                identity = process_identity(process.pid)
+                if identity is not None:
+                    _write(directory / "started.json", json.dumps(asdict(identity)).encode())
+            assert process.stdout is not None
+            os.set_blocking(process.stdout.fileno(), False)
+            with selectors.DefaultSelector() as selector:
+                selector.register(process.stdout, selectors.EVENT_READ)
+                eof = False
+                while not eof or process.poll() is None:
+                    if outcome == "completed":
+                        if cancelled() or (directory / "cancelled").exists():
+                            outcome = "cancelled"
+                        elif time.monotonic() >= deadline:
+                            outcome = "timed_out"
+                        if outcome != "completed":
+                            self.cancel(execution)
+                    for _, _ in selector.select(0.05):
+                        data = os.read(process.stdout.fileno(), 65536)
+                        if not data:
+                            eof = True
+                            selector.unregister(process.stdout)
+                            continue
+                        maximum = execution["environment"]["max_log_bytes"]
+                        if len(output) + len(data) > maximum:
+                            complete = False
+                            output.extend(data[: max(0, maximum - len(output))])
+                            reasons.append("CHECK_LOG_LIMIT_EXCEEDED")
+                            outcome = "unknown"
+                            self.cancel(execution)
+                        else:
+                            output.extend(data)
+                    if time.monotonic() > deadline + 5:
+                        complete = False
+                        reasons.append("CHECK_STOP_UNCONFIRMED")
+                        break
+            process.wait(timeout=3)
+        except Exception as error:
+            outcome, complete = "unknown", False
+            code = (
+                str(error)
+                if type(error) is ValueError
+                and str(error)
+                in {
+                    "CHECK_ENVIRONMENT_SOURCE_CHANGED",
+                    "CHECK_START_REJECTED",
+                    "CHECK_ENVIRONMENT_UNSUPPORTED",
+                    "CHECK_ENVIRONMENT_INVALID",
+                }
+                else "CHECK_EXECUTION_FAILED"
+            )
+            reasons.append(code)
+            if process is not None:
+                self.cancel(execution)
+                try:
+                    process.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    reasons.append("CHECK_STOP_UNCONFIRMED")
+            elif spawn_intent:
+                # A return can be lost after the kernel accepted Popen. Wait only
+                # for the fixed namespace init's independent identity, never retry.
+                until = time.monotonic() + 1
+                while self._init(directory, execution) is None and time.monotonic() < until:
+                    time.sleep(0.01)
+                self.cancel(execution)
+        finally:
+            if process is not None and process.stdout is not None:
+                process.stdout.close()
+        local_stop: Literal["confirmed", "unknown", "not_started"] = (
+            "not_started" if not spawn_intent else "unknown"
+        )
+        init = self._init(directory, execution)
+        if (process is None or process.poll() is not None) and init is not None:
+            if observe_process(init) in {"exited", "identity_mismatch"}:
+                local_stop = "confirmed"
+        if local_stop != "confirmed":
+            outcome = "unknown"
+        observed = replace(
+            self._unknown(execution),
+            outcome=outcome,  # type: ignore[arg-type]
+            exit_code=process.returncode if process else None,
+            local_stop=local_stop,
+            log_complete=complete,
+            log_sha256=hashlib.sha256(output).hexdigest(),
+            log_size=len(output),
+            reason_codes=tuple(dict.fromkeys(reasons)),
+        )
+        _write(directory / "output.log", bytes(output))
+        _write(directory / "result.json", json.dumps(asdict(observed)).encode())
+        return observed

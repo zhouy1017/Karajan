@@ -1,0 +1,63 @@
+{
+  "head": "3d47194147edf153a0a48a183b34ff7222d674d4",
+  "sources": {
+    "backend/karajan/candidates/__init__.py": {
+      "sha256": "198c1b07b42c74941e893c69877ee3d6594b64104236313732d97db6700b4d6e",
+      "bytes": 178
+    },
+    "backend/karajan/candidates/_capture_lookup.py": {
+      "sha256": "ea524d6973801a7583648357252070ff28657f2454730a4c063240daab3cd608",
+      "bytes": 4432
+    },
+    "backend/karajan/candidates/_projection.py": {
+      "sha256": "73c8a2edf707937af6a53fae7e1e124ccc98d32e8f13159540ebe11767ab7ce9",
+      "bytes": 2127
+    },
+    "backend/karajan/candidates/_review_binding.py": {
+      "sha256": "ea6da0ecbf0d3683dd033a5991c740d79138d16e1723b5752bed88c339bf1283",
+      "bytes": 9758
+    },
+    "backend/karajan/candidates/models.py": {
+      "sha256": "e5a94a8042d33c46fdd3af58c3bbd8e616895e2b35ee127e19c2757e64c43fb9",
+      "bytes": 4301
+    },
+    "backend/karajan/candidates/store.py": {
+      "sha256": "d48c5bc50dc35d17548e85e8795a2359e4c915c839c0a4e24055a6cbd38ffa13",
+      "bytes": 41595
+    },
+    "backend/karajan/isolation/_opencode_projection.py": {
+      "sha256": "cac01b05d8aae1ab1916b30d6f50500585fdce3dfd07fe956ffb002243274c57",
+      "bytes": 2393
+    },
+    "tests/candidates/test_baseline_materialization.py": {
+      "sha256": "3c1f8c272377942319995bceac8daaa5c8008bd62fcc6a6477e35f4e6c10bfdc",
+      "bytes": 9462
+    },
+    "tests/candidates/test_evidence_recovery.py": {
+      "sha256": "142bce650ebbb259e5d7301eb00b45f4479a36fe84a0c82440e5145804966061",
+      "bytes": 4788
+    },
+    "tests/candidates/test_projected_capture.py": {
+      "sha256": "a5928c04b76d32cbfe513a0affe1c8a1e9ad5f5b0ee511dbf45f9a65b794d11b",
+      "bytes": 5734
+    },
+    "tests/candidates/test_review_rebind.py": {
+      "sha256": "ae76b86abb4e7eac5c086a560b59a6c4b7096f06218dcd3f4eb2c8e3311d7693",
+      "bytes": 17232
+    },
+    "tests/candidates/test_validation.py": {
+      "sha256": "e38d83470be4056206805ea0ce6527c391fa5bfca3d9f0dadf98b9ca567c0f2b",
+      "bytes": 26633
+    }
+  },
+  "ports": [
+    "CandidateStore.lookup_evidence",
+    "CandidateStore.rebind_reviewers",
+    "CandidateStore.lookup_review_rebind"
+  ],
+  "rebind_freeze_verified": {
+    "helper": true,
+    "models": true,
+    "test": true
+  }
+}

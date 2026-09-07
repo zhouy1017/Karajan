@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="2" time="0.177" timestamp="2026-09-06T23:35:15.522681+08:00" hostname="ProArt-Zhou"><testcase classname="tests.execution.test_check_manifest" name="test_check_manifest_roundtrips_and_prepares_without_model_identity" time="0.021" /><testcase classname="tests.execution.test_check_manifest" name="test_real_check_child_uses_environment_fence_and_replays_original_launch" time="0.016"><error message="failed on setup with &quot;pydantic_core._pydantic_core.ValidationError: 9 validation errors for AttemptManifest&#10;schema_version&#10;  Extra inputs are not permitted [type=extra_forbidden, input_value='karajan.check-attempt.v1', input_type=str]&#10;    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden&#10;environment_id&#10;  Extra inputs are not permitted [type=extra_forbidden, input_value='python-check-1', input_type=str]&#10;    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden&#10;environment_revision&#10;  Extra inputs are not permitted [type=extra_forbidden, input_value=2, input_type=int]&#10;    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden&#10;environment_source_sha256&#10;  Extra inputs are not permitted [type=extra_forbidden, input_value='aaaaaaaaaaaaaaaaaaaaaaaa...aaaaaaaaaaaaaaaaaaaaaaa', input_type=str]&#10;    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden&#10;execution_sha256&#10;  Extra inputs are not permitted [type=extra_forbidden, input_value='bbbbbbbbbbbbbbbbbbbbbbbb...bbbbbbbbbbbbbbbbbbbbbbb', input_type=str]&#10;    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden&#10;role&#10;  Input should be 'commander', 'worker' or 'reviewer' [type=literal_error, input_value='check', input_type=str]&#10;    For further information visit https://errors.pydantic.dev/2.13/v/literal_error&#10;profile_id&#10;  Field required [type=missing, input_value={'schema_version': 'karaj...bbbbbbbbbbbbbbbbbbbbbb'}, input_type=dict]&#10;    For further information visit https://errors.pydantic.dev/2.13/v/missing&#10;profile_revision&#10;  Field required [type=missing, input_value={'schema_version': 'karaj...bbbbbbbbbbbbbbbbbbbbbb'}, input_type=dict]&#10;    For further information visit https://errors.pydantic.dev/2.13/v/missing&#10;requested_binding&#10;  Field required [type=missing, input_value={'schema_version': 'karaj...bbbbbbbbbbbbbbbbbbbbbb'}, input_type=dict]&#10;    For further information visit https://errors.pydantic.dev/2.13/v/missing&quot;">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-892/test_real_check_child_uses_env0')
+
+    @pytest.fixture
+    def check_runner(tmp_path):
+        host = RunnerHost(tmp_path / "host")
+        attempt = check_manifest()
+        script = tmp_path / "check_child.py"
+        script.write_text(
+            # Launch the base interpreter: the Windows venv exe is a redirector.
+            f"import sys\nsys.path[:0] = {sys.path!r}\n"
+            + """import json, time
+    from dataclasses import asdict
+    from pathlib import Path
+    from karajan.execution import RunnerHost, LaunchDenied
+    host = RunnerHost(Path(sys.argv[1]), existing_only=True)
+    output = Path(sys.argv[2])
+    identity = host.wait_for_runner_registration('check-attempt-1')
+    kwargs = dict(fence=1, authorization_ref='approved-plan-1')
+    with host.current_runner_guard('check-attempt-1', **kwargs) as current:
+        assert current == identity
+        runner = asdict(current)
+    with host.current_fence_guard('check-attempt-1', **kwargs) as fence:
+        output.write_text(json.dumps({'runner': runner, 'fence': fence}))
+    deadline = time.monotonic() + 15
+    while not output.with_suffix('.continue').exists() and time.monotonic() &lt; deadline:
+        time.sleep(0.02)
+    try:
+        with host.current_runner_guard('check-attempt-1', **kwargs):
+            result = 'allowed'
+    except LaunchDenied as error:
+        result = str(error)
+    output.with_suffix('.after').write_text(json.dumps(result))
+    """
+        )
+        output = tmp_path / "observation.json"
+        spec = ProcessSpec(
+            (sys._base_executable, str(script), str(host.directory), str(output)), tmp_path, 20,
+        )
+        host.prepare(attempt, "check-start", spec)
+&gt;       host.initialize_control_once(
+            attempt.id, prepared_id="check-start", fence=1,
+            authorization_ref=attempt.authorization_ref,
+        )
+
+tests\execution\test_check_manifest.py:106: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;karajan.execution.host.RunnerHost object at 0x00000292CAA6DCD0&gt;
+attempt_id = 'check-attempt-1', prepared_id = 'check-start', fence = 1
+authorization_ref = 'approved-plan-1'
+
+    def initialize_control_once(
+        self,
+        attempt_id: str,
+        *,
+        prepared_id: str,
+        fence: int,
+        authorization_ref: str,
+    ) -&gt; dict[str, object]:
+        """Initialize the exact prepared launch without overwriting any control.
+    
+        The trusted coordinator holds its current business guards around this
+        operation. A disabled original control stays disabled on every replay.
+        This does not accept activation or authorize a model/provider effect.
+        """
+        for value in (attempt_id, prepared_id, authorization_ref):
+            _identifier.validate_python(value, strict=True)
+        _positive_integer.validate_python(fence, strict=True)
+        with self._connect(existing_only=True) as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                "SELECT * FROM executions WHERE attempt_id=?", (attempt_id,)
+            ).fetchone()
+            if row is None:
+                raise KeyError(attempt_id)
+&gt;           manifest = AttemptManifest.model_validate_json(row["manifest"])
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           pydantic_core._pydantic_core.ValidationError: 9 validation errors for AttemptManifest
+E           schema_version
+E             Extra inputs are not permitted [type=extra_forbidden, input_value='karajan.check-attempt.v1', input_type=str]
+E               For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden
+E           environment_id
+E             Extra inputs are not permitted [type=extra_forbidden, input_value='python-check-1', input_type=str]
+E               For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden
+E           environment_revision
+E             Extra inputs are not permitted [type=extra_forbidden, input_value=2, input_type=int]
+E               For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden
+E           environment_source_sha256
+E             Extra inputs are not permitted [type=extra_forbidden, input_value='aaaaaaaaaaaaaaaaaaaaaaaa...aaaaaaaaaaaaaaaaaaaaaaa', input_type=str]
+E               For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden
+E           execution_sha256
+E             Extra inputs are not permitted [type=extra_forbidden, input_value='bbbbbbbbbbbbbbbbbbbbbbbb...bbbbbbbbbbbbbbbbbbbbbbb', input_type=str]
+E               For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden
+E           role
+E             Input should be 'commander', 'worker' or 'reviewer' [type=literal_error, input_value='check', input_type=str]
+E               For further information visit https://errors.pydantic.dev/2.13/v/literal_error
+E           profile_id
+E             Field required [type=missing, input_value={'schema_version': 'karaj...bbbbbbbbbbbbbbbbbbbbbb'}, input_type=dict]
+E               For further information visit https://errors.pydantic.dev/2.13/v/missing
+E           profile_revision
+E             Field required [type=missing, input_value={'schema_version': 'karaj...bbbbbbbbbbbbbbbbbbbbbb'}, input_type=dict]
+E               For further information visit https://errors.pydantic.dev/2.13/v/missing
+E           requested_binding
+E             Field required [type=missing, input_value={'schema_version': 'karaj...bbbbbbbbbbbbbbbbbbbbbb'}, input_type=dict]
+E               For further information visit https://errors.pydantic.dev/2.13/v/missing
+
+backend\karajan\execution\host.py:302: ValidationError</error></testcase></testsuite></testsuites>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="2.352" timestamp="2026-09-07T00:59:32.875757+08:00" hostname="ProArt-Zhou"><testcase classname="tests.runs.test_reviewer_binding" name="test_current_worker_qualification_cannot_create_a_reviewer_binding" time="1.342"><failure message="ModuleNotFoundError: No module named 'karajan.orchestration.reviewer_binding'">check_case = (&lt;karajan.orchestration.go_execution_intent.GoExecutionIntents object at 0x000002487F004BF0&gt;, ('b0c84d21-a76d-4527-a7d...ce68b0cace', 'revision': 1, 'content_sha256': '823a7f87b67c9f5a4ac5a92102e5d08db2e412883ae06a35f3ec1313c8e416f3', ...})
+
+    def test_current_worker_qualification_cannot_create_a_reviewer_binding(check_case):
+&gt;       from karajan.orchestration.reviewer_binding import ApprovedReviewerBindings
+E       ModuleNotFoundError: No module named 'karajan.orchestration.reviewer_binding'
+
+tests\runs\test_reviewer_binding.py:30: ModuleNotFoundError</failure></testcase></testsuite></testsuites>

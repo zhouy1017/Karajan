@@ -1,0 +1,74 @@
+{
+  "schema_version": "karajan.subject-consumer-author-evidence.v1",
+  "issues": [
+    94,
+    101
+  ],
+  "base": "3d47194",
+  "backend_frozen": true,
+  "sources": {
+    "backend/karajan/orchestration/candidate_checks.py": "f333cd61105837424e23a0ba32b2eed1597d379144ba0d91cd615bc79dd292c7",
+    "backend/karajan/orchestration/candidate_subjects.py": "23b3baa7320af7bb241625e0240e5d1d0b5d92b199b75d40c0a9b9d215a02791",
+    "backend/karajan/orchestration/_candidate_check_runner.py": "3394b4809cbf8344a15180d2198dd8231520355143660c4333c6416f20d3b0b4",
+    "tests/runs/test_candidate_subjects.py": "ab0b0dda69d9b6772fb646f49b35b377fd537ac1e04379a9e141e0763e2f33b9",
+    "tests/runs/subject_check_fixture.py": "2f2247c961552ae6dc67b336798b569740e3b68174549829f6be01428f325329",
+    "tests/runs/test_candidate_subjects_native.py": "594db840fe79aa08bb456c46fac6fd8d36b1982abe3b58dc5a2ce7dc9cdd13b6"
+  },
+  "backend_source_count": 139,
+  "all_actual_execution_sources_match": true,
+  "results": {
+    "windows_consumer": {
+      "passed": 16,
+      "failed": 0,
+      "terminal_seconds": 26.3
+    },
+    "windows_prior_consumer_and_legacy": {
+      "passed": 40,
+      "failed": 0,
+      "terminal_seconds": 63.12,
+      "scope": "14 earlier consumer cases plus all 26 existing Checks cases; same backend bytes"
+    },
+    "linux": {
+      "passed": 18,
+      "failed": 0,
+      "terminal_seconds": 107.3,
+      "consumer_cases": 16,
+      "actual_namespace_cases": 2
+    },
+    "static": "Ruff/format six files and mypy three backend files passed"
+  },
+  "qualification": "explicit_test_double",
+  "provider_calls": 0,
+  "reviewer_execution": "not_run",
+  "independent_review": "../subject-independent-review",
+  "artifacts": {
+    "final-c-windows.xml": "fb922a49e18b2e1ee3f3e12dff1caa24016c59482277ed3257d9ce2ee608c76d",
+    "current-and-legacy.xml": "4d151268c0a84d701632e4e468d443d96f37cd05bfdda775d95cea700b3f5608",
+    "final-linux.xml": "aa6cb0a957e00ada7dc1e1f72f718a19f5c6b9a026e842ae5eadfc2564d25b87",
+    "native-passed.json": "ca46712740149dda718f5d0df1e58abd2551ca85c50367a858a4969712450b0a",
+    "active-cancel-passed.json": "cb99a0fa8a13c17cd2b86c8cf27876ddb096871277302d01cd9527ca386dd29a",
+    "native-summary.json": "e28300f724141f0ac1b503f5ec5b38159f50a272ac8750a793328a1a273c7ced",
+    "backend-source-before.json": "dc6cde029db3f2d2929e4051d53b4a7f8fcfb48276621080ba91b3b8eac6f668",
+    "backend-source-after.json": "d6d3311d104369b6c60aad9bcddb75fbcad95d6127781b4833e34ce851d53b4c",
+    "static.txt": "1d9c4e47242167d78be4ed8c07972ab1a83b3a39c433a38593607284f4597e3d",
+    "check-a-behavior.log": "bcf80edb3dd154e8aa62f4b72b0e0f06c57c92044b9927a0e7d5319e1077763b",
+    "check-a-syntax.log": "0685788b240abf5fdab04d066d18a0e822a9fbcc791a40883c8286271a8cb947",
+    "check-b-behavior.log": "bcf80edb3dd154e8aa62f4b72b0e0f06c57c92044b9927a0e7d5319e1077763b",
+    "check-b-syntax.log": "0685788b240abf5fdab04d066d18a0e822a9fbcc791a40883c8286271a8cb947",
+    "active-cancel.log": "cb5c20ffc25fec9cadf3176ab5488040fefff6b4f4102da3f413415b617f0951"
+  },
+  "history": [
+    "initial.xml",
+    "behavior-red.xml",
+    "first-green.xml",
+    "boundary-first.xml",
+    "late-observation-red.xml",
+    "late-observation-green.xml",
+    "fault-first.xml"
+  ],
+  "limitations": [
+    "P uses a fixed separate test child and explicit Reviewer qualifier; production has no fixture flag.",
+    "Production real unsupported Reviewer qualification remains blocked, verified by root factory tests.",
+    "A complete current Reviewer model execution/Review Evidence and remote G are outside this evidence."
+  ]
+}

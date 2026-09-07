@@ -1,0 +1,23 @@
+[
+  {
+    "port": "lookup_evidence",
+    "origin_commit": "45ff065",
+    "source_text_equal": true,
+    "ast_equal": true,
+    "method_source_sha256": "ff3dfbaecc921cee83c6d2aee00946259005bf91f998e1dfd0b74d8a5061d6e9"
+  },
+  {
+    "port": "rebind_reviewers",
+    "origin_commit": "58eafc3",
+    "source_text_equal": true,
+    "ast_equal": true,
+    "method_source_sha256": "c08e17069c16623189270d516fc5efac1bfdc8d3bfb3d4cc4c77d20f9127c418"
+  },
+  {
+    "port": "lookup_review_rebind",
+    "origin_commit": "58eafc3",
+    "source_text_equal": true,
+    "ast_equal": true,
+    "method_source_sha256": "def63841040c79b4f0bfcc51584f7e8b432f59003bad680f42e0487d38707119"
+  }
+]

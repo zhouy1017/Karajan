@@ -1,0 +1,43 @@
+{
+  "issue": 94,
+  "author": "capacity_facts",
+  "base": "624ad8b8490003f155baf7842ba91b9975b9526a",
+  "scope": "Check Host manifest and actual local process lifecycle; no provider calls",
+  "sources": {
+    "backend/karajan/execution/manifest.py": "50f8b73246a22a72709ea0e7c26fe285dad8d17d32d96c60d06dd0e4ba56979a",
+    "backend/karajan/execution/host.py": "5e3d0f8d8f84649690854ddd672a6a2643d4ad923f79b2eff584c4cdf73164f1",
+    "backend/karajan/execution/_supervisor.py": "a9753aa1607a3785e5fa7bcab704cbfa93400e660f4f6ab55f02a7e140575b0f",
+    "backend/karajan/execution/__init__.py": "7efb1589d70d5b71867c793b34939c25fb58fc11ee76c89c99689231a85fbec3",
+    "tests/execution/test_check_manifest.py": "51ad23293b23cdfbe84093ddd691be324694e9278888250809e471dfb0976a3e"
+  },
+  "checks": {
+    "mypy_linux_target_on_windows": "passed",
+    "windows": {
+      "seconds": 26.44,
+      "passed": 121
+    },
+    "linux": {
+      "seconds": 39.7,
+      "passed": 121,
+      "warnings": 1
+    },
+    "format": "passed",
+    "ruff": "passed",
+    "mypy_windows": "passed"
+  },
+  "evidence": {
+    "check-windows.xml": "9b049909696ccbf8254280b78b1e409f627335773055cb0aad812eecec5a30d9",
+    "execution-linux.xml": "64a2bf0b46f26d88dfd93faa2a1fb8dec4145430a39343859ea6bc1329115f64",
+    "execution-windows.xml": "952facffd530e3facfa45bb528054400c5659862b7210dcdd077bf88ee6ce0a3",
+    "first-green.xml": "676d8396dca444306896ee979b0dab752eb1410a86e35aafe4ca4012a68c7f4c",
+    "first-red.xml": "f8c60030232eaf66cc27a5ee49bf01d393e7d8d6782c830dfe1340bf43c45ff7",
+    "host-start-red.py.txt": "7416231649930e663055a5d414878d287a4bf56500a22b8ae486aba7a105a4ae",
+    "parser-red.xml": "229d2d4fcfa793635f7b1aa4b55bcb8bf07f3418d8d4481c57d770bf2a41dea1",
+    "README.md": "fd305a76fe4d02c51dce692b4f4768ffce4241d7f2310f8c9cc5ff842ed969e6",
+    "start-green.xml": "3e25d9a76af4a1ba6abd6bb1631bf249eba89230ac54ae0bd4e8f6f5c390d818",
+    "start-red.xml": "7f2b73ccea64e8a318cc57612f2feb68e807ba16e5c7204fa9ca1cb528208ce3",
+    "test-first.py.txt": "05c241cfc1111453a93462cddd9711b9762e69bb1aebaf75f2cad7b0c51bd452",
+    "test-parser-red.py.txt": "df71833059b4fdc2bb27a3fdbb5225e155cb94497e56c42747a404304ad0fae7",
+    "test-start-red.py.txt": "74e65a11fe19863f82c5702b4b3e065e0820f85829dadab090d24d3bf8f4c625"
+  }
+}
