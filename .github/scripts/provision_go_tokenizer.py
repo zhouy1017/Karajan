@@ -75,14 +75,14 @@ class _HTTPSRedirects(HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
-def _open(url: str) -> AbstractContextManager[BinaryIO]:
+def _open(url: str, *, timeout: float = 30.0) -> AbstractContextManager[BinaryIO]:
     # Public HF files may redirect to its signed CDN. No proxy/auth/cookie handlers
     # or environment token lookup are used; the downloaded bytes still must match.
     opener = build_opener(ProxyHandler({}), _HTTPSRedirects())
     request = Request(
         url, headers={"User-Agent": "Karajan-tokenizer-provision/1", "Accept-Encoding": "identity"}
     )
-    return cast(AbstractContextManager[BinaryIO], opener.open(request, timeout=30))
+    return cast(AbstractContextManager[BinaryIO], opener.open(request, timeout=timeout))
 
 
 def _verified(path: Path, size: int, expected: str) -> bool:
@@ -100,11 +100,16 @@ def _http_error_code(error: HTTPError) -> NoReturn:
     raise ProvisionError(f"TOKENIZER_HTTP_STATUS_{status}") from None
 
 
+def _url_error_code(error: URLError) -> NoReturn:
+    if isinstance(error.reason, (ConnectionError, TimeoutError)):
+        raise _RetryableDownloadError("TOKENIZER_NETWORK_ERROR") from None
+    raise ProvisionError("TOKENIZER_NETWORK_ERROR") from None
+
+
 def provision(directory: Path, *, open_url: OpenURL | None = None) -> dict[str, object]:
     """Verify/reuse or atomically publish each artifact; injection is only for offline tests."""
     directory = directory.resolve()
     directory.mkdir(parents=True, exist_ok=True)
-    connect = open_url if open_url is not None else _open
     receipts = []
     for name, (size, expected) in ARTIFACTS.items():
         target = directory / name
@@ -124,7 +129,14 @@ def provision(directory: Path, *, open_url: OpenURL | None = None) -> dict[str, 
                         count = 0
                         url = f"https://huggingface.co/zai-org/GLM-5.3-Flash/resolve/{REVISION}/{name}"
                         try:
-                            with connect(url) as response:
+                            remaining = deadline - time.monotonic()
+                            if remaining <= 0:
+                                raise ProvisionError("TOKENIZER_DOWNLOAD_TIMEOUT")
+                            if open_url is None:
+                                response_context = _open(url, timeout=min(30.0, remaining))
+                            else:
+                                response_context = open_url(url)
+                            with response_context as response:
                                 while True:
                                     if time.monotonic() >= deadline:
                                         raise ProvisionError("TOKENIZER_DOWNLOAD_TIMEOUT")
@@ -134,6 +146,8 @@ def provision(directory: Path, *, open_url: OpenURL | None = None) -> dict[str, 
                                         raise _RetryableDownloadError(
                                             "TOKENIZER_NETWORK_ERROR"
                                         ) from error
+                                    if time.monotonic() >= deadline:
+                                        raise ProvisionError("TOKENIZER_DOWNLOAD_TIMEOUT")
                                     if not chunk:
                                         break
                                     count += len(chunk)
@@ -146,14 +160,20 @@ def provision(directory: Path, *, open_url: OpenURL | None = None) -> dict[str, 
                                         raise ProvisionError("TOKENIZER_FILESYSTEM_ERROR") from None
                         except HTTPError as error:
                             _http_error_code(error)
-                        except (ConnectionError, TimeoutError, URLError) as error:
+                        except URLError as error:
+                            _url_error_code(error)
+                        except (ConnectionError, TimeoutError) as error:
                             raise _RetryableDownloadError("TOKENIZER_NETWORK_ERROR") from error
                         if count != size:
                             raise ProvisionError("TOKENIZER_LENGTH_MISMATCH")
                         if digest.hexdigest() != expected:
                             raise ProvisionError("TOKENIZER_DIGEST_MISMATCH")
+                        if time.monotonic() >= deadline:
+                            raise ProvisionError("TOKENIZER_DOWNLOAD_TIMEOUT")
                         stream.flush()
                         os.fsync(stream.fileno())
+                    if time.monotonic() >= deadline:
+                        raise ProvisionError("TOKENIZER_DOWNLOAD_TIMEOUT")
                     os.replace(temporary, target)
                     temporary = None
                     status = "downloaded"

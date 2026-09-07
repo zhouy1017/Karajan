@@ -6,6 +6,7 @@ import hashlib
 import importlib.util
 import io
 import json
+import ssl
 import sys
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -95,7 +96,7 @@ def test_persistent_network_failure_is_bounded_and_cleans_each_temp(
     def connect(_: str) -> object:
         nonlocal calls
         calls += 1
-        raise URLError("signed response detail")
+        raise URLError(ConnectionResetError("private transport detail"))
 
     with pytest.raises(SCRIPT.ProvisionError, match="^TOKENIZER_NETWORK_ERROR$"):
         SCRIPT.provision(tmp_path, open_url=connect)
@@ -142,7 +143,7 @@ def test_retryable_http_status_uses_three_attempts(
 def test_retry_attempts_share_one_download_budget(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, small_artifact: bytes
 ) -> None:
-    clock = iter([0.0, 1.0, 181.0, 182.0])
+    clock = iter([0.0, 0.0, 1.0, 181.0])
     monkeypatch.setattr(SCRIPT.time, "monotonic", lambda: next(clock))
     calls = 0
 
@@ -156,6 +157,67 @@ def test_retry_attempts_share_one_download_budget(
 
     assert calls == 1
     assert list(tmp_path.iterdir()) == []
+
+
+def test_default_connect_receives_remaining_budget(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, small_artifact: bytes
+) -> None:
+    clock = [0.0]
+    monkeypatch.setattr(SCRIPT.time, "monotonic", lambda: clock[0])
+    timeouts: list[float] = []
+
+    class Opener:
+        def open(self, request: object, timeout: float) -> BinaryIO:
+            del request
+            timeouts.append(timeout)
+            if len(timeouts) == 1:
+                clock[0] = 179.0
+                raise TimeoutError("private transport detail")
+            assert timeout <= 1.0
+            return io.BytesIO(small_artifact)
+
+    monkeypatch.setattr(SCRIPT, "build_opener", lambda *args: Opener())
+
+    SCRIPT.provision(tmp_path)
+
+    assert timeouts == [30.0, 1.0]
+    assert (tmp_path / "fixture.bin").read_bytes() == small_artifact
+
+
+def test_final_read_crossing_deadline_cannot_publish(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, small_artifact: bytes
+) -> None:
+    clock = [0.0]
+    monkeypatch.setattr(SCRIPT.time, "monotonic", lambda: clock[0])
+
+    class LateEOF(io.BytesIO):
+        def read(self, amount: int | None = -1) -> bytes:
+            if self.tell():
+                clock[0] = 181.0
+                return b""
+            clock[0] = 179.0
+            return super().read(amount)
+
+    with pytest.raises(SCRIPT.ProvisionError, match="^TOKENIZER_DOWNLOAD_TIMEOUT$"):
+        SCRIPT.provision(tmp_path, open_url=lambda _: response(LateEOF(small_artifact)))
+
+    assert not (tmp_path / "fixture.bin").exists()
+
+
+def test_certificate_failure_is_deterministic_and_not_retried(
+    tmp_path: Path, small_artifact: bytes
+) -> None:
+    calls = 0
+
+    def connect(url: str) -> object:
+        nonlocal calls
+        calls += 1
+        raise URLError(ssl.SSLCertVerificationError(1, "CERTIFICATE_VERIFY_FAILED"))
+
+    with pytest.raises(SCRIPT.ProvisionError, match="^TOKENIZER_NETWORK_ERROR$"):
+        SCRIPT.provision(tmp_path, open_url=connect)
+
+    assert calls == 1
 
 
 def test_bad_digest_is_deterministic_and_never_retried(
@@ -181,7 +243,10 @@ def test_cli_network_error_does_not_emit_exception_detail(
     tmp_path: Path,
     small_artifact: bytes,
 ) -> None:
-    monkeypatch.setattr(SCRIPT, "_open", lambda _: (_ for _ in ()).throw(URLError("secret URL")))
+    def fail_open(_: str, *, timeout: float = 30.0) -> object:
+        raise URLError("secret URL")
+
+    monkeypatch.setattr(SCRIPT, "_open", fail_open)
     monkeypatch.setattr(sys, "argv", ["provision_go_tokenizer.py", "--directory", str(tmp_path)])
 
     assert SCRIPT.main() == 1
