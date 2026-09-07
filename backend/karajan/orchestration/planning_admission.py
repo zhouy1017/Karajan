@@ -30,6 +30,7 @@ from karajan.projects.credential_sources import (
 from karajan.projects.qualification import ProfileQualificationStore
 from karajan.resources.broker import units
 from karajan.routing import RoutingError, evaluate_reserved_profile, evaluate_route
+from karajan.routing.quotas import QuotaTemporalFence, capture_quota_temporal_fence
 from karajan.runs import RunError, RunPlanner
 from karajan.runs.planning import digest, encoded, identifier
 from karajan.storage import open_database, require_schema
@@ -665,7 +666,7 @@ class PlanningAdmissionAuthority:
         binding: dict[str, Any],
         *,
         as_of: float,
-    ) -> None:
+    ) -> QuotaTemporalFence:
         """Run the normal quota algorithm over Capacity's final immutable facts."""
         route = record["route_sources"]["route"]
         task, policy = route["snapshots"]["task"], route["snapshots"]["policy"]
@@ -718,6 +719,10 @@ class PlanningAdmissionAuthority:
             raise RunError("PLANNING_BOUNDARY_ROUTE_INVALID") from None
         if result["selected_profile"] != binding["profile"]:
             raise RunError("PLANNING_BOUNDARY_ROUTE_REJECTED")
+        try:
+            return capture_quota_temporal_fence(result)
+        except RoutingError:
+            raise RunError("PLANNING_BOUNDARY_ROUTE_INVALID") from None
 
     def _execution_binding(self, execution_id: str, principal: str) -> dict[str, Any]:
         """Read the controller's original ID-only binding without opening a claim."""
@@ -957,6 +962,12 @@ class PlanningAdmissionAuthority:
         self._assert_estimate_live(record, held_run)
         self._assert_qualification_live(record, qualification, now=observed)
         self._assert_budget_deadline(record, record["budget_usage"], now=observed)
+
+    def _assert_quota_fence_current(self, fence: QuotaTemporalFence) -> None:
+        try:
+            fence.assert_current(as_of=self.capacity._now())
+        except RoutingError:
+            raise RunError("PLANNING_BOUNDARY_ROUTE_REJECTED") from None
 
     @staticmethod
     def _budget(run: dict[str, Any], budget_ref: str) -> tuple[dict[str, Any], str]:
@@ -1376,9 +1387,10 @@ class PlanningAdmissionAuthority:
                         # private, no-I/O clock read is safe inside Capacity's
                         # held transaction and does not reopen a Capacity view.
                         self._assert_final_boundary_live(record, qualification, held_run)
-                        self._revalidate_boundary_route(
+                        fence = self._revalidate_boundary_route(
                             boundary[0], record, binding, as_of=self.capacity._now()
                         )
+                        self._assert_quota_fence_current(fence)
                         # Route construction is pure but can consume wall time.
                         # Recheck the independently frozen Run/Commander facts
                         # at the last possible controller boundary.
@@ -1508,9 +1520,10 @@ class PlanningAdmissionAuthority:
                         if len(boundary) != 1:
                             raise RunError("PLANNING_BOUNDARY_FACTS_REQUIRED")
                         self._assert_final_boundary_live(record, qualification, held_run)
-                        self._revalidate_boundary_route(
+                        fence = self._revalidate_boundary_route(
                             boundary[0], record, binding, as_of=self.capacity._now()
                         )
+                        self._assert_quota_fence_current(fence)
                         self._assert_final_boundary_live(record, qualification, held_run)
 
                     # Project qualification remains held until Capacity has

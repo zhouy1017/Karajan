@@ -651,6 +651,31 @@ def test_capacity_boundary_retains_unknown_estimate_conservative_age(
     assert authority.capacity.snapshot()["reservations"] == []
 
 
+def test_final_quota_fence_rejects_conservative_age_crossed_during_pure_route(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    now = [1004.0]
+    _, authority, _, execution = _case(
+        tmp_path,
+        configured,
+        clock=lambda: now[0],
+        conservative_observation_max_age_seconds=5,
+    )
+    original = authority._revalidate_boundary_route
+
+    def finish_after_conservative_age(*args: Any, **kwargs: Any) -> Any:
+        result = original(*args, **kwargs)
+        # Capacity facts and the full shared evaluator both ran at age four.
+        # Only the O(1) temporal tail sees the pure computation cross age five.
+        now[0] = 1006.0
+        return result
+
+    monkeypatch.setattr(authority, "_revalidate_boundary_route", finish_after_conservative_age)
+    denied = authority.advance(execution["id"], "owner", "pure-route-age")
+    assert denied["reason_codes"] == ["PLANNING_BOUNDARY_ROUTE_REJECTED"]
+    assert authority.capacity.snapshot()["reservations"] == []
+
+
 def test_final_reservation_hook_rechecks_original_budget_after_fact_capture(
     configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
