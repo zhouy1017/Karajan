@@ -254,6 +254,30 @@ def test_boundary_view_handles_two_valid_claims_with_future_above_the_input_maxi
         pool["future_reserved"] == "5000000000000.000000"
         for pool in derived["accounts"][0]["pools"]
     )
+    # The reviewer/planning consumer converts the derived view, not the raw
+    # fragment. Raw diagnostics retain the aggregate provenance but are not a
+    # rejection channel in `_capacity_snapshot`.
+    from karajan.orchestration.routing import _capacity_snapshot
+
+    snapshot, diagnostics = _capacity_snapshot(
+        derived,
+        {
+            "profiles": [
+                {
+                    "id": "fast-a",
+                    "revision": 1,
+                    "profile": {
+                        "id": "fast-a",
+                        "revision": 1,
+                        "binding": {"account_id": "shared-account"},
+                    },
+                    "quota_pool_refs": ["short", "weekly", "allowance"],
+                }
+            ]
+        },
+    )
+    assert all(pool["future_reserved"] == "5000000000000.000000" for pool in snapshot["pools"])
+    assert "ROUTING_QUANTITY_OUT_OF_RANGE:short" in diagnostics[0]["reason_codes"]
     assert source.sha256 == hashlib.sha256(source.canonical_json.encode()).hexdigest()
 
 
