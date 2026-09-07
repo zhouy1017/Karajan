@@ -1,0 +1,40 @@
+import hashlib
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+WORK = HERE.parents[1]
+ROOT = HERE.parents[3]
+OUT = HERE / 'boundaries-win32'
+OUT.mkdir(exist_ok=False)
+relative = [
+    '.cache/spark-independent/final/test_final_publication.py',
+    '.cache/relay-resume-independent/test_rejection_boundary.py',
+    '.cache/relay-resume-independent/test_followup_boundaries.py',
+    '.cache/relay-resume-independent/test_framing_boundaries.py',
+]
+inputs = []
+for name in relative:
+    source = WORK / name
+    data = source.read_bytes()
+    target = OUT / source.name
+    target.write_bytes(data)
+    inputs.append({'original': name, 'copy': target.relative_to(WORK).as_posix(), 'sha256': hashlib.sha256(data).hexdigest()})
+relay = WORK / 'backend/karajan/adapters/opencode/go_relay.py'
+before = hashlib.sha256(relay.read_bytes()).hexdigest()
+env = os.environ.copy()
+env.update(KARAJAN_GO_TOKENIZER_DIRECTORY=str(ROOT / '.cache/go-task-execution/.cache/go-context-artifacts'),
+           KARAJAN_REQUIRE_GO_TOKENIZER='1', HF_HUB_OFFLINE='1', TRANSFORMERS_OFFLINE='1', PYTHONUTF8='1')
+command = [sys.executable, '-m', 'pytest', *(str(OUT / Path(name).name) for name in relative),
+           '-q', '-p', 'no:cacheprovider', '-o', 'pythonpath=backend tests/adapters/opencode',
+           '--junitxml=' + str(OUT / 'tests.xml')]
+with (OUT / 'stdout.txt').open('wb') as output:
+    result = subprocess.run(command, cwd=WORK, env=env, stdout=output, stderr=subprocess.STDOUT, check=False)
+after = hashlib.sha256(relay.read_bytes()).hexdigest()
+(OUT / 'result.json').write_text(json.dumps({'command': command, 'inputs': inputs, 'exit_code': result.returncode,
+       'relay_before': before, 'relay_after': after, 'sources_equal': before == after}, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'exit_code': result.returncode, 'relay_unchanged': before == after}))
+raise SystemExit(result.returncode or (0 if before == after else 2))

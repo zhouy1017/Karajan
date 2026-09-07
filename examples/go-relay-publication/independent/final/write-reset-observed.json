@@ -1,0 +1,26 @@
+{
+  "actual_os_write_errors": [
+    "ConnectionResetError"
+  ],
+  "journal_outcome": {
+    "protocol_passed": false,
+    "reason_codes": [
+      "RELAY_TRANSPORT_ERROR"
+    ],
+    "response_bytes": 446,
+    "state": "response_received",
+    "upstream_status": 200,
+    "usage": {}
+  },
+  "journal_request_count": 1,
+  "journal_state": "response_received",
+  "null_name_count": 1,
+  "protocol_after_reset": false,
+  "protocol_before_reset": true,
+  "reason_codes": [
+    "RELAY_TRANSPORT_ERROR"
+  ],
+  "relay_completed": false,
+  "stream_terminated": true,
+  "upstream_response_complete": true
+}

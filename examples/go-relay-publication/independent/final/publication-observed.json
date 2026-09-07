@@ -1,0 +1,11 @@
+{
+  "client_status": 200,
+  "declared_content_length": 446,
+  "journal_outcome": null,
+  "journal_request_count": 1,
+  "journal_state": "send_unknown",
+  "null_name_count": 1,
+  "protocol_passed": true,
+  "received_body_bytes": 446,
+  "relay_completed": false
+}

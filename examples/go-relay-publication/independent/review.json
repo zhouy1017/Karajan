@@ -1,0 +1,51 @@
+{
+  "candidate": "initial Spark uncommitted patch",
+  "evidence_sha256": {
+    "completion-lag-observed.json": "0b0977da9873a59f533f79d6a9dc751cf00745946855c4bafab3553a3abf5a93",
+    "independent.xml": "a72510df9e6e06529bb1648d75fefd0df95e52319a678c3000db5223839f4835",
+    "nullable-initial.py.txt": "164d263f6198e436740bead3fc1dee248e425a518af37279194972c5f7e07516",
+    "publication-observed.json": "fcc0d6c7d39dc8d3433cf6e14239ea44d2dc8bb8796e0b7b2eb4bb00293e571d",
+    "regression.xml": "eb5bbb67cb4112beb1187f2931fa92f3c889c3cfcf136d9cda638d5d509155f9",
+    "relay-initial.py.txt": "3f52c0a3b4288035c4c85e08a50a37e7e840461083bb7d6e7efdfce7ba906c4a",
+    "review.md": "9dab3b29e158a31cfa39dbfd8ab1c28b9131bc5df693b6b30449dde3650769d1",
+    "test_response_publication.py": "f10209a82e4d47990b7c9728fbf026dec2af43b4c0ae98a57b6661394668ba8d",
+    "write-reset-observed.json": "5a25d35f75bce5d19ec376c1c3cbe1b3533032fcfaf7d049dbdcecd4a472b362"
+  },
+  "head": "c63c7e36b17c2f8d8b041984e5bd3422bd72ffd6",
+  "history_note": "Initial test copy was reconstructed from the complete recorded tool read after concurrent Spark follow-up changed disk, then verified against the pre-test SHA256. The transient later copy is separately labeled and is not reviewed as frozen source.",
+  "limitations": [
+    "Windows loopback HTTP and real SQLite only; HTTP upstream is synthetic.",
+    "Initial candidate; no final merge or new CI claim.",
+    "No provider, key, native runtime or GitHub action."
+  ],
+  "review_kind": "independent Standards/Spec",
+  "source_sha256": {
+    "backend/karajan/adapters/opencode/go_relay.py": "3f52c0a3b4288035c4c85e08a50a37e7e840461083bb7d6e7efdfce7ba906c4a",
+    "tests/adapters/opencode/test_go_relay_nullable_names.py": "164d263f6198e436740bead3fc1dee248e425a518af37279194972c5f7e07516"
+  },
+  "spec_findings": [
+    {
+      "file": "tests/adapters/opencode/test_go_relay_nullable_names.py",
+      "id": "SPARK-RECEIPT-001",
+      "line": 130,
+      "priority": 2,
+      "reason": "Client completion does not establish server receipt/Journal completion; unchecked one-second hold also permits progress before intermediate checks.",
+      "status": "open"
+    }
+  ],
+  "standards_findings": [],
+  "tests": {
+    "independent": {
+      "failed": 1,
+      "passed": 2,
+      "seconds": 0.74,
+      "skipped": 0
+    },
+    "regression": {
+      "failed": 0,
+      "passed": 85,
+      "seconds": 9.82,
+      "skipped": 0
+    }
+  }
+}

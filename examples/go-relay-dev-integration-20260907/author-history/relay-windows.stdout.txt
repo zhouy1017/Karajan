@@ -1,0 +1,46 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Users\Chooo\Playground\Karajan\.cache\ci-spark-relay
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 205 items
+
+tests\adapters\opencode\test_go_relay.py ............................... [ 15%]
+...........................................                              [ 36%]
+tests\adapters\opencode\test_go_relay_context.py .sssssssssssss          [ 42%]
+tests\adapters\opencode\test_go_relay_nullable_names.py .............    [ 49%]
+tests\adapters\opencode\test_go_relay_journal.py ...                     [ 50%]
+tests\adapters\opencode\test_go_context.py ssssssssssssssssssssssssss.ss [ 64%]
+ssssssssss                                                               [ 69%]
+tests\adapters\opencode\test_go_journal.py ............................. [ 83%]
+........................                                                 [ 95%]
+tests\adapters\opencode\test_go_send_guard.py sssssssss                  [100%]
+
+- generated xml file: C:\Users\Chooo\Playground\Karajan\.cache\ci-spark-relay\.cache\relay-dev-merge-author\relay-windows.junit.xml -
+=========================== short test summary info ===========================
+SKIPPED [1] tests\adapters\opencode\test_go_relay_context.py:54: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [6] tests\adapters\opencode\test_go_relay_context.py:105: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [1] tests\adapters\opencode\test_go_relay_context.py:164: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [4] tests\adapters\opencode\test_go_relay_context.py:211: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [1] tests\adapters\opencode\test_go_relay_context.py:267: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [1] tests\adapters\opencode\test_go_context.py:62: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [1] tests\adapters\opencode\test_go_context.py:120: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [7] tests\adapters\opencode\test_go_context.py:136: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [7] tests\adapters\opencode\test_go_context.py:157: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [1] tests\adapters\opencode\test_go_context.py:177: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [1] tests\adapters\opencode\test_go_context.py:194: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [5] tests\adapters\opencode\test_go_context.py:210: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [3] tests\adapters\opencode\test_go_context.py:220: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [3] tests\adapters\opencode\test_go_context.py:240: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [1] tests\adapters\opencode\test_go_context.py:252: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [1] tests\adapters\opencode\test_go_context.py:264: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [3] tests\adapters\opencode\test_go_context.py:284: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [4] tests\adapters\opencode\test_go_context.py:290: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [1] tests\adapters\opencode\test_go_send_guard.py:59: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [1] tests\adapters\opencode\test_go_send_guard.py:101: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [1] tests\adapters\opencode\test_go_send_guard.py:133: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [1] tests\adapters\opencode\test_go_send_guard.py:153: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [2] tests\adapters\opencode\test_go_send_guard.py:186: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [2] tests\adapters\opencode\test_go_send_guard.py:214: Pinned official tokenizer artifacts have not been provisioned locally
+SKIPPED [1] tests\adapters\opencode\test_go_send_guard.py:252: Pinned official tokenizer artifacts have not been provisioned locally
+====================== 145 passed, 60 skipped in 13.99s =======================
