@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import socket
 import threading
+import time
 from collections.abc import Callable, Iterator
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
@@ -88,6 +89,58 @@ def post(relay: GoRelay, body: Any = None, **kwargs: Any) -> httpx.Response:
             content=json.dumps(payload() if body is None else body),
             **kwargs,
         )
+
+
+def post_with_raw_socket(
+    relay: GoRelay,
+    body: bytes,
+    headers: dict[str, str],
+    *,
+    split_body: bool = False,
+    send_delay: float = 0.02,
+) -> int:
+    request_body = body
+    request_headers = {
+        "Host": f"127.0.0.1:{urlsplit(relay.url).port}",
+        "Content-Length": str(len(request_body)),
+        "Content-Type": "application/json",
+    } | headers
+    request = (
+        b"POST /v1/chat/completions HTTP/1.1\r\n"
+        + b"".join(f"{name}: {value}\r\n".encode() for name, value in request_headers.items())
+        + b"\r\n"
+    )
+    with socket.create_connection(("127.0.0.1", urlsplit(relay.url).port), timeout=5) as raw:
+        raw.sendall(request)
+        if split_body and request_body:
+            midpoint = len(request_body) // 2
+            raw.sendall(request_body[:midpoint])
+            time.sleep(send_delay)
+            raw.sendall(request_body[midpoint:])
+        else:
+            raw.sendall(request_body)
+        raw.settimeout(3)
+        try:
+            response = raw.recv(1024)
+        except OSError as error:
+            raise RuntimeError(f"socket reset while reading response: {error}") from error
+    if not response:
+        raise RuntimeError("connection closed before response headers were read")
+    status_line = response.split(b"\r\n", 1)[0]
+    return int(status_line.split()[1])
+
+
+def raw_request_lines(relay: GoRelay, length: int, *, valid: bool = False) -> bytes:
+    capability = relay.capability if valid else SECRET
+    return (
+        b"POST /v1/chat/completions HTTP/1.1\r\n"
+        + b"Host: localhost\r\n"
+        + f"Authorization: Bearer {capability}\r\n".encode()
+        + b"x-opencode-session: ses_test\r\n"
+        + f"Content-Length: {length}\r\n".encode()
+        + b"Content-Type: application/json\r\n"
+        + b"\r\n"
+    )
 
 
 def test_complete_stream_keeps_real_credential_only_at_upstream() -> None:
@@ -183,7 +236,17 @@ def test_local_path_is_exact(path: str) -> None:
 
 def test_capability_and_session_are_required_and_never_forward_arbitrary_headers() -> None:
     with running() as (relay, requests):
-        assert post(relay, headers={"Authorization": "Bearer " + SECRET}).status_code == 403
+        response = post(
+            relay,
+            headers={
+                "Authorization": "Bearer " + SECRET,
+                "x-opencode-session": "ses_test",
+            },
+        )
+        assert response.status_code == 403
+        assert response.json() == {"error": {"type": "INVALID_CAPABILITY"}}
+        assert not requests
+        assert not relay.receipts
         assert (
             post(
                 relay,
@@ -223,6 +286,130 @@ def test_capability_and_session_are_required_and_never_forward_arbitrary_headers
         assert "cookie" not in requests[0].headers
         assert "x-opencode-request" not in requests[0].headers
         assert SECRET not in json.dumps(relay.receipts)
+
+
+def test_wrong_capability_body_drain_stops_at_declared_end(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    reads: list[tuple[int, int]] = []
+    original = GoRelay._read_request
+
+    class ObservedReader:
+        def __init__(self, inner: Any):
+            self._inner = inner
+
+        def read1(self, count: int = -1) -> bytes:
+            result = self._inner.read1(count)
+            reads.append((count, len(result)))
+            return result
+
+        def __getattr__(self, name: str) -> Any:
+            return getattr(self._inner, name)
+
+    def observe(self: GoRelay, handler: Any) -> tuple[dict[str, Any], str]:
+        handler.rfile = ObservedReader(handler.rfile)
+        return original(self, handler)
+
+    monkeypatch.setattr(GoRelay, "_read_request", observe)
+    body = b"x" * 20
+    with running() as (relay, requests):
+        with socket.create_connection(("127.0.0.1", urlsplit(relay.url).port)) as peer:
+            peer.sendall(raw_request_lines(relay, len(body)) + body)
+            peer.shutdown(socket.SHUT_WR)
+            peer.settimeout(2)
+            response = peer.recv(2048)
+            assert b" 403 " in response.split(b"\r\n", 1)[0]
+        assert reads == [(len(body), len(body))]
+        assert relay.receipts == []
+        assert not requests
+
+
+def test_rejection_split_body_is_dropped_without_side_effects() -> None:
+    body = b"x" * 20_000
+    with running() as (relay, requests):
+        assert (
+            post_with_raw_socket(
+                relay,
+                body,
+                {
+                    "Authorization": "Bearer " + SECRET,
+                    "x-opencode-session": "ses_test",
+                },
+                split_body=True,
+            )
+            == 403
+        )
+        assert not requests
+        assert not relay.receipts
+
+
+def test_rejection_drain_has_total_deadline_under_slow_trickle() -> None:
+    body_length = 4096
+    with running() as (relay, requests):
+        with socket.create_connection(("127.0.0.1", urlsplit(relay.url).port)) as peer:
+            peer.sendall(raw_request_lines(relay, body_length))
+            stopped = threading.Event()
+
+            def trickle() -> None:
+                for _ in range(25):
+                    if stopped.is_set():
+                        return
+                    try:
+                        peer.sendall(b"x")
+                    except OSError:
+                        return
+                    stopped.wait(0.1)
+
+            sender = threading.Thread(target=trickle)
+            started = time.monotonic()
+            sender.start()
+            try:
+                peer.settimeout(1.2)
+                response = peer.recv(2048)
+                assert response and b" 403 " in response.split(b"\r\n", 1)[0]
+                assert time.monotonic() - started < 1.2
+            finally:
+                stopped.set()
+                sender.join(timeout=1)
+                peer.shutdown(socket.SHUT_WR)
+        assert not requests
+        assert not relay.receipts
+
+
+def test_fully_consumed_invalid_body_is_not_read_a_second_time(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    body = json.dumps({**payload(), "model": "unsupported-model"}).encode()
+    reads: list[tuple[int, int]] = []
+    original = GoRelay._read_request
+
+    class ObservedReader:
+        def __init__(self, inner: Any):
+            self._inner = inner
+
+        def read(self, count: int = -1) -> bytes:
+            result = self._inner.read(count)
+            reads.append((count, len(result)))
+            return result
+
+        def __getattr__(self, name: str) -> Any:
+            return getattr(self._inner, name)
+
+    def observe(self: GoRelay, handler: Any) -> tuple[dict[str, Any], str]:
+        handler.rfile = ObservedReader(handler.rfile)
+        return original(self, handler)
+
+    monkeypatch.setattr(GoRelay, "_read_request", observe)
+
+    with running() as (relay, _), socket.create_connection(
+        ("127.0.0.1", urlsplit(relay.url).port)
+    ) as peer:
+        peer.sendall(raw_request_lines(relay, len(body), valid=True) + body)
+        peer.shutdown(socket.SHUT_WR)
+        peer.settimeout(2)
+        response = peer.recv(2048)
+        assert response and b" 422 " in response.split(b"\r\n", 1)[0]
+    assert reads == [(len(body), len(body))]
 
 
 @pytest.mark.parametrize(

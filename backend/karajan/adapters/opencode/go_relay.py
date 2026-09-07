@@ -38,6 +38,7 @@ _UPSTREAM = "https://opencode.ai/zen/go/v1/chat/completions"
 _MODEL = "glm-5.3-flash"
 _REQUEST_LIMIT = 262_144
 _RESPONSE_LIMIT = 1_048_576
+_REJECTION_DRAIN_SECONDS = 0.5
 _MAX_REQUESTS = 6
 _TOOLS = frozenset({"read", "edit"})
 _SESSION = re.compile(r"[A-Za-z0-9_-]{1,160}\Z")
@@ -575,28 +576,73 @@ class GoRelay:
             pass
         handler.close_connection = True
 
-    def _read_request(self, handler: BaseHTTPRequestHandler) -> tuple[dict[str, Any], str]:
+    @staticmethod
+    def _drain_request_body(handler: Any) -> None:
+        budget = getattr(handler, "_go_relay_unread_body", 0)
+        if not isinstance(budget, int) or budget <= 0:
+            return
+        original_timeout = handler.connection.gettimeout()
+        deadline = time.monotonic() + _REJECTION_DRAIN_SECONDS
+        read = getattr(handler.rfile, "read1", None)
+        try:
+            while budget > 0:
+                remaining = budget
+                timeout = deadline - time.monotonic()
+                if timeout <= 0:
+                    return
+                handler.connection.settimeout(timeout)
+                chunk = (
+                    read(min(16_384, remaining))
+                    if read is not None
+                    else handler.rfile.read(remaining)
+                )
+                if not chunk:
+                    return
+                budget -= len(chunk)
+                handler._go_relay_unread_body = budget
+        except (TimeoutError, OSError):
+            return
+        finally:
+            handler.connection.settimeout(original_timeout)
+
+    @staticmethod
+    def _set_request_body_budget(handler: Any, size: int | None = None) -> None:
+        if size is None:
+            handler._go_relay_unread_body = _REQUEST_LIMIT
+            return
+        handler._go_relay_unread_body = max(0, min(size, _REQUEST_LIMIT))
+
+    def _read_request(self, handler: Any) -> tuple[dict[str, Any], str]:
+        self._set_request_body_budget(handler, 0)
         if handler.path != "/v1/chat/completions":
             raise _Rejected("INVALID_PATH", 404)
+        lengths = handler.headers.get_all("Content-Length", [])
+        valid_length = (
+            not handler.headers.get_all("Transfer-Encoding")
+            and len(lengths) == 1
+            and re.fullmatch(r"[0-9]{1,9}", lengths[0]) is not None
+        )
+        if valid_length:
+            self._set_request_body_budget(handler, int(lengths[0]))
         auth = handler.headers.get_all("Authorization", [])
         if len(auth) != 1 or not hmac.compare_digest(
             auth[0].encode(), f"Bearer {self._capability}".encode()
         ):
             raise _Rejected("INVALID_CAPABILITY", 403)
-        lengths = handler.headers.get_all("Content-Length", [])
-        if (
-            handler.headers.get_all("Transfer-Encoding")
-            or len(lengths) != 1
-            or not re.fullmatch(r"[0-9]{1,9}", lengths[0])
-        ):
+        if not valid_length:
             raise _Rejected("INVALID_BODY_LENGTH", 400)
         size = int(lengths[0])
+        self._set_request_body_budget(handler, size)
         if not 1 <= size <= _REQUEST_LIMIT:
+            self._set_request_body_budget(handler, size)
             raise _Rejected("REQUEST_TOO_LARGE", 413)
+        self._set_request_body_budget(handler, size)
         sessions = handler.headers.get_all("x-opencode-session", [])
         if len(sessions) != 1 or _SESSION.fullmatch(sessions[0]) is None:
             raise _Rejected("INVALID_SESSION_HEADER", 400)
         raw = handler.rfile.read(size)
+        remaining = max(0, handler._go_relay_unread_body - len(raw))
+        handler._go_relay_unread_body = remaining
         if len(raw) != size:
             raise _Rejected("INCOMPLETE_REQUEST", 400)
         try:
@@ -619,6 +665,7 @@ class GoRelay:
             or any(not isinstance(message, dict) for message in messages)
         ):
             raise _Rejected("INVALID_MESSAGES", 422)
+        handler._go_relay_unread_body = 0
         return payload, sessions[0]
 
     def _handle(self, handler: BaseHTTPRequestHandler) -> None:
@@ -786,6 +833,8 @@ class GoRelay:
                 receipt["reason_codes"] = [error.reason]
                 self._withdraw_context_sends(receipt)
                 self._persist_receipt(receipt)
+            else:
+                self._drain_request_body(handler)
             self._error(handler, error.status, error.reason)
         except Exception:
             if receipt is not None:

@@ -1,5 +1,7 @@
 """Actual HTTP relay and durable journal; synthetic upstream and credentials."""
 
+from typing import Any
+
 import httpx
 import pytest
 from karajan.adapters.opencode.go_journal import GoCallJournal
@@ -258,5 +260,60 @@ def test_failed_context_observation_revokes_remaining_sends(tmp_path, accounting
         assert post(relay).status_code == 503
         assert len(upstream) == 1
         assert journal.snapshot("task")["request_count"] == 1
+    finally:
+        assert relay.close()["status"] == "closed"
+
+
+def test_lost_metered_begin_reply_revokes_original_grant_and_blocks_next_send(
+    tmp_path, accounting, monkeypatch
+) -> None:
+    journal = GoCallJournal(tmp_path / "calls.sqlite", clock=lambda: 1000.0)
+    binding = task_binding()
+    grant = journal.create_grant(binding, grant_id="task")
+    upstream: list[bool] = []
+
+    def receive(request):
+        upstream.append(True)
+        return metered_answer()
+
+    context = GoRelayContext(
+        accounting,
+        digest(accounting.source()),
+        binding["execution_policy_digest"],
+        4000,
+        4096,
+        8192,
+        100,
+        1000,
+    )
+    relay = GoRelay(
+        SECRET,
+        CANARY,
+        context=context,
+        authorization=GoRelayAuthorization(journal, "task", binding, grant["capability"]),
+        client_factory=lambda: httpx.Client(
+            transport=httpx.MockTransport(receive), trust_env=False
+        ),
+    )
+    original = journal.begin_call
+
+    def commit_then_lose(*args: Any, **kwargs: Any) -> None:
+        original(*args, **kwargs)
+        raise OSError("synthetic lost committed begin result")
+
+    monkeypatch.setattr(journal, "begin_call", commit_then_lose)
+    relay.start()
+    try:
+        first_status = post(relay).status_code
+        first = journal.snapshot("task")
+        monkeypatch.setattr(journal, "begin_call", original)
+        second_status = post(relay).status_code
+        final = journal.snapshot("task")
+        assert first_status == 502
+        assert first["state"] == "revoked"
+        assert first["calls"][0]["state"] == "send_unknown"
+        assert second_status == 503
+        assert final["request_count"] == 1
+        assert not upstream
     finally:
         assert relay.close()["status"] == "closed"
