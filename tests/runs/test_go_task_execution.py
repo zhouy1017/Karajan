@@ -234,6 +234,7 @@ def test_direct_unregistered_caller_cannot_claim_or_resolve_material(
     assert not services.work_root.exists()
 
 
+@pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux runtime required")
 def test_consume_preserves_native_failure_when_collector_rejects_missing_capture(
     projected, tmp_path, accounting, artifacts, monkeypatch
 ):

@@ -1,0 +1,8 @@
+{
+  "first_http_status": 502,
+  "first_grant_state": "revoked",
+  "first_call_state": "send_unknown",
+  "second_http_status": 503,
+  "request_count": 1,
+  "upstream_count": 0
+}

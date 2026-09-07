@@ -1,0 +1,29 @@
+{
+  "additional_unix_cases": [
+    "test_unix_relay_keeps_the_same_fixed_endpoint_and_capability_boundary",
+    "test_unix_transport_consumes_the_durable_grant_and_preserves_replacement_files",
+    "test_unix_start_never_overwrites_an_existing_path"
+  ],
+  "all_125_source_hashes_unchanged": true,
+  "execution": "independent Linux followup; not author execution",
+  "external_artifacts": {
+    "chat_template.jinja": "0c4099f3382d6c92700dfb99725025360966fd73032f0ecf32377c0d9e6309c5",
+    "tokenizer.json": "19e773648cb4e65de8660ea6365e10acca112d42a854923df93db4a6f333a82d",
+    "tokenizer_config.json": "98b1271574f41abf89427ae2dda030d94dc9478f0edc5a8bd240db213c6fd5fc"
+  },
+  "formal_cases_preserved": 196,
+  "head_after": "03984aa08aecf79c33c44a9a054a707ae04748e0",
+  "provider": "not_run",
+  "result": {
+    "errors": "0",
+    "failures": "0",
+    "hostname": "ProArt-Zhou",
+    "name": "pytest",
+    "skipped": "0",
+    "tests": "199",
+    "time": "17.041",
+    "timestamp": "2026-09-07T09:04:35.868449+08:00"
+  },
+  "schema_version": "karajan.relay-linux-followup.v1",
+  "tested_commit": "03984aa08aecf79c33c44a9a054a707ae04748e0"
+}

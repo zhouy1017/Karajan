@@ -1,0 +1,55 @@
+{
+  "base": "7c85669a3d2a5b717bbcaea7f8dbbf2c5ea937a0",
+  "evidence": {
+    "README.md": "508c2fb6f0d616769a707ca9c610f25636efbe83198aa055dccf383ac8946cc6",
+    "after-sources.json": "28717dbdecad6dc0b18bcdef336cc59717e943ed587f7337eea15c9fb71f9597",
+    "before-sources.json": "28717dbdecad6dc0b18bcdef336cc59717e943ed587f7337eea15c9fb71f9597",
+    "before.patch.txt": "333a6523c2102bb88d0b59227f766c30b0f667147bde2afad8bbfd1bc64d644a",
+    "framing.xml": "7379d22d99cdcacba3492cc2904f8e15a9e9a2b647bb20a885e1ca110f961eef",
+    "go_relay.py.before.py.txt": "deb0239590d67ddfb077f025773bb9c7c2947a7f3379c693f7ee469d0aab2453",
+    "lost-begin-observation.json": "ebf3e02d221cb359d24e196034c42a74f62639f5572b6e146834167ff9114103",
+    "six.xml": "26ba198e6125bbf42c1ba783e4aa8908ccc4d75949a51805bc56c907c1cb6dd3",
+    "test_followup_boundaries.py": "7a8853d2002badaa4eb2a36ce0e54a9307c96dc04d572c5906afa443fd2dcab1",
+    "test_framing_boundaries.py": "52cfe113e3679511e3464a9bd1c8d95339c7c1670a5705cddbb19c7ed1d45aeb",
+    "test_go_relay.py.before.py.txt": "580b428c9169a6ecfcc50c06cb81099b8d257fc69921e3c5164a55dddbc07d23",
+    "test_go_relay_context.py.before.py.txt": "ae7bac8042c44e28e4e5dca06d0d839a61ed187816d68930307c25fb45596135",
+    "test_rejection_boundary.py": "78792f8df5a199d892c7217de54a2d31dae7f66c8b9c6ba46d9cb318854981a7"
+  },
+  "executions": {
+    "framing.xml": {
+      "errors": "0",
+      "failures": "0",
+      "hostname": "ProArt-Zhou",
+      "name": "pytest",
+      "skipped": "0",
+      "tests": "4",
+      "time": "0.464",
+      "timestamp": "2026-09-07T08:55:54.479897+08:00"
+    },
+    "six.xml": {
+      "errors": "0",
+      "failures": "0",
+      "hostname": "ProArt-Zhou",
+      "name": "pytest",
+      "skipped": "0",
+      "tests": "6",
+      "time": "2.283",
+      "timestamp": "2026-09-07T08:54:06.378981+08:00"
+    }
+  },
+  "implementation_commit": null,
+  "product_sha256": "deb0239590d67ddfb077f025773bb9c7c2947a7f3379c693f7ee469d0aab2453",
+  "reviewer": "qualification_integration",
+  "schema_version": "karajan.relay-independent-review.v1",
+  "spec": {
+    "closed_existing": [
+      "10053-REVIEW-003",
+      "10053-REVIEW-004"
+    ],
+    "new_confirmed_findings": 0
+  },
+  "standards": {
+    "blocking_findings": 0,
+    "nonblocking_heuristic_observations": 1
+  }
+}
