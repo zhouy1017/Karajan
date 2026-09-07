@@ -1,0 +1,43 @@
+{
+  "command": [
+    "C:\\Users\\Chooo\\Playground\\Karajan\\.venv\\Scripts\\python.exe",
+    "-m",
+    "pytest",
+    "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\ci-spark-relay\\.cache\\relay-dev-merge-root\\boundaries-win32\\test_final_publication.py",
+    "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\ci-spark-relay\\.cache\\relay-dev-merge-root\\boundaries-win32\\test_rejection_boundary.py",
+    "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\ci-spark-relay\\.cache\\relay-dev-merge-root\\boundaries-win32\\test_followup_boundaries.py",
+    "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\ci-spark-relay\\.cache\\relay-dev-merge-root\\boundaries-win32\\test_framing_boundaries.py",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "-o",
+    "pythonpath=backend tests/adapters/opencode",
+    "--junitxml=C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\ci-spark-relay\\.cache\\relay-dev-merge-root\\boundaries-win32\\tests.xml"
+  ],
+  "inputs": [
+    {
+      "original": ".cache/spark-independent/final/test_final_publication.py",
+      "copy": ".cache/relay-dev-merge-root/boundaries-win32/test_final_publication.py",
+      "sha256": "be4a64a791c6e5dd82019647b448d62f6f60d069da58d079bc3bc685241f6cb3"
+    },
+    {
+      "original": ".cache/relay-resume-independent/test_rejection_boundary.py",
+      "copy": ".cache/relay-dev-merge-root/boundaries-win32/test_rejection_boundary.py",
+      "sha256": "78792f8df5a199d892c7217de54a2d31dae7f66c8b9c6ba46d9cb318854981a7"
+    },
+    {
+      "original": ".cache/relay-resume-independent/test_followup_boundaries.py",
+      "copy": ".cache/relay-dev-merge-root/boundaries-win32/test_followup_boundaries.py",
+      "sha256": "7a8853d2002badaa4eb2a36ce0e54a9307c96dc04d572c5906afa443fd2dcab1"
+    },
+    {
+      "original": ".cache/relay-resume-independent/test_framing_boundaries.py",
+      "copy": ".cache/relay-dev-merge-root/boundaries-win32/test_framing_boundaries.py",
+      "sha256": "52cfe113e3679511e3464a9bd1c8d95339c7c1670a5705cddbb19c7ed1d45aeb"
+    }
+  ],
+  "exit_code": 0,
+  "relay_before": "b79f1e08afa5aa0931e4b1056dbce7f674014d04606ce64a9d3cd48ced723881",
+  "relay_after": "b79f1e08afa5aa0931e4b1056dbce7f674014d04606ce64a9d3cd48ced723881",
+  "sources_equal": true
+}

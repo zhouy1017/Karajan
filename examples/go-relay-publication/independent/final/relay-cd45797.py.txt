@@ -18,8 +18,7 @@ import stat
 import sys
 import threading
 import time
-from collections.abc import Callable, Iterator
-from contextlib import AbstractContextManager, ExitStack, contextmanager
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from decimal import Decimal
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -39,7 +38,6 @@ _UPSTREAM = "https://opencode.ai/zen/go/v1/chat/completions"
 _MODEL = "glm-5.3-flash"
 _REQUEST_LIMIT = 262_144
 _RESPONSE_LIMIT = 1_048_576
-_REJECTION_DRAIN_SECONDS = 0.5
 _MAX_REQUESTS = 6
 _TOOLS = frozenset({"read", "edit"})
 _SESSION = re.compile(r"[A-Za-z0-9_-]{1,160}\Z")
@@ -423,9 +421,6 @@ class GoRelay:
     ``client_factory`` is a code-only seam for an HTTP fixture, never a CLI
     endpoint option. Receipt lists are detached snapshots, including while a
     request is pending. ``close`` reports unknown if an active handler remains.
-    Task consumers require a controller-owned ``send_guard``; this low-level
-    port leaves it optional for existing diagnostics. The guard must release
-    its operation locks before cancellation waits for this relay to close.
     """
 
     def __init__(
@@ -436,7 +431,6 @@ class GoRelay:
         client_factory: Callable[[], httpx.Client] | None = None,
         authorization: GoRelayAuthorization | None = None,
         context: GoRelayContext | GoQualificationContext | None = None,
-        send_guard: Callable[[], AbstractContextManager[None]] | None = None,
     ) -> None:
         if (
             not secret
@@ -461,7 +455,6 @@ class GoRelay:
         self._unix_socket: Path | None = None
         self._socket_identity: tuple[int, int] | None = None
         self._context = context
-        self._send_guard = send_guard
         self._authorization = (
             GoRelayAuthorization(
                 authorization.journal,
@@ -582,73 +575,28 @@ class GoRelay:
             pass
         handler.close_connection = True
 
-    @staticmethod
-    def _drain_request_body(handler: Any) -> None:
-        budget = getattr(handler, "_go_relay_unread_body", 0)
-        if not isinstance(budget, int) or budget <= 0:
-            return
-        original_timeout = handler.connection.gettimeout()
-        deadline = time.monotonic() + _REJECTION_DRAIN_SECONDS
-        read = getattr(handler.rfile, "read1", None)
-        try:
-            while budget > 0:
-                remaining = budget
-                timeout = deadline - time.monotonic()
-                if timeout <= 0:
-                    return
-                handler.connection.settimeout(timeout)
-                chunk = (
-                    read(min(16_384, remaining))
-                    if read is not None
-                    else handler.rfile.read(remaining)
-                )
-                if not chunk:
-                    return
-                budget -= len(chunk)
-                handler._go_relay_unread_body = budget
-        except (TimeoutError, OSError):
-            return
-        finally:
-            handler.connection.settimeout(original_timeout)
-
-    @staticmethod
-    def _set_request_body_budget(handler: Any, size: int | None = None) -> None:
-        if size is None:
-            handler._go_relay_unread_body = _REQUEST_LIMIT
-            return
-        handler._go_relay_unread_body = max(0, min(size, _REQUEST_LIMIT))
-
-    def _read_request(self, handler: Any) -> tuple[dict[str, Any], str]:
-        self._set_request_body_budget(handler, 0)
+    def _read_request(self, handler: BaseHTTPRequestHandler) -> tuple[dict[str, Any], str]:
         if handler.path != "/v1/chat/completions":
             raise _Rejected("INVALID_PATH", 404)
-        lengths = handler.headers.get_all("Content-Length", [])
-        valid_length = (
-            not handler.headers.get_all("Transfer-Encoding")
-            and len(lengths) == 1
-            and re.fullmatch(r"[0-9]{1,9}", lengths[0]) is not None
-        )
-        if valid_length:
-            self._set_request_body_budget(handler, int(lengths[0]))
         auth = handler.headers.get_all("Authorization", [])
         if len(auth) != 1 or not hmac.compare_digest(
             auth[0].encode(), f"Bearer {self._capability}".encode()
         ):
             raise _Rejected("INVALID_CAPABILITY", 403)
-        if not valid_length:
+        lengths = handler.headers.get_all("Content-Length", [])
+        if (
+            handler.headers.get_all("Transfer-Encoding")
+            or len(lengths) != 1
+            or not re.fullmatch(r"[0-9]{1,9}", lengths[0])
+        ):
             raise _Rejected("INVALID_BODY_LENGTH", 400)
         size = int(lengths[0])
-        self._set_request_body_budget(handler, size)
         if not 1 <= size <= _REQUEST_LIMIT:
-            self._set_request_body_budget(handler, size)
             raise _Rejected("REQUEST_TOO_LARGE", 413)
-        self._set_request_body_budget(handler, size)
         sessions = handler.headers.get_all("x-opencode-session", [])
         if len(sessions) != 1 or _SESSION.fullmatch(sessions[0]) is None:
             raise _Rejected("INVALID_SESSION_HEADER", 400)
         raw = handler.rfile.read(size)
-        remaining = max(0, handler._go_relay_unread_body - len(raw))
-        handler._go_relay_unread_body = remaining
         if len(raw) != size:
             raise _Rejected("INCOMPLETE_REQUEST", 400)
         try:
@@ -671,7 +619,6 @@ class GoRelay:
             or any(not isinstance(message, dict) for message in messages)
         ):
             raise _Rejected("INVALID_MESSAGES", 422)
-        handler._go_relay_unread_body = 0
         return payload, sessions[0]
 
     def _handle(self, handler: BaseHTTPRequestHandler) -> None:
@@ -747,59 +694,53 @@ class GoRelay:
                     receipt["request_context"] = self._context.measure(payload)
                 except GoContextError as error:
                     raise _Rejected(error.code, 422) from None
-            with ExitStack() as responses:
-                # Business locks precede the relay condition and journal. Keep
-                # them through the actual send, not through response streaming.
-                with self._guard_send():
-                    client = self._client_factory()
-                    with self._condition:
-                        if self._closing:
-                            raise _Rejected("RELAY_CLOSING", 503)
-                        self._clients.add(client)
-                        if self._authorization is not None:
-                            auth = self._authorization
-                            call_id = str(uuid4())
-                            try:
-                                grant = auth.journal.begin_call(
-                                    auth.grant_id,
-                                    call_id,
-                                    capability=auth.capability,
-                                    binding=auth.binding,
-                                    **(
-                                        {"request_context": receipt["request_context"]}
-                                        if "request_context" in receipt
-                                        else {}
-                                    ),
-                                )
-                            except GoJournalError as error:
-                                self._recover_context_call(receipt, call_id)
-                                reason = str(error)
-                                raise _Rejected(
-                                    reason, 429 if reason == "REQUEST_LIMIT_REACHED" else 403
-                                ) from None
-                            except Exception:
-                                self._recover_context_call(receipt, call_id)
-                                raise
-                            if not grant["send_allowed"]:
-                                raise _Rejected("CALL_SEND_NOT_AUTHORIZED", 409)
-                            receipt["journal_call_id"] = call_id
-                        receipt["upstream_send_attempted"] = True
-                        self._receipts[receipt["sequence"] - 1] = copy.deepcopy(receipt)
-                    response = responses.enter_context(
-                        client.stream(
-                            "POST",
-                            _UPSTREAM,
-                            headers={
-                                "Authorization": f"Bearer {self._secret}",
-                                "User-Agent": "opencode/1.18.29 Karajan/0.1",
-                                "x-opencode-session": session,
-                                "Accept": "text/event-stream",
-                                "Accept-Encoding": "identity",
-                            },
-                            json=payload,
-                            follow_redirects=False,
+            client = self._client_factory()
+            with self._condition:
+                if self._closing:
+                    raise _Rejected("RELAY_CLOSING", 503)
+                self._clients.add(client)
+                if self._authorization is not None:
+                    auth = self._authorization
+                    call_id = str(uuid4())
+                    try:
+                        grant = auth.journal.begin_call(
+                            auth.grant_id,
+                            call_id,
+                            capability=auth.capability,
+                            binding=auth.binding,
+                            **(
+                                {"request_context": receipt["request_context"]}
+                                if "request_context" in receipt
+                                else {}
+                            ),
                         )
-                    )
+                    except GoJournalError as error:
+                        self._recover_context_call(receipt, call_id)
+                        reason = str(error)
+                        raise _Rejected(
+                            reason, 429 if reason == "REQUEST_LIMIT_REACHED" else 403
+                        ) from None
+                    except Exception:
+                        self._recover_context_call(receipt, call_id)
+                        raise
+                    if not grant["send_allowed"]:
+                        raise _Rejected("CALL_SEND_NOT_AUTHORIZED", 409)
+                    receipt["journal_call_id"] = call_id
+                receipt["upstream_send_attempted"] = True
+                self._receipts[receipt["sequence"] - 1] = copy.deepcopy(receipt)
+            with client.stream(
+                "POST",
+                _UPSTREAM,
+                headers={
+                    "Authorization": f"Bearer {self._secret}",
+                    "User-Agent": "opencode/1.18.29 Karajan/0.1",
+                    "x-opencode-session": session,
+                    "Accept": "text/event-stream",
+                    "Accept-Encoding": "identity",
+                },
+                json=payload,
+                follow_redirects=False,
+            ) as response:
                 receipt["upstream_status"] = response.status_code
                 if response.status_code != 200:
                     raise _Rejected("UPSTREAM_HTTP_ERROR")
@@ -829,14 +770,13 @@ class GoRelay:
                         raise _Rejected("CONTEXT_PROVIDER_INPUT_EXCEEDED")
                     if completion > measured["requested_output_tokens"]:
                         raise _Rejected("CONTEXT_PROVIDER_OUTPUT_EXCEEDED")
-                receipt["protocol_passed"] = True
-                self._persist_receipt(receipt)
                 handler.send_response(200)
                 handler.send_header("Content-Type", "text/event-stream")
                 handler.send_header("Content-Length", str(len(content)))
                 handler.send_header("Connection", "close")
                 handler.end_headers()
                 handler.wfile.write(content)
+                receipt["protocol_passed"] = True
                 receipt["relay_completed"] = True
                 self._persist_receipt(receipt)
                 handler.close_connection = True
@@ -845,13 +785,9 @@ class GoRelay:
                 receipt["reason_codes"] = [error.reason]
                 self._withdraw_context_sends(receipt)
                 self._persist_receipt(receipt)
-            else:
-                self._drain_request_body(handler)
             self._error(handler, error.status, error.reason)
         except Exception:
             if receipt is not None:
-                receipt["protocol_passed"] = False
-                receipt["relay_completed"] = False
                 receipt["reason_codes"] = ["RELAY_TRANSPORT_ERROR"]
                 self._withdraw_context_sends(receipt)
                 self._persist_receipt(receipt)
@@ -871,31 +807,6 @@ class GoRelay:
                     self._complete_journal(receipt)
                 if receipt is not None and "sequence" in receipt:
                     self._receipts[receipt["sequence"] - 1] = copy.deepcopy(receipt)
-
-    @contextmanager
-    def _guard_send(self) -> Iterator[None]:
-        """Sanitize controller failures; a guard cannot suppress a send failure."""
-        if self._send_guard is None:
-            yield
-            return
-        try:
-            guard = self._send_guard()
-            guard.__enter__()
-        except Exception:
-            raise _Rejected("TASK_SEND_GUARD_REJECTED", 403) from None
-        try:
-            yield
-        except BaseException:
-            try:
-                guard.__exit__(*sys.exc_info())
-            except Exception:
-                raise _Rejected("TASK_SEND_GUARD_REJECTED", 403) from None
-            raise
-        else:
-            try:
-                guard.__exit__(None, None, None)
-            except Exception:
-                raise _Rejected("TASK_SEND_GUARD_REJECTED", 403) from None
 
     def _recover_context_call(self, receipt: dict[str, Any], call_id: str) -> None:
         """Read a lost begin result; this never retries begin or grants a send."""

@@ -1,0 +1,488 @@
+{
+  "schema_version": "karajan.relay-publication-check.v1",
+  "checked_at": "2026-09-07T01:11:39.425565+00:00",
+  "implementation_commit": "03984aa08aecf79c33c44a9a054a707ae04748e0",
+  "base_commit": "7c85669a3d2a5b717bbcaea7f8dbbf2c5ea937a0",
+  "publication_map_sha256": "3e5309fe71c0da141506afe616c1ac846e15761b719eeff6db2380e85114c87d",
+  "method": "Separate read-only verification process after the whitelist copy script; no behavior tests executed.",
+  "copied_originals": [
+    {
+      "path": "author/failed-harness-static.txt",
+      "sha256": "8cd0428efc2341936964eb3cd0a9cb708fd2b7b63ce0f6ba0e84c90692e404f0",
+      "bytes": 110,
+      "byte_equal_original": true,
+      "crlf_count": 1,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "author/final-freeze.txt",
+      "sha256": "e41744c52a3c7cb4ed75cd4b0dd4e7d59bdac42376e4a5dcdc0335ca9bddd667",
+      "bytes": 755,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "author/formal.log",
+      "sha256": "81ad9f2fff4917797897bd6e47ed507167d9022f2398a30abbbdc62c2608c896",
+      "bytes": 265,
+      "byte_equal_original": true,
+      "crlf_count": 4,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "author/formal.xml",
+      "sha256": "f22a6205fc24a7db1990f01ccc5077afb90179236cf19ee8312efd02b0f81eec",
+      "bytes": 33017,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "author/independent.xml",
+      "sha256": "aaf36ee5dbb81d2a20617f165566ff09b0f4c5dd932158400b6a45ca0abcdb92",
+      "bytes": 1186,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "author/lost-begin-observation.json",
+      "sha256": "ebf3e02d221cb359d24e196034c42a74f62639f5572b6e146834167ff9114103",
+      "bytes": 185,
+      "byte_equal_original": true,
+      "crlf_count": 8,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "author/mypy-source.log",
+      "sha256": "8e63ae22e8213e327a5e9cbd584067681681bd8ef7f25c869877887ccdcfc4ff",
+      "bytes": 43,
+      "byte_equal_original": true,
+      "crlf_count": 1,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "author/mypy.log",
+      "sha256": "15bd2f513a66ef0b376e38b7a7023c3bb6892028e543bb2bdd04f6055e34ad5a",
+      "bytes": 2599,
+      "byte_equal_original": true,
+      "crlf_count": 21,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "author/ruff.log",
+      "sha256": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0",
+      "bytes": 20,
+      "byte_equal_original": true,
+      "crlf_count": 1,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "author/test_followup_boundaries.py.txt",
+      "sha256": "7a8853d2002badaa4eb2a36ce0e54a9307c96dc04d572c5906afa443fd2dcab1",
+      "bytes": 3975,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "author/test_rejection_boundary.py.txt",
+      "sha256": "78792f8df5a199d892c7217de54a2d31dae7f66c8b9c6ba46d9cb318854981a7",
+      "bytes": 4610,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "independent/README.md",
+      "sha256": "508c2fb6f0d616769a707ca9c610f25636efbe83198aa055dccf383ac8946cc6",
+      "bytes": 6163,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "independent/after-sources.json",
+      "sha256": "28717dbdecad6dc0b18bcdef336cc59717e943ed587f7337eea15c9fb71f9597",
+      "bytes": 709,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "independent/before-sources.json",
+      "sha256": "28717dbdecad6dc0b18bcdef336cc59717e943ed587f7337eea15c9fb71f9597",
+      "bytes": 709,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "independent/before.patch.txt",
+      "sha256": "333a6523c2102bb88d0b59227f766c30b0f667147bde2afad8bbfd1bc64d644a",
+      "bytes": 15288,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 8
+    },
+    {
+      "path": "independent/framing.xml",
+      "sha256": "7379d22d99cdcacba3492cc2904f8e15a9e9a2b647bb20a885e1ca110f961eef",
+      "bytes": 952,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "independent/go_relay.py.before.py.txt",
+      "sha256": "deb0239590d67ddfb077f025773bb9c7c2947a7f3379c693f7ee469d0aab2453",
+      "bytes": 40081,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "independent/lost-begin-observation.json",
+      "sha256": "ebf3e02d221cb359d24e196034c42a74f62639f5572b6e146834167ff9114103",
+      "bytes": 185,
+      "byte_equal_original": true,
+      "crlf_count": 8,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "independent/six.xml",
+      "sha256": "26ba198e6125bbf42c1ba783e4aa8908ccc4d75949a51805bc56c907c1cb6dd3",
+      "bytes": 1228,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "independent/test_followup_boundaries.py.txt",
+      "sha256": "7a8853d2002badaa4eb2a36ce0e54a9307c96dc04d572c5906afa443fd2dcab1",
+      "bytes": 3975,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "independent/test_framing_boundaries.py.txt",
+      "sha256": "52cfe113e3679511e3464a9bd1c8d95339c7c1670a5705cddbb19c7ed1d45aeb",
+      "bytes": 3205,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "independent/test_go_relay.py.before.py.txt",
+      "sha256": "580b428c9169a6ecfcc50c06cb81099b8d257fc69921e3c5164a55dddbc07d23",
+      "bytes": 30879,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "independent/test_go_relay_context.py.before.py.txt",
+      "sha256": "ae7bac8042c44e28e4e5dca06d0d839a61ed187816d68930307c25fb45596135",
+      "bytes": 11292,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "independent/test_rejection_boundary.py.txt",
+      "sha256": "78792f8df5a199d892c7217de54a2d31dae7f66c8b9c6ba46d9cb318854981a7",
+      "bytes": 4610,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "independent/freeze.json",
+      "sha256": "9abcdaf7db75abe4dffdb424f99fc1bb4ff8e0bc179deca3b510819e207dac87",
+      "bytes": 2307,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "history/HANDOFF.md",
+      "sha256": "d60ff69a6be67b7360c87dd2e841dc1fb987aa281ccfd9f2687edd07bd2dbdfa",
+      "bytes": 2857,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "history/README.md",
+      "sha256": "b306f8de250aa86a7e755f6e8682d7c70cd1be76492916d9d675ad7ee608b55b",
+      "bytes": 8000,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "history/round-two-new-boundaries.xml",
+      "sha256": "dde56271ff38a2dff243a3c2a23c948539957f0d2824b8aa8bc3584e18dadd16",
+      "bytes": 6303,
+      "byte_equal_original": true,
+      "crlf_count": 109,
+      "trailing_whitespace_lines": 11
+    },
+    {
+      "path": "history/round-two-original-four.xml",
+      "sha256": "154846b9d5f27155ed7617be452d5c797c818ff7da0f073ddb938b81ab8dafbf",
+      "bytes": 905,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "linux-followup/README.md",
+      "sha256": "2c58368387ded738bf8e78825fa6e01a011a751393351a3e6afcbc7e5c628ae9",
+      "bytes": 2947,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "linux-followup/result.json",
+      "sha256": "fb1cf378ab4e512bc180af5fbccf3934d7b9291be16aaafe3b716e360f21dd16",
+      "bytes": 1140,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "linux-followup/linux.log",
+      "sha256": "c3d678d6c8de5d50cb5b813656c17c4b2d8d113dbb3e655f7b394c1be8828cd3",
+      "bytes": 261,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "linux-followup/linux.xml",
+      "sha256": "886aac6ca6838a9f7570697e5d730a15b13aba9c40c6cb2fa5863946237b9174",
+      "bytes": 33477,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "linux-followup/run.sh.txt",
+      "sha256": "72b3e4d046a5768a10dc81b8b7b38b72a9561d73a7d68e0809c957da0595cc17",
+      "bytes": 945,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "linux-followup/before-sources.json",
+      "sha256": "1af66bf25e07a232af2cb88c60ae5a62324a2fd3c66ebadf7135d56b214eafa1",
+      "bytes": 15646,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "linux-followup/after-sources.json",
+      "sha256": "7502be42d7741155511bd549bd377be3c309dfd6ff6fd3331d917609e40108da",
+      "bytes": 14471,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "linux-followup/freeze.json",
+      "sha256": "f42be3075616695cb70329cc22309ef6940c2df0855f241d95b71086b2e12840",
+      "bytes": 692,
+      "byte_equal_original": true,
+      "crlf_count": 0,
+      "trailing_whitespace_lines": 0
+    }
+  ],
+  "all_37_copies_equal_originals": true,
+  "source_blobs": [
+    {
+      "path": "backend/karajan/adapters/opencode/go_relay.py",
+      "sha256": "deb0239590d67ddfb077f025773bb9c7c2947a7f3379c693f7ee469d0aab2453",
+      "current_and_git_blob_match": true
+    },
+    {
+      "path": "tests/adapters/opencode/test_go_relay.py",
+      "sha256": "580b428c9169a6ecfcc50c06cb81099b8d257fc69921e3c5164a55dddbc07d23",
+      "current_and_git_blob_match": true
+    },
+    {
+      "path": "tests/adapters/opencode/test_go_relay_context.py",
+      "sha256": "ae7bac8042c44e28e4e5dca06d0d839a61ed187816d68930307c25fb45596135",
+      "current_and_git_blob_match": true
+    }
+  ],
+  "author_freeze_source_hashes_equal": true,
+  "independent_freeze_13_originals_equal": true,
+  "linux_125_current_before_after_hashes_equal": true,
+  "linux_original_196_case_ids_preserved": true,
+  "linux_only_extra_case_ids": [
+    {
+      "classname": "tests.adapters.opencode.test_go_unix_relay",
+      "name": "test_unix_relay_keeps_the_same_fixed_endpoint_and_capability_boundary"
+    },
+    {
+      "classname": "tests.adapters.opencode.test_go_unix_relay",
+      "name": "test_unix_transport_consumes_the_durable_grant_and_preserves_replacement_files"
+    },
+    {
+      "classname": "tests.adapters.opencode.test_go_unix_relay",
+      "name": "test_unix_start_never_overwrites_an_existing_path"
+    }
+  ],
+  "xml_results": [
+    {
+      "path": "author/formal.xml",
+      "results": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "196",
+          "time": "16.034",
+          "timestamp": "2026-09-07T08:56:49.113696+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    },
+    {
+      "path": "author/independent.xml",
+      "results": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "6",
+          "time": "2.325",
+          "timestamp": "2026-09-07T08:56:30.478720+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    },
+    {
+      "path": "independent/six.xml",
+      "results": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "6",
+          "time": "2.283",
+          "timestamp": "2026-09-07T08:54:06.378981+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    },
+    {
+      "path": "independent/framing.xml",
+      "results": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "4",
+          "time": "0.464",
+          "timestamp": "2026-09-07T08:55:54.479897+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    },
+    {
+      "path": "linux-followup/linux.xml",
+      "results": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "199",
+          "time": "17.041",
+          "timestamp": "2026-09-07T09:04:35.868449+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    },
+    {
+      "path": "history/round-two-new-boundaries.xml",
+      "results": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "2",
+          "skipped": "0",
+          "tests": "2",
+          "time": "1.551",
+          "timestamp": "2026-09-06T23:09:36.582941+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    },
+    {
+      "path": "history/round-two-original-four.xml",
+      "results": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "4",
+          "time": "1.984",
+          "timestamp": "2026-09-06T23:08:16.459855+08:00",
+          "hostname": "ProArt-Zhou"
+        }
+      ]
+    }
+  ],
+  "optional_test_mypy_errors_retained": 20,
+  "new_text_checks": [
+    {
+      "path": "README.md",
+      "sha256": "08321773a0023cdf6e3255a21ae9b6b6a7fec50e0328377cb54f8d3bc9aa5f7c",
+      "utf8": true,
+      "lf_only": true,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": ".gitattributes",
+      "sha256": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da",
+      "utf8": true,
+      "lf_only": true,
+      "trailing_whitespace_lines": 0
+    },
+    {
+      "path": "publication-map.json",
+      "sha256": "3e5309fe71c0da141506afe616c1ac846e15761b719eeff6db2380e85114c87d",
+      "utf8": true,
+      "lf_only": true,
+      "trailing_whitespace_lines": 0
+    }
+  ],
+  "this_generated_json_format": "UTF-8/LF/no trailing spaces; checked after serialization",
+  "top_readme_local_links_resolve": true,
+  "expected_total_published_files": 41,
+  "only_whitelisted_originals_and_four_generated_files": true,
+  "whitespace_scope": {
+    "new_text": "README, leaf attributes and generated JSON checked directly",
+    "original_evidence": "Byte-preserved historical CRLF/whitespace; counted above, deliberately not reformatted",
+    "git_staged_diff_check": "not_run; no claim that untracked originals passed staged whitespace checks",
+    "whitespace_rules_changed": false
+  },
+  "publication_setup_note": "An initial archive-only verifier reached the README link check before this generated check file existed. Final verification defers only this self-reference until after writing, then checks every link. No behavior test or original evidence was changed.",
+  "behavior_tests_executed_in_publication": 0,
+  "product_test_git_remote_mutations": false,
+  "new_pr_current_head_ci": "pending",
+  "provider_calls": 0
+}

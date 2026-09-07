@@ -58,6 +58,12 @@ examples/go-projected-qualification/**/*.xml -text whitespace=-blank-at-eol,-bla
 examples/go-projected-qualification/**/*.txt -text whitespace=cr-at-eol
 examples/go-projected-qualification/**/*.md -text whitespace=cr-at-eol
 
+# Preserve Spark repair reports, negative controls and their recorded byte hashes.
+examples/go-relay-publication/**/*.json -text whitespace=cr-at-eol
+examples/go-relay-publication/**/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+examples/go-relay-publication/**/*.txt -text whitespace=cr-at-eol
+examples/go-relay-publication/**/*.md -text whitespace=cr-at-eol
+
 # Historical task execution reports keep their recorded bytes and hashes.
 examples/go-task-execution-foundation/**/*.json -text whitespace=cr-at-eol
 examples/go-task-execution-foundation/**/*.xml -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol

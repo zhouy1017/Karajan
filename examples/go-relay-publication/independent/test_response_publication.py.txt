@@ -1,0 +1,191 @@
+"""Independent real loopback sockets and SQLite; upstream HTTP is synthetic."""
+
+import json
+import socket
+import socketserver
+import struct
+import sys
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+from threading import Event
+from urllib.parse import urlsplit
+
+import httpx
+from karajan.adapters.opencode.go_relay import GoRelay
+from test_go_relay import CANARY, SECRET, answer, payload, post
+from test_go_relay_journal import authorization
+from test_go_relay_nullable_names import response
+
+
+def record(name, value):
+    text = json.dumps(value, indent=2, sort_keys=True)
+    assert SECRET not in text
+    Path(__file__).with_name(name).write_text(text + "\n", encoding="utf-8")
+    print(text)
+
+
+def make_relay(tmp_path, transport=None):
+    auth = authorization(tmp_path)
+    raw = response([{"name": "read"}, {"name": None, "arguments": "{}"}])
+    if transport is None:
+        transport = httpx.MockTransport(lambda request: answer(raw))
+    relay = GoRelay(
+        SECRET,
+        CANARY,
+        authorization=auth,
+        client_factory=lambda: httpx.Client(transport=transport, trust_env=False),
+    )
+    relay.start()
+    return relay, auth
+
+
+def test_full_socket_body_has_published_protocol_but_not_delivery_completion(tmp_path, monkeypatch):
+    written, resume = Event(), Event()
+    original_write = socketserver._SocketWriter.write
+
+    def pause_after_real_socket_write(writer, content):
+        result = original_write(writer, content)
+        if bytes(content).startswith(b"data: "):
+            written.set()
+            assert resume.wait(timeout=10)
+        return result
+
+    monkeypatch.setattr(socketserver._SocketWriter, "write", pause_after_real_socket_write)
+    relay, auth = make_relay(tmp_path)
+    try:
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            pending = pool.submit(post, relay)
+            assert written.wait(timeout=5)
+            result = pending.result(timeout=3)
+            receipt = relay.receipts[0]
+            journal = auth.journal.snapshot("grant")
+            record("publication-observed.json", {
+                "client_status": result.status_code,
+                "received_body_bytes": len(result.content),
+                "declared_content_length": int(result.headers["content-length"]),
+                "protocol_passed": receipt["protocol_passed"],
+                "relay_completed": receipt["relay_completed"],
+                "null_name_count": receipt.get("tool_name_null_fragments"),
+                "journal_request_count": journal["request_count"],
+                "journal_state": journal["calls"][0]["state"],
+                "journal_outcome": journal["calls"][0]["outcome"],
+            })
+            assert result.status_code == 200
+            assert len(result.content) == int(result.headers["content-length"])
+            assert receipt["protocol_passed"] is True
+            assert receipt["tool_name_null_fragments"] == 1
+            assert receipt["relay_completed"] is False
+            assert journal["calls"][0]["state"] == "send_unknown"
+    finally:
+        resume.set()
+        assert relay.close() == {"status": "closed", "errors": []}
+    assert relay.receipts[0]["relay_completed"] is True
+    assert auth.journal.snapshot("grant")["calls"][0]["state"] == "response_received"
+
+
+def test_author_completion_expectation_needs_server_completion_barrier(tmp_path):
+    """Red reproducer for the author's immediate post-future Journal assertion."""
+    closing, resume = Event(), Event()
+    raw = response([{"name": "read"}, {"name": None, "arguments": "{}"}])
+
+    class PausedCloseTransport(httpx.MockTransport):
+        def close(self):
+            closing.set()
+            assert resume.wait(timeout=10)
+            super().close()
+
+    relay, auth = make_relay(tmp_path, PausedCloseTransport(lambda request: answer(raw)))
+    try:
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            pending = pool.submit(post, relay)
+            result = pending.result(timeout=3)
+            assert closing.wait(timeout=3)
+            receipt = relay.receipts[0]
+            journal = auth.journal.snapshot("grant")
+            record("completion-lag-observed.json", {
+                "client_status": result.status_code,
+                "received_body_bytes": len(result.content),
+                "declared_content_length": int(result.headers["content-length"]),
+                "protocol_passed": receipt["protocol_passed"],
+                "relay_completed": receipt["relay_completed"],
+                "journal_state": journal["calls"][0]["state"],
+                "journal_outcome": journal["calls"][0]["outcome"],
+                "barrier": "public injected HTTP transport close; no receipt/Journal writes mocked",
+            })
+            assert result.status_code == 200
+            assert receipt["relay_completed"] is True
+            # This is exactly the expectation made without a server completion
+            # barrier at the end of the new author test. It is not guaranteed.
+            assert journal["calls"][0]["state"] == "response_received"
+    finally:
+        resume.set()
+        assert relay.close() == {"status": "closed", "errors": []}
+
+
+def test_real_client_reset_fails_delivery_without_refunding_the_upstream_call(tmp_path, monkeypatch):
+    before_body, resume = Event(), Event()
+    original_write = socketserver._SocketWriter.write
+    os_errors = []
+
+    def pause_before_real_socket_write(writer, content):
+        if bytes(content).startswith(b"data: "):
+            before_body.set()
+            assert resume.wait(timeout=10)
+            try:
+                return original_write(writer, content)
+            except OSError as error:
+                os_errors.append(type(error).__name__)
+                raise
+        return original_write(writer, content)
+
+    monkeypatch.setattr(socketserver._SocketWriter, "write", pause_before_real_socket_write)
+    relay, auth = make_relay(tmp_path)
+    endpoint = urlsplit(relay.url)
+    client = socket.create_connection((endpoint.hostname, endpoint.port), timeout=5)
+    body = json.dumps(payload()).encode()
+    request = (
+        "POST /v1/chat/completions HTTP/1.1\r\n"
+        f"Host: {endpoint.netloc}\r\n"
+        f"Authorization: Bearer {relay.capability}\r\n"
+        "x-opencode-session: ses_test\r\n"
+        f"Content-Length: {len(body)}\r\n\r\n"
+    ).encode() + body
+    try:
+        client.sendall(request)
+        assert before_body.wait(timeout=5)
+        header = b""
+        while b"\r\n\r\n" not in header:
+            header += client.recv(4096)
+        before = relay.receipts[0]
+        assert before["protocol_passed"] is True
+        assert before["relay_completed"] is False
+        linger_format = "hh" if sys.platform == "win32" else "ii"
+        client.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack(linger_format, 1, 0))
+        client.close()
+    finally:
+        client.close()
+        resume.set()
+        assert relay.close() == {"status": "closed", "errors": []}
+    final = relay.receipts[0]
+    journal = auth.journal.snapshot("grant")
+    record("write-reset-observed.json", {
+        "actual_os_write_errors": os_errors,
+        "protocol_before_reset": before["protocol_passed"],
+        "protocol_after_reset": final["protocol_passed"],
+        "relay_completed": final["relay_completed"],
+        "upstream_response_complete": final["upstream_response_complete"],
+        "stream_terminated": final["stream_terminated"],
+        "null_name_count": final.get("tool_name_null_fragments"),
+        "reason_codes": final["reason_codes"],
+        "journal_request_count": journal["request_count"],
+        "journal_state": journal["calls"][0]["state"],
+        "journal_outcome": journal["calls"][0]["outcome"],
+    })
+    assert os_errors
+    assert final["protocol_passed"] is False
+    assert final["relay_completed"] is False
+    assert final["upstream_response_complete"] is True
+    assert final["reason_codes"] == ["RELAY_TRANSPORT_ERROR"]
+    assert journal["request_count"] == 1
+    assert journal["calls"][0]["state"] == "response_received"
+    assert journal["calls"][0]["outcome"]["protocol_passed"] is False

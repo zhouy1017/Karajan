@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.367" timestamp="2026-09-06T22:17:34.761849+08:00" hostname="ProArt-Zhou"><testcase classname=".cache.spark-independent.final.test_old_source_control" name="test_current_author_held_write_case_rejects_cd45797" time="0.120"><failure message="assert False is True">tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-856/test_current_author_held_write0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001A751E2FE00&gt;
+
+    def test_current_author_held_write_case_rejects_cd45797(tmp_path, monkeypatch):
+        name = "karajan.adapters.opencode._independent_cd45797"
+        path = Path(__file__).with_name("relay-cd45797.py.txt")
+        loader = importlib.machinery.SourceFileLoader(name, str(path))
+        spec = importlib.util.spec_from_loader(name, loader)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[name] = module
+        loader.exec_module(module)
+        monkeypatch.setattr(author, "GoRelay", module.GoRelay)
+        # Public construction binding only: do not modify the author test or receipt,
+        # Journal, socket behavior, assertions, or historical implementation.
+&gt;       author.test_receipt_protocol_state_publishes_before_body_is_observable(tmp_path, monkeypatch)
+
+.cache\spark-independent\final\test_old_source_control.py:22: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+tmp_path = WindowsPath('C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo/pytest-856/test_current_author_held_write0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001A751E2FE00&gt;
+
+    def test_receipt_protocol_state_publishes_before_body_is_observable(tmp_path, monkeypatch):
+        raw = response([{"name": "read"}, {"name": None, "arguments": "{}"}])
+    
+        with running_with_journal(tmp_path, lambda request: answer(raw)) as (relay, auth, _upstream):
+            written = threading.Event()
+            resume = threading.Event()
+            write_timeout = threading.Event()
+            original_write = socketserver._SocketWriter.write
+            write_pause_seconds = 10
+    
+            def delayed_write(self, data):
+                result = original_write(self, data)
+                if isinstance(data, bytes | bytearray) and data.startswith(b"data:"):
+                    written.set()
+                    if not resume.wait(timeout=write_pause_seconds):
+                        write_timeout.set()
+                return result
+    
+            monkeypatch.setattr(socketserver._SocketWriter, "write", delayed_write)
+            response_result = None
+            try:
+                with ThreadPoolExecutor(max_workers=1) as pool:
+                    future = pool.submit(post, relay)
+                    assert written.wait(timeout=5), "server did not emit first data frame"
+                    response_result = future.result(timeout=3)
+                assert not write_timeout.is_set(), (
+                    "write pause watchdog expired while body should be observable"
+                )
+                assert response_result is not None
+                assert response_result.status_code == 200
+                assert len(response_result.content) == int(response_result.headers["content-length"])
+                assert len(response_result.content) == len(raw)
+                assert response_result.text == response_result.content.decode()
+                receipt = relay.receipts[0]
+&gt;               assert receipt["protocol_passed"] is True
+E               assert False is True
+
+tests\adapters\opencode\test_go_relay_nullable_names.py:134: AssertionError</failure><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase></testsuite></testsuites>
