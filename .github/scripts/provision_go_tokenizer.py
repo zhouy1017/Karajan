@@ -9,11 +9,14 @@ from __future__ import annotations
 import argparse
 import hashlib
 import io
+import ipaddress
 import json
 import os
 import select
 import socket
 import ssl
+import subprocess
+import sys
 import tempfile
 import time
 from collections.abc import Callable
@@ -51,6 +54,10 @@ ARTIFACTS = {
 OpenURL = Callable[[str], AbstractContextManager[BinaryIO]]
 MAX_DOWNLOAD_ATTEMPTS = 3
 DOWNLOAD_BUDGET_SECONDS = 180
+_RESOLVE_PROGRAM = (
+    "import json,socket,sys; "
+    "print(json.dumps(socket.getaddrinfo(sys.argv[1],int(sys.argv[2]),0,socket.SOCK_STREAM)))"
+)
 
 
 class ProvisionError(ValueError):
@@ -183,6 +190,61 @@ class _DeadlineSocket:
         return getattr(self._sock, name)
 
 
+def _resolve_addresses(host: str, port: int, deadline: float) -> list[tuple[Any, ...]]:
+    """Resolve one host in a killable child, bounded by the artifact deadline."""
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        address = None
+    if address is not None:
+        if address.version == 4:
+            return [(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP, "", (host, port))]
+        return [(socket.AF_INET6, socket.SOCK_STREAM, socket.IPPROTO_TCP, "", (host, port, 0, 0))]
+
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        raise TimeoutError
+    process = subprocess.Popen(
+        [sys.executable, "-c", _RESOLVE_PROGRAM, host, str(port)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True,
+    )
+    try:
+        try:
+            output, _ = process.communicate(timeout=remaining)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait(timeout=1.0)
+            raise TimeoutError from None
+        if time.monotonic() >= deadline:
+            raise TimeoutError
+        if process.returncode != 0:
+            raise OSError
+        decoded = json.loads(output)
+    except TimeoutError:
+        raise
+    except (OSError, ValueError, TypeError):
+        raise OSError("resolver failed") from None
+    if not isinstance(decoded, list) or not decoded:
+        raise OSError("resolver failed")
+    addresses: list[tuple[Any, ...]] = []
+    for item in decoded:
+        if not isinstance(item, list) or len(item) != 5:
+            raise OSError("resolver failed")
+        family, socktype, proto, canonname, sockaddr = item
+        if (
+            not isinstance(family, int)
+            or not isinstance(socktype, int)
+            or not isinstance(proto, int)
+        ):
+            raise OSError("resolver failed")
+        if not isinstance(canonname, str) or not isinstance(sockaddr, list):
+            raise OSError("resolver failed")
+        addresses.append((family, socktype, proto, canonname, tuple(sockaddr)))
+    return addresses
+
+
 class _DeadlineConnectionMixin:
     sock: Any
     _deadline: float | None
@@ -215,7 +277,9 @@ class _DeadlineConnectionMixin:
         host, port = address
         self._remaining()
         try:
-            addresses = socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM)
+            deadline = self._deadline
+            assert deadline is not None
+            addresses = _resolve_addresses(host, port, deadline)
         except OSError:
             self._remaining()
             raise

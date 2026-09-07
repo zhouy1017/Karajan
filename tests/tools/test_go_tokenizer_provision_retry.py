@@ -8,6 +8,7 @@ import importlib.util
 import io
 import json
 import ssl
+import subprocess
 import sys
 import threading
 import time
@@ -543,9 +544,12 @@ def test_connect_attempts_shrink_one_absolute_deadline(
 
     candidates = iter([Candidate(0), Candidate(1)])
     monkeypatch.setattr(
-        SCRIPT.socket,
-        "getaddrinfo",
-        lambda *args: [(1, 1, 6, "", ("127.0.0.1", 443))] * 2,
+        SCRIPT,
+        "_resolve_addresses",
+        lambda host, port, deadline: [
+            (1, 1, 6, "", ("127.0.0.1", 443)),
+            (1, 1, 6, "", ("127.0.0.1", 443)),
+        ],
     )
     monkeypatch.setattr(SCRIPT.socket, "socket", lambda *args: next(candidates))
     connection = SCRIPT._DeadlineHTTPConnection(
@@ -567,6 +571,35 @@ def test_expired_connect_does_not_resolve_or_open_a_socket(
 
     with pytest.raises(TimeoutError):
         connection._deadline_create_connection(("origin.invalid", 443), 1.0, None)
+
+
+def test_blocked_resolver_is_killed_and_reaped_at_the_deadline(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    processes: list[subprocess.Popen[str]] = []
+    original_popen = SCRIPT.subprocess.Popen
+    monkeypatch.setattr(
+        SCRIPT,
+        "_RESOLVE_PROGRAM",
+        "import time; time.sleep(2)",
+    )
+
+    def observe_popen(*args: Any, **kwargs: Any) -> subprocess.Popen[str]:
+        process = original_popen(*args, **kwargs)
+        processes.append(process)
+        return cast(Any, process)
+
+    monkeypatch.setattr(SCRIPT.subprocess, "Popen", observe_popen)
+    connection = SCRIPT._DeadlineHTTPConnection(
+        "origin.invalid", timeout=1.0, deadline=time.monotonic() + 0.10
+    )
+    started = time.perf_counter()
+    with pytest.raises(TimeoutError):
+        connection._deadline_create_connection(("origin.invalid", 443), 1.0, None)
+
+    assert time.perf_counter() - started < 0.80
+    assert len(processes) == 1
+    assert processes[0].poll() is not None
 
 
 def test_bad_digest_is_deterministic_and_never_retried(

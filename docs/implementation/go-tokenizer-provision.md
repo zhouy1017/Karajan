@@ -22,6 +22,10 @@ HTTP parser can introduce length semantics regressions. EOF, digest
 completion, and publication each recheck the same deadline. The deadline is
 carried on the internal redirect request, so approved HTTPS redirects share
 the original artifact budget rather than starting a new budget per hop.
+Hostname resolution is performed by a short-lived resolver process so a
+blocked system resolver can be terminated and reaped at the same deadline;
+numeric addresses use a direct address tuple. TCP address attempts and the
+non-blocking TLS handshake then consume the remaining budget.
 
 The command line reports only stable, redacted categories. HTTP failures may
 include the numeric status (`TOKENIZER_HTTP_STATUS_429`); transport failures
