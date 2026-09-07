@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from karajan.capacity import CapacityError, CapacityStore
+from karajan.resources.broker import units
 from karajan.routing import select_rule
 from karajan.runs import RunError, RunPlanner
 from karajan.runs.planning import digest, encoded, identifier
@@ -206,7 +207,9 @@ class PlanningAdmissionAuthority:
             if prior is not None:
                 if prior["payload"] != payload:
                     raise RunError("IDEMPOTENCY_CONFLICT")
-                return dict(json.loads(prior["result"]))
+                prior_result = dict(json.loads(prior["result"]))
+                if prior_result.get("phase") in {"admitted", "denied"}:
+                    return prior_result
             db.execute(
                 "INSERT INTO planning_estimates VALUES (?,?,?,?,?) ON CONFLICT("
                 "run_id,budget_ref,profile_id,profile_revision) DO UPDATE SET data=excluded.data",
@@ -272,11 +275,67 @@ class PlanningAdmissionAuthority:
         if row is None:
             raise RunError("PLANNING_EXECUTION_NOT_FOUND")
         execution = dict(json.loads(row["data"]))
+        if execution.get("cancel_requested") or execution.get("state") in {
+            "cancelled",
+            "submission_unknown",
+        }:
+            raise RunError("PLANNING_EXECUTION_CANCELLED")
         binding = execution.get("binding")
         if not isinstance(binding, dict) or binding.get("execution_id") != execution_id:
             raise RunError("PLANNING_EXECUTION_BINDING_INVALID")
         self.planner.get(binding["run_id"], principal=principal)
         return binding
+
+    @contextmanager
+    def _execution_guard(self, execution_id: str, principal: str) -> Iterator[dict[str, Any]]:
+        """Keep cancellation from crossing an already-entered effect boundary."""
+        db = sqlite3.connect(self.execution_database, timeout=10, isolation_level=None)
+        db.row_factory = sqlite3.Row
+        try:
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute("SELECT data FROM executions WHERE id=?", (execution_id,)).fetchone()
+            if row is None:
+                raise RunError("PLANNING_EXECUTION_NOT_FOUND")
+            execution = dict(json.loads(row["data"]))
+            if execution.get("cancel_requested") or execution.get("state") in {
+                "cancelled",
+                "submission_unknown",
+            }:
+                raise RunError("PLANNING_EXECUTION_CANCELLED")
+            binding = execution.get("binding")
+            if not isinstance(binding, dict) or binding.get("execution_id") != execution_id:
+                raise RunError("PLANNING_EXECUTION_BINDING_INVALID")
+            self.planner.get(binding["run_id"], principal=principal)
+            yield binding
+            db.commit()
+        except BaseException:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    def _finish_command(
+        self, record: dict[str, Any], principal: str, command_key: str, payload: str
+    ) -> dict[str, Any]:
+        """Every command key, including a rejection, is durably non-reusable."""
+        with self._transaction() as db:
+            prior = db.execute(
+                "SELECT payload,result FROM commands WHERE principal=? AND key=?",
+                (principal, command_key),
+            ).fetchone()
+            if prior is not None:
+                if prior["payload"] != payload:
+                    raise RunError("IDEMPOTENCY_CONFLICT")
+                db.execute(
+                    "UPDATE commands SET result=? WHERE principal=? AND key=?",
+                    (encoded(record), principal, command_key),
+                )
+            else:
+                db.execute(
+                    "INSERT INTO commands VALUES (?,?,?,?)",
+                    (principal, command_key, payload, encoded(record)),
+                )
+            return record
 
     @staticmethod
     def _budget(run: dict[str, Any], budget_ref: str) -> tuple[dict[str, Any], str]:
@@ -378,11 +437,19 @@ class PlanningAdmissionAuthority:
                     "attempts": 0,
                     "duration_seconds": 0,
                     "claims": [],
+                    "started_at": self.planner.clock(),
                 }
                 if usage_row is None
                 else dict(json.loads(usage_row["data"]))
             )
             estimate = current["estimate"]
+            if (
+                self.planner.clock()
+                >= usage["started_at"] + current["budget"]["max_duration_seconds"]
+            ):
+                current["phase"], current["reason_codes"] = "denied", ["PLANNING_BUDGET_EXPIRED"]
+                self._save(db, current)
+                return current
             if (
                 usage["attempts"] + estimate["max_requests"]
                 > current["budget"]["max_total_attempts"]
@@ -430,16 +497,16 @@ class PlanningAdmissionAuthority:
                 return dict(json.loads(prior["result"]))
         record = self._prepare(execution_id, binding, principal)
         if record["phase"] in {"admitted", "denied"}:
-            return record
+            return self._finish_command(record, principal, command_key, payload)
         if record["phase"] == "unknown":
             request = record.get("capacity_activation_request")
             if not isinstance(request, dict):
-                return record
+                return self._finish_command(record, principal, command_key, payload)
             receipt = self.capacity.command_receipt(
                 "activate", request, command_key=record["capacity_activation_command_key"]
             )
             if receipt is None:
-                return record
+                return self._finish_command(record, principal, command_key, payload)
             with self._transaction() as db:
                 current = self._load(db, execution_id) or record
                 current["capacity_activation_receipt"] = receipt
@@ -448,7 +515,41 @@ class PlanningAdmissionAuthority:
                 )
                 current["reason_codes"] = receipt.get("reason_codes", [])
                 self._save(db, current)
-                return current
+                record = current
+            return self._finish_command(record, principal, command_key, payload)
+        if record["phase"] == "capacity_admit_unknown":
+            request = record["capacity_request"]
+            assert isinstance(request, dict)
+            receipt = self.capacity.command_receipt(
+                "admit", request, command_key=record["capacity_command_key"]
+            )
+            if receipt is None:
+                return self._finish_command(record, principal, command_key, payload)
+            with self._transaction() as db:
+                current = self._load(db, execution_id) or record
+                current["capacity_receipt"] = receipt
+                current["capacity_activation_request"] = {"admission_id": receipt["admission_id"]}
+                current["phase"] = "capacity_activate_unknown"
+                self._save(db, current)
+                record = current
+        if record["phase"] == "capacity_activate_unknown":
+            request = record["capacity_activation_request"]
+            assert isinstance(request, dict)
+            receipt = self.capacity.command_receipt(
+                "activate", request, command_key=record["capacity_activation_command_key"]
+            )
+            if receipt is None:
+                return self._finish_command(record, principal, command_key, payload)
+            with self._transaction() as db:
+                current = self._load(db, execution_id) or record
+                current["capacity_activation_receipt"] = receipt
+                current["phase"] = (
+                    "admitted" if receipt.get("decision") == "capacity_revalidated" else "denied"
+                )
+                current["reason_codes"] = receipt.get("reason_codes", [])
+                self._save(db, current)
+                record = current
+            return self._finish_command(record, principal, command_key, payload)
         profile = binding["profile"]
         registration = next(
             (
@@ -463,7 +564,12 @@ class PlanningAdmissionAuthority:
             or registration.get("profile") is None
             or registration["profile"]["binding"]["billing_path"] != "subscription_only"
         ):
-            return self._deny(record, "PLANNING_CASH_UPPER_BOUND_REQUIRED")
+            return self._finish_command(
+                self._deny(record, "PLANNING_CASH_UPPER_BOUND_REQUIRED"),
+                principal,
+                command_key,
+                payload,
+            )
         qualification = self.qualifications.read_commander(
             binding,
             scope=COMMANDER_QUALIFICATION_SCOPE,
@@ -471,13 +577,43 @@ class PlanningAdmissionAuthority:
         )
         if (
             not isinstance(qualification, dict)
+            or qualification.get("schema_version") != "karajan.commander-qualification.v1"
             or qualification.get("scope") != COMMANDER_QUALIFICATION_SCOPE
+            or qualification.get("reader_version") != COMMANDER_QUALIFICATION_READER_VERSION
+            or qualification.get("binding_sha256") != digest(binding)
             or qualification.get("source_generation_sha256") is None
+            or not isinstance(qualification.get("valid_until"), (int, float))
+            or qualification["valid_until"] <= self.planner.clock()
             or self.authority_kind == "production"
             and qualification.get("provenance") != "official"
         ):
             record = self._deny(record, "COMMANDER_QUALIFICATION_REQUIRED")
         else:
+            rulebook = run["configuration_snapshot"]["configuration"]["rulebook"]
+            matching = [
+                rule
+                for rule in rulebook["rules"]
+                if rule["when"]["role"] == "commander" and rule["when"].get("purpose") == "lead"
+            ]
+            highest = [
+                rule
+                for rule in matching
+                if rule["priority"] == max((row["priority"] for row in matching), default=0)
+            ]
+            allowed = (
+                len(highest) == 1
+                and binding["profile"]
+                in [
+                    profile
+                    for group in highest[0]["eligible_groups"]
+                    for profile in rulebook["profile_groups"].get(group, [])
+                ]
+                and set(highest[0]["capabilities_all"])
+                <= set(qualification.get("capabilities", []))
+            )
+            if not allowed:
+                record = self._deny(record, "COMMANDER_ROUTE_NOT_AUTHORIZED")
+                return self._finish_command(record, principal, command_key, payload)
             with self._transaction() as db:
                 stored = self._load(db, execution_id)
                 if stored is not None:
@@ -487,13 +623,37 @@ class PlanningAdmissionAuthority:
                     self._save(db, record)
             claimed = self._claim_budget(record)
             if claimed is None:
-                return self._deny(record, "PLANNING_ADMISSION_UNKNOWN")
+                return self._finish_command(
+                    self._deny(record, "PLANNING_ADMISSION_UNKNOWN"),
+                    principal,
+                    command_key,
+                    payload,
+                )
             record = claimed
         if record is None or record["phase"] in {"denied", "unknown"}:
-            return record or self._deny(
-                self._prepare(execution_id, binding, principal), "PLANNING_ADMISSION_UNKNOWN"
+            return self._finish_command(
+                record
+                or self._deny(
+                    self._prepare(execution_id, binding, principal), "PLANNING_ADMISSION_UNKNOWN"
+                ),
+                principal,
+                command_key,
+                payload,
             )
         estimate = record["estimate"]
+        pools = {row["id"]: row for row in self.capacity.snapshot()["pools"]}
+        if any(
+            pool_id not in pools
+            or pools[pool_id]["unit"] == "requests"
+            and units(amount) < estimate["max_requests"] * units("1")
+            for pool_id, amount in estimate["demand"].items()
+        ):
+            return self._finish_command(
+                self._deny(record, "PLANNING_REQUEST_DEMAND_UNDERRESERVED"),
+                principal,
+                command_key,
+                payload,
+            )
         request = {
             "attempt_id": binding["attempt_id"],
             "run_id": binding["run_id"],
@@ -508,18 +668,30 @@ class PlanningAdmissionAuthority:
             "expected_capacity": estimate.get("expected_capacity"),
         }
         if request["expected_capacity"] is None:
-            return self._deny(record, "PLANNING_CAPACITY_BINDING_REQUIRED")
+            return self._finish_command(
+                self._deny(record, "PLANNING_CAPACITY_BINDING_REQUIRED"),
+                principal,
+                command_key,
+                payload,
+            )
+        dispatch_admit = False
         with self._transaction() as db:
             record = self._load(db, execution_id) or record
             if record["phase"] == "budget_claimed":
                 record["capacity_request"], record["phase"] = request, "capacity_admit_unknown"
                 self._save(db, record)
+                dispatch_admit = True
+        if not dispatch_admit:
+            return self._finish_command(record, principal, command_key, payload)
         try:
             receipt = self.capacity.command_receipt(
                 "admit", request, command_key=record["capacity_command_key"]
             ) or self.capacity.admit(request, command_key=record["capacity_command_key"])
         except CapacityError as error:
-            return self._deny(record, str(error))
+            return self._finish_command(
+                self._deny(record, str(error)), principal, command_key, payload
+            )
+        dispatch_activate = False
         with self._transaction() as db:
             record = self._load(db, execution_id) or record
             record["capacity_receipt"] = receipt
@@ -529,10 +701,14 @@ class PlanningAdmissionAuthority:
                     receipt.get("reason_codes", ["PLANNING_CAPACITY_DENIED"]),
                 )
                 self._save(db, record)
-                return record
-            record["capacity_activation_request"] = {"admission_id": receipt["admission_id"]}
-            record["phase"] = "capacity_activate_unknown"
-            self._save(db, record)
+                dispatch_activate = False
+            else:
+                record["capacity_activation_request"] = {"admission_id": receipt["admission_id"]}
+                record["phase"] = "capacity_activate_unknown"
+                self._save(db, record)
+                dispatch_activate = True
+        if not dispatch_activate:
+            return self._finish_command(record, principal, command_key, payload)
         try:
             activation_request = record["capacity_activation_request"]
             activation = self.capacity.command_receipt(
@@ -546,11 +722,11 @@ class PlanningAdmissionAuthority:
             with self._transaction() as db:
                 record = self._load(db, execution_id) or record
                 record["phase"], record["reason_codes"] = (
-                    "unknown",
+                    "capacity_activate_unknown",
                     ["PLANNING_CAPACITY_ACTIVATION_UNKNOWN"],
                 )
                 self._save(db, record)
-                return record
+            return self._finish_command(record, principal, command_key, payload)
         with self._transaction() as db:
             record = self._load(db, execution_id) or record
             record["capacity_activation_receipt"] = activation
@@ -559,11 +735,7 @@ class PlanningAdmissionAuthority:
             )
             record["reason_codes"] = activation.get("reason_codes", [])
             self._save(db, record)
-            db.execute(
-                "INSERT INTO commands VALUES (?,?,?,?)",
-                (principal, command_key, payload, encoded(record)),
-            )
-            return record
+        return self._finish_command(record, principal, command_key, payload)
 
     def read_admission(self, binding: dict[str, Any]) -> object:
         """Read the original durable record only; it never calls Capacity."""
@@ -588,7 +760,12 @@ class PlanningAdmissionAuthority:
             "state": "admitted"
             if record["phase"] == "admitted"
             else "unknown"
-            if record["phase"] == "unknown"
+            if record["phase"]
+            in {
+                "unknown",
+                "capacity_admit_unknown",
+                "capacity_activate_unknown",
+            }
             else "denied",
         }
 
@@ -599,27 +776,30 @@ class PlanningAdmissionAuthority:
         """Fresh, non-reusable authorization around one owned transport effect."""
         for value in (execution_id, principal, effect_id):
             identifier(value)
-        binding = self._execution_binding(execution_id, principal)
-        record = self.advance(execution_id, principal, "planning-guard:" + effect_id)
-        if record["phase"] != "admitted" or record["binding"] != binding:
-            raise RunError("PLANNING_EFFECT_NOT_ADMITTED")
-        self._run_intent(binding, principal)
-        qualification = self.qualifications.read_commander(
-            binding,
-            scope=COMMANDER_QUALIFICATION_SCOPE,
-            reader_version=COMMANDER_QUALIFICATION_READER_VERSION,
-        )
-        if not isinstance(qualification, dict) or qualification != record["qualification"]:
-            raise RunError("COMMANDER_QUALIFICATION_CHANGED")
-        with self.capacity.pre_effect_guard(
-            record["capacity_receipt"]["admission_id"], expected_request=record["capacity_request"]
-        ) as capacity:
-            yield {
-                "execution_id": execution_id,
-                "binding_sha256": record["binding_sha256"],
-                "attempt_id": binding["attempt_id"],
-                "fence": binding["fence"],
-                "source_generation_sha256": qualification["source_generation_sha256"],
-                "budget_identity": record["budget_identity"],
-                "capacity": capacity,
-            }
+        with self._execution_guard(execution_id, principal) as binding:
+            record = self.advance(execution_id, principal, "planning-guard:" + effect_id)
+            if record["phase"] != "admitted" or record["binding"] != binding:
+                raise RunError("PLANNING_EFFECT_NOT_ADMITTED")
+            self._run_intent(binding, principal)
+            qualification = self.qualifications.read_commander(
+                binding,
+                scope=COMMANDER_QUALIFICATION_SCOPE,
+                reader_version=COMMANDER_QUALIFICATION_READER_VERSION,
+            )
+            if not isinstance(qualification, dict) or qualification != record["qualification"]:
+                raise RunError("COMMANDER_QUALIFICATION_CHANGED")
+            if qualification["valid_until"] <= self.planner.clock():
+                raise RunError("COMMANDER_QUALIFICATION_EXPIRED")
+            with self.capacity.pre_effect_guard(
+                record["capacity_receipt"]["admission_id"],
+                expected_request=record["capacity_request"],
+            ) as capacity:
+                yield {
+                    "execution_id": execution_id,
+                    "binding_sha256": record["binding_sha256"],
+                    "attempt_id": binding["attempt_id"],
+                    "fence": binding["fence"],
+                    "source_generation_sha256": qualification["source_generation_sha256"],
+                    "budget_identity": record["budget_identity"],
+                    "capacity": capacity,
+                }

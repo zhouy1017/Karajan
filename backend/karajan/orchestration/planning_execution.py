@@ -139,21 +139,14 @@ class PlanningExecution:
         existing_only: bool = True,
         clock: Callable[[], float] | None = None,
     ) -> "PlanningExecution":
-        """Construct the production controller from trusted persistent ports.
+        """Reject injected ports until a fixed persistent bootstrap exists.
 
-        A web caller cannot reach this constructor through an authority label;
-        the factory binds object identity after its deployment/bootstrap checks.
+        Object identity and an ``authority_kind`` field are not a trust root.
+        The #113/bootstrap follow-up must reconstruct both ports from its
+        protected deployment descriptor; callers cannot promote fixtures here.
         """
-        return cls(
-            database,
-            planner,
-            admissions=admissions,
-            outputs=outputs,
-            capacity=capacity,
-            existing_only=existing_only,
-            clock=clock,
-            _trusted_authority_ids=frozenset({id(admissions), id(outputs)}),
-        )
+        del database, planner, admissions, outputs, capacity, existing_only, clock
+        raise RunError("PLANNING_TRUSTED_BOOTSTRAP_REQUIRED")
 
     def _authority_allowed(self, authority: object, kind: str) -> bool:
         if kind == "fixture":

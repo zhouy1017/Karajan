@@ -10,7 +10,8 @@ from karajan.orchestration.planning_admission import (
     PlanningAdmissionAuthority,
 )
 from karajan.orchestration.planning_execution import PlanningExecution
-from karajan.runs import RunPlanner
+from karajan.runs import RunError, RunPlanner
+from karajan.runs.planning import digest
 from test_planning import create_request
 from test_planning_execution import capacity_store
 
@@ -33,11 +34,14 @@ class FixtureCommander:
         if not self.available:
             return None
         return {
+            "schema_version": "karajan.commander-qualification.v1",
             "scope": scope,
             "reader_version": reader_version,
+            "binding_sha256": digest(binding),
             "record_sha256": "a" * 64,
             "source_generation_sha256": "b" * 64,
-            "valid_until": 2000.0,
+            "valid_until": 2_000_000_000.0,
+            "capabilities": ["design_reasoning", "structured_plan_output"],
             "provenance": "fixture",
         }
 
@@ -74,7 +78,7 @@ def _case(
         run["id"],
         binding["budget_ref"],
         binding["profile"],
-        demand={"short": "1", "weekly": "1", "allowance": "1"},
+        demand={"short": "5", "weekly": "5", "allowance": "5"},
         expected_capacity={
             "policy_revision": 1,
             "pool_windows": {
@@ -97,7 +101,8 @@ def test_two_intents_share_the_original_frozen_planning_budget(
     configured: dict, tmp_path: Path
 ) -> None:
     service, authority, run, first = _case(tmp_path, configured)
-    assert authority.advance(first["id"], "owner", "advance-1")["phase"] == "admitted"
+    first_result = authority.advance(first["id"], "owner", "advance-1")
+    assert first_result["phase"] == "admitted", first_result["reason_codes"]
 
     intent = service.planner.planning_intent(
         run["id"], term=1, command_key="intent-2", principal="lead"
@@ -158,3 +163,27 @@ def test_lost_activation_reply_reopens_the_original_capacity_command(
     recovered = reopened.advance(execution["id"], "owner", "recover")
     assert recovered["phase"] == "admitted"
     assert len(authority.capacity.snapshot()["reservations"]) == 1
+
+
+def test_rejected_command_key_cannot_be_reused_for_another_execution(
+    configured: dict, tmp_path: Path
+) -> None:
+    service, authority, run, first = _case(tmp_path, configured, available=False)
+    assert authority.advance(first["id"], "owner", "same")["phase"] == "denied"
+    authority.qualifications.available = True
+    intent = service.planner.planning_intent(
+        run["id"], term=1, command_key="intent-2", principal="lead"
+    )
+    second = service.begin(run["id"], intent["id"], principal="owner", command_key="begin-2")
+    with pytest.raises(RunError, match="IDEMPOTENCY_CONFLICT"):
+        authority.advance(second["id"], "owner", "same")
+    assert authority.capacity.snapshot()["reservations"] == []
+
+
+def test_cancelled_execution_cannot_enter_effect_guard(configured: dict, tmp_path: Path) -> None:
+    service, authority, _, execution = _case(tmp_path, configured)
+    authority.advance(execution["id"], "owner", "advance")
+    service.cancel(execution["id"], principal="owner", command_key="cancel")
+    with pytest.raises(RunError, match="PLANNING_EXECUTION_CANCELLED"):
+        with authority.effect_guard(execution["id"], "owner", "start"):
+            pass
