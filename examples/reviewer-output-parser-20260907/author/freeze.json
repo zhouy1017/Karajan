@@ -1,0 +1,317 @@
+{
+  "schema_version": "karajan.review-output-parser-author.v1",
+  "issue": "https://github.com/zhouy1017/Karajan/issues/104",
+  "parent_issue": 95,
+  "generated_at": "2026-09-07T02:05:52.715286+00:00",
+  "implementation_base": "2e587d1773c514361689e13ebbd16ba62f1cd219",
+  "implementation_commit": null,
+  "evidence_level": "C",
+  "author_review_only": true,
+  "independent_standards": "pending",
+  "independent_spec": "pending",
+  "current_head_ci": "not_run",
+  "provider_calls": 0,
+  "credential_reads": 0,
+  "parser_revision": "karajan.review-output-parser.v1",
+  "owned_files": {
+    "backend/karajan/candidates/review_output.py": "8b72d037154f7c4d1a9bb8af95d5713b3851de4122327aa070f3f2562c226733",
+    "tests/candidates/test_review_output.py": "66a4b72f55928a18815373ebeeb9063ac23a4e566b563bd4fc22ac48139f6d6f",
+    "docs/implementation/reviewer-output-parser.md": "cefb702ad21acbfad61dbcdabb4dadc94f11dbd7fdf1d400947a704f201f9e1e",
+    "docs/architecture/04-api-and-workbench.md": "6cce77b21d5d9b1d34a984a439feb0bb80fada1d6ac8b007f078cd08859d113e"
+  },
+  "parser_test_freeze_announcement_matched": {
+    "backend/karajan/candidates/review_output.py": "8b72d037154f7c4d1a9bb8af95d5713b3851de4122327aa070f3f2562c226733",
+    "tests/candidates/test_review_output.py": "66a4b72f55928a18815373ebeeb9063ac23a4e566b563bd4fc22ac48139f6d6f"
+  },
+  "unchanged_base_contracts": {
+    "backend/karajan/candidates/models.py": {
+      "git_blob_sha256": "99e99e5cb8f3ae6d6b02f9f0047e8239e8bc8901670c217e88cc6a6d31180769",
+      "working_sha256": "99e99e5cb8f3ae6d6b02f9f0047e8239e8bc8901670c217e88cc6a6d31180769",
+      "exact_bytes": true,
+      "lf_equal": true
+    },
+    "backend/karajan/candidates/store.py": {
+      "git_blob_sha256": "9096bc2904d34ec01ab3adb22da45f151b94bfda90fd3e942890ba93675243ca",
+      "working_sha256": "9096bc2904d34ec01ab3adb22da45f151b94bfda90fd3e942890ba93675243ca",
+      "exact_bytes": true,
+      "lf_equal": true
+    },
+    "backend/karajan/candidates/__init__.py": {
+      "git_blob_sha256": "198c1b07b42c74941e893c69877ee3d6594b64104236313732d97db6700b4d6e",
+      "working_sha256": "198c1b07b42c74941e893c69877ee3d6594b64104236313732d97db6700b4d6e",
+      "exact_bytes": true,
+      "lf_equal": true
+    },
+    "backend/karajan/orchestration/serial.py": {
+      "git_blob_sha256": "e4d9b7a5aed32d96bdacbc605d9179ac5f2411844dc312e828bc07c316df3245",
+      "working_sha256": "e4d9b7a5aed32d96bdacbc605d9179ac5f2411844dc312e828bc07c316df3245",
+      "exact_bytes": true,
+      "lf_equal": true
+    },
+    "tests/candidates/test_validation.py": {
+      "git_blob_sha256": "e38d83470be4056206805ea0ce6527c391fa5bfca3d9f0dadf98b9ca567c0f2b",
+      "working_sha256": "e38d83470be4056206805ea0ce6527c391fa5bfca3d9f0dadf98b9ca567c0f2b",
+      "exact_bytes": true,
+      "lf_equal": true
+    },
+    "tests/candidates/test_projected_capture.py": {
+      "git_blob_sha256": "a5928c04b76d32cbfe513a0affe1c8a1e9ad5f5b0ee511dbf45f9a65b794d11b",
+      "working_sha256": "a5928c04b76d32cbfe513a0affe1c8a1e9ad5f5b0ee511dbf45f9a65b794d11b",
+      "exact_bytes": true,
+      "lf_equal": true
+    },
+    "tests/candidates/test_baseline_materialization.py": {
+      "git_blob_sha256": "3c1f8c272377942319995bceac8daaa5c8008bd62fcc6a6477e35f4e6c10bfdc",
+      "working_sha256": "3c1f8c272377942319995bceac8daaa5c8008bd62fcc6a6477e35f4e6c10bfdc",
+      "exact_bytes": true,
+      "lf_equal": true
+    },
+    "examples/candidates/probe_validation.py": {
+      "git_blob_sha256": "e291bb0b247d6dd04036e1a29845d76685dc482ab523a0fb12701abeda94c7a6",
+      "working_sha256": "e291bb0b247d6dd04036e1a29845d76685dc482ab523a0fb12701abeda94c7a6",
+      "exact_bytes": true,
+      "lf_equal": true
+    }
+  },
+  "source_map": {
+    "path": "final-sources.json",
+    "sha256": "2bf2674ff2dba9fb961689f4240d3b4fa1f6830b3b83478f94697a4e4eb7e14e",
+    "capture_timing": "after final frozen-source test runs, not a before snapshot"
+  },
+  "results": {
+    "candidate-final-linux.xml": {
+      "tests": 375,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": 10.695
+    },
+    "candidate-final-windows.xml": {
+      "tests": 375,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "time_seconds": 66.779
+    },
+    "candidate-linux-path-corrected.xml": {
+      "tests": 375,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": 10.465
+    },
+    "fields-green.xml": {
+      "tests": 168,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": 0.171
+    },
+    "fields-red.xml": {
+      "tests": 168,
+      "failures": 124,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": 0.734
+    },
+    "first-green.xml": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": 0.09
+    },
+    "initial-missing-entry.xml": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 1,
+      "skipped": 0,
+      "time_seconds": 0.183
+    },
+    "json-green.xml": {
+      "tests": 38,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": 0.102
+    },
+    "json-red.xml": {
+      "tests": 38,
+      "failures": 34,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": 0.254
+    },
+    "parser-final-windows.xml": {
+      "tests": 269,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": 1.804
+    },
+    "scope-green.xml": {
+      "tests": 266,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": 1.66
+    },
+    "scope-red.xml": {
+      "tests": 266,
+      "failures": 41,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": 2.08
+    }
+  },
+  "static_exit_codes": {
+    "ruff": 0,
+    "mypy": 0,
+    "format": 0
+  },
+  "whitespace_check": {
+    "scope": [
+      "backend/karajan/candidates/review_output.py",
+      "tests/candidates/test_review_output.py",
+      "docs/implementation/reviewer-output-parser.md",
+      "docs/architecture/04-api-and-workbench.md"
+    ],
+    "lf_no_bom_no_trailing_whitespace": true,
+    "staged_diff_checked": false,
+    "historical_bytes_untouched": true
+  },
+  "artifacts": {
+    "candidate-final-linux.log": {
+      "sha256": "8b275a8c4db817e6c2fb2269cc7e647ce3c59be86aa4005a055844edd180d8a8",
+      "size": 2416
+    },
+    "candidate-final-linux.xml": {
+      "sha256": "483382d747be52bab930c44758f333ed81c6e76559d934a4852e10133c7a88ce",
+      "size": 62822
+    },
+    "candidate-final-windows.log": {
+      "sha256": "00847624bc2cee2ca4bfeffdce323bc49216953c9f4e1a200833442de4f2d09e",
+      "size": 1433
+    },
+    "candidate-final-windows.xml": {
+      "sha256": "c1fc339d73df697380e31299107ed090da90f3e7f28e815cce9a70cc53545f9b",
+      "size": 62114
+    },
+    "candidate-linux-path-corrected.log": {
+      "sha256": "268ab455a564af04dee5d081297fa2d2f12e471be3f16f3d5545249fd8d89c79",
+      "size": 1241
+    },
+    "candidate-linux-path-corrected.xml": {
+      "sha256": "f637e989a7a0c8374b3c183cbc4231af586cc33c2fbef535717ee206c88276b0",
+      "size": 61313
+    },
+    "fields-green.log": {
+      "sha256": "62889c5f46dcc7e0cd090d7d801bc19b2605929fe9ca76aa32aa9f2b27ed20dc",
+      "size": 747
+    },
+    "fields-green.xml": {
+      "sha256": "b65aada1abce20b659563f4233dadcc0f35b48e8aac726ac0987c7ab0117fe10",
+      "size": 29518
+    },
+    "fields-red-test.py.txt": {
+      "sha256": "c7002c9729821ec68f71d91991a44a1782f22d4ce08f18f803e8c33919e88b57",
+      "size": 9300
+    },
+    "fields-red.log": {
+      "sha256": "59bd0f0435f27b5fd3b0632461cbb1d257647978bd459d12fb4d5787fe6ae8a8",
+      "size": 218723
+    },
+    "fields-red.xml": {
+      "sha256": "85b86063b4f89a2a6567a7cf620c1f130bb40e2c96a1762ef517dee735255f26",
+      "size": 263259
+    },
+    "final-sources.json": {
+      "sha256": "2bf2674ff2dba9fb961689f4240d3b4fa1f6830b3b83478f94697a4e4eb7e14e",
+      "size": 14601
+    },
+    "first-green.xml": {
+      "sha256": "881bf8329cb6dcd459329745c472020f932f4f8cda57710bb47bfeccfb6e2ce1",
+      "size": 643
+    },
+    "format-final.log": {
+      "sha256": "97d85b4b6c185a05396e2d09a3c304ff0f7cc77f8b7b7bb7989ec6cd875b3898",
+      "size": 27
+    },
+    "initial-missing-entry.log": {
+      "sha256": "21d44ceef7ed1f6ae1d6709d34f6e438f6a92db179b87952eba93919092b1127",
+      "size": 1571
+    },
+    "initial-missing-entry.xml": {
+      "sha256": "856abbce520ee54749e798b49f7c5c6e8521da9ef406177523e7a7c8507d9681",
+      "size": 1067
+    },
+    "initial-test.py.txt": {
+      "sha256": "25950fe9e02f50d87664ef82cf490f78fb141d670d47ac0edce9d7e32c46ac2e",
+      "size": 623
+    },
+    "json-green.log": {
+      "sha256": "e9ae2d90bda5c92549858226c8c4f105472b411fc2927ea8977379a3e59fee4a",
+      "size": 663
+    },
+    "json-green.xml": {
+      "sha256": "05c52815ac74ec3c79148198e2a1e2fbe22ad48dddca4ef47bae69407da5a1f8",
+      "size": 35637
+    },
+    "json-red-test.py.txt": {
+      "sha256": "225f84d0228e2ed2730d4a644bb332ba36692d6691673f2a258ae5f2e851c368",
+      "size": 3920
+    },
+    "json-red.log": {
+      "sha256": "d24ed3c7511227c81b5de231adefcf309a005a39a95d67858b85b1cb027af7cd",
+      "size": 138554
+    },
+    "json-red.xml": {
+      "sha256": "c2a0730e3e4330f05ddb21132fa33739edb2fdf79775a22693480c09aeb3bf75",
+      "size": 118814
+    },
+    "mypy-final.log": {
+      "sha256": "e719b2889fe97c548d79e4e3d03e45f82989174bb4c36729d110d52372b6107d",
+      "size": 46
+    },
+    "parser-final-windows.log": {
+      "sha256": "c59743cb4fed3448230661396255f6dfd5a5adc5498e29f5b4827a57389dfd52",
+      "size": 917
+    },
+    "parser-final-windows.xml": {
+      "sha256": "5ea2f8bbc0c65fb2520ab2f8331fcb314bc35c53cfd0934ee6897598ef3a8ce5",
+      "size": 44729
+    },
+    "README.md": {
+      "sha256": "70387093d5de5266fac3e6b1d480e9d9b6e0191ef994ac1bcf9a30f150c02a98",
+      "size": 4508
+    },
+    "ruff-final.log": {
+      "sha256": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0",
+      "size": 20
+    },
+    "scope-green.log": {
+      "sha256": "a5a254138db6605d3a92cd078f2b006bba8abe3fcda35c68adea176d5930045c",
+      "size": 908
+    },
+    "scope-green.xml": {
+      "sha256": "de579f7cd8f392e089805b2f7b8eebdffac419bac7066c0f6bfbe29f031689f4",
+      "size": 44317
+    },
+    "scope-red-test.py.txt": {
+      "sha256": "73638de2c9bc7b9aa9e022d29a81354310f017f1cb811754379b39c0bb61b1c2",
+      "size": 17196
+    },
+    "scope-red.log": {
+      "sha256": "c2c730b5a7e76113ee1cae1bfde395bee2963037e71555ddb2d3bd522e4afe7f",
+      "size": 63606
+    },
+    "scope-red.xml": {
+      "sha256": "89009899d443c2c425d578503e582301b6c053021efc3d6b970590492a790fcb",
+      "size": 101794
+    },
+    "static-exits.json": {
+      "sha256": "3916d5cea480370e721a2485f493eb5249407e3b6be1ba6c3505a477f39de550",
+      "size": 49
+    }
+  }
+}
