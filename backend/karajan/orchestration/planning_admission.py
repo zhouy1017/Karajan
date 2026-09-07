@@ -14,7 +14,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Protocol
 
-from karajan.capacity import CapacityError, CapacityStore
+from karajan.capacity import CapacityBoundaryFacts, CapacityError, CapacityStore
 from karajan.projects import ProjectRegistry
 from karajan.projects.credential_sources import (
     CredentialSourceError,
@@ -22,7 +22,7 @@ from karajan.projects.credential_sources import (
     LocalKeyFile,
 )
 from karajan.projects.qualification import ProfileQualificationStore
-from karajan.resources.broker import units
+from karajan.resources.broker import money, units
 from karajan.routing import RoutingError, evaluate_reserved_profile, evaluate_route
 from karajan.runs import RunError, RunPlanner
 from karajan.runs.planning import digest, encoded, identifier
@@ -652,6 +652,91 @@ class PlanningAdmissionAuthority:
             "capacity_sha256": digest(capacity),
         }
 
+    def _boundary_capacity_facts(
+        self, boundary: CapacityBoundaryFacts, record: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Derive a pure routing view, excluding only this already-active hold."""
+        facts = boundary.facts.as_dict()
+        owned = boundary.owned_admission_id
+        if owned is None:
+            return facts
+        matched: list[tuple[dict[str, Any], dict[str, Any]]] = []
+        for account in facts["accounts"]:
+            for admission in account["admissions"]:
+                if admission["admission_id"] == owned:
+                    matched.append((account, admission))
+        if len(matched) != 1:
+            raise RunError("PLANNING_OWN_CAPACITY_HOLD_INVALID")
+        account, admission = matched[0]
+        reservation = admission.get("reservation")
+        request = record["capacity_request"]
+        if (
+            not admission.get("effective_held")
+            or not isinstance(reservation, dict)
+            or reservation.get("state") != "active"
+            or reservation.get("request") != request
+            or account["held_attempts"] < 1
+        ):
+            raise RunError("PLANNING_OWN_CAPACITY_HOLD_INVALID")
+        account["held_attempts"] -= 1
+        account["held_admission_ids"] = [
+            item for item in account["held_admission_ids"] if item != owned
+        ]
+        demand = request["demand"]
+        for pool in account["pools"]:
+            amount = demand.get(pool["id"])
+            if amount is None:
+                continue
+            remaining = units(pool["future_reserved"]) - units(amount)
+            if remaining < 0:
+                raise RunError("PLANNING_OWN_CAPACITY_HOLD_INVALID")
+            pool["future_reserved"] = money(remaining)
+        return facts
+
+    def _revalidate_boundary_route(
+        self, boundary: CapacityBoundaryFacts, record: dict[str, Any], binding: dict[str, Any]
+    ) -> None:
+        """Run the normal quota algorithm over Capacity's final immutable facts."""
+        route = record["route_sources"]["route"]
+        task, policy = route["snapshots"]["task"], route["snapshots"]["policy"]
+        resources = deepcopy(policy["resources"])
+        capacity, _ = _capacity_snapshot(self._boundary_capacity_facts(boundary, record), resources)
+        estimate = record["estimate"]
+        registration = next(
+            row
+            for row in resources["profiles"]
+            if {"id": row["id"], "revision": row["revision"]} == binding["profile"]
+        )
+        capacity["estimates"] = [
+            {
+                "profile": binding["profile"],
+                "demand": [
+                    {
+                        "pool_id": pool_id,
+                        "unit": next(p for p in capacity["pools"] if p["id"] == pool_id)["unit"],
+                        "window_id": next(p for p in capacity["pools"] if p["id"] == pool_id)[
+                            "window_id"
+                        ],
+                        "amount": amount,
+                    }
+                    for pool_id, amount in sorted(estimate["demand"].items())
+                ],
+                "confidence": "unknown",
+                "completion_seconds": float(estimate["duration_seconds"]),
+                "price": None,
+                "evidence_ref": "planning-estimate:" + estimate["digest"],
+            }
+        ]
+        capacity["id"] = "planning-boundary:" + boundary.facts.sha256
+        try:
+            result = evaluate_reserved_profile(
+                task, policy, capacity, binding["profile"], revalidate_quota=True
+            )
+        except (RoutingError, KeyError, TypeError, ValueError):
+            raise RunError("PLANNING_BOUNDARY_ROUTE_INVALID") from None
+        if result["selected_profile"] != binding["profile"]:
+            raise RunError("PLANNING_BOUNDARY_ROUTE_REJECTED")
+
     def _execution_binding(self, execution_id: str, principal: str) -> dict[str, Any]:
         """Read the controller's original ID-only binding without opening a claim."""
         db = sqlite3.connect(self.execution_database.as_uri() + "?mode=ro", uri=True, timeout=10)
@@ -1235,6 +1320,9 @@ class PlanningAdmissionAuthority:
                         request,
                         command_key=record["capacity_command_key"],
                         before_reserve=before_reserve,
+                        after_capacity_facts=lambda boundary: self._revalidate_boundary_route(
+                            boundary, record, binding
+                        ),
                     )
         except (CapacityError, RunError) as error:
             return self._finish_command(
@@ -1350,6 +1438,9 @@ class PlanningAdmissionAuthority:
                         record["capacity_receipt"]["admission_id"],
                         expected_request=record["capacity_request"],
                         before_effect=before_effect,
+                        after_capacity_facts=lambda boundary: self._revalidate_boundary_route(
+                            boundary, record, binding
+                        ),
                     ) as capacity:
                         yield {
                             "execution_id": execution_id,

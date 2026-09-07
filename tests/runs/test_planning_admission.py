@@ -519,13 +519,19 @@ def test_capacity_boundary_rechecks_commander_expiry_before_reservation(
         *,
         command_key: str,
         before_reserve: Callable[[], None] | None = None,
+        after_capacity_facts: Callable[[Any], None] | None = None,
     ) -> dict[str, Any]:
         def expired_callback() -> None:
             now[0] = 1001.0
             assert before_reserve is not None
             before_reserve()
 
-        return original(request, command_key=command_key, before_reserve=expired_callback)
+        return original(
+            request,
+            command_key=command_key,
+            before_reserve=expired_callback,
+            after_capacity_facts=after_capacity_facts,
+        )
 
     monkeypatch.setattr(authority.capacity, "admit", expire_while_capacity_is_held)
     denied = authority.advance(execution["id"], "owner", "advance")
@@ -549,13 +555,19 @@ def test_capacity_boundary_rechecks_nested_commander_profile_facts_expiry(
         *,
         command_key: str,
         before_reserve: Callable[[], None] | None = None,
+        after_capacity_facts: Callable[[Any], None] | None = None,
     ) -> dict[str, Any]:
         def expired_callback() -> None:
             now[0] = 1002.0
             assert before_reserve is not None
             before_reserve()
 
-        return original(request, command_key=command_key, before_reserve=expired_callback)
+        return original(
+            request,
+            command_key=command_key,
+            before_reserve=expired_callback,
+            after_capacity_facts=after_capacity_facts,
+        )
 
     monkeypatch.setattr(authority.capacity, "admit", expire_while_capacity_is_held)
     denied = authority.advance(execution["id"], "owner", "advance")
