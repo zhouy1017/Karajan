@@ -86,6 +86,7 @@ class PlanningExecution:
         outputs: PlanningOutputAuthority | None = None,
         capacity: CapacityStore | None = None,
         allow_fixture_authorities: bool = False,
+        _trusted_authority_ids: frozenset[int] = frozenset(),
         existing_only: bool = False,
         clock: Callable[[], float] | None = None,
     ) -> None:
@@ -97,6 +98,10 @@ class PlanningExecution:
         self.outputs = outputs
         self.capacity = capacity
         self.allow_fixture_authorities = allow_fixture_authorities
+        # Production tags are evidence fields, never a caller-controlled grant.
+        # Only the controller factory below can bind the exact authority objects
+        # it rebuilt from fixed persistent configuration.
+        self._trusted_authority_ids = _trusted_authority_ids
         self.existing_only = existing_only
         self.clock = planner.clock if clock is None else clock
         if not existing_only:
@@ -121,6 +126,39 @@ class PlanningExecution:
                 "CREATE TABLE IF NOT EXISTS commands (principal TEXT NOT NULL, key TEXT NOT NULL, "
                 "payload TEXT NOT NULL, result TEXT NOT NULL, PRIMARY KEY(principal,key))"
             )
+
+    @classmethod
+    def from_trusted_factory(
+        cls,
+        database: Path,
+        planner: RunPlanner,
+        *,
+        admissions: PlanningAdmissionAuthority,
+        outputs: PlanningOutputAuthority,
+        capacity: CapacityStore,
+        existing_only: bool = True,
+        clock: Callable[[], float] | None = None,
+    ) -> "PlanningExecution":
+        """Construct the production controller from trusted persistent ports.
+
+        A web caller cannot reach this constructor through an authority label;
+        the factory binds object identity after its deployment/bootstrap checks.
+        """
+        return cls(
+            database,
+            planner,
+            admissions=admissions,
+            outputs=outputs,
+            capacity=capacity,
+            existing_only=existing_only,
+            clock=clock,
+            _trusted_authority_ids=frozenset({id(admissions), id(outputs)}),
+        )
+
+    def _authority_allowed(self, authority: object, kind: str) -> bool:
+        if kind == "fixture":
+            return self.allow_fixture_authorities
+        return kind == "production" and id(authority) in self._trusted_authority_ids
 
     @contextmanager
     def _transaction(self) -> Iterator[sqlite3.Connection]:
@@ -246,6 +284,7 @@ class PlanningExecution:
                 return dict(json.loads(prior["result"]))
         intent = self._intent(run, intent_id)
         with self._transaction() as db:
+
             def create() -> dict[str, Any]:
                 if db.execute(
                     "SELECT 1 FROM executions WHERE run_id=? AND intent_id=? "
@@ -275,9 +314,7 @@ class PlanningExecution:
                 self._save(db, result)
                 return result
 
-            return self._command(
-                db, principal, command_key, replay_payload, create
-            )
+            return self._command(db, principal, command_key, replay_payload, create)
 
     def get(self, execution_id: str, *, principal: str) -> dict[str, Any]:
         for value in (execution_id, principal):
@@ -286,6 +323,28 @@ class PlanningExecution:
             execution = self._load(db, execution_id)
         self._owner_run(execution["run_id"], principal)
         return execution
+
+    def admit(self, execution_id: str, *, principal: str, command_key: str) -> dict[str, Any]:
+        """Advance only a trusted durable admission authority once.
+
+        ``reconcile`` intentionally remains receipt-only, so a reconnect cannot
+        turn an observation into a fresh capacity claim.
+        """
+        for value in (execution_id, principal, command_key):
+            identifier(value)
+        self.get(execution_id, principal=principal)
+        authority = self.admissions
+        advance = None if authority is None else getattr(authority, "advance", None)
+        if not callable(advance) or id(authority) not in self._trusted_authority_ids:
+            return self._blocked(
+                execution_id, principal, "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE"
+            )
+        try:
+            advance(execution_id, principal, command_key)
+        except (RunError, ValueError):
+            # The immutable authority record is the only result consumers see.
+            pass
+        return self.reconcile(execution_id, principal=principal)
 
     def cancel(self, execution_id: str, *, principal: str, command_key: str) -> dict[str, Any]:
         for value in (execution_id, principal, command_key):
@@ -329,13 +388,13 @@ class PlanningExecution:
             ).model_dump()
         except (ValidationError, TypeError, ValueError):
             return self._blocked(execution_id, principal, "PLANNING_ADMISSION_EVIDENCE_INVALID")
-        if evidence["authority_kind"] == "fixture" and not self.allow_fixture_authorities:
-            return self._blocked(execution_id, principal, "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN")
-        if evidence["authority_kind"] == "production":
-            # This slice deliberately has no production factory.  A caller or
-            # test double cannot promote itself by selecting a different tag.
+        if not self._authority_allowed(self.admissions, evidence["authority_kind"]):
             return self._blocked(
-                execution_id, principal, "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE"
+                execution_id,
+                principal,
+                "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN"
+                if evidence["authority_kind"] == "fixture"
+                else "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE",
             )
         if self.capacity is None:
             return self._blocked(execution_id, principal, "PLANNING_CAPACITY_AUTHORITY_UNAVAILABLE")
@@ -395,11 +454,13 @@ class PlanningExecution:
             ).model_dump()
         except (ValidationError, TypeError, ValueError):
             return self._blocked(execution_id, principal, "PLANNING_OUTPUT_SOURCE_INVALID")
-        if source["authority_kind"] == "fixture" and not self.allow_fixture_authorities:
-            return self._blocked(execution_id, principal, "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN")
-        if source["authority_kind"] == "production":
+        if not self._authority_allowed(self.outputs, source["authority_kind"]):
             return self._blocked(
-                execution_id, principal, "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE"
+                execution_id,
+                principal,
+                "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN"
+                if source["authority_kind"] == "fixture"
+                else "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE",
             )
         if source["binding_sha256"] != execution["binding_sha256"]:
             return self._blocked(execution_id, principal, "PLANNING_OUTPUT_SOURCE_BINDING_MISMATCH")
@@ -416,9 +477,11 @@ class PlanningExecution:
             current["state"] = (
                 "awaiting_output" if evidence["state"] == "admitted" else "admission_unknown"
             )
-            current["reason_codes"] = [] if evidence["state"] == "admitted" else [
-                "PLANNING_ADMISSION_" + evidence["state"].upper()
-            ]
+            current["reason_codes"] = (
+                []
+                if evidence["state"] == "admitted"
+                else ["PLANNING_ADMISSION_" + evidence["state"].upper()]
+            )
             self._save(db, current)
             return current
 
@@ -463,16 +526,17 @@ class PlanningExecution:
             ).model_dump()
         except (ValidationError, TypeError, ValueError):
             return self._blocked(execution["id"], principal, "PLANNING_OUTPUT_SOURCE_INVALID")
-        if current_source["authority_kind"] == "fixture" and not self.allow_fixture_authorities:
-            return self._blocked(execution["id"], principal, "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN")
-        if current_source["authority_kind"] == "production":
+        if not self._authority_allowed(self.outputs, current_source["authority_kind"]):
             return self._blocked(
-                execution["id"], principal, "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE"
+                execution["id"],
+                principal,
+                "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN"
+                if current_source["authority_kind"] == "fixture"
+                else "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE",
             )
-        if (
-            current_source["binding_sha256"] != execution["binding_sha256"]
-            or current_source["source_sha256"] != execution.get("output_source_sha256")
-        ):
+        if current_source["binding_sha256"] != execution["binding_sha256"] or current_source[
+            "source_sha256"
+        ] != execution.get("output_source_sha256"):
             return self._blocked(execution["id"], principal, "PLANNING_OUTPUT_SOURCE_CHANGED")
         try:
             evidence = PlanningOutputEvidence.model_validate(
@@ -482,11 +546,13 @@ class PlanningExecution:
             return self._blocked(execution["id"], principal, "PLANNING_OUTPUT_EVIDENCE_INVALID")
         content: bytes = evidence.pop("content")
         actual_sha256 = hashlib.sha256(content).hexdigest()
-        if evidence["authority_kind"] == "fixture" and not self.allow_fixture_authorities:
-            return self._blocked(execution["id"], principal, "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN")
-        if evidence["authority_kind"] == "production":
+        if not self._authority_allowed(self.outputs, evidence["authority_kind"]):
             return self._blocked(
-                execution["id"], principal, "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE"
+                execution["id"],
+                principal,
+                "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN"
+                if evidence["authority_kind"] == "fixture"
+                else "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE",
             )
         if (
             evidence["execution_id"] != execution["id"]
@@ -551,16 +617,17 @@ class PlanningExecution:
             ).model_dump()
         except (ValidationError, TypeError, ValueError):
             return self._blocked(execution_id, principal, "PLANNING_OUTPUT_SOURCE_INVALID")
-        if source["authority_kind"] == "fixture" and not self.allow_fixture_authorities:
-            return self._blocked(execution_id, principal, "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN")
-        if source["authority_kind"] == "production":
+        if not self._authority_allowed(self.outputs, source["authority_kind"]):
             return self._blocked(
-                execution_id, principal, "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE"
+                execution_id,
+                principal,
+                "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN"
+                if source["authority_kind"] == "fixture"
+                else "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE",
             )
-        if (
-            source["binding_sha256"] != execution["binding_sha256"]
-            or source["source_sha256"] != execution.get("output_source_sha256")
-        ):
+        if source["binding_sha256"] != execution["binding_sha256"] or source[
+            "source_sha256"
+        ] != execution.get("output_source_sha256"):
             return self._blocked(execution_id, principal, "PLANNING_OUTPUT_SOURCE_CHANGED")
         with self._transaction() as db:
             current = self._load(db, execution_id)
