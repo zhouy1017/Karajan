@@ -994,6 +994,10 @@ class ProfileQualificationStore:
                 else:
                     rows.append({"profile": ref, "qualification": qualified, "reason_codes": []})
             yield {
+                # Internal orchestration consumers may validate another
+                # controller-owned binding under this exact held transaction.
+                # It is not a public Project read handle.
+                "project_db": db,
                 "catalog": catalog,
                 "profiles": rows,
                 "qualification_scope": scope,

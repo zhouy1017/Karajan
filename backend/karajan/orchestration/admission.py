@@ -118,7 +118,11 @@ class ApprovedTaskAdmission:
                 return None
             bindings = self.reviewer_bindings
             if bindings is None:
-                raise RunError("REVIEWER_BINDING_CONTROLLER_REQUIRED")
+                # Preserve the established public admission result for an
+                # approved reviewer-shaped task before #115's controller is
+                # installed: the generic assessor records its immutable
+                # EXECUTION_LINEAGE_REQUIRED blocker and never reserves.
+                return None
             dependencies = task.get("depends_on")
             if not isinstance(dependencies, list) or len(dependencies) != 1:
                 raise RunError("UNIQUE_APPROVED_REVIEWER_DEPENDENCY_REQUIRED")
@@ -340,7 +344,8 @@ class ApprovedTaskAdmission:
                     operation["revalidation"] = current
                     current_request = _request(current)
                     provenance_changed = (
-                        operation["assessment"].get("reviewer_lineage")
+                        current["state"] == "selected"
+                        and operation["assessment"].get("reviewer_lineage")
                         != current.get("reviewer_lineage")
                     )
                     if current_request is None or current_request != request or provenance_changed:
@@ -416,6 +421,71 @@ class ApprovedTaskAdmission:
             operation["reason_codes"] = []
             self._save(db, operation)
             return operation
+
+    @contextmanager
+    def reviewer_reserved_effect_guard(
+        self, run_id: str, operation_id: str, *, principal: str
+    ) -> Iterator[dict[str, Any]]:
+        """Fence a future Reviewer effect to its original operation and Capacity hold.
+
+        This exposes no native start or send capability.  A #116 consumer uses
+        this ID-only port at its real boundary; it receives the Reviewer record
+        only after the stored Worker lineage, current binding, exact request,
+        cancellation state, Project facts, and already-active Capacity hold all
+        agree.  The guard never creates or activates a reservation.
+        """
+        for value in (run_id, operation_id, principal):
+            identifier(value)
+        self._owner(run_id, principal)
+        with self._transaction() as db:
+            operation = self._load(db, run_id, operation_id)
+            if operation.get("cancel_requested"):
+                raise RunError("REVIEWER_OPERATION_CANCELLED")
+            worker_operation_id = operation.get("depends_on_operation_id")
+            if not isinstance(worker_operation_id, str):
+                raise RunError("REVIEW_WORKER_LINEAGE_REQUIRED")
+            worker_operation = self._load(db, run_id, worker_operation_id)
+            bindings = self.reviewer_bindings
+            if bindings is None:
+                raise RunError("REVIEWER_BINDING_CONTROLLER_REQUIRED")
+            request = operation.get("request")
+            capacity_receipt = operation.get("capacity_receipt")
+            if (
+                operation.get("state") != "reserved"
+                or not isinstance(request, dict)
+                or not isinstance(capacity_receipt, dict)
+                or not isinstance(capacity_receipt.get("admission_id"), str)
+            ):
+                raise RunError("RESERVED_REVIEWER_OPERATION_REQUIRED")
+            with self.routing._reviewer_reserved_execution_guard(
+                run_id,
+                operation,
+                worker_operation,
+                principal=principal,
+                candidates=bindings.candidates,
+                reviewer_validator=bindings,
+            ) as current:
+                if (
+                    current["state"] != "selected"
+                    or current["reviewer_operation_id"] != operation_id
+                    or current["original_assessment_digest"] != operation["assessment"]["digest"]
+                    or current["route"]["selected_profile"]
+                    != operation["assessment"]["route"]["selected_profile"]
+                    or current["planned_attempt_id"] != operation["planned_attempt_id"]
+                    or current["planned_context_id"] != operation["planned_context_id"]
+                    or _request(current) != request
+                ):
+                    raise RunError("REVIEWER_RESERVED_ROUTE_NOT_CURRENT")
+                # This is the existing Reviewer admission's Capacity transaction;
+                # it excludes only its own hold and cannot issue another claim.
+                with self.routing.capacity.pre_effect_guard(
+                    capacity_receipt["admission_id"], expected_request=request
+                ) as capacity:
+                    yield {
+                        "operation": operation,
+                        "revalidation": current,
+                        "capacity": capacity,
+                    }
 
 
 def _request(assessment: dict[str, Any]) -> dict[str, Any] | None:

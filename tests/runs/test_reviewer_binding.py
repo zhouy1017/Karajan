@@ -2,7 +2,7 @@
 
 import json
 import sqlite3
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from contextlib import contextmanager
 from copy import deepcopy
 from threading import Event
@@ -203,6 +203,128 @@ def test_reviewer_admission_uses_distinct_operation_identity_and_capacity_reques
     assert reserved["state"] == "reserved", reserved
     assert reserved["request"]["attempt_id"] == queued["planned_attempt_id"]
     assert reserved["request"]["role"] == "reviewer"
+
+
+def _activate_reviewer_reservation(intents, run_id, operation):
+    receipt = intents.admissions.routing.capacity.activate(
+        operation["capacity_receipt"]["admission_id"],
+        command_key="reviewer-activate:" + operation["id"],
+    )
+    assert receipt["decision"] == "capacity_revalidated", receipt
+
+
+def test_reviewer_effect_guard_uses_only_the_stored_operation_and_active_hold(binding_case):
+    intents, (run_id, worker_operation_id), _, _, _ = _passed_reviewer_subject(binding_case)
+    reviewer = intents.admissions.advance(
+        run_id,
+        intents.admissions.enqueue(
+            run_id, "review", principal="owner", command_key="effect-guard"
+        )["id"],
+        principal="owner",
+    )
+    _activate_reviewer_reservation(intents, run_id, reviewer)
+    before = intents.admissions.routing.capacity.snapshot()
+    with intents.admissions.reviewer_reserved_effect_guard(
+        run_id, reviewer["id"], principal="owner"
+    ) as held:
+        assert held["operation"]["id"] == reviewer["id"]
+        assert held["operation"]["id"] != worker_operation_id
+        assert held["operation"]["depends_on_operation_id"] == worker_operation_id
+        assert held["revalidation"]["reviewer_operation_id"] == reviewer["id"]
+        assert held["capacity"]["admission_id"] == reviewer["capacity_receipt"]["admission_id"]
+        assert held["capacity"]["request"] == reviewer["request"]
+    assert intents.admissions.routing.capacity.snapshot() == before
+
+
+def test_reviewer_effect_guard_keeps_project_binding_locked_through_capacity(binding_case):
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
+    reviewer = intents.admissions.advance(
+        run_id,
+        intents.admissions.enqueue(
+            run_id, "review", principal="owner", command_key="effect-project-lock"
+        )["id"],
+        principal="owner",
+    )
+    _activate_reviewer_reservation(intents, run_id, reviewer)
+    project_id = intents.admissions.routing.planner.get(run_id, principal="owner")["project_id"]
+    started = Event()
+
+    def read_project():
+        started.set()
+        return intents.admissions.routing.planner.projects.get_configuration(project_id)
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        with intents.admissions.reviewer_reserved_effect_guard(
+            run_id, reviewer["id"], principal="owner"
+        ) as held:
+            assert held["capacity"]["state"] == "active"
+            future = pool.submit(read_project)
+            assert started.wait(2)
+            with pytest.raises(TimeoutError):
+                future.result(timeout=0.15)
+        assert future.result(timeout=5)
+
+
+def test_reviewer_effect_guard_rejects_cancelled_or_changed_binding_without_new_admission(
+    binding_case,
+):
+    service, qualification, intents, (run_id, _), _, _, _ = binding_case
+    intents, _, _, _, _ = _passed_reviewer_subject(binding_case)
+    reviewer = intents.admissions.advance(
+        run_id,
+        intents.admissions.enqueue(
+            run_id, "review", principal="owner", command_key="effect-change"
+        )["id"],
+        principal="owner",
+    )
+    _activate_reviewer_reservation(intents, run_id, reviewer)
+    before = intents.admissions.routing.capacity.snapshot()
+    qualification.generation = 2
+    with pytest.raises(RunError, match="REVIEWER_RESERVED_ROUTE_NOT_CURRENT"):
+        with intents.admissions.reviewer_reserved_effect_guard(
+            run_id, reviewer["id"], principal="owner"
+        ):
+            pytest.fail("changed reviewer binding entered the effect guard")
+    assert intents.admissions.routing.capacity.snapshot() == before
+    cancelled = intents.admissions.cancel(run_id, reviewer["id"], principal="owner")
+    assert cancelled["cancel_requested"] is True
+    with pytest.raises(RunError, match="REVIEWER_OPERATION_CANCELLED"):
+        with intents.admissions.reviewer_reserved_effect_guard(
+            run_id, reviewer["id"], principal="owner"
+        ):
+            pytest.fail("cancelled reviewer entered the effect guard")
+
+
+@pytest.mark.parametrize(
+    ("change", "reason"),
+    [("attempts", "RUN_ATTEMPT_LIMIT"), ("duration", "RUN_DURATION_LIMIT")],
+)
+def test_reviewer_admission_honors_existing_run_cumulative_budget_before_capacity(
+    binding_case, change, reason
+):
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
+    with sqlite3.connect(intents.admissions.database) as db:
+        row = db.execute(
+            "SELECT data FROM run_execution_budgets WHERE run_id=?", (run_id,)
+        ).fetchone()
+        budget = json.loads(row[0])
+        if change == "attempts":
+            budget["max_total_attempts"] = len(budget["claims"])
+        else:
+            budget["started_at"] = 0.0
+            budget["max_duration_seconds"] = 1
+        db.execute(
+            "UPDATE run_execution_budgets SET data=? WHERE run_id=?",
+            (json.dumps(budget), run_id),
+        )
+    reviewer = intents.admissions.enqueue(
+        run_id, "review", principal="owner", command_key="budget-" + change
+    )
+    before = intents.admissions.routing.capacity.path.read_bytes()
+    blocked = intents.admissions.advance(run_id, reviewer["id"], principal="owner")
+    assert blocked["state"] == "blocked"
+    assert blocked["reason_codes"] == [reason]
+    assert intents.admissions.routing.capacity.path.read_bytes() == before
 
 
 def test_multiple_credible_worker_operations_are_rejected_before_capacity(binding_case):

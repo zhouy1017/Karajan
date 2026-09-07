@@ -359,6 +359,103 @@ class ApprovedRunRouting:
             receipt["digest"] = digest(receipt)
             yield receipt
 
+    @contextmanager
+    def _reviewer_reserved_execution_guard(
+        self,
+        run_id: str,
+        reviewer_operation: dict[str, Any],
+        worker_operation: dict[str, Any],
+        *,
+        principal: str,
+        candidates: Any,
+        reviewer_validator: Any,
+    ) -> Iterator[dict[str, Any]]:
+        """Recheck one persisted Reviewer operation without admitting new demand.
+
+        ``reviewer_operation`` is deliberately a controller record, rather than
+        an assessment ID supplied by an execution caller.  Its original request
+        stays outside this guard: the caller must enter Capacity's matching
+        ``pre_effect_guard`` after this yields.  The held order is therefore
+        operation -> Run -> Project -> Capacity.
+        """
+        for value in (run_id, reviewer_operation["id"], worker_operation["id"], principal):
+            identifier(value)
+        original = reviewer_operation.get("assessment")
+        if (
+            not isinstance(original, dict)
+            or original.get("state") != "selected"
+            or not isinstance(original.get("route"), dict)
+            or not original["route"].get("selected_profile")
+        ):
+            raise RunError("RESERVED_REVIEWER_ROUTE_REQUIRED")
+        if (
+            reviewer_operation.get("run_id") != run_id
+            or reviewer_operation.get("depends_on_operation_id") != worker_operation["id"]
+            or original.get("reviewer_lineage", {}).get("worker_operation_id")
+            != worker_operation["id"]
+        ):
+            raise RunError("REVIEW_WORKER_LINEAGE_REQUIRED")
+        selected = original["route"]["selected_profile"]
+        with self.planner.activation_guard(run_id) as run, ExitStack() as holds:
+            self.planner._owner(run, principal)
+            receipt: dict[str, Any] = {
+                "schema_version": "karajan.approved-routing-assessment.v1",
+                "id": str(uuid.uuid4()),
+                "run_id": run_id,
+                "task_id": reviewer_operation["task_id"],
+                "planned_attempt_id": reviewer_operation["planned_attempt_id"],
+                "planned_context_id": reviewer_operation["planned_context_id"],
+                "scope": "reserved_reviewer_execution_revalidation",
+                "reviewer_operation_id": reviewer_operation["id"],
+                "original_assessment_digest": original.get("digest"),
+                "state": "blocked",
+                "activation_allowed": False,
+                "dispatch_enabled": False,
+                "reason_codes": [],
+                "route": None,
+                "sources": {},
+                "admission_expectations": [],
+            }
+            self._build(
+                receipt,
+                run,
+                reviewer_operation["task_id"],
+                principal,
+                holds,
+                reserved_profile=selected,
+                worker_operation=worker_operation,
+                candidates=candidates,
+                reviewer_validator=reviewer_validator,
+            )
+            if receipt["state"] == "selected":
+                current_source, old_source = receipt["sources"], original["sources"]
+                changed = any(
+                    current_source[key] != old_source[key]
+                    for key in ("approval", "execution_policy_digest", "routing_digest")
+                )
+                changed |= receipt.get("reviewer_lineage") != original.get("reviewer_lineage")
+                changed |= (
+                    receipt["route"]["snapshots"]["task"]
+                    != original["route"]["snapshots"]["task"]
+                )
+                for collection in ("profiles", "estimates"):
+                    before = next(
+                        (row for row in old_source[collection] if row["profile"] == selected),
+                        None,
+                    )
+                    current = next(
+                        (row for row in current_source[collection] if row["profile"] == selected),
+                        None,
+                    )
+                    changed |= before is None or current != before
+                if changed:
+                    receipt["state"] = "blocked"
+                    receipt["reason_codes"] = ["RESERVED_REVIEWER_INPUT_CHANGED"]
+                    receipt["route"]["selected_profile"] = None
+                    receipt["route"]["reason_codes"] = ["RESERVED_REVIEWER_INPUT_CHANGED"]
+            receipt["digest"] = digest(receipt)
+            yield receipt
+
     def _build(
         self,
         receipt: dict[str, Any],
@@ -406,20 +503,9 @@ class ApprovedRunRouting:
                 return
             reviewer_operation = worker_operation
             try:
-                from .go_execution_intent import _connection
-
                 transition = reviewer_operation.get("validation", {}).get("review_binding")
                 if not isinstance(transition, dict):
                     raise RunError("REVIEWER_BINDING_REQUIRED")
-                with _connection(self.planner.projects.database, readonly=False) as project_db:
-                    project_db.execute("PRAGMA query_only=ON")
-                    reviewer_validator.current_locked(
-                        project_db,
-                        run,
-                        reviewer_operation,
-                        transition,
-                        principal=principal,
-                    )
                 lineage = _reviewer_lineage(run, task, reviewer_operation, candidates)
             except RunError as error:
                 receipt["reason_codes"] = [error.code]
@@ -511,6 +597,19 @@ class ApprovedRunRouting:
                 scope="runtime_tools",
             )
         )
+        if reviewer:
+            try:
+                assert reviewer_validator is not None
+                reviewer_validator.current_locked(
+                    view["project_db"],
+                    run,
+                    reviewer_operation,
+                    transition,
+                    principal=principal,
+                )
+            except RunError as error:
+                receipt["reason_codes"] = [error.code]
+                return
         resources = deepcopy(fixed["resources"])
         current = view["catalog"]
         profile_facts = []
