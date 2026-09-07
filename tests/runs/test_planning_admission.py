@@ -1,6 +1,7 @@
 """C evidence for durable planning admission; no provider is contacted."""
 
 import json
+import os
 import shutil
 import sys
 import time
@@ -13,12 +14,25 @@ from typing import Any
 
 import pytest
 from karajan.capacity import CapacityStore
+from karajan.orchestration.go_task_runtime import (
+    GoTaskCredentialSource,
+    GoTaskSettings,
+    write_go_task_bootstrap,
+)
 from karajan.orchestration.planning_admission import (
     COMMANDER_QUALIFICATION_SCOPE,
+    PersistentCommanderQualificationReader,
     PlanningAdmissionAuthority,
 )
 from karajan.orchestration.planning_bootstrap import PLANNING_ADMISSION_BOOTSTRAP
 from karajan.orchestration.planning_execution import PlanningExecution
+from karajan.projects import ProjectRegistry
+from karajan.projects.credential_sources import (
+    CredentialSourceError,
+    CredentialSourceStore,
+    LocalKeyFile,
+)
+from karajan.projects.qualification import ProfileQualificationStore
 from karajan.runs import RunError, RunPlanner
 from karajan.runs.planning import digest
 from test_planning import create_request
@@ -679,6 +693,75 @@ def test_persistent_factory_missing_descriptor_rejects_without_creating_stores(
         PlanningExecution.from_trusted_factory(control)
     assert list(control.iterdir()) == []
     assert not list(tmp_path.glob("*.sqlite"))
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
+def test_persistent_reader_observes_material_sealed_current_generation(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The reader uses a real existing CredentialSourceStore, never descriptor text."""
+    _, authority, run, execution = _case(tmp_path, configured)
+    key = tmp_path / "synthetic-current.key"
+    key.write_text("synthetic-current-key\n", encoding="utf-8")
+    key.chmod(0o600)
+    private = tmp_path / "synthetic-credential-private"
+    profile_record = run["configuration_snapshot"]["configuration"]["resources"]["profiles"][0]
+    auth_ref = profile_record["profile"]["auth_ref"]
+    credentials = CredentialSourceStore(
+        authority.planner.projects,
+        sources={(run["project_id"], auth_ref): LocalKeyFile("synthetic-current", key)},
+        private_directory=private,
+        clock=lambda: 1000.0,
+    )
+    registered = credentials.register(
+        run["project_id"], auth_ref, principal="owner", command_key="synthetic-current-register"
+    )
+    control = tmp_path / "go-source-control"
+    control.mkdir(mode=0o700)
+    settings = GoTaskSettings(
+        control,
+        tmp_path,
+        tmp_path / "candidates",
+        tmp_path / "host",
+        tmp_path / "journal.sqlite",
+        tmp_path / "qualification",
+        tmp_path / "task-work",
+        tmp_path / "python",
+        tmp_path / "runtime",
+        Path(os.environ["KARAJAN_GO_TOKENIZER_DIRECTORY"]),
+        private,
+        tuple(authority.planner.projects.allowed_roots),
+        (GoTaskCredentialSource(run["project_id"], auth_ref, "synthetic-current", key),),
+    )
+    write_go_task_bootstrap(settings)
+    monkeypatch.setattr(
+        "karajan.orchestration.go_task_runtime.deployment_source",
+        lambda _settings, _accounting: {"runtime": "synthetic-observed"},
+    )
+    persistent_projects = ProjectRegistry(
+        authority.planner.projects.database,
+        authority.planner.projects.allowed_roots,
+        existing_only=True,
+    )
+    persistent_planner = RunPlanner(
+        authority.planner.database, persistent_projects, existing_only=True
+    )
+    reader = PersistentCommanderQualificationReader(
+        persistent_planner,
+        ProfileQualificationStore(persistent_projects, commander_reader_only=True),
+        control_directory=control,
+    )
+    registration = profile_record
+    with persistent_projects._transaction() as db:
+        observed = reader._current_source(
+            db, run["project_id"], {"registration": registration}, "owner"
+        )
+    assert observed["credential_generation"] == registered["generation"]
+    assert observed["credential_source"] == registered["source"]
+    key.write_text("synthetic-current-key-changed\n", encoding="utf-8")
+    with persistent_projects._transaction() as db:
+        with pytest.raises(CredentialSourceError, match="^CREDENTIAL_MATERIAL_CHANGED$"):
+            reader._current_source(db, run["project_id"], {"registration": registration}, "owner")
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")

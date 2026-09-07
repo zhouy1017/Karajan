@@ -16,7 +16,11 @@ from typing import Any, Protocol
 
 from karajan.capacity import CapacityError, CapacityStore
 from karajan.projects import ProjectRegistry
-from karajan.projects.credential_sources import CredentialSourceStore, LocalKeyFile
+from karajan.projects.credential_sources import (
+    CredentialSourceError,
+    CredentialSourceStore,
+    LocalKeyFile,
+)
 from karajan.projects.qualification import ProfileQualificationStore
 from karajan.resources.broker import units
 from karajan.routing import RoutingError, evaluate_reserved_profile, evaluate_route
@@ -55,6 +59,34 @@ class PersistentCommanderQualificationReader:
         self.planner = planner
         self.qualifications = qualifications
         self.control_directory = control_directory
+        self._source_settings: Any | None = None
+        self._credentials: CredentialSourceStore | None = None
+        # Construction opens its own existing Project transactions, so it must
+        # occur before commander_facts_guard owns the Project connection. An
+        # absent/invalid deployment source is a no-fact condition, not a
+        # factory promotion or a second credential ledger.
+        try:
+            from karajan.orchestration.go_task_runtime import _read_bootstrap
+
+            settings, _ = _read_bootstrap(self.control_directory)
+            if (
+                (settings.state_directory / "projects.sqlite").resolve()
+                != self.planner.projects.database.resolve()
+            ):
+                raise RunError("COMMANDER_SOURCE_STATE_MISMATCH")
+            self._credentials = CredentialSourceStore(
+                self.planner.projects,
+                sources={
+                    (row.project_id, row.auth_ref): LocalKeyFile(row.source_id, row.path)
+                    for row in settings.credential_sources
+                },
+                private_directory=settings.credential_private_directory,
+                existing_only=True,
+            )
+            self._source_settings = settings
+        except (CredentialSourceError, OSError, RunError, ValueError):
+            self._source_settings = None
+            self._credentials = None
 
     def _current_source(
         self, db: sqlite3.Connection, project_id: str, current: dict[str, Any], principal: str
@@ -72,21 +104,13 @@ class PersistentCommanderQualificationReader:
             deployment_source,
         )
 
-        settings, bootstrap_sha = _read_bootstrap(self.control_directory)
-        if (
-            (settings.state_directory / "projects.sqlite").resolve()
-            != self.planner.projects.database.resolve()
-        ):
-            raise RunError("COMMANDER_SOURCE_STATE_MISMATCH")
-        credentials = CredentialSourceStore(
-            self.planner.projects,
-            sources={
-                (row.project_id, row.auth_ref): LocalKeyFile(row.source_id, row.path)
-                for row in settings.credential_sources
-            },
-            private_directory=settings.credential_private_directory,
-            existing_only=True,
-        )
+        settings = self._source_settings
+        credentials = self._credentials
+        if settings is None or credentials is None:
+            raise RunError("COMMANDER_SOURCE_UNAVAILABLE")
+        current_settings, bootstrap_sha = _read_bootstrap(self.control_directory)
+        if current_settings.document() != settings.document():
+            raise RunError("COMMANDER_SOURCE_CHANGED")
         profile = current["registration"]["profile"]
         generation = credentials.current_locked(
             db, project_id, profile["auth_ref"], principal=principal
