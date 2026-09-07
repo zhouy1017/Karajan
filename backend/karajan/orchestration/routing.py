@@ -18,7 +18,7 @@ from karajan.capacity import (
     CapacityStore,
     derive_capacity_boundary_facts,
 )
-from karajan.projects.qualification import ProfileQualificationStore
+from karajan.projects.qualification import ProfileQualificationStore, QualificationError
 from karajan.routing import evaluate_reserved_profile, evaluate_route, select_rule
 from karajan.routing.compiler import RoutingError, digest, parse, reference
 from karajan.routing.models import AccountState, PoolState, TaskClassification
@@ -48,6 +48,20 @@ class ReviewerTemporalFence:
             raise RunError("REVIEWER_QUALIFICATION_EXPIRED")
         if not self.estimate_created_at <= as_of < self.estimate_valid_until:
             raise RunError("REVIEWER_ESTIMATE_EXPIRED")
+
+
+class _ReviewerRevalidation(dict[str, Any]):
+    """Ephemeral current Reviewer receipt with a held-Project source recheck."""
+
+    def __init__(self, value: dict[str, Any], source_recheck: Callable[[], None] | None) -> None:
+        super().__init__(value)
+        self._source_recheck = source_recheck
+
+    def recheck_source(self) -> None:
+        if self._source_recheck is None:
+            raise RunError("REVIEWER_QUALIFICATION_SOURCE_CHANGED")
+        self._source_recheck()
+
 
 if TYPE_CHECKING:
     from karajan.projects.demand import AttemptEstimateStore
@@ -322,7 +336,7 @@ class ApprovedRunRouting:
                 "sources": {},
                 "admission_expectations": [],
             }
-            self._build(
+            source_recheck = self._build(
                 receipt,
                 run,
                 task_id,
@@ -333,7 +347,7 @@ class ApprovedRunRouting:
                 reviewer_validator=reviewer_validator,
             )
             receipt["digest"] = digest(receipt)
-            yield receipt
+            yield _ReviewerRevalidation(receipt, source_recheck)
 
     @contextmanager
     def reserved_execution_guard(
@@ -476,7 +490,7 @@ class ApprovedRunRouting:
                 "sources": {},
                 "admission_expectations": [],
             }
-            self._build(
+            source_recheck = self._build(
                 receipt,
                 run,
                 reviewer_operation["task_id"],
@@ -514,7 +528,7 @@ class ApprovedRunRouting:
                     receipt["route"]["selected_profile"] = None
                     receipt["route"]["reason_codes"] = ["RESERVED_REVIEWER_INPUT_CHANGED"]
             receipt["digest"] = digest(receipt)
-            yield receipt
+            yield _ReviewerRevalidation(receipt, source_recheck)
 
     def reviewer_boundary_guard(
         self,
@@ -523,6 +537,7 @@ class ApprovedRunRouting:
         worker_operation: dict[str, Any],
         candidates: Any,
         clock: Callable[[], float],
+        source_recheck: Callable[[], None],
     ) -> ReviewerTemporalFence:
         """Recheck elapsed Reviewer facts while the caller still holds Project and Capacity.
 
@@ -531,9 +546,10 @@ class ApprovedRunRouting:
         replace the locked source; elapsed qualification/estimate facts and
         Candidate artifacts still need a fresh read at this moment.
         """
-        # CandidateStore may read and hash a final Check artifact.  It is the
-        # only potentially blocking read in this guard, so complete it before
-        # taking the temporal sample used for every source below.
+        # Reopen the original Reader's source observations and then the final
+        # Check artifacts while Project remains held. Both can block, so finish
+        # them before the temporal sample used for every source below.
+        source_recheck()
         _current_reviewer_check_artifacts(worker_operation, candidates)
         return self.reviewer_elapsed_boundary_guard(assessment, clock=clock)
 
@@ -687,16 +703,16 @@ class ApprovedRunRouting:
         worker_operation: dict[str, Any] | None = None,
         candidates: Any | None = None,
         reviewer_validator: Any | None = None,
-    ) -> None:
+    ) -> Callable[[], None] | None:
         if run["schema_version"] != "karajan.run-planning.v2":
             receipt["reason_codes"] = ["APPROVED_ROUTING_V2_REQUIRED"]
-            return
+            return None
         plan = next(
             (p for p in run["plans"] if p["plan_revision"] == run["active_plan_revision"]), None
         )
         if plan is None or run["state"] != "executing":
             receipt["reason_codes"] = ["APPROVED_PLAN_REQUIRED"]
-            return
+            return None
         approval = next(
             (a for a in run["approvals"] if a["plan_revision"] == plan["plan_revision"]), None
         )
@@ -714,12 +730,12 @@ class ApprovedRunRouting:
         task = next((t for t in plan["plan"]["tasks"] if t["id"] == task_id), None)
         if task is None:
             receipt["reason_codes"] = ["TASK_SCOPE_NOT_APPROVED"]
-            return
+            return None
         reviewer = task["role"] == "reviewer"
         if reviewer:
             if worker_operation is None or candidates is None or reviewer_validator is None:
                 receipt["reason_codes"] = ["EXECUTION_LINEAGE_REQUIRED"]
-                return
+                return None
             reviewer_operation = worker_operation
             try:
                 transition = reviewer_operation.get("validation", {}).get("review_binding")
@@ -728,12 +744,12 @@ class ApprovedRunRouting:
                 lineage = _reviewer_lineage(run, task, reviewer_operation, candidates)
             except RunError as error:
                 receipt["reason_codes"] = [error.code]
-                return
+                return None
         elif task["role"] != "worker" or task["depends_on"]:
             receipt["reason_codes"] = [
                 "EXECUTION_LINEAGE_REQUIRED" if task["depends_on"] else "ROLE_NOT_IMPLEMENTED"
             ]
-            return
+            return None
         fixed = run["configuration_snapshot"]["configuration"]
         execution = run["execution_policy_snapshot"]
         classification = {
@@ -828,7 +844,7 @@ class ApprovedRunRouting:
                 )
             except RunError as error:
                 receipt["reason_codes"] = [error.code]
-                return
+                return None
         resources = deepcopy(fixed["resources"])
         current = view["catalog"]
         profile_facts = []
@@ -986,6 +1002,58 @@ class ApprovedRunRouting:
                         },
                     }
                 )
+        if not reviewer:
+            return None
+        return lambda: self._recheck_reviewer_source_locked(view["project_db"], run, receipt)
+
+    def _recheck_reviewer_source_locked(
+        self, project_db: Any, run: dict[str, Any], receipt: dict[str, Any]
+    ) -> None:
+        """Reobserve the selected Reviewer's sealed runtime and credential material.
+
+        ``routing_facts_guard`` owns ``project_db`` through Capacity's callback.
+        This repeats the same private ``_facts`` reader that built the route, so
+        current suite/controller/runtime/credential material cannot be replaced
+        by a retained SQLite generation or a fixture declaration.
+        """
+        route = receipt.get("route")
+        sources = receipt.get("sources")
+        if not isinstance(route, dict) or not isinstance(sources, dict):
+            raise RunError("REVIEWER_QUALIFICATION_SOURCE_CHANGED")
+        selected = route.get("selected_profile")
+        configuration = run.get("configuration_snapshot", {}).get("configuration")
+        resources = configuration.get("resources") if isinstance(configuration, dict) else None
+        profiles = resources.get("profiles") if isinstance(resources, dict) else None
+        if not isinstance(selected, dict) or not isinstance(profiles, list):
+            raise RunError("REVIEWER_QUALIFICATION_SOURCE_CHANGED")
+        frozen = next(
+            (
+                row
+                for row in profiles
+                if isinstance(row, dict)
+                and {"id": row.get("id"), "revision": row.get("revision")}
+                == selected
+            ),
+            None,
+        )
+        expected = next(
+            (
+                row.get("qualification")
+                for row in sources.get("profiles", [])
+                if isinstance(row, dict) and row.get("profile") == selected
+            ),
+            None,
+        )
+        if not isinstance(frozen, dict) or not isinstance(expected, dict):
+            raise RunError("REVIEWER_QUALIFICATION_SOURCE_CHANGED")
+        try:
+            observed = self.qualifications._facts(
+                project_db, run["project_id"], frozen, "runtime_tools", None
+            )
+        except QualificationError:
+            raise RunError("REVIEWER_QUALIFICATION_SOURCE_CHANGED") from None
+        if observed != expected:
+            raise RunError("REVIEWER_QUALIFICATION_SOURCE_CHANGED")
 
 
 def _current_binding(frozen: dict[str, Any], catalog: dict[str, Any], row: dict[str, Any]) -> bool:

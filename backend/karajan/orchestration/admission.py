@@ -415,11 +415,15 @@ class ApprovedTaskAdmission:
 
                             def check_budget_at_reservation() -> None:
                                 nonlocal run_budget_boundary, reviewer_temporal_fence
+                                source_recheck = getattr(current, "recheck_source", None)
+                                if not callable(source_recheck):
+                                    raise RunError("REVIEWER_QUALIFICATION_SOURCE_CHANGED")
                                 reviewer_temporal_fence = self.routing.reviewer_boundary_guard(
                                     current,
                                     worker_operation=reviewer_worker,
                                     candidates=bindings.candidates,
                                     clock=lambda: self.routing.capacity.clock(),
+                                    source_recheck=source_recheck,
                                 )
                                 run_budget_boundary = capture_run_budget_boundary(
                                     db,
@@ -688,11 +692,15 @@ class ApprovedTaskAdmission:
 
                     def check_reviewer_effect_boundary() -> None:
                         nonlocal run_budget_boundary, reviewer_temporal_fence
+                        source_recheck = getattr(current, "recheck_source", None)
+                        if not callable(source_recheck):
+                            raise RunError("REVIEWER_QUALIFICATION_SOURCE_CHANGED")
                         reviewer_temporal_fence = self.routing.reviewer_boundary_guard(
                             current,
                             worker_operation=worker_operation,
                             candidates=bindings.candidates,
                             clock=lambda: self.routing.capacity.clock(),
+                            source_recheck=source_recheck,
                         )
                         run_budget_boundary = capture_run_budget_boundary(
                             db,
