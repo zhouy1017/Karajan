@@ -3,7 +3,7 @@
 import json
 import sqlite3
 import uuid
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
@@ -424,7 +424,7 @@ class ApprovedTaskAdmission:
                                     )
                                 )
 
-                            def check_reviewer_final_reservation_boundary() -> None:
+                            def check_reviewer_final_reservation_boundary() -> Callable[[], None]:
                                 if (
                                     capacity_boundary is None
                                     or capacity_quota_fence is None
@@ -432,17 +432,21 @@ class ApprovedTaskAdmission:
                                     or reviewer_temporal_fence is None
                                 ):
                                     raise RunError("REVIEWER_CAPACITY_BOUNDARY_INVALID")
-                                capacity_now = self.routing.capacity.clock()
-                                try:
-                                    capacity_quota_fence.assert_current(as_of=capacity_now)
-                                except RoutingError:
-                                    raise RunError(
-                                        "REVIEWER_CAPACITY_REVALIDATION_FAILED"
-                                    ) from None
-                                reviewer_temporal_fence.assert_current(as_of=capacity_now)
-                                run_budget_boundary.assert_new_admission_allowed(
-                                    now=self.routing.planner.clock()
-                                )
+
+                                def final_check() -> None:
+                                    capacity_now = self.routing.capacity.clock()
+                                    try:
+                                        capacity_quota_fence.assert_current(as_of=capacity_now)
+                                    except RoutingError:
+                                        raise RunError(
+                                            "REVIEWER_CAPACITY_REVALIDATION_FAILED"
+                                        ) from None
+                                    reviewer_temporal_fence.assert_current(as_of=capacity_now)
+                                    run_budget_boundary.assert_new_admission_allowed(
+                                        now=self.routing.planner.clock()
+                                    )
+
+                                return final_check
 
                             try:
                                 receipt = self.routing.capacity.admit(
@@ -691,7 +695,7 @@ class ApprovedTaskAdmission:
                             current, request=request, boundary=boundary
                         )
 
-                    def check_reviewer_final_effect_boundary() -> None:
+                    def check_reviewer_final_effect_boundary() -> Callable[[], None]:
                         if (
                             capacity_boundary is None
                             or capacity_quota_fence is None
@@ -699,15 +703,19 @@ class ApprovedTaskAdmission:
                             or reviewer_temporal_fence is None
                         ):
                             raise RunError("REVIEWER_CAPACITY_BOUNDARY_INVALID")
-                        capacity_now = self.routing.capacity.clock()
-                        try:
-                            capacity_quota_fence.assert_current(as_of=capacity_now)
-                        except RoutingError:
-                            raise RunError("REVIEWER_CAPACITY_REVALIDATION_FAILED") from None
-                        reviewer_temporal_fence.assert_current(as_of=capacity_now)
-                        run_budget_boundary.assert_current_or_new_admission_allowed(
-                            now=self.routing.planner.clock()
-                        )
+
+                        def final_check() -> None:
+                            capacity_now = self.routing.capacity.clock()
+                            try:
+                                capacity_quota_fence.assert_current(as_of=capacity_now)
+                            except RoutingError:
+                                raise RunError("REVIEWER_CAPACITY_REVALIDATION_FAILED") from None
+                            reviewer_temporal_fence.assert_current(as_of=capacity_now)
+                            run_budget_boundary.assert_current_or_new_admission_allowed(
+                                now=self.routing.planner.clock()
+                            )
+
+                        return final_check
 
                     with self.routing.capacity.pre_effect_guard(
                         capacity_receipt["admission_id"],
