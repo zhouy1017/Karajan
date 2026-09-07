@@ -454,6 +454,31 @@ def test_admit_rejects_when_reservation_encoding_consumes_its_lifetime(ledger, m
     assert store.snapshot()["reservations"] == []
 
 
+def test_admit_rejects_a_clock_that_regresses_after_its_creation_sample(ledger, monkeypatch):
+    store, clock = ledger
+    original = capacity_store.encoded
+
+    def regress_after_encoding(value):
+        result = original(value)
+        if isinstance(value, dict) and value.get("state") == "reserved":
+            clock[0] = 1000.0
+        return result
+
+    def advance_controller_clock() -> None:
+        clock[0] = 1001.0
+
+    monkeypatch.setattr(capacity_store, "encoded", regress_after_encoding)
+    rejected = store.admit(
+        request(),
+        command_key="encoding-regresses-after-creation",
+        before_reservation_write=advance_controller_clock,
+    )
+
+    assert rejected["decision"] == "rejected"
+    assert rejected["reason_codes"] == ["CAPACITY_CLOCK_REGRESSED"]
+    assert store.snapshot()["reservations"] == []
+
+
 def test_admit_rechecks_time_and_uses_the_post_callback_reservation_clock(ledger):
     store, clock = ledger
     calls: list[str] = []

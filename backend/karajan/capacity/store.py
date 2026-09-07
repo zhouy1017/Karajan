@@ -55,6 +55,14 @@ class _CapacityTemporalFence:
             and (self.exclusive_until is None or now < self.exclusive_until)
         )
 
+    def through(self, now: float) -> "_CapacityTemporalFence":
+        """Advance the same-boundary clock floor after a valid observation."""
+        return _CapacityTemporalFence(
+            floor=max(self.floor, now),
+            inclusive_until=self.inclusive_until,
+            exclusive_until=self.exclusive_until,
+        )
+
 
 class _UnactivatedCancellation(AdmissionRef):
     evidence_ref: Identifier
@@ -490,6 +498,8 @@ class CapacityStore:
                     reasons = self._final_temporal_reasons(
                         value, policy, held, observations, final_now, evaluated_at=evaluated_at
                     )
+                else:
+                    temporal_fence = temporal_fence.through(final_now)
                 now = final_now
             identity: str | None = None
             reservation: dict[str, Any] | None = None
@@ -509,35 +519,47 @@ class CapacityStore:
                 # after every source/controller calculation, but the later
                 # boundary can still reject if encoding consumed its lifetime.
                 created_at = self._now()
-                reservation = {
-                    "id": identity,
-                    "request": value,
-                    "state": "reserved",
-                    "account_id": profile["account_id"],
-                    "created_at": created_at,
-                    "expires_at": created_at + value["duration_seconds"],
-                    "policy_revision": policy_revision,
-                    "observations": observations,
-                }
-                reservation_data = encoded(reservation)
-                # The controller closure must be constant-time and source-free.
-                # It and Capacity's scalar fence are immediately adjacent to
-                # INSERT; no JSON work or collection traversal follows.
-                if final_check is not None:
-                    final_check()
-                final_now = self._now()
-                if reservation["expires_at"] <= final_now:
-                    reasons = ["RESERVATION_EXPIRED"]
-                if not temporal_fence.current(final_now):
+                if not temporal_fence.current(created_at):
                     reasons = self._final_temporal_reasons(
                         value,
                         policy,
                         held,
                         observations,
-                        final_now,
+                        created_at,
                         evaluated_at=temporal_fence.floor,
                     )
-                now = final_now
+                else:
+                    temporal_fence = temporal_fence.through(created_at)
+                    reservation = {
+                        "id": identity,
+                        "request": value,
+                        "state": "reserved",
+                        "account_id": profile["account_id"],
+                        "created_at": created_at,
+                        "expires_at": created_at + value["duration_seconds"],
+                        "policy_revision": policy_revision,
+                        "observations": observations,
+                    }
+                    reservation_data = encoded(reservation)
+                # The controller closure must be constant-time and source-free.
+                # It and Capacity's scalar fence are immediately adjacent to
+                # INSERT; no JSON work or collection traversal follows.
+                if not reasons and final_check is not None:
+                    final_check()
+                if not reasons:
+                    final_now = self._now()
+                    if reservation is None or reservation["expires_at"] <= final_now:
+                        reasons = ["RESERVATION_EXPIRED"]
+                    if not temporal_fence.current(final_now):
+                        reasons = self._final_temporal_reasons(
+                            value,
+                            policy,
+                            held,
+                            observations,
+                            final_now,
+                            evaluated_at=temporal_fence.floor,
+                        )
+                    now = final_now
             decision: dict[str, Any] = {
                 "decision": "rejected" if reasons else "admitted",
                 "reason_codes": reasons,
@@ -892,9 +914,27 @@ class CapacityStore:
                 raise CapacityError(temporal[0])
             if item["expires_at"] <= now:
                 raise CapacityError("RESERVATION_EXPIRED")
+            temporal_fence = temporal_fence.through(now)
             final_check: FinalBoundaryCheck | None = None
             if before_effect_yield is not None:
                 final_check = _final_boundary_check(before_effect_yield())
+            # The callback's preparation itself may have crossed a Capacity
+            # boundary.  Sample and retain that point before its deferred
+            # scalar closure can observe a regressed clock.
+            prepared_at = self._now()
+            if item["expires_at"] <= prepared_at:
+                raise CapacityError("RESERVATION_EXPIRED")
+            if not temporal_fence.current(prepared_at):
+                temporal = self._final_temporal_reasons(
+                    expected,
+                    policy,
+                    held,
+                    observations,
+                    prepared_at,
+                    evaluated_at=temporal_fence.floor,
+                )
+                raise CapacityError(temporal[0])
+            temporal_fence = temporal_fence.through(prepared_at)
             # No JSON parsing, database scanning, or temporal iteration may
             # follow this point on a successful effect path.  Controller's
             # optional closure is itself constrained to O(1) checks.
