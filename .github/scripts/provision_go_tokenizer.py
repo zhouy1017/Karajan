@@ -8,20 +8,24 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import io
 import json
 import os
+import socket
 import tempfile
 import time
 from collections.abc import Callable
 from contextlib import AbstractContextManager
-from http.client import HTTPMessage, HTTPResponse
+from http.client import HTTPConnection, HTTPMessage, HTTPResponse, HTTPSConnection
 from pathlib import Path
-from typing import IO, BinaryIO, NoReturn, cast
+from typing import IO, Any, BinaryIO, NoReturn, cast
 from urllib.error import URLError
 from urllib.parse import urlsplit
 from urllib.request import (
     HTTPError,
+    HTTPHandler,
     HTTPRedirectHandler,
+    HTTPSHandler,
     ProxyHandler,
     Request,
     build_opener,
@@ -78,7 +82,9 @@ class _HTTPSRedirects(HTTPRedirectHandler):
 def _open(url: str, *, timeout: float = 30.0) -> AbstractContextManager[BinaryIO]:
     # Public HF files may redirect to its signed CDN. No proxy/auth/cookie handlers
     # or environment token lookup are used; the downloaded bytes still must match.
-    opener = build_opener(ProxyHandler({}), _HTTPSRedirects())
+    opener = build_opener(
+        ProxyHandler({}), _HTTPSRedirects(), _DeadlineHTTPHandler(), _DeadlineHTTPSHandler()
+    )
     request = Request(
         url, headers={"User-Agent": "Karajan-tokenizer-provision/1", "Accept-Encoding": "identity"}
     )
@@ -106,103 +112,105 @@ def _url_error_code(error: URLError) -> NoReturn:
     raise ProvisionError("TOKENIZER_NETWORK_ERROR") from None
 
 
-def _set_response_timeout(response: BinaryIO, timeout: float) -> None:
-    """Tighten the timeout on the socket owned by urllib's HTTP response."""
-    if not isinstance(response, HTTPResponse):
-        return
-    if response.fp is None:
-        if response.length == 0:
-            return
-        raise ProvisionError("TOKENIZER_TRANSPORT_UNAVAILABLE")
-    raw = getattr(response.fp, "raw", None)
-    sock = getattr(raw, "_sock", None)
-    if sock is None or not callable(getattr(sock, "settimeout", None)):
-        raise ProvisionError("TOKENIZER_TRANSPORT_UNAVAILABLE")
-    try:
-        sock.settimeout(timeout)
-    except OSError:
-        raise ProvisionError("TOKENIZER_TRANSPORT_UNAVAILABLE") from None
+class _DeadlineSocketIO(io.RawIOBase):
+    """Raw response stream whose every blocking read shares one absolute deadline."""
+
+    def __init__(self, sock: socket.socket, stream: socket.SocketIO, deadline: float) -> None:
+        super().__init__()
+        self._sock = sock
+        self._stream = stream
+        self._deadline = deadline
+
+    def readable(self) -> bool:
+        return True
+
+    def readinto(self, buffer: Any) -> int:
+        remaining = self._deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError
+        try:
+            self._sock.settimeout(remaining)
+            count = self._stream.readinto(buffer)
+        except TimeoutError as error:
+            raise TimeoutError from error
+        except OSError:
+            raise
+        if time.monotonic() >= self._deadline:
+            raise TimeoutError
+        return cast(int, count)
+
+    def close(self) -> None:
+        try:
+            self._stream.close()
+        finally:
+            super().close()
 
 
-class _ResponseReader:
-    """Read an HTTP body without allowing chunk framing to outrun its deadline."""
+class _DeadlineSocket:
+    """Small socket facade preserving http.client's standard HTTPResponse parser."""
 
-    _MAX_LINE_BYTES = 65_536
+    def __init__(self, sock: socket.socket, deadline: float) -> None:
+        self._sock = sock
+        self._deadline = deadline
 
-    def __init__(self, response: BinaryIO) -> None:
-        self.response = response
-        self.chunked = isinstance(response, HTTPResponse) and response.chunked
-        self.chunk_remaining = 0
-        self.finished = False
+    def makefile(self, mode: str = "r", buffering: int | None = None) -> IO[bytes]:
+        del buffering
+        if "r" not in mode or "b" not in mode:
+            raise ValueError("TOKENIZER_TRANSPORT_UNAVAILABLE")
+        stream = cast(socket.SocketIO, cast(Any, self._sock).makefile(mode, 0))
+        return cast(IO[bytes], _DeadlineSocketIO(self._sock, stream, self._deadline))
 
-    def _raw_read(self, amount: int, deadline: float) -> bytes:
-        if isinstance(self.response, HTTPResponse):
-            if self.response.fp is None:
-                if self.response.length == 0:
-                    return b""
-                raise ProvisionError("TOKENIZER_TRANSPORT_UNAVAILABLE")
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                raise ProvisionError("TOKENIZER_DOWNLOAD_TIMEOUT")
-            _set_response_timeout(self.response, remaining)
-            read1 = getattr(self.response.fp, "read1", None)
-            chunk = read1(amount) if callable(read1) else self.response.fp.read(amount)
-            if time.monotonic() >= deadline:
-                raise ProvisionError("TOKENIZER_DOWNLOAD_TIMEOUT")
-            return chunk
-        return self.response.read(amount)
+    def sendall(self, data: bytes, flags: int = 0) -> None:
+        remaining = self._deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError
+        self._sock.settimeout(remaining)
+        self._sock.sendall(data, flags)
+        if time.monotonic() >= self._deadline:
+            raise TimeoutError
 
-    def _line(self, deadline: float) -> bytes:
-        line = bytearray()
-        while len(line) < self._MAX_LINE_BYTES:
-            part = self._raw_read(1, deadline)
-            if not part:
-                raise ProvisionError("TOKENIZER_LENGTH_MISMATCH")
-            line.extend(part)
-            if part == b"\n":
-                return bytes(line)
-        raise ProvisionError("TOKENIZER_LENGTH_MISMATCH")
+    def close(self) -> None:
+        self._sock.close()
 
-    def _exact(self, amount: int, deadline: float) -> bytes:
-        value = bytearray()
-        while len(value) < amount:
-            part = self._raw_read(amount - len(value), deadline)
-            if not part:
-                raise ProvisionError("TOKENIZER_LENGTH_MISMATCH")
-            value.extend(part)
-        return bytes(value)
+    def __getattr__(self, name: str) -> object:
+        return getattr(self._sock, name)
 
-    def _chunked_read(self, amount: int, deadline: float) -> bytes:
-        if self.finished:
-            return b""
-        while self.chunk_remaining == 0:
-            line = self._line(deadline)
-            size_text = line.split(b";", 1)[0].strip()
-            try:
-                self.chunk_remaining = int(size_text, 16)
-            except ValueError:
-                raise ProvisionError("TOKENIZER_LENGTH_MISMATCH") from None
-            if self.chunk_remaining < 0:
-                raise ProvisionError("TOKENIZER_LENGTH_MISMATCH")
-            if self.chunk_remaining == 0:
-                while self._line(deadline) not in (b"\r\n", b"\n"):
-                    pass
-                self.finished = True
-                return b""
-        value = self._raw_read(min(amount, self.chunk_remaining), deadline)
-        if not value:
-            raise ProvisionError("TOKENIZER_LENGTH_MISMATCH")
-        self.chunk_remaining -= len(value)
-        if self.chunk_remaining == 0 and self._exact(2, deadline) != b"\r\n":
-            raise ProvisionError("TOKENIZER_LENGTH_MISMATCH")
-        return value
 
-    def read(self, amount: int, deadline: float) -> bytes:
-        if self.chunked:
-            return self._chunked_read(amount, deadline)
-        if isinstance(self.response, HTTPResponse):
-            return self._raw_read(amount, deadline)
-        return self.response.read(amount)
+class _DeadlineConnectionMixin:
+    sock: Any
+
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        timeout = cast(float | None, kwargs.get("timeout"))
+        self._deadline = None if timeout is None else time.monotonic() + timeout
+        super().__init__(*args, **kwargs)
+
+    def connect(self) -> None:
+        super().connect()  # type: ignore[misc]
+        if self.sock is not None and self._deadline is not None:
+            self.sock = _DeadlineSocket(self.sock, self._deadline)
+
+
+class _DeadlineHTTPConnection(_DeadlineConnectionMixin, HTTPConnection):
+    pass
+
+
+class _DeadlineHTTPSConnection(_DeadlineConnectionMixin, HTTPSConnection):
+    pass
+
+
+class _DeadlineHTTPHandler(HTTPHandler):
+    def http_open(self, req: Request) -> HTTPResponse:
+        return self.do_open(_DeadlineHTTPConnection, req)
+
+
+class _DeadlineHTTPSHandler(HTTPSHandler):
+    def https_open(self, req: Request) -> HTTPResponse:
+        context = cast(Any, self)._context
+        return self.do_open(
+            _DeadlineHTTPSConnection,
+            req,
+            context=context,
+        )
 
 
 def provision(directory: Path, *, open_url: OpenURL | None = None) -> dict[str, object]:
@@ -236,13 +244,12 @@ def provision(directory: Path, *, open_url: OpenURL | None = None) -> dict[str, 
                             else:
                                 response_context = open_url(url)
                             with response_context as response:
-                                reader = _ResponseReader(response)
                                 while True:
                                     if deadline - time.monotonic() <= 0:
                                         raise ProvisionError("TOKENIZER_DOWNLOAD_TIMEOUT")
                                     try:
                                         amount = min(65_536, size + 1 - count)
-                                        chunk = reader.read(amount, deadline)
+                                        chunk = response.read(amount)
                                     except (ConnectionError, TimeoutError) as error:
                                         raise _RetryableDownloadError(
                                             "TOKENIZER_NETWORK_ERROR"

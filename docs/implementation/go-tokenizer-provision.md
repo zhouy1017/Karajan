@@ -13,13 +13,13 @@ retried. Every attempt uses its own temporary file; only a verified file is
 atomically renamed into place, and failed temporary files are removed.
 
 The default HTTP transport receives the remaining budget on connection and
-updates its owned socket timeout before every read. `HTTPResponse.read1` is
-used where available so a slow stream cannot extend the deadline by waiting
-for a full buffer. EOF, digest completion, and publication each recheck the
-same deadline. For chunked HTTP responses, the bounded reader consumes chunk
-size lines, payload bytes, CRLF separators, and trailers one raw byte at a
-time under the same socket timeout; framing delays therefore cannot extend
-the budget.
+wraps the owned socket's raw response stream with the same absolute deadline.
+The standard `HTTPResponse` parser remains responsible for status lines,
+headers, fixed-length bodies, chunk framing, trailers, and EOF. Each raw
+socket read tightens the socket timeout from the monotonic deadline, so a
+slow header or chunk framing byte cannot extend the budget and no replacement
+HTTP parser can introduce length semantics regressions. EOF, digest
+completion, and publication each recheck the same deadline.
 
 The command line reports only stable, redacted categories. HTTP failures may
 include the numeric status (`TOKENIZER_HTTP_STATUS_429`); transport failures

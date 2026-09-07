@@ -17,7 +17,6 @@ from email.message import Message
 from pathlib import Path
 from typing import IO, BinaryIO, cast
 from urllib.error import HTTPError, URLError
-from urllib.request import urlopen
 
 import pytest
 
@@ -48,6 +47,26 @@ def local_server(
                 assert content_length is not None
                 self.send_header("Content-Length", str(content_length))
             self.end_headers()
+            writer(cast(IO[bytes], self.wfile))
+
+        def log_message(self, format: str, *args: object) -> None:
+            del format, args
+
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield f"http://127.0.0.1:{server.server_port}/fixture"
+    finally:
+        server.shutdown()
+        thread.join(timeout=2)
+        server.server_close()
+
+
+@contextmanager
+def raw_server(writer: Callable[[IO[bytes]], None]) -> Iterator[str]:
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
             writer(cast(IO[bytes], self.wfile))
 
         def log_message(self, format: str, *args: object) -> None:
@@ -233,11 +252,12 @@ def test_loopback_slow_byte_stream_stops_at_small_budget(
                 return
 
     monkeypatch.setattr(SCRIPT, "DOWNLOAD_BUDGET_SECONDS", 0.30)
+    open_default = SCRIPT._open
     with local_server(writer, len(small_artifact)) as url:
         monkeypatch.setattr(
             SCRIPT,
             "_open",
-            lambda _, *, timeout=30.0: urlopen(url, timeout=timeout),
+            lambda _, *, timeout=30.0: open_default(url, timeout=timeout),
         )
         started = time.perf_counter()
         with pytest.raises(SCRIPT.ProvisionError, match="^TOKENIZER_DOWNLOAD_TIMEOUT$"):
@@ -274,11 +294,12 @@ def test_loopback_delayed_byte_cannot_extend_budget(
             return
 
     monkeypatch.setattr(SCRIPT, "DOWNLOAD_BUDGET_SECONDS", 0.80)
+    open_default = SCRIPT._open
     with local_server(writer, len(payload)) as url:
         monkeypatch.setattr(
             SCRIPT,
             "_open",
-            lambda _, *, timeout=30.0: urlopen(url, timeout=timeout),
+            lambda _, *, timeout=30.0: open_default(url, timeout=timeout),
         )
         failure: list[BaseException] = []
 
@@ -323,11 +344,12 @@ def test_loopback_chunk_size_framing_cannot_extend_budget(
             return
 
     monkeypatch.setattr(SCRIPT, "DOWNLOAD_BUDGET_SECONDS", 0.30)
+    open_default = SCRIPT._open
     with local_server(writer, None, chunked=True) as url:
         monkeypatch.setattr(
             SCRIPT,
             "_open",
-            lambda _, *, timeout=30.0: urlopen(url, timeout=timeout),
+            lambda _, *, timeout=30.0: open_default(url, timeout=timeout),
         )
         started = time.perf_counter()
         with pytest.raises(SCRIPT.ProvisionError, match="^TOKENIZER_DOWNLOAD_TIMEOUT$"):
@@ -337,6 +359,79 @@ def test_loopback_chunk_size_framing_cannot_extend_budget(
 
     assert elapsed < 0.90
     assert not (tmp_path / "fixture.bin").exists()
+
+
+def test_loopback_slow_response_headers_share_the_download_deadline(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, small_artifact: bytes
+) -> None:
+    stop = threading.Event()
+
+    def writer(stream: IO[bytes]) -> None:
+        try:
+            stream.write(
+                b"HTTP/1.0 200 OK\r\nContent-Length: "
+                + str(len(small_artifact)).encode()
+                + b"\r\nX-Slow: "
+            )
+            stream.flush()
+            for byte in b"abcdefghijklmnop":
+                if stop.wait(0.07):
+                    return
+                stream.write(bytes((byte,)))
+                stream.flush()
+            stream.write(b"\r\n\r\n" + small_artifact)
+            stream.flush()
+        except (BrokenPipeError, ConnectionResetError):
+            return
+
+    monkeypatch.setattr(SCRIPT, "DOWNLOAD_BUDGET_SECONDS", 0.30)
+    open_default = SCRIPT._open
+    with raw_server(writer) as url:
+        monkeypatch.setattr(
+            SCRIPT,
+            "_open",
+            lambda _, *, timeout=30.0: open_default(url, timeout=timeout),
+        )
+        started = time.perf_counter()
+        with pytest.raises(SCRIPT.ProvisionError, match="^TOKENIZER_DOWNLOAD_TIMEOUT$"):
+            SCRIPT.provision(tmp_path)
+        elapsed = time.perf_counter() - started
+        stop.set()
+
+    assert elapsed < 0.90
+    assert not (tmp_path / "fixture.bin").exists()
+
+
+def test_complete_content_length_does_not_wait_for_delayed_connection_close(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, small_artifact: bytes
+) -> None:
+    stop = threading.Event()
+
+    def writer(stream: IO[bytes]) -> None:
+        try:
+            stream.write(b"HTTP/1.0 200 OK\r\nContent-Length: " + str(len(small_artifact)).encode())
+            stream.write(b"\r\n\r\n" + small_artifact)
+            stream.flush()
+            stop.wait(0.80)
+        except (BrokenPipeError, ConnectionResetError):
+            return
+
+    monkeypatch.setattr(SCRIPT, "DOWNLOAD_BUDGET_SECONDS", 0.30)
+    open_default = SCRIPT._open
+    with raw_server(writer) as url:
+        monkeypatch.setattr(
+            SCRIPT,
+            "_open",
+            lambda _, *, timeout=30.0: open_default(url, timeout=timeout),
+        )
+        started = time.perf_counter()
+        result = SCRIPT.provision(tmp_path)
+        elapsed = time.perf_counter() - started
+        stop.set()
+
+    assert result["artifacts"][0]["status"] == "downloaded"
+    assert elapsed < 0.60
+    assert (tmp_path / "fixture.bin").read_bytes() == small_artifact
 
 
 def test_final_read_crossing_deadline_cannot_publish(
