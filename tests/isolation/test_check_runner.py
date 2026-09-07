@@ -14,6 +14,7 @@ from threading import Event
 
 import pytest
 from karajan.candidates import CandidateStore
+from karajan.isolation import check_runner
 from karajan.isolation.check_runner import FixedCheckRunner, PythonCheckEnvironment
 from karajan.routing.compiler import digest
 
@@ -368,13 +369,23 @@ def test_lost_actual_popen_reply_never_claims_not_started_or_launches_again(
 ):
     runner, execution, _ = candidate(tmp_path, "import time; time.sleep(10)", environment)
     original = subprocess.Popen
+    original_regular = check_runner.regular
     children = []
+    changed_init_once = False
 
     def lost_reply(*args, **kwargs):
         children.append(original(*args, **kwargs))
         raise OSError("synthetic lost process return")
 
+    def init_changes_during_first_read(path, **kwargs):
+        nonlocal changed_init_once
+        if path.name == "namespace-init.json" and not changed_init_once:
+            changed_init_once = True
+            raise ValueError("CHECK_ASSET_CHANGED")
+        return original_regular(path, **kwargs)
+
     monkeypatch.setattr(subprocess, "Popen", lost_reply)
+    monkeypatch.setattr(check_runner, "regular", init_changes_during_first_read)
     try:
         observed = runner.run(execution, start_guard=allowed_start, cancelled=lambda: False)
         assert observed.outcome == "unknown" and observed.local_stop != "not_started"
@@ -388,6 +399,7 @@ def test_lost_actual_popen_reply_never_claims_not_started_or_launches_again(
             == observed
         )
         assert len(children) == 1
+        assert changed_init_once
     finally:
         time.sleep(0.1)
         runner.cancel(execution)
@@ -395,6 +407,15 @@ def test_lost_actual_popen_reply_never_claims_not_started_or_launches_again(
             if process.poll() is None:
                 process.kill()
             process.wait(timeout=3)
+
+
+def test_init_keeps_nontransient_asset_guard(environment, tmp_path):
+    runner, execution, _ = candidate(tmp_path, "pass", environment)
+    directory = runner._directory(execution)
+    directory.mkdir(parents=True)
+    (directory / "namespace-init.json").symlink_to(tmp_path / "untrusted-init")
+    with pytest.raises(ValueError, match="CHECK_ASSET_NOT_REGULAR"):
+        runner._init(directory, execution)
 
 
 def test_lost_result_commit_reply_recovers_readonly_and_log_corruption_blocks(

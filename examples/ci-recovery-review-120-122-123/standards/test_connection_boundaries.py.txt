@@ -1,0 +1,41 @@
+import importlib.util,ipaddress,json,socket,time
+from pathlib import Path
+import pytest
+spec=importlib.util.spec_from_file_location('provision',Path('.github/scripts/provision_go_tokenizer.py'))
+module=importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+
+def test_localhost_uses_real_child_resolver_and_valid_address_protocol():
+    addresses=module._resolve_addresses('localhost',443,time.monotonic()+5)
+    assert addresses
+    assert all(ipaddress.ip_address(row[4][0]).is_loopback for row in addresses)
+    assert all(row[1]==socket.SOCK_STREAM and row[4][1]==443 for row in addresses)
+
+@pytest.mark.parametrize('host',['127.0.0.1','::1'])
+def test_numeric_addresses_do_not_spawn_resolver(monkeypatch,host):
+    monkeypatch.setattr(module.subprocess,'Popen',lambda *a,**k:pytest.fail('resolver child for numeric address'))
+    address=module._resolve_addresses(host,443,time.monotonic()+1)
+    assert address[0][4][0]==host
+
+@pytest.mark.parametrize('program',[
+    "import sys; sys.stderr.write('synthetic-private-diagnostic'); sys.exit(7)",
+    "print('synthetic-private-diagnostic')",
+    "print('[]')",
+    "print('[[]]')",
+])
+def test_resolver_failures_emit_only_constant_error(monkeypatch,program):
+    monkeypatch.setattr(module,'_RESOLVE_PROGRAM',program)
+    with pytest.raises(OSError,match='^resolver failed$'):
+        module._resolve_addresses('localhost',443,time.monotonic()+5)
+
+def test_redirect_connect_applies_remaining_deadline(monkeypatch):
+    monkeypatch.setattr(module.time,'monotonic',lambda:99.)
+    observed=[]
+    class Socket:
+        def settimeout(self,timeout): observed.append(timeout)
+        def connect(self,address): pass
+        def close(self): pass
+    monkeypatch.setattr(module.socket,'socket',lambda *args:Socket())
+    connection=module._DeadlineHTTPConnection('127.0.0.1',timeout=30.,deadline=100.)
+    connection._deadline_create_connection(('127.0.0.1',443),30.,None)
+    assert observed==[1.]

@@ -1,0 +1,19 @@
+{
+  "candidate": "205cd9063e14ad516c1a21cb1d62f674bda75885",
+  "command": [
+    "git",
+    "diff",
+    "--exit-code",
+    "aee3ca8269c622cb96833ea1b8f2477fb3e773e9",
+    "205cd9063e14ad516c1a21cb1d62f674bda75885",
+    "--",
+    ".github/workflows/ci.yml",
+    "docs/implementation/ci-quality-budget.md",
+    "backend/karajan/isolation/check_runner.py",
+    "tests/isolation/test_check_runner.py",
+    "docs/implementation/m3-candidate-checks-runtime.md"
+  ],
+  "exit_code": 0,
+  "cwd": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\dispatch-tokenizer-ci",
+  "utc": "2026-09-07T07:41:34.765059+00:00"
+}
