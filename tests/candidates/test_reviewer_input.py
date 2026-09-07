@@ -91,9 +91,12 @@ def _identity(candidate: dict[str, Any]) -> dict[str, Any]:
         "manifest_sha256",
         "input_sha256",
         "policy_sha256",
+        "request_sha256",
     )
-    return {key: candidate[key] for key in fields} | {
-        "baseline_id": candidate["request"]["baseline_id"]
+    return {
+        **{key: candidate[key] for key in fields if key != "request_sha256"},
+        "baseline_id": candidate["request"]["baseline_id"],
+        "request_sha256": digest(candidate["request"]),
     }
 
 
@@ -183,12 +186,44 @@ def _trusted_admission(
         "state": "executing",
         "requirement": {"goal": "Review", "acceptance": ["checks"]},
     }
+    execution_policy = {
+        "schema_version": "karajan.execution-policy.v2",
+        "validation": {
+            "id": "checks",
+            "revision": 1,
+            "checks": [
+                {
+                    "id": "check-1",
+                    "revision": 1,
+                    "argv": ["python", "-m", "pytest"],
+                    "environment_ref": {"id": "env-check", "revision": 1},
+                }
+            ],
+            "environments": [
+                {"id": "env-check", "revision": 1, "source_sha256": "1" * 64},
+                {"id": "env-review", "revision": 1, "source_sha256": "b" * 64},
+            ],
+            "review": {
+                "revision": 1,
+                "environment_ref": {"id": "env-review", "revision": 1},
+            },
+        },
+    }
+    plan = {"plan": {"authorization": {"checks": ["check-1"]}}}
     operation: dict[str, Any] = {
         "id": "operation-1",
         "run_id": "run-1",
         "task_id": "task-1",
         "state": "reserved",
-        "workspace": {"source_binding": {"requirement": source_requirement}},
+        "workspace": {
+            "input_sha256": case["candidate"]["input_sha256"],
+            "read_paths": ["app.py"],
+            "source_binding": {
+                "requirement": source_requirement,
+                "execution_policy": execution_policy,
+                "plan": plan,
+            },
+        },
     }
     planner = SimpleNamespace(get=lambda run_id, *, principal: run)
     admissions = SimpleNamespace(routing=SimpleNamespace(planner=planner))
@@ -245,14 +280,71 @@ def test_public_compiler_rejects_stale_operation_requirement(
         )
 
 
+def test_public_compiler_rejects_evidence_with_foreign_candidate_id(
+    case: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    admissions, run = _trusted_admission(
+        case,
+        monkeypatch,
+        source_requirement={"goal": "Review", "acceptance": ["checks"]},
+    )
+    database = case["store"].directory / "candidates.sqlite"
+    with sqlite3.connect(database) as db:
+        row = db.execute(
+            "SELECT data FROM evidence WHERE id=?", (case["evidence"]["id"],)
+        ).fetchone()
+        assert row is not None
+        evidence = json.loads(row[0])
+        evidence["input"]["candidate_id"] = "foreign-candidate"
+        db.execute(
+            "UPDATE evidence SET data=? WHERE id=?",
+            (json.dumps(evidence), case["evidence"]["id"]),
+        )
+    with pytest.raises(RunError, match="REVIEWER_INPUT_CHECKS_INCOMPLETE"):
+        compile_reviewer_input(
+            admissions,
+            case["store"],
+            run_id=run["id"],
+            operation_id="operation-1",
+            principal="principal",
+            final_check_evidence_ids=[case["evidence"]["id"]],
+        )
+
+
 def test_public_compiler_rejects_persisted_subject_revision_drift(
     case: dict[str, Any], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """The public path reloads the operation and rejects an old persisted subject."""
     requirement = {"goal": "Review", "acceptance": ["checks"]}
     approval = {"id": "approval-1", "revision": 1}
-    plan = {"plan_digest": "e" * 64}
-    execution_policy = {"digest": "f" * 64}
+    plan = {
+        "plan_digest": "e" * 64,
+        "plan": {"authorization": {"checks": ["check-1"]}},
+    }
+    execution_policy = {
+        "schema_version": "karajan.execution-policy.v2",
+        "digest": "f" * 64,
+        "validation": {
+            "id": "checks",
+            "revision": 1,
+            "checks": [
+                {
+                    "id": "check-1",
+                    "revision": 1,
+                    "argv": ["python", "-m", "pytest"],
+                    "environment_ref": {"id": "env-check", "revision": 1},
+                }
+            ],
+            "environments": [
+                {"id": "env-check", "revision": 1, "source_sha256": "1" * 64},
+                {"id": "env-review", "revision": 1, "source_sha256": "b" * 64},
+            ],
+            "review": {
+                "revision": 1,
+                "environment_ref": {"id": "env-review", "revision": 1},
+            },
+        },
+    }
     baseline_entry = case["store"].get_baseline(case["candidate"]["request"]["baseline_id"])[
         "manifest"
     ][0]
@@ -297,7 +389,11 @@ def test_public_compiler_rejects_persisted_subject_revision_drift(
         "task_id": "task-1",
         "state": "reserved",
         "assessment": {"sources": {"approval": approval}},
-        "workspace": {"source_binding": source},
+        "workspace": {
+            "input_sha256": case["candidate"]["input_sha256"],
+            "read_paths": ["app.py"],
+            "source_binding": source,
+        },
         "execution": {
             "collection": {
                 "capture": capture,
@@ -409,6 +505,8 @@ def test_compiles_verified_cas_and_does_not_require_overall_review_gate(
         "sha256": hashlib.sha256(b"1 passed\n").hexdigest(),
         "size": len(b"1 passed\n"),
     }
+    assert document["checks"][0]["argv"] == ["python", "-m", "pytest"]
+    assert document["checks"][0]["environment_sha256"] == "1" * 64
 
 
 def test_caller_workspace_is_ignored_after_freeze(case: dict[str, Any]) -> None:

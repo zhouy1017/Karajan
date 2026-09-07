@@ -1,0 +1,68 @@
+{
+  "candidate": "205cd9063e14ad516c1a21cb1d62f674bda75885",
+  "external_traffic": false,
+  "scope": "actual localhost DNS child, controlled DNS error child, real TCP loopback",
+  "results": [
+    {
+      "case": "actual_localhost_child_resolution",
+      "elapsed": 0.0470000000204891,
+      "addresses": [
+        [
+          2,
+          1,
+          0,
+          "",
+          [
+            "127.0.0.1",
+            443
+          ]
+        ],
+        [
+          23,
+          1,
+          0,
+          "",
+          [
+            "::1",
+            443,
+            0,
+            0
+          ]
+        ]
+      ],
+      "passed": true
+    },
+    {
+      "case": "blocked_child_deadline_reap",
+      "elapsed": 0.17199999999138527,
+      "reason": "TimeoutError",
+      "process_count": 1,
+      "all_reaped": true,
+      "passed": true
+    },
+    {
+      "case": "dns_EAI_AGAIN",
+      "actual_child_attempts": 3,
+      "expected_child_attempts": 3,
+      "reason": "ProvisionError:TOKENIZER_NETWORK_ERROR",
+      "old_preserved": true,
+      "temp_clean": true,
+      "passed": true
+    },
+    {
+      "case": "dns_EAI_NONAME",
+      "actual_child_attempts": 1,
+      "expected_child_attempts": 1,
+      "reason": "ProvisionError:TOKENIZER_NETWORK_ERROR",
+      "old_preserved": true,
+      "temp_clean": true,
+      "passed": true
+    },
+    {
+      "case": "real_TCP_multiple_addresses_shared_budget",
+      "elapsed": 0.3129999999946449,
+      "reason": "TimeoutError",
+      "passed": true
+    }
+  ]
+}

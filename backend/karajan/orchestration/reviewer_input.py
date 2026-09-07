@@ -14,14 +14,16 @@ from typing import Any
 from pydantic import ValidationError
 
 from karajan.candidates import CandidateError, CandidateStore
-from karajan.candidates.models import Freeze
+from karajan.candidates.models import CandidateIdentity, Freeze
 from karajan.candidates.store import digest, manifest_digest
 from karajan.runs import RunError
 from karajan.runs.models import Requirement
+from karajan.runs.validation import covered
 
 from .admission import ApprovedTaskAdmission
 from .candidate_subjects import current_subject
 from .go_execution_intent import GoExecutionIntents
+from .go_task_collector import _validation_policy
 from .workspace import _approved_task
 
 MAX_INPUT_BYTES = 256 * 1024
@@ -37,6 +39,7 @@ _CANDIDATE_IDENTITY_FIELDS = (
     "input_sha256",
     "policy_sha256",
     "baseline_id",
+    "request_sha256",
 )
 _SUBJECT_FIELDS = {
     "schema_version",
@@ -95,15 +98,31 @@ def compile_reviewer_input(
         ):
             raise RunError("REVIEWER_INPUT_OPERATION_INVALID")
         _approved_task(run, operation, principal)
-        source = operation.get("workspace", {}).get("source_binding", {})
+        workspace = operation.get("workspace", {})
+        source = workspace.get("source_binding", {})
         if source.get("requirement") != run.get("requirement"):
             raise RunError("REVIEWER_INPUT_APPROVAL_CHANGED")
+        try:
+            current_policy = _validation_policy(source)
+            installed = operation.get("validation", {}).get("review_binding")
+            if installed is not None:
+                current_policy["review"]["approved_reviewers"] = [
+                    row["reviewer"] for row in installed["binding"]["reviewer_sources"]
+                ]
+            current = {
+                "input_sha256": workspace["input_sha256"],
+                "policy_sha256": digest(current_policy),
+            }
+        except (KeyError, TypeError, ValueError, ValidationError):
+            raise RunError("REVIEWER_INPUT_APPROVAL_CHANGED") from None
         resolved = current_subject(operation, candidates)
         return _compile(
             candidates,
             resolved["subject"],
             run["requirement"],
             final_check_evidence_ids,
+            current=current,
+            read_paths=workspace["read_paths"],
         )
     except RunError:
         raise
@@ -126,6 +145,9 @@ def _compile(
     subject: Mapping[str, Any],
     requirement: Mapping[str, Any],
     final_check_evidence_ids: Collection[str],
+    *,
+    current: Mapping[str, str] | None = None,
+    read_paths: Collection[str] | None = None,
 ) -> ReviewerInput:
     if not isinstance(subject, Mapping) or set(subject) != _SUBJECT_FIELDS:
         raise RunError("REVIEWER_INPUT_SUBJECT_INVALID")
@@ -152,12 +174,17 @@ def _compile(
 
     candidate = candidates.get(subject_candidate["id"])
     actual_identity = _candidate_record_identity(candidate)
-    if actual_identity != subject_candidate:
+    if any(actual_identity[key] != value for key, value in subject_candidate.items()):
         raise RunError("REVIEWER_INPUT_SUBJECT_INVALID")
     if candidate["request"]["task_class"] != "T1":
         raise RunError("REVIEWER_INPUT_SCOPE_UNSUPPORTED")
-    checks = _final_checks(candidates, candidate, evidence_ids)
-    files, diff = _materialize_content(candidates, candidate)
+    if current is not None and (
+        current.get("input_sha256") != candidate["input_sha256"]
+        or current.get("policy_sha256") != candidate["policy_sha256"]
+    ):
+        raise RunError("REVIEWER_INPUT_CANDIDATE_STALE")
+    checks = _final_checks(candidates, candidate, evidence_ids, current=current)
+    files, diff = _materialize_content(candidates, candidate, read_paths=read_paths)
     payload = {
         "schema_version": "karajan.reviewer-input.v1",
         "candidate": actual_identity,
@@ -186,10 +213,15 @@ def _compile(
 
 
 def _subject_identity(value: object) -> dict[str, Any]:
-    if not isinstance(value, Mapping) or set(value) != set(_CANDIDATE_IDENTITY_FIELDS):
+    if not isinstance(value, Mapping):
+        raise RunError("REVIEWER_INPUT_SUBJECT_INVALID")
+    keys = set(value)
+    full_keys = set(_CANDIDATE_IDENTITY_FIELDS)
+    initial_keys = full_keys - {"request_sha256"}
+    if keys != full_keys and keys != initial_keys:
         raise RunError("REVIEWER_INPUT_SUBJECT_INVALID")
     try:
-        identity = {key: value[key] for key in _CANDIDATE_IDENTITY_FIELDS}
+        identity = {key: value[key] for key in _CANDIDATE_IDENTITY_FIELDS if key in value}
         if any(
             not isinstance(identity[key], str) or not identity[key]
             for key in identity
@@ -198,6 +230,10 @@ def _subject_identity(value: object) -> dict[str, Any]:
             raise RunError("REVIEWER_INPUT_SUBJECT_INVALID")
         if type(identity["revision"]) is not int or identity["revision"] <= 0:
             raise RunError("REVIEWER_INPUT_SUBJECT_INVALID")
+        if "request_sha256" in value:
+            CandidateIdentity.model_validate(identity)
+        else:
+            identity.pop("request_sha256", None)
         return identity
     except KeyError:
         raise RunError("REVIEWER_INPUT_SUBJECT_INVALID") from None
@@ -210,9 +246,13 @@ def _candidate_record_identity(candidate: Mapping[str, Any]) -> dict[str, Any]:
         request = candidate["request"]
         Freeze.model_validate(request)
         identity = {
-            key: candidate[key] for key in _CANDIDATE_IDENTITY_FIELDS if key != "baseline_id"
+            key: candidate[key]
+            for key in _CANDIDATE_IDENTITY_FIELDS
+            if key not in {"baseline_id", "request_sha256"}
         }
         identity["baseline_id"] = request["baseline_id"]
+        identity["request_sha256"] = digest(request)
+        identity = CandidateIdentity.model_validate(identity).model_dump()
         if candidate["content_sha256"] != digest(
             {
                 key: candidate[key]
@@ -235,12 +275,17 @@ def _final_checks(
     candidates: CandidateStore,
     candidate: Mapping[str, Any],
     evidence_ids: tuple[str, ...],
+    *,
+    current: Mapping[str, str] | None = None,
 ) -> list[dict[str, Any]]:
-    current = {
+    gate_current = {
         key: candidate[key]
         for key in ("repository_identity", "base_sha", "input_sha256", "policy_sha256")
     }
-    gate = candidates.gate(candidate["id"], current=current)
+    if current is not None:
+        gate_current["input_sha256"] = current["input_sha256"]
+        gate_current["policy_sha256"] = current["policy_sha256"]
+    gate = candidates.gate(candidate["id"], current=gate_current)
     records = {
         record["id"]: record
         for record in gate["evidence"]
@@ -269,6 +314,7 @@ def _final_checks(
         if (
             record.get("effective_status") != "passed"
             or not isinstance(input_data, Mapping)
+            or input_data.get("candidate_id") != candidate["id"]
             or input_data.get("check_revision") != definition["revision"]
             or input_data.get("policy_sha256") != candidate["policy_sha256"]
             or input_data.get("input_sha256") != candidate["input_sha256"]
@@ -284,6 +330,8 @@ def _final_checks(
                 "evidence_key": input_data["evidence_key"],
                 "check_id": input_data["check_id"],
                 "check_revision": input_data["check_revision"],
+                "argv": list(definition["argv"]),
+                "environment_sha256": definition["environment_sha256"],
                 "outcome": input_data["outcome"],
                 "exit_code": input_data["exit_code"],
                 "status": record["status"],
@@ -297,7 +345,10 @@ def _final_checks(
 
 
 def _materialize_content(
-    candidates: CandidateStore, candidate: Mapping[str, Any]
+    candidates: CandidateStore,
+    candidate: Mapping[str, Any],
+    *,
+    read_paths: Collection[str] | None = None,
 ) -> tuple[list[dict[str, str]], str]:
     baseline = candidates.get_baseline(candidate["request"]["baseline_id"])
     if any(candidate[key] != baseline[key] for key in ("repository_identity", "base_sha")):
@@ -312,6 +363,29 @@ def _materialize_content(
         for path in baseline_manifest
     ):
         raise RunError("REVIEWER_INPUT_UNSUPPORTED_FILE")
+    if read_paths is None:
+        selected_paths = set(candidate_manifest)
+    else:
+        if (
+            not isinstance(read_paths, Collection)
+            or isinstance(read_paths, (str, bytes, bytearray))
+            or any(type(path) is not str or not path for path in read_paths)
+        ):
+            raise RunError("REVIEWER_INPUT_SCOPE_UNSUPPORTED")
+        roots = list(read_paths)
+        selected_paths = {path for path in candidate_manifest if covered(path, roots)}
+        for path in set(candidate_manifest) - selected_paths:
+            old, new = baseline_manifest[path], candidate_manifest[path]
+            if (
+                old["mode"],
+                old["artifact"]["sha256"],
+                old["artifact"]["size"],
+            ) != (
+                new["mode"],
+                new["artifact"]["sha256"],
+                new["artifact"]["size"],
+            ):
+                raise RunError("REVIEWER_INPUT_SCOPE_UNSUPPORTED")
     with tempfile.TemporaryDirectory(
         prefix="reviewer-input-", dir=candidates.directory.parent
     ) as directory:
@@ -322,7 +396,7 @@ def _materialize_content(
         candidates.materialize(candidate["id"], candidate_root)
         files: list[dict[str, str]] = []
         diff_parts: list[str] = []
-        for path in sorted(candidate_manifest):
+        for path in sorted(selected_paths):
             old = (baseline_root / path).read_bytes()
             new = (candidate_root / path).read_bytes()
             try:
