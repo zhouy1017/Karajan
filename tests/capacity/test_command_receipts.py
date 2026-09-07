@@ -299,6 +299,7 @@ def test_admit_boundary_callback_skips_exact_historical_receipt(ledger):
         value,
         command_key="historical-admit",
         before_reserve=lambda: callbacks.append("called"),
+        after_capacity_facts=lambda _: callbacks.append("facts"),
     )
 
     assert replayed == original
@@ -321,6 +322,41 @@ def test_admit_boundary_callback_rolls_back_before_reservation_and_receipt(ledge
     assert callbacks == ["called"]
     assert store.snapshot() == before
     assert store.command_receipt("admit", value, command_key="deadline-expired") is None
+
+
+def test_admit_facts_callback_is_full_and_has_no_owned_claim(ledger):
+    store, _ = ledger
+    seen = []
+
+    admitted = store.admit(
+        request(),
+        command_key="boundary-facts",
+        after_capacity_facts=seen.append,
+    )
+
+    assert admitted["decision"] == "admitted"
+    assert len(seen) == 1
+    assert seen[0].owned_admission_id is None
+    assert seen[0].facts.as_dict()["account_ids"] == ["account"]
+
+
+def test_admit_facts_callback_failure_rolls_back_reservation_and_receipt(ledger):
+    store, _ = ledger
+    value = request()
+    before = store.snapshot()
+
+    def forbidden_boundary_calculation(_) -> None:
+        raise RuntimeError("ROUTE_CONSERVATIVE_LIMIT_EXCEEDED")
+
+    with pytest.raises(RuntimeError, match="^ROUTE_CONSERVATIVE_LIMIT_EXCEEDED$"):
+        store.admit(
+            value,
+            command_key="boundary-facts-failure",
+            after_capacity_facts=forbidden_boundary_calculation,
+        )
+
+    assert store.snapshot() == before
+    assert store.command_receipt("admit", value, command_key="boundary-facts-failure") is None
 
 
 def test_admit_rechecks_time_and_uses_the_post_callback_reservation_clock(ledger):

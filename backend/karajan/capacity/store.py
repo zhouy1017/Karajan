@@ -16,7 +16,7 @@ from pydantic import BaseModel, ValidationError
 from karajan.resources.broker import money, units
 from karajan.storage import open_database, require_schema
 
-from .facts import CapacityFacts, capture_routing_facts
+from .facts import CapacityBoundaryFacts, CapacityFacts, capture_routing_facts
 from .models import (
     AdmissionRef,
     AdmissionRequest,
@@ -399,6 +399,7 @@ class CapacityStore:
         *,
         command_key: str,
         before_reserve: Callable[[], None] | None = None,
+        after_capacity_facts: Callable[[CapacityBoundaryFacts], None] | None = None,
     ) -> dict[str, Any]:
         """Admit a request, optionally rechecking a controller fact at the lock boundary.
 
@@ -407,6 +408,11 @@ class CapacityStore:
         request admissible, immediately before the reservation row is written.
         Historical command receipts return before it is invoked.  It cannot
         alter request validation, Capacity receipt identity, or default callers.
+
+        ``after_capacity_facts`` receives the complete immutable account facts
+        after ``before_reserve`` and before a new reservation.  It is an
+        internal, pure callback: it must not read controller sources or call
+        Capacity.  A new admission has no owned claim to exclude.
         """
         value = _admission_payload(request)
 
@@ -420,6 +426,21 @@ class CapacityStore:
                 # Re-read every temporal Capacity input while this transaction
                 # is still held; its initial assessment cannot authorize a
                 # reservation at a later clock value.
+                profile, policy_revision, now, reasons, observations, availability = (
+                    self._admission_evaluation(db, value)
+                )
+            if not reasons and after_capacity_facts is not None:
+                after_capacity_facts(
+                    CapacityBoundaryFacts(
+                        capture_routing_facts(
+                            self, db, account_ids=(profile["account_id"],)
+                        ),
+                        owned_admission_id=None,
+                    )
+                )
+                # The pure callback receives a source-complete snapshot, while
+                # this second check remains Capacity's final temporal/vector
+                # authority before a reservation can be written.
                 profile, policy_revision, now, reasons, observations, availability = (
                     self._admission_evaluation(db, value)
                 )
@@ -584,6 +605,7 @@ class CapacityStore:
         *,
         expected_request: dict[str, Any],
         before_effect: Callable[[], None] | None = None,
+        after_capacity_facts: Callable[[CapacityBoundaryFacts], None] | None = None,
     ) -> Iterator[dict[str, Any]]:
         """Hold a fresh capacity check across the caller's bounded effect boundary.
 
@@ -607,6 +629,17 @@ class CapacityStore:
             item = self._reservation(db, identity)
             if item["state"] != "active":
                 raise CapacityError("ADMISSION_NOT_ACTIVE")
+            if item["expires_at"] <= self._now():
+                raise CapacityError("RESERVATION_EXPIRED")
+            if after_capacity_facts is not None:
+                after_capacity_facts(
+                    CapacityBoundaryFacts(
+                        capture_routing_facts(
+                            self, db, account_ids=(item["account_id"],)
+                        ),
+                        owned_admission_id=identity,
+                    )
+                )
             now = self._now()
             if item["expires_at"] <= now:
                 raise CapacityError("RESERVATION_EXPIRED")
