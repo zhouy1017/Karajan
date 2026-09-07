@@ -4,6 +4,7 @@ import copy
 
 import pytest
 from karajan.routing import RoutingError, evaluate_reserved_profile, evaluate_route
+from karajan.routing.quotas import capture_quota_temporal_fence
 
 from .test_cash_and_sort import add_candidate, cash_sample
 from .test_routing import sample
@@ -44,6 +45,38 @@ def test_opt_in_quota_revalidation_uses_the_normal_shared_quota_checks() -> None
     report = evaluate_reserved_profile(task, policy, capacity, REF, revalidate_quota=True)
     assert report["selected_profile"] is None
     assert "QUOTA_INSUFFICIENT:service-fixture" in report["candidates"][0]["reason_codes"]
+
+
+def test_quota_temporal_fence_reuses_selected_unknown_mode_after_full_evaluation() -> None:
+    task, policy, capacity = sample()
+    capacity["estimates"][0]["confidence"] = "unknown"
+    capacity["accounts"][0]["policy"]["conservative_mode"] = {
+        "enabled": True,
+        "max_local_active_attempts": 2,
+        "max_attempt_duration_seconds": 30,
+        "observation_max_age_seconds": 5,
+        "cooldown_seconds": 10,
+    }
+    report = evaluate_reserved_profile(task, policy, capacity, REF, revalidate_quota=True)
+    assert report["selected_profile"] == REF
+    assert report["candidates"][0]["pool_evaluations"][0]["unknown_mode"] is True
+
+    fence = capture_quota_temporal_fence(report)
+    fence.assert_current(as_of=1005.0)  # age == max stays valid.
+    with pytest.raises(RoutingError, match="QUOTA_TIME_FENCE_EXPIRED"):
+        fence.assert_current(as_of=1006.0)
+    with pytest.raises(RoutingError, match="QUOTA_TIME_REGRESSED"):
+        fence.assert_current(as_of=999.0)
+
+    reset_capacity = copy.deepcopy(capacity)
+    reset_capacity["pools"][0]["reset_at"] = 1005.0
+    reset_report = evaluate_reserved_profile(
+        task, policy, reset_capacity, REF, revalidate_quota=True
+    )
+    assert reset_report["selected_profile"] == REF
+    reset_fence = capture_quota_temporal_fence(reset_report)
+    with pytest.raises(RoutingError, match="QUOTA_TIME_FENCE_EXPIRED"):
+        reset_fence.assert_current(as_of=1005.0)
 
 
 def test_different_eligible_profile_cannot_replace_the_reserved_profile() -> None:
