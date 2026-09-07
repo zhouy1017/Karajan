@@ -410,6 +410,23 @@ class LateReceiptBoundary(CheckProcessBoundary):
         return None if self.cancel_calls == 1 else self.inspect(execution)
 
 
+class PermanentUnknownBoundary(CheckProcessBoundary):
+    """A trusted runner whose owned receipt remains unknown across recovery."""
+
+    def run(self, execution, *, start_guard, cancelled):
+        from dataclasses import replace
+
+        observed = replace(
+            super().run(execution, start_guard=start_guard, cancelled=cancelled),
+            local_stop="unknown",
+        )
+        self.observations[execution["check_run_id"]] = observed
+        return observed
+
+    def cancel(self, execution):
+        return self.inspect(execution)
+
+
 class CheckHostIdentityBoundary(RunnerHost):
     """Only direct-child authority is synthetic; prepare/start/ledger are actual Host."""
 
@@ -513,17 +530,11 @@ def test_public_cancel_retains_host_until_native_receipt_arrives(projected, tmp_
 
 
 def test_permanent_unknown_cancel_never_becomes_confirmed_or_starts_next_check(
-    projected, tmp_path, monkeypatch
+    projected, tmp_path
 ):
-    from dataclasses import replace
-
-    case, service, runner, host = check_workflow(projected, tmp_path, exits=(0, 0))
-    original = runner.run
-
-    def permanently_unknown(*args, **kwargs):
-        return replace(original(*args, **kwargs), local_stop="unknown")
-
-    monkeypatch.setattr(runner, "run", permanently_unknown)
+    case, service, runner, host = check_workflow(
+        projected, tmp_path, exits=(0, 0), runner=PermanentUnknownBoundary()
+    )
     observed = run_next_boundary_check(case, service, host)
     assert observed["checks"]["runs"][0]["observation"]["local_stop"] == "unknown"
     pending = service.cancel(*case.args, principal="owner")
