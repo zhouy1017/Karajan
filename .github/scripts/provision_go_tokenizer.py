@@ -11,7 +11,9 @@ import hashlib
 import io
 import json
 import os
+import select
 import socket
+import ssl
 import tempfile
 import time
 from collections.abc import Callable
@@ -183,6 +185,7 @@ class _DeadlineSocket:
 
 class _DeadlineConnectionMixin:
     sock: Any
+    _deadline: float | None
 
     def __init__(self, *args: object, **kwargs: object) -> None:
         deadline = cast(float | None, kwargs.pop("deadline", None))
@@ -191,19 +194,98 @@ class _DeadlineConnectionMixin:
         if self._deadline is None and timeout is not None:
             self._deadline = time.monotonic() + timeout
         super().__init__(*args, **kwargs)
+        self._create_connection = self._deadline_create_connection
 
-    def connect(self) -> None:
-        super().connect()  # type: ignore[misc]
+    def _remaining(self) -> float:
+        if self._deadline is None:
+            return 30.0
+        remaining = self._deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError
+        return remaining
+
+    def _deadline_create_connection(
+        self,
+        address: tuple[str, int],
+        timeout: float | None = None,
+        source_address: tuple[str, int] | None = None,
+    ) -> socket.socket:
+        if self._deadline is None:
+            return socket.create_connection(address, timeout, source_address)
+        host, port = address
+        self._remaining()
+        try:
+            addresses = socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM)
+        except OSError:
+            self._remaining()
+            raise
+        last_error: OSError | None = None
+        for family, socktype, proto, _, sockaddr in addresses:
+            sock: socket.socket | None = None
+            try:
+                sock = socket.socket(family, socktype, proto)
+                sock.settimeout(self._remaining())
+                if source_address:
+                    sock.bind(source_address)
+                sock.connect(sockaddr)
+                return sock
+            except OSError as error:
+                last_error = error
+                if sock is not None:
+                    sock.close()
+                self._remaining()
+        if last_error is not None:
+            raise last_error
+        raise OSError("no address available")
+
+    def _connect_tcp(self) -> None:
+        HTTPConnection.connect(cast(HTTPConnection, self))
+
+    def _wrap_connected_socket(self) -> None:
         if self.sock is not None and self._deadline is not None:
             self.sock = _DeadlineSocket(self.sock, self._deadline)
 
 
 class _DeadlineHTTPConnection(_DeadlineConnectionMixin, HTTPConnection):
-    pass
+    def connect(self) -> None:
+        self._connect_tcp()
+        self._wrap_connected_socket()
 
 
 class _DeadlineHTTPSConnection(_DeadlineConnectionMixin, HTTPSConnection):
-    pass
+    _context: ssl.SSLContext
+    _tunnel_host: str | None
+
+    def connect(self) -> None:
+        self._connect_tcp()
+        if self._tunnel_host:
+            server_hostname = self._tunnel_host
+        else:
+            server_hostname = self.host
+        self.sock = self._context.wrap_socket(
+            self.sock,
+            server_hostname=server_hostname,
+            do_handshake_on_connect=False,
+        )
+        self.sock.setblocking(False)
+        while True:
+            remaining = self._remaining()
+            ready = False
+            try:
+                self.sock.do_handshake()
+                break
+            except ssl.SSLWantReadError:
+                readable, _, _ = select.select([self.sock], [], [], remaining)
+                ready = bool(readable)
+            except ssl.SSLWantWriteError:
+                _, writable, _ = select.select([], [self.sock], [], remaining)
+                ready = bool(writable)
+            else:
+                break
+            if not ready:
+                raise TimeoutError
+        self.sock.settimeout(self._remaining())
+        self._wrap_connected_socket()
 
 
 class _DeadlineHTTPHandler(HTTPHandler):

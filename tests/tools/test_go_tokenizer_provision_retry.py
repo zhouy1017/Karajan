@@ -520,6 +520,55 @@ def test_https_redirect_preserves_the_original_absolute_deadline() -> None:
     assert cast(Any, redirected)._karajan_deadline == deadline
 
 
+def test_connect_attempts_shrink_one_absolute_deadline(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    attempts: list[float] = []
+
+    class Candidate:
+        def __init__(self, index: int) -> None:
+            self.index = index
+
+        def settimeout(self, timeout: float) -> None:
+            attempts.append(timeout)
+
+        def connect(self, address: object) -> None:
+            del address
+            if self.index == 0:
+                time.sleep(0.05)
+                raise ConnectionError("synthetic transient failure")
+
+        def close(self) -> None:
+            pass
+
+    candidates = iter([Candidate(0), Candidate(1)])
+    monkeypatch.setattr(
+        SCRIPT.socket,
+        "getaddrinfo",
+        lambda *args: [(1, 1, 6, "", ("127.0.0.1", 443))] * 2,
+    )
+    monkeypatch.setattr(SCRIPT.socket, "socket", lambda *args: next(candidates))
+    connection = SCRIPT._DeadlineHTTPConnection(
+        "origin.invalid", timeout=1.0, deadline=time.monotonic() + 0.50
+    )
+
+    assert connection._deadline_create_connection(("origin.invalid", 443), 1.0, None).index == 1
+    assert len(attempts) == 2
+    assert attempts[1] < attempts[0]
+
+
+def test_expired_connect_does_not_resolve_or_open_a_socket(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    connection = SCRIPT._DeadlineHTTPConnection("origin.invalid", timeout=1.0, deadline=0.0)
+    monkeypatch.setattr(
+        SCRIPT.socket, "getaddrinfo", lambda *args: pytest.fail("DNS ran after deadline")
+    )
+
+    with pytest.raises(TimeoutError):
+        connection._deadline_create_connection(("origin.invalid", 443), 1.0, None)
+
+
 def test_bad_digest_is_deterministic_and_never_retried(
     tmp_path: Path, small_artifact: bytes
 ) -> None:
