@@ -479,6 +479,34 @@ def test_admit_rejects_a_clock_that_regresses_after_its_creation_sample(ledger, 
     assert store.snapshot()["reservations"] == []
 
 
+def test_admit_rolls_back_an_earlier_expiry_when_a_recheck_clock_regresses(ledger):
+    store, clock = ledger
+    held = store.admit(
+        {**request("held"), "duration_seconds": 3}, command_key="short-lived-held"
+    )
+    clock[0] = 1004.0
+    before = store.snapshot()
+
+    def regress_before_recheck() -> None:
+        clock[0] = 1002.0
+
+    with pytest.raises(CapacityError, match="^CAPACITY_CLOCK_REGRESSED$"):
+        store.admit(
+            request("candidate"),
+            command_key="regressed-recheck",
+            before_reserve=regress_before_recheck,
+        )
+
+    assert store.snapshot() == before
+    assert store.snapshot()["reservations"] == [
+        {**before["reservations"][0], "id": held["admission_id"], "state": "reserved"}
+    ]
+    assert (
+        store.command_receipt("admit", request("candidate"), command_key="regressed-recheck")
+        is None
+    )
+
+
 def test_admit_rechecks_time_and_uses_the_post_callback_reservation_clock(ledger):
     store, clock = ledger
     calls: list[str] = []

@@ -463,8 +463,34 @@ class CapacityStore:
             captured_at: float | None = None
             temporal_fence: _CapacityTemporalFence | None = None
             final_check: FinalBoundaryCheck | None = None
+            highest_capacity_time: float | None = None
+
+            def evaluate() -> tuple[
+                dict[str, Any],
+                dict[str, Any],
+                int,
+                float,
+                list[dict[str, Any]],
+                list[str],
+                dict[str, Any],
+                dict[str, str],
+            ]:
+                nonlocal highest_capacity_time
+                result = self._admission_evaluation(db, value)
+                if highest_capacity_time is not None and result[3] < highest_capacity_time:
+                    # _held can have persisted expiry while evaluating at the
+                    # earlier time.  Raising lets _command roll that mutation
+                    # back with the candidate reservation and its receipt.
+                    raise CapacityError("CAPACITY_CLOCK_REGRESSED")
+                highest_capacity_time = (
+                    result[3]
+                    if highest_capacity_time is None
+                    else max(result[3], highest_capacity_time)
+                )
+                return result
+
             profile, policy, policy_revision, now, held, reasons, observations, availability = (
-                self._admission_evaluation(db, value)
+                evaluate()
             )
             if not reasons and before_reserve is not None:
                 before_reserve()
@@ -473,7 +499,7 @@ class CapacityStore:
                 # is still held; its initial assessment cannot authorize a
                 # reservation at a later clock value.
                 profile, policy, policy_revision, now, held, reasons, observations, availability = (
-                    self._admission_evaluation(db, value)
+                    evaluate()
                 )
             if not reasons and after_capacity_facts is not None:
                 boundary = CapacityBoundaryFacts(
@@ -481,15 +507,27 @@ class CapacityStore:
                     owned_admission_id=None,
                 )
                 captured_at = boundary.facts.as_dict()["captured_at"]
+                if type(captured_at) not in (int, float):
+                    raise CapacityError("CAPACITY_TEMPORAL_FACTS_INVALID")
+                captured_time = cast(int | float, captured_at)
+                if not math.isfinite(captured_time):
+                    raise CapacityError("CAPACITY_TEMPORAL_FACTS_INVALID")
+                if highest_capacity_time is not None and captured_time < highest_capacity_time:
+                    raise CapacityError("CAPACITY_CLOCK_REGRESSED")
+                highest_capacity_time = (
+                    float(captured_time)
+                    if highest_capacity_time is None
+                    else max(float(captured_time), highest_capacity_time)
+                )
                 after_capacity_facts(boundary)
                 # The pure callback receives a source-complete snapshot, while
                 # this second check remains Capacity's final temporal/vector
                 # authority before a reservation can be written.
                 profile, policy, policy_revision, now, held, reasons, observations, availability = (
-                    self._admission_evaluation(db, value)
+                    evaluate()
                 )
             if not reasons:
-                evaluated_at = max(now, captured_at) if captured_at is not None else now
+                evaluated_at = highest_capacity_time if highest_capacity_time is not None else now
                 temporal_fence = self._temporal_fence(
                     policy, observations, evaluated_at=evaluated_at
                 )
