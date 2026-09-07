@@ -94,7 +94,8 @@ pinned Linux OpenCode binary and local HTTP fixtures. No provider credential is
 needed. The published evidence records the exact source revision and each check;
 fixture observations are not official Go observations. CI remains required on
 both supported platforms. CI failures follow the current
-[repair assignment](testing-gates.md#ci-失败的修复分工): local `gpt-5.3-codex-spark`,
-without new `@copilot` comments. If its quota is unavailable, retain the
-reproduction and handoff materials and report the issue as unfixed; do not
-substitute another model or weaken checks.
+[repair assignment](testing-gates.md#ci-失败的修复分工): prefer local
+`gpt-5.3-codex-spark`, with the preauthorized fallback `gpt-5.6-luna` at `medium`
+reasoning effort when Spark's quota is exhausted. Do not add new `@copilot`
+comments. If both models are unavailable, retain the reproduction and handoff
+materials and report the repair as blocked and unfixed. Do not weaken checks.
