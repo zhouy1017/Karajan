@@ -11,9 +11,14 @@ from contextlib import ExitStack, contextmanager
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any
 
-from karajan.capacity import CapacityStore
+from karajan.capacity import (
+    CapacityBoundaryFacts,
+    CapacityError,
+    CapacityStore,
+    derive_capacity_boundary_facts,
+)
 from karajan.projects.qualification import ProfileQualificationStore
-from karajan.routing import evaluate_route, select_rule
+from karajan.routing import evaluate_reserved_profile, evaluate_route, select_rule
 from karajan.routing.compiler import digest, parse, reference
 from karajan.routing.models import AccountState, PoolState, TaskClassification
 from karajan.runs import RunError, RunPlanner
@@ -505,6 +510,16 @@ class ApprovedRunRouting:
         replace the locked source; elapsed qualification/estimate facts and
         Candidate artifacts still need a fresh read at this moment.
         """
+        # CandidateStore may read and hash a final Check artifact.  It is the
+        # only potentially blocking read in this guard, so complete it before
+        # taking the temporal sample used for every source below.
+        _current_reviewer_check_artifacts(worker_operation, candidates)
+        self.reviewer_elapsed_boundary_guard(assessment, clock=clock)
+
+    def reviewer_elapsed_boundary_guard(
+        self, assessment: dict[str, Any], *, clock: Callable[[], float]
+    ) -> None:
+        """Check stored Reviewer qualification and estimate windows without I/O."""
         if assessment.get("state") != "selected":
             raise RunError("RESERVED_REVIEWER_ROUTE_NOT_CURRENT")
         route = assessment.get("route")
@@ -514,10 +529,6 @@ class ApprovedRunRouting:
         selected = route.get("selected_profile")
         if not isinstance(selected, dict):
             raise RunError("RESERVED_REVIEWER_ROUTE_NOT_CURRENT")
-        # CandidateStore may read and hash a final Check artifact.  It is the
-        # only potentially blocking read in this guard, so complete it before
-        # taking the temporal sample used for every source below.
-        _current_reviewer_check_artifacts(worker_operation, candidates)
         now = clock()
         if type(now) not in (int, float):
             raise RunError("REVIEWER_BOUNDARY_CLOCK_INVALID")
@@ -548,6 +559,79 @@ class ApprovedRunRouting:
             or not estimate.get("created_at", now + 1) <= now < estimate.get("valid_until", now)
         ):
             raise RunError("REVIEWER_ESTIMATE_EXPIRED")
+
+    def reviewer_capacity_boundary_guard(
+        self,
+        assessment: dict[str, Any],
+        *,
+        request: dict[str, Any],
+        boundary: CapacityBoundaryFacts,
+        as_of: float | None = None,
+    ) -> None:
+        """Reapply the frozen Reviewer route's quota policy to fresh Capacity facts.
+
+        Capacity owns the complete source fragment and, for an effect boundary,
+        the only admissible existing claim.  The pure routing evaluator then
+        retains its single conservative-quota algorithm instead of re-encoding
+        unknown-estimate or observation policy in admission.
+        """
+        route = assessment.get("route")
+        if not isinstance(route, dict):
+            raise RunError("RESERVED_REVIEWER_ROUTE_NOT_CURRENT")
+        task = route.get("snapshots", {}).get("task")
+        policy = route.get("snapshots", {}).get("policy")
+        original_capacity = route.get("snapshots", {}).get("capacity")
+        selected = route.get("selected_profile")
+        if any(
+            not isinstance(value, dict) for value in (task, policy, original_capacity, selected)
+        ):
+            raise RunError("RESERVED_REVIEWER_ROUTE_NOT_CURRENT")
+        assert isinstance(task, dict)
+        assert isinstance(policy, dict)
+        assert isinstance(original_capacity, dict)
+        assert isinstance(selected, dict)
+        try:
+            resources = deepcopy(policy["resources"])
+            derived = derive_capacity_boundary_facts(boundary, expected_request=request)
+            if as_of is not None:
+                captured_at = derived.get("captured_at")
+                if (
+                    type(as_of) not in (int, float)
+                    or not isinstance(captured_at, (int, float))
+                    or isinstance(captured_at, bool)
+                ):
+                    raise ValueError
+                final_as_of = float(as_of)
+                captured_time = float(captured_at)
+                if final_as_of < captured_time:
+                    raise ValueError
+                derived["captured_at"] = final_as_of
+                derived["derived_capacity_boundary"] = {
+                    **derived.get("derived_capacity_boundary", {}),
+                    "as_of": final_as_of,
+                }
+            capacity, _ = _capacity_snapshot(derived, resources)
+            capacity.update(
+                id="capacity-boundary:" + digest(
+                    [boundary.facts.sha256, boundary.owned_admission_id]
+                ),
+                estimates=deepcopy(original_capacity["estimates"]),
+                budget_remaining=deepcopy(original_capacity["budget_remaining"]),
+                fx=deepcopy(original_capacity["fx"]),
+            )
+            current_policy = deepcopy(policy)
+            current_policy["resources"] = resources
+            report = evaluate_reserved_profile(
+                task,
+                current_policy,
+                capacity,
+                selected,
+                revalidate_quota=True,
+            )
+        except (CapacityError, KeyError, TypeError, ValueError):
+            raise RunError("REVIEWER_CAPACITY_BOUNDARY_INVALID") from None
+        if report["selected_profile"] != selected:
+            raise RunError("REVIEWER_CAPACITY_REVALIDATION_FAILED")
 
     def _build(
         self,

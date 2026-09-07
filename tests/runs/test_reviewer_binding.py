@@ -440,6 +440,35 @@ def test_reviewer_effect_guard_keeps_its_last_legal_run_budget_claim(binding_cas
         assert held["capacity"]["state"] == "active"
 
 
+def test_reviewer_effect_guard_without_its_own_claim_rejects_a_full_run_budget(binding_case):
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
+    reviewer = intents.admissions.advance(
+        run_id,
+        intents.admissions.enqueue(
+            run_id, "review", principal="owner", command_key="effect-no-claim-full-budget"
+        )["id"],
+        principal="owner",
+    )
+    _activate_reviewer_reservation(intents, run_id, reviewer)
+    with intents.admissions._transaction() as db:
+        row = db.execute(
+            "SELECT data FROM run_execution_budgets WHERE run_id=?", (run_id,)
+        ).fetchone()
+        budget = json.loads(row[0])
+        budget["max_total_attempts"] = len(budget["claims"])
+        db.execute(
+            "UPDATE run_execution_budgets SET data=? WHERE run_id=?",
+            (json.dumps(budget), run_id),
+        )
+    before = intents.admissions.routing.capacity.snapshot()
+    with pytest.raises(RunError, match="^RUN_ATTEMPT_LIMIT$"):
+        with intents.admissions.reviewer_reserved_effect_guard(
+            run_id, reviewer["id"], principal="owner"
+        ):
+            pytest.fail("a claimless Reviewer entered a full Run budget")
+    assert intents.admissions.routing.capacity.snapshot() == before
+
+
 @pytest.mark.parametrize(
     ("change", "reason"),
     [("attempts", "RUN_ATTEMPT_LIMIT"), ("duration", "RUN_DURATION_LIMIT")],
@@ -492,9 +521,22 @@ def test_reviewer_admission_rechecks_run_deadline_after_capacity_lock_wait(
     routing, capacity = intents.admissions.routing, intents.admissions.routing.capacity
     actual = capacity.admit
 
-    def after_capacity_lock(request, *, command_key, before_reserve=None):
+    def after_capacity_lock(
+        request,
+        *,
+        command_key,
+        before_reserve=None,
+        after_capacity_facts=None,
+        before_reservation_write=None,
+    ):
         routing.planner.clock = lambda: 1001.0
-        return actual(request, command_key=command_key, before_reserve=before_reserve)
+        return actual(
+            request,
+            command_key=command_key,
+            before_reserve=before_reserve,
+            after_capacity_facts=after_capacity_facts,
+            before_reservation_write=before_reservation_write,
+        )
 
     monkeypatch.setattr(capacity, "admit", after_capacity_lock)
     before = capacity.path.read_bytes()
@@ -502,6 +544,145 @@ def test_reviewer_admission_rechecks_run_deadline_after_capacity_lock_wait(
     assert blocked["state"] == "blocked"
     assert blocked["reason_codes"] == ["RUN_DURATION_LIMIT"]
     assert capacity.path.read_bytes() == before
+
+
+def _tighten_reviewer_conservative_capacity(
+    capacity, *, maximum: int, observation_age: int, conservative_maximum: int | None = None
+) -> None:
+    policy = capacity.snapshot()["policies"][-1]["policy"]
+    policy.update(
+        max_active_attempts=maximum,
+        lead_reserved_slots=0,
+        observation_max_age_seconds=30,
+    )
+    policy["conservative_mode"].update(
+        max_local_active_attempts=conservative_maximum or maximum,
+        max_attempt_duration_seconds=policy["max_attempt_duration_seconds"],
+        observation_max_age_seconds=observation_age,
+        cooldown_seconds=policy["conservative_mode"]["cooldown_seconds"],
+    )
+    capacity.activate_policy(policy, expected_revision=1, command_key="tight-reviewer-conservative")
+
+
+def test_reviewer_unknown_quota_uses_conservative_observation_age_at_capacity_boundary(
+    binding_case, monkeypatch
+):
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
+    capacity = intents.admissions.routing.capacity
+    _tighten_reviewer_conservative_capacity(capacity, maximum=2, observation_age=5)
+    reviewer = intents.admissions.enqueue(
+        run_id, "review", principal="owner", command_key="reviewer-conservative-age"
+    )
+    actual = capacity.admit
+
+    def after_capacity_lock(
+        request,
+        *,
+        command_key,
+        before_reserve=None,
+        after_capacity_facts=None,
+        before_reservation_write=None,
+    ):
+        assert before_reserve is not None
+
+        def advance_after_initial_capacity_check() -> None:
+            capacity.clock = lambda: 1006.0
+            before_reserve()
+
+        return actual(
+            request,
+            command_key=command_key,
+            before_reserve=advance_after_initial_capacity_check,
+            after_capacity_facts=after_capacity_facts,
+            before_reservation_write=before_reservation_write,
+        )
+
+    monkeypatch.setattr(capacity, "admit", after_capacity_lock)
+    before = capacity.path.read_bytes()
+    blocked = intents.admissions.advance(run_id, reviewer["id"], principal="owner")
+    assert blocked["state"] == "blocked"
+    assert blocked["reason_codes"] == ["REVIEWER_CAPACITY_REVALIDATION_FAILED"]
+    assert capacity.path.read_bytes() == before
+
+
+def test_reviewer_effect_revalidation_excludes_only_its_existing_final_slot(binding_case):
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
+    capacity = intents.admissions.routing.capacity
+    _tighten_reviewer_conservative_capacity(capacity, maximum=2, observation_age=5)
+    reviewer = intents.admissions.advance(
+        run_id,
+        intents.admissions.enqueue(
+            run_id, "review", principal="owner", command_key="reviewer-final-own-slot"
+        )["id"],
+        principal="owner",
+    )
+    assert reviewer["state"] == "reserved", reviewer["assessment"]["route"]["candidates"]
+    _activate_reviewer_reservation(intents, run_id, reviewer)
+
+    with intents.admissions.reviewer_reserved_effect_guard(
+        run_id, reviewer["id"], principal="owner"
+    ) as guarded:
+        assert guarded["capacity"]["admission_id"] == reviewer["capacity_receipt"]["admission_id"]
+
+
+@pytest.mark.parametrize("other_state", ["active", "unknown"])
+def test_reviewer_conservative_quota_keeps_other_active_or_unknown_holds(
+    binding_case, other_state, monkeypatch
+):
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
+    capacity = intents.admissions.routing.capacity
+    _tighten_reviewer_conservative_capacity(
+        capacity, maximum=3, conservative_maximum=2, observation_age=5
+    )
+    reviewer = intents.admissions.enqueue(
+        run_id, "review", principal="owner", command_key="reviewer-other-" + other_state
+    )
+    other_request = deepcopy(reviewer["request"])
+    other_request["attempt_id"] = "other-reviewer-attempt-" + other_state
+    actual = capacity.admit
+    created = []
+
+    def after_current_reviewer_route(
+        request,
+        *,
+        command_key,
+        before_reserve=None,
+        after_capacity_facts=None,
+        before_reservation_write=None,
+    ):
+        other = actual(other_request, command_key="other-reviewer-" + other_state)
+        created.append(other["admission_id"])
+        capacity.activate(
+            other["admission_id"], command_key="other-reviewer-activate-" + other_state
+        )
+        if other_state == "unknown":
+            capacity.reconcile(
+                other["admission_id"],
+                local_ended=True,
+                remote_ended=False,
+                usage_complete=False,
+                not_sent=False,
+                evidence_ref="fixture:other-reviewer-unknown",
+                command_key="other-reviewer-reconcile-unknown",
+            )
+        return actual(
+            request,
+            command_key=command_key,
+            before_reserve=before_reserve,
+            after_capacity_facts=after_capacity_facts,
+            before_reservation_write=before_reservation_write,
+        )
+
+    monkeypatch.setattr(capacity, "admit", after_current_reviewer_route)
+    blocked = intents.admissions.advance(run_id, reviewer["id"], principal="owner")
+    assert blocked["state"] == "blocked", blocked
+    assert blocked["reason_codes"] == ["REVIEWER_CAPACITY_REVALIDATION_FAILED"], blocked.get(
+        "revalidation"
+    )
+    assert reviewer["capacity_receipt"] is None
+    assert created == [
+        row["id"] for row in capacity.snapshot()["reservations"] if row["id"] in created
+    ]
 
 
 @pytest.mark.parametrize(
@@ -570,7 +751,14 @@ def test_reviewer_admission_holds_project_binding_until_capacity_reserve_boundar
         return routing.planner.projects.get_configuration(project_id)
 
     with ThreadPoolExecutor(max_workers=1) as pool:
-        def admission_with_probe(request, *, command_key, before_reserve=None):
+        def admission_with_probe(
+            request,
+            *,
+            command_key,
+            before_reserve=None,
+            after_capacity_facts=None,
+            before_reservation_write=None,
+        ):
             assert before_reserve is not None
 
             def held_before_reserve():
@@ -581,7 +769,13 @@ def test_reviewer_admission_holds_project_binding_until_capacity_reserve_boundar
                     future.result(timeout=0.15)
                 before_reserve()
 
-            return actual(request, command_key=command_key, before_reserve=held_before_reserve)
+            return actual(
+                request,
+                command_key=command_key,
+                before_reserve=held_before_reserve,
+                after_capacity_facts=after_capacity_facts,
+                before_reservation_write=before_reservation_write,
+            )
 
         monkeypatch.setattr(capacity, "admit", admission_with_probe)
         reserved = intents.admissions.advance(run_id, reviewer["id"], principal="owner")
@@ -682,11 +876,97 @@ def test_reviewer_elapsed_source_expiry_after_capacity_lock_blocks_reservation(
         monkeypatch.setattr(routing.estimates, "estimate_locked", short_lived)
     actual = capacity.admit
 
-    def after_capacity_lock(request, *, command_key, before_reserve=None):
+    def after_capacity_lock(
+        request,
+        *,
+        command_key,
+        before_reserve=None,
+        after_capacity_facts=None,
+        before_reservation_write=None,
+    ):
         capacity.clock = lambda: 1001.0
-        return actual(request, command_key=command_key, before_reserve=before_reserve)
+        return actual(
+            request,
+            command_key=command_key,
+            before_reserve=before_reserve,
+            after_capacity_facts=after_capacity_facts,
+            before_reservation_write=before_reservation_write,
+        )
 
     monkeypatch.setattr(capacity, "admit", after_capacity_lock)
+    before = capacity.path.read_bytes()
+    blocked = intents.admissions.advance(run_id, queued["id"], principal="owner")
+    assert blocked["state"] == "blocked"
+    assert blocked["reason_codes"] == [reason]
+    assert capacity.path.read_bytes() == before
+
+
+@pytest.mark.parametrize(
+    ("source", "reason"),
+    [
+        ("qualification", "REVIEWER_QUALIFICATION_EXPIRED"),
+        ("estimate", "REVIEWER_ESTIMATE_EXPIRED"),
+        ("run", "RUN_DURATION_LIMIT"),
+    ],
+)
+def test_reviewer_final_capacity_boundary_rechecks_time_after_complete_capacity_facts(
+    binding_case, monkeypatch, source, reason
+):
+    _, qualification, intents, (run_id, _), _, _, _ = binding_case
+    _passed_reviewer_subject(binding_case)
+    routing, capacity = intents.admissions.routing, intents.admissions.routing.capacity
+    if source == "qualification":
+        qualification.mutate = lambda observed: observed["facts"].update(valid_until=1001.0)
+    elif source == "estimate":
+        original_estimate = routing.estimates.estimate_locked
+
+        def short_lived(*args, **kwargs):
+            result = deepcopy(original_estimate(*args, **kwargs))
+            if result["source_binding"] is not None:
+                result["source_binding"]["valid_until"] = 1001.0
+            return result
+
+        monkeypatch.setattr(routing.estimates, "estimate_locked", short_lived)
+    else:
+        with sqlite3.connect(intents.admissions.database) as db:
+            row = db.execute(
+                "SELECT data FROM run_execution_budgets WHERE run_id=?", (run_id,)
+            ).fetchone()
+            budget = json.loads(row[0])
+            budget.update(started_at=0.0, max_duration_seconds=1001)
+            db.execute(
+                "UPDATE run_execution_budgets SET data=? WHERE run_id=?",
+                (json.dumps(budget), run_id),
+            )
+    queued = intents.admissions.enqueue(
+        run_id, "review", principal="owner", command_key="final-capacity-" + source
+    )
+    actual = capacity.admit
+
+    def delayed_complete_capacity_facts(
+        request,
+        *,
+        command_key,
+        before_reserve=None,
+        after_capacity_facts=None,
+        before_reservation_write=None,
+    ):
+        assert after_capacity_facts is not None
+
+        def final_facts(boundary) -> None:
+            after_capacity_facts(boundary)
+            capacity.clock = lambda: 1001.0
+            routing.planner.clock = lambda: 1001.0
+
+        return actual(
+            request,
+            command_key=command_key,
+            before_reserve=before_reserve,
+            after_capacity_facts=final_facts,
+            before_reservation_write=before_reservation_write,
+        )
+
+    monkeypatch.setattr(capacity, "admit", delayed_complete_capacity_facts)
     before = capacity.path.read_bytes()
     blocked = intents.admissions.advance(run_id, queued["id"], principal="owner")
     assert blocked["state"] == "blocked"
@@ -787,8 +1067,17 @@ def test_reviewer_elapsed_source_expiry_after_capacity_effect_lock_blocks_execut
 
     @contextmanager
     def after_capacity_lock(*args, **kwargs):
-        capacity.clock = lambda: 1001.0
-        with actual(*args, **kwargs) as held:
+        after_capacity_facts = kwargs["after_capacity_facts"]
+
+        def delayed_complete_capacity_facts(boundary) -> None:
+            after_capacity_facts(boundary)
+            capacity.clock = lambda: 1001.0
+            routing.planner.clock = lambda: 1001.0
+
+        with actual(
+            *args,
+            **{**kwargs, "after_capacity_facts": delayed_complete_capacity_facts},
+        ) as held:
             yield held
 
     monkeypatch.setattr(capacity, "pre_effect_guard", after_capacity_lock)
@@ -842,9 +1131,22 @@ def test_reviewer_admission_reuses_one_exact_request_after_lost_reply(binding_ca
     capacity = intents.admissions.routing.capacity
     actual, calls = capacity.admit, []
 
-    def admit_then_lose(request, *, command_key, before_reserve=None):
+    def admit_then_lose(
+        request,
+        *,
+        command_key,
+        before_reserve=None,
+        after_capacity_facts=None,
+        before_reservation_write=None,
+    ):
         calls.append((request, command_key))
-        actual(request, command_key=command_key, before_reserve=before_reserve)
+        actual(
+            request,
+            command_key=command_key,
+            before_reserve=before_reserve,
+            after_capacity_facts=after_capacity_facts,
+            before_reservation_write=before_reservation_write,
+        )
         raise ConnectionResetError("fixture response lost after Capacity commit")
 
     monkeypatch.setattr(capacity, "admit", admit_then_lose)
@@ -867,9 +1169,22 @@ def test_concurrent_reviewer_advance_has_one_capacity_admission(binding_case, mo
     capacity = intents.admissions.routing.capacity
     actual, calls = capacity.admit, []
 
-    def observed(request, *, command_key, before_reserve=None):
+    def observed(
+        request,
+        *,
+        command_key,
+        before_reserve=None,
+        after_capacity_facts=None,
+        before_reservation_write=None,
+    ):
         calls.append((request, command_key))
-        return actual(request, command_key=command_key, before_reserve=before_reserve)
+        return actual(
+            request,
+            command_key=command_key,
+            before_reserve=before_reserve,
+            after_capacity_facts=after_capacity_facts,
+            before_reservation_write=before_reservation_write,
+        )
 
     monkeypatch.setattr(capacity, "admit", observed)
     reservations_before = len(capacity.snapshot()["reservations"])

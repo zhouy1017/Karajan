@@ -399,11 +399,36 @@ class ApprovedTaskAdmission:
                                 )
                                 admission_allowed(db, run, now=self.routing.planner.clock())
 
+                            capacity_boundary: Any | None = None
+
+                            def check_reviewer_capacity_route(boundary: Any) -> None:
+                                nonlocal capacity_boundary
+                                capacity_boundary = boundary
+                                self.routing.reviewer_capacity_boundary_guard(
+                                    current, request=request, boundary=boundary
+                                )
+
+                            def check_reviewer_final_reservation_boundary() -> None:
+                                if capacity_boundary is None:
+                                    raise RunError("REVIEWER_CAPACITY_BOUNDARY_INVALID")
+                                self.routing.reviewer_elapsed_boundary_guard(
+                                    current, clock=lambda: self.routing.capacity.clock()
+                                )
+                                self.routing.reviewer_capacity_boundary_guard(
+                                    current,
+                                    request=request,
+                                    boundary=capacity_boundary,
+                                    as_of=self.routing.capacity.clock(),
+                                )
+                                admission_allowed(db, run, now=self.routing.planner.clock())
+
                             try:
                                 receipt = self.routing.capacity.admit(
                                     request,
                                     command_key=key,
                                     before_reserve=check_budget_at_reservation,
+                                    after_capacity_facts=check_reviewer_capacity_route,
+                                    before_reservation_write=check_reviewer_final_reservation_boundary,
                                 )
                             except RunError as error:
                                 operation["state"] = "blocked"
@@ -624,10 +649,52 @@ class ApprovedTaskAdmission:
                             clock=lambda: self.routing.capacity.clock(),
                         )
 
+                    capacity_boundary: Any | None = None
+
+                    def check_reviewer_capacity_route(boundary: Any) -> None:
+                        nonlocal capacity_boundary
+                        capacity_boundary = boundary
+                        self.routing.reviewer_capacity_boundary_guard(
+                            current, request=request, boundary=boundary
+                        )
+
+                    def check_reviewer_final_effect_boundary() -> None:
+                        if capacity_boundary is None:
+                            raise RunError("REVIEWER_CAPACITY_BOUNDARY_INVALID")
+                        self.routing.reviewer_elapsed_boundary_guard(
+                            current, clock=lambda: self.routing.capacity.clock()
+                        )
+                        self.routing.reviewer_capacity_boundary_guard(
+                            current,
+                            request=request,
+                            boundary=capacity_boundary,
+                            as_of=self.routing.capacity.clock(),
+                        )
+                        now = self.routing.planner.clock()
+                        try:
+                            current_process(
+                                db,
+                                run,
+                                operation,
+                                attempt_id=operation["planned_attempt_id"],
+                                now=now,
+                            )
+                        except RunError as error:
+                            if error.code != "RUN_EXECUTION_CLAIM_REQUIRED":
+                                raise
+                            # #115 does not claim a native Reviewer process.
+                            # Before that later #116 claim exists, this is a
+                            # fresh-admission check; after it exists, the
+                            # exact original process remains valid even at the
+                            # final legal Run slot.
+                            admission_allowed(db, run, now=now)
+
                     with self.routing.capacity.pre_effect_guard(
                         capacity_receipt["admission_id"],
                         expected_request=request,
                         before_effect=check_reviewer_effect_boundary,
+                        after_capacity_facts=check_reviewer_capacity_route,
+                        before_effect_yield=check_reviewer_final_effect_boundary,
                     ) as capacity:
                         now = self.routing.planner.clock()
                         try:
