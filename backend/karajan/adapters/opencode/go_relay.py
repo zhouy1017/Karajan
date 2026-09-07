@@ -11,6 +11,7 @@ from __future__ import annotations
 import copy
 import hmac
 import json
+import os
 import re
 import secrets
 import socket
@@ -41,6 +42,7 @@ _REQUEST_LIMIT = 262_144
 _RESPONSE_LIMIT = 1_048_576
 _MAX_REQUESTS = 6
 _TOOLS = frozenset({"read", "edit"})
+_UNIX_RELAY_PATH_BYTES = 107
 _SESSION = re.compile(r"[A-Za-z0-9_-]{1,160}\Z")
 _COST = re.compile(r"(?:0|[1-9][0-9]{0,15})(?:\.[0-9]{1,24})?(?:[eE]([+-]?[0-9]{1,3}))?\Z")
 if sys.platform == "linux":
@@ -504,7 +506,13 @@ class GoRelay:
             if unix_socket is not None:
                 if sys.platform != "linux":
                     raise RuntimeError("LINUX_UNIX_RELAY_REQUIRED")
-                unix_socket = unix_socket.parent.resolve(strict=True) / unix_socket.name
+                parent = unix_socket.parent
+                parent_info = parent.lstat()
+                if stat.S_ISLNK(parent_info.st_mode) or not stat.S_ISDIR(parent_info.st_mode):
+                    raise RuntimeError("RELAY_SOCKET_PARENT_INVALID")
+                unix_socket = parent / unix_socket.name
+                if len(os.fsencode(str(unix_socket))) > _UNIX_RELAY_PATH_BYTES:
+                    raise RuntimeError("UNIX_RELAY_PATH_TOO_LONG")
                 if unix_socket.exists() or unix_socket.is_symlink():
                     raise RuntimeError("RELAY_SOCKET_PATH_EXISTS")
             owner = self

@@ -1,17 +1,30 @@
 """Public Task facade, actual stores; explicitly synthetic planning/qualification."""
 
+import json
 import subprocess
 import sys
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
 from karajan.adapters.opencode.go_journal import GoCallJournal
 from karajan.candidates import CandidateStore
-from karajan.execution import RunnerHost
-from karajan.orchestration.go_execution_intent import GoExecutionIntents, GoExecutionSource
-from karajan.orchestration.go_task_execution import ApprovedGoTaskExecution, GoTaskServices
+from karajan.execution import ProcessIdentity, ProcessSpec, RunnerHost
+from karajan.orchestration.go_execution_intent import (
+    GoExecutionIntents,
+    GoExecutionSource,
+    GoLaunchSpec,
+)
+from karajan.orchestration.go_task_execution import (
+    ApprovedGoTaskExecution,
+    GoTaskServices,
+    consume_go_task,
+)
 from karajan.runs import RunError
+from test_go_context import accounting as accounting
+from test_go_context import artifacts as artifacts
 from test_go_execution_intent import case, projected, ready, reservation
+from test_opencode_go_composition import runtime_artifact
 
 __all__ = ["case", "projected", "ready", "reservation"]
 
@@ -219,6 +232,104 @@ def test_direct_unregistered_caller_cannot_claim_or_resolve_material(
     current = facade.get(run_id, operation_id, principal="owner")
     assert current["execution"]["effect_claim"] is None
     assert not services.work_root.exists()
+
+
+def test_consume_preserves_native_failure_when_collector_rejects_missing_capture(
+    projected, tmp_path, accounting, artifacts, monkeypatch
+):
+    from karajan.isolation import go_task
+    from task_execution_fixture import approved_fixture
+    from test_task_workspace import git
+
+    repository = projected["repository"]
+    for name, data in {
+        "src/report.py": b"print('approved task')\n",
+        "tests/test_report.py": b"assert True\n",
+    }.items():
+        path = repository / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+    git(repository, "add", ".")
+    git(
+        repository,
+        "-c",
+        "user.name=Fixture",
+        "-c",
+        "user.email=fixture@example.invalid",
+        "commit",
+        "-qm",
+        "independent task baseline",
+    )
+    projects = projected["projects"]
+    current = projects.get(projected["project_id"])
+    projects.update(
+        current["id"],
+        {
+            "name": current["name"],
+            "base_ref": "main",
+            "target_branch": "main",
+            "allowed_target_branches": ["main"],
+        },
+        expected_revision=current["revision"],
+        principal="owner",
+        command_key="baseline-refresh",
+    )
+    services, run_id, op_id = approved_fixture(
+        projected, tmp_path, runtime_artifact(), accounting, artifacts, 1
+    )
+    spec = ProcessSpec((sys.executable, "-c", "pass"), tmp_path)
+    services.intents.launch_compiler = lambda op: GoLaunchSpec(spec, "c" * 64)
+    identity = ProcessIdentity(42, "explicit-formal-child-boundary")
+    monkeypatch.setattr(
+        services.intents.host, "wait_for_runner_registration", lambda *a, **k: identity
+    )
+
+    @contextmanager
+    def current_runner(*args, **kwargs):
+        yield identity
+
+    monkeypatch.setattr(services.intents.host, "current_runner_guard", current_runner)
+    facade = ApprovedGoTaskExecution(services)
+    facade.advance(run_id, op_id, principal="owner")
+    calls = []
+
+    def failed_native(*args, **kwargs):
+        calls.append(1)
+        return go_task.GoTaskResult(
+            None,
+            json.dumps(
+                {
+                    "schema_version": "karajan.go-native-task-observation.v1",
+                    "status": "failed",
+                    "reason_codes": ["TASK_EXECUTION_FAILED"],
+                    "error_type": "RuntimeError",
+                    "error_reason_code": "UNIX_RELAY_PATH_TOO_LONG",
+                    "native_cleanup": {"local_stop": "not_started"},
+                    "relay_cleanup": {"status": "closed"},
+                }
+            ),
+        )
+
+    monkeypatch.setattr("karajan.orchestration.go_task_execution.execute_go_task", failed_native)
+    with pytest.raises(RunError, match="TASK_STOPPED_CAPTURE_REQUIRED"):
+        consume_go_task(services, run_id, op_id, principal="owner")
+    current = facade.get(run_id, op_id, principal="owner")
+    assert len(calls) == 1
+    assert current["execution"]["failure_diagnostic"] == {
+        "schema_version": "karajan.go-task-failure-diagnostic.v1",
+        "intent_digest": current["execution"]["intent_digest"],
+        "reason_code": "UNIX_RELAY_PATH_TOO_LONG",
+        "error_type": "RuntimeError",
+        "native_cleanup": {"local_stop": "not_started"},
+        "relay_cleanup": {"status": "closed"},
+    }
+    assert current["execution"]["effect_claim"] is not None
+    grant = services.journal.snapshot(current["execution"]["intent"]["grant_id"])
+    assert grant["state"] == "revoked" and grant["request_count"] == 0
+    replay = consume_go_task(services, run_id, op_id, principal="owner")
+    assert len(calls) == 1
+    assert replay["execution"]["failure_diagnostic"] == current["execution"]["failure_diagnostic"]
+    assert replay["execution"]["effect_claim"] == current["execution"]["effect_claim"]
 
 
 def test_reconcile_recovers_original_committed_activation_without_activating(history):

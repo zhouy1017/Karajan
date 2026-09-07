@@ -26,6 +26,25 @@ from karajan.runs.planning import encoded, identifier
 from .admission import ApprovedTaskAdmission
 from .workspace import _approved_task
 
+_NATIVE_DIAGNOSTIC_CODES = frozenset(
+    {
+        "TASK_CAPTURE_NO_SUCCESSFUL_START",
+        "TASK_EXECUTION_TIMEOUT",
+        "TASK_NATIVE_CONFIGURATION_MISMATCH",
+        "TASK_NATIVE_START_NOT_OBSERVED",
+        "TASK_NATIVE_EXECUTION_INCOMPLETE",
+        "TASK_NATIVE_TOOL_INCOMPLETE",
+        "TASK_RELAY_REJECTED",
+        "TASK_SEND_GUARD_REJECTED",
+        "TASK_STOPPED_CAPTURE_UNAVAILABLE",
+        "TASK_PROVIDER_PROTOCOL_INCOMPLETE",
+        "TASK_LOCAL_CLEANUP_INCOMPLETE",
+        "UNIX_RELAY_PATH_TOO_LONG",
+        "UNCLASSIFIED_NATIVE_FAILURE",
+        "UNCLASSIFIED_NATIVE_STOP_FAILURE",
+    }
+)
+
 
 @dataclass(frozen=True)
 class GoExecutionSource:
@@ -557,6 +576,54 @@ class GoExecutionIntents:
                 and execution["phase"] != "candidate_recorded"
             ):
                 op["state"] = "execution_unknown"
+            return op
+
+    def record_failure_diagnostic(
+        self,
+        run_id: str,
+        operation_id: str,
+        *,
+        principal: str,
+        runner: ProcessIdentity,
+        reason_code: str,
+        error_type: str,
+        native_stop: Literal["confirmed", "not_started", "unknown"],
+        relay_status: Literal["closed", "unknown"],
+    ) -> dict[str, Any]:
+        """Persist only controller-selected producer facts for a failed attempt."""
+        _runner(runner)
+        if (
+            reason_code not in _NATIVE_DIAGNOSTIC_CODES
+            or re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,63}", error_type) is None
+            or type(native_stop) is not str
+            or native_stop not in {"confirmed", "not_started", "unknown"}
+            or type(relay_status) is not str
+            or relay_status not in {"closed", "unknown"}
+        ):
+            raise RunError("TASK_DIAGNOSTIC_NOT_ALLOWLISTED")
+        diagnostic = {
+            "schema_version": "karajan.go-task-failure-diagnostic.v1",
+            "intent_digest": None,
+            "reason_code": reason_code,
+            "error_type": error_type,
+            "native_cleanup": {"local_stop": native_stop},
+            "relay_cleanup": {"status": relay_status},
+        }
+        with self._edit(run_id, operation_id, principal, current_source=False) as (op, execution):
+            expected_claim = {
+                "intent_digest": execution["intent_digest"],
+                "runner": asdict(runner),
+            }
+            if (
+                execution["phase"] != "effect_claimed"
+                or execution["effect_claim"] != expected_claim
+            ):
+                raise RunError("TASK_EXECUTION_CLAIM_NOT_CURRENT")
+            diagnostic["intent_digest"] = execution["intent_digest"]
+            prior = execution.get("failure_diagnostic")
+            if prior is not None and prior != diagnostic:
+                raise RunError("TASK_DIAGNOSTIC_IDENTITY_CONFLICT")
+            execution["failure_diagnostic"] = diagnostic
             return op
 
     def record_cleanup(self, run_id: str, operation_id: str, *, principal: str) -> dict[str, Any]:
