@@ -49,7 +49,9 @@ def validate_request(method: str, route: str, body: object, sessions: set[str]) 
                 and set(parts[0]) == {"type", "text"}
                 and parts[0]["type"] == "text"
                 and isinstance(parts[0]["text"], str)
-                and 0 < len(parts[0]["text"]) <= 8192
+                and 0
+                < len(parts[0]["text"])
+                <= (262_144 if Path("/control/no-tools").is_file() else 8192)
             )
     if not valid:
         raise ValueError("MANAGEMENT_REQUEST_NOT_ALLOWED")

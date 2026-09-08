@@ -9,12 +9,10 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any
-
 
 SCOPE = "commander_planning.v1"
 AUTH_REF = "secret:go-commander"
@@ -91,12 +89,9 @@ def _git(repository: Path, *args: str) -> None:
 def _seed_repository(root: Path) -> Path:
     repository = root / "repository"
     repository.mkdir(mode=0o700)
-    (repository / "greeting.py").write_text(
-        'def greet(name: str) -> str:\n'
-        '    """Return Guest for an empty name and preserve a named greeting."""\n'
-        '    return f"Hello, {name or \'Guest\'}!"\n',
-        encoding="utf-8",
-    )
+    with (repository / "greeting.py").open("w", encoding="utf-8", newline="\n") as seed:
+        seed.write("def greet(name: str) -> str:\n")
+        seed.write('    return f"Hello, {name}!"\n')
     _git(repository, "init", "--initial-branch=main")
     _git(repository, "add", "greeting.py")
     subprocess.run(
@@ -133,9 +128,7 @@ def _configuration() -> dict[str, Any]:
         auth_mode="api_key",
         native_settings={"suite_ref": SUITE_REF},
     )
-    configuration["resources"]["accounts"][0].update(
-        provider_id=SOURCE_ID, secret_ref=AUTH_REF
-    )
+    configuration["resources"]["accounts"][0].update(provider_id=SOURCE_ID, secret_ref=AUTH_REF)
     configuration["approved_profile_refs"] = [{"id": "commander", "revision": 1}]
     configuration["rulebook"]["revision"] = 2
     for refs in configuration["rulebook"]["profile_groups"].values():
@@ -144,7 +137,7 @@ def _configuration() -> dict[str, Any]:
     return configuration
 
 
-def _live(values: dict[str, Path]) -> dict[str, Any]:
+def _live(values: dict[str, Path], *, qualifier: Any | None = None) -> dict[str, Any]:
     root = values["directory"].resolve()
     if root.exists() or root.is_symlink():
         raise ValueError("NEW_DEDICATED_DIRECTORY_REQUIRED")
@@ -157,7 +150,6 @@ def _live(values: dict[str, Path]) -> dict[str, Any]:
     repository = _seed_repository(root)
 
     sys.path.insert(0, str(_repo_root() / "backend"))
-    from karajan.adapters.opencode.go_journal import GoCallJournal
     from karajan.orchestration.go_commander_qualification import (
         CommanderCredentialSource,
         CommanderQualificationSettings,
@@ -196,6 +188,9 @@ def _live(values: dict[str, Path]) -> dict[str, Any]:
     control = (root / "control").absolute()
     journal_path = root / "commander-journal.sqlite"
     work_root = root / "commander-work"
+    for directory in (control, work_root):
+        directory.mkdir(mode=0o700)
+    journal_path.touch(mode=0o600)
     settings = CommanderQualificationSettings(
         values["runtime"].resolve(),
         values["tokenizer"].resolve(),
@@ -214,7 +209,7 @@ def _live(values: dict[str, Path]) -> dict[str, Any]:
         project["id"], AUTH_REF, principal="owner", command_key="register-commander-credential"
     )
     store = open_go_commander_qualification_store(projects, control_directory=control)
-    record = qualify_commander_planning(
+    record = (qualifier or qualify_commander_planning)(
         store,
         project["id"],
         {"id": "commander", "revision": 1},
@@ -222,9 +217,8 @@ def _live(values: dict[str, Path]) -> dict[str, Any]:
         command_key="qualify-commander-planning",
         validity_seconds=3600,
     )
-    start = store.get_command_start(
-        project["id"], "qualify-commander-planning", principal="owner"
-    )
+    start = store.get_command_start(project["id"], "qualify-commander-planning", principal="owner")
+    scenarios = start.get("binding", {}).get("execution_start", {}).get("scenarios", [])
     return {
         "schema_version": "karajan.business-planning-demo.v1",
         "scope": SCOPE,
@@ -241,9 +235,7 @@ def _live(values: dict[str, Path]) -> dict[str, Any]:
         "start": {
             "id": start.get("id"),
             "completed": start.get("completed"),
-            "request_counts": [
-                row.get("request_count") for row in start.get("binding", {}).get("execution_start", {}).get("scenarios", [])
-            ],
+            "request_counts": [row.get("request_count") for row in scenarios],
         },
         "dispatch_eligible": False,
         "business_execution": "owned by web planning factory",
@@ -265,15 +257,19 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps({"status": "invalid", "errors": errors, "paths": _public_paths(values)}))
         return 2
     if not args.live:
-        print(json.dumps({
-            "status": "not_run",
-            "reason": "EXPLICIT_LIVE_REQUIRED",
-            "scope": SCOPE,
-            "paths": _public_paths(values),
-            "credential_file_checked": False,
-            "provider_called": False,
-            "business_execution": "owned by web planning factory",
-        }))
+        print(
+            json.dumps(
+                {
+                    "status": "not_run",
+                    "reason": "EXPLICIT_LIVE_REQUIRED",
+                    "scope": SCOPE,
+                    "paths": _public_paths(values),
+                    "credential_file_checked": False,
+                    "provider_called": False,
+                    "business_execution": "owned by web planning factory",
+                }
+            )
+        )
         return 0
     try:
         result = _live(values)

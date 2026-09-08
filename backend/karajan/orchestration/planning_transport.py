@@ -25,6 +25,8 @@ import httpx
 from karajan.adapters.opencode.go_context import GoRequestAccounting
 from karajan.adapters.opencode.go_journal import GoCallJournal
 from karajan.adapters.opencode.go_relay import GoPlanningRelayContext, GoRelay, GoRelayAuthorization
+from karajan.isolation.go_task import _cleanup_relay_socket_root, _relay_socket_root
+from karajan.isolation.opencode_runtime import IsolatedOpenCode
 from karajan.runs import RunError
 from karajan.runs.planning import digest, identifier
 
@@ -239,9 +241,14 @@ class FixtureGoPlanningProducer:
         accounting: GoRequestAccounting,
         *,
         upstream: Callable[[httpx.Request], httpx.Response],
+        runtime: Path | None = None,
+        work_root: Path | None = None,
         now: Callable[[], float] = time.time,
     ) -> None:
         self.journal, self.accounting, self.upstream, self.now = journal, accounting, upstream, now
+        self.runtime, self.work_root = runtime, work_root
+        if (runtime is None) != (work_root is None):
+            raise RunError("PLANNING_NATIVE_CONFIGURATION_INVALID")
 
     def source(self, binding: dict[str, Any]) -> dict[str, Any]:
         return {
@@ -322,22 +329,75 @@ class FixtureGoPlanningProducer:
                 transport=httpx.MockTransport(self.upstream), trust_env=False
             ),
         )
-        relay.start()
+        socket_root = None
+        native = None
+        if self.runtime is None:
+            relay.start()
+        else:
+            socket_root = _relay_socket_root()
+            socket = socket_root.path / "inference.sock"
+            relay.start(unix_socket=socket)
+            directory = self.work_root / ("planning-" + binding["execution_id"])
+            native = IsolatedOpenCode(
+                self.runtime, directory, socket, relay.capability, projection=[], no_tools=True
+            )
         try:
-            with httpx.Client(trust_env=False, timeout=10) as client:
-                response = client.post(
-                    relay.url + "/chat/completions",
-                    headers={
-                        "Authorization": "Bearer " + relay.capability,
-                        "x-opencode-session": "planning_" + uuid4().hex,
-                    },
-                    content=model_input.request_bytes,
-                )
-            if response.status_code != 200:
-                raise RunError("PLANNING_TRANSPORT_REJECTED")
-            return _sse_content(response.content)
+            if native is None:
+                with httpx.Client(trust_env=False, timeout=10) as client:
+                    response = client.post(
+                        relay.url + "/chat/completions",
+                        headers={
+                            "Authorization": "Bearer " + relay.capability,
+                            "x-opencode-session": "planning_" + uuid4().hex,
+                        },
+                        content=model_input.request_bytes,
+                    )
+                if response.status_code != 200:
+                    raise RunError("PLANNING_TRANSPORT_REJECTED")
+                return _sse_content(response.content)
+            return self._native_output(native, model_input)
         finally:
+            if native is not None:
+                native.close()
             relay.close()
+            if socket_root is not None:
+                _cleanup_relay_socket_root(socket_root)
+
+    @staticmethod
+    def _native_output(native: IsolatedOpenCode, model_input: PlanningModelInput) -> bytes:
+        started = native.start()
+        if started.get("state") != "running":
+            raise RunError("PLANNING_NATIVE_START_FAILED")
+        session = native.request("POST", "/session", {"title": "Planning", "agent": "probe"})
+        native.request(
+            "POST",
+            f"/session/{session['id']}/prompt_async",
+            {
+                "agent": "probe",
+                "model": {"providerID": "opencode-go", "modelID": "glm-5.3-flash"},
+                "parts": [{"type": "text", "text": model_input.request["messages"][1]["content"]}],
+            },
+        )
+        deadline = time.monotonic() + 90
+        while time.monotonic() < deadline:
+            messages = native.request("GET", f"/session/{session['id']}/message")
+            complete = [
+                message
+                for message in messages
+                if message.get("info", {}).get("role") == "assistant"
+                and message.get("info", {}).get("time", {}).get("completed")
+            ]
+            if complete:
+                text = "".join(
+                    part.get("text", "")
+                    for part in complete[-1].get("parts", [])
+                    if part.get("type") == "text" and isinstance(part.get("text"), str)
+                )
+                if complete[-1].get("info", {}).get("finish") == "stop" and text:
+                    return text.encode("utf-8")
+                raise RunError("PLANNING_NATIVE_OUTPUT_INVALID")
+            time.sleep(0.1)
+        raise RunError("PLANNING_NATIVE_TIMEOUT")
 
 @contextmanager
 def _allowed() -> Iterator[None]:
