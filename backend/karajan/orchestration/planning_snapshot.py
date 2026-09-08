@@ -6,6 +6,7 @@ import os
 import sqlite3
 import stat
 import subprocess
+import sys
 import tempfile
 import time
 from contextlib import nullcontext
@@ -24,6 +25,28 @@ _MAX_BYTES = 8_000_000
 _MOVEFILE_WRITE_THROUGH = 0x8
 _ERROR_FILE_EXISTS = 80
 _ERROR_ALREADY_EXISTS = 183
+
+
+if sys.platform == "win32":
+    from ctypes import WinDLL, WinError, c_int, c_uint32, c_wchar_p, get_last_error
+
+    def _move_file_write_through_windows(source: str, target: Path) -> None:
+        """Atomically publish a new Windows artifact without replacing one."""
+        move_file = WinDLL("kernel32", use_last_error=True).MoveFileExW
+        move_file.argtypes = [c_wchar_p, c_wchar_p, c_uint32]
+        move_file.restype = c_int
+        if move_file(source, str(target), _MOVEFILE_WRITE_THROUGH):
+            return
+        error = get_last_error()
+        if error in {_ERROR_FILE_EXISTS, _ERROR_ALREADY_EXISTS}:
+            raise FileExistsError(error, "artifact already exists", str(target))
+        raise WinError(error)
+
+
+else:
+
+    def _move_file_write_through_windows(source: str, target: Path) -> None:
+        raise OSError("Windows artifact publication required")
 
 
 def snapshot_database(control_directory: Path) -> Path:
@@ -232,17 +255,7 @@ class PlanningRepositorySnapshotStore:
     @staticmethod
     def _move_file_write_through(source: str, target: Path) -> None:
         """Atomically publish a new Windows artifact without replacing one."""
-        import ctypes
-
-        move_file = ctypes.WinDLL("kernel32", use_last_error=True).MoveFileExW
-        move_file.argtypes = [ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_uint32]
-        move_file.restype = ctypes.c_int
-        if move_file(source, str(target), _MOVEFILE_WRITE_THROUGH):
-            return
-        error = ctypes.get_last_error()
-        if error in {_ERROR_FILE_EXISTS, _ERROR_ALREADY_EXISTS}:
-            raise FileExistsError(error, "artifact already exists", str(target))
-        raise ctypes.WinError(error)
+        _move_file_write_through_windows(source, target)
 
     def _published_content(self, target: Path, content: bytes) -> bool:
         """Accept only our short-lived link(2) overlap, never a durable alias."""

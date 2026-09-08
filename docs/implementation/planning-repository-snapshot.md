@@ -123,7 +123,16 @@ Git-path and unconnected-Journal P2s (plus nonblocking fixture duplication),
 while Spec recorded command reservation, complete-manifest sealing, Project
 publication revalidation, and connected zero-effect evidence P2s. Those red
 findings are retained as provenance; predecessor test results do not override
-them.
+them. The preserved review-fix attribution is
+`87d8ed88345f7724f3d7808dabcb82f0f4771c02` (`fix: seal planning snapshot
+publication`). Its PR #148 remote Ubuntu CI run `34218759910`, job
+`102036772358`, failed at 2026-09-08 11:05:51 UTC before tests: Linux mypy
+reported that its unguarded Windows FFI references lacked `ctypes.WinDLL`,
+`ctypes.get_last_error`, and `ctypes.WinError`. The same push run
+`34218754710` failed likewise. This is a candidate failure, not infrastructure
+or a test-timeout result; the follow-up uses platform-guarded, typed ctypes
+bindings while retaining the Windows write-through no-replace publication
+protocol.
 
 | Original acceptance condition | Actual evidence | Result |
 | --- | --- | --- |
