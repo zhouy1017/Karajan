@@ -1,5 +1,6 @@
 """Private immutable content-addressed repository snapshots for planning."""
 
+import errno
 import hashlib
 import json
 import os
@@ -8,7 +9,6 @@ import stat
 import subprocess
 import sys
 import tempfile
-import time
 from contextlib import nullcontext
 from pathlib import Path
 from typing import Any
@@ -22,9 +22,12 @@ _NAME = "planning-repository-snapshots.sqlite"
 _ARTIFACTS = "planning-repository-snapshot-blobs"
 _MAX_FILES = 2_000
 _MAX_BYTES = 8_000_000
+_MAX_GIT_OBJECT_BYTES = 8_000_000
 _MOVEFILE_WRITE_THROUGH = 0x8
 _ERROR_FILE_EXISTS = 80
 _ERROR_ALREADY_EXISTS = 183
+_AT_FDCWD = -100
+_RENAME_NOREPLACE = 1
 
 
 if sys.platform == "win32":
@@ -42,11 +45,43 @@ if sys.platform == "win32":
             raise FileExistsError(error, "artifact already exists", str(target))
         raise WinError(error)
 
+    def _move_file_no_replace_posix(source: str, target: Path) -> None:
+        raise OSError("POSIX artifact publication required")
+
 
 else:
 
     def _move_file_write_through_windows(source: str, target: Path) -> None:
         raise OSError("Windows artifact publication required")
+
+    def _move_file_no_replace_posix(source: str, target: Path) -> None:
+        """Atomically install ``source`` without ever replacing ``target``.
+
+        Linux ``renameat2(RENAME_NOREPLACE)`` turns a prepared, flushed
+        temporary file into its CAS name in one directory-entry operation.
+        Unlike link-then-unlink, a killed publisher cannot leave a second
+        hardlink which makes an otherwise valid digest unrecoverable.  Other
+        POSIX kernels have no equivalent primitive in this boundary, so fail
+        closed rather than reopening the crash window with a link fallback.
+        """
+        if not sys.platform.startswith("linux"):
+            raise OSError("atomic no-replace publication unavailable")
+        try:
+            from ctypes import CDLL, c_char_p, c_int, get_errno
+
+            renameat2 = CDLL(None, use_errno=True).renameat2
+            renameat2.argtypes = [c_int, c_char_p, c_int, c_char_p, c_int]
+            renameat2.restype = c_int
+        except (AttributeError, OSError):
+            raise OSError("atomic no-replace publication unavailable") from None
+        if renameat2(
+            _AT_FDCWD, os.fsencode(source), _AT_FDCWD, os.fsencode(target), _RENAME_NOREPLACE
+        ) == 0:
+            return
+        error = get_errno()
+        if error == errno.EEXIST:
+            raise FileExistsError(error, "artifact already exists", str(target))
+        raise OSError(error, "renameat2", str(target))
 
 
 def snapshot_database(control_directory: Path) -> Path:
@@ -233,7 +268,9 @@ class PlanningRepositorySnapshotStore:
             raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE") from None
 
     @classmethod
-    def _git(cls, root: Path, *args: str) -> bytes:
+    def _git(
+        cls, root: Path, *args: str, limit: int | None = None, input: bytes | None = None
+    ) -> bytes:
         source_objects = cls._git_objects(root)
         env = {
             k: os.environ[k]
@@ -260,8 +297,13 @@ class PlanningRepositorySnapshotStore:
             (reader / "refs" / "heads").mkdir(parents=True)
             (reader / "refs" / "tags").mkdir(parents=True)
             (reader / "HEAD").write_text("ref: refs/heads/empty\n", encoding="ascii")
+            object_format = "sha256" if any(len(arg) == 64 for arg in args) else "sha1"
             (reader / "config").write_text(
-                "[core]\nrepositoryformatversion = 0\nbare = true\n", encoding="ascii"
+                "[core]\nrepositoryformatversion = 1\nbare = true\n"
+                "[extensions]\nobjectformat = "
+                + object_format
+                + "\n",
+                encoding="ascii",
             )
             env.update(
                 {
@@ -271,31 +313,147 @@ class PlanningRepositorySnapshotStore:
                 }
             )
             try:
-                r = subprocess.run(
-                    [
-                        "git",
-                        "--no-replace-objects",
-                        "--git-dir=" + str(reader),
-                        "-c",
-                        "core.hooksPath=" + os.devnull,
-                        "-c",
-                        "core.fsmonitor=false",
-                        "-c",
-                        "credential.helper=",
-                        "-c",
-                        "protocol.allow=never",
-                        *args,
-                    ],
-                    capture_output=True,
-                    timeout=10,
-                    env=env,
-                    check=False,
-                )
+                command = [
+                    "git",
+                    "--no-replace-objects",
+                    "--git-dir=" + str(reader),
+                    "-c",
+                    "core.hooksPath=" + os.devnull,
+                    "-c",
+                    "core.fsmonitor=false",
+                    "-c",
+                    "credential.helper=",
+                    "-c",
+                    "protocol.allow=never",
+                    *args,
+                ]
+                if limit is None:
+                    completed = subprocess.run(
+                        command, input=input, capture_output=True, timeout=10, env=env, check=False
+                    )
+                    output = completed.stdout
+                    returncode = completed.returncode
+                else:
+                    process = subprocess.Popen(
+                        command,
+                        stdin=subprocess.PIPE if input is not None else subprocess.DEVNULL,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.DEVNULL,
+                        env=env,
+                    )
+                    assert process.stdout is not None
+                    if input is not None:
+                        assert process.stdin is not None
+                        process.stdin.write(input)
+                        process.stdin.close()
+                    output = process.stdout.read(limit + 1)
+                    if len(output) > limit:
+                        process.kill()
+                        process.wait(timeout=10)
+                        raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE")
+                    returncode = process.wait(timeout=10)
             except (OSError, subprocess.TimeoutExpired):
                 raise RunError("PLANNING_SNAPSHOT_GIT_UNAVAILABLE") from None
-        if r.returncode:
+        if returncode:
             raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE")
-        return r.stdout
+        return output
+
+    @staticmethod
+    def _object_hash(oid: str, kind: str, content: bytes) -> str:
+        """Return the Git object ID for a bounded canonical object body."""
+        algorithm = "sha1" if len(oid) == 40 else "sha256"
+        hashed = hashlib.new(algorithm)
+        hashed.update(kind.encode("ascii") + b" " + str(len(content)).encode("ascii") + b"\0")
+        hashed.update(content)
+        return hashed.hexdigest()
+
+    @classmethod
+    def _git_object(cls, root: Path, oid: str, kind: str) -> bytes:
+        """Read one bounded object and bind its type, bytes, and name together."""
+        if not cls._git_oid(oid):
+            raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE")
+        content = cls._git(root, "cat-file", kind, oid, limit=_MAX_GIT_OBJECT_BYTES)
+        if cls._object_hash(oid, kind, content) != oid:
+            raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE")
+        return content
+
+    @classmethod
+    def _git_tree_pair(cls, root: Path, oids: list[str]) -> dict[str, bytes]:
+        """Read at most two child trees in one bounded, config-isolated Git call."""
+        if not 1 <= len(oids) <= 2 or any(not cls._git_oid(oid) for oid in oids):
+            raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE")
+        output = cls._git(
+            root,
+            "cat-file",
+            "--batch",
+            input="".join(oid + "\n" for oid in oids).encode("ascii"),
+            limit=len(oids) * (_MAX_GIT_OBJECT_BYTES + 200),
+        )
+        result: dict[str, bytes] = {}
+        offset = 0
+        try:
+            for oid in oids:
+                end = output.index(b"\n", offset)
+                received, kind, raw_size = output[offset:end].decode("ascii").split(" ")
+                size = int(raw_size)
+                start = end + 1
+                finish = start + size
+                if (
+                    received != oid
+                    or kind != "tree"
+                    or size < 0
+                    or size > _MAX_GIT_OBJECT_BYTES
+                    or finish >= len(output)
+                    or output[finish : finish + 1] != b"\n"
+                ):
+                    raise ValueError()
+                content = output[start:finish]
+                if cls._object_hash(oid, "tree", content) != oid:
+                    raise ValueError()
+                result[oid] = content
+                offset = finish + 1
+            if offset != len(output):
+                raise ValueError()
+        except (UnicodeError, ValueError):
+            raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE") from None
+        return result
+
+    @classmethod
+    def _tree_entries(cls, tree: bytes, oid_length: int) -> list[tuple[str, str, str]]:
+        """Parse a verified Git tree without making a pathspec authoritative."""
+        raw_oid_length = oid_length // 2
+        entries: list[tuple[str, str, str]] = []
+        offset = 0
+        while offset < len(tree):
+            space = tree.find(b" ", offset)
+            nul = tree.find(b"\0", space + 1)
+            if space < 1 or nul < space + 2 or nul + 1 + raw_oid_length > len(tree):
+                raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE")
+            try:
+                mode = tree[offset:space].decode("ascii")
+                name = tree[space + 1 : nul].decode("utf-8", "strict")
+            except UnicodeError:
+                raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE") from None
+            if not name or "/" in name or name in {".", ".."}:
+                raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE")
+            raw_oid = tree[nul + 1 : nul + 1 + raw_oid_length]
+            entries.append((mode, name, raw_oid.hex()))
+            offset = nul + 1 + raw_oid_length
+        return entries
+
+    @classmethod
+    def _base_tree(cls, root: Path, base: str) -> tuple[str, bytes]:
+        commit = cls._git_object(root, base, "commit")
+        first, separator, _ = commit.partition(b"\n")
+        if not separator or not first.startswith(b"tree "):
+            raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE")
+        try:
+            tree = first.removeprefix(b"tree ").decode("ascii")
+        except UnicodeError:
+            raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE") from None
+        if len(tree) != len(base) or not cls._git_oid(tree):
+            raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE")
+        return tree, cls._git_object(root, tree, "tree")
 
     def _sync_artifacts(self, target: Path | None = None) -> None:
         """Durably record a blob directory entry before a SQLite reference.
@@ -327,23 +485,19 @@ class PlanningRepositorySnapshotStore:
         _move_file_write_through_windows(source, target)
 
     def _published_content(self, target: Path, content: bytes) -> bool:
-        """Accept only our short-lived link(2) overlap, never a durable alias."""
-        for _ in range(100):
-            if self.private_root is not None:
-                self._validate_private(True)
-            info = target.lstat()
-            if stat.S_ISREG(info.st_mode) and not stat.S_ISLNK(info.st_mode):
-                if info.st_nlink == 1:
-                    with target.open("rb") as stream:
-                        return stream.read(len(content) + 1) == content
-                # A competing publisher owns a temporary link until it unlinks
-                # it.  Do not mistake that exact protocol interval for an
-                # attacker-created alias, but never accept it as final state.
-                if info.st_nlink == 2:
-                    time.sleep(0.005)
-                    continue
+        """Accept a single-name CAS artifact only, never a foreign alias."""
+        if self.private_root is not None:
+            self._validate_private(True)
+        info = target.lstat()
+        if (
+            not stat.S_ISREG(info.st_mode)
+            or stat.S_ISLNK(info.st_mode)
+            or info.st_nlink != 1
+            or info.st_size != len(content)
+        ):
             raise ValueError()
-        raise ValueError()
+        with target.open("rb") as stream:
+            return stream.read(len(content) + 1) == content
 
     def _publish(self, sha: str, content: bytes) -> None:
         if self.private_root is not None:
@@ -376,11 +530,14 @@ class PlanningRepositorySnapshotStore:
                         pass
             else:
                 try:
-                    os.link(name, target)
+                    _move_file_no_replace_posix(name, target)
                 except FileExistsError:
                     pass
                 finally:
-                    os.unlink(name)
+                    try:
+                        os.unlink(name)
+                    except FileNotFoundError:
+                        pass
             if not self._published_content(target, content):
                 raise ValueError()
             self._sync_artifacts(target)
@@ -420,35 +577,52 @@ class PlanningRepositorySnapshotStore:
         matched = {p: False for p in paths}
         total = 0
         # Git and complete enumeration are deliberately outside both SQLite writers.
-        for entry in self._git(root, "ls-tree", "-r", "-z", "--full-tree", repo["base_sha"]).split(
-            b"\0"
-        ):
-            if not entry:
-                continue
-            head, raw = entry.split(b"\t", 1)
-            mode, kind, _ = head.decode("ascii").split(" ")
-            path = raw.decode("utf-8", "strict")
-            if not self._allowed(path, paths):
-                continue
-            # Git permits names that the snapshot protocol deliberately cannot
-            # represent (notably a backslash).  Validate selected tree entries
-            # before reading blobs or publishing any artifact so a bad member
-            # cannot occupy an unreadable immutable binding.
-            self._paths([path])
-            if kind != "blob" or mode not in {"100644", "100755"}:
-                raise RunError("PLANNING_SNAPSHOT_ENTRY_UNSUPPORTED")
-            for x in matched:
-                matched[x] = matched[x] or self._within(path, x)
-            size = int(
-                self._git(root, "cat-file", "-s", repo["base_sha"] + ":" + path).decode("ascii")
-            )
-            total += size
-            if len(rows) >= _MAX_FILES or total > _MAX_BYTES:
-                raise RunError("PLANNING_SNAPSHOT_LIMIT_EXCEEDED")
-            content = self._git(root, "cat-file", "blob", repo["base_sha"] + ":" + path)
-            if len(content) != size:
-                raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE")
-            rows.append((path, mode, content))
+        # Do not ask a tree-ish resolver for ``base:path``: the registered commit,
+        # every selected tree, and every selected blob are each read by their
+        # original object name and independently rehashed before their bytes can
+        # enter the new SHA-256 CAS seal.
+        base_tree, raw_tree = self._base_tree(root, repo["base_sha"])
+        oid_length = len(repo["base_sha"])
+
+        def visit(tree_oid: str, tree: bytes, parent: str) -> None:
+            nonlocal total
+            entries = self._tree_entries(tree, oid_length)
+            selected = []
+            for mode, name, oid in entries:
+                path = name if not parent else parent + "/" + name
+                relevant = any(
+                    self._within(path, approved) or self._within(approved, path)
+                    for approved in paths
+                )
+                if not relevant:
+                    continue
+                selected.append((mode, path, oid))
+            child_tree_oids = [oid for mode, _, oid in selected if mode in {"40000", "040000"}]
+            child_trees: dict[str, bytes] = {}
+            for index in range(0, len(child_tree_oids), 2):
+                pair = child_tree_oids[index : index + 2]
+                child_trees.update(self._git_tree_pair(root, pair))
+            for mode, path, oid in selected:
+                # Git permits names that the snapshot protocol deliberately
+                # cannot represent. Validate all selected path components before
+                # a child object read or any CAS publication.
+                self._paths([path])
+                if mode in {"40000", "040000"}:
+                    visit(oid, child_trees[oid], path)
+                    continue
+                if not self._allowed(path, paths):
+                    continue
+                if mode not in {"100644", "100755"}:
+                    raise RunError("PLANNING_SNAPSHOT_ENTRY_UNSUPPORTED")
+                content = self._git_object(root, oid, "blob")
+                total += len(content)
+                if len(rows) >= _MAX_FILES or total > _MAX_BYTES:
+                    raise RunError("PLANNING_SNAPSHOT_LIMIT_EXCEEDED")
+                for approved in matched:
+                    matched[approved] = matched[approved] or self._within(path, approved)
+                rows.append((path, mode, content))
+
+        visit(base_tree, raw_tree, "")
         if not rows or not all(matched.values()):
             raise RunError("PLANNING_SNAPSHOT_PATH_EMPTY")
         if not self._sha256(binding.get("requirement_sha256")) or not self._sha256(

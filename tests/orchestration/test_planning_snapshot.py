@@ -3,6 +3,7 @@ import os
 import sqlite3
 import stat
 import subprocess
+import zlib
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from threading import Event
@@ -18,6 +19,24 @@ def _git(root: Path, *args: str) -> str:
     return subprocess.run(
         ["git", "-C", str(root), *args], check=True, capture_output=True, text=True
     ).stdout.strip()
+
+
+def _replace_loose_object_same_length(root: Path, oid: str, kind: str) -> tuple[bytes, int]:
+    """Corrupt the actual loose object named by ``oid`` without a replace ref."""
+    original = subprocess.run(
+        ["git", "-C", str(root), "cat-file", kind, oid], check=True, capture_output=True
+    ).stdout
+    assert original
+    changed = original[:-1] + (b"X" if original[-1:] != b"X" else b"Y")
+    assert len(changed) == len(original)
+    pathname = root / ".git" / "objects" / oid[:2] / oid[2:]
+    assert pathname.is_file()
+    original_mode = stat.S_IMODE(pathname.stat().st_mode)
+    pathname.chmod(original_mode | stat.S_IWRITE)
+    pathname.write_bytes(
+        zlib.compress(kind.encode() + b" " + str(len(changed)).encode() + b"\0" + changed)
+    )
+    return original, original_mode
 
 
 def test_base_tree_snapshot_is_immutable_and_directory_paths_are_expanded(tmp_path: Path):
@@ -90,6 +109,66 @@ def test_base_tree_snapshot_is_immutable_and_directory_paths_are_expanded(tmp_pa
     # A recomputed self-hash cannot replace the independent full-manifest seal.
     with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_CHANGED$"):
         store.read(binding)
+
+
+@pytest.mark.parametrize(
+    ("kind", "object_expression"),
+    [("blob", "HEAD:src/a.txt"), ("tree", "HEAD^{tree}"), ("commit", "HEAD")],
+)
+def test_freeze_rejects_same_length_replaced_loose_git_object(
+    tmp_path: Path, kind: str, object_expression: str
+) -> None:
+    """The registered base is object identity, not cat-file's unverified body."""
+    root = tmp_path / "repo"
+    root.mkdir()
+    _git(root, "init")
+    (root / "src").mkdir()
+    source = root / "src" / "a.txt"
+    source.write_bytes(b"base\n")
+    original_bytes, original_mode = source.read_bytes(), stat.S_IMODE(source.stat().st_mode)
+    _git(root, "add", ".")
+    _git(root, "-c", "user.name=x", "-c", "user.email=x@y.z", "commit", "-m", "base")
+    base = _git(root, "rev-parse", "HEAD")
+    oid = _git(root, "rev-parse", object_expression)
+    original, object_mode = _replace_loose_object_same_length(root, oid, kind)
+    binding = {
+        "execution_id": "execution",
+        "run_id": "run",
+        "intent_id": "intent",
+        "requirement_sha256": "a" * 64,
+        "authorization_ceiling_sha256": "c" * 64,
+    }
+    run = {
+        "project_id": "project",
+        "configuration_snapshot": {"project_revision": 1},
+        "authorization_ceiling": {"read_paths": ["src"]},
+    }
+    project = {
+        "id": "project",
+        "revision": 1,
+        "repository": {
+            "root": str(root.resolve()),
+            "identity_sha256": "b" * 64,
+            "base_sha": base,
+        },
+    }
+    store = PlanningRepositorySnapshotStore(tmp_path / "snapshots.sqlite")
+    with pytest.raises(RunError, match="^PLANNING_SNAPSHOT_BASE_UNAVAILABLE$"):
+        store.freeze(binding, run, project)
+    assert source.read_bytes() == original_bytes
+    assert stat.S_IMODE(source.stat().st_mode) == original_mode
+    with sqlite3.connect(store.database) as db:
+        assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 0
+        assert db.execute("SELECT count(*) FROM files").fetchone()[0] == 0
+    assert list(store.artifacts.iterdir()) == []
+
+    pathname = root / ".git" / "objects" / oid[:2] / oid[2:]
+    pathname.write_bytes(
+        zlib.compress(kind.encode() + b" " + str(len(original)).encode() + b"\0" + original)
+    )
+    pathname.chmod(object_mode)
+    assert store.freeze(binding, run, project)["base_sha"] == base
+    assert store.read(binding)["content"] == {"src/a.txt": original_bytes}
 
 
 def test_unapproved_or_symlink_base_entry_is_rejected(tmp_path: Path):
@@ -480,10 +559,10 @@ def test_real_store_instances_concurrently_preserve_one_original_snapshot(tmp_pa
         assert db.execute("SELECT count(*) FROM files").fetchone()[0] == 1
 
 
-def test_concurrent_publish_waits_only_for_its_temporary_link(
+def test_concurrent_publish_uses_atomic_no_replace_without_live_alias(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
-    """A second publisher sees linkcount two, then recovers the first bytes."""
+    """Concurrent publishers race only at the no-replace atomic commit."""
     if os.name == "nt":
         pytest.skip("Windows uses a no-replace write-through rename, not link overlap")
     content = b"original bytes"
@@ -491,35 +570,29 @@ def test_concurrent_publish_waits_only_for_its_temporary_link(
     database = tmp_path / "snapshots.sqlite"
     first = PlanningRepositorySnapshotStore(database)
     second = PlanningRepositorySnapshotStore(database)
-    linked = Event()
-    saw_overlap = Event()
+    entered = Event()
     release = Event()
-    original_link = planning_snapshot.os.link
-    original_sleep = planning_snapshot.time.sleep
+    original_move = planning_snapshot._move_file_no_replace_posix
     calls = 0
 
-    def pause_after_link(source: str, target: str) -> None:
+    def pause_before_atomic_move(source: str, target: Path) -> None:
         nonlocal calls
-        original_link(source, target)
         calls += 1
         if calls == 1:
-            linked.set()
+            entered.set()
             assert release.wait(timeout=5)
+        original_move(source, target)
 
-    def release_on_overlap(seconds: float) -> None:
-        saw_overlap.set()
-        release.set()
-        original_sleep(seconds)
-
-    monkeypatch.setattr(planning_snapshot.os, "link", pause_after_link)
-    monkeypatch.setattr(planning_snapshot.time, "sleep", release_on_overlap)
+    monkeypatch.setattr(planning_snapshot, "_move_file_no_replace_posix", pause_before_atomic_move)
     with ThreadPoolExecutor(max_workers=2) as workers:
         published = workers.submit(first._publish, sha, content)
-        assert linked.wait(timeout=5)
+        assert entered.wait(timeout=5)
         recovered = workers.submit(second._publish, sha, content)
+        # Neither producer has made a target alias before its atomic rename.
+        assert not (database.parent / "planning-repository-snapshot-blobs" / sha).exists()
+        release.set()
         published.result(timeout=5)
         recovered.result(timeout=5)
-    assert saw_overlap.is_set()
     target = database.parent / "planning-repository-snapshot-blobs" / sha
     assert target.read_bytes() == content
     assert target.stat().st_nlink == 1

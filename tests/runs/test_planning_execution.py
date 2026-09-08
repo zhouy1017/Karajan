@@ -2,8 +2,11 @@
 
 import hashlib
 import json
+import os
 import sqlite3
 import subprocess
+import sys
+import time
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from pathlib import Path
@@ -14,6 +17,7 @@ import pytest
 from karajan.capacity import CapacityStore
 from karajan.orchestration.planning_execution import PlanningExecution
 from karajan.orchestration.planning_snapshot import PlanningRepositorySnapshotStore
+from karajan.projects import ProjectRegistry
 from karajan.runs import RunError, RunPlanner
 from karajan.runs.planning import digest
 from test_planning import create_request, handoff_request, proposal
@@ -261,6 +265,116 @@ def snapshot_case(
     service.snapshots = store
     execution = service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
     return service, run, intent, authorities, store, execution
+
+
+@pytest.mark.skipif(os.name == "nt", reason="the owned-child stop fixture uses POSIX SIGSTOP")
+def test_killed_publisher_recovers_original_command_and_shared_cas_content(
+    configured: dict, tmp_path: Path
+) -> None:
+    """A process death after atomic publish leaves a usable one-name CAS object."""
+    service, run, _, authorities, store, first = snapshot_case(configured, tmp_path)
+    second_intent = service.planner.planning_intent(
+        run["id"], term=1, command_key="second-intent", principal="lead"
+    )
+    second = service.begin(
+        run["id"], second_intent["id"], principal="owner", command_key="second-begin"
+    )
+    marker = tmp_path / "publisher-reached-post-rename"
+    root = Path(service.planner.projects.get(run["project_id"])["repository"]["root"])
+    child = """
+import os
+import signal
+import sys
+from pathlib import Path
+from karajan.orchestration.planning_execution import PlanningExecution
+from karajan.orchestration.planning_snapshot import PlanningRepositorySnapshotStore
+from karajan.projects import ProjectRegistry
+from karajan.runs import RunPlanner
+
+(
+    execution_database,
+    run_database,
+    project_database,
+    root,
+    snapshot_database,
+    execution_id,
+    marker,
+) = sys.argv[1:]
+projects = ProjectRegistry(Path(project_database), [Path(root).parent], existing_only=True)
+planner = RunPlanner(Path(run_database), projects, existing_only=True)
+store = PlanningRepositorySnapshotStore(Path(snapshot_database), existing_only=True)
+original = store._published_content
+def pause_after_atomic_publish(target, content):
+    result = original(target, content)
+    Path(marker).write_text("published", encoding="ascii")
+    os.kill(os.getpid(), signal.SIGSTOP)
+    return result
+store._published_content = pause_after_atomic_publish
+execution = PlanningExecution(
+    Path(execution_database), planner, snapshots=store, existing_only=True
+)
+execution.freeze_repository_snapshot(
+    execution_id, principal="owner", command_key="freeze"
+)
+"""
+    child_process = subprocess.Popen(
+        [
+            sys.executable,
+            "-c",
+            child,
+            str(service.database),
+            str(service.planner.database),
+            str(service.planner.projects.database),
+            str(root),
+            str(store.database),
+            first["id"],
+            str(marker),
+        ],
+        cwd=Path.cwd(),
+    )
+    deadline = time.monotonic() + 10
+    while not marker.exists() and time.monotonic() < deadline:
+        time.sleep(0.01)
+    assert marker.read_text(encoding="ascii") == "published"
+    # This is the child created above; no shared test runner or other process is
+    # signalled.  SIGKILL models process death only, not physical power loss.
+    child_process.kill()
+    assert child_process.wait(timeout=5) != 0
+
+    reopened_projects = ProjectRegistry(
+        service.planner.projects.database, [root.parent], existing_only=True
+    )
+    reopened_planner = RunPlanner(service.planner.database, reopened_projects, existing_only=True)
+    reopened_store = PlanningRepositorySnapshotStore(store.database, existing_only=True)
+    reopened = PlanningExecution(
+        service.database, reopened_planner, snapshots=reopened_store, existing_only=True
+    )
+    before_capacity = authorities.capacity.snapshot()
+    original_manifest = reopened.freeze_repository_snapshot(
+        first["id"], principal="owner", command_key="freeze"
+    )
+    later_manifest = reopened.freeze_repository_snapshot(
+        second["id"], principal="owner", command_key="second-freeze"
+    )
+    assert original_manifest["execution_id"] == first["id"]
+    assert later_manifest["execution_id"] == second["id"]
+    assert reopened.read_repository_snapshot(first["id"], principal="owner")["content"] == {
+        "src/snapshot-subject.txt": b"snapshot source\n",
+        "tests/snapshot-subject.txt": b"snapshot test\n",
+    }
+    assert authorities.capacity.snapshot() == before_capacity
+    with pytest.raises(RunError, match="^RUN_NOT_FOUND$"):
+        reopened.read_repository_snapshot(first["id"], principal="lead")
+    with sqlite3.connect(store.database) as db:
+        assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 2
+        assert db.execute("SELECT count(*) FROM files").fetchone()[0] == 4
+    with sqlite3.connect(service.database) as db:
+        assert db.execute(
+            "SELECT count(*) FROM commands WHERE principal=? AND key=?", ("owner", "freeze")
+        ).fetchone()[0] == 1
+    for entry in original_manifest["files"]:
+        artifact = store.artifacts / entry["sha256"]
+        assert artifact.stat().st_nlink == 1
 
 
 def test_id_only_output_consumption_reopens_exact_capacity_receipt_and_plan(
