@@ -451,9 +451,16 @@ def test_unobserved_capacity_persists_commander_qualification_block_without_send
             headers={**headers, "Idempotency-Key": "execute"},
         )
 
-    assert result.status_code == 202
-    assert result.json()["command"]["state"] == "accepted"
-    planning = result.json()["planning"]
+        assert result.status_code == 202
+        assert result.json()["command"]["state"] == "accepted"
+        deadline = time.monotonic() + 10
+        observed = result.json()
+        while time.monotonic() < deadline:
+            observed = client.get(f"/v1/runs/{run['id']}/planning", headers=headers).json()
+            if observed["planning"]["execution"]["state"] == "blocked":
+                break
+            time.sleep(0.05)
+        planning = observed["planning"]
     assert planning["execution"] == {
         "id": planning["execution"]["id"],
         "binding_sha256": planning["execution"]["binding_sha256"],
