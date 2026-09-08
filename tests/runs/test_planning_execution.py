@@ -267,6 +267,122 @@ def snapshot_case(
     return service, run, intent, authorities, store, execution
 
 
+def public_snapshot_flow(
+    tmp_path: Path, *, object_format: str, repository_name: str = "repository"
+) -> tuple[PlanningExecution, PlanningRepositorySnapshotStore, dict[str, Any], Path]:
+    """Exercise the public registered-base producer, including a child tree."""
+    root = tmp_path / repository_name
+    root.mkdir()
+    subprocess.run(
+        ["git", "init", "--object-format=" + object_format, str(root)],
+        check=True,
+        capture_output=True,
+    )
+    (root / "src" / "nested").mkdir(parents=True)
+    (root / "tests" / "nested").mkdir(parents=True)
+    (root / "src" / "nested" / "input.txt").write_bytes(b"nested source bytes\n")
+    (root / "tests" / "nested" / "input.txt").write_bytes(b"nested test bytes\n")
+    subprocess.run(["git", "-C", str(root), "add", "src", "tests"], check=True)
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "-c",
+            "user.name=Fixture",
+            "-c",
+            "user.email=fixture@example.invalid",
+            "commit",
+            "-m",
+            "nested snapshot fixture",
+        ],
+        check=True,
+    )
+    registry = ProjectRegistry(tmp_path / "projects.sqlite", [tmp_path])
+    created = registry.create(
+        {
+            "name": "Object format fixture",
+            "repository_path": str(root),
+            "base_ref": "HEAD",
+            "target_branch": "main",
+            "allowed_target_branches": ["main"],
+        },
+        command_key="project",
+        principal="owner",
+    )
+    configuration = json.loads(
+        (Path(__file__).parents[2] / "examples/projects/offline-configuration.json").read_text()
+    )
+    preview = registry.preview_configuration(
+        created["id"], configuration, command_key="preview", principal="owner"
+    )
+    configured = registry.apply_configuration(
+        created["id"],
+        preview["preview_id"],
+        expected_revision=1,
+        command_key="apply",
+        principal="owner",
+    )
+    planner = RunPlanner(tmp_path / "runs.sqlite", registry)
+    run = planner.create(create_request(configured), command_key="run", principal="owner")
+    intent = planner.planning_intent(run["id"], term=1, command_key="intent", principal="lead")
+    service = PlanningExecution(tmp_path / "planning-execution.sqlite", planner)
+    store = PlanningRepositorySnapshotStore(tmp_path / "snapshots.sqlite")
+    service.snapshots = store
+    execution = service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
+    return service, store, execution, root
+
+
+@pytest.mark.parametrize("object_format", ["sha1", "sha256"])
+def test_public_snapshot_flow_supports_registered_git_object_format(
+    tmp_path: Path, object_format: str
+) -> None:
+    """Registry -> planner -> execution preserves nested approved source objects."""
+    service, store, execution, root = public_snapshot_flow(
+        tmp_path, object_format=object_format
+    )
+    project = service.planner.projects.get(execution["binding"]["project_id"])
+    manifest = service.freeze_repository_snapshot(
+        execution["id"], principal="owner", command_key="freeze"
+    )
+
+    assert manifest["base_sha"] == project["repository"]["base_sha"]
+    assert len(manifest["base_sha"]) == {"sha1": 40, "sha256": 64}[object_format]
+    assert manifest["binding_sha256"] == digest(execution["binding"])
+    assert [(entry["path"], entry["mode"], entry["sha256"]) for entry in manifest["files"]] == [
+        ("src/nested/input.txt", "100644", hashlib.sha256(b"nested source bytes\n").hexdigest()),
+        ("tests/nested/input.txt", "100644", hashlib.sha256(b"nested test bytes\n").hexdigest()),
+    ]
+    assert store.read(execution["binding"])["content"] == {
+        "src/nested/input.txt": b"nested source bytes\n",
+        "tests/nested/input.txt": b"nested test bytes\n",
+    }
+
+    reopened = PlanningExecution(
+        service.database, service.planner, snapshots=PlanningRepositorySnapshotStore(store.database)
+    )
+    assert reopened.read_repository_snapshot(execution["id"], principal="owner")["content"] == {
+        "src/nested/input.txt": b"nested source bytes\n",
+        "tests/nested/input.txt": b"nested test bytes\n",
+    }
+    assert root.is_dir()
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Git alternate separators differ on Windows")
+def test_public_snapshot_flow_preserves_literal_colon_repository_path(tmp_path: Path) -> None:
+    """A registered POSIX root is one alternate pathname, not a list injection."""
+    service, _, execution, _ = public_snapshot_flow(
+        tmp_path, object_format="sha1", repository_name='repository:one"quote\\slash'
+    )
+
+    manifest = service.freeze_repository_snapshot(
+        execution["id"], principal="owner", command_key="freeze"
+    )
+    assert manifest["base_sha"] == service.planner.projects.get(execution["binding"]["project_id"])[
+        "repository"
+    ]["base_sha"]
+
+
 @pytest.mark.skipif(os.name == "nt", reason="the owned-child stop fixture uses POSIX SIGSTOP")
 def test_killed_publisher_recovers_original_command_and_shared_cas_content(
     configured: dict, tmp_path: Path

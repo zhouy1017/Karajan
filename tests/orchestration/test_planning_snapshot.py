@@ -3,6 +3,7 @@ import os
 import sqlite3
 import stat
 import subprocess
+import time
 import zlib
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -115,13 +116,14 @@ def test_base_tree_snapshot_is_immutable_and_directory_paths_are_expanded(tmp_pa
     ("kind", "object_expression"),
     [("blob", "HEAD:src/a.txt"), ("tree", "HEAD^{tree}"), ("commit", "HEAD")],
 )
+@pytest.mark.parametrize("object_format", ["sha1", "sha256"])
 def test_freeze_rejects_same_length_replaced_loose_git_object(
-    tmp_path: Path, kind: str, object_expression: str
+    tmp_path: Path, kind: str, object_expression: str, object_format: str
 ) -> None:
     """The registered base is object identity, not cat-file's unverified body."""
     root = tmp_path / "repo"
     root.mkdir()
-    _git(root, "init")
+    _git(root, "init", "--object-format=" + object_format)
     (root / "src").mkdir()
     source = root / "src" / "a.txt"
     source.write_bytes(b"base\n")
@@ -295,6 +297,103 @@ def test_base_tree_read_disables_local_replace_refs_and_git_environment(
     assert PlanningRepositorySnapshotStore(tmp_path / "snapshots.sqlite").read(binding)[
         "content"
     ] == {"src/a.txt": b"registered"}
+
+
+@pytest.mark.skipif(os.name == "nt", reason="the owned process-group fixture is POSIX-only")
+def test_bounded_git_reader_times_out_and_reaps_its_owned_child(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A no-output Git child cannot hold the receiving boundary past its deadline."""
+    root = tmp_path / "repo"
+    root.mkdir()
+    _git(root, "init")
+    (root / "input.txt").write_text("base")
+    _git(root, "add", ".")
+    _git(root, "-c", "user.name=x", "-c", "user.email=x@y.z", "commit", "-m", "base")
+    base = _git(root, "rev-parse", "HEAD")
+    marker = tmp_path / "owned-child.pid"
+    tools = tmp_path / "tools"
+    tools.mkdir()
+    fake_git = tools / "git"
+    fake_git.write_text(
+        "#!/usr/bin/env python3\n"
+        "import subprocess\n"
+        "import sys\n"
+        "import time\n"
+        "from pathlib import Path\n"
+        "child = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'])\n"
+        f"Path({str(marker)!r}).write_text(str(child.pid))\n"
+        "time.sleep(60)\n",
+        encoding="utf-8",
+    )
+    fake_git.chmod(0o755)
+    monkeypatch.setenv("PATH", str(tools) + os.pathsep + os.environ["PATH"])
+    monkeypatch.setattr(planning_snapshot, "_GIT_TIMEOUT_SECONDS", 0.2)
+
+    started = time.monotonic()
+    with pytest.raises(RunError, match="^PLANNING_SNAPSHOT_GIT_UNAVAILABLE$"):
+        PlanningRepositorySnapshotStore._git(
+            root, "sha1", "cat-file", "commit", base, limit=100
+        )
+    assert time.monotonic() - started < 2
+    child_pid = int(marker.read_text(encoding="ascii"))
+    for _ in range(100):
+        try:
+            os.kill(child_pid, 0)
+        except ProcessLookupError:
+            break
+        time.sleep(0.01)
+    else:
+        pytest.fail("owned Git child remained alive after timeout cleanup")
+
+
+@pytest.mark.skipif(os.name == "nt", reason="the owned process-group fixture is POSIX-only")
+def test_bounded_git_reader_rejects_over_limit_output_and_reaps_its_owned_child(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The bounded receiving boundary rejects byte excess without waiting for EOF."""
+    root = tmp_path / "repo"
+    root.mkdir()
+    _git(root, "init")
+    (root / "input.txt").write_text("base")
+    _git(root, "add", ".")
+    _git(root, "-c", "user.name=x", "-c", "user.email=x@y.z", "commit", "-m", "base")
+    base = _git(root, "rev-parse", "HEAD")
+    marker = tmp_path / "owned-child.pid"
+    tools = tmp_path / "tools"
+    tools.mkdir()
+    fake_git = tools / "git"
+    fake_git.write_text(
+        "#!/usr/bin/env python3\n"
+        "import subprocess\n"
+        "import sys\n"
+        "import time\n"
+        "from pathlib import Path\n"
+        "child = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'])\n"
+        f"Path({str(marker)!r}).write_text(str(child.pid))\n"
+        "sys.stdout.buffer.write(b'x' * 101)\n"
+        "sys.stdout.flush()\n"
+        "time.sleep(60)\n",
+        encoding="utf-8",
+    )
+    fake_git.chmod(0o755)
+    monkeypatch.setenv("PATH", str(tools) + os.pathsep + os.environ["PATH"])
+
+    started = time.monotonic()
+    with pytest.raises(RunError, match="^PLANNING_SNAPSHOT_BASE_UNAVAILABLE$"):
+        PlanningRepositorySnapshotStore._git(
+            root, "sha1", "cat-file", "commit", base, limit=100
+        )
+    assert time.monotonic() - started < 2
+    child_pid = int(marker.read_text(encoding="ascii"))
+    for _ in range(100):
+        try:
+            os.kill(child_pid, 0)
+        except ProcessLookupError:
+            break
+        time.sleep(0.01)
+    else:
+        pytest.fail("owned Git child remained alive after output-limit cleanup")
 
 
 @pytest.mark.skipif(os.name == "nt", reason="the hostile ext transport fixture needs POSIX touch")

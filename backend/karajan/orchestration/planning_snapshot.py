@@ -4,11 +4,14 @@ import errno
 import hashlib
 import json
 import os
+import signal
 import sqlite3
 import stat
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 from contextlib import nullcontext
 from pathlib import Path
 from typing import Any
@@ -23,11 +26,38 @@ _ARTIFACTS = "planning-repository-snapshot-blobs"
 _MAX_FILES = 2_000
 _MAX_BYTES = 8_000_000
 _MAX_GIT_OBJECT_BYTES = 8_000_000
+_GIT_TIMEOUT_SECONDS = 10.0
+_GIT_CLEANUP_SECONDS = 1.0
 _MOVEFILE_WRITE_THROUGH = 0x8
 _ERROR_FILE_EXISTS = 80
 _ERROR_ALREADY_EXISTS = 183
 _AT_FDCWD = -100
 _RENAME_NOREPLACE = 1
+
+
+def _git_alternate_pathname(path: Path) -> str:
+    """Encode one exact alternate pathname for Git's C-style list parser.
+
+    ``GIT_ALTERNATE_OBJECT_DIRECTORIES`` is a platform path list.  Git accepts
+    a C-quoted member in that list, so quote the whole controller-selected
+    pathname rather than allowing a separator in its spelling to add another
+    object source.  Do not use JSON escapes: Git documents C-style quoting and
+    accepts backslash, quote, and three-digit octal escapes there.
+    """
+    text = os.fsdecode(os.fsencode(path))
+    if "\0" in text:
+        raise OSError("NUL alternate object pathname")
+    escaped: list[str] = []
+    for character in text:
+        if character == "\\":
+            escaped.append("\\\\")
+        elif character == '"':
+            escaped.append('\\"')
+        elif ord(character) < 32 or ord(character) == 127:
+            escaped.append("\\" + format(ord(character), "03o"))
+        else:
+            escaped.append(character)
+    return '"' + "".join(escaped) + '"'
 
 
 if sys.platform == "win32":
@@ -269,8 +299,15 @@ class PlanningRepositorySnapshotStore:
 
     @classmethod
     def _git(
-        cls, root: Path, *args: str, limit: int | None = None, input: bytes | None = None
+        cls,
+        root: Path,
+        object_format: str,
+        *args: str,
+        limit: int,
+        input: bytes | None = None,
     ) -> bytes:
+        if object_format not in {"sha1", "sha256"}:
+            raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE")
         source_objects = cls._git_objects(root)
         env = {
             k: os.environ[k]
@@ -297,7 +334,6 @@ class PlanningRepositorySnapshotStore:
             (reader / "refs" / "heads").mkdir(parents=True)
             (reader / "refs" / "tags").mkdir(parents=True)
             (reader / "HEAD").write_text("ref: refs/heads/empty\n", encoding="ascii")
-            object_format = "sha256" if any(len(arg) == 64 for arg in args) else "sha1"
             (reader / "config").write_text(
                 "[core]\nrepositoryformatversion = 1\nbare = true\n"
                 "[extensions]\nobjectformat = "
@@ -309,9 +345,11 @@ class PlanningRepositorySnapshotStore:
                 {
                     "GIT_DIR": str(reader),
                     "GIT_OBJECT_DIRECTORY": str(reader / "objects"),
-                    "GIT_ALTERNATE_OBJECT_DIRECTORIES": str(source_objects),
+                    "GIT_ALTERNATE_OBJECT_DIRECTORIES": _git_alternate_pathname(source_objects),
                 }
             )
+            process: subprocess.Popen[bytes] | None = None
+            reader_thread: threading.Thread | None = None
             try:
                 command = [
                     "git",
@@ -327,36 +365,87 @@ class PlanningRepositorySnapshotStore:
                     "protocol.allow=never",
                     *args,
                 ]
-                if limit is None:
-                    completed = subprocess.run(
-                        command, input=input, capture_output=True, timeout=10, env=env, check=False
-                    )
-                    output = completed.stdout
-                    returncode = completed.returncode
-                else:
-                    process = subprocess.Popen(
-                        command,
-                        stdin=subprocess.PIPE if input is not None else subprocess.DEVNULL,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.DEVNULL,
-                        env=env,
-                    )
-                    assert process.stdout is not None
-                    if input is not None:
-                        assert process.stdin is not None
-                        process.stdin.write(input)
-                        process.stdin.close()
-                    output = process.stdout.read(limit + 1)
-                    if len(output) > limit:
-                        process.kill()
-                        process.wait(timeout=10)
-                        raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE")
-                    returncode = process.wait(timeout=10)
+                options: dict[str, Any] = {
+                    "stdin": subprocess.PIPE if input is not None else subprocess.DEVNULL,
+                    "stdout": subprocess.PIPE,
+                    "stderr": subprocess.DEVNULL,
+                    "env": env,
+                }
+                if os.name == "posix":
+                    # This reader owns a fresh group, so its timeout cleanup
+                    # cannot touch a controller or unrelated Git process.
+                    options["start_new_session"] = True
+                elif os.name == "nt":
+                    process_group_flag = "CREATE_NEW_" + "PROCESS_GROUP"
+                    options["creationflags"] = getattr(subprocess, process_group_flag)
+                process = subprocess.Popen(command, **options)
+                stream = process.stdout
+                assert stream is not None
+                if input is not None:
+                    assert process.stdin is not None
+                    process.stdin.write(input)
+                    process.stdin.close()
+
+                output: list[bytes] = []
+                reader_errors: list[BaseException] = []
+                output_ready = threading.Event()
+
+                def read_output() -> None:
+                    try:
+                        output.append(stream.read(limit + 1))
+                    except BaseException as error:  # Pipe close is also a failed Git read.
+                        reader_errors.append(error)
+                    finally:
+                        output_ready.set()
+
+                reader_thread = threading.Thread(target=read_output, daemon=False)
+                reader_thread.start()
+                deadline = time.monotonic() + _GIT_TIMEOUT_SECONDS
+                while not output_ready.wait(max(0.0, min(0.05, deadline - time.monotonic()))):
+                    if time.monotonic() >= deadline:
+                        raise subprocess.TimeoutExpired(command, _GIT_TIMEOUT_SECONDS)
+                if reader_errors:
+                    raise OSError("bounded Git reader failed") from reader_errors[0]
+                result = output[0]
+                if len(result) > limit:
+                    raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE")
+                returncode = process.wait(timeout=max(0.0, deadline - time.monotonic()))
+                reader_thread.join(timeout=_GIT_CLEANUP_SECONDS)
+                if reader_thread.is_alive():
+                    raise OSError("bounded Git reader did not finish")
+                output_bytes = result
             except (OSError, subprocess.TimeoutExpired):
                 raise RunError("PLANNING_SNAPSHOT_GIT_UNAVAILABLE") from None
+            finally:
+                if process is not None and process.poll() is None:
+                    try:
+                        if os.name == "posix":
+                            kill_group = getattr(os, "kill" + "pg")
+                            kill_signal = getattr(signal, "SIG" + "KILL")
+                            kill_group(process.pid, kill_signal)
+                        elif os.name == "nt":
+                            subprocess.run(
+                                ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                                check=False,
+                                stdout=subprocess.DEVNULL,
+                                stderr=subprocess.DEVNULL,
+                                timeout=_GIT_CLEANUP_SECONDS,
+                            )
+                        else:
+                            process.kill()
+                    except (OSError, subprocess.TimeoutExpired):
+                        pass
+                    try:
+                        process.wait(timeout=_GIT_CLEANUP_SECONDS)
+                    except (OSError, subprocess.TimeoutExpired):
+                        pass
+                if process is not None and process.stdout is not None:
+                    process.stdout.close()
+                if reader_thread is not None:
+                    reader_thread.join(timeout=_GIT_CLEANUP_SECONDS)
         if returncode:
             raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE")
-        return output
+        return output_bytes
 
     @staticmethod
     def _object_hash(oid: str, kind: str, content: bytes) -> str:
@@ -368,22 +457,32 @@ class PlanningRepositorySnapshotStore:
         return hashed.hexdigest()
 
     @classmethod
-    def _git_object(cls, root: Path, oid: str, kind: str) -> bytes:
+    def _git_object(cls, root: Path, object_format: str, oid: str, kind: str) -> bytes:
         """Read one bounded object and bind its type, bytes, and name together."""
-        if not cls._git_oid(oid):
+        if not cls._git_oid(oid) or {"sha1": 40, "sha256": 64}.get(object_format) != len(oid):
             raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE")
-        content = cls._git(root, "cat-file", kind, oid, limit=_MAX_GIT_OBJECT_BYTES)
+        content = cls._git(root, object_format, "cat-file", kind, oid, limit=_MAX_GIT_OBJECT_BYTES)
         if cls._object_hash(oid, kind, content) != oid:
             raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE")
         return content
 
     @classmethod
-    def _git_tree_pair(cls, root: Path, oids: list[str]) -> dict[str, bytes]:
+    def _git_tree_pair(
+        cls, root: Path, object_format: str, oids: list[str]
+    ) -> dict[str, bytes]:
         """Read at most two child trees in one bounded, config-isolated Git call."""
-        if not 1 <= len(oids) <= 2 or any(not cls._git_oid(oid) for oid in oids):
+        if not (
+            1 <= len(oids) <= 2
+            and all(
+                cls._git_oid(oid)
+                and {"sha1": 40, "sha256": 64}.get(object_format) == len(oid)
+                for oid in oids
+            )
+        ):
             raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE")
         output = cls._git(
             root,
+            object_format,
             "cat-file",
             "--batch",
             input="".join(oid + "\n" for oid in oids).encode("ascii"),
@@ -442,8 +541,8 @@ class PlanningRepositorySnapshotStore:
         return entries
 
     @classmethod
-    def _base_tree(cls, root: Path, base: str) -> tuple[str, bytes]:
-        commit = cls._git_object(root, base, "commit")
+    def _base_tree(cls, root: Path, object_format: str, base: str) -> tuple[str, bytes]:
+        commit = cls._git_object(root, object_format, base, "commit")
         first, separator, _ = commit.partition(b"\n")
         if not separator or not first.startswith(b"tree "):
             raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE")
@@ -453,7 +552,7 @@ class PlanningRepositorySnapshotStore:
             raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE") from None
         if len(tree) != len(base) or not cls._git_oid(tree):
             raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE")
-        return tree, cls._git_object(root, tree, "tree")
+        return tree, cls._git_object(root, object_format, tree, "tree")
 
     def _sync_artifacts(self, target: Path | None = None) -> None:
         """Durably record a blob directory entry before a SQLite reference.
@@ -581,7 +680,8 @@ class PlanningRepositorySnapshotStore:
         # every selected tree, and every selected blob are each read by their
         # original object name and independently rehashed before their bytes can
         # enter the new SHA-256 CAS seal.
-        base_tree, raw_tree = self._base_tree(root, repo["base_sha"])
+        object_format = "sha1" if len(repo["base_sha"]) == 40 else "sha256"
+        base_tree, raw_tree = self._base_tree(root, object_format, repo["base_sha"])
         oid_length = len(repo["base_sha"])
 
         def visit(tree_oid: str, tree: bytes, parent: str) -> None:
@@ -601,7 +701,7 @@ class PlanningRepositorySnapshotStore:
             child_trees: dict[str, bytes] = {}
             for index in range(0, len(child_tree_oids), 2):
                 pair = child_tree_oids[index : index + 2]
-                child_trees.update(self._git_tree_pair(root, pair))
+                child_trees.update(self._git_tree_pair(root, object_format, pair))
             for mode, path, oid in selected:
                 # Git permits names that the snapshot protocol deliberately
                 # cannot represent. Validate all selected path components before
@@ -614,7 +714,7 @@ class PlanningRepositorySnapshotStore:
                     continue
                 if mode not in {"100644", "100755"}:
                     raise RunError("PLANNING_SNAPSHOT_ENTRY_UNSUPPORTED")
-                content = self._git_object(root, oid, "blob")
+                content = self._git_object(root, object_format, oid, "blob")
                 total += len(content)
                 if len(rows) >= _MAX_FILES or total > _MAX_BYTES:
                     raise RunError("PLANNING_SNAPSHOT_LIMIT_EXCEEDED")
