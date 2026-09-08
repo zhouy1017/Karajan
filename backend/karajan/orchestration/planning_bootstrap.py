@@ -276,7 +276,6 @@ def provision_planning_bootstrap(
     from karajan.orchestration.planning_admission import PlanningAdmissionAuthority
     from karajan.orchestration.planning_execution import PlanningExecution
     from karajan.projects import ProjectRegistry
-    from karajan.projects.qualification import ProfileQualificationStore
     from karajan.runs import RunPlanner
 
     control, state = control_directory.absolute(), state_directory.absolute()
@@ -292,12 +291,17 @@ def provision_planning_bootstrap(
         planner = RunPlanner(state / "runs.sqlite", projects)
         capacity = CapacityStore(state / "capacity.sqlite")
         execution = PlanningExecution(state / "planning-execution.sqlite", planner)
+        class NoCommanderFacts:
+            def read_commander(self, binding: dict[str, Any], *, scope: str, reader_version: str) -> None:
+                del binding, scope, reader_version
+                return None
+
         PlanningAdmissionAuthority(
             state / "planning-admission.sqlite",
             execution.database,
             planner,
             capacity,
-            ProfileQualificationStore(projects, commander_reader_only=True),
+            NoCommanderFacts(),
             authority_kind="production",
         )
         settings = PlanningBootstrapSettings(
@@ -310,7 +314,9 @@ def provision_planning_bootstrap(
             roots,
         )
         descriptor = control / PLANNING_ADMISSION_BOOTSTRAP
-        raw = (json.dumps(settings.document(), sort_keys=True, separators=(",", ":")) + "\n").encode()
+        raw = (
+            json.dumps(settings.document(), sort_keys=True, separators=(",", ":")) + "\n"
+        ).encode()
         fd = os.open(descriptor, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
         with os.fdopen(fd, "wb") as stream:
             stream.write(raw)
