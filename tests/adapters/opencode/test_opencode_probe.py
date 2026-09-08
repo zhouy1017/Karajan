@@ -162,15 +162,60 @@ def test_disconnection_exposes_real_runtime_retries(tmp_path: Path) -> None:
     )
 
 
-def test_header_timeout_is_reported_as_error_without_inventing_a_retry(tmp_path: Path) -> None:
+def test_general_request_deadline_is_terminal_while_headers_are_withheld(tmp_path: Path) -> None:
     report = OpenCodeProbe(runtime_path(), tmp_path / "probe").run("timeout_once")
     assert report.status == "runtime_error"
     assert report.final_text == ""
     assert len(report.receipts) == 1
     assert report.provider_requests[0]["fault"] == "timeout_once"
+    assert report.timeout_lifecycle == {
+        "provider_header_wait": "started",
+        "provider_release": "after_native_error_cleanup",
+        "native_terminal": "session.error",
+    }
+    assert report.provider_requests[0]["header_wait_seconds"] >= 0.4
     errors = [event for event in report.events if event["type"] == "session.error"]
     assert len(errors) == 1
     assert errors[0]["properties"]["error"]["data"]["message"] == "The operation timed out."
+    assert not any(
+        event.get("type") == "session.status"
+        and event.get("properties", {}).get("status", {}).get("type") == "retry"
+        for event in report.events
+    )
+
+
+def test_native_header_timeout_retries_with_distinct_transport_receipts(tmp_path: Path) -> None:
+    report = OpenCodeProbe(runtime_path(), tmp_path / "probe").run("header_timeout_once")
+    assert report.status == "completed"
+    assert report.final_text == f"fixture completed: {report.fixture_secret}"
+    assert report.tool_output_observed
+    assert len(report.provider_requests) == 3
+    assert len(report.receipts) == 3
+    assert report.provider_requests[0]["fault"] == "header_timeout_once"
+    assert report.provider_requests[0]["header_wait_seconds"] >= 0.5
+    assert report.timeout_lifecycle == {
+        "provider_header_wait": "started",
+        "native_retry": "session.status",
+        "provider_release": "after_native_retry",
+    }
+    assert len({receipt["receipt_id"] for receipt in report.receipts}) == 3
+    assert all(receipt["admitted"] for receipt in report.receipts)
+    assert report.receipts[0]["transport_error"] == "RemoteDisconnected"
+    assert [receipt["response_status"] for receipt in report.receipts[1:]] == [200, 200]
+    assert len({receipt["attempt_id"] for receipt in report.receipts}) == 1
+    assert len({receipt["fence"] for receipt in report.receipts}) == 1
+    retries = [
+        event
+        for event in report.events
+        if event.get("type") == "session.status"
+        and event.get("properties", {}).get("status", {}).get("type") == "retry"
+    ]
+    assert len(retries) == 1
+    assert (
+        retries[0]["properties"]["status"]["message"]
+        == "Provider response headers timed out after 500ms"
+    )
+    assert not any(event["type"] == "session.error" for event in report.events)
 
 
 def test_abort_records_bounded_post_cancel_observation_without_claiming_remote_stop(

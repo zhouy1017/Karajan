@@ -27,6 +27,7 @@ def main() -> int:
             "rate_limit_once",
             "disconnect_once",
             "timeout_once",
+            "header_timeout_once",
             "cancel_stream",
             "admission_limit",
             "cleanup_fault",
