@@ -28,6 +28,7 @@ _MAX_BYTES = 8_000_000
 _MAX_GIT_OBJECT_BYTES = 8_000_000
 _GIT_TIMEOUT_SECONDS = 10.0
 _GIT_CLEANUP_SECONDS = 1.0
+_MAX_GIT_METADATA_BYTES = 8 * 1024
 _MOVEFILE_WRITE_THROUGH = 0x8
 _ERROR_FILE_EXISTS = 80
 _ERROR_ALREADY_EXISTS = 183
@@ -59,6 +60,66 @@ def _git_alternate_pathname(path: Path) -> str:
         else:
             escaped.append(character)
     return '"' + "".join(escaped) + '"'
+
+
+def _trusted_git_executable(root: Path) -> Path:
+    """Return a controller-installed Git, never a repository/PATH lookup.
+
+    The receiving boundary deliberately does not use ``which``.  On Windows a
+    bare executable name also searches the controller's current directory, so
+    a repository-local ``git.exe`` could run before Git's object restrictions
+    take effect.  These are the ordinary system installation locations for Git
+    on the platforms we support; deployments with Git elsewhere must expose it
+    through one of those controller-managed locations rather than an
+    untrusted repository or mutable PATH entry.
+    """
+    candidates: tuple[Path, ...]
+    if os.name == "nt":
+        program_files = Path(os.environ.get("ProgramW6432", r"C:\Program Files"))
+        candidates = (
+            program_files / "Git" / "cmd" / "git.exe",
+            program_files / "Git" / "bin" / "git.exe",
+            Path(r"C:\Program Files\Git\cmd\git.exe"),
+        )
+    else:
+        candidates = (Path("/usr/bin/git"), Path("/usr/local/bin/git"))
+    try:
+        repository = root.resolve(strict=True)
+        controller_cwd = Path.cwd().resolve(strict=True)
+    except OSError:
+        raise OSError("repository working directory unavailable") from None
+    for candidate in candidates:
+        try:
+            executable = candidate.resolve(strict=True)
+            info = executable.lstat()
+            if (
+                not executable.is_absolute()
+                or not stat.S_ISREG(info.st_mode)
+                or stat.S_ISLNK(info.st_mode)
+                or executable.is_relative_to(repository)
+                or executable.is_relative_to(controller_cwd)
+            ):
+                continue
+            return executable
+        except OSError:
+            continue
+    raise OSError("trusted controller Git unavailable")
+
+
+def _read_git_metadata(path: Path) -> str:
+    """Read one small, regular Git metadata file without an unbounded decode."""
+    descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+    try:
+        info = os.fstat(descriptor)
+        if not stat.S_ISREG(info.st_mode) or info.st_size > _MAX_GIT_METADATA_BYTES:
+            raise ValueError()
+        with os.fdopen(descriptor, "rb", closefd=False) as stream:
+            raw = stream.read(_MAX_GIT_METADATA_BYTES + 1)
+        if len(raw) > _MAX_GIT_METADATA_BYTES:
+            raise ValueError()
+        return raw.decode("utf-8")
+    finally:
+        os.close(descriptor)
 
 
 if sys.platform == "win32":
@@ -240,9 +301,12 @@ else:
             renameat2.restype = c_int
         except (AttributeError, OSError):
             raise OSError("atomic no-replace publication unavailable") from None
-        if renameat2(
-            _AT_FDCWD, os.fsencode(source), _AT_FDCWD, os.fsencode(target), _RENAME_NOREPLACE
-        ) == 0:
+        if (
+            renameat2(
+                _AT_FDCWD, os.fsencode(source), _AT_FDCWD, os.fsencode(target), _RENAME_NOREPLACE
+            )
+            == 0
+        ):
             return
         error = get_errno()
         if error == errno.EEXIST:
@@ -402,7 +466,7 @@ class PlanningRepositorySnapshotStore:
             if stat.S_ISDIR(info.st_mode) and not stat.S_ISLNK(info.st_mode):
                 git_dir = dot_git
             elif stat.S_ISREG(info.st_mode) and not stat.S_ISLNK(info.st_mode):
-                text = dot_git.read_text(encoding="utf-8")
+                text = _read_git_metadata(dot_git)
                 if not text.startswith("gitdir: ") or "\n" not in text:
                     raise ValueError()
                 location = text.removeprefix("gitdir: ").splitlines()[0]
@@ -419,7 +483,7 @@ class PlanningRepositorySnapshotStore:
                 common_info = common_file.lstat()
                 if not stat.S_ISREG(common_info.st_mode) or stat.S_ISLNK(common_info.st_mode):
                     raise ValueError()
-                relative = common_file.read_text(encoding="utf-8").strip()
+                relative = _read_git_metadata(common_file).strip()
                 if not relative or "\0" in relative:
                     raise ValueError()
                 common = (git_dir / relative).resolve(strict=True)
@@ -445,11 +509,19 @@ class PlanningRepositorySnapshotStore:
         if object_format not in {"sha1", "sha256"}:
             raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE")
         source_objects = cls._git_objects(root)
-        env = {
-            k: os.environ[k]
-            for k in ("SystemRoot", "WINDIR", "PATH", "TEMP", "TMP")
-            if k in os.environ
-        }
+        git = _trusted_git_executable(root)
+        env = {k: os.environ[k] for k in ("SystemRoot", "WINDIR", "TEMP", "TMP") if k in os.environ}
+        if os.name == "nt":
+            system_root = Path(env.get("SystemRoot", r"C:\Windows"))
+            env["PATH"] = os.pathsep.join(
+                str(path)
+                for path in (git.parent, git.parent.parent / "bin", system_root / "System32")
+            )
+        else:
+            # The executable is absolute, and Git receives no inherited
+            # executable search path. Keep only standard controller locations
+            # for normal Git helper startup and test interpreter shebangs.
+            env["PATH"] = "/usr/bin:/bin"
         env.update(
             {
                 "GIT_CONFIG_NOSYSTEM": "1",
@@ -472,9 +544,7 @@ class PlanningRepositorySnapshotStore:
             (reader / "HEAD").write_text("ref: refs/heads/empty\n", encoding="ascii")
             (reader / "config").write_text(
                 "[core]\nrepositoryformatversion = 1\nbare = true\n"
-                "[extensions]\nobjectformat = "
-                + object_format
-                + "\n",
+                "[extensions]\nobjectformat = " + object_format + "\n",
                 encoding="ascii",
             )
             env.update(
@@ -492,7 +562,7 @@ class PlanningRepositorySnapshotStore:
             returncode: int | None = None
             try:
                 command = [
-                    "git",
+                    str(git),
                     "--no-replace-objects",
                     "--git-dir=" + str(reader),
                     "-c",
@@ -510,6 +580,10 @@ class PlanningRepositorySnapshotStore:
                     "stdout": subprocess.PIPE,
                     "stderr": subprocess.DEVNULL,
                     "env": env,
+                    # The temporary bare reader is controller-owned.  Pinning
+                    # cwd as well as argv prevents Windows executable search
+                    # from consulting a repository controller cwd.
+                    "cwd": str(reader),
                 }
                 if os.name == "posix":
                     # This reader owns a fresh group, so its timeout cleanup
@@ -644,15 +718,12 @@ class PlanningRepositorySnapshotStore:
         return content
 
     @classmethod
-    def _git_tree_pair(
-        cls, root: Path, object_format: str, oids: list[str]
-    ) -> dict[str, bytes]:
+    def _git_tree_pair(cls, root: Path, object_format: str, oids: list[str]) -> dict[str, bytes]:
         """Read at most two child trees in one bounded, config-isolated Git call."""
         if not (
             1 <= len(oids) <= 2
             and all(
-                cls._git_oid(oid)
-                and {"sha1": 40, "sha256": 64}.get(object_format) == len(oid)
+                cls._git_oid(oid) and {"sha1": 40, "sha256": 64}.get(object_format) == len(oid)
                 for oid in oids
             )
         ):
@@ -836,10 +907,14 @@ class PlanningRepositorySnapshotStore:
         ).get("project_revision"):
             raise RunError("PLANNING_REPOSITORY_SOURCE_CHANGED")
         repo = project.get("repository")
-        if not isinstance(repo, dict) or not all(
-            isinstance(repo.get(k), str) for k in ("root", "identity_sha256", "base_sha")
-        ) or not (
-            self._sha256(repo.get("identity_sha256")) and self._git_oid(repo.get("base_sha"))
+        if (
+            not isinstance(repo, dict)
+            or not all(
+                isinstance(repo.get(k), str) for k in ("root", "identity_sha256", "base_sha")
+            )
+            or not (
+                self._sha256(repo.get("identity_sha256")) and self._git_oid(repo.get("base_sha"))
+            )
         ):
             raise RunError("PLANNING_REPOSITORY_SOURCE_INVALID")
         root = Path(repo["root"])
@@ -925,10 +1000,7 @@ class PlanningRepositorySnapshotStore:
             "total_bytes": total,
         }
         source_sha256 = digest(
-            {
-                k: result[k]
-                for k in ("repository_identity_sha256", "base_sha", "read_paths_sha256")
-            }
+            {k: result[k] for k in ("repository_identity_sha256", "base_sha", "read_paths_sha256")}
         )
         result["snapshot_sha256"] = digest(result)
         # This database value is a separate seal over every manifest field;

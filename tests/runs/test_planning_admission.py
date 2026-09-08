@@ -1326,6 +1326,109 @@ def test_persistent_factory_opens_a_provisioned_snapshot_ledger(
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
+def test_retained_factory_rejects_cancelled_execution_store_swap_during_git_prepare(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A stale pre-cancel authority cannot publish after real Git preparation."""
+    registry = configured["registry"]
+    project = registry.get(configured["id"])
+    root = Path(project["repository"]["root"])
+    (root / "src").mkdir(exist_ok=True)
+    (root / "tests").mkdir(exist_ok=True)
+    source = root / "src" / "retained-authority.txt"
+    source.write_bytes(b"registered base bytes\n")
+    test_source = root / "tests" / "retained-authority-test.txt"
+    test_source.write_bytes(b"registered test base bytes\n")
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "add",
+            "src/retained-authority.txt",
+            "tests/retained-authority-test.txt",
+        ],
+        check=True,
+    )
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "-c",
+            "user.name=x",
+            "-c",
+            "user.email=x@y.z",
+            "commit",
+            "-m",
+            "snapshot",
+        ],
+        check=True,
+    )
+    registry.update(
+        project["id"],
+        {
+            "name": project["name"],
+            "base_ref": project["repository"]["base_ref"],
+            "target_branch": project["target_branch"],
+            "allowed_target_branches": project["allowed_target_branches"],
+        },
+        expected_revision=project["revision"],
+        command_key="update-base",
+        principal="owner",
+    )
+    configured.update(registry.get(project["id"]))
+    configured["registry"] = registry
+    _, authority, _, execution = _case(tmp_path, configured)
+    ProfileQualificationStore(authority.planner.projects)
+    control = _protected_factory_control(tmp_path, authority)
+    ledger = provision_planning_repository_snapshots(control)
+    retained = PlanningExecution.from_trusted_factory(control)
+    assert retained.capacity is not None
+    capacity_before = retained.capacity.snapshot()
+    execution_store = tmp_path / "protected-state" / "planning-execution.sqlite"
+    stale_copy = tmp_path / "pre-cancel-planning-execution.sqlite"
+    shutil.copy2(execution_store, stale_copy)
+    entered = Event()
+    release = Event()
+    original_git = PlanningRepositorySnapshotStore._git
+
+    def slow_first_git(*args: Any, **kwargs: Any) -> bytes:
+        result = original_git(*args, **kwargs)
+        if not entered.is_set():
+            entered.set()
+            assert release.wait(timeout=5)
+        return result
+
+    monkeypatch.setattr(PlanningRepositorySnapshotStore, "_git", slow_first_git)
+    held = tmp_path / "held-planning-execution.sqlite"
+    with ThreadPoolExecutor(max_workers=1) as workers:
+        publication = workers.submit(
+            retained.freeze_repository_snapshot,
+            execution["id"],
+            principal="owner",
+            command_key="freeze-after-cancel",
+        )
+        assert entered.wait(timeout=5)
+        cancelled = retained.cancel(execution["id"], principal="owner", command_key="cancel")
+        assert cancelled["cancel_requested"] is True
+        execution_store.rename(held)
+        execution_store.symlink_to(stale_copy)
+        release.set()
+        with pytest.raises(RunError, match="^PLANNING_ADMISSION_BOOTSTRAP_CHANGED$"):
+            publication.result(timeout=10)
+    with sqlite3.connect(ledger) as db:
+        assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 0
+    assert stale_copy.read_bytes() != held.read_bytes()
+    execution_store.unlink()
+    held.rename(execution_store)
+    reopened = PlanningExecution.from_trusted_factory(control)
+    assert reopened.get(execution["id"], principal="owner")["cancel_requested"] is True
+    assert reopened.capacity is not None
+    assert reopened.capacity.snapshot() == capacity_before
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
 def test_factory_freezes_registered_base_bytes_and_reopens(
     configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -1428,9 +1531,9 @@ def test_factory_freezes_registered_base_bytes_and_reopens(
 
     def effect_counts() -> tuple[int, int, int]:
         with sqlite3.connect(service.planner.projects.database) as db:
-            qualified = db.execute(
-                "SELECT count(*) FROM profile_qualification_records"
-            ).fetchone()[0]
+            qualified = db.execute("SELECT count(*) FROM profile_qualification_records").fetchone()[
+                0
+            ]
         current = service.planner.get(run["id"], principal="owner")
         reservations = service.capacity.snapshot()["reservations"]
         return qualified, len(current["plans"]), len(reservations)
@@ -1493,9 +1596,7 @@ def test_factory_freezes_registered_base_bytes_and_reopens(
 
     external_artifacts = tmp_path / "repository-controlled-retained-blobs"
     shutil.copytree(artifacts, external_artifacts)
-    external_blobs_before = {
-        item.name: item.read_bytes() for item in external_artifacts.iterdir()
-    }
+    external_blobs_before = {item.name: item.read_bytes() for item in external_artifacts.iterdir()}
     held_artifacts = artifacts.parent / ".retained-blobs"
     artifacts.rename(held_artifacts)
     artifacts.symlink_to(external_artifacts, target_is_directory=True)
@@ -1568,9 +1669,9 @@ def test_factory_freezes_registered_base_bytes_and_reopens(
     }
     assert service.capacity.snapshot() == before
     assert effect_counts() == effects_before
-    assert process_call_sites == [
-        (planning_snapshot.__name__, "_git")
-    ] * (1 + 2 * len(frozen["files"]))
+    assert process_call_sites == [(planning_snapshot.__name__, "_git")] * (
+        1 + 2 * len(frozen["files"])
+    )
     assert network_calls == []
 
     ledger = snapshot_database(control)

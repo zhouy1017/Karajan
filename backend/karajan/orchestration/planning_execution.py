@@ -12,6 +12,7 @@ import sqlite3
 import uuid
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, Protocol, cast
 
@@ -74,6 +75,22 @@ class PlanningOutputAuthority(Protocol):
     def read_output(self, execution_id: str, binding: dict[str, Any]) -> object: ...
 
 
+@dataclass(frozen=True, slots=True, repr=False)
+class _TrustedFactoryAuthority:
+    """Private bootstrap and store identities captured by one factory."""
+
+    control_directory: Path
+    bootstrap_sha256: str
+    settings_document: dict[str, Any]
+    identities: tuple[tuple[Path, tuple[int, int]], ...]
+
+
+def _path_identity(path: Path) -> tuple[int, int]:
+    """Keep stable filesystem identity; SQLite writes do not change this."""
+    info = path.lstat()
+    return info.st_dev, info.st_ino
+
+
 class PlanningExecution:
     """Persist controller-side planning stages without granting runtime authority."""
 
@@ -88,6 +105,7 @@ class PlanningExecution:
         snapshots: object | None = None,
         allow_fixture_authorities: bool = False,
         _trusted_authority_ids: frozenset[int] = frozenset(),
+        _trusted_factory_authority: _TrustedFactoryAuthority | None = None,
         existing_only: bool = False,
         clock: Callable[[], float] | None = None,
     ) -> None:
@@ -104,6 +122,7 @@ class PlanningExecution:
         # Only the controller factory below can bind the exact authority objects
         # it rebuilt from fixed persistent configuration.
         self._trusted_authority_ids = _trusted_authority_ids
+        self._trusted_factory_authority = _trusted_factory_authority
         self.existing_only = existing_only
         self.clock = planner.clock if clock is None else clock
         if not existing_only:
@@ -136,12 +155,20 @@ class PlanningExecution:
     ) -> "PlanningExecution":
         """Rebuild the admission port from the protected persistent bootstrap."""
         from .planning_admission import open_persistent_planning_admission
-        from .planning_bootstrap import read_planning_bootstrap
+        from .planning_bootstrap import (
+            PLANNING_ADMISSION_BOOTSTRAP,
+            assert_planning_bootstrap_current,
+            read_planning_bootstrap,
+        )
         from .planning_snapshot import PlanningRepositorySnapshotStore, snapshot_database
 
+        settings, bootstrap_sha256 = read_planning_bootstrap(control_directory)
         admissions = open_persistent_planning_admission(control_directory)
+        # The admission factory has independently opened its read-only ports.
+        # Re-read the descriptor before retaining their pathname identities so
+        # construction itself cannot race a substitution.
+        settings = assert_planning_bootstrap_current(control_directory, bootstrap_sha256)
         try:
-            settings, _ = read_planning_bootstrap(control_directory)
             ledger = snapshot_database(control_directory)
         except Exception as error:
             raise RunError("PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE") from error
@@ -163,6 +190,24 @@ class PlanningExecution:
                 )
             except Exception as error:
                 raise RunError("PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE") from error
+        protected_paths = (
+            settings.control_directory / PLANNING_ADMISSION_BOOTSTRAP,
+            settings.state_directory,
+            settings.planning_execution_database,
+            settings.planning_admission_database,
+            settings.capacity_database,
+            settings.projects_database,
+            settings.state_directory / "runs.sqlite",
+        )
+        try:
+            trusted_factory_authority = _TrustedFactoryAuthority(
+                settings.control_directory,
+                bootstrap_sha256,
+                settings.document(),
+                tuple((path, _path_identity(path)) for path in protected_paths),
+            )
+        except OSError as error:
+            raise RunError("PLANNING_ADMISSION_BOOTSTRAP_CHANGED") from error
         return cls(
             admissions.execution_database,
             admissions.planner,
@@ -171,7 +216,26 @@ class PlanningExecution:
             snapshots=snapshots,
             existing_only=True,
             _trusted_authority_ids=frozenset({id(admissions)}),
+            _trusted_factory_authority=trusted_factory_authority,
         )
+
+    def _assert_trusted_factory_authority_current(self) -> None:
+        """Reject retained aliases/replacements before reopening controller state."""
+        trusted = self._trusted_factory_authority
+        if trusted is None:
+            return
+        from .planning_bootstrap import assert_planning_bootstrap_current
+
+        try:
+            settings = assert_planning_bootstrap_current(
+                trusted.control_directory, trusted.bootstrap_sha256
+            )
+            if settings.document() != trusted.settings_document or any(
+                _path_identity(path) != expected for path, expected in trusted.identities
+            ):
+                raise ValueError()
+        except (OSError, ValueError, RunError):
+            raise RunError("PLANNING_ADMISSION_BOOTSTRAP_CHANGED") from None
 
     def _authority_allowed(self, authority: object, kind: str) -> bool:
         if kind == "fixture":
@@ -229,6 +293,7 @@ class PlanningExecution:
 
     @contextmanager
     def _transaction(self) -> Iterator[sqlite3.Connection]:
+        self._assert_trusted_factory_authority_current()
         db = open_database(self.database, existing_only=self.existing_only, isolation_level=None)
         db.row_factory = sqlite3.Row
         try:

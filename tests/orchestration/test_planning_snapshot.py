@@ -24,6 +24,90 @@ def _git(root: Path, *args: str) -> str:
     ).stdout.strip()
 
 
+def _windows_open_process(pid: int) -> int:
+    """Hold an exact child identity without sending it any control event."""
+    import ctypes
+
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    open_process = kernel.OpenProcess
+    open_process.argtypes = [ctypes.c_uint32, ctypes.c_int, ctypes.c_uint32]
+    open_process.restype = ctypes.c_void_p
+    handle = int(open_process(0x00100000 | 0x1000, False, pid) or 0)
+    if not handle:
+        raise ctypes.WinError(ctypes.get_last_error())
+    return handle
+
+
+def _windows_process_exited(handle: int) -> bool:
+    """Read-only zero-time wait on a held process handle."""
+    import ctypes
+
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    wait = kernel.WaitForSingleObject
+    wait.argtypes = [ctypes.c_void_p, ctypes.c_uint32]
+    wait.restype = ctypes.c_uint32
+    result = wait(ctypes.c_void_p(handle), 0)
+    if result == 0:  # WAIT_OBJECT_0
+        return True
+    if result == 258:  # WAIT_TIMEOUT
+        return False
+    raise ctypes.WinError(ctypes.get_last_error())
+
+
+def _windows_close_handle(handle: int) -> None:
+    import ctypes
+
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    assert kernel.CloseHandle(ctypes.c_void_p(handle))
+
+
+def test_git_metadata_read_rejects_oversized_regular_file_before_subprocess(tmp_path: Path) -> None:
+    """The source metadata receiver has a fixed byte bound before decoding."""
+    root = tmp_path / "repo"
+    root.mkdir()
+    pointer = root / ".git"
+    # Deliberately only one byte above the boundary: this is an actual regular
+    # metadata file, not a synthetic giant allocation.
+    pointer.write_bytes(b"x" * (planning_snapshot._MAX_GIT_METADATA_BYTES + 1))
+    with pytest.raises(RunError, match="^PLANNING_SNAPSHOT_BASE_UNAVAILABLE$"):
+        PlanningRepositorySnapshotStore._git_objects(root)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows executable search is platform-specific")
+def test_git_reader_ignores_repository_local_git_exe(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A real repository-local executable cannot replace the pinned reader."""
+    root = tmp_path / "repo"
+    root.mkdir()
+    _git(root, "init")
+    (root / "input.txt").write_text("base", encoding="utf-8")
+    _git(root, "add", ".")
+    _git(root, "-c", "user.name=x", "-c", "user.email=x@y.z", "commit", "-m", "base")
+    base = _git(root, "rev-parse", "HEAD")
+    marker = tmp_path / "repository-git-executed"
+    source = tmp_path / "shadow.cs"
+    source.write_text(
+        "using System; using System.IO; public class Shadow { public static void Main() { "
+        "File.WriteAllText(Environment.GetEnvironmentVariable("
+        '"KARAJAN_GIT_SHADOW_MARKER"), "ran"); } }',
+        encoding="utf-8",
+    )
+    shadow = root / "git.exe"
+    compiler = Path(r"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe")
+    if not compiler.exists():
+        compiler = Path(r"C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe")
+    subprocess.run([str(compiler), "/nologo", "/out:" + str(shadow), str(source)], check=True)
+    monkeypatch.chdir(root)
+    monkeypatch.setenv("PATH", str(root) + os.pathsep + os.environ["PATH"])
+    monkeypatch.setenv("KARAJAN_GIT_SHADOW_MARKER", str(marker))
+    result = PlanningRepositorySnapshotStore._git(
+        root, "sha1", "cat-file", "commit", base, limit=100_000
+    )
+    assert result.startswith(b"tree ")
+    assert not marker.exists()
+
+
 def _replace_loose_object_same_length(root: Path, oid: str, kind: str) -> tuple[bytes, int]:
     """Corrupt the actual loose object named by ``oid`` without a replace ref."""
     original = subprocess.run(
@@ -329,14 +413,12 @@ def test_bounded_git_reader_times_out_and_reaps_its_owned_child(
         encoding="utf-8",
     )
     fake_git.chmod(0o755)
-    monkeypatch.setenv("PATH", str(tools) + os.pathsep + os.environ["PATH"])
+    monkeypatch.setattr(planning_snapshot, "_trusted_git_executable", lambda _root: fake_git)
     monkeypatch.setattr(planning_snapshot, "_GIT_TIMEOUT_SECONDS", 0.2)
 
     started = time.monotonic()
     with pytest.raises(RunError, match="^PLANNING_SNAPSHOT_GIT_UNAVAILABLE$"):
-        PlanningRepositorySnapshotStore._git(
-            root, "sha1", "cat-file", "commit", base, limit=100
-        )
+        PlanningRepositorySnapshotStore._git(root, "sha1", "cat-file", "commit", base, limit=100)
     assert time.monotonic() - started < 2
     child_pid = int(marker.read_text(encoding="ascii"))
     for _ in range(100):
@@ -394,18 +476,18 @@ def test_bounded_git_reader_reaps_child_after_its_leader_exits(
             "#!/usr/bin/env python3\n" + script.read_text(encoding="utf-8"), encoding="utf-8"
         )
         fake_git.chmod(0o755)
-    monkeypatch.setenv("PATH", str(tools) + os.pathsep + os.environ["PATH"])
+    # The fixture is deliberately injected at the controller-owned executable
+    # resolver, not through PATH.  Production never discovers Git from PATH.
+    monkeypatch.setattr(planning_snapshot, "_trusted_git_executable", lambda _root: fake_git)
     if os.name == "nt":
-        # Windows CreateProcess only resolves executable suffixes for the bare
-        # ``git`` command.  Keep the actual receiving-boundary Popen and route
-        # that one command to the temporary batch fixture explicitly.
+        # Keep the actual receiving-boundary Popen and its pinned absolute
+        # fixture executable.  The wrapper observes rather than rewrites argv.
         original_popen = planning_snapshot.subprocess.Popen
 
         def fixture_popen(
             command: list[str], *args: object, **kwargs: object
         ) -> subprocess.Popen[bytes]:
-            assert command[0] == "git"
-            return original_popen([str(fake_git), *command[1:]], *args, **kwargs)
+            return original_popen(command, *args, **kwargs)
 
         monkeypatch.setattr(planning_snapshot.subprocess, "Popen", fixture_popen)
     monkeypatch.setattr(planning_snapshot, "_GIT_TIMEOUT_SECONDS", 0.2)
@@ -414,35 +496,69 @@ def test_bounded_git_reader_reaps_child_after_its_leader_exits(
 
     def observe_thread(*args: object, **kwargs: object) -> threading.Thread:
         thread = original_thread(*args, **kwargs)
-        reader_threads.append(thread)
+        if getattr(kwargs.get("target"), "__name__", None) == "read_output":
+            reader_threads.append(thread)
         return thread
 
     monkeypatch.setattr(planning_snapshot.threading, "Thread", observe_thread)
 
-    started = time.monotonic()
-    with pytest.raises(RunError, match="^PLANNING_SNAPSHOT_GIT_UNAVAILABLE$"):
-        PlanningRepositorySnapshotStore._git(
-            root, "sha1", "cat-file", "commit", base, limit=100
-        )
-    assert time.monotonic() - started < 1
-    marker_parts = marker.read_text(encoding="ascii").split(":")
-    if os.name == "posix":
-        leader_pid, child_pid, child_group = (int(part) for part in marker_parts)
-        assert child_group == leader_pid
-    else:
-        child_pid = int(marker_parts[0])
-    for _ in range(100):
+    child_handle = 0
+    live_control_handle = 0
+    if os.name == "nt":
+        # A deliberately live control proves the observer itself is not a
+        # console-control operation which can mask failed cleanup.
+        control = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(.5)"])
         try:
-            os.kill(child_pid, 0)
-        except ProcessLookupError:
-            break
-        except OSError as error:
-            if os.name == "nt" and error.winerror == 87:  # ERROR_INVALID_PARAMETER: no PID.
+            live_control_handle = _windows_open_process(control.pid)
+            assert not _windows_process_exited(live_control_handle)
+        finally:
+            if live_control_handle:
+                _windows_close_handle(live_control_handle)
+            control.wait(timeout=2)
+
+    started = time.monotonic()
+    with ThreadPoolExecutor(max_workers=1) as workers:
+        future = workers.submit(
+            PlanningRepositorySnapshotStore._git,
+            root,
+            "sha1",
+            "cat-file",
+            "commit",
+            base,
+            limit=100,
+        )
+        for _ in range(100):
+            if marker.exists():
                 break
-            raise
-        time.sleep(0.01)
-    else:
-        pytest.fail("owned child survived after its Git leader exited")
+            time.sleep(0.002)
+        else:
+            pytest.fail("Git fixture did not publish its owned child identity")
+        marker_parts = marker.read_text(encoding="ascii").split(":")
+        if os.name == "posix":
+            leader_pid, child_pid, child_group = (int(part) for part in marker_parts)
+            assert child_group == leader_pid
+        else:
+            child_pid = int(marker_parts[0])
+            child_handle = _windows_open_process(child_pid)
+        with pytest.raises(RunError, match="^PLANNING_SNAPSHOT_GIT_UNAVAILABLE$"):
+            future.result(timeout=2)
+    assert time.monotonic() - started < 1
+    try:
+        for _ in range(100):
+            if os.name == "nt":
+                if _windows_process_exited(child_handle):
+                    break
+            else:
+                try:
+                    os.kill(child_pid, 0)
+                except ProcessLookupError:
+                    break
+            time.sleep(0.01)
+        else:
+            pytest.fail("owned child survived after its Git leader exited")
+    finally:
+        if child_handle:
+            _windows_close_handle(child_handle)
     assert len(reader_threads) == 1
     assert not reader_threads[0].is_alive()
 
@@ -477,13 +593,11 @@ def test_bounded_git_reader_rejects_over_limit_output_and_reaps_its_owned_child(
         encoding="utf-8",
     )
     fake_git.chmod(0o755)
-    monkeypatch.setenv("PATH", str(tools) + os.pathsep + os.environ["PATH"])
+    monkeypatch.setattr(planning_snapshot, "_trusted_git_executable", lambda _root: fake_git)
 
     started = time.monotonic()
     with pytest.raises(RunError, match="^PLANNING_SNAPSHOT_BASE_UNAVAILABLE$"):
-        PlanningRepositorySnapshotStore._git(
-            root, "sha1", "cat-file", "commit", base, limit=100
-        )
+        PlanningRepositorySnapshotStore._git(root, "sha1", "cat-file", "commit", base, limit=100)
     assert time.monotonic() - started < 2
     child_pid = int(marker.read_text(encoding="ascii"))
     for _ in range(100):
@@ -522,11 +636,7 @@ def test_missing_promisor_blob_cannot_run_repository_configured_helper(
     _git(root, "config", "remote.origin.partialclonefilter", "blob:none")
     _git(root, "config", "extensions.partialClone", "origin")
     (root / ".git" / "objects" / blob[:2] / blob[2:]).unlink()
-    legacy_env = {
-        key: os.environ[key]
-        for key in ("PATH", "TEMP", "TMP")
-        if key in os.environ
-    }
+    legacy_env = {key: os.environ[key] for key in ("PATH", "TEMP", "TMP") if key in os.environ}
     legacy_env.update(
         {
             "GIT_CONFIG_NOSYSTEM": "1",
