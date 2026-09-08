@@ -5,6 +5,7 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from pathlib import Path
+from threading import Event
 from typing import Any
 
 import pytest
@@ -443,11 +444,89 @@ def test_concurrent_submitters_create_at_most_one_plan(configured: dict, tmp_pat
             )
         )
 
-    assert all(submission["state"] == "submitted" for submission in submissions)
-    assert submissions[0]["submission"] == submissions[1]["submission"]
+    assert all(
+        submission["state"] in {"submission_unknown", "submitted"}
+        for submission in submissions
+    ), [submission["state"] for submission in submissions]
+    plans = service.planner.get(run["id"], principal="owner")["plans"]
+    assert len(plans) == 1
+    recovered = PlanningExecution(service.database, service.planner).submit(
+        execution["id"], principal="owner", command_key="submit"
+    )
+    assert recovered["state"] == "submitted"
+    assert recovered["submission"] == plans[0]
+
+
+def test_receipt_only_recovery_cannot_stop_a_claiming_submitter(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authorities)
+    authorities.activate()
+    entered = Event()
+    release = Event()
+    original = service._recover_or_submit
+
+    def pause_after_claim(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        entered.set()
+        assert release.wait(5), "first submit did not resume"
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(service, "_recover_or_submit", pause_after_claim)
+    receipt_only = PlanningExecution(service.database, service.planner)
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        first = workers.submit(
+            service.submit, execution["id"], principal="owner", command_key="submit"
+        )
+        assert entered.wait(5), "first submit did not persist its claim"
+        recovered = workers.submit(
+            receipt_only.submit, execution["id"], principal="owner", command_key="submit"
+        ).result(timeout=5)
+        assert recovered["state"] == "submission_unknown"
+        assert service.get(execution["id"], principal="owner")["state"] == "submit_claimed"
+        release.set()
+        submitted = first.result(timeout=5)
+
+    assert submitted["state"] == "submitted"
     assert service.planner.get(run["id"], principal="owner")["plans"] == [
-        submissions[0]["submission"]
+        submitted["submission"]
     ]
+
+
+@pytest.mark.parametrize(
+    ("change", "reason"),
+    [
+        ("changed", "PLANNING_OUTPUT_SOURCE_CHANGED"),
+        ("unavailable", "PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE"),
+        ("forbidden", "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN"),
+    ],
+)
+def test_output_authority_change_at_run_submission_guard_prevents_plan(
+    configured: dict,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    change: str,
+    reason: str,
+) -> None:
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authorities)
+    authorities.activate()
+    original = service.planner._submit_planning_execution_plan
+
+    def change_source(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        if change == "changed":
+            authorities.output_source = "c" * 64
+        elif change == "unavailable":
+            service.outputs = None
+        else:
+            service.allow_fixture_authorities = False
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(service.planner, "_submit_planning_execution_plan", change_source)
+    rejected = service.submit(execution["id"], principal="owner", command_key="submit")
+    assert rejected["submission"] is None
+    assert rejected["reason_codes"] == [reason]
+    assert service.planner.get(run["id"], principal="owner")["plans"] == []
 
 
 def test_cancellation_observed_before_run_submit_prevents_plan(
