@@ -241,6 +241,13 @@ class ApprovedTaskAdmission:
             None,
         )
         reason = None
+        active_with_exact_reviewer_receipt = (
+            current is not None
+            and current["stored_state"] == "active"
+            and isinstance(activation, dict)
+            and isinstance(activation.get("receipt"), dict)
+            and activation["receipt"].get("decision") == "capacity_revalidated"
+        )
         if current is None:
             operation["state"], reason = "reconciliation_required", "CAPACITY_ADMISSION_MISSING"
         elif current["stored_state"] == "expired" or current["exclusion_reason"] == (
@@ -249,12 +256,23 @@ class ApprovedTaskAdmission:
             operation["state"], reason = "expired", "RESERVATION_EXPIRED_UNSENT"
         elif current["stored_state"] == "released":
             operation["state"], reason = "released", "RESERVATION_RELEASED"
-        elif current["stored_state"] != "reserved" and not (
-            current["stored_state"] == "active"
-            and isinstance(activation, dict)
-            and isinstance(activation.get("receipt"), dict)
-            and activation["receipt"].get("decision") == "capacity_revalidated"
+        elif (
+            active_with_exact_reviewer_receipt
+            and reviewer_recovery
+            and not operation.get("cancel_requested")
         ):
+            # A concurrent read can observe the Capacity activation after it
+            # commits but before its caller stores the exact receipt. Once
+            # both durable facts agree, this Reviewer operation has recovered
+            # its original hold; do not strand it in reconciliation.
+            operation["state"] = "reserved"
+            operation["reason_codes"] = []
+            operation["capacity_status"] = {
+                "facts_sha256": facts.sha256,
+                "admission": current,
+            }
+            self._save(db, operation)
+        elif current["stored_state"] != "reserved" and not active_with_exact_reviewer_receipt:
             operation["state"], reason = (
                 "reconciliation_required",
                 "EXECUTION_RECONCILIATION_REQUIRED",

@@ -2,6 +2,8 @@
 
 import json
 import sqlite3
+from concurrent.futures import ThreadPoolExecutor
+from threading import Event
 
 import pytest
 from karajan.runs import RunError
@@ -109,6 +111,83 @@ def test_reviewer_unknown_remains_pending_and_refresh_is_idempotent(binding_case
         command_key="always-unknown",
     ) == unknown
 
+
+def test_concurrent_get_recovers_active_reviewer_activation_receipt(binding_case, monkeypatch):
+    """A read that misses an in-flight receipt must converge to the active hold."""
+    intents, (run_id, _), _, _, _ = _passed_reviewer_subject(binding_case)
+    queued = intents.admissions.enqueue(
+        run_id, "review", principal="owner", command_key="activation-race"
+    )
+    reviewer = intents.admissions.advance(run_id, queued["id"], principal="owner")
+    capacity = intents.admissions.routing.capacity
+    admission_id = reviewer["capacity_receipt"]["admission_id"]
+    activation_entered = Event()
+    permit_activation = Event()
+    activation_committed = Event()
+    permit_activation_reply = Event()
+    missed_receipt = Event()
+    actual_activate = capacity.activate
+    actual_receipt = capacity.command_receipt
+
+    def activate_after_get_window(current_admission_id, *, command_key):
+        assert current_admission_id == admission_id
+        activation_entered.set()
+        assert permit_activation.wait(timeout=5)
+        receipt = actual_activate(current_admission_id, command_key=command_key)
+        activation_committed.set()
+        assert permit_activation_reply.wait(timeout=5)
+        return receipt
+
+    def miss_receipt_during_get(kind, payload, *, command_key):
+        if (
+            activation_entered.is_set()
+            and not missed_receipt.is_set()
+            and kind == "activate"
+            and payload == {"admission_id": admission_id}
+        ):
+            assert actual_receipt(kind, payload, command_key=command_key) is None
+            missed_receipt.set()
+            assert activation_committed.wait(timeout=5)
+            return None
+        return actual_receipt(kind, payload, command_key=command_key)
+
+    monkeypatch.setattr(capacity, "activate", activate_after_get_window)
+    monkeypatch.setattr(capacity, "command_receipt", miss_receipt_during_get)
+    with ThreadPoolExecutor(max_workers=2, thread_name_prefix="reviewer") as executor:
+        activation = executor.submit(
+            intents.admissions.activate_reviewer, run_id, reviewer["id"], principal="owner"
+        )
+        assert activation_entered.wait(timeout=5)
+        observed = executor.submit(
+            intents.admissions.get, run_id, reviewer["id"], principal="owner"
+        )
+        assert missed_receipt.wait(timeout=5)
+        permit_activation.set()
+        assert activation_committed.wait(timeout=5)
+        raced = observed.result(timeout=5)
+        assert raced["state"] == "reconciliation_required"
+        permit_activation_reply.set()
+        activated = activation.result(timeout=5)
+
+    assert activated["state"] == "reserved"
+    assert activated["reason_codes"] == []
+    assert activated["reviewer_activation"]["receipt"] == capacity.command_receipt(
+        "activate",
+        {"admission_id": admission_id},
+        command_key="reviewer-activate:" + reviewer["id"],
+    )
+    reservations = capacity.snapshot()["reservations"]
+    assert [(row["id"], row["state"]) for row in reservations if row["id"] == admission_id] == [
+        (admission_id, "active")
+    ]
+    with intents.admissions.reviewer_reserved_effect_guard(
+        run_id, reviewer["id"], principal="owner"
+    ) as held:
+        assert held["capacity"]["state"] == "active"
+    assert (
+        intents.admissions.reconcile_reviewer(run_id, reviewer["id"], principal="owner")
+        == activated
+    )
 
 def test_generic_worker_reconciliation_does_not_use_reviewer_refresh(prepared):
     service, routing, run = prepared
