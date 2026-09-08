@@ -347,6 +347,34 @@ class RunnerHost:
                 "activation_allowed": False,
             }
 
+    def inspect_original_preparation(self, manifest: HostManifest, start_key: str) -> Snapshot:
+        """Read and correlate one already-persisted preparation without effects.
+
+        This is intentionally narrower than ``prepare``: it neither creates a
+        row nor initializes control.  A recovery consumer supplies its original
+        fixed manifest and start key, and receives a snapshot only when every
+        persisted Host identity still matches.
+        """
+        if not start_key or len(start_key) > 256:
+            raise ValueError("Invalid start key.")
+        manifest_json = manifest.model_dump_json()
+        expected = parse_host_manifest_json(manifest_json)
+        with self._connect(existing_only=True) as connection:
+            connection.execute("PRAGMA query_only=ON")
+            row = connection.execute(
+                "SELECT start_key,attempt_id,manifest FROM executions WHERE start_key=?",
+                (start_key,),
+            ).fetchone()
+        if row is None:
+            raise KeyError(start_key)
+        try:
+            actual = parse_host_manifest_json(row["manifest"])
+        except (TypeError, ValueError):
+            raise LaunchDenied("PREPARED_BINDING_MISMATCH") from None
+        if row["attempt_id"] != expected.id or actual != expected:
+            raise LaunchDenied("PREPARED_BINDING_MISMATCH")
+        return self.inspect(expected.id)
+
     @contextmanager
     def current_fence_guard(
         self, attempt_id: str, *, fence: int, authorization_ref: str

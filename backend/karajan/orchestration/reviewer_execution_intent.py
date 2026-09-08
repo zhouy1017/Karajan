@@ -15,12 +15,12 @@ from pathlib import Path
 from typing import Any
 
 from karajan.candidates import CandidateStore
-from karajan.execution import ProcessSpec, RunnerHost
+from karajan.execution import LaunchDenied, ProcessSpec, RunnerHost
 from karajan.routing.compiler import digest
 from karajan.runs import RunError
 from karajan.storage import ExistingStoreError, open_database, require_schema
 
-from .admission import ApprovedTaskAdmission
+from .admission import ApprovedTaskAdmission, ReviewerFinalEffectCapability
 from .go_execution_intent import GoExecutionIntents
 from .reviewer_execution_binding import compiler_binding, host_manifest, launch_document
 from .reviewer_input import ReviewerInput, compile_reviewer_input
@@ -304,27 +304,31 @@ class ReviewerExecutionIntents:
         ) as held:
             if compiler_binding(held, compiled, project_id=binding["project_id"]) != binding:
                 raise RunError("REVIEWER_EXECUTION_INPUT_CHANGED")
-            intent = (
-                binding
-                | asdict(self.source)
-                | {
-                    "schema_version": "karajan.reviewer-execution-intent.v1",
-                    "execution_id": str(uuid.uuid4()),
-                    "principal": principal,
-                    "fence": 1,
-                    "start_key": "reviewer-host-start:" + reviewer_operation_id,
-                    "phase": "prepared",
-                    "host_prepared_id": None,
-                    "host_observation": None,
-                    "effect_claim": None,
-                    "cancel_requested": False,
-                    "delivery": {"eligible": False, "state": "not_run"},
-                }
-            )
-            intent["binding_digest"] = digest(intent)
-            intent["intent_digest"] = digest(intent)
             try:
                 with self._db() as db:
+                    # The private-ledger writer may have waited after the
+                    # Admission guard was entered.  Re-read deployment source
+                    # before taking the producer's final scalar time sample.
+                    self._assert_current_effect_boundary(held)
+                    intent = (
+                        binding
+                        | asdict(self.source)
+                        | {
+                            "schema_version": "karajan.reviewer-execution-intent.v1",
+                            "execution_id": str(uuid.uuid4()),
+                            "principal": principal,
+                            "fence": 1,
+                            "start_key": "reviewer-host-start:" + reviewer_operation_id,
+                            "phase": "prepared",
+                            "host_prepared_id": None,
+                            "host_observation": None,
+                            "effect_claim": None,
+                            "cancel_requested": False,
+                            "delivery": {"eligible": False, "state": "not_run"},
+                        }
+                    )
+                    intent["binding_digest"] = digest(intent)
+                    intent["intent_digest"] = digest(intent)
                     db.execute(
                         "INSERT INTO reviewer_executions VALUES (?,?,?,?,?,?,?)",
                         (
@@ -381,6 +385,21 @@ class ReviewerExecutionIntents:
             (json.dumps(value, sort_keys=True), value["phase"], value["execution_id"]),
         )
 
+    def _assert_current_effect_boundary(self, held: dict[str, Any]) -> None:
+        """Use the held producer's complete temporal fence at a real write.
+
+        Deployment-source reads can block, so they must complete before the
+        producer samples its Capacity/Reviewer/Run clocks.  The retained
+        callable is valid only inside ``reviewer_reserved_effect_guard`` and
+        never opens its controller writers again.
+        """
+        if self.current_source is not None and self.current_source() != self.source:
+            raise RunError("REVIEWER_EXECUTION_SOURCE_CHANGED")
+        capability = held.get("final_effect_capability")
+        if not isinstance(capability, ReviewerFinalEffectCapability):
+            raise RunError("REVIEWER_EXECUTION_BOUNDARY_INVALID")
+        capability.assert_current()
+
     @contextmanager
     def _current_guard(self, value: dict[str, Any]) -> Iterator[Callable[[], None]]:
         if self.current_source is not None and self.current_source() != self.source:
@@ -403,16 +422,7 @@ class ReviewerExecutionIntents:
             value["run_id"], value["reviewer_operation_id"], principal=value["principal"]
         ) as held:
             def assert_temporal_current() -> None:
-                """Use retained guard facts only; Host must not reopen controller writers."""
-                now = self.admissions.routing.capacity.clock()
-                if now >= held["capacity"]["expires_at"]:
-                    raise RunError("RESERVATION_EXPIRED")
-                fence = self.admissions.routing.reviewer_elapsed_boundary_guard(
-                    held["revalidation"], clock=lambda: now
-                )
-                fence.assert_current(as_of=now)
-                if self.current_source is not None and self.current_source() != self.source:
-                    raise RunError("REVIEWER_EXECUTION_SOURCE_CHANGED")
+                self._assert_current_effect_boundary(held)
 
             yield assert_temporal_current
 
@@ -464,13 +474,17 @@ class ReviewerExecutionIntents:
     ) -> dict[str, Any]:
         with self._db(write=False) as db:
             value = self._load(db, run_id, reviewer_operation_id, principal)
-            if value is None or value["host_prepared_id"] is None:
+            if value is None:
                 raise RunError("REVIEWER_EXECUTION_HOST_PREPARE_REQUIRED")
-            snapshot = self.host.inspect(value["planned_attempt_id"])
-            if (
-                snapshot.prepared_id != value["start_key"]
-                or snapshot.attempt_id != value["planned_attempt_id"]
-            ):
+            try:
+                snapshot = self.host.inspect_original_preparation(
+                    host_manifest(value), value["start_key"]
+                )
+            except KeyError:
+                raise RunError("REVIEWER_EXECUTION_HOST_PREPARE_REQUIRED") from None
+            except (LaunchDenied, ValueError):
+                raise RunError("REVIEWER_EXECUTION_HOST_BINDING_MISMATCH") from None
+            if value["host_prepared_id"] not in {None, snapshot.prepared_id}:
                 raise RunError("REVIEWER_EXECUTION_HOST_BINDING_MISMATCH")
             observation = {
                 "prepared_id": snapshot.prepared_id,
@@ -479,6 +493,11 @@ class ReviewerExecutionIntents:
                 "launch_phase": snapshot.launch_phase,
                 "remote_stop": snapshot.remote_stop,
             }
+            # A reply lost after Host's preparation commit leaves no execution
+            # receipt.  Correlate that historical Host row without creating a
+            # receipt, control, claim, or any new authority in this ledger.
+            if value["host_prepared_id"] is None:
+                return deepcopy(value | {"host_observation": observation})
         with self._db() as db:
             current = self._load(db, run_id, reviewer_operation_id, principal)
             if current is None or current["execution_id"] != value["execution_id"]:

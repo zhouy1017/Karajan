@@ -148,6 +148,23 @@ def _ledger_in_registered_repository(database: Path, projects: object) -> bool:
         raise RunError("REVIEWER_EXECUTION_LEDGER_UNAVAILABLE") from None
 
 
+def _host_in_registered_repository(directory: Path, projects: object) -> bool:
+    """Reject a Host root or its existing SQLite inode under a source tree."""
+    try:
+        root = directory.resolve(strict=True)
+        roots = [
+            Path(row["repository"]["root"]).resolve(strict=True)
+            for row in projects.list()  # type: ignore[attr-defined]
+        ]
+        if any(root.is_relative_to(repository) for repository in roots):
+            return True
+        return _ledger_in_registered_repository(directory / "runnerhost.sqlite3", projects)
+    except RunError:
+        raise
+    except (KeyError, OSError, TypeError, ValueError):
+        raise RunError("REVIEWER_EXECUTION_HOST_UNAVAILABLE") from None
+
+
 def _current_assets_present(task: Any) -> bool:
     """Missing current assets permit historical reads, never effect composition."""
     private = Path(task.credential_private_directory)
@@ -221,6 +238,8 @@ def open_reviewer_execution_intents(
     # paths, and does not create or repair either side.
     if _ledger_in_registered_repository(reviewer.execution_database, projects):
         raise RunError("REVIEWER_EXECUTION_LEDGER_IN_REPOSITORY")
+    if _host_in_registered_repository(reviewer.host_directory, projects):
+        raise RunError("REVIEWER_EXECUTION_HOST_IN_REPOSITORY")
     if not _current_assets_present(task):
         return ReviewerExecutionHistory(reviewer.execution_database)
     planner = RunPlanner(reviewer.state_directory / "runs.sqlite", projects, existing_only=True)

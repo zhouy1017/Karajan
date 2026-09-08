@@ -18,7 +18,11 @@ from karajan.orchestration.reviewer_execution_intent import (
     ReviewerLaunchSpec,
 )
 from karajan.runs import RunError
-from test_reviewer_binding import _activate_reviewer_reservation, _passed_reviewer_subject
+from test_reviewer_binding import (
+    _activate_reviewer_reservation,
+    _passed_reviewer_subject,
+    _tighten_reviewer_conservative_capacity,
+)
 
 pytest_plugins = (
     "test_projected_qualification_store",
@@ -27,8 +31,14 @@ pytest_plugins = (
 )
 
 
-def _service(tmp_path: Path, binding_case):
+def _service(tmp_path: Path, binding_case, *, conservative_observation_age: float | None = None):
     intents, (run_id, _), candidates, _, _ = _passed_reviewer_subject(binding_case)
+    if conservative_observation_age is not None:
+        _tighten_reviewer_conservative_capacity(
+            intents.admissions.routing.capacity,
+            maximum=2,
+            observation_age=conservative_observation_age,
+        )
     reviewer = intents.admissions.advance(
         run_id,
         intents.admissions.enqueue(run_id, "review", principal="owner", command_key="review")["id"],
@@ -205,6 +215,20 @@ def test_prepare_rejects_second_key_and_never_prepares_host(tmp_path, binding_ca
         service.host.inspect(intent["planned_attempt_id"])
 
 
+def test_new_intent_rechecks_current_deployment_source_at_its_writer_boundary(
+    tmp_path, binding_case
+):
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    changed = ReviewerExecutionSource("3" * 64, "4" * 64)
+    service.current_source = lambda: changed
+    before, host_before = service.database.read_bytes(), service.host.database.read_bytes()
+    with pytest.raises(RunError, match="REVIEWER_EXECUTION_SOURCE_CHANGED"):
+        service.prepare(run_id, reviewer_id, principal="owner", command_key="stale-new-intent")
+    assert service.database.read_bytes() == before
+    assert service.read(run_id, reviewer_id, principal="owner") is None
+    assert service.host.database.read_bytes() == host_before
+
+
 def test_concurrent_independent_facades_replay_one_prepared_identity(tmp_path, binding_case):
     service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
     other = ReviewerExecutionIntents(
@@ -348,6 +372,188 @@ def test_expiry_after_real_sqlite_writer_wait_blocks_the_actual_effect(
     if boundary == "control":
         with sqlite3.connect(service.host.database) as db:
             assert db.execute("SELECT COUNT(*) FROM controls").fetchone()[0] == 0
+
+
+@pytest.mark.parametrize("boundary", ["host", "control", "claim"])
+def test_quota_freshness_after_real_writer_wait_blocks_each_actual_effect(
+    tmp_path, binding_case, boundary
+):
+    """A live reservation may outlast a required fresh quota observation."""
+    service, run_id, reviewer_id, _ = _service(
+        tmp_path, binding_case, conservative_observation_age=5
+    )
+    capacity = service.admissions.routing.capacity
+    service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+    reached, release = threading.Event(), threading.Event()
+    outcome: list[BaseException] = []
+
+    if boundary == "host":
+        original = service.host.prepare
+
+        def action():
+            return service.freeze_launch(run_id, reviewer_id, principal="owner")
+
+        def call(*args, **kwargs):
+            reached.set()
+            return original(*args, **kwargs)
+
+        service.host.prepare = call
+        database = service.host.database
+    elif boundary == "control":
+        original = service.host.initialize_control_once
+
+        def action():
+            return service.freeze_launch(run_id, reviewer_id, principal="owner")
+
+        def call(*args, **kwargs):
+            reached.set()
+            assert release.wait(5)
+            return original(*args, **kwargs)
+
+        service.host.initialize_control_once = call
+        database = service.host.database
+    else:
+        service.freeze_launch(run_id, reviewer_id, principal="owner")
+        from karajan.execution._platform import process_identity
+
+        identity = process_identity(os.getpid())
+        assert identity is not None
+
+        @contextmanager
+        def current_runner(*args, **kwargs):
+            reached.set()
+            yield identity
+
+        service.host.wait_for_runner_registration = lambda *args, **kwargs: identity
+        service.host.current_runner_guard = current_runner
+
+        def action():
+            return service.claim_registered_observer(
+                run_id, reviewer_id, principal="owner", timeout_seconds=0.01
+            )
+
+        database = service.database
+
+    holder = None
+    if boundary != "control":
+        holder = sqlite3.connect(database, isolation_level=None, timeout=5)
+        holder.execute("BEGIN IMMEDIATE")
+
+    def invoke():
+        try:
+            action()
+        except BaseException as error:
+            outcome.append(error)
+
+    thread = threading.Thread(target=invoke)
+    thread.start()
+    assert reached.wait(5)
+    if boundary == "control":
+        holder = sqlite3.connect(database, isolation_level=None, timeout=5)
+        holder.execute("BEGIN IMMEDIATE")
+        release.set()
+    # Reservation, qualification and estimate windows remain valid.  Only the
+    # conservative quota observation age crosses while the real writer waits.
+    capacity.clock = lambda: 1006.0
+    assert holder is not None
+    time.sleep(0.05)
+    holder.commit()
+    holder.close()
+    thread.join(10)
+    assert not thread.is_alive()
+    assert outcome and isinstance(outcome[0], RunError)
+    assert "REVIEWER_CAPACITY_REVALIDATION_FAILED" in str(outcome[0])
+    current = service.read(run_id, reviewer_id, principal="owner")
+    assert current is not None and current["effect_claim"] is None
+    if boundary == "host":
+        with pytest.raises(KeyError):
+            service.host.inspect(current["planned_attempt_id"])
+    if boundary == "control":
+        with sqlite3.connect(service.host.database) as db:
+            assert db.execute("SELECT COUNT(*) FROM controls").fetchone()[0] == 0
+
+
+def test_deployment_source_read_before_final_deadline_check_blocks_host_write(
+    tmp_path, binding_case
+):
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    prepared = service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+    with sqlite3.connect(service.admissions.database) as db:
+        row = db.execute(
+            "SELECT data FROM run_execution_budgets WHERE run_id=?", (run_id,)
+        ).fetchone()
+        budget = json.loads(row[0])
+        budget.update(started_at=1000.0, max_duration_seconds=10)
+        db.execute(
+            "UPDATE run_execution_budgets SET data=? WHERE run_id=?", (json.dumps(budget), run_id)
+        )
+    calls = 0
+
+    def current_source():
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            service.admissions.routing.planner.clock = lambda: 1010.0
+        return service.source
+
+    service.current_source = current_source
+    service.admissions.routing.planner.clock = lambda: 1001.0
+    before = service.host.database.read_bytes()
+    with pytest.raises(RunError, match="RUN_DURATION_LIMIT"):
+        service.freeze_launch(run_id, reviewer_id, principal="owner")
+    assert calls >= 2
+    assert service.host.database.read_bytes() == before
+    with pytest.raises(KeyError):
+        service.host.inspect(prepared["planned_attempt_id"])
+
+
+def test_lost_host_prepare_reply_reopens_for_historical_read_only_correlation(
+    tmp_path, binding_case
+):
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    original = service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+    prepare = service.host.prepare
+    counts = {"prepare": 0, "control": 0, "start": 0, "claim": 0}
+
+    def lose_reply(*args, **kwargs):
+        counts["prepare"] += 1
+        prepare(*args, **kwargs)
+        raise ConnectionError("reply lost after Host commit")
+
+    def count_control(*args, **kwargs):
+        counts["control"] += 1
+        return pytest.fail("lost Host reply must not initialize control")
+
+    service.host.prepare = lose_reply
+    service.host.initialize_control_once = count_control
+    with pytest.raises(ConnectionError, match="reply lost"):
+        service.freeze_launch(run_id, reviewer_id, principal="owner")
+    assert counts == {"prepare": 1, "control": 0, "start": 0, "claim": 0}
+    assert service.read(run_id, reviewer_id, principal="owner")["host_prepared_id"] is None
+    host_before, ledger_before = service.host.database.read_bytes(), service.database.read_bytes()
+    reopened = ReviewerExecutionIntents(
+        service.database,
+        service.admissions,
+        service.candidates,
+        source=service.source,
+        host=RunnerHost(service.host.directory, existing_only=True),
+        launch_compiler=service.launch_compiler,
+        existing_only=True,
+    )
+    observed = reopened.inspect_host(run_id, reviewer_id, principal="owner")
+    assert observed["host_prepared_id"] is None
+    assert observed["host_observation"]["prepared_id"] == original["start_key"]
+    assert reopened.host.database.read_bytes() == host_before
+    assert reopened.database.read_bytes() == ledger_before
+    with sqlite3.connect(reopened.host.database) as db:
+        assert db.execute(
+            "SELECT COUNT(*) FROM executions WHERE start_key=?", (original["start_key"],)
+        ).fetchone()[0] == 1
+        assert db.execute(
+            "SELECT COUNT(*) FROM controls WHERE attempt_id=?", (original["planned_attempt_id"],)
+        ).fetchone()[0] == 0
+    with pytest.raises(RunError, match="REVIEWER_EXECUTION_HOST_PREPARE_REQUIRED"):
+        reopened.claim_registered_observer(run_id, reviewer_id, principal="owner")
 
 
 def test_cancel_serializes_with_actual_inspect_host_writer_and_stays_durable(

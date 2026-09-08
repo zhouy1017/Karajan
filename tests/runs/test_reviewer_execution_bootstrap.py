@@ -180,6 +180,8 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
         type(candidates), "_save_evidence", count("evidence", type(candidates)._save_evidence)
     )
     journal_before = journal.read_bytes()
+    descriptor = control / "reviewer-execution-bootstrap.json"
+    other = tmp_path / "other.sqlite"
     seeded = ReviewerExecutionIntents(
         database,
         intents.admissions,
@@ -231,8 +233,6 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
 
     # Replacing the facade's own descriptor is a current-source change, not a
     # historical-read failure.  The next effect guard must see it.
-    descriptor = control / "reviewer-execution-bootstrap.json"
-    other = tmp_path / "other.sqlite"
     ReviewerExecutionIntents(
         other,
         intents.admissions,
@@ -262,3 +262,30 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
     assert journal.read_bytes() == journal_before
     public = json.dumps(original, sort_keys=True)
     assert "material-seal" not in public and "credential" not in public
+
+    # The factory must use actual ProjectRegistry roots for every persistent
+    # execution root, including Host.  Both descriptors agree, the Host store
+    # already exists, and the independent execution ledger stays outside.
+    descriptor.write_text(
+        json.dumps(reviewer_settings.document(), sort_keys=True, separators=(",", ":")) + "\n"
+    )
+    repository = Path(intents.admissions.routing.planner.projects.list()[0]["repository"]["root"])
+    repository_host = repository / "reviewer-host-storage"
+    repository_host.mkdir()
+    RunnerHost(repository_host)
+    repository_host_before = (repository_host / "runnerhost.sqlite3").read_bytes()
+    ledger_before_repository_check = database.read_bytes()
+    task_inside_repository = original_task | {"host_directory": str(repository_host)}
+    task_descriptor.write_text(
+        json.dumps(task_inside_repository, sort_keys=True, separators=(",", ":")) + "\n"
+    )
+    reviewer_inside_repository = reviewer_settings.document() | {
+        "host_directory": str(repository_host)
+    }
+    descriptor.write_text(
+        json.dumps(reviewer_inside_repository, sort_keys=True, separators=(",", ":")) + "\n"
+    )
+    with pytest.raises(RunError, match="REVIEWER_EXECUTION_HOST_IN_REPOSITORY"):
+        open_reviewer_execution_intents(control)
+    assert database.read_bytes() == ledger_before_repository_check
+    assert (repository_host / "runnerhost.sqlite3").read_bytes() == repository_host_before

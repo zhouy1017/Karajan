@@ -5,6 +5,7 @@ import sqlite3
 import uuid
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +17,16 @@ from karajan.storage import open_database, require_schema
 
 from .execution_budget import capture_run_budget_boundary
 from .routing import ApprovedRunRouting
+
+
+@dataclass(frozen=True)
+class ReviewerFinalEffectCapability:
+    """Ephemeral producer-owned validator for one held Reviewer effect guard."""
+
+    _check: Callable[[], None]
+
+    def assert_current(self) -> None:
+        self._check()
 
 
 class ApprovedTaskAdmission:
@@ -770,10 +781,19 @@ class ApprovedTaskAdmission:
                         after_capacity_facts=check_reviewer_capacity_route,
                         before_effect_yield=check_reviewer_final_effect_boundary,
                     ) as capacity:
+                        # This closure deliberately remains an in-memory capability
+                        # of the held Admission/Capacity transactions.  Consumers
+                        # use it only at their own final writer boundary; it is not
+                        # a serializable receipt and cannot be reconstructed from
+                        # the yielded controller facts.
+                        final_effect_check = ReviewerFinalEffectCapability(
+                            check_reviewer_final_effect_boundary()
+                        )
                         yield {
                             "operation": operation,
                             "revalidation": current,
                             "capacity": capacity,
+                            "final_effect_capability": final_effect_check,
                         }
 
 
