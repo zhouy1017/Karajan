@@ -564,12 +564,17 @@ class PlanningExecution:
         for value in (execution_id, principal, command_key):
             identifier(value)
         execution = self.reconcile(execution_id, principal=principal)
+        claimed_here = False
         if execution["state"] == "awaiting_output":
             execution = self._capture_output(execution, principal, command_key)
         if execution["state"] == "output_captured":
             execution = self._claim_submission(execution_id, principal, command_key)
+            # Only this invocation has just checked the live output authority.
+            # A persisted claim belongs to a previous, possibly interrupted
+            # invocation and may only be recovered through its Run receipt.
+            claimed_here = execution["state"] == "submit_claimed"
         if execution["state"] in {"submit_claimed", "submission_unknown"}:
-            return self._recover_or_submit(execution_id, principal)
+            return self._recover_or_submit(execution_id, principal, claimed_here=claimed_here)
         return execution
 
     def _capture_output(
@@ -700,7 +705,9 @@ class PlanningExecution:
                 self._save(db, current)
             return current
 
-    def _recover_or_submit(self, execution_id: str, principal: str) -> dict[str, Any]:
+    def _recover_or_submit(
+        self, execution_id: str, principal: str, *, claimed_here: bool
+    ) -> dict[str, Any]:
         with self._transaction() as db:
             current = self._load(db, execution_id)
             self._owner_run(current["run_id"], principal)
@@ -726,6 +733,11 @@ class PlanningExecution:
             if current["state"] == "submission_unknown":
                 return current
             if current["cancel_requested"]:
+                return current
+            if not claimed_here:
+                current["state"] = "submission_unknown"
+                current["reason_codes"] = ["PLANNING_EXECUTION_SUBMISSION_UNKNOWN"]
+                self._save(db, current)
                 return current
             if current.get("submission_started"):
                 current["state"] = "submission_unknown"

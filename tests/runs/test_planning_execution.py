@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
@@ -382,16 +383,70 @@ def test_exact_run_receipt_recovers_lost_reply_without_resubmission(
     monkeypatch.setattr(service.planner, "_submit_planning_execution_plan", lose_reply)
     with pytest.raises(RuntimeError, match="reply lost"):
         service.submit(execution["id"], principal="owner", command_key="submit")
-    recovered = PlanningExecution(
+    recovered = PlanningExecution(service.database, service.planner).submit(
+        execution["id"], principal="owner", command_key="submit"
+    )
+    assert recovered["state"] == "submitted"
+    assert service.planner.get(run["id"], principal="owner")["plans"] == [
+        recovered["submission"]
+    ]
+
+
+def test_reopened_unstarted_claim_without_receipt_never_submits(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A crash after the SQLite claim is uncertain, never a fresh submission."""
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authorities)
+    authorities.activate()
+
+    def crash_after_claim(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        raise SystemExit("claim persisted before submit")
+
+    monkeypatch.setattr(service, "_recover_or_submit", crash_after_claim)
+    with pytest.raises(SystemExit, match="claim persisted"):
+        service.submit(execution["id"], principal="owner", command_key="submit")
+    claimed = service.get(execution["id"], principal="owner")
+    assert claimed["state"] == "submit_claimed"
+    assert claimed["submission_started"] is False
+    assert service.planner.get(run["id"], principal="owner")["plans"] == []
+
+    # A new controller has no live authorities to re-authorize the persisted
+    # claim. It may read its exact Run receipt, but cannot make a new Plan.
+    reopened = PlanningExecution(service.database, service.planner)
+    recovered = reopened.submit(execution["id"], principal="owner", command_key="submit")
+    assert recovered["state"] == "submission_unknown"
+    assert recovered["reason_codes"] == ["PLANNING_EXECUTION_SUBMISSION_UNKNOWN"]
+    assert service.planner.get(run["id"], principal="owner")["plans"] == []
+
+
+def test_concurrent_submitters_create_at_most_one_plan(configured: dict, tmp_path: Path) -> None:
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authorities)
+    authorities.activate()
+    reopened = PlanningExecution(
         service.database,
         service.planner,
         admissions=authorities,
         outputs=authorities,
+        capacity=authorities.capacity,
         allow_fixture_authorities=True,
-    ).submit(execution["id"], principal="owner", command_key="submit")
-    assert recovered["state"] == "submitted"
+    )
+
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        submissions = list(
+            workers.map(
+                lambda subject: subject.submit(
+                    execution["id"], principal="owner", command_key="submit"
+                ),
+                (service, reopened),
+            )
+        )
+
+    assert all(submission["state"] == "submitted" for submission in submissions)
+    assert submissions[0]["submission"] == submissions[1]["submission"]
     assert service.planner.get(run["id"], principal="owner")["plans"] == [
-        recovered["submission"]
+        submissions[0]["submission"]
     ]
 
 
