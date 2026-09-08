@@ -363,17 +363,60 @@ def test_existing_store_direct_child_claim_is_one_shot_and_cancelled_recovery_st
         reopened.claim_registered_observer(run_id, reviewer_id, principal="owner")["claim_allowed"]
         is False
     )
+    # The lost-reply child deliberately writes no reply.  Observe its actual
+    # Host terminal record before retrying the controller operation, so a
+    # natural None -> 0 exit-code update cannot race a snapshot comparison.
+    deadline = time.monotonic() + 5
     before_replay = reopened.host.inspect(prepared["planned_attempt_id"])
+    while before_replay.state != "exited":
+        assert time.monotonic() < deadline, "lost-reply direct child did not exit"
+        time.sleep(0.02)
+        before_replay = reopened.host.inspect(prepared["planned_attempt_id"])
+    with sqlite3.connect(reopened.host.database) as database:
+        persisted_before = database.execute(
+            "SELECT start_key, attempt_id, supervisor_pid, supervisor_birth, "
+            "runner_pid, runner_birth, launch_phase FROM executions WHERE start_key=?",
+            (prepared["start_key"],),
+        ).fetchone()
+        launch_count_before = database.execute(
+            "SELECT COUNT(*) FROM executions WHERE start_key=?", (prepared["start_key"],)
+        ).fetchone()[0]
+        child_count_before = database.execute(
+            "SELECT COUNT(*) FROM executions WHERE start_key=? AND runner_pid IS NOT NULL",
+            (prepared["start_key"],),
+        ).fetchone()[0]
     replayed = reopened.host.start(prepared["start_key"], activation)
-    # A lost controller reply may observe the original child already exited.
-    # Its terminal state is canonical; replay identifies the original launch
-    # and never accepts a second supervisor/process identity.
-    assert replayed == reopened.host.inspect(prepared["planned_attempt_id"])
+    after_replay = reopened.host.inspect(prepared["planned_attempt_id"])
+    with sqlite3.connect(reopened.host.database) as database:
+        persisted_after = database.execute(
+            "SELECT start_key, attempt_id, supervisor_pid, supervisor_birth, "
+            "runner_pid, runner_birth, launch_phase FROM executions WHERE start_key=?",
+            (prepared["start_key"],),
+        ).fetchone()
+        launch_count_after = database.execute(
+            "SELECT COUNT(*) FROM executions WHERE start_key=?", (prepared["start_key"],)
+        ).fetchone()[0]
+        child_count_after = database.execute(
+            "SELECT COUNT(*) FROM executions WHERE start_key=? AND runner_pid IS NOT NULL",
+            (prepared["start_key"],),
+        ).fetchone()[0]
+    # Completion and usage fields are mutable observations.  Recovery instead
+    # proves it replayed the one persisted launch and its one registered child.
     assert replayed.prepared_id == prepared["start_key"]
     assert replayed.attempt_id == prepared["planned_attempt_id"]
-    assert replayed.launch_phase == before_replay.launch_phase == "acknowledged"
-    assert replayed.supervisor == before_replay.supervisor
-    assert replayed.processes == before_replay.processes
+    assert after_replay.prepared_id == before_replay.prepared_id == prepared["start_key"]
+    assert after_replay.attempt_id == before_replay.attempt_id == prepared["planned_attempt_id"]
+    assert (
+        replayed.launch_phase
+        == after_replay.launch_phase
+        == before_replay.launch_phase
+        == "acknowledged"
+    )
+    assert replayed.supervisor == after_replay.supervisor == before_replay.supervisor
+    assert replayed.processes == after_replay.processes == before_replay.processes == ()
+    assert persisted_after == persisted_before
+    assert launch_count_after == launch_count_before == 1
+    assert child_count_after == child_count_before == 1
     assert reopened.cancel(run_id, reviewer_id, principal="owner")["cancel_requested"] is True
     with pytest.raises(RunError, match="REVIEWER_EXECUTION_CANCELLED"):
         reopened.claim_registered_observer(run_id, reviewer_id, principal="owner")
