@@ -46,6 +46,7 @@ from karajan.orchestration.planning_snapshot import (
 )
 from karajan.orchestration.planning_transport import (
     PlanningOutputStore,
+    PlanningTransport,
     ProductionGoPlanningProducer,
 )
 from karajan.projects import ProjectRegistry
@@ -147,6 +148,7 @@ def planning_capacity(
     remaining: str = "10",
     lead_reserve: dict[str, str] | None = None,
     clock: Callable[[], float] = lambda: 1000.0,
+    observation_at: float = 1000.0,
     observation_max_age_seconds: int = 30,
     conservative_observation_max_age_seconds: int = 30,
     max_attempt_duration_seconds: int = 60,
@@ -170,8 +172,8 @@ def planning_capacity(
             {
                 "pool_id": pool,
                 "window_id": window,
-                "observed_at": 1000.0,
-                "reset_at": 2000.0,
+                "observed_at": observation_at,
+                "reset_at": observation_at + 1000.0,
                 "source": "fixture",
                 "source_ref": "fixture-observer",
                 "metric": "remaining",
@@ -205,6 +207,57 @@ def planning_capacity(
     return store
 
 
+def _native_v2_policy(configured: dict) -> dict:
+    policy = policy_request(configured)
+    policy.update(
+        schema_version="karajan.execution-policy.v2",
+        max_context_tokens=16384,
+        context_policy={
+            **policy["context_policy"],
+            "measurement": {
+                "method": "reference_tokenizer_estimate",
+                "source_sha256": "a" * 64,
+                "fixed_margin": 2048,
+                "ratio_margin_basis_points": 1000,
+            },
+        },
+        validation={
+            "id": "native-production-transport-validation",
+            "revision": 1,
+            "checks": [
+                {
+                    "id": "tests",
+                    "revision": 1,
+                    "argv": ["python", "-m", "pytest"],
+                    "environment_ref": {"id": "offline", "revision": 1},
+                    "timeout_seconds": 60,
+                }
+            ],
+            "environments": [
+                {
+                    "id": "offline",
+                    "revision": 1,
+                    "runtime_kind": "isolated-command",
+                    "platform": "linux_x64",
+                    "source_sha256": "b" * 64,
+                    "filesystem": "candidate_copy",
+                    "network": "none",
+                    "env": {},
+                    "max_log_bytes": 65536,
+                }
+            ],
+            "review": {
+                "id": "independent_review",
+                "revision": 1,
+                "environment_ref": {"id": "offline", "revision": 1},
+                "context_policy": "candidate_and_acceptance_only",
+                "independence_policy": "existing_candidate_independence_v1",
+            },
+        },
+    )
+    return policy
+
+
 def _case(
     tmp_path: Path,
     configured: dict,
@@ -215,12 +268,21 @@ def _case(
     conservative_observation_max_age_seconds: int = 30,
     max_attempt_duration_seconds: int = 60,
     register_estimate: bool = True,
+    paths: list[str] | None = None,
+    execution_policy: dict | None = None,
+    observation_at: float = 1000.0,
 ) -> tuple[PlanningExecution, PlanningAdmissionAuthority, dict, Any]:
     planner = RunPlanner(tmp_path / "runs.sqlite", configured["registry"], clock=clock or time.time)
     fixed = configured["registry"].register_execution_policy(
-        configured["id"], policy_request(configured), command_key="policy", principal="owner"
+        configured["id"],
+        policy_request(configured) if execution_policy is None else execution_policy,
+        command_key="policy",
+        principal="owner",
     )
-    run = planner.create(request_v2(configured, fixed), command_key="run", principal="owner")
+    request = request_v2(configured, fixed)
+    if paths is not None:
+        request["authorization"].update(read_paths=paths, write_paths=paths)
+    run = planner.create(request, command_key="run", principal="owner")
     assert run["plans"] == []
     intent = planner.planning_intent(run["id"], term=1, command_key="intent-1", principal="lead")
     execution = PlanningExecution(tmp_path / "planning.sqlite", planner).begin(
@@ -229,6 +291,7 @@ def _case(
     capacity = planning_capacity(
         tmp_path / "capacity",
         clock=clock or (lambda: 1000.0),
+        observation_at=observation_at,
         observation_max_age_seconds=observation_max_age_seconds,
         conservative_observation_max_age_seconds=conservative_observation_max_age_seconds,
         max_attempt_duration_seconds=max_attempt_duration_seconds,
@@ -259,7 +322,7 @@ def _case(
                 "runtime_version": "1",
                 "roles": ["commander"],
                 "tools": ["fixture-tools"],
-                "context_tokens": 8192,
+                "context_tokens": fixed["max_context_tokens"],
                 "data_destination": "local-fixture",
                 "budget_enforcement": "bounded_calls",
                 "provenance": "fixture",
@@ -476,6 +539,136 @@ def test_production_native_send_releases_guard_for_cancelled_wait(
             "PLANNING_NATIVE_TIMEOUT",
         }
     assert service.planner.get(run["id"], principal="owner")["plans"] == []
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="native planning requires Linux namespaces")
+def test_production_transport_consumes_registered_budget_and_publishes_one_plan(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """One C/P transport operation carries trusted admission through native publication.
+
+    The Commander qualification and credential below are explicit, private test
+    fixtures.  The transport, controller estimate, admission receipt, producer,
+    Relay, Journal, output authority, and Run submit path remain production code.
+    """
+    _, authority, run, execution = _case(
+        tmp_path,
+        configured,
+        register_estimate=False,
+        paths=["original.txt"],
+        execution_policy=_native_v2_policy(configured),
+        clock=time.time,
+        observation_at=time.time(),
+    )
+    # The production reader opens this existing-only ledger after bootstrap.
+    ProfileQualificationStore(authority.planner.projects)
+    control, _ = _output_source_control(tmp_path, authority, run)
+    state = tmp_path / "protected-state"
+    outputs = PlanningOutputStore(state / "planning-output.sqlite", authority_kind="production")
+    outputs.database.chmod(0o600)
+    provision_planning_repository_snapshots(control)
+    service = PlanningExecution.from_trusted_factory(control)
+    assert isinstance(service.admissions, PlanningAdmissionAuthority)
+    reader = service.admissions.qualifications
+    assert isinstance(reader, PersistentCommanderQualificationReader)
+    profile = run["configuration_snapshot"]["configuration"]["resources"]["profiles"][0]
+    fixture_facts = authority.qualifications.read_commander(
+        execution["binding"],
+        scope=COMMANDER_QUALIFICATION_SCOPE,
+        reader_version="karajan.commander-qualification-reader.v1",
+    )
+    assert fixture_facts is not None
+    with reader.qualifications._owned(run["project_id"], "owner") as db:
+        bound = reader.qualifications._binding(
+            db, run["project_id"], {"id": profile["id"], "revision": profile["revision"]}
+        )
+        source = reader._current_source(db, run["project_id"], bound, "owner")
+        profile_facts = deepcopy(fixture_facts["profile_facts"])
+        profile_facts["valid_until"] = time.time() + 60
+        start = {
+            "qualification_scope": COMMANDER_QUALIFICATION_SCOPE,
+            "profile_binding": bound,
+            "source": source,
+            "execution_start": {"test_only": "production-transport"},
+        }
+        record = {
+            "id": "test-production-transport-qualification",
+            "binding": start,
+            "qualification_scope": COMMANDER_QUALIFICATION_SCOPE,
+            "status": "passed",
+            "provenance": "official",
+            "observed_at": time.time(),
+            "valid_until": time.time() + 60,
+            "commander_facts": {
+                "profile_facts": profile_facts,
+                "capability_evidence": fixture_facts["capability_evidence"],
+                "source_generation_sha256": digest(source),
+            },
+        }
+        db.execute(
+            "INSERT INTO profile_qualification_starts VALUES (?,?,?,?,?,?)",
+            (
+                record["id"],
+                run["project_id"],
+                "owner",
+                "test-production-transport",
+                record["id"],
+                json.dumps(start),
+            ),
+        )
+        db.execute(
+            "INSERT INTO profile_qualification_start_seals VALUES (?,?)",
+            (record["id"], digest(start)),
+        )
+        db.execute(
+            "INSERT INTO profile_qualification_records VALUES (?,?,?)",
+            (record["id"], json.dumps(record), digest(record)),
+        )
+    plan = submit_request(
+        service.planner.get(run["id"], principal="owner"),
+        service.planner.get(run["id"], principal="owner")["planning_intents"][0],
+    )["plan"]
+    for task in plan["tasks"]:
+        task["paths"] = ["original.txt"]
+
+    class LocalRelay(GoRelay):
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            body = {
+                "model": "glm-5.3-flash",
+                "choices": [
+                    {
+                        "index": 0,
+                        "delta": {
+                            "content": json.dumps(plan, separators=(",", ":")),
+                            "tool_calls": None,
+                        },
+                        "finish_reason": "stop",
+                    }
+                ],
+                "usage": {"prompt_tokens": 20, "completion_tokens": 2, "total_tokens": 22},
+            }
+            kwargs["client_factory"] = lambda: httpx.Client(
+                transport=httpx.MockTransport(
+                    lambda _request: httpx.Response(
+                        200,
+                        headers={"content-type": "text/event-stream"},
+                        content=("data: " + json.dumps(body) + "\n\ndata: [DONE]\n\n").encode(),
+                    )
+                ),
+                trust_env=False,
+            )
+            super().__init__(*args, **kwargs)
+
+    monkeypatch.setattr("karajan.orchestration.planning_transport.GoRelay", LocalRelay)
+    transport = PlanningTransport.from_trusted_factory(control)
+    result = transport.execute(execution["id"], principal="owner", command_key="execute")
+
+    assert result["state"] == "submitted", result["reason_codes"]
+    admitted = transport.execution.admissions.read_admission(execution["binding"])
+    assert admitted["state"] == "admitted"
+    assert admitted["duration_seconds"] == 25
+    persisted = transport.execution.planner.get(run["id"], principal="owner")
+    assert persisted["plans"] and persisted["plans"][0]["plan"] == plan
 
 
 @pytest.mark.skipif(sys.platform != "linux", reason="native planning requires Linux namespaces")
