@@ -4,7 +4,8 @@
 `base_sha`, rather than a mutable checkout. It enumerates only the Run's
 approved `authorization_ceiling.read_paths`; each entry can name one file or a
 directory prefix. Only base-tree regular blobs are accepted. The sealed manifest
-and bytes are keyed by the existing PlanningExecution binding digest.
+is keyed by the existing PlanningExecution binding digest; bytes are verified
+SHA-256-addressed files in the protected state directory.
 
 The public controller methods accept an execution ID, authenticated principal,
 and command key only. They neither accept content nor a repository path. Missing
@@ -30,8 +31,12 @@ execution binding digest and every non-Commander identity field are still
 matched against durable Run/intent state, so a tampered binding is rejected.
 
 Production provisioning calls `provision_planning_repository_snapshots` using
-the existing protected planning bootstrap. This creates the fixed ledger in the
-private state directory. The trusted factory opens it in `existing_only` mode.
+the existing protected planning bootstrap. This creates the fixed manifest
+ledger and CAS directory in the private state directory. The trusted factory
+validates their original path spelling, link count, containment, and private
+modes before opening either. The unmerged local `blobs.content` SQLite fixture
+format is obsolete and intentionally has no fake migration; v1 execution
+bindings and their historical read-only behavior remain supported.
 
 ## Evidence and limits
 
@@ -41,9 +46,10 @@ replace objects, hooks, fsmonitor, credentials, and protocols. It never uses a
 caller-selected worktree revision. The manifest records the existing execution
 binding digest, requirement and authorization-ceiling digests, repository
 identity/base, approved path digest, each regular blob's path/mode/size/digest,
-the total byte count, and its own digest. A reader validates the whole manifest
-shape and every blob before returning bytes; malformed, missing, or changed
-state is rejected and is never repaired by a reader.
+the total byte count, and its own digest. A reader validates the whole manifest,
+reference rows, and every CAS file before returning bytes; malformed, missing,
+or changed state is rejected and is never repaired by a reader. WAL and foreign
+keys protect the manifest/reference ledger.
 
 Approved entries may be an exact file or a directory prefix. Absolute,
 relative-alias, traversal, backslash, symlink, submodule, unsupported mode,
@@ -56,20 +62,20 @@ pytest base directory: `tests/orchestration/test_planning_snapshot.py`,
 `tests/runs/test_planning_execution.py`, and the protected-factory tests in
 `tests/runs/test_planning_admission.py`. They cover actual ProjectRegistry /
 RunPlanner / PlanningExecution provisioning, base bytes after worktree change,
-reopen/replay, blob/manifest/deleted-ledger rejection without Capacity changes,
+reopen/replay, CAS-file/manifest/deleted-ledger rejection without Capacity changes,
 Git replace/environment poisoning, and repository-root aliases. This is local
 production-bootstrap evidence only: no native transport, Journal call, Host,
 provider request, model call, qualification, or plan submission is exercised.
 
-## Original AC coverage (candidate `f95fe89b0435b80a251213d18f7302df6850d555` + worktree)
+## Original AC coverage (current candidate worktree)
 
 | Original acceptance condition | Actual evidence | Result |
 | --- | --- | --- |
 | Registered Project/Run/intent/execution create one persistent identity-bound snapshot, including paths, requirement/acceptance and modes/digests. | `test_factory_freezes_registered_base_bytes_and_reopens`; actual SQLite ProjectRegistry, RunPlanner, protected factory and Git base tree. | C/P passed |
-| Replay, reopen, worktree changes, concurrent producers and a lost command reply recover precisely the original snapshot. | Base-tree/reopen test; `test_real_store_instances_concurrently_preserve_one_original_snapshot`; `test_committed_snapshot_survives_commander_handoff_and_source_change` exercises a real approved Commander handoff plus later ProjectRegistry source transition for both a lost and saved original freeze receipt, returning the old manifest/bytes without new blobs or Capacity effects. | C/P passed |
+| Replay, reopen, worktree changes, concurrent producers and a lost command reply recover precisely the original snapshot. | Base-tree/reopen test; `test_real_store_instances_concurrently_preserve_one_original_snapshot`; `test_committed_snapshot_survives_commander_handoff_and_source_change` exercises a real approved Commander handoff plus later ProjectRegistry source transition for both a lost and saved original freeze receipt, returning the old manifest/bytes without new CAS references or Capacity effects. | C/P passed |
 | Wrong identities, changed Run term/configuration/authorization, tampered execution binding or binding digest, manifest/blob corruption, and missing ledgers fail closed without repair. | `test_changed_trusted_run_record_rejects_unfrozen_execution_without_snapshot`, `test_persisted_snapshot_binding_tamper_is_stable_and_does_not_create`, factory tamper/deleted-ledger tests, and malformed-manifest test. | C/P passed |
 | Traversal, symlink/reparse, unapproved or empty paths, registered-root aliases/corrupt base, and fixed file/byte limits reject completely without clipping. | `test_unapproved_or_symlink_base_entry_is_rejected`, `test_repository_root_alias_is_rejected`, Git hardening test, and `test_limits_and_malformed_persisted_manifest_reject_without_partial_snapshot`. | C/P passed |
-| Freeze/read/replay have no Capacity/native/Host/Journal/model/Plan/qualification effects. | Snapshot/execution tests compare the real Capacity SQLite snapshot before and after; these test modules do not construct native, Host, Journal, provider, qualification or submit effects. | C/P passed for local absence; S not run |
+| Freeze/read/replay have no Capacity/native/Host/Journal/model/Plan/qualification effects. | Snapshot/execution tests compare the real factory-reopened Capacity ledger before and after, while directly counting persisted manifest/reference records. Native, Host, Journal, provider, qualification and submit stores are not opened by this local path. | C passed; P/S not_run |
 | #110/#111 binding, begin/replay, submitted receipt recovery, historical handoff/source recovery and concurrency regressions stay intact; checks pass. | `KARAJAN_GO_TOKENIZER_DIRECTORY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-context-artifacts PYTHONPATH=backend:tests:tests/projects:tests/runs:tests/candidates /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest --basetemp=/tmp/karajan-142-impact-tokenizer tests/orchestration/test_planning_snapshot.py tests/runs/test_planning_execution.py tests/runs/test_planning_admission.py -q` on WSL Ubuntu, 2026-09-08: `79 passed in 18.18s`. | P passed |
 
 The initial Windows invocation could not enumerate its inherited

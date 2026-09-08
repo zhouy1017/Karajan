@@ -136,12 +136,16 @@ class PlanningExecution:
     ) -> "PlanningExecution":
         """Rebuild the admission port from the protected persistent bootstrap."""
         from .planning_admission import open_persistent_planning_admission
+        from .planning_bootstrap import read_planning_bootstrap
         from .planning_snapshot import PlanningRepositorySnapshotStore, snapshot_database
 
         admissions = open_persistent_planning_admission(control_directory)
         try:
+            settings, _ = read_planning_bootstrap(control_directory)
             snapshots = PlanningRepositorySnapshotStore(
-                snapshot_database(control_directory), existing_only=True
+                snapshot_database(control_directory),
+                existing_only=True,
+                private_root=settings.state_directory,
             )
         except Exception as error:
             raise RunError("PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE") from error
@@ -425,29 +429,49 @@ class PlanningExecution:
         if not callable(freeze) or not callable(read):
             raise RunError("PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE")
 
+        def current_authority() -> tuple[dict[str, Any], dict[str, Any]]:
+            # This is intentionally re-read after the slow Git preparation.
+            # Never authorize first publication from the stale pre-prepare row.
+            with self._transaction() as db:
+                current = self._load(db, execution_id)
+                self._owner_run(current["run_id"], principal)
+                if current["cancel_requested"]:
+                    raise RunError("PLANNING_EXECUTION_CANCELLED")
+            if self._snapshot_binding(current, principal) != binding:
+                raise RunError("PLANNING_EXECUTION_BINDING_STALE")
+            run = self._owner_run(current["run_id"], principal)
+            intent = self._intent(run, current["intent_id"])
+            if self._binding(run, intent, execution_id) != binding:
+                raise RunError("PLANNING_EXECUTION_BINDING_STALE")
+            return current, run
+
         def freeze_current() -> dict[str, Any]:
             try:
                 return {key: value for key, value in read(binding).items() if key != "content"}
             except RunError as error:
                 if str(error) != "PLANNING_REPOSITORY_SNAPSHOT_NOT_FOUND":
                     raise
-            if execution.get("cancel_requested"):
-                raise RunError("PLANNING_EXECUTION_CANCELLED")
-            run = self._owner_run(execution["run_id"], principal)
-            intent = self._intent(run, execution["intent_id"])
-            if self._binding(run, intent, execution_id) != binding:
-                raise RunError("PLANNING_EXECUTION_BINDING_STALE")
+            _, run = current_authority()
             project = self.planner.projects.get(run["project_id"])
-            return cast(dict[str, Any], freeze(binding, run, project))
+            return cast(dict[str, Any], freeze(binding, run, project, guard=current_authority))
 
+        # Command receipt lookup is short; preparation and Git never run under
+        # the execution writer.  A saved success is still read/verified.
+        payload = ["freeze_repository_snapshot", execution_id]
         with self._transaction() as db:
-            return self._command(
-                db,
-                principal,
-                command_key,
-                ["freeze_repository_snapshot", execution_id],
-                freeze_current,
-            )
+            prior = db.execute(
+                "SELECT payload,result FROM commands WHERE principal=? AND key=?",
+                (principal, command_key),
+            ).fetchone()
+            if prior is not None:
+                if prior["payload"] != encoded(payload):
+                    raise RunError("IDEMPOTENCY_CONFLICT")
+                read(binding)
+                return dict(json.loads(prior["result"]))
+        result = freeze_current()
+        with self._transaction() as db:
+            # A concurrent first freezer may have recorded the same command.
+            return self._command(db, principal, command_key, payload, lambda: result)
 
     def read_repository_snapshot(self, execution_id: str, *, principal: str) -> dict[str, Any]:
         execution = self.get(execution_id, principal=principal)

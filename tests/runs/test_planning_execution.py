@@ -359,7 +359,7 @@ def test_changed_trusted_run_record_rejects_unfrozen_execution_without_snapshot(
         service.freeze_repository_snapshot(execution["id"], principal="owner", command_key="freeze")
     with sqlite3.connect(database) as db:
         assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 0
-        assert db.execute("SELECT count(*) FROM blobs").fetchone()[0] == 0
+        assert db.execute("SELECT count(*) FROM files").fetchone()[0] == 0
     assert authorities.capacity.snapshot() == before
 
 
@@ -510,7 +510,7 @@ def test_committed_snapshot_survives_commander_handoff_and_source_change(
     assert authorities.capacity.snapshot() == before
     with sqlite3.connect(database) as db:
         assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 1
-        assert db.execute("SELECT count(*) FROM blobs").fetchone()[0] == 2
+        assert db.execute("SELECT count(*) FROM files").fetchone()[0] == 2
 
 
 def test_handoff_rejects_first_snapshot_for_original_execution(
@@ -540,7 +540,7 @@ def test_handoff_rejects_first_snapshot_for_original_execution(
         service.freeze_repository_snapshot(execution["id"], principal="owner", command_key="freeze")
     with sqlite3.connect(database) as db:
         assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 0
-        assert db.execute("SELECT count(*) FROM blobs").fetchone()[0] == 0
+        assert db.execute("SELECT count(*) FROM files").fetchone()[0] == 0
 
 
 def test_production_label_cannot_promote_a_test_double(configured: dict, tmp_path: Path) -> None:

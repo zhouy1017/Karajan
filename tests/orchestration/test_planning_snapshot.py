@@ -214,7 +214,7 @@ def test_limits_and_malformed_persisted_manifest_reject_without_partial_snapshot
         store.freeze(binding, run, project)
     with sqlite3.connect(database) as db:
         assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 0
-        assert db.execute("SELECT count(*) FROM blobs").fetchone()[0] == 0
+        assert db.execute("SELECT count(*) FROM files").fetchone()[0] == 0
 
     monkeypatch.setattr(planning_snapshot, "_MAX_BYTES", 8_000_000)
     store.freeze(binding, run, project)
@@ -262,4 +262,4 @@ def test_real_store_instances_concurrently_preserve_one_original_snapshot(tmp_pa
     }
     with sqlite3.connect(database) as db:
         assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 1
-        assert db.execute("SELECT count(*) FROM blobs").fetchone()[0] == 1
+        assert db.execute("SELECT count(*) FROM files").fetchone()[0] == 1

@@ -1294,10 +1294,11 @@ def test_factory_freezes_registered_base_bytes_and_reopens(
     configured.update(registry.get(project["id"]))
     configured["registry"] = registry
     _, authority, run, execution = _case(tmp_path, configured)
-    before = authority.capacity.snapshot()
     control = _protected_factory_control(tmp_path, authority)
     provision_planning_repository_snapshots(control)
     service = PlanningExecution.from_trusted_factory(control)
+    assert service.capacity is not None
+    before = service.capacity.snapshot()
     frozen = service.freeze_repository_snapshot(
         execution["id"], principal="owner", command_key="freeze"
     )
@@ -1328,19 +1329,21 @@ def test_factory_freezes_registered_base_bytes_and_reopens(
         ]
         == b"registered base bytes\n"
     )
-    assert authority.capacity.snapshot() == before
+    assert service.capacity.snapshot() == before
 
     ledger = snapshot_database(control)
-    with sqlite3.connect(ledger) as db:
-        db.execute("UPDATE blobs SET content=?", (b"tampered",))
+    artifact = Path(
+        ledger.parent / "planning-repository-snapshot-blobs" / frozen["files"][0]["sha256"]
+    )
+    artifact.write_bytes(b"tampered")
     with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_CHANGED$"):
         reopened.read_repository_snapshot(execution["id"], principal="owner")
     with sqlite3.connect(ledger) as db:
-        assert db.execute("SELECT content FROM blobs").fetchone()[0] == b"tampered"
+        assert artifact.read_bytes() == b"tampered"
         db.execute("UPDATE snapshots SET data=?", ("{}",))
     with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_CHANGED$"):
         reopened.read_repository_snapshot(execution["id"], principal="owner")
-    assert authority.capacity.snapshot() == before
+    assert service.capacity.snapshot() == before
 
     ledger.unlink()
     with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE$"):
@@ -1606,6 +1609,32 @@ def test_persistent_factory_rejects_run_database_alias(configured: dict, tmp_pat
     (state / "runs.sqlite").symlink_to(target)
     with pytest.raises(RunError, match="^PLANNING_ADMISSION_BOOTSTRAP_INVALID$"):
         PlanningExecution.from_trusted_factory(control)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
+@pytest.mark.parametrize("alias", ["symlink", "hardlink"])
+def test_persistent_factory_rejects_snapshot_ledger_alias_without_writes(
+    configured: dict, tmp_path: Path, alias: str
+) -> None:
+    _, authority, _, _ = _case(tmp_path, configured)
+    control = _protected_factory_control(tmp_path, authority)
+    ledger = provision_planning_repository_snapshots(control)
+    state = ledger.parent
+    external = tmp_path / "repository-controlled-snapshot.sqlite"
+    shutil.copy2(ledger, external)
+    if alias == "symlink":
+        ledger.unlink()
+        ledger.symlink_to(external)
+    else:
+        # Keep the protected spelling as a two-link inode: it is just as
+        # unsuitable as a symlink even though SQLite can open it.
+        ledger.unlink()
+        os.link(external, ledger)
+    before = external.read_bytes()
+    with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE$"):
+        PlanningExecution.from_trusted_factory(control)
+    assert external.read_bytes() == before
+    assert not list((state / "planning-repository-snapshot-blobs").iterdir())
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
