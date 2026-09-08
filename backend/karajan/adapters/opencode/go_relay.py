@@ -31,7 +31,12 @@ from uuid import uuid4
 import httpx
 from pydantic import ValidationError
 
-from .go_journal import GoCallJournal, GoJournalError, GoQualificationLimits
+from .go_journal import (
+    GoBusinessRequestLimits,
+    GoCallJournal,
+    GoJournalError,
+    GoQualificationLimits,
+)
 
 if TYPE_CHECKING:
     from .go_context import GoRequestAccounting
@@ -157,9 +162,7 @@ def _text_channels(
             _text_channels(item, channels, (*path, index))
 
 
-def _stream_facts(
-    raw: bytes, secret: str, *, allowed_tools: frozenset[str] = _TOOLS
-) -> dict[str, Any]:
+def _stream_facts(raw: bytes, secret: str) -> dict[str, Any]:
     """Accept the single-choice Chat Completions stream used by this diagnostic."""
     if secret.encode() in raw:
         raise _Rejected("UPSTREAM_CREDENTIAL_ECHO")
@@ -278,8 +281,6 @@ def _stream_facts(
             continue
         if _contains_secret(nested, secret):
             raise _Rejected("UPSTREAM_CREDENTIAL_ECHO")
-    if any(name not in allowed_tools for name in names.values()):
-        raise _Rejected("UNAPPROVED_TOOL")
     if (finish == "tool_calls") != bool(names):
         raise _Rejected("INCOMPLETE_TOOL_CALL")
     return {
@@ -293,6 +294,43 @@ def _stream_facts(
         "provider_reported_cost": cost,
         "provider_reported_cost_unit": "unknown",
     }
+
+
+def _request_tool_names(payload: dict[str, Any]) -> list[str]:
+    """Return declared and historical tool identities without widening policy.
+
+    Accounting subsequently validates the full OpenAI-compatible shape. This
+    early parser ensures a malformed business declaration is safely rejected
+    before it can become an internal relay error.
+    """
+    names: list[str] = []
+
+    def function_name(value: Any) -> str:
+        if not isinstance(value, dict):
+            raise _Rejected("UNAPPROVED_TOOL", 403)
+        name = value.get("name")
+        if not isinstance(name, str):
+            raise _Rejected("UNAPPROVED_TOOL", 403)
+        return name
+
+    tools = payload.get("tools", [])
+    if not isinstance(tools, list):
+        raise _Rejected("UNAPPROVED_TOOL", 403)
+    for tool in tools:
+        if not isinstance(tool, dict):
+            raise _Rejected("UNAPPROVED_TOOL", 403)
+        names.append(function_name(tool.get("function")))
+    for message in payload["messages"]:
+        calls = message.get("tool_calls")
+        if calls is None:
+            continue
+        if not isinstance(calls, list):
+            raise _Rejected("UNAPPROVED_TOOL", 403)
+        for call in calls:
+            if not isinstance(call, dict):
+                raise _Rejected("UNAPPROVED_TOOL", 403)
+            names.append(function_name(call.get("function")))
+    return names
 
 
 def _client() -> httpx.Client:
@@ -365,6 +403,72 @@ class GoRelayContext:
             ratio_margin_basis_points=self.ratio_margin_basis_points,
         )
 
+
+class _BusinessRelayAccounting:
+    """Shared accounting only; business authority remains on the typed contexts."""
+
+    accounting: GoRequestAccounting
+    source_sha256: str
+    approved_input_tokens: int
+    reserved_output_tokens: int
+    operating_context_tokens: int
+    fixed_margin: int
+    ratio_margin_basis_points: int
+
+    def limits(self) -> dict[str, Any]:
+        return GoBusinessRequestLimits.model_validate(
+            {
+                "source_sha256": self.source_sha256,
+                "approved_input_tokens": self.approved_input_tokens,
+                "reserved_output_tokens": self.reserved_output_tokens,
+                "operating_context_tokens": self.operating_context_tokens,
+                "fixed_margin": self.fixed_margin,
+                "ratio_margin_basis_points": self.ratio_margin_basis_points,
+            }
+        ).model_dump()
+
+    def measure(self, payload: dict[str, Any]) -> dict[str, Any]:
+        from karajan.routing.compiler import digest
+
+        if self.limits()["source_sha256"] != digest(self.accounting.source()):
+            from .go_context import GoContextError
+
+            raise GoContextError("CONTEXT_SOURCE_CHANGED")
+        limits = self.limits()
+        del limits["source_sha256"]
+        return self.accounting.measure(payload, **limits)
+
+
+@dataclass(frozen=True)
+class GoPlanningRelayContext(_BusinessRelayAccounting):
+    """Controller-built planning wire limits; native requests cannot construct it."""
+
+    accounting: GoRequestAccounting = field(repr=False)
+    source_sha256: str
+    planning_binding_sha256: str
+    admission_sha256: str
+    input_sha256: str
+    approved_input_tokens: int
+    reserved_output_tokens: int
+    operating_context_tokens: int
+    fixed_margin: int
+    ratio_margin_basis_points: int
+
+
+@dataclass(frozen=True)
+class GoReviewerRelayContext(_BusinessRelayAccounting):
+    """Controller-built Reviewer wire limits, separate from qualification probes."""
+
+    accounting: GoRequestAccounting = field(repr=False)
+    source_sha256: str
+    review_binding_sha256: str
+    reviewer_input_sha256: str
+    candidate_checks_sha256: str
+    approved_input_tokens: int
+    reserved_output_tokens: int
+    operating_context_tokens: int
+    fixed_margin: int
+    ratio_margin_basis_points: int
 
 @dataclass(frozen=True)
 class GoQualificationContext:
@@ -493,6 +597,8 @@ class GoRelay:
         context: GoRelayContext
         | GoQualificationContext
         | GoReviewerQualificationContext
+        | GoPlanningRelayContext
+        | GoReviewerRelayContext
         | None = None,
         send_guard: Callable[[], AbstractContextManager[None]] | None = None,
     ) -> None:
@@ -798,11 +904,20 @@ class GoRelay:
                 not task_grant
                 and binding.get("schema_version") == "karajan.go-reviewer-qualification-grant.v1"
             )
+            planning_native = binding.get("schema_version") == "karajan.go-planning-native-grant.v1"
+            reviewer_native = binding.get("schema_version") == "karajan.go-reviewer-native-grant.v1"
+            business_native = planning_native or reviewer_native
             if task_grant and self._context is None:
                 raise _Rejected("TASK_CONTEXT_ACCOUNTING_REQUIRED", 403)
             if (qualification_v2 or reviewer_qualification) and self._context is None:
                 raise _Rejected("QUALIFICATION_CONTEXT_ACCOUNTING_REQUIRED", 403)
-            if "schema_version" in binding and not (qualification_v2 or reviewer_qualification):
+            if business_native and self._send_guard is None:
+                raise _Rejected("TASK_SEND_GUARD_REJECTED", 403)
+            if business_native and self._context is None:
+                raise _Rejected("TASK_CONTEXT_ACCOUNTING_REQUIRED", 403)
+            if "schema_version" in binding and not (
+                qualification_v2 or reviewer_qualification or business_native
+            ):
                 raise _Rejected("GO_JOURNAL_INPUT_INVALID", 403)
             if self._context is not None:
                 from .go_context import GoContextError
@@ -823,6 +938,42 @@ class GoRelay:
                         or self._context.limits() != binding.get("context")
                     ):
                         raise _Rejected("QUALIFICATION_CONTEXT_BINDING_MISMATCH", 403)
+                elif isinstance(self._context, GoPlanningRelayContext):
+                    if (
+                        not planning_native
+                        or self._context.limits() != binding.get("context")
+                        or any(
+                            getattr(self._context, key) != binding.get(key)
+                            for key in (
+                                "planning_binding_sha256",
+                                "admission_sha256",
+                                "input_sha256",
+                            )
+                        )
+                    ):
+                        raise _Rejected("TASK_CONTEXT_POLICY_MISMATCH", 403)
+                    if "tools" in payload or any(
+                        message.get("role") == "tool" or message.get("tool_calls")
+                        for message in payload["messages"]
+                    ):
+                        raise _Rejected("UNAPPROVED_TOOL", 403)
+                elif isinstance(self._context, GoReviewerRelayContext):
+                    if (
+                        not reviewer_native
+                        or self._context.limits() != binding.get("context")
+                        or any(
+                            getattr(self._context, key) != binding.get(key)
+                            for key in (
+                                "review_binding_sha256",
+                                "reviewer_input_sha256",
+                                "candidate_checks_sha256",
+                            )
+                        )
+                    ):
+                        raise _Rejected("TASK_CONTEXT_POLICY_MISMATCH", 403)
+                    names = _request_tool_names(payload)
+                    if any(name != "read" for name in names):
+                        raise _Rejected("UNAPPROVED_TOOL", 403)
                 elif not (
                     isinstance(self._context, GoRelayContext)
                     and task_grant
@@ -838,12 +989,7 @@ class GoRelay:
                     # Accounting has validated the complete request shape. Only
                     # structural tool identities are authority-relevant here;
                     # quoted code or prose mentioning "edit" remains review data.
-                    names = [tool["function"]["name"] for tool in payload.get("tools", [])]
-                    names.extend(
-                        call["function"]["name"]
-                        for message in payload["messages"]
-                        for call in (message.get("tool_calls") or [])
-                    )
+                    names = _request_tool_names(payload)
                     if any(name != "read" for name in names):
                         raise _Rejected("UNAPPROVED_TOOL", 403)
             with ExitStack() as responses:
@@ -917,13 +1063,23 @@ class GoRelay:
                         raise _Rejected("UPSTREAM_RESPONSE_TOO_LARGE")
                     content.extend(chunk)
                 receipt["upstream_response_complete"] = True
-                receipt.update(
-                    _stream_facts(
-                        bytes(content),
-                        self._secret,
-                        allowed_tools=frozenset({"read"}) if reviewer_qualification else _TOOLS,
-                    )
+                facts = _stream_facts(bytes(content), self._secret)
+                allowed_tools = (
+                    frozenset()
+                    if planning_native
+                    else frozenset({"read"})
+                    if reviewer_qualification or reviewer_native
+                    else _TOOLS
                 )
+                if any(name not in allowed_tools for name in facts["tool_names"]):
+                    # Stream observations are valid independently of the tool
+                    # policy verdict. Persist only facts that cannot contain
+                    # provider-controlled tool identity text in public receipts.
+                    receipt.update(
+                        {key: value for key, value in facts.items() if key != "tool_names"}
+                    )
+                    raise _Rejected("UNAPPROVED_TOOL")
+                receipt.update(facts)
                 if "request_context" in receipt:
                     measured = receipt["request_context"]
                     prompt = receipt["usage"].get("prompt_tokens")

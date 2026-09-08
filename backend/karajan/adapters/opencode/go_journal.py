@@ -112,6 +112,10 @@ class GoQualificationLimits(Contract):
     ratio_margin_basis_points: Annotated[int, Field(ge=0, le=10_000)]
 
 
+class GoBusinessRequestLimits(GoQualificationLimits):
+    """Exact tokenizer-accounted limits for a business native wire request."""
+
+
 class _QualificationGrantV2(_GrantBinding):
     schema_version: Literal["karajan.go-qualification-grant.v2"]
     probe_spec_digest: _Digest
@@ -143,6 +147,17 @@ class _PlanningGrantBinding(_CommonGrantBinding):
     authentication_source_digest: _Digest
 
 
+class _PlanningNativeGrantBinding(_CommonGrantBinding):
+    schema_version: Literal["karajan.go-planning-native-grant.v1"]
+    subject: _PlanningSubject
+    planning_binding_sha256: _Digest
+    admission_sha256: _Digest
+    input_sha256: _Digest
+    authentication_source_digest: _Digest
+    context: GoBusinessRequestLimits
+    tool_policy: Literal["none"]
+
+
 class _TaskSubject(Contract):
     kind: Literal["task_attempt"]
     project_id: Identifier
@@ -156,6 +171,27 @@ class _TaskGrantBinding(_CommonGrantBinding):
     execution_policy_digest: _Digest
     workspace_digest: _Digest
     authentication_source_digest: _Digest
+
+
+class _ReviewerNativeSubject(Contract):
+    kind: Literal["reviewer_execution"]
+    project_id: Identifier
+    run_id: Identifier
+    reviewer_operation_id: Identifier
+    worker_operation_id: Identifier
+    reviewer_task_id: Identifier
+    execution_id: Identifier
+
+
+class _ReviewerNativeGrantBinding(_CommonGrantBinding):
+    schema_version: Literal["karajan.go-reviewer-native-grant.v1"]
+    subject: _ReviewerNativeSubject
+    review_binding_sha256: _Digest
+    reviewer_input_sha256: _Digest
+    candidate_checks_sha256: _Digest
+    authentication_source_digest: _Digest
+    context: GoBusinessRequestLimits
+    tool_policy: Literal["read"]
 
 
 class _GrantRef(Contract):
@@ -221,6 +257,10 @@ def _binding(value: object) -> dict[str, Any]:
     schema_version = value.get("schema_version")
     if schema_version == "karajan.go-planning-grant.v1":
         return _validated(_PlanningGrantBinding, value)
+    if schema_version == "karajan.go-planning-native-grant.v1":
+        return _validated(_PlanningNativeGrantBinding, value)
+    if schema_version == "karajan.go-reviewer-native-grant.v1":
+        return _validated(_ReviewerNativeGrantBinding, value)
     if schema_version == "karajan.go-reviewer-qualification-grant.v1":
         return _validated(_ReviewerQualificationGrant, value)
     if schema_version == "karajan.go-qualification-grant.v2":
@@ -408,6 +448,8 @@ class GoCallJournal:
             if value.get("schema_version") in {
                 "karajan.go-qualification-grant.v2",
                 "karajan.go-reviewer-qualification-grant.v1",
+                "karajan.go-planning-native-grant.v1",
+                "karajan.go-reviewer-native-grant.v1",
             }:
                 if context is None:
                     raise GoJournalError("QUALIFICATION_CONTEXT_REQUIRED")
