@@ -11,6 +11,7 @@ from typing import Any
 import pytest
 from karajan.capacity import CapacityStore
 from karajan.orchestration.planning_execution import PlanningExecution
+from karajan.orchestration.planning_snapshot import PlanningRepositorySnapshotStore
 from karajan.runs import RunError, RunPlanner
 from karajan.runs.planning import digest
 from test_planning import create_request, proposal
@@ -299,6 +300,22 @@ def test_production_default_rejects_fixture_authorities(configured: dict, tmp_pa
     assert blocked["submission"] is None
 
 
+def test_repository_snapshot_is_id_only_and_has_no_capacity_effect(
+    configured: dict, tmp_path: Path
+) -> None:
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    service.snapshots = PlanningRepositorySnapshotStore(tmp_path / "snapshots.sqlite")
+    execution = service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
+    before = authorities.capacity.snapshot()
+    with pytest.raises(RunError, match="PLANNING_SNAPSHOT_PATH_EMPTY"):
+        service.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="snapshot"
+        )
+    assert authorities.capacity.snapshot() == before
+    with pytest.raises(RunError, match="RUN_NOT_FOUND"):
+        service.freeze_repository_snapshot(execution["id"], principal="lead", command_key="other")
+
+
 def test_production_label_cannot_promote_a_test_double(configured: dict, tmp_path: Path) -> None:
     service, run, intent, authorities = planning_case(tmp_path, configured)
     execution = begin(service, run, intent, authorities)
@@ -388,9 +405,7 @@ def test_exact_run_receipt_recovers_lost_reply_without_resubmission(
         execution["id"], principal="owner", command_key="submit"
     )
     assert recovered["state"] == "submitted"
-    assert service.planner.get(run["id"], principal="owner")["plans"] == [
-        recovered["submission"]
-    ]
+    assert service.planner.get(run["id"], principal="owner")["plans"] == [recovered["submission"]]
 
 
 def test_reopened_unstarted_claim_without_receipt_never_submits(
@@ -445,8 +460,7 @@ def test_concurrent_submitters_create_at_most_one_plan(configured: dict, tmp_pat
         )
 
     assert all(
-        submission["state"] in {"submission_unknown", "submitted"}
-        for submission in submissions
+        submission["state"] in {"submission_unknown", "submitted"} for submission in submissions
     ), [submission["state"] for submission in submissions]
     plans = service.planner.get(run["id"], principal="owner")["plans"]
     assert len(plans) == 1
@@ -457,9 +471,7 @@ def test_concurrent_submitters_create_at_most_one_plan(configured: dict, tmp_pat
     assert recovered["submission"] == plans[0]
 
 
-def test_delayed_capture_cannot_rollback_a_submitted_plan(
-    configured: dict, tmp_path: Path
-) -> None:
+def test_delayed_capture_cannot_rollback_a_submitted_plan(configured: dict, tmp_path: Path) -> None:
     service, run, intent, authorities = planning_case(tmp_path, configured)
     execution = begin(service, run, intent, authorities)
     authorities.activate()
@@ -481,17 +493,18 @@ def test_delayed_capture_cannot_rollback_a_submitted_plan(
         )
         assert captured.wait(5), "delayed capture did not read output"
         authorities.read_output = original_output  # type: ignore[method-assign]
-        submitted = service.submit(
-            execution["id"], principal="owner", command_key="submit-first"
-        )
+        submitted = service.submit(execution["id"], principal="owner", command_key="submit-first")
         assert submitted["state"] == "submitted"
         release.set()
         late = delayed.result(timeout=5)
 
     assert late["state"] == "submitted"
-    assert service.get(execution["id"], principal="owner")["submission_request"][
-        "expected_plan_revision"
-    ] == 0
+    assert (
+        service.get(execution["id"], principal="owner")["submission_request"][
+            "expected_plan_revision"
+        ]
+        == 0
+    )
     recovered = service.submit(execution["id"], principal="owner", command_key="submit-recovery")
     assert recovered["state"] == "submitted"
     assert recovered["submission"] == submitted["submission"]
@@ -551,9 +564,7 @@ def test_delayed_capture_cannot_take_an_active_claim(
         submitted = active.result(timeout=5)
 
     assert submitted["state"] == "submitted"
-    assert service.planner.get(run["id"], principal="owner")["plans"] == [
-        submitted["submission"]
-    ]
+    assert service.planner.get(run["id"], principal="owner")["plans"] == [submitted["submission"]]
 
 
 def test_matching_run_receipt_repairs_a_stale_submission_state(
@@ -607,9 +618,7 @@ def test_receipt_only_recovery_cannot_stop_a_claiming_submitter(
         submitted = first.result(timeout=5)
 
     assert submitted["state"] == "submitted"
-    assert service.planner.get(run["id"], principal="owner")["plans"] == [
-        submitted["submission"]
-    ]
+    assert service.planner.get(run["id"], principal="owner")["plans"] == [submitted["submission"]]
 
 
 @pytest.mark.parametrize(
@@ -730,8 +739,7 @@ def test_begin_replay_survives_original_intent_state_change(
     authorities.activate()
     service.submit(execution["id"], principal="owner", command_key="submit")
     assert (
-        service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
-        == execution
+        service.begin(run["id"], intent["id"], principal="owner", command_key="begin") == execution
     )
 
 

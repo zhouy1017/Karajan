@@ -29,6 +29,8 @@ from karajan.orchestration.planning_admission import (
 )
 from karajan.orchestration.planning_bootstrap import PLANNING_ADMISSION_BOOTSTRAP
 from karajan.orchestration.planning_execution import PlanningExecution
+from karajan.orchestration.planning_snapshot import provision_planning_repository_snapshots
+from karajan.orchestration.planning_snapshot import PlanningRepositorySnapshotStore
 from karajan.projects import ProjectRegistry
 from karajan.projects.credential_sources import (
     CredentialSourceError,
@@ -881,6 +883,7 @@ def test_final_reservation_closure_rechecks_original_budget_after_encoding(
     assert denied["reason_codes"] == ["PLANNING_BUDGET_EXPIRED"]
     assert authority.capacity.snapshot()["reservations"] == []
 
+
 def test_final_effect_closure_rechecks_commander_expiry_after_capacity_preparation(
     configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -1222,6 +1225,21 @@ def test_persistent_factory_missing_descriptor_rejects_without_creating_stores(
         PlanningExecution.from_trusted_factory(control)
     assert list(control.iterdir()) == []
     assert not list(tmp_path.glob("*.sqlite"))
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
+def test_persistent_factory_requires_provisioned_snapshot_ledger(
+    configured: dict, tmp_path: Path
+) -> None:
+    _, authority, _, _ = _case(tmp_path, configured)
+    control = _protected_factory_control(tmp_path, authority)
+    with pytest.raises(RunError, match="PLANNING_REPOSITORY_SNAPSHOT"):
+        PlanningExecution.from_trusted_factory(control)
+    path = provision_planning_repository_snapshots(control)
+    assert path.exists() and path.stat().st_mode & 0o077 == 0
+    PlanningRepositorySnapshotStore(path, existing_only=True)
+    service = PlanningExecution.from_trusted_factory(control)
+    assert service.snapshots is not None
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")

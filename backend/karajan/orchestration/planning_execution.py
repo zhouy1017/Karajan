@@ -13,7 +13,7 @@ import uuid
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Literal, Protocol
+from typing import Any, Literal, Protocol, cast
 
 from pydantic import Field, ValidationError
 
@@ -85,6 +85,7 @@ class PlanningExecution:
         admissions: PlanningAdmissionAuthority | None = None,
         outputs: PlanningOutputAuthority | None = None,
         capacity: CapacityStore | None = None,
+        snapshots: object | None = None,
         allow_fixture_authorities: bool = False,
         _trusted_authority_ids: frozenset[int] = frozenset(),
         existing_only: bool = False,
@@ -97,6 +98,7 @@ class PlanningExecution:
         self.admissions = admissions
         self.outputs = outputs
         self.capacity = capacity
+        self.snapshots = snapshots
         self.allow_fixture_authorities = allow_fixture_authorities
         # Production tags are evidence fields, never a caller-controlled grant.
         # Only the controller factory below can bind the exact authority objects
@@ -134,13 +136,21 @@ class PlanningExecution:
     ) -> "PlanningExecution":
         """Rebuild the admission port from the protected persistent bootstrap."""
         from .planning_admission import open_persistent_planning_admission
+        from .planning_snapshot import PlanningRepositorySnapshotStore, snapshot_database
 
         admissions = open_persistent_planning_admission(control_directory)
+        try:
+            snapshots = PlanningRepositorySnapshotStore(
+                snapshot_database(control_directory), existing_only=True
+            )
+        except Exception as error:
+            raise RunError("PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE") from error
         return cls(
             admissions.execution_database,
             admissions.planner,
             admissions=admissions,
             capacity=admissions.capacity,
+            snapshots=snapshots,
             existing_only=True,
             _trusted_authority_ids=frozenset({id(admissions)}),
         )
@@ -362,6 +372,39 @@ class PlanningExecution:
             execution = self._load(db, execution_id)
         self._owner_run(execution["run_id"], principal)
         return execution
+
+    def freeze_repository_snapshot(
+        self, execution_id: str, *, principal: str, command_key: str
+    ) -> dict[str, Any]:
+        """Create or recover the one private base-tree snapshot for this execution.
+
+        The caller supplies only durable IDs.  Missing production provisioning is
+        fail-closed and never changes admission, capacity, or Run state.
+        """
+        for value in (execution_id, principal, command_key):
+            identifier(value)
+        execution = self.get(execution_id, principal=principal)
+        store = self.snapshots
+        freeze = None if store is None else getattr(store, "freeze", None)
+        if not callable(freeze):
+            raise RunError("PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE")
+        run = self._owner_run(execution["run_id"], principal)
+        project = self.planner.projects.get(run["project_id"])
+        with self._transaction() as db:
+            return self._command(
+                db,
+                principal,
+                command_key,
+                ["freeze_repository_snapshot", execution_id],
+                lambda: freeze(execution["binding"], run, project),
+            )
+
+    def read_repository_snapshot(self, execution_id: str, *, principal: str) -> dict[str, Any]:
+        execution = self.get(execution_id, principal=principal)
+        read = None if self.snapshots is None else getattr(self.snapshots, "read", None)
+        if not callable(read):
+            raise RunError("PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE")
+        return cast(dict[str, Any], read(execution["binding"]))
 
     def admit(self, execution_id: str, *, principal: str, command_key: str) -> dict[str, Any]:
         """Advance only a trusted durable admission authority once.
