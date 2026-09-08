@@ -1,9 +1,13 @@
 """C coverage for the pre-native Reviewer execution ledger."""
 
+import json
+import sys
+import time
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
-from karajan.execution import LaunchDenied, ProcessSpec, RunnerHost
+from karajan.execution import Activation, LaunchDenied, ProcessSpec, RunnerHost
 from karajan.orchestration.reviewer_execution_intent import (
     ReviewerExecutionIntents,
     ReviewerExecutionSource,
@@ -96,3 +100,95 @@ def test_unregistered_or_unstarted_host_cannot_claim_observer(tmp_path, binding_
             run_id, reviewer_id, principal="owner", timeout_seconds=0.01
         )
     assert service.read(run_id, reviewer_id, principal="owner")["effect_claim"] is None
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="Host direct-child identity is Linux P evidence"
+)
+def test_existing_store_direct_child_claim_is_one_shot_and_cancelled_recovery_stays_blocked(
+    tmp_path, binding_case
+):
+    """A registered Host child, rather than the controller, owns the claim."""
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    qualification = binding_case[1]
+    observed_facts = []
+    original_facts = qualification._facts
+
+    def record_facts(*args):
+        value = original_facts(*args)
+        observed_facts.append(deepcopy(value))
+        return value
+
+    qualification._facts = record_facts
+    source = service.source
+    child = Path(__file__).with_name("reviewer_execution_test_child.py").resolve()
+    service.launch_compiler = lambda _: ReviewerLaunchSpec(
+        ProcessSpec((sys.executable, "-I", str(child), run_id, reviewer_id, "owner"), tmp_path, 20),
+        "3" * 64,
+    )
+    intent = service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+    prepared = service.freeze_launch(run_id, reviewer_id, principal="owner")
+    assert observed_facts
+    (tmp_path / "reviewer-execution-test-port.json").write_text(
+        json.dumps(
+            {
+                "stores": {
+                    "projects": str(service.admissions.routing.planner.projects.database),
+                    "runs": str(service.admissions.routing.planner.database),
+                    "capacity": str(service.admissions.routing.capacity.path),
+                    "admissions": str(service.admissions.database),
+                },
+                "candidate_directory": str(service.candidates.directory),
+                "host_directory": str(service.host.directory),
+                "execution_database": str(service.database),
+                "allowed_roots": [
+                    str(path) for path in service.admissions.routing.planner.projects.allowed_roots
+                ],
+                "project_clock": service.admissions.routing.planner.projects.clock(),
+                "planner_clock": service.admissions.routing.planner.clock(),
+                "capacity_clock": service.admissions.routing.capacity.clock(),
+                "estimate_clock": service.admissions.routing.estimates.clock(),
+                "source": {
+                    "runner_source_sha256": source.runner_source_sha256,
+                    "native_source_sha256": source.native_source_sha256,
+                },
+                "qualification_facts": observed_facts[-1],
+            }
+        )
+    )
+    activation = Activation(
+        "reviewer-test-activation",
+        intent["planned_attempt_id"],
+        intent["fence"],
+        intent["authorization_ref"],
+        intent["budget_ref"],
+        time.time() + 30,
+    )
+    service.host.start(prepared["start_key"], activation)
+    result_path = tmp_path / "reviewer-execution-test-child-result.json"
+    deadline = time.monotonic() + 30
+    while not result_path.exists():
+        assert time.monotonic() < deadline, "registered direct child did not reply"
+        time.sleep(0.02)
+    result = json.loads(result_path.read_text())
+    assert result.get("claim_allowed") is True, result
+    claimed = service.read(run_id, reviewer_id, principal="owner")
+    assert claimed["effect_claim"]["runner"]["pid"] == result["pid"]
+    reopened = ReviewerExecutionIntents(
+        service.database,
+        service.admissions,
+        service.candidates,
+        source=source,
+        host=RunnerHost(service.host.directory, existing_only=True),
+        launch_compiler=service.launch_compiler,
+        current_source=lambda: source,
+        existing_only=True,
+    )
+    assert (
+        reopened.claim_registered_observer(run_id, reviewer_id, principal="owner")["claim_allowed"]
+        is False
+    )
+    assert reopened.host.start(prepared["start_key"], activation).state in {"running", "finished"}
+    assert reopened.cancel(run_id, reviewer_id, principal="owner")["cancel_requested"] is True
+    with pytest.raises(RunError, match="REVIEWER_EXECUTION_CANCELLED"):
+        reopened.claim_registered_observer(run_id, reviewer_id, principal="owner")
