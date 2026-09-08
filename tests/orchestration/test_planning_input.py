@@ -15,14 +15,16 @@ _RUNS_TEST_ROOT = str(Path(__file__).parents[1] / "runs")
 if _RUNS_TEST_ROOT not in sys.path:
     sys.path.insert(0, _RUNS_TEST_ROOT)
 
-from karajan.adapters.opencode.go_context import GoRequestAccounting
-from karajan.orchestration.planning_execution import PlanningExecution
-from karajan.orchestration.planning_input import _compile, compile_planning_input
-from karajan.orchestration.planning_snapshot import PlanningRepositorySnapshotStore
-from karajan.projects import ProjectRegistry
-from karajan.runs import RunError, RunPlanner
-from karajan.runs.routing_authorization import PlanV2
-from test_routing_authorization import policy_request, request_v2
+# These imports intentionally follow the direct-path fixture-root bootstrap
+# above, which is required when pytest collects this file by path.
+from karajan.adapters.opencode.go_context import GoRequestAccounting  # noqa: E402
+from karajan.orchestration.planning_execution import PlanningExecution  # noqa: E402
+from karajan.orchestration.planning_input import _compile, compile_planning_input  # noqa: E402
+from karajan.orchestration.planning_snapshot import PlanningRepositorySnapshotStore  # noqa: E402
+from karajan.projects import ProjectRegistry  # noqa: E402
+from karajan.runs import RunError, RunPlanner  # noqa: E402
+from karajan.runs.routing_authorization import PlanV2  # noqa: E402
+from test_routing_authorization import policy_request, request_v2  # noqa: E402
 
 pytest_plugins = ["test_planning_admission"]
 
