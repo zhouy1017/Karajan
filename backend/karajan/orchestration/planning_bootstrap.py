@@ -261,3 +261,63 @@ def assert_planning_bootstrap_current(
     if actual != expected_sha256.lower():
         raise RunError("PLANNING_ADMISSION_BOOTSTRAP_CHANGED")
     return settings
+
+
+def provision_planning_bootstrap(
+    control_directory: Path, state_directory: Path, allowed_roots: tuple[Path, ...]
+) -> PlanningBootstrapSettings:
+    """Explicitly provision empty controller stores and one protected descriptor.
+
+    This setup action creates no Project, Run, Commander qualification, admission,
+    execution, output, or Plan.  Runtime factories subsequently reopen only these
+    fixed stores through ``read_planning_bootstrap``.
+    """
+    from karajan.capacity import CapacityStore
+    from karajan.orchestration.planning_admission import PlanningAdmissionAuthority
+    from karajan.orchestration.planning_execution import PlanningExecution
+    from karajan.projects import ProjectRegistry
+    from karajan.projects.qualification import ProfileQualificationStore
+    from karajan.runs import RunPlanner
+
+    control, state = control_directory.absolute(), state_directory.absolute()
+    roots = tuple(path.absolute() for path in allowed_roots)
+    if not roots or control.exists() or state.exists() or control == state:
+        raise _invalid()
+    try:
+        control.mkdir(mode=0o700)
+        state.mkdir(mode=0o700)
+        _private(control, directory=True)
+        _private(state, directory=True)
+        projects = ProjectRegistry(state / "projects.sqlite", roots)
+        planner = RunPlanner(state / "runs.sqlite", projects)
+        capacity = CapacityStore(state / "capacity.sqlite")
+        execution = PlanningExecution(state / "planning-execution.sqlite", planner)
+        PlanningAdmissionAuthority(
+            state / "planning-admission.sqlite",
+            execution.database,
+            planner,
+            capacity,
+            ProfileQualificationStore(projects, commander_reader_only=True),
+            authority_kind="production",
+        )
+        settings = PlanningBootstrapSettings(
+            control,
+            state,
+            execution.database,
+            state / "planning-admission.sqlite",
+            state / "capacity.sqlite",
+            state / "projects.sqlite",
+            roots,
+        )
+        descriptor = control / PLANNING_ADMISSION_BOOTSTRAP
+        raw = (json.dumps(settings.document(), sort_keys=True, separators=(",", ":")) + "\n").encode()
+        fd = os.open(descriptor, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        with os.fdopen(fd, "wb") as stream:
+            stream.write(raw)
+            stream.flush()
+            os.fsync(stream.fileno())
+        _private(descriptor)
+        read_planning_bootstrap(control)
+        return settings
+    except (OSError, RunError, ValueError):
+        raise _invalid() from None
