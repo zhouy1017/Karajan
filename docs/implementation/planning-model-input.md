@@ -8,15 +8,19 @@ source, digest, or token estimate.
 
 The returned `PlanningModelInput` (`karajan.planning-model-input.v1`) contains
 the original requirement and acceptance list, original intent and
-authorization ceiling, configuration and versioned execution-policy
-identities, the complete snapshot manifest, and every approved file as
+authorization ceiling, the original execution binding, the complete frozen v2
+execution policy, the complete snapshot manifest, and every approved file as
 base64. `request_bytes` is canonical UTF-8 JSON and is measured, hashed, and
 size-recorded. The fixed system instruction marks repository content as
-untrusted data; the user message contains the complete delimited payload and a
-versioned Plan v1/v2 output contract.
+untrusted data; the user message contains the complete delimited payload and
+the exact `PlanV2.model_json_schema()` contract used by
+`parse_planning_output(version="v2")`.
 
-The compiler requires a current `karajan.run-planning.v2` execution policy with
-frozen `max_context_tokens` and `reserved_output_tokens`. It uses the pinned
+The compiler requires a current `karajan.run-planning.v2` run with
+`karajan.execution-policy.v2`, frozen `max_context_tokens`, and
+`reserved_output_tokens`; unsupported versions are rejected rather than
+represented by a combined schema. Manifest path, mode, size, and SHA-256 are
+checked against the persisted blob before base64 encoding. It uses the pinned
 Go accounting source with fixed margin 2048 and ratio margin 1000 basis points;
 bytes and token/output/context limits therefore fail explicitly without
 truncation. The artifact digest proves this local artifact only. Native Relay

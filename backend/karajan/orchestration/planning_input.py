@@ -19,6 +19,7 @@ from karajan.contracts.probe import Contract
 from karajan.runs import RunError
 from karajan.runs.models import Requirement
 from karajan.runs.planning import digest
+from karajan.runs.routing_authorization import PlanV2
 
 from .planning_execution import PlanningExecution
 
@@ -34,11 +35,13 @@ class PlanningModelInput(Contract):
     schema_version: Literal["karajan.planning-model-input.v1"]
     prompt_protocol: Literal["karajan.planning-prompt.v1"]
     execution: dict[str, Any]
+    binding: dict[str, Any]
     requirement: dict[str, Any]
     intent: dict[str, Any]
     authorization_ceiling: dict[str, Any]
     configuration: dict[str, Any]
     execution_policy: dict[str, Any]
+    output_schema: dict[str, Any]
     repository_snapshot: dict[str, Any]
     files: list[dict[str, Any]]
     request: dict[str, Any]
@@ -82,10 +85,10 @@ def _compile(
     if run.get("schema_version") != "karajan.run-planning.v2":
         raise RunError("PLANNING_INPUT_POLICY_UNSUPPORTED")
     policy = run.get("execution_policy_snapshot")
-    if not isinstance(policy, dict) or policy.get("schema_version") not in {
-        "karajan.execution-policy.v1",
-        "karajan.execution-policy.v2",
-    }:
+    if (
+        not isinstance(policy, dict)
+        or policy.get("schema_version") != "karajan.execution-policy.v2"
+    ):
         raise RunError("PLANNING_INPUT_POLICY_UNSUPPORTED")
     intent = next(
         (
@@ -126,12 +129,14 @@ def _compile(
         or snapshot.get("execution_id") != execution["id"]
         or snapshot.get("run_id") != run["id"]
         or snapshot.get("intent_id") != execution["intent_id"]
+        or snapshot.get("binding_sha256") != digest(binding)
         or snapshot.get("requirement_sha256") != digest(requirement)
         or snapshot.get("authorization_ceiling_sha256") != digest(ceiling)
     ):
         raise RunError("PLANNING_REPOSITORY_SNAPSHOT_CHANGED")
     if (
-        binding.get("execution_policy_sha256") != digest(policy)
+        binding.get("execution_policy_sha256")
+        != policy.get("digest", digest(policy))
         or binding.get("configuration_sha256") != config.get("digest")
         or binding.get("authorization_ceiling_sha256") != digest(ceiling)
     ):
@@ -144,26 +149,30 @@ def _compile(
         raise RunError("PLANNING_INPUT_POLICY_UNSUPPORTED")
 
     files = _files(snapshot)
-    semantic_policy = {
-        "schema_version": policy["schema_version"],
-        "id": policy.get("id"),
-        "revision": policy.get("revision"),
-        "digest": digest(policy),
-        "configuration_digest": config.get("digest"),
-        "max_context_tokens": policy["max_context_tokens"],
-        "context_policy": {
-            "input_accounting": context.get("input_accounting"),
-            "reserved_output_tokens": reserved,
-        },
-    }
+    policy_digest = policy.get("digest")
+    if policy_digest is not None:
+        policy_document = {
+            key: value
+            for key, value in policy.items()
+            if key
+            not in {"project_id", "digest", "registered_by", "registered_at", "activation_allowed"}
+        }
+        if policy_digest != digest(policy_document):
+            raise RunError("PLANNING_EXECUTION_BINDING_STALE")
+    if not isinstance(policy_digest, str):
+        policy_digest = digest(policy)
+    semantic_policy = {**policy, "digest": policy_digest}
+    output_schema = _plan_schema("v2")
     data = {
         "protocol": _PROMPT_PROTOCOL,
+        "output_version": "v2",
         "requirement": requirement,
         "planning_intent": {
             key: intent[key] for key in ("id", "term", "principal", "profile", "budget_ref")
         },
         "authorization_ceiling": ceiling,
         "execution_policy": semantic_policy,
+        "binding": binding,
         "repository": {
             key: snapshot[key]
             for key in (
@@ -171,10 +180,11 @@ def _compile(
                 "base_sha",
                 "snapshot_sha256",
                 "read_paths_sha256",
+                "binding_sha256",
             )
         },
         "files": files,
-        "plan_output_schema": _plan_schema(),
+        "plan_output_schema": output_schema,
     }
     prompt = json.dumps(
         data, ensure_ascii=False, allow_nan=False, separators=(",", ":"), sort_keys=True
@@ -231,11 +241,13 @@ def _compile(
                 "fence",
             )
         },
+        binding=binding,
         requirement=requirement,
         intent={key: intent[key] for key in ("id", "term", "principal", "profile", "budget_ref")},
         authorization_ceiling=ceiling,
         configuration={key: config[key] for key in ("project_revision", "revision", "digest")},
         execution_policy=semantic_policy,
+        output_schema=output_schema,
         repository_snapshot={key: snapshot[key] for key in snapshot if key != "content"},
         files=files,
         request=request,
@@ -257,9 +269,26 @@ def _files(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
         raise RunError("PLANNING_REPOSITORY_SNAPSHOT_CHANGED")
     result = []
     for row in sorted(metadata, key=lambda item: item.get("path", "")):
+        size = row.get("size") if isinstance(row, dict) else None
+        if (
+            not isinstance(row, dict)
+            or set(row) != {"path", "mode", "size", "sha256"}
+            or not isinstance(size, int)
+            or isinstance(size, bool)
+            or size < 0
+            or row.get("mode") not in {"100644", "100755"}
+            or not isinstance(row.get("sha256"), str)
+            or len(row["sha256"]) != 64
+        ):
+            raise RunError("PLANNING_REPOSITORY_SNAPSHOT_CHANGED")
         path = row.get("path")
         body = content.get(path)
-        if not isinstance(body, bytes) or not isinstance(path, str):
+        if (
+            not isinstance(body, bytes)
+            or not isinstance(path, str)
+            or len(body) != size
+            or hashlib.sha256(body).hexdigest() != row["sha256"]
+        ):
             raise RunError("PLANNING_REPOSITORY_SNAPSHOT_CHANGED")
         result.append(
             {**row, "encoding": "base64", "bytes": base64.b64encode(body).decode("ascii")}
@@ -269,10 +298,11 @@ def _files(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
     return result
 
 
-def _plan_schema() -> dict[str, Any]:
-    return {
-        "schema_version": "karajan.plan.v1-or-v2",
-        "required": ["summary", "authorization", "tasks"],
-        "tasks": "complete PlanTask fields; every task includes acceptance and authorized paths",
-        "authorization": "must remain within the original authorization ceiling",
-    }
+def _plan_schema(version: Literal["v2"] = "v2") -> dict[str, Any]:
+    """Return the exact schema consumed by ``parse_planning_output``."""
+    if version != "v2":
+        raise RunError("PLANNING_INPUT_POLICY_UNSUPPORTED")
+    schema = PlanV2.model_json_schema(mode="validation")
+    schema["$schema"] = "https://json-schema.org/draft/2020-12/schema"
+    schema["x-karajan-output-version"] = "v2"
+    return schema

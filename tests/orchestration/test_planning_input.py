@@ -2,10 +2,20 @@
 
 import hashlib
 import json
+import os
+from pathlib import Path
 
 import pytest
-from karajan.orchestration.planning_input import _compile
-from karajan.runs import RunError
+from karajan.adapters.opencode.go_context import GoRequestAccounting
+from karajan.orchestration.planning_execution import PlanningExecution
+from karajan.orchestration.planning_input import _compile, compile_planning_input
+from karajan.orchestration.planning_snapshot import PlanningRepositorySnapshotStore
+from karajan.projects import ProjectRegistry
+from karajan.runs import RunError, RunPlanner
+from karajan.runs.routing_authorization import PlanV2
+from test_routing_authorization import policy_request, request_v2
+
+pytest_plugins = ["test_planning_admission"]
 
 
 class Accounting:
@@ -63,6 +73,7 @@ def records():
     binding["execution_policy_sha256"] = digest(policy)
     snapshot = {
         "schema_version": "karajan.planning-repository-snapshot.v1",
+        "binding_sha256": digest(binding),
         "execution_id": "execution",
         "run_id": "run",
         "intent_id": "intent",
@@ -139,3 +150,99 @@ def test_compile_rejects_legacy_policy_without_frozen_limits():
     run["schema_version"] = "karajan.run-planning.v1"
     with pytest.raises(RunError, match="^PLANNING_INPUT_POLICY_UNSUPPORTED$"):
         _compile(execution, run, snapshot, Accounting())
+
+
+def test_public_compiler_reads_real_persisted_snapshot_and_reopens_deterministically(
+    configured, tmp_path: Path
+):
+    policy = policy_request(configured)
+    policy.update(
+        schema_version="karajan.execution-policy.v2",
+        max_context_tokens=8192,
+        context_policy={
+            **policy["context_policy"],
+            "measurement": {
+                "method": "reference_tokenizer_estimate",
+                "source_sha256": "a" * 64,
+                "fixed_margin": 2048,
+                "ratio_margin_basis_points": 1000,
+            },
+        },
+        validation={
+            "id": "validation",
+            "revision": 1,
+            "checks": [
+                {
+                    "id": "tests",
+                    "revision": 1,
+                    "argv": ["python", "-m", "pytest"],
+                    "environment_ref": {"id": "offline", "revision": 1},
+                    "timeout_seconds": 60,
+                }
+            ],
+            "environments": [
+                {
+                    "id": "offline",
+                    "revision": 1,
+                    "runtime_kind": "isolated-command",
+                    "platform": "windows_x64",
+                    "source_sha256": "b" * 64,
+                    "filesystem": "candidate_copy",
+                    "network": "none",
+                    "env": {},
+                    "max_log_bytes": 65536,
+                }
+            ],
+            "review": {
+                "id": "independent_review",
+                "revision": 1,
+                "environment_ref": {"id": "offline", "revision": 1},
+                "context_policy": "candidate_and_acceptance_only",
+                "independence_policy": "existing_candidate_independence_v1",
+            },
+        },
+    )
+    registered = configured["registry"].register_execution_policy(
+        configured["id"], policy, command_key="policy", principal="owner"
+    )
+    planner = RunPlanner(tmp_path / "runs.sqlite", configured["registry"])
+    request = request_v2(configured, registered)
+    request["authorization"]["read_paths"] = ["original.txt"]
+    request["authorization"]["write_paths"] = ["original.txt"]
+    run = planner.create(request, command_key="run", principal="owner")
+    intent = planner.planning_intent(run["id"], term=1, command_key="intent", principal="lead")
+    service = PlanningExecution(tmp_path / "planning.sqlite", planner)
+    execution = service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
+    service.snapshots = PlanningRepositorySnapshotStore(tmp_path / "snapshots.sqlite")
+    service.freeze_repository_snapshot(execution["id"], principal="owner", command_key="freeze")
+    accounting = GoRequestAccounting(Path(os.environ["KARAJAN_GO_TOKENIZER_DIRECTORY"]))
+
+    first = compile_planning_input(
+        service, accounting, execution_id=execution["id"], principal="owner"
+    )
+    repository = Path(run["configuration_snapshot"]["repository"]["root"])
+    (repository / "working-tree-only.txt").write_bytes(b"must not be read")
+    reopened_projects = ProjectRegistry(
+        configured["registry"].database,
+        configured["registry"].allowed_roots,
+        existing_only=True,
+    )
+    reopened_planner = RunPlanner(service.planner.database, reopened_projects, existing_only=True)
+    reopened = type(service)(
+        service.database,
+        reopened_planner,
+        snapshots=PlanningRepositorySnapshotStore(
+            tmp_path / "snapshots.sqlite", existing_only=True
+        ),
+        existing_only=True,
+    )
+    second = compile_planning_input(
+        reopened, accounting, execution_id=execution["id"], principal="owner"
+    )
+
+    assert first.artifact_bytes == second.artifact_bytes
+    assert first.binding == execution["binding"]
+    assert first.output_schema["x-karajan-output-version"] == "v2"
+    assert first.output_schema["required"] == PlanV2.model_json_schema()["required"]
+    assert "$defs" in first.output_schema
+    assert "working-tree-only.txt" not in [row["path"] for row in first.files]
