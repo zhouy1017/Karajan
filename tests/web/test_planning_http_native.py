@@ -273,13 +273,14 @@ def test_authenticated_v2_planning_executes_one_native_fixture_send_and_persists
         observed = executed.json()
         while time.monotonic() < deadline:
             observed = client.get(f"/v1/runs/{run['id']}/planning", headers=headers).json()
-            if observed["run"]["plans"]:
+            if observed["run"]["plans"] and observed["command"]["state"] == "completed":
                 break
             time.sleep(0.05)
         assert observed["run"]["plans"], (
             observed,
             execution.get(binding["execution_id"], principal="owner"),
         )
+        assert observed["command"]["state"] == "completed"
         assert observed["run"]["plans"][0]["plan"] == plan
         retried = client.post(
             f"/v1/runs/{run['id']}/planning-execute",
@@ -457,7 +458,10 @@ def test_unobserved_capacity_persists_commander_qualification_block_without_send
         observed = result.json()
         while time.monotonic() < deadline:
             observed = client.get(f"/v1/runs/{run['id']}/planning", headers=headers).json()
-            if observed["planning"]["execution"]["state"] == "blocked":
+            if (
+                observed["planning"]["execution"]["state"] == "blocked"
+                and observed["command"]["state"] == "failed"
+            ):
                 break
             time.sleep(0.05)
         planning = observed["planning"]
@@ -470,6 +474,11 @@ def test_unobserved_capacity_persists_commander_qualification_block_without_send
     }
     assert planning["availability"] == {
         "state": "blocked",
+        "reason_code": "COMMANDER_QUALIFICATION_REQUIRED",
+    }
+    assert observed["command"] == {
+        "id": observed["command"]["id"],
+        "state": "failed",
         "reason_code": "COMMANDER_QUALIFICATION_REQUIRED",
     }
     assert capacity.snapshot()["reservations"] == []
