@@ -30,20 +30,33 @@ Evidence, parser, or delivery.
 
 All WSL commands used `/tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python`,
 `PYTHONPATH=backend:tests:tests/projects:tests/runs:tests/candidates`, and a
-fresh `/tmp/karajan-dg01-*` base temp. The factory test used
-`KARAJAN_GO_TOKENIZER_DIRECTORY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-context-artifacts`
-and `KARAJAN_OPENCODE_LINUX_BINARY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode`.
+fresh `/tmp/karajan-dg01-*` base temp. The current factory regression uses the
+CI default runtime discovery: with `KARAJAN_OPENCODE_LINUX_BINARY` unset it
+uses `runtimes/opencode/node_modules/opencode-linux-x64/bin/opencode`, the
+pinned v1.18.29 binary with SHA-256
+`ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650`.
+It keeps the pinned tokenizer at
+`/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-context-artifacts` and sets
+both required-artifact flags. Thus a missing or invalid runtime is a useful
+test failure (`Prepared fixed Linux OpenCode artifact is required`), never a
+silent skip. The test only opens/hashes existing descriptors and stores; it
+does not invoke native Review, a provider, HTTP, Journal grant/call, Evidence,
+or a real credential.
 
 | Command | Result |
 | --- | --- |
+| Prior `43ebc45` / PR #150 CI 34219462874 Linux job 102038995726: CI main `uv run --frozen --extra dev pytest tests`, with global pinned tokenizer and `KARAJAN_REQUIRE_OPENCODE_ISOLATION=1` but **without** `KARAJAN_OPENCODE_LINUX_BINARY` | **Red (CI)**: `1 failed, 3070 passed, 7 skipped in 1385.87s`; only `test_existing_factory_reopens_identity_and_rechecks_own_descriptor` failed, at its direct `os.environ["KARAJAN_OPENCODE_LINUX_BINARY"]` lookup with `KeyError`. The later independent-boundary CI steps set that override, but the main pytest step does not. |
+| Current no-override factory regression: `env -u KARAJAN_OPENCODE_LINUX_BINARY KARAJAN_REQUIRE_OPENCODE_ISOLATION=1 KARAJAN_REQUIRE_GO_TOKENIZER=1 KARAJAN_GO_TOKENIZER_DIRECTORY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-context-artifacts PYTHONPATH=backend:tests:tests/projects:tests/runs:tests/candidates /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest tests/runs/test_reviewer_execution_bootstrap.py::test_existing_factory_reopens_identity_and_rechecks_own_descriptor -q --basetemp /tmp/karajan-dg01-reviewer-ci-default-factory-fixed` | **P passed**: `1 passed in 9.89s`. This runs the actual factory/source path cold with the standard npm runtime path, rather than a deployment-source/runtime substitute or a Windows executable. |
+| Current no-override owned suite: `env -u KARAJAN_OPENCODE_LINUX_BINARY KARAJAN_REQUIRE_OPENCODE_ISOLATION=1 KARAJAN_REQUIRE_GO_TOKENIZER=1 KARAJAN_GO_TOKENIZER_DIRECTORY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-context-artifacts PYTHONPATH=backend:tests:tests/projects:tests/runs:tests/candidates /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest tests/runs/test_reviewer_execution_bootstrap.py tests/runs/test_reviewer_execution_intent.py -q --basetemp /tmp/karajan-dg01-reviewer-ci-default-owned-captured` | **P passed**: `27 passed in 36.67s`. The full seven-module affected suite was not rerun because this is a test-fixture discovery repair: production behaviour and the other six modules are unchanged. |
 | Candidate `fd3f765` targeted lost-reply assertion | **Red (historical)**: the earlier `replayed.state == before_replay.state` terminal-state assertion exposed recovery-state timing; this was retained as the baseline diagnostic rather than treated as product evidence. |
 | Candidate `1d7fcd8` two-module command supplied by Commander | **Red (historical)**: `1 failed, 19 passed in 29.95s`; `replayed == reopened.host.inspect(...)` raced a legitimate `exit_code: None -> 0` completion update. This is a mutable-snapshot regression, not a second launch. |
 | Current bounded candidate: lost-reply test, three fresh `/tmp/karajan-dg01-reviewer-green-{1,2,3}` directories after Host terminal observation | **P passed**: each run `1 passed, 15 deselected` (5.72s, 5.76s, 5.64s). This is the new deterministic regression feedback loop. |
 | Current repaired candidate: bootstrap + intent modules with `/tmp/karajan-dg01-reviewer-owned-final4` | **P passed**: `27 passed in 38.72s`. This includes repository containment, cold historical reopen, writer-wait expiry, cancellation-WAL, and connected-boundary regressions. |
 | Current repaired candidate: `tests/runs/test_reviewer_execution_bootstrap.py tests/runs/test_reviewer_execution_intent.py tests/runs/test_reviewer_binding.py tests/runs/test_reviewer_input_approved.py tests/runs/test_admission_guard.py tests/runs/test_task_admission.py tests/execution/test_runnerhost.py -q --basetemp /tmp/karajan-dg01-reviewer-affected-final` | **P passed**: `155 passed in 122.43s`. This result is for the repaired candidate, not retrospectively for an older candidate. |
 | Current repaired candidate: `C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m pytest tests/runs/test_reviewer_execution_bootstrap.py tests/runs/test_reviewer_execution_intent.py -q --basetemp C:/Users/Chooo/AppData/Local/Temp/karajan-reviewer-windows-final` | **P passed**: `22 passed, 5 skipped in 44.52s`; the Linux-only factory/direct-child evidence and an unavailable Windows directory-symlink capability were skipped. |
-| `C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m ruff check .` | `All checks passed!` |
-| `C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m mypy backend` | `Success: no issues found in 154 source files` |
+| Current fixture repair: `C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m ruff check .` | `All checks passed!` |
+| Current fixture repair (Windows): `C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m mypy backend` | `Success: no issues found in 154 source files` |
+| Current fixture repair (WSL/Linux): `/tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m mypy backend` | `Success: no issues found in 154 source files` |
 
 ## Independent-review repairs on this candidate
 

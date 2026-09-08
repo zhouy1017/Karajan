@@ -29,6 +29,24 @@ pytest_plugins = (
 )
 
 
+def linux_runtime_artifact() -> Path:
+    """Follow the CI runtime lookup without relying on isolation test collection."""
+    runtime = Path(
+        os.environ.get(
+            "KARAJAN_OPENCODE_LINUX_BINARY",
+            str(
+                Path(__file__).resolve().parents[2]
+                / "runtimes/opencode/node_modules/opencode-linux-x64/bin/opencode"
+            ),
+        )
+    )
+    if not runtime.is_file():
+        if os.environ.get("KARAJAN_REQUIRE_OPENCODE_ISOLATION") == "1":
+            pytest.fail("Prepared fixed Linux OpenCode artifact is required")
+        pytest.skip("Prepared fixed Linux OpenCode artifact is unavailable")
+    return runtime
+
+
 def settings(tmp_path: Path) -> ReviewerExecutionSettings:
     for name in ("control", "state", "candidate", "host"):
         (tmp_path / name).mkdir()
@@ -69,7 +87,7 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
     tmp_path, binding_case, monkeypatch
 ):
     """The production factory reads the pinned runtime and existing descriptors."""
-    runtime = Path(os.environ["KARAJAN_OPENCODE_LINUX_BINARY"])
+    runtime = linux_runtime_artifact()
     tokenizer = Path(os.environ["KARAJAN_GO_TOKENIZER_DIRECTORY"])
     assert runtime.is_file() and tokenizer.is_dir()
     intents, (run_id, _), candidates, _, _ = _passed_reviewer_subject(binding_case)
