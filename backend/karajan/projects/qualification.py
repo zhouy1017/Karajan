@@ -325,14 +325,19 @@ class ProfileQualificationStore:
                             "probe_spec_digest": source["probe_spec_digest"],
                             "scenario": scenario,
                             "context": {
-                                key: LIMITS[key]
-                                for key in (
-                                    "approved_input_tokens",
-                                    "reserved_output_tokens",
-                                    "operating_context_tokens",
-                                    "fixed_margin",
-                                    "ratio_margin_basis_points",
-                                )
+                                "source_sha256": digest(
+                                    source["runtime"].get("accounting_source", source["runtime"])
+                                ),
+                                **{
+                                    key: LIMITS[key]
+                                    for key in (
+                                        "approved_input_tokens",
+                                        "reserved_output_tokens",
+                                        "operating_context_tokens",
+                                        "fixed_margin",
+                                        "ratio_margin_basis_points",
+                                    )
+                                },
                             },
                         },
                     }
@@ -369,20 +374,33 @@ class ProfileQualificationStore:
                 credential,
                 current_guard=lambda: self._commander_current_guard(start, principal),
             )
+        except QualificationError as error:
+            observation = {"status": "failed", "reason_codes": [error.code], "scenarios": []}
         except Exception:
             observation = {
                 "status": "failed",
-                "reason_codes": ["COMMANDER_NATIVE_PROBE_UNAVAILABLE"],
+                "reason_codes": ["COMMANDER_PROBE_EXECUTION_UNKNOWN"],
                 "scenarios": [],
             }
         now = self._now()
         fixture_observation = source.get("observation_origin") == "c_fixed_suite_test_double"
+        complete_official = (
+            not fixture_observation
+            and observation.get("status") == "passed"
+            and len(observation.get("scenarios", [])) == len(SCENARIOS)
+            and all(
+                item.get("observation_origin") == "official_go" and item.get("status") == "passed"
+                for item in observation.get("scenarios", [])
+            )
+        )
         record: dict[str, Any] = {
             "schema_version": "karajan.profile-qualification.v1",
             "id": observation_id,
             "project_id": project_id,
             "principal": principal,
-            "status": observation.get("status", "failed") if fixture_observation else "failed",
+            "status": observation.get("status", "failed")
+            if fixture_observation
+            else ("passed" if complete_official else "failed"),
             "qualification_scope": SCOPE,
             "suite_ref": SUITE_REF,
             "provenance": "fixture" if fixture_observation else "official",
@@ -394,13 +412,40 @@ class ProfileQualificationStore:
             "valid_until": now + validity_seconds,
             "observation": observation,
             "reason_codes": list(observation.get("reason_codes", [])),
-            "limitations": ["Commander native probe is not configured in this store/source slice."],
+            "limitations": (
+                []
+                if complete_official
+                else ["No incomplete or fixture Commander observation is Planning authority."]
+            ),
         }
         with self._owned(project_id, principal) as db:
             try:
                 self._commander_current_locked(db, start, principal)
             except Exception:
                 record["reason_codes"].append("COMMANDER_SOURCE_CHANGED")
+                record["status"] = "failed"
+            if complete_official and record["status"] == "passed":
+                registration = start["profile_binding"]["registration"]
+                record["commander_facts"] = {
+                    "profile_facts": {
+                        "profile": {"id": registration["id"], "revision": registration["revision"]},
+                        "profile_digest": start["profile_digest"],
+                        "roles": ["commander"],
+                        "runtime_version": "1.18.29",
+                        "tools": [],
+                        "context_tokens": None,
+                        "data_destination": "controller",
+                        "budget_enforcement": "bounded_calls",
+                        # Facts are controller-extracted from this original observation;
+                        # record provenance remains the authoritative official_go distinction.
+                        "provenance": "imported_observation",
+                        "evidence_ref": observation_id,
+                        "observed_at": record["observed_at"],
+                        "valid_until": record["valid_until"],
+                    },
+                    "capability_evidence": registration["capability_evidence"],
+                    "source_generation_sha256": digest(start["source"]),
+                }
             db.execute(
                 "INSERT INTO profile_qualification_records VALUES (?,?,?)",
                 (observation_id, encoded(record), digest(record)),

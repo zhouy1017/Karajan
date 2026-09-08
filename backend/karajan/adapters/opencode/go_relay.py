@@ -475,6 +475,7 @@ class GoReviewerRelayContext(_BusinessRelayAccounting):
     fixed_margin: int
     ratio_margin_basis_points: int
 
+
 @dataclass(frozen=True)
 class GoQualificationContext:
     """Fixed controller probe accounting, distinct from approved Task authority.
@@ -999,8 +1000,7 @@ class GoRelay:
             )
             commander_qualification = (
                 not task_grant
-                and binding.get("schema_version")
-                == "karajan.go-commander-qualification-grant.v1"
+                and binding.get("schema_version") == "karajan.go-commander-qualification-grant.v1"
             )
             planning_native = binding.get("schema_version") == "karajan.go-planning-native-grant.v1"
             reviewer_native = binding.get("schema_version") == "karajan.go-reviewer-native-grant.v1"
@@ -1038,7 +1038,11 @@ class GoRelay:
                     # shell, MCP, permission, or tool request can cross this
                     # relay boundary under the qualification grant.
                     if (
-                        payload.get("tools") != []
+                        # The pinned native client omits ``tools`` for an
+                        # empty configured set.  Missing is therefore the one
+                        # canonical empty-tools encoding; any supplied value
+                        # must still be exactly an empty list.
+                        payload.get("tools", []) != []
                         or "tool_choice" in payload
                         or "parallel_tool_calls" in payload
                         or any(

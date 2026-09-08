@@ -16,7 +16,8 @@ from karajan.runs import RunError
 from karajan.runs.planning import identifier
 
 DESCRIPTOR_NAME = "commander-qualification-source.v2.json"
-_SCHEMA = "karajan.commander-qualification-settings.v2"
+_SCHEMA = "karajan.commander-qualification-settings.v3"
+_LEGACY_SCHEMA = "karajan.commander-qualification-settings.v2"
 _PATHS = ("runtime", "tokenizer_directory", "credential_private_directory")
 
 
@@ -34,10 +35,14 @@ class CommanderQualificationSettings:
     tokenizer_directory: Path
     credential_private_directory: Path
     credential_sources: tuple[CommanderCredentialSource, ...] = field(repr=False)
+    journal_path: Path | None = None
+    work_root: Path | None = None
 
     def document(self) -> dict[str, Any]:
-        return {
-            "schema_version": _SCHEMA,
+        value = {
+            "schema_version": _SCHEMA
+            if self.journal_path is not None and self.work_root is not None
+            else _LEGACY_SCHEMA,
             **{name: str(getattr(self, name)) for name in _PATHS},
             "credential_sources": [
                 {
@@ -49,14 +54,21 @@ class CommanderQualificationSettings:
                 for row in self.credential_sources
             ],
         }
+        if value["schema_version"] == _SCHEMA:
+            value.update(journal_path=str(self.journal_path), work_root=str(self.work_root))
+        return value
 
     @classmethod
     def from_document(cls, value: object) -> "CommanderQualificationSettings":
         try:
             if (
                 type(value) is not dict
-                or set(value) != {"schema_version", *_PATHS, "credential_sources"}
-                or value["schema_version"] != _SCHEMA
+                or set(value)
+                not in (
+                    {"schema_version", *_PATHS, "credential_sources"},
+                    {"schema_version", *_PATHS, "credential_sources", "journal_path", "work_root"},
+                )
+                or value["schema_version"] not in {_SCHEMA, _LEGACY_SCHEMA}
                 or type(value["credential_sources"]) is not list
             ):
                 raise ValueError
@@ -87,8 +99,20 @@ class CommanderQualificationSettings:
                 )
             if len({(row.project_id, row.auth_ref) for row in sources}) != len(sources):
                 raise ValueError
+            has_native = value["schema_version"] == _SCHEMA and set(value) == {
+                "schema_version",
+                *_PATHS,
+                "credential_sources",
+                "journal_path",
+                "work_root",
+            }
+            if value["schema_version"] == _SCHEMA and not has_native:
+                raise ValueError
             return cls(
-                **{name: path(value[name]) for name in _PATHS}, credential_sources=tuple(sources)
+                **{name: path(value[name]) for name in _PATHS},
+                journal_path=path(value["journal_path"]) if has_native else None,
+                work_root=path(value["work_root"]) if has_native else None,
+                credential_sources=tuple(sources),
             )
         except (KeyError, TypeError, ValueError, OSError):
             raise RunError("COMMANDER_QUALIFICATION_BOOTSTRAP_INVALID") from None
@@ -114,6 +138,11 @@ def read_commander_qualification_settings(
         _private(control_directory, directory=True)
         _plain(path)
         _private(path)
+        directory_fd = os.open(control_directory, os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
         raw = path.read_bytes()
         if len(raw) > 32768:
             raise ValueError
@@ -162,12 +191,25 @@ def open_go_commander_qualification_store(
         settings.tokenizer_directory,
         settings.credential_private_directory,
         *(row.path for row in settings.credential_sources),
+        *(() if settings.journal_path is None else (settings.journal_path,)),
+        *(() if settings.work_root is None else (settings.work_root,)),
     )
     if any(path.resolve().is_relative_to(root) for path in paths for root in repositories):
         raise RunError("QUALIFICATION_CONTROL_STATE_IN_REPOSITORY")
     _plain(settings.runtime)
     _plain(settings.tokenizer_directory, directory=True)
     _private(settings.credential_private_directory, directory=True)
+    journal = None
+    if settings.journal_path is not None or settings.work_root is not None:
+        if settings.journal_path is None or settings.work_root is None:
+            raise RunError("COMMANDER_QUALIFICATION_SOURCE_UNAVAILABLE")
+        _plain(settings.journal_path)
+        _private(settings.journal_path)
+        _plain(settings.work_root, directory=True)
+        _private(settings.work_root, directory=True)
+        from karajan.adapters.opencode.go_journal import GoCallJournal
+
+        journal = GoCallJournal(settings.journal_path, existing_only=existing_only)
     credentials = CredentialSourceStore(
         projects,
         sources={
@@ -181,7 +223,11 @@ def open_go_commander_qualification_store(
         projects,
         credentials=credentials,
         commander_suite=FixedGoCommanderSuite(
-            settings.runtime, settings.tokenizer_directory, descriptor_sha256
+            settings.runtime,
+            settings.tokenizer_directory,
+            descriptor_sha256,
+            journal=journal,
+            work_root=settings.work_root,
         ),
     )
 

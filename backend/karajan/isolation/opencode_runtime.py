@@ -81,6 +81,7 @@ class IsolatedOpenCode:
         *,
         model_id: str = "glm-5.3-flash",
         projection: list[dict[str, Any]] | None = None,
+        no_tools: bool = False,
     ) -> None:
         if sys.platform != "linux":
             raise ValueError("LINUX_NAMESPACES_REQUIRED")
@@ -89,6 +90,7 @@ class IsolatedOpenCode:
         if not capability or len(capability) > 256 or not capability.isprintable():
             raise ValueError("LOCAL_CAPABILITY_INVALID")
         self._projection = projection_files(projection) if projection is not None else None
+        self._no_tools = no_tools
         self.runtime = runtime.resolve(strict=True)
         _verify_runtime(self.runtime)
         self.upstream_socket = upstream_socket.resolve(strict=True)
@@ -156,6 +158,8 @@ class IsolatedOpenCode:
                 self._capture_pins = ProjectionPins(self._owned_workspace, projection)
             with (self.directory / "projection.json").open("x", encoding="utf-8") as stream:
                 json.dump(projection, stream, allow_nan=False)
+            if self._no_tools:
+                (self.directory / "no-tools").touch(exist_ok=False)
             outer, inner = socket.socketpair()
             outer.settimeout(30)
             command = [

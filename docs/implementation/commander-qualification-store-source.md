@@ -18,12 +18,29 @@ the legacy Go qualification settings and the task-runtime deployment source
 are not Commander sources.  The persistent current reader reconstructs this
 same canonical source, including the dynamic Profile/authentication generation.
 
-There is no native Commander probe in this slice.  Production observation fails
-closed as `COMMANDER_NATIVE_PROBE_UNAVAILABLE`, creates no official Commander
-fact, and therefore makes no Planning admission reservation.  The dedicated
-C-only test double persists `fixture` provenance and has no route to production
-composition or official current facts.
+The v3 descriptor additionally binds the pre-existing Go Journal and a private
+controller work root.  Only that descriptor can compose the native producer;
+legacy v2 descriptors are readable history and deliberately have no execution
+right.  Every sealed scene context contains the exact `GoRequestAccounting`
+source digest required by the original Journal grant.
 
-Not run here: native parser/retention/isolation behavior, real official Go
-observation, and the full P/S qualification suite.  Those remain work for the
-next controller-owned probe slice.
+`isolation/go_commander_probe.py` runs the pinned Linux OpenCode binary in a
+fresh namespace with a readonly anchor projection and a native configuration
+that denies every tool.  It creates a new empty session, sends the fixed inline
+prompt through the original Relay/Journal and accepts only one causally linked
+final PlanV2 matching the fixed scene semantics.  It retains the actual native
+session/final, bounded output, Journal calls, Relay receipts and local stop
+facts.  Local HTTP peers are explicitly `http_fixture`; production facts are
+created only after both scenes have complete `official_go` observations.
+
+The native client omits `tools` for an empty configured set.  Relay accepts
+only that canonical omission (or explicit `tools: []`), while rejecting any
+tool declaration, choice, history, or observed tool call.  This does not claim
+read, edit, shell, MCP, delegation, maximum-context, billing, or official S
+qualification.  Fixture provenance remains unable to satisfy Planning
+admission.
+
+The dedicated Linux C/P test uses the real pinned ELF, namespace, empty-tools
+native wire, original SQLite Journal and a temporary local HTTP peer for both
+scenes.  It is not an official provider request.  Real official Go observation
+and the #113 business Plan/owner-approval flow remain not run.
