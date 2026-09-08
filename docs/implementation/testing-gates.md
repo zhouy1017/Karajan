@@ -26,7 +26,7 @@ uv run --frozen --extra dev pytest \
   tests/projects/test_qualification_store.py \
   tests/runs/test_admission_guard.py \
   tests/web/test_task_admission_http.py \
-  tests/tools/test_require_successful_jobs.py
+  tests/tools/test_ci_quality_gate.py
 ```
 
 这组回归覆盖规则授权不可扩大、持久资格/撤销的 fail-closed 读取、准入 reservation 与 HTTP 请求的权限边界。它使用 fixture、临时目录、本地 git 和 HTTP test client；不下载 tokenizer、不安装或启动 OpenCode/native runtime，也不会接触真实模型或 provider 凭据。它是代表性快速业务覆盖，不能冒充全库测试。
@@ -41,7 +41,9 @@ uv run --frozen --extra dev pytest \
 
 ## 汇总的 fail-closed 规则
 
-`quality-gate` 以 `if: always()` 等待 `quick-python` 与 `frontend-quality`，然后由 [require_successful_jobs.py](../../.github/scripts/require_successful_jobs.py) 严格要求两项结果均为 `success`。失败、取消、skip、缺失、未知和 workflow `needs` 集合不一致都会使汇总非零。`nightly-quality-gate` 对两项 nightly dependency 使用相同规则。脚本有直接测试覆盖成功、`failure`、`cancelled`、`skipped`、缺失结果和依赖列表缺失情形。
+`quality-gate` 以 `if: always()` 等待 `quick-python` 与 `frontend-quality`，然后在汇总 job 内以小型内联断言严格要求两项结果均为 `success`。失败、取消、skip、缺失、未知和 workflow `needs` 集合不一致都会使汇总非零。`nightly-quality-gate` 对两项 nightly dependency 使用相同规则。`tests/tools/test_ci_quality_gate.py` 从 workflow 提取并执行两段实际内联 Python，覆盖成功、`failure`、`cancelled`、`skipped`、缺失结果和依赖列表缺失情形。
+
+汇总 job 不检出仓库，也不执行项目代码、依赖安装、native runtime 或测试；它只读取 GitHub 注入的 `needs` 结果并作严格判断。这样上游失败时，汇总不会启动候选的任何代码。
 
 仓库 ruleset / branch protection 应继续要求精确名称 `quality-gate`，并要求当前提交或 merge group 的检查通过。workflow 文件本身不会修改 GitHub 规则；每个候选的远端检查结果和计时须单独读取。`nightly-quality-gate` 是可追踪的回归状态，不是 PR required check。
 

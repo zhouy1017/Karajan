@@ -73,7 +73,7 @@ jobs:
           tests/projects/test_qualification_store.py
           tests/runs/test_admission_guard.py
           tests/web/test_task_admission_http.py
-          tests/tools/test_require_successful_jobs.py
+          tests/tools/test_ci_quality_gate.py
 
   frontend-quality:
     name: frontend-quality
@@ -119,19 +119,31 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - name: Check out the aggregation script
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
       - name: Require every quick upstream check to succeed
         shell: bash
         env:
           NEEDS_RESULTS: ${{ toJSON(needs) }}
-        run: >-
-          python3 .github/scripts/require_successful_jobs.py
-          --required quick-python
-          --required frontend-quality
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import sys
+
+          results = json.loads(os.environ["NEEDS_RESULTS"])
+          required = {"quick-python", "frontend-quality"}
+          if set(results) != required:
+              print("Required checks are missing or the gate dependency list is inconsistent.")
+              sys.exit(1)
+          unsuccessful = {
+              job: outcome.get("result", "missing") if isinstance(outcome, dict) else "missing"
+              for job, outcome in results.items()
+              if not isinstance(outcome, dict) or outcome.get("result") != "success"
+          }
+          if unsuccessful:
+              print(f"Required checks did not succeed: {unsuccessful}")
+              sys.exit(1)
+          print("All required checks succeeded.")
+          PY
 
   python-nightly:
     name: python-nightly (${{ matrix.os }}, Python 3.12)
@@ -313,16 +325,28 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - name: Check out the aggregation script
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
       - name: Require every nightly upstream check to succeed
         shell: bash
         env:
           NEEDS_RESULTS: ${{ toJSON(needs) }}
-        run: >-
-          python3 .github/scripts/require_successful_jobs.py
-          --required python-nightly
-          --required frontend-nightly
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import sys
+
+          results = json.loads(os.environ["NEEDS_RESULTS"])
+          required = {"python-nightly", "frontend-nightly"}
+          if set(results) != required:
+              print("Required checks are missing or the gate dependency list is inconsistent.")
+              sys.exit(1)
+          unsuccessful = {
+              job: outcome.get("result", "missing") if isinstance(outcome, dict) else "missing"
+              for job, outcome in results.items()
+              if not isinstance(outcome, dict) or outcome.get("result") != "success"
+          }
+          if unsuccessful:
+              print(f"Required checks did not succeed: {unsuccessful}")
+              sys.exit(1)
+          print("All required checks succeeded.")
+          PY
