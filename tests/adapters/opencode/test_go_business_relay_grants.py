@@ -147,7 +147,9 @@ def _business_relay(journal, grant, binding, context, guard, upstream, receive):
         SECRET,
         CANARY,
         context=context,
-        authorization=GoRelayAuthorization(journal, "grant", binding, grant["capability"]),
+        authorization=GoRelayAuthorization(
+            journal, grant["grant_id"], binding, grant["capability"]
+        ),
         send_guard=guard,
         client_factory=lambda: httpx.Client(
             transport=httpx.MockTransport(observed), trust_env=False
@@ -347,7 +349,13 @@ def test_business_and_qualification_authority_cannot_mix_through_relay(
     )
     relay.start()
     try:
-        assert post(relay).status_code == 403
+        response = post(relay)
+        assert response.status_code == 403
+        assert response.json()["error"]["type"] == (
+            "TASK_CONTEXT_POLICY_MISMATCH"
+            if direction == "qualification_grant"
+            else "QUALIFICATION_CONTEXT_BINDING_MISMATCH"
+        )
     finally:
         relay.close()
     assert journal.snapshot("target")["calls"] == []
@@ -385,7 +393,9 @@ def test_legacy_planning_grant_cannot_send_with_business_context(
     )
     relay.start()
     try:
-        assert post(relay).status_code == 403
+        response = post(relay)
+        assert response.status_code == 403
+        assert response.json()["error"]["type"] == "GO_JOURNAL_INPUT_INVALID"
     finally:
         relay.close()
     assert journal.snapshot("legacy")["calls"] == []
@@ -448,7 +458,13 @@ def test_business_authority_seals_limits_and_actual_source_reject_before_send(
     )
     relay.start()
     try:
-        assert post(relay).status_code in {403, 422}
+        response = post(relay)
+        assert response.status_code == (422 if fault == "false_matching_source" else 403)
+        assert response.json()["error"]["type"] == (
+            "CONTEXT_SOURCE_CHANGED"
+            if fault == "false_matching_source"
+            else "TASK_CONTEXT_POLICY_MISMATCH"
+        )
     finally:
         relay.close()
     assert journal.snapshot("target")["calls"] == []
@@ -708,6 +724,7 @@ def test_forbidden_returned_tool_persists_valid_observed_usage_despite_protocol_
     grant = journal.create_grant(binding, grant_id="grant")
     forbidden = "read" if context_type is GoPlanningRelayContext else "edit"
     observed = {"prompt_tokens": 5000, "completion_tokens": 4097}
+    partial = {"prompt_tokens": 4999, "completion_tokens": 4096}
     upstream = []
     relay = _business_relay(
         journal,
@@ -716,7 +733,38 @@ def test_forbidden_returned_tool_persists_valid_observed_usage_despite_protocol_
         _business_context(accounting, binding, context_type),
         _allowed,
         upstream,
-        lambda _: answer(_tool_event(forbidden, observed)),
+        lambda _: answer(
+            stream(
+                event(
+                    choices=[
+                        {
+                            "index": 0,
+                            "delta": {
+                                "tool_calls": [
+                                    {"index": 0, "function": {"name": forbidden}}
+                                ]
+                            },
+                            "finish_reason": None,
+                        }
+                    ],
+                    usage=partial,
+                ),
+                event(
+                    choices=[
+                        {
+                            "index": 0,
+                            "delta": {
+                                "tool_calls": [
+                                    {"index": 0, "function": {"name": None}}
+                                ]
+                            },
+                            "finish_reason": "tool_calls",
+                        }
+                    ],
+                    usage=observed,
+                ),
+            )
+        ),
     )
     relay.start()
     try:
@@ -730,6 +778,9 @@ def test_forbidden_returned_tool_persists_valid_observed_usage_despite_protocol_
     assert call["outcome"]["usage"] == observed
     assert call["outcome"]["protocol_passed"] is False
     assert call["outcome"]["reason_codes"] == ["UNAPPROVED_TOOL"]
+    assert relay.receipts[0]["usage"] == observed
+    assert relay.receipts[0]["tool_names"] == []
+    assert forbidden not in json.dumps(relay.receipts)
 
 
 @pytest.mark.parametrize(

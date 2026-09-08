@@ -304,16 +304,22 @@ def _request_tool_names(payload: dict[str, Any]) -> list[str]:
     before it can become an internal relay error.
     """
     names: list[str] = []
+
+    def function_name(value: Any) -> str:
+        if not isinstance(value, dict):
+            raise _Rejected("UNAPPROVED_TOOL", 403)
+        name = value.get("name")
+        if not isinstance(name, str):
+            raise _Rejected("UNAPPROVED_TOOL", 403)
+        return name
+
     tools = payload.get("tools", [])
     if not isinstance(tools, list):
         raise _Rejected("UNAPPROVED_TOOL", 403)
     for tool in tools:
-        if not isinstance(tool, dict) or not isinstance(tool.get("function"), dict):
+        if not isinstance(tool, dict):
             raise _Rejected("UNAPPROVED_TOOL", 403)
-        name = tool["function"].get("name")
-        if not isinstance(name, str):
-            raise _Rejected("UNAPPROVED_TOOL", 403)
-        names.append(name)
+        names.append(function_name(tool.get("function")))
     for message in payload["messages"]:
         calls = message.get("tool_calls")
         if calls is None:
@@ -321,12 +327,9 @@ def _request_tool_names(payload: dict[str, Any]) -> list[str]:
         if not isinstance(calls, list):
             raise _Rejected("UNAPPROVED_TOOL", 403)
         for call in calls:
-            if not isinstance(call, dict) or not isinstance(call.get("function"), dict):
+            if not isinstance(call, dict):
                 raise _Rejected("UNAPPROVED_TOOL", 403)
-            name = call["function"].get("name")
-            if not isinstance(name, str):
-                raise _Rejected("UNAPPROVED_TOOL", 403)
-            names.append(name)
+            names.append(function_name(call.get("function")))
     return names
 
 
@@ -1060,7 +1063,7 @@ class GoRelay:
                         raise _Rejected("UPSTREAM_RESPONSE_TOO_LARGE")
                     content.extend(chunk)
                 receipt["upstream_response_complete"] = True
-                receipt.update(_stream_facts(bytes(content), self._secret))
+                facts = _stream_facts(bytes(content), self._secret)
                 allowed_tools = (
                     frozenset()
                     if planning_native
@@ -1068,11 +1071,15 @@ class GoRelay:
                     if reviewer_qualification or reviewer_native
                     else _TOOLS
                 )
-                if any(name not in allowed_tools for name in receipt["tool_names"]):
+                if any(name not in allowed_tools for name in facts["tool_names"]):
                     # Stream observations are valid independently of the tool
-                    # policy verdict. Persist their usage below, but never mark
-                    # this response as protocol-passed.
+                    # policy verdict. Persist only facts that cannot contain
+                    # provider-controlled tool identity text in public receipts.
+                    receipt.update(
+                        {key: value for key, value in facts.items() if key != "tool_names"}
+                    )
                     raise _Rejected("UNAPPROVED_TOOL")
+                receipt.update(facts)
                 if "request_context" in receipt:
                     measured = receipt["request_context"]
                     prompt = receipt["usage"].get("prompt_tokens")

@@ -626,7 +626,8 @@ def test_unapproved_tool_name_is_rejected_without_retaining_its_text() -> None:
                     },
                     "finish_reason": "tool_calls",
                 }
-            ]
+            ],
+            usage={"prompt_tokens": 31, "completion_tokens": 4},
         )
     )
     with running(lambda _: answer(body)) as (relay, _):
@@ -634,6 +635,7 @@ def test_unapproved_tool_name_is_rejected_without_retaining_its_text() -> None:
         relay.close()
         assert response.status_code == 502
         assert relay.receipts[0]["reason_codes"] == ["UNAPPROVED_TOOL"]
+        assert relay.receipts[0]["usage"] == {"prompt_tokens": 31, "completion_tokens": 4}
         assert "unapproved-tool" not in json.dumps(relay.receipts)
 
 
