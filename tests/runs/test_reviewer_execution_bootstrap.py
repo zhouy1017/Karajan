@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from karajan.execution import ProcessSpec, RunnerHost
+from karajan.execution import LaunchDenied, ProcessSpec, RunnerHost
 from karajan.orchestration.go_task_runtime import GoTaskSettings, write_go_task_bootstrap
 from karajan.orchestration.reviewer_execution_bootstrap import (
     ReviewerExecutionSettings,
@@ -14,6 +14,7 @@ from karajan.orchestration.reviewer_execution_bootstrap import (
     provision_reviewer_execution_bootstrap,
 )
 from karajan.orchestration.reviewer_execution_intent import (
+    ReviewerExecutionHistory,
     ReviewerExecutionIntents,
     ReviewerExecutionSource,
     ReviewerLaunchSpec,
@@ -64,7 +65,9 @@ def test_tampered_descriptor_is_rejected(tmp_path):
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="fixed Reviewer factory is Linux-only")
-def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(tmp_path, binding_case):
+def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
+    tmp_path, binding_case, monkeypatch
+):
     """The production factory reads the pinned runtime and existing descriptors."""
     runtime = Path(os.environ["KARAJAN_OPENCODE_LINUX_BINARY"])
     tokenizer = Path(os.environ["KARAJAN_GO_TOKENIZER_DIRECTORY"])
@@ -140,6 +143,25 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(tmp_path,
     # Production opens actual existing descriptors/stores and hashes the pinned
     # runtime/tokenizer source. This does not qualify or call a model.
     first = open_reviewer_execution_intents(control)
+    from karajan.adapters.opencode.go_journal import GoCallJournal
+
+    counters = {name: 0 for name in ("native", "grant", "call", "gate", "evidence")}
+
+    def count(name, original):
+        def wrapped(*args, **kwargs):
+            counters[name] += 1
+            return original(*args, **kwargs)
+
+        return wrapped
+
+    monkeypatch.setattr(RunnerHost, "start", count("native", RunnerHost.start))
+    monkeypatch.setattr(GoCallJournal, "create_grant", count("grant", GoCallJournal.create_grant))
+    monkeypatch.setattr(GoCallJournal, "begin_call", count("call", GoCallJournal.begin_call))
+    monkeypatch.setattr(type(candidates), "gate", count("gate", type(candidates).gate))
+    monkeypatch.setattr(
+        type(candidates), "_save_evidence", count("evidence", type(candidates)._save_evidence)
+    )
+    journal_before = journal.read_bytes()
     seeded = ReviewerExecutionIntents(
         database,
         intents.admissions,
@@ -149,10 +171,45 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(tmp_path,
         launch_compiler=lambda _: ReviewerLaunchSpec(ProcessSpec(("fixture",), tmp_path), "3" * 64),
     )
     original = seeded.prepare(run_id, reviewer["id"], principal="owner", command_key="prepare")
+    seeded.freeze_launch(run_id, reviewer["id"], principal="owner")
+    with pytest.raises(LaunchDenied):
+        seeded.claim_registered_observer(
+            run_id, reviewer["id"], principal="owner", timeout_seconds=0.01
+        )
+    historical = seeded.read(run_id, reviewer["id"], principal="owner")
+    assert historical is not None
     before = database.read_bytes()
     reopened = open_reviewer_execution_intents(control)
-    assert reopened.read(run_id, reviewer["id"], principal="owner") == original
+    assert reopened.read(run_id, reviewer["id"], principal="owner") == historical
     assert database.read_bytes() == before
+
+    # A cold process may still inspect the fixed historical intent when one
+    # current execution asset disappears.  The explicit history interface has
+    # no effect methods and does not provision a replacement store or seal.
+    task_descriptor = control / "go-task-bootstrap.json"
+    original_task = json.loads(task_descriptor.read_text())
+    seal = private / "material-seal.key"
+    seal_bytes = seal.read_bytes()
+    for missing in ("runtime", "tokenizer_directory", "credential_seal"):
+        document = dict(original_task)
+        if missing == "credential_seal":
+            seal.unlink()
+        else:
+            document[missing] = str(tmp_path / f"missing-{missing}")
+            task_descriptor.write_text(
+                json.dumps(document, sort_keys=True, separators=(",", ":")) + "\n"
+            )
+        cold = open_reviewer_execution_intents(control)
+        assert isinstance(cold, ReviewerExecutionHistory)
+        assert cold.read(run_id, reviewer["id"], principal="owner") == historical
+        assert database.read_bytes() == before
+        assert not hasattr(cold, "freeze_launch")
+        task_descriptor.write_text(
+            json.dumps(original_task, sort_keys=True, separators=(",", ":")) + "\n"
+        )
+        if missing == "credential_seal":
+            seal.write_bytes(seal_bytes)
+            seal.chmod(0o600)
 
     # Replacing the facade's own descriptor is a current-source change, not a
     # historical-read failure.  The next effect guard must see it.
@@ -171,5 +228,19 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(tmp_path,
     descriptor.write_text(json.dumps(changed, sort_keys=True, separators=(",", ":")) + "\n")
     with pytest.raises(RunError, match="REVIEWER_EXECUTION_BOOTSTRAP_CHANGED"):
         reopened.freeze_launch(run_id, reviewer["id"], principal="owner")
-    assert reopened.read(run_id, reviewer["id"], principal="owner") == original
+    assert reopened.read(run_id, reviewer["id"], principal="owner") == historical
     assert other.read_bytes() == other_before
+    assert reopened.cancel(run_id, reviewer["id"], principal="owner")["cancel_requested"]
+    # The real Candidate gate is a read-only current-context check required by
+    # compilation; its observed calls are not quality effects.  The connected
+    # Evidence writer and every forbidden transport/native boundary stay zero.
+    assert counters["gate"] > 0
+    assert {key: value for key, value in counters.items() if key != "gate"} == {
+        "native": 0,
+        "grant": 0,
+        "call": 0,
+        "evidence": 0,
+    }
+    assert journal.read_bytes() == journal_before
+    public = json.dumps(original, sort_keys=True)
+    assert "material-seal" not in public and "credential" not in public

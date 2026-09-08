@@ -6,6 +6,7 @@ import sqlite3
 import sys
 import threading
 import time
+from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
 
@@ -110,6 +111,79 @@ def test_existing_only_rejects_hardlinked_ledger_before_opening_it(tmp_path, bin
     assert service.database.read_bytes() == before
 
 
+def test_rejects_schema_valid_ledger_inside_actual_registered_repository_without_writing_it(
+    tmp_path, binding_case
+):
+    service, _, _, _ = _service(tmp_path, binding_case)
+    root = Path(service.admissions.routing.planner.projects.list()[0]["repository"]["root"])
+    ledger = root / "existing-reviewer-ledger.sqlite"
+    ledger.write_bytes(service.database.read_bytes())
+    ledger.chmod(0o600)
+    before, mode = ledger.read_bytes(), ledger.stat().st_mode
+    with pytest.raises(RunError, match="REVIEWER_EXECUTION_LEDGER_IN_REPOSITORY"):
+        ReviewerExecutionIntents(
+            ledger,
+            service.admissions,
+            service.candidates,
+            source=service.source,
+            host=service.host,
+            launch_compiler=service.launch_compiler,
+            existing_only=True,
+        )
+    assert ledger.read_bytes() == before
+    assert ledger.stat().st_mode == mode
+
+
+def test_rejects_parent_symlink_alias_of_actual_registered_repository(tmp_path, binding_case):
+    service, _, _, _ = _service(tmp_path, binding_case)
+    root = Path(service.admissions.routing.planner.projects.list()[0]["repository"]["root"])
+    ledger = root / "symlink-reviewer-ledger.sqlite"
+    ledger.write_bytes(service.database.read_bytes())
+    alias = tmp_path / "repository-alias"
+    try:
+        os.symlink(root, alias, target_is_directory=True)
+    except OSError as error:
+        pytest.skip(f"directory symlinks unavailable: {error}")
+    before, mode = ledger.read_bytes(), ledger.stat().st_mode
+    with pytest.raises(RunError, match="REVIEWER_EXECUTION_LEDGER_IN_REPOSITORY"):
+        ReviewerExecutionIntents(
+            alias / ledger.name,
+            service.admissions,
+            service.candidates,
+            source=service.source,
+            host=service.host,
+            launch_compiler=service.launch_compiler,
+            existing_only=True,
+        )
+    assert ledger.read_bytes() == before
+    assert ledger.stat().st_mode == mode
+
+
+def test_rejects_repository_hardlink_without_changing_original_ledger_or_mode(
+    tmp_path, binding_case
+):
+    service, _, _, _ = _service(tmp_path, binding_case)
+    root = Path(service.admissions.routing.planner.projects.list()[0]["repository"]["root"])
+    linked = root / "reviewer-ledger-hardlink.sqlite"
+    try:
+        os.link(service.database, linked)
+    except OSError as error:
+        pytest.skip(f"hard links unavailable: {error}")
+    before, mode = service.database.read_bytes(), service.database.stat().st_mode
+    with pytest.raises(RunError, match="REVIEWER_EXECUTION_LEDGER_IN_REPOSITORY"):
+        ReviewerExecutionIntents(
+            service.database,
+            service.admissions,
+            service.candidates,
+            source=service.source,
+            host=service.host,
+            launch_compiler=service.launch_compiler,
+            existing_only=True,
+        )
+    assert service.database.read_bytes() == before
+    assert service.database.stat().st_mode == mode
+
+
 def test_prepare_is_durable_and_freezes_compiler_identity(tmp_path, binding_case):
     service, run_id, reviewer_id, intents = _service(tmp_path, binding_case)
     before = intents.admissions.routing.capacity.snapshot()
@@ -182,6 +256,137 @@ def test_ledger_uses_wal_and_compiler_does_not_hold_its_writer(tmp_path, binding
     service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
     service.freeze_launch(run_id, reviewer_id, principal="owner")
     assert observed == ["wal"]
+
+
+@pytest.mark.parametrize("boundary", ["host", "control", "claim"])
+def test_expiry_after_real_sqlite_writer_wait_blocks_the_actual_effect(
+    tmp_path, binding_case, boundary
+):
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+    reached = threading.Event()
+    release = threading.Event()
+    outcome: list[BaseException] = []
+
+    if boundary == "host":
+        target, original = service.host, service.host.prepare
+
+        def call(*args, **kwargs):
+            reached.set()
+            return original(*args, **kwargs)
+
+        target.prepare = call
+        def action():
+            return service.freeze_launch(run_id, reviewer_id, principal="owner")
+        database = service.host.database
+    elif boundary == "control":
+        target, original = service.host, service.host.initialize_control_once
+
+        def call(*args, **kwargs):
+            reached.set()
+            assert release.wait(5)
+            return original(*args, **kwargs)
+
+        target.initialize_control_once = call
+        def action():
+            return service.freeze_launch(run_id, reviewer_id, principal="owner")
+        database = service.host.database
+    else:
+        service.freeze_launch(run_id, reviewer_id, principal="owner")
+        # This focused ledger-boundary regression supplies the already-held
+        # Host identity; it still waits on the real execution SQLite writer.
+        from karajan.execution._platform import process_identity
+
+        identity = process_identity(os.getpid())
+        assert identity is not None
+
+        @contextmanager
+        def current_runner(*args, **kwargs):
+            reached.set()
+            yield identity
+
+        service.host.wait_for_runner_registration = lambda *args, **kwargs: identity
+        service.host.current_runner_guard = current_runner
+        def action():
+            return service.claim_registered_observer(
+                run_id, reviewer_id, principal="owner", timeout_seconds=0.01
+            )
+        database = service.database
+
+    holder = None
+    if boundary != "control":
+        holder = sqlite3.connect(database, isolation_level=None, timeout=5)
+        holder.execute("BEGIN IMMEDIATE")
+
+    def invoke():
+        try:
+            action()
+        except BaseException as error:
+            outcome.append(error)
+
+    thread = threading.Thread(target=invoke)
+    thread.start()
+    assert reached.wait(5)
+    if boundary == "control":
+        holder = sqlite3.connect(database, isolation_level=None, timeout=5)
+        holder.execute("BEGIN IMMEDIATE")
+        release.set()
+    service.admissions.routing.capacity.clock = lambda: time.time() + 10_000
+    assert holder is not None
+    # The real Host control transaction is now blocked behind this writer.
+    time.sleep(0.05)
+    holder.commit()
+    holder.close()
+    thread.join(10)
+    assert not thread.is_alive()
+    assert outcome and isinstance(outcome[0], RunError)
+    current = service.read(run_id, reviewer_id, principal="owner")
+    assert current is not None and current["effect_claim"] is None
+    if boundary == "host":
+        with pytest.raises(KeyError):
+            service.host.inspect(current["planned_attempt_id"])
+    if boundary == "control":
+        with sqlite3.connect(service.host.database) as db:
+            assert db.execute("SELECT COUNT(*) FROM controls").fetchone()[0] == 0
+
+
+def test_cancel_serializes_with_actual_inspect_host_writer_and_stays_durable(
+    tmp_path, binding_case
+):
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+    service.freeze_launch(run_id, reviewer_id, principal="owner")
+    entered, continue_inspect = threading.Event(), threading.Event()
+    original = service.host.inspect
+
+    def delayed(*args, **kwargs):
+        entered.set()
+        assert continue_inspect.wait(5)
+        return original(*args, **kwargs)
+
+    service.host.inspect = delayed
+    inspect_errors: list[BaseException] = []
+    thread = threading.Thread(
+        target=lambda: _record_error(
+            inspect_errors, lambda: service.inspect_host(run_id, reviewer_id, principal="owner")
+        )
+    )
+    thread.start()
+    assert entered.wait(5)
+    cancelled = service.cancel(run_id, reviewer_id, principal="owner")
+    continue_inspect.set()
+    thread.join(10)
+    assert not thread.is_alive() and not inspect_errors
+    assert cancelled is not None and cancelled["cancel_requested"]
+    current = service.read(run_id, reviewer_id, principal="owner")
+    assert current is not None and current["cancel_requested"]
+
+
+def _record_error(errors, call):
+    try:
+        call()
+    except BaseException as error:
+        errors.append(error)
 
 
 def test_tampered_persisted_intent_is_rejected_without_a_host_effect(tmp_path, binding_case):

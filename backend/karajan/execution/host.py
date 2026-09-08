@@ -9,7 +9,7 @@ import subprocess
 import sys
 import time
 import uuid
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -216,7 +216,14 @@ class RunnerHost:
         finally:
             connection.close()
 
-    def prepare(self, manifest: HostManifest, start_key: str, spec: ProcessSpec) -> Snapshot:
+    def prepare(
+        self,
+        manifest: HostManifest,
+        start_key: str,
+        spec: ProcessSpec,
+        *,
+        before_write: Callable[[], None] | None = None,
+    ) -> Snapshot:
         if not start_key or len(start_key) > 256:
             raise ValueError("Invalid start key.")
         manifest_json = manifest.model_dump_json()
@@ -236,6 +243,12 @@ class RunnerHost:
                     raise StartConflict("START_KEY_PAYLOAD_MISMATCH")
             else:
                 try:
+                    # A caller may have waited for this writer after checking
+                    # its own authority.  Keep its final, scalar recheck next
+                    # to the actual Host effect without giving Host any
+                    # routing or admission capability.
+                    if before_write is not None:
+                        before_write()
                     connection.execute(
                         "INSERT INTO executions (start_key, attempt_id, request_digest, manifest, "
                         "spec, state, nonce) VALUES (?, ?, ?, ?, ?, 'prepared', ?)",
@@ -282,6 +295,7 @@ class RunnerHost:
         prepared_id: str,
         fence: int,
         authorization_ref: str,
+        before_write: Callable[[], None] | None = None,
     ) -> dict[str, object]:
         """Initialize the exact prepared launch without overwriting any control.
 
@@ -315,6 +329,8 @@ class RunnerHost:
             if old is None:
                 if row["state"] != "prepared" or row["activation"] is not None:
                     raise LaunchDenied("CONTROL_PREPARED_REQUIRED")
+                if before_write is not None:
+                    before_write()
                 connection.execute(
                     "INSERT INTO controls VALUES (?,?,?,1)",
                     (attempt_id, fence, authorization_ref),

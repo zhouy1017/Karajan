@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 
 from karajan.orchestration.reviewer_execution_bootstrap import open_reviewer_execution_intents
+from karajan.orchestration.reviewer_execution_intent import ReviewerExecutionIntents
 from karajan.runs import RunError
 from karajan.runs.planning import identifier
 
@@ -24,6 +25,8 @@ def main(argv: list[str] | None = None) -> int:
         for value in values:
             identifier(value)
         service = open_reviewer_execution_intents(Path.cwd())
+        if not isinstance(service, ReviewerExecutionIntents):
+            raise RunError("REVIEWER_EXECUTION_CURRENT_EFFECTS_UNAVAILABLE")
         service.claim_registered_observer(
             run_id, reviewer_operation_id, principal=principal, timeout_seconds=5.0
         )

@@ -8,12 +8,12 @@ import os
 import stat
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from karajan.runs import RunError
 
 if TYPE_CHECKING:
-    from .reviewer_execution_intent import ReviewerExecutionIntents
+    from .reviewer_execution_intent import ReviewerExecutionHistory, ReviewerExecutionIntents
 
 _NAME = "reviewer-execution-bootstrap.json"
 _SCHEMA = "karajan.reviewer-execution-bootstrap.v1"
@@ -114,7 +114,60 @@ def open_existing_reviewer_execution_bootstrap(
         raise RunError("REVIEWER_EXECUTION_BOOTSTRAP_INVALID") from None
 
 
-def open_reviewer_execution_intents(control_directory: Path) -> ReviewerExecutionIntents:
+def _ledger_in_registered_repository(database: Path, projects: object) -> bool:
+    """Use the actual ProjectRegistry roots before permitting a ledger open.
+
+    Path containment catches direct paths and parent aliases; inode comparison
+    catches a separately named hard link placed in a registered repository.
+    """
+    try:
+        candidate = database.resolve(strict=True)
+        candidate_info = candidate.stat()
+        rows = projects.list()  # type: ignore[attr-defined]
+        roots = [Path(row["repository"]["root"]).resolve(strict=True) for row in rows]
+        if any(candidate.is_relative_to(root) for root in roots):
+            return True
+        for root in roots:
+            for parent, directories, names in os.walk(root, followlinks=False):
+                directories[:] = [
+                    name for name in directories if not (Path(parent) / name).is_symlink()
+                ]
+                for name in names:
+                    path = Path(parent) / name
+                    try:
+                        info = path.stat(follow_symlinks=False)
+                    except OSError:
+                        continue
+                    if stat.S_ISREG(info.st_mode) and (info.st_dev, info.st_ino) == (
+                        candidate_info.st_dev,
+                        candidate_info.st_ino,
+                    ):
+                        return True
+        return False
+    except (KeyError, OSError, TypeError, ValueError):
+        raise RunError("REVIEWER_EXECUTION_LEDGER_UNAVAILABLE") from None
+
+
+def _current_assets_present(task: Any) -> bool:
+    """Missing current assets permit historical reads, never effect composition."""
+    private = Path(task.credential_private_directory)
+    paths = (
+        Path(task.runtime),
+        Path(task.tokenizer_directory),
+        Path(task.journal_path),
+        private,
+        *(Path(row.path) for row in task.credential_sources),
+    )
+    if not all(bool(path.exists()) for path in paths):
+        return False
+    return (private / "material-seal.key").is_file() and (
+        private / "material-seals.sqlite"
+    ).is_file()
+
+
+def open_reviewer_execution_intents(
+    control_directory: Path,
+) -> ReviewerExecutionIntents | ReviewerExecutionHistory:
     """Open the fixed Reviewer execution facade from provisioned controller state.
 
     This deliberately has no run, principal, profile, argv, or source arguments.
@@ -136,6 +189,7 @@ def open_reviewer_execution_intents(control_directory: Path) -> ReviewerExecutio
     from .qualification_services import GoQualificationSettings, open_go_qualification_store
     from .reviewer_binding import ApprovedReviewerBindings
     from .reviewer_execution_intent import (
+        ReviewerExecutionHistory,
         ReviewerExecutionIntents,
         ReviewerExecutionSource,
         ReviewerLaunchSpec,
@@ -162,6 +216,13 @@ def open_reviewer_execution_intents(control_directory: Path) -> ReviewerExecutio
     projects = ProjectRegistry(
         reviewer.state_directory / "projects.sqlite", task.allowed_roots, existing_only=True
     )
+    # This check deliberately precedes every execution-ledger open.  It uses
+    # the registered source roots, not caller-provided or descriptor-guessed
+    # paths, and does not create or repair either side.
+    if _ledger_in_registered_repository(reviewer.execution_database, projects):
+        raise RunError("REVIEWER_EXECUTION_LEDGER_IN_REPOSITORY")
+    if not _current_assets_present(task):
+        return ReviewerExecutionHistory(reviewer.execution_database)
     planner = RunPlanner(reviewer.state_directory / "runs.sqlite", projects, existing_only=True)
     capacity = CapacityStore(reviewer.state_directory / "capacity.sqlite", existing_only=True)
     qualification = GoQualificationSettings(
