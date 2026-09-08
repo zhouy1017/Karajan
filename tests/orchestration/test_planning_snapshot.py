@@ -3,6 +3,8 @@ import os
 import sqlite3
 import stat
 import subprocess
+import sys
+import threading
 import time
 import zlib
 from concurrent.futures import ThreadPoolExecutor
@@ -345,6 +347,104 @@ def test_bounded_git_reader_times_out_and_reaps_its_owned_child(
         time.sleep(0.01)
     else:
         pytest.fail("owned Git child remained alive after timeout cleanup")
+
+
+def test_bounded_git_reader_reaps_child_after_its_leader_exits(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Leader exit cannot prevent cleanup of its stdout-owning owned child."""
+    root = tmp_path / "repo"
+    root.mkdir()
+    _git(root, "init")
+    (root / "input.txt").write_text("base")
+    _git(root, "add", ".")
+    _git(root, "-c", "user.name=x", "-c", "user.email=x@y.z", "commit", "-m", "base")
+    base = _git(root, "rev-parse", "HEAD")
+    marker = tmp_path / "owned-child.pid"
+    tools = tmp_path / "tools"
+    tools.mkdir()
+    script = tools / "git.py"
+    marker_value = (
+        "f'{leader}:{child.pid}:{os.getpgid(child.pid)}'"
+        if os.name == "posix"
+        else "str(child.pid)"
+    )
+    script.write_text(
+        (
+            "import os\n"
+            "import subprocess\n"
+            "import sys\n"
+            "import time\n"
+            "from pathlib import Path\n"
+            + "leader = os.getpid()\n"
+            + "child = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(2)'])\n"
+            + f"Path({str(marker)!r}).write_text({marker_value})\n"
+        ),
+        encoding="utf-8",
+    )
+    if os.name == "nt":
+        fake_git = tools / "git.cmd"
+        fake_git.write_text(
+            '@echo off\r\n"' + sys.executable + '" "%~dp0git.py" %*\r\n',
+            encoding="ascii",
+        )
+    else:
+        fake_git = tools / "git"
+        fake_git.write_text(
+            "#!/usr/bin/env python3\n" + script.read_text(encoding="utf-8"), encoding="utf-8"
+        )
+        fake_git.chmod(0o755)
+    monkeypatch.setenv("PATH", str(tools) + os.pathsep + os.environ["PATH"])
+    if os.name == "nt":
+        # Windows CreateProcess only resolves executable suffixes for the bare
+        # ``git`` command.  Keep the actual receiving-boundary Popen and route
+        # that one command to the temporary batch fixture explicitly.
+        original_popen = planning_snapshot.subprocess.Popen
+
+        def fixture_popen(
+            command: list[str], *args: object, **kwargs: object
+        ) -> subprocess.Popen[bytes]:
+            assert command[0] == "git"
+            return original_popen([str(fake_git), *command[1:]], *args, **kwargs)
+
+        monkeypatch.setattr(planning_snapshot.subprocess, "Popen", fixture_popen)
+    monkeypatch.setattr(planning_snapshot, "_GIT_TIMEOUT_SECONDS", 0.2)
+    reader_threads: list[threading.Thread] = []
+    original_thread = planning_snapshot.threading.Thread
+
+    def observe_thread(*args: object, **kwargs: object) -> threading.Thread:
+        thread = original_thread(*args, **kwargs)
+        reader_threads.append(thread)
+        return thread
+
+    monkeypatch.setattr(planning_snapshot.threading, "Thread", observe_thread)
+
+    started = time.monotonic()
+    with pytest.raises(RunError, match="^PLANNING_SNAPSHOT_GIT_UNAVAILABLE$"):
+        PlanningRepositorySnapshotStore._git(
+            root, "sha1", "cat-file", "commit", base, limit=100
+        )
+    assert time.monotonic() - started < 1
+    marker_parts = marker.read_text(encoding="ascii").split(":")
+    if os.name == "posix":
+        leader_pid, child_pid, child_group = (int(part) for part in marker_parts)
+        assert child_group == leader_pid
+    else:
+        child_pid = int(marker_parts[0])
+    for _ in range(100):
+        try:
+            os.kill(child_pid, 0)
+        except ProcessLookupError:
+            break
+        except OSError as error:
+            if os.name == "nt" and error.winerror == 87:  # ERROR_INVALID_PARAMETER: no PID.
+                break
+            raise
+        time.sleep(0.01)
+    else:
+        pytest.fail("owned child survived after its Git leader exited")
+    assert len(reader_threads) == 1
+    assert not reader_threads[0].is_alive()
 
 
 @pytest.mark.skipif(os.name == "nt", reason="the owned process-group fixture is POSIX-only")

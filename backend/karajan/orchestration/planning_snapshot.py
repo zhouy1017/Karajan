@@ -14,7 +14,7 @@ import threading
 import time
 from contextlib import nullcontext
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from karajan.projects.credential_sources import _plain, _private
 from karajan.runs import RunError
@@ -33,6 +33,7 @@ _ERROR_FILE_EXISTS = 80
 _ERROR_ALREADY_EXISTS = 183
 _AT_FDCWD = -100
 _RENAME_NOREPLACE = 1
+_CREATE_SUSPENDED = 0x00000004
 
 
 def _git_alternate_pathname(path: Path) -> str:
@@ -61,7 +62,124 @@ def _git_alternate_pathname(path: Path) -> str:
 
 
 if sys.platform == "win32":
-    from ctypes import WinDLL, WinError, c_int, c_uint32, c_wchar_p, get_last_error
+    from ctypes import (
+        Structure,
+        WinDLL,
+        WinError,
+        addressof,
+        c_int,
+        c_long,
+        c_uint32,
+        c_void_p,
+        c_wchar_p,
+        get_last_error,
+        sizeof,
+    )
+
+    class _WindowsThreadEntry(Structure):
+        _fields_ = [
+            ("dwSize", c_uint32),
+            ("cntUsage", c_uint32),
+            ("th32ThreadID", c_uint32),
+            ("th32OwnerProcessID", c_uint32),
+            ("tpBasePri", c_long),
+            ("tpDeltaPri", c_long),
+            ("dwFlags", c_uint32),
+        ]
+
+    def _windows_job() -> int:
+        """Create an unnamed job that outlives one receiving-boundary leader."""
+        kernel = WinDLL("kernel32", use_last_error=True)
+        create = kernel.CreateJobObjectW
+        create.argtypes = [c_void_p, c_wchar_p]
+        create.restype = c_void_p
+        handle = int(create(None, None) or 0)
+        if not handle:
+            raise WinError(get_last_error())
+        return handle
+
+    def _windows_assign_job(job: int, process_handle: int) -> None:
+        kernel = WinDLL("kernel32", use_last_error=True)
+        assign = kernel.AssignProcessToJobObject
+        assign.argtypes = [c_void_p, c_void_p]
+        assign.restype = c_int
+        if not assign(c_void_p(job), c_void_p(process_handle)):
+            raise WinError(get_last_error())
+
+    def _windows_terminate_job(job: int) -> None:
+        kernel = WinDLL("kernel32", use_last_error=True)
+        terminate = kernel.TerminateJobObject
+        terminate.argtypes = [c_void_p, c_uint32]
+        terminate.restype = c_int
+        if not terminate(c_void_p(job), 125):
+            raise WinError(get_last_error())
+
+    def _windows_close_handle(handle: int) -> None:
+        kernel = WinDLL("kernel32", use_last_error=True)
+        close = kernel.CloseHandle
+        close.argtypes = [c_void_p]
+        close.restype = c_int
+        if not close(c_void_p(handle)):
+            raise WinError(get_last_error())
+
+    def _windows_cancel_reader(thread_id: int) -> None:
+        """Cancel the reader's pending synchronous pipe read, if it has one."""
+        kernel = WinDLL("kernel32", use_last_error=True)
+        open_thread = kernel.OpenThread
+        open_thread.argtypes = [c_uint32, c_int, c_uint32]
+        open_thread.restype = c_void_p
+        thread = int(open_thread(0x0001, False, thread_id) or 0)  # THREAD_TERMINATE
+        if not thread:
+            raise WinError(get_last_error())
+        try:
+            cancel = kernel.CancelSynchronousIo
+            cancel.argtypes = [c_void_p]
+            cancel.restype = c_int
+            if not cancel(c_void_p(thread)):
+                raise WinError(get_last_error())
+        finally:
+            _windows_close_handle(thread)
+
+    def _windows_resume_process(process_id: int) -> None:
+        """Resume the one primary thread created suspended for Job assignment."""
+        kernel = WinDLL("kernel32", use_last_error=True)
+        snapshot = kernel.CreateToolhelp32Snapshot
+        snapshot.argtypes = [c_uint32, c_uint32]
+        snapshot.restype = c_void_p
+        threads = int(snapshot(0x00000004, 0) or 0)  # TH32CS_SNAPTHREAD
+        if threads == c_void_p(-1).value or not threads:
+            raise WinError(get_last_error())
+        try:
+            first = kernel.Thread32First
+            first.argtypes = [c_void_p, c_void_p]
+            first.restype = c_int
+            next_thread = kernel.Thread32Next
+            next_thread.argtypes = [c_void_p, c_void_p]
+            next_thread.restype = c_int
+            entry = _WindowsThreadEntry()
+            entry.dwSize = sizeof(entry)
+            present = bool(first(c_void_p(threads), c_void_p(addressof(entry))))
+            while present and entry.th32OwnerProcessID != process_id:
+                entry.dwSize = sizeof(entry)
+                present = bool(next_thread(c_void_p(threads), c_void_p(addressof(entry))))
+            if not present:
+                raise OSError("suspended Git primary thread disappeared")
+            open_thread = kernel.OpenThread
+            open_thread.argtypes = [c_uint32, c_int, c_uint32]
+            open_thread.restype = c_void_p
+            thread = int(open_thread(0x0002, False, entry.th32ThreadID) or 0)  # SUSPEND_RESUME
+            if not thread:
+                raise WinError(get_last_error())
+            try:
+                resume = kernel.ResumeThread
+                resume.argtypes = [c_void_p]
+                resume.restype = c_uint32
+                if resume(c_void_p(thread)) == 0xFFFFFFFF:
+                    raise WinError(get_last_error())
+            finally:
+                _windows_close_handle(thread)
+        finally:
+            _windows_close_handle(threads)
 
     def _move_file_write_through_windows(source: str, target: Path) -> None:
         """Atomically publish a new Windows artifact without replacing one."""
@@ -80,6 +198,24 @@ if sys.platform == "win32":
 
 
 else:
+
+    def _windows_job() -> int:
+        raise OSError("Windows Job Objects are unavailable")
+
+    def _windows_assign_job(job: int, process_handle: int) -> None:
+        raise OSError("Windows Job Objects are unavailable")
+
+    def _windows_terminate_job(job: int) -> None:
+        raise OSError("Windows Job Objects are unavailable")
+
+    def _windows_close_handle(handle: int) -> None:
+        raise OSError("Windows Job Objects are unavailable")
+
+    def _windows_cancel_reader(thread_id: int) -> None:
+        raise OSError("Windows pipe cancellation is unavailable")
+
+    def _windows_resume_process(process_id: int) -> None:
+        raise OSError("Windows process resumption is unavailable")
 
     def _move_file_write_through_windows(source: str, target: Path) -> None:
         raise OSError("Windows artifact publication required")
@@ -350,6 +486,10 @@ class PlanningRepositorySnapshotStore:
             )
             process: subprocess.Popen[bytes] | None = None
             reader_thread: threading.Thread | None = None
+            job = 0
+            contained = os.name != "nt"
+            cleanup_unconfirmed = False
+            returncode: int | None = None
             try:
                 command = [
                     "git",
@@ -376,9 +516,15 @@ class PlanningRepositorySnapshotStore:
                     # cannot touch a controller or unrelated Git process.
                     options["start_new_session"] = True
                 elif os.name == "nt":
-                    process_group_flag = "CREATE_NEW_" + "PROCESS_GROUP"
-                    options["creationflags"] = getattr(subprocess, process_group_flag)
+                    job = _windows_job()
+                    options["creationflags"] = _CREATE_SUSPENDED
                 process = subprocess.Popen(command, **options)
+                if job:
+                    # A Job keeps ownership of descendants after the Git leader
+                    # exits.  Its ordinary children inherit the same Job.
+                    _windows_assign_job(job, int(cast(Any, process)._handle))
+                    contained = True
+                    _windows_resume_process(process.pid)
                 stream = process.stdout
                 assert stream is not None
                 if input is not None:
@@ -398,7 +544,10 @@ class PlanningRepositorySnapshotStore:
                     finally:
                         output_ready.set()
 
-                reader_thread = threading.Thread(target=read_output, daemon=False)
+                # Normal cleanup proves this thread reached EOF before return.
+                # If the platform cannot cancel a stuck pipe read, it is daemon
+                # only so an unavailable reader cannot hold the controller open.
+                reader_thread = threading.Thread(target=read_output, daemon=True)
                 reader_thread.start()
                 deadline = time.monotonic() + _GIT_TIMEOUT_SECONDS
                 while not output_ready.wait(max(0.0, min(0.05, deadline - time.monotonic()))):
@@ -417,32 +566,60 @@ class PlanningRepositorySnapshotStore:
             except (OSError, subprocess.TimeoutExpired):
                 raise RunError("PLANNING_SNAPSHOT_GIT_UNAVAILABLE") from None
             finally:
-                if process is not None and process.poll() is None:
+                if process is not None:
                     try:
                         if os.name == "posix":
                             kill_group = getattr(os, "kill" + "pg")
                             kill_signal = getattr(signal, "SIG" + "KILL")
                             kill_group(process.pid, kill_signal)
                         elif os.name == "nt":
-                            subprocess.run(
-                                ["taskkill", "/PID", str(process.pid), "/T", "/F"],
-                                check=False,
-                                stdout=subprocess.DEVNULL,
-                                stderr=subprocess.DEVNULL,
-                                timeout=_GIT_CLEANUP_SECONDS,
-                            )
+                            if job and contained:
+                                _windows_terminate_job(job)
+                            else:
+                                process.kill()
+                                cleanup_unconfirmed = True
                         else:
                             process.kill()
-                    except (OSError, subprocess.TimeoutExpired):
+                    except ProcessLookupError:
+                        # On POSIX this proves the dedicated group is already empty.
                         pass
+                    except OSError:
+                        cleanup_unconfirmed = True
                     try:
                         process.wait(timeout=_GIT_CLEANUP_SECONDS)
                     except (OSError, subprocess.TimeoutExpired):
-                        pass
-                if process is not None and process.stdout is not None:
-                    process.stdout.close()
+                        cleanup_unconfirmed = True
                 if reader_thread is not None:
+                    if reader_thread.is_alive() and os.name == "nt":
+                        thread_id = reader_thread.native_id
+                        if thread_id is None:
+                            cleanup_unconfirmed = True
+                        else:
+                            try:
+                                _windows_cancel_reader(thread_id)
+                            except OSError:
+                                cleanup_unconfirmed = True
                     reader_thread.join(timeout=_GIT_CLEANUP_SECONDS)
+                    if reader_thread.is_alive():
+                        cleanup_unconfirmed = True
+                # BufferedReader.close() waits on a concurrent read.  It is safe
+                # only after the reader has actually exited; otherwise report the
+                # boundary unavailable without turning cleanup into an unbounded
+                # controller wait.
+                if (
+                    reader_thread is not None
+                    and not reader_thread.is_alive()
+                    and process is not None
+                    and process.stdout is not None
+                ):
+                    process.stdout.close()
+                if job:
+                    try:
+                        _windows_close_handle(job)
+                    except OSError:
+                        cleanup_unconfirmed = True
+            if cleanup_unconfirmed:
+                raise RunError("PLANNING_SNAPSHOT_GIT_UNAVAILABLE")
         if returncode:
             raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE")
         return output_bytes

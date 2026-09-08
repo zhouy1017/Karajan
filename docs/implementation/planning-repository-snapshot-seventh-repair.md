@@ -1,6 +1,6 @@
 # Planning repository snapshot: SHA-256 and literal-alternate repair
 
-Candidate: this local successor to `01a23ef5c16bd82ba3b1b03f537f74f4efd4d195`.
+Candidate: local successor to `772b50b6575821b4b7f3d16ecebc9d739f01b5cc`.
 
 ## Scope and decision
 
@@ -26,19 +26,38 @@ The reader remains a fresh bare repository with source configuration, replace
 refs, hooks, promisor configuration, transport, and caller Git environment
 excluded.
 
-## Bounded reader finding
+## Bounded reader finding and leader-exit repair
 
-The pre-repair limited reader did `stdout.read(limit + 1)` before
+The earlier limited reader did `stdout.read(limit + 1)` before
 `wait(timeout=10)`. A no-output child could therefore block before the wall
-time bound was applied. The repair starts a reader thread, enforces the fixed
-monotonic deadline while it waits for at most `limit + 1` bytes, then waits
-only for the remaining deadline. On POSIX the fresh session's process group is
-killed on either timeout or byte excess; on Windows the owned process tree is
-terminated with `taskkill /T /F`. The test fixture launches an actual temporary
-`git` replacement that spawns a sleeping child. One variant emits no output;
-another emits 101 bytes against a 100-byte cap. Both prove prompt rejection
-and disappearance of the exact owned child PID. This applies to the snapshot
-reader boundary; it does not make claims about unrelated subprocess owners.
+time bound was applied. The first repair moved the read into a thread, but its
+cleanup still had a real leader-exit hole: it ran group/tree cleanup only while
+`process.poll()` was `None`, then could call buffered `stdout.close()` while
+that reader held the stream lock.
+
+The actual receiving-boundary fixture now makes the temporary `git` leader
+spawn an inherited-stdout child and exit immediately. Before this repair its
+0.2-second deadline took 2.03 seconds (the child only slept two seconds), so
+this is a reproduced failure, not an unrun claim. On POSIX cleanup always
+signals the dedicated fresh-session group, including after its leader exits.
+On Windows the reader creates the Git process suspended, assigns its process
+handle to a private unnamed Job Object, then resumes its primary thread. This
+removes the child-before-assignment race and preserves ownership after the
+leader exits; `TerminateJobObject` ends the exact Job rather than using a
+leader-PID `taskkill /T` tree walk. A pending Windows synchronous pipe read is
+cancelled before its bounded join. On both platforms `stdout.close()` happens
+only after the reader is observed stopped. If Job assignment, termination,
+pipe cancellation, wait, or reader exit cannot be proved, the boundary returns
+`PLANNING_SNAPSHOT_GIT_UNAVAILABLE`, does not close the contended stream, and
+does not report a successful read or physical cleanup.
+
+The regression records the child PID; on POSIX it also records and checks that
+the child's original process group is the original Git leader PID. It observes
+the elapsed bound, exact child disappearance, and reader-thread termination.
+The Windows batch wrapper is routed only because bare `git` CreateProcess
+resolution does not select `.cmd`; the real `_git` Popen, pipe, Job, deadline,
+and cleanup path are exercised. This remains a claim about this owned snapshot
+reader boundary, not unrelated subprocess owners.
 
 ## New behavioral evidence
 
@@ -67,8 +86,10 @@ All Windows commands used
 | --- | --- |
 | Focused Windows | `pytest tests/orchestration/test_planning_snapshot.py tests/runs/test_planning_execution.py -k 'public_snapshot_flow or freeze_rejects_same_length_replaced_loose_git_object' -q --basetemp=.pytest-planning142-gap-target-win-2`: `8 passed, 1 skipped` (the colon-root check is Linux-only). |
 | Focused Linux | Ubuntu, shared `/tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python`: equivalent selection plus `bounded_git_reader`: `11 passed`. |
-| Required Windows modules | `pytest tests/orchestration/test_planning_snapshot.py tests/runs/test_planning_execution.py tests/runs/test_planning_admission.py -q --basetemp=.pytest-planning142-full-win-evidence2`: `89 passed, 21 skipped in 44.01s`. Skips are the named POSIX-link/path/process-group/transport cases and Linux-only deployment modes. |
-| Required Linux modules | Ubuntu: `KARAJAN_GO_TOKENIZER_DIRECTORY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-context-artifacts PYTHONPATH=backend:tests:tests/projects:tests/runs:tests/candidates /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest tests/orchestration/test_planning_snapshot.py tests/runs/test_planning_execution.py tests/runs/test_planning_admission.py -q --basetemp=/tmp/planning142-full-linux-current-with-tokenizer`: `110 passed in 27.58s`. |
+| Leader-exit red | Ubuntu: `... python -m pytest tests/orchestration/test_planning_snapshot.py -k reaps_child_after_its_leader_exits -q --basetemp=/tmp/karajan-142-leader-exit-red`: `1 failed, 19 deselected in 2.88s`; the asserted 0.2-second boundary measured 2.03 seconds before this repair. |
+| Leader-exit green | Ubuntu: the same shared Python, `-k bounded_git_reader`: `3 passed, 17 deselected in 0.90s`; Windows main `.venv`, `-k reaps_child_after_its_leader_exits`: `1 passed, 19 deselected in 0.50s`. Both runs used fresh private base temps outside the repository base temp. |
+| Required Windows modules | Windows main `.venv`, fixed tokenizer cache, and fresh external `--basetemp=C:/Users/Chooo/Playground/Karajan/.cache/pytest-142-leader-final-win-3`: `90 passed, 21 skipped in 65.10s`. Skips are the named POSIX-link/path/process-group/transport cases and Linux-only deployment modes. Standard output/error logs were outside that base temp. |
+| Required Linux modules | Ubuntu: `KARAJAN_GO_TOKENIZER_DIRECTORY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-context-artifacts PYTHONPATH=backend:tests:tests/projects:tests/runs:tests/candidates /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest tests/orchestration/test_planning_snapshot.py tests/runs/test_planning_execution.py tests/runs/test_planning_admission.py -q --basetemp=/tmp/karajan-142-leader-final-linux`: `111 passed in 28.42s`. |
 | Ruff | `python -m ruff check .`: passed. |
 | mypy | `python -m mypy backend --platform win32` and `python -m mypy backend --platform linux`: each `Success: no issues found in 151 source files`. |
 
