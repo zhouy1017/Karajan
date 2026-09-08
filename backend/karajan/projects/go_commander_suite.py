@@ -1,4 +1,5 @@
 """Fixed, controller-owned Commander planning qualification source and producer."""
+
 import hashlib
 import stat
 import sys
@@ -156,6 +157,75 @@ def probe_spec(accounting_source: dict[str, Any] | None = None) -> dict[str, Any
             },
         ],
     }
+    schema = {
+        "type": "object",
+        "required": ["summary", "authorization", "tasks"],
+        "authorization": {
+            "required": [
+                "profile_refs",
+                "read_paths",
+                "write_paths",
+                "budget_ref",
+                "checks",
+                "delivery",
+                "target_branch",
+                "channel_ids",
+                "tools",
+                "data_destinations",
+                "required_capabilities",
+                "min_isolation",
+                "currency_limits",
+                "max_attempt_duration_seconds",
+                "max_quality_repair_rounds",
+                "stage_permissions",
+            ],
+            "no_tools_ceiling": True,
+        },
+        "task": {
+            "required": [
+                "id",
+                "revision",
+                "role",
+                "purpose",
+                "readiness",
+                "complexity",
+                "risk",
+                "paths",
+                "domains",
+                "required_capabilities",
+                "tools",
+                "context_tokens",
+                "duration_seconds",
+                "depends_on",
+                "acceptance",
+                "required",
+            ],
+            "dependency_ordered": True,
+        },
+    }
+    requirements = [
+        {
+            "id": "inspect-contract",
+            "role": "commander",
+            "purpose": "advice",
+            "depends_on": [],
+            "coverage": "identify parser inputs, outputs, and invariants",
+        },
+        {
+            "id": "design-change",
+            "role": "commander",
+            "purpose": "lead",
+            "depends_on": ["inspect-contract"],
+            "coverage": "specify a bounded no-tools implementation strategy",
+        },
+        {
+            "id": "verify-contract",
+            "role": "commander",
+            "purpose": "advice",
+            "depends_on": ["design-change"],
+            "coverage": "verify dependency ordering and the no-tool ceiling",
+        },
+    ]
     cases = {
         "legal_plan": {
             "input": {
@@ -169,12 +239,11 @@ def probe_spec(accounting_source: dict[str, Any] | None = None) -> dict[str, Any
                     "read_paths": ["inline"],
                     "write_paths": [],
                     "delivery": "none",
+                    "data_destinations": ["controller"],
                     "required_capabilities": ["design_reasoning", "structured_plan_output"],
                 },
-                "schema": (
-                    "PlanV2: summary, authorization, tasks; each task has id, role, purpose, "
-                    "dependencies, capabilities, tools, limits, and acceptance."
-                ),
+                "schema": schema,
+                "requirements": requirements,
             },
             "expected_plan": legal,
             "permission_ceiling": {"tools": []},
@@ -191,11 +260,11 @@ def probe_spec(accounting_source: dict[str, Any] | None = None) -> dict[str, Any
                     "read_paths": ["inline"],
                     "write_paths": [],
                     "delivery": "none",
+                    "data_destinations": ["controller"],
                     "required_capabilities": ["design_reasoning", "structured_plan_output"],
                 },
-                "schema": (
-                    "PlanV2: include a no-tools authorization and a dependency-ordered task list."
-                ),
+                "schema": schema,
+                "requirements": requirements,
             },
             "expected_plan": legal,
             "permission_ceiling": {"tools": []},
@@ -228,6 +297,7 @@ class FixedGoCommanderSuite:
         work_root: Path | None = None,
         descriptor_path: Path | None = None,
         project_database: Path | None = None,
+        client_factory: Callable[[], Any] | None = None,
     ) -> None:
         self.runtime, self.tokenizer_directory, self.descriptor_sha256 = (
             runtime,
@@ -236,6 +306,9 @@ class FixedGoCommanderSuite:
         )
         self.journal, self.work_root = journal, work_root
         self.descriptor_path, self.project_database = descriptor_path, project_database
+        # Injection-only composition seam. It is never sourced from a
+        # descriptor/request and permanently marks resulting observations fixture.
+        self.client_factory = client_factory
 
     def _descriptor_digest(self) -> str:
         if self.descriptor_path is None:
@@ -294,7 +367,7 @@ class FixedGoCommanderSuite:
             "suite_ref": deepcopy(SUITE_REF),
             "qualification_scope": SCOPE,
             "reader_version": READER_VERSION,
-            "observation_origin": "official_go",
+            "observation_origin": "http_fixture" if self.client_factory else "official_go",
             "descriptor_sha256": self._descriptor_digest(),
             "profile_binding": deepcopy(bound),
             "profile_sha256": digest(bound["registration"]["profile"]),
@@ -364,6 +437,7 @@ class FixedGoCommanderSuite:
                     scenario=scene["scenario"],
                     accounting=self.accounting(),
                     current_guard=current_guard,
+                    client_factory=self.client_factory,
                 )
             )
         reasons = [reason for row in observations for reason in row.get("reason_codes", [])]

@@ -383,7 +383,10 @@ class ProfileQualificationStore:
                 "scenarios": [],
             }
         now = self._now()
-        fixture_observation = source.get("observation_origin") == "c_fixed_suite_test_double"
+        fixture_observation = source.get("observation_origin") in {
+            "c_fixed_suite_test_double",
+            "http_fixture",
+        }
         complete_official = (
             not fixture_observation
             and observation.get("status") == "passed"

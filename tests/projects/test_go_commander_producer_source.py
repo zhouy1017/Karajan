@@ -72,13 +72,39 @@ def test_probe_prompt_hides_expected_plan_and_rejects_plausible_escalation(scena
     spec = probe_spec()
     expected = spec["cases"][scenario]["expected_plan"]
     prompt = _prompt(scenario, spec)
-    assert '"inspect-contract"' not in prompt
+    # IDs and dependency edges are public input constraints; private summary
+    # and acceptance prose are not an answer oracle.
+    assert expected["summary"] not in prompt
     parsed = parse_planning_output(json.dumps(expected), version="v2").model_dump(mode="json")
     assert _semantically_valid(parsed, spec, scenario)
     wrong = deepcopy(parsed)
     wrong["authorization"]["tools"] = ["shell"]
     wrong["tasks"][1]["tools"] = ["shell"]
     assert not _semantically_valid(wrong, spec, scenario)
+
+
+@pytest.mark.parametrize("scenario", ["legal_plan", "denied_tool"])
+def test_probe_accepts_distinct_schema_valid_prose_but_rejects_missing_or_wrong_requirements(
+    scenario: str,
+) -> None:
+    spec = probe_spec()
+    first = parse_planning_output(
+        json.dumps(spec["cases"][scenario]["expected_plan"]), version="v2"
+    ).model_dump(mode="json")
+    second = deepcopy(first)
+    second["summary"] = "A differently worded bounded inline plan."
+    second["tasks"][0]["acceptance"] = ["Describe the parser boundary in original wording."]
+    assert _semantically_valid(first, spec, scenario)
+    assert _semantically_valid(second, spec, scenario)
+    missing = deepcopy(second)
+    missing["tasks"] = missing["tasks"][:-1]
+    assert not _semantically_valid(missing, spec, scenario)
+    dependency = deepcopy(second)
+    dependency["tasks"][2]["depends_on"] = []
+    assert not _semantically_valid(dependency, spec, scenario)
+    destination = deepcopy(second)
+    destination["authorization"]["data_destinations"] = ["internet"]
+    assert not _semantically_valid(destination, spec, scenario)
 
 
 @pytest.mark.skipif(os.name != "posix", reason="Pinned Linux source material is required")

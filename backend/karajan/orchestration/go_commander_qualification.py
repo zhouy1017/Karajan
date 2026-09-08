@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import stat
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -247,6 +248,7 @@ def open_go_commander_qualification_store(
     descriptor_sha256: str | None = None,
     existing_only: bool = False,
     control_directory: Path | None = None,
+    _fixture_client_factory: Callable[[], Any] | None = None,
 ) -> ProfileQualificationStore:
     if control_directory is not None:
         if settings is not None or descriptor_sha256 is not None:
@@ -291,6 +293,7 @@ def open_go_commander_qualification_store(
             if control_directory is not None
             else None,
             project_database=projects.database,
+            client_factory=_fixture_client_factory,
         ),
     )
 

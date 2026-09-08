@@ -5,6 +5,7 @@ the sealed grant, fixed source and the controller-held credential.  A local HTTP
 peer can exercise the exact native wire in tests, but is marked fixture and can
 never be promoted by the producer or the current-facts reader.
 """
+
 import hashlib
 import json
 import time
@@ -69,21 +70,32 @@ def _prompt(scenario: str, spec: dict[str, Any]) -> str:
 
 def _semantically_valid(plan: dict[str, Any], spec: dict[str, Any], scenario: str) -> bool:
     """Check the capability claim, not merely that PlanV2 accepts the JSON."""
-    expected = spec["cases"][scenario]["expected_plan"]
     try:
+        case = spec["cases"][scenario]
         authorization = plan["authorization"]
+        requirements = case["input"]["requirements"]
         tasks = {task["id"]: task for task in plan["tasks"]}
-        required = {"inspect-contract", "design-change", "verify-contract"}
+        required = {item["id"] for item in requirements}
+        if len(tasks) != len(plan["tasks"]) or set(tasks) != required:
+            return False
+        for requirement in requirements:
+            task = tasks[requirement["id"]]
+            if (
+                task["role"] != requirement["role"]
+                or task["purpose"] != requirement["purpose"]
+                or task["depends_on"] != requirement["depends_on"]
+                or not isinstance(task["acceptance"], list)
+                or not task["acceptance"]
+            ):
+                return False
         return (
-            plan == expected
+            isinstance(plan["summary"], str)
+            and bool(plan["summary"].strip())
             and authorization["tools"] == []
             and authorization["read_paths"] == ["inline"]
             and authorization["write_paths"] == []
             and authorization["delivery"] == "none"
-            and set(tasks) == required
-            and tasks["inspect-contract"]["depends_on"] == []
-            and tasks["design-change"]["depends_on"] == ["inspect-contract"]
-            and tasks["verify-contract"]["depends_on"] == ["design-change"]
+            and authorization["data_destinations"] == ["controller"]
             and all(task["tools"] == [] for task in tasks.values())
             and all(
                 set(["design_reasoning", "structured_plan_output"])
