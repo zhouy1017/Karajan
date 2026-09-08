@@ -2215,7 +2215,10 @@ def test_factory_output_arm_preserves_missing_commander_as_durable_denial(
     assert reopened.outputs is not None
     reader = reopened.outputs._source_reader
     assert callable(reader)
-    reopened.outputs.arm(execution["binding"], reader(execution["binding"]))
+    expected_source = reader(execution["binding"])
+    producer = ProductionGoPlanningProducer.from_trusted_factory(control, reopened)
+    assert producer.source(execution["binding"]) == expected_source
+    reopened.outputs.arm(execution["binding"], expected_source)
     denied = reopened.admissions.advance(execution["id"], "owner", "missing-commander")
 
     assert denied["phase"] == "denied"

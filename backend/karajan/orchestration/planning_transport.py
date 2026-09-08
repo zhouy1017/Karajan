@@ -760,7 +760,9 @@ class ProductionGoPlanningProducer:
     def source(self, binding: dict[str, Any]) -> dict[str, Any]:
         if self.execution.admissions is None:
             raise RunError("PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE")
-        control_directory = getattr(self.execution.admissions, "control_directory", None)
+        control_directory: Path | None = getattr(
+            self.execution.admissions, "bootstrap_control_directory", None
+        )
         if not isinstance(control_directory, Path):
             raise RunError("PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE")
         return observe_production_output_source(
