@@ -80,8 +80,10 @@ def test_fixed_host_prepare_is_replayable_without_starting_native(tmp_path, bind
 def test_cancelled_admission_prevents_new_host_preparation(tmp_path, binding_case):
     service, run_id, reviewer_id, intents = _service(tmp_path, binding_case)
     service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
-    intents.admissions.cancel(run_id, reviewer_id, principal="owner")
-    with pytest.raises(RunError, match="REVIEWER_OPERATION_CANCELLED"):
+    cancelled = service.cancel(run_id, reviewer_id, principal="owner")
+    assert cancelled is not None and cancelled["cancel_requested"] is True
+    assert intents.admissions.get(run_id, reviewer_id, principal="owner")["cancel_requested"]
+    with pytest.raises(RunError, match="REVIEWER_EXECUTION_CANCELLED"):
         service.freeze_launch(run_id, reviewer_id, principal="owner")
 
 
