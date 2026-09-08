@@ -74,6 +74,7 @@ type Run = {
   plans: Plan[];
   handoffs: Handoff[];
   planning?: PlanningStatus | null;
+  command?: PlanningCommand;
   configuration_snapshot?: {
     configuration: {
       resources: {
@@ -87,14 +88,19 @@ type Run = {
     };
   };
 };
+type PlanningCommand = {
+  id: string;
+  state: string;
+  reason_code?: string;
+};
 type PlanningRead = {
   schema_version: "karajan.workbench-planning.v1";
   run: Run;
   planning: PlanningStatus | null;
-  command?: { id: string; state: string; reason_code?: string };
+  command?: PlanningCommand;
 };
 type PlanningExecuteReceipt = PlanningRead & {
-  command?: { id: string; state: string };
+  command?: PlanningCommand;
 };
 
 function planningBlockedMessage(reasonCode?: string) {
@@ -228,13 +234,17 @@ function RunWorkbench({
       // A successful read makes a previous transient planning read failure
       // stale, including when the run already contains a plan.
       setPlanningReadError(false);
-      // Existing plans already carry the authoritative snapshot used by the
-      // approval flow; planning status is only needed before a plan exists.
-      if (result.plans.length) {
+      const commandStorageKey = `karajan:planning-execute-command:${id}`;
+      // A persisted command (or a run without a plan) needs the planning
+      // snapshot because the run GET does not carry the durable command view.
+      // A completed run with its authoritative plan needs no second read.
+      if (
+        result.plans.length > 0 &&
+        sessionStorage.getItem(commandStorageKey) === null
+      ) {
         setSelected(result);
         return true;
       }
-      let planning: PlanningStatus | null | undefined;
       try {
         const planningResponse = await fetch(
           `/v1/runs/${encodeURIComponent(id)}/planning`,
@@ -249,28 +259,25 @@ function RunWorkbench({
         setSelected({
           ...planningResult.run,
           planning: planningResult.planning,
+          command: planningResult.command,
         });
+        if (planningResult.command?.state === "failed") {
+          setError(
+            planningResult.command.reason_code
+              ? `生成计划未完成（服务端代码：${planningResult.command.reason_code}）。`
+              : "生成计划未完成，请重新读取。",
+          );
+        } else if (planningResult.command?.state === "unknown") {
+          setNotice("生成计划结果未知；可使用同一请求身份重新读取。");
+        }
         return true;
       } catch (cause) {
         if (!current()) return false;
-        // Keep compatibility with pre-planning test servers; real read errors
-        // remain visible and disable a new preparation key.
-        if (
-          cause instanceof Error &&
-          cause.message.startsWith("Unexpected request")
-        ) {
-          planning = result.planning;
-          setSelected({ ...result, planning });
-          return true;
-        }
         setSelected(result);
         setPlanningReadError(true);
         setError("规划状态读取失败，请重新读取。");
         return true;
       }
-      planning = result.planning;
-      setSelected({ ...result, planning });
-      return true;
     } catch (cause) {
       if (current())
         setError(cause instanceof Error ? cause.message : "无法读取计划。");
@@ -301,22 +308,29 @@ function RunWorkbench({
           result.run?.id !== id
         )
           return;
-        const refreshed = { ...result.run, planning: result.planning };
+        const refreshed = {
+          ...result.run,
+          planning: result.planning,
+          command: result.command,
+        };
         setSelected(refreshed);
         setPlanningReadError(false);
+        const durableCommand = result.command;
+        const commandState = durableCommand?.state;
         if (
-          refreshed.plans.length ||
-          result.planning?.availability.state !== "awaiting" ||
-          result.command?.state === "failed" ||
-          result.command?.state === "unknown"
+          commandState === "completed" ||
+          commandState === "failed" ||
+          commandState === "unknown"
         ) {
-          if (result.command?.state === "failed") {
+          if (commandState === "failed") {
             setError(
-              result.command.reason_code
-                ? `生成计划未完成（服务端代码：${result.command.reason_code}）。`
+              durableCommand?.reason_code
+                ? `生成计划未完成（服务端代码：${durableCommand.reason_code}）。`
                 : "生成计划未完成，请重新读取。",
             );
-          } else if (result.command?.state === "unknown") {
+            sessionStorage.removeItem(commandStorageKey);
+            command.current = null;
+          } else if (commandState === "unknown") {
             setNotice("生成计划结果未知；可使用同一请求身份重新读取。");
           } else {
             sessionStorage.removeItem(commandStorageKey);

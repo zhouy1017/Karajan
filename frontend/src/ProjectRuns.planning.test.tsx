@@ -384,7 +384,11 @@ it("submits execution only after preparation and keeps the persisted plan approv
     if (path === "/v1/runs/run-1")
       return Response.json(executed ? generatedRun : run);
     if (path === "/v1/runs/run-1/planning")
-      return Response.json(awaitingPlanning);
+      return Response.json(
+        executed
+          ? { ...awaitingPlanning, run: generatedRun }
+          : awaitingPlanning,
+      );
     if (path === "/v1/runs/run-1/planning-execute") {
       writes.push(options!);
       executed = true;
@@ -492,6 +496,197 @@ it.each([
     expect(execute).toBe(false);
   },
 );
+
+it("keeps polling while output is pending and displays the completed plan", async () => {
+  const writes: RequestInit[] = [];
+  let planningReads = 0;
+  const finalRun = {
+    ...run,
+    state: "awaiting_approval",
+    plans: [
+      {
+        term: 1,
+        plan_revision: 1,
+        plan_digest: "a".repeat(64),
+        authorization_digest: "b".repeat(64),
+        configuration_digest: "c".repeat(64),
+        plan: {
+          summary: "完成后的持久计划",
+          authorization: {
+            profile_refs: [],
+            read_paths: ["."],
+            write_paths: ["src"],
+            checks: [],
+            budget_ref: "planning",
+            delivery: "pull_request",
+            target_branch: "main",
+          },
+          tasks: [],
+        },
+      },
+    ],
+  };
+  vi.stubGlobal("fetch", async (path: string, options?: RequestInit) => {
+    if (path.startsWith("/v1/runs?")) return Response.json({ items: [run] });
+    if (path === "/v1/runs/run-1")
+      return Response.json(planningReads >= 4 ? finalRun : run);
+    if (path === "/v1/runs/run-1/planning") {
+      planningReads += 1;
+      if (planningReads < 3) return Response.json(awaitingPlanning);
+      if (planningReads === 3)
+        return Response.json({
+          ...awaitingPlanning,
+          planning: {
+            ...awaitingPlanning.planning,
+            availability: {
+              state: "blocked",
+              reason_code: "PLANNING_OUTPUT_PENDING",
+            },
+          },
+          command: { id: "command-1", state: "accepted" },
+        });
+      return Response.json({
+        ...awaitingPlanning,
+        run: finalRun,
+        command: { id: "command-1", state: "completed" },
+      });
+    }
+    if (path === "/v1/runs/run-1/planning-execute") {
+      writes.push(options!);
+      return new Response(
+        JSON.stringify({
+          ...awaitingPlanning,
+          command: { id: "command-1", state: "accepted" },
+        }),
+        { status: 202, headers: { "Content-Type": "application/json" } },
+      );
+    }
+    throw new Error(`Unexpected request: ${path}`);
+  });
+
+  renderRuns();
+  await userEvent.click(
+    await screen.findByRole("button", { name: "增加问候语" }),
+  );
+  await userEvent.click(
+    await screen.findByRole("button", { name: "生成计划" }),
+  );
+  await screen.findByText("完成后的持久计划", {}, { timeout: 4000 });
+  expect(writes).toHaveLength(1);
+  expect(screen.queryByText("规划已准备，可以生成计划。")).toBeNull();
+});
+
+it("stops after a later terminal command error and shows its reason", async () => {
+  let planningReads = 0;
+  vi.stubGlobal("fetch", async (path: string) => {
+    if (path.startsWith("/v1/runs?")) return Response.json({ items: [run] });
+    if (path === "/v1/runs/run-1") return Response.json(run);
+    if (path === "/v1/runs/run-1/planning") {
+      planningReads += 1;
+      if (planningReads === 1) return Response.json(awaitingPlanning);
+      return Response.json({
+        ...awaitingPlanning,
+        planning: {
+          ...awaitingPlanning.planning,
+          availability: {
+            state: "blocked",
+            reason_code: "PLANNING_OUTPUT_PENDING",
+          },
+        },
+        command:
+          planningReads === 2
+            ? { id: "command-failed", state: "accepted" }
+            : {
+                id: "command-failed",
+                state: "failed",
+                reason_code: "NATIVE_FAILED",
+              },
+      });
+    }
+    if (path === "/v1/runs/run-1/planning-execute")
+      return new Response(
+        JSON.stringify({
+          ...awaitingPlanning,
+          command: { id: "command-failed", state: "accepted" },
+        }),
+        { status: 202, headers: { "Content-Type": "application/json" } },
+      );
+    throw new Error(`Unexpected request: ${path}`);
+  });
+
+  renderRuns();
+  await userEvent.click(
+    await screen.findByRole("button", { name: "增加问候语" }),
+  );
+  await userEvent.click(
+    await screen.findByRole("button", { name: "生成计划" }),
+  );
+  await screen.findByText(
+    "生成计划未完成（服务端代码：NATIVE_FAILED）。",
+    {},
+    { timeout: 3000 },
+  );
+});
+
+it("keeps an unknown command identity across reopening without sending again", async () => {
+  const writes: RequestInit[] = [];
+  let planningReads = 0;
+  vi.stubGlobal("fetch", async (path: string, options?: RequestInit) => {
+    if (path.startsWith("/v1/runs?")) return Response.json({ items: [run] });
+    if (path === "/v1/runs/run-1") return Response.json(run);
+    if (path === "/v1/runs/run-1/planning") {
+      planningReads += 1;
+      if (planningReads === 1) return Response.json(awaitingPlanning);
+      return Response.json({
+        ...awaitingPlanning,
+        planning: {
+          ...awaitingPlanning.planning,
+          availability: {
+            state: "blocked",
+            reason_code: "PLANNING_OUTPUT_PENDING",
+          },
+        },
+        ...(planningReads > 1
+          ? { command: { id: "command-unknown", state: "unknown" } }
+          : {}),
+      });
+    }
+    if (path === "/v1/runs/run-1/planning-execute") {
+      writes.push(options!);
+      return new Response(
+        JSON.stringify({
+          ...awaitingPlanning,
+          command: { id: "command-unknown", state: "accepted" },
+        }),
+        { status: 202, headers: { "Content-Type": "application/json" } },
+      );
+    }
+    throw new Error(`Unexpected request: ${path}`);
+  });
+
+  const view = render(<ProjectRuns project={project} csrf="csrf-fixture" />);
+  await userEvent.click(
+    await screen.findByRole("button", { name: "增加问候语" }),
+  );
+  await userEvent.click(
+    await screen.findByRole("button", { name: "生成计划" }),
+  );
+  await screen.findByText(
+    "生成计划结果未知；可使用同一请求身份重新读取。",
+    {},
+    { timeout: 4000 },
+  );
+  view.unmount();
+  renderRuns();
+  await userEvent.click(
+    await screen.findByRole("button", { name: "增加问候语" }),
+  );
+  await screen.findByText(
+    "当前规划暂不能执行（服务端代码：PLANNING_OUTPUT_PENDING）。",
+  );
+  expect(writes).toHaveLength(1);
+  expect(screen.queryByRole("button", { name: "生成计划" })).toBeNull();
+});
 
 it("reuses an unknown execution key after the workbench is remounted", async () => {
   const writes: RequestInit[] = [];
