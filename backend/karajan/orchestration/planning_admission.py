@@ -89,19 +89,20 @@ class PersistentCommanderQualificationReader:
         self.qualifications = qualifications
         self.control_directory = control_directory
         self._source_settings: Any | None = None
+        self._source_descriptor_sha256: str | None = None
         self._credentials: CredentialSourceStore | None = None
         # Construction opens its own existing Project transactions, so it must
         # occur before commander_facts_guard owns the Project connection. An
         # absent/invalid deployment source is a no-fact condition, not a
         # factory promotion or a second credential ledger.
         try:
-            from karajan.orchestration.go_task_runtime import _read_bootstrap
+            from karajan.orchestration.go_commander_qualification import (
+                read_commander_qualification_settings,
+            )
 
-            settings, _ = _read_bootstrap(self.control_directory)
-            if (
-                settings.state_directory / "projects.sqlite"
-            ).resolve() != self.planner.projects.database.resolve():
-                raise RunError("COMMANDER_SOURCE_STATE_MISMATCH")
+            settings, descriptor_sha256 = read_commander_qualification_settings(
+                self.control_directory
+            )
             self._credentials = CredentialSourceStore(
                 self.planner.projects,
                 sources={
@@ -112,6 +113,7 @@ class PersistentCommanderQualificationReader:
                 existing_only=True,
             )
             self._source_settings = settings
+            self._source_descriptor_sha256 = descriptor_sha256
         except (CredentialSourceError, OSError, RunError, ValueError):
             self._source_settings = None
             self._credentials = None
@@ -126,32 +128,30 @@ class PersistentCommanderQualificationReader:
         seal before yielding a generation. A missing future Commander suite or
         unsupported platform remains unavailable instead of becoming a pass.
         """
-        from karajan.adapters.opencode.go_context import GoRequestAccounting
-        from karajan.orchestration.go_task_runtime import (
-            _read_bootstrap,
-            deployment_source,
+        from karajan.orchestration.go_commander_qualification import (
+            read_commander_qualification_settings,
         )
+        from karajan.projects.go_commander_suite import FixedGoCommanderSuite
 
         settings = self._source_settings
         credentials = self._credentials
-        if settings is None or credentials is None:
+        descriptor_sha256 = self._source_descriptor_sha256
+        if settings is None or credentials is None or descriptor_sha256 is None:
             raise RunError("COMMANDER_SOURCE_UNAVAILABLE")
-        current_settings, bootstrap_sha = _read_bootstrap(self.control_directory)
+        current_settings, current_descriptor_sha256 = read_commander_qualification_settings(
+            self.control_directory
+        )
         if current_settings.document() != settings.document():
             raise RunError("COMMANDER_SOURCE_CHANGED")
         profile = current["registration"]["profile"]
         generation = credentials.current_locked(
             db, project_id, profile["auth_ref"], principal=principal
         )
-        runtime = deployment_source(settings, GoRequestAccounting(settings.tokenizer_directory))
-        return {
-            "schema_version": "karajan.commander-qualification-source.v1",
-            "bootstrap_sha256": bootstrap_sha,
-            "credential_generation": generation["generation"],
-            "credential_source": generation["source"],
-            "profile_sha256": digest(profile),
-            "runtime": runtime,
-        }
+        if current_descriptor_sha256 != descriptor_sha256:
+            raise RunError("COMMANDER_SOURCE_CHANGED")
+        return FixedGoCommanderSuite(
+            settings.runtime, settings.tokenizer_directory, descriptor_sha256
+        ).source(current, generation)
 
     @staticmethod
     def _registration(run: dict[str, Any], binding: dict[str, Any]) -> dict[str, Any] | None:
@@ -968,8 +968,7 @@ class PlanningAdmissionAuthority:
             estimate.get("schema_version") != "karajan.planning-estimate.v1"
             or not isinstance(estimate.get("digest"), str)
             or estimate["digest"] != digest(sealed)
-            or estimate.get("configuration_sha256")
-            != held_run["configuration_snapshot"]["digest"]
+            or estimate.get("configuration_sha256") != held_run["configuration_snapshot"]["digest"]
             or not isinstance(estimate.get("demand"), dict)
             or not estimate["demand"]
             or any(type(value) is not str for value in estimate["demand"].values())

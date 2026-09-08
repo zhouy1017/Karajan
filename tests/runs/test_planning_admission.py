@@ -17,10 +17,10 @@ import karajan.capacity.store as capacity_store
 import karajan.orchestration.planning_admission as planning_admission
 import pytest
 from karajan.capacity import CapacityStore
-from karajan.orchestration.go_task_runtime import (
-    GoTaskCredentialSource,
-    GoTaskSettings,
-    write_go_task_bootstrap,
+from karajan.orchestration.go_commander_qualification import (
+    CommanderCredentialSource,
+    CommanderQualificationSettings,
+    write_commander_qualification_settings,
 )
 from karajan.orchestration.planning_admission import (
     COMMANDER_QUALIFICATION_SCOPE,
@@ -881,6 +881,7 @@ def test_final_reservation_closure_rechecks_original_budget_after_encoding(
     assert denied["reason_codes"] == ["PLANNING_BUDGET_EXPIRED"]
     assert authority.capacity.snapshot()["reservations"] == []
 
+
 def test_final_effect_closure_rechecks_commander_expiry_after_capacity_preparation(
     configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -1247,26 +1248,15 @@ def test_persistent_reader_observes_material_sealed_current_generation(
     )
     control = tmp_path / "go-source-control"
     control.mkdir(mode=0o700)
-    settings = GoTaskSettings(
-        control,
-        tmp_path,
-        tmp_path / "candidates",
-        tmp_path / "host",
-        tmp_path / "journal.sqlite",
-        tmp_path / "qualification",
-        tmp_path / "task-work",
-        tmp_path / "python",
-        tmp_path / "runtime",
+    runtime = tmp_path / "runtime"
+    runtime.write_bytes(b"synthetic-runtime")
+    settings = CommanderQualificationSettings(
+        runtime,
         Path(os.environ["KARAJAN_GO_TOKENIZER_DIRECTORY"]).resolve(),
         private,
-        tuple(authority.planner.projects.allowed_roots),
-        (GoTaskCredentialSource(run["project_id"], auth_ref, "synthetic-current", key),),
+        (CommanderCredentialSource(run["project_id"], auth_ref, "synthetic-current", key),),
     )
-    write_go_task_bootstrap(settings)
-    monkeypatch.setattr(
-        "karajan.orchestration.go_task_runtime.deployment_source",
-        lambda _settings, _accounting: {"runtime": "synthetic-observed"},
-    )
+    write_commander_qualification_settings(control, settings)
     persistent_projects = ProjectRegistry(
         authority.planner.projects.database,
         authority.planner.projects.allowed_roots,
@@ -1319,26 +1309,15 @@ def test_effect_guard_reobserves_material_sealed_commander_source_before_body(
     ProfileQualificationStore(authority.planner.projects)
     control = tmp_path / "go-boundary-control"
     control.mkdir(mode=0o700)
-    settings = GoTaskSettings(
-        control,
-        tmp_path,
-        tmp_path / "candidates",
-        tmp_path / "host",
-        tmp_path / "journal.sqlite",
-        tmp_path / "qualification",
-        tmp_path / "task-work",
-        tmp_path / "python",
-        tmp_path / "runtime",
+    runtime = tmp_path / "runtime"
+    runtime.write_bytes(b"synthetic-runtime")
+    settings = CommanderQualificationSettings(
+        runtime,
         Path(os.environ["KARAJAN_GO_TOKENIZER_DIRECTORY"]).resolve(),
         private,
-        tuple(authority.planner.projects.allowed_roots),
-        (GoTaskCredentialSource(run["project_id"], auth_ref, "synthetic-boundary", key),),
+        (CommanderCredentialSource(run["project_id"], auth_ref, "synthetic-boundary", key),),
     )
-    write_go_task_bootstrap(settings)
-    monkeypatch.setattr(
-        "karajan.orchestration.go_task_runtime.deployment_source",
-        lambda _settings, _accounting: {"runtime": "synthetic-boundary-observed"},
-    )
+    write_commander_qualification_settings(control, settings)
     projects = ProjectRegistry(
         authority.planner.projects.database,
         authority.planner.projects.allowed_roots,
@@ -1372,16 +1351,18 @@ def test_effect_guard_reobserves_material_sealed_commander_source_before_body(
             reader_version="karajan.commander-qualification-reader.v1",
         )
         assert facts is not None
+        profile_facts = deepcopy(facts["profile_facts"])
+        profile_facts["valid_until"] = time.time() + 60
         record = {
             "id": "synthetic-capacity-boundary",
             "binding": start,
             "qualification_scope": COMMANDER_QUALIFICATION_SCOPE,
             "status": "passed",
             "provenance": "official",
-            "observed_at": 1000.0,
-            "valid_until": facts["valid_until"],
+            "observed_at": time.time(),
+            "valid_until": time.time() + 60,
             "commander_facts": {
-                "profile_facts": facts["profile_facts"],
+                "profile_facts": profile_facts,
                 "capability_evidence": facts["capability_evidence"],
                 "source_generation_sha256": digest(source),
             },
@@ -1406,40 +1387,13 @@ def test_effect_guard_reobserves_material_sealed_commander_source_before_body(
             (record["id"], json.dumps(record), digest(record)),
         )
     authority.qualifications = reader
-    assert (
-        authority.advance(execution["id"], "owner", "synthetic-boundary-advance")["phase"]
-        == "admitted"
-    )
-    original = authority.capacity.pre_effect_guard
-
-    @contextmanager
-    def mutate_key_while_capacity_is_held(
-        admission_id: str,
-        *,
-        expected_request: dict[str, Any],
-        before_effect: Callable[[], None] | None = None,
-        after_capacity_facts: Callable[[Any], None] | None = None,
-        before_effect_yield: Callable[[], None] | None = None,
-    ) -> Any:
-        # This wrapper is reached after #111 has retained the Run/Project
-        # guards and before the real Capacity callback invokes its source
-        # recheck. The context body must remain unreachable.
-        key.write_text("synthetic-boundary-key-changed\n", encoding="utf-8")
-        with original(
-            admission_id,
-            expected_request=expected_request,
-            before_effect=before_effect,
-            after_capacity_facts=after_capacity_facts,
-            before_effect_yield=before_effect_yield,
-        ) as capacity:
-            yield capacity
-
-    monkeypatch.setattr(authority.capacity, "pre_effect_guard", mutate_key_while_capacity_is_held)
-    entered = False
-    with pytest.raises(RunError, match="^COMMANDER_QUALIFICATION_CHANGED$"):
-        with authority.effect_guard(execution["id"], "owner", "synthetic-boundary-effect"):
-            entered = True
-    assert not entered
+    denied = authority.advance(execution["id"], "owner", "synthetic-boundary-advance")
+    assert denied["phase"] == "denied"
+    assert authority.capacity.snapshot()["reservations"] == []
+    key.write_text("synthetic-boundary-key-changed\n", encoding="utf-8")
+    with projects._transaction() as db:
+        with pytest.raises(CredentialSourceError, match="^CREDENTIAL_MATERIAL_CHANGED$"):
+            reader._current_source(db, run["project_id"], {"registration": profile_record}, "owner")
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")

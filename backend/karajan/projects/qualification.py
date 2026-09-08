@@ -33,6 +33,7 @@ from .registry import ProjectRegistry, encoded, identifier
 
 if TYPE_CHECKING:
     from .credential_sources import CredentialSourceStore
+    from .go_commander_suite import FixedGoCommanderSuite
     from .go_reviewer_suite import FixedGoReviewerSuite
     from .go_suite import FixedGoSuite
 
@@ -118,6 +119,7 @@ class ProfileQualificationStore:
         credentials: "CredentialSourceStore | None" = None,
         go_suite: "FixedGoSuite | None" = None,
         reviewer_suite: "FixedGoReviewerSuite | None" = None,
+        commander_suite: "FixedGoCommanderSuite | None" = None,
         commander_source: Callable[[sqlite3.Connection, str, dict[str, Any], str], dict[str, Any]]
         | None = None,
         commander_reader_only: bool = False,
@@ -129,6 +131,7 @@ class ProfileQualificationStore:
         self.credentials = credentials
         self.go_suite = go_suite
         self.reviewer_suite = reviewer_suite
+        self.commander_suite = commander_suite
         self.commander_source = commander_source
         self.commander_store_available = True
         if projects.existing_only:
@@ -234,6 +237,238 @@ class ProfileQualificationStore:
             "channel": channels[0],
             "repository": project["repository"],
         }
+
+    def qualify_commander_planning(
+        self,
+        project_id: str,
+        profile_ref: dict[str, Any],
+        *,
+        principal: str,
+        command_key: str,
+        validity_seconds: int,
+    ) -> dict[str, Any]:
+        """Create one sealed, independent Commander start before any observation.
+
+        The fixed suite and its two identities are private implementation facts.
+        A replay only returns the original record or the explicit unknown state;
+        it never resolves material or repeats an observation.
+        """
+        from .go_commander_suite import LIMITS, SCENARIOS, SCOPE, SUITE_REF
+
+        identifier(command_key)
+        if type(validity_seconds) is not int or not 1 <= validity_seconds <= 86400:
+            raise QualificationError("QUALIFICATION_VALIDITY_INVALID")
+        try:
+            profile_ref = ProfileRef.model_validate(profile_ref).model_dump()
+        except ValidationError:
+            raise QualificationError("PROFILE_REFERENCE_INVALID") from None
+        request_digest = digest(
+            ["qualify_commander_planning.v2", project_id, profile_ref, validity_seconds]
+        )
+        with self._owned(project_id, principal) as db:
+            previous = db.execute(
+                "SELECT * FROM profile_qualification_starts WHERE principal=? AND command_key=?",
+                (principal, command_key),
+            ).fetchone()
+            if previous is not None:
+                if previous["request_digest"] != request_digest:
+                    raise QualificationError("IDEMPOTENCY_CONFLICT")
+                self._checked_start(db, previous)
+                return self._record(db, previous["id"])
+            if self.commander_suite is None or self.credentials is None:
+                raise QualificationError("COMMANDER_QUALIFICATION_SOURCE_UNCONFIGURED")
+            bound = self._binding(db, project_id, profile_ref)
+            self.commander_suite.validate_profile(bound)
+            profile = bound["registration"]["profile"]
+            authentication = self.credentials.current_locked(
+                db, project_id, profile["auth_ref"], principal=principal
+            )
+            # Source construction (including the material seal) completes
+            # before this transaction commits the irrevocable start.
+            source = self.commander_suite.source(bound, authentication)
+            now = self._now()
+            observation_id = str(uuid.uuid4())
+            start: dict[str, Any] = {
+                "qualification_id": observation_id,
+                "project_id": project_id,
+                "suite_ref": SUITE_REF,
+                "profile_binding": bound,
+                "profile_digest": digest(profile),
+                "auth_generation": authentication["generation"],
+                "credential_source_id": authentication["source"]["id"],
+                "authentication_source": authentication,
+                "source": source,
+                "started_at": now,
+                "expires_at": now + LIMITS["max_seconds_per_start"],
+                "scenarios": [],
+            }
+            for scenario in SCENARIOS:
+                attempt_id, grant_id = str(uuid.uuid4()), str(uuid.uuid4())
+                start["scenarios"].append(
+                    {
+                        "scenario": scenario,
+                        "attempt_id": attempt_id,
+                        "fence": 1,
+                        "grant_id": grant_id,
+                        "grant_binding": {
+                            "schema_version": "karajan.go-commander-qualification-grant.v1",
+                            "qualification_id": observation_id,
+                            "attempt_id": attempt_id,
+                            "fence": 1,
+                            "profile_digest": start["profile_digest"],
+                            "runtime_digest": digest(source["runtime"]),
+                            "channel": profile["binding"]["channel_id"],
+                            "model": profile["binding"]["model_id"],
+                            "auth_generation": authentication["generation"],
+                            "expires_at": start["expires_at"],
+                            "max_requests": LIMITS["max_requests_per_scene"],
+                            "probe_spec_digest": source["probe_spec_digest"],
+                            "scenario": scenario,
+                            "context": {
+                                key: LIMITS[key]
+                                for key in (
+                                    "approved_input_tokens",
+                                    "reserved_output_tokens",
+                                    "operating_context_tokens",
+                                    "fixed_margin",
+                                    "ratio_margin_basis_points",
+                                )
+                            },
+                        },
+                    }
+                )
+            binding = {
+                "qualification_scope": SCOPE,
+                "suite_ref": SUITE_REF,
+                "profile_binding": bound,
+                "source": source,
+                "execution_start": start,
+                "controller_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            }
+            db.execute(
+                "INSERT INTO profile_qualification_starts VALUES (?,?,?,?,?,?)",
+                (
+                    observation_id,
+                    project_id,
+                    principal,
+                    command_key,
+                    request_digest,
+                    encoded(binding),
+                ),
+            )
+            db.execute(
+                "INSERT INTO profile_qualification_start_seals VALUES (?,?)",
+                (observation_id, digest(binding)),
+            )
+        try:
+            credential = self.credentials.resolve_exact(
+                project_id, profile["auth_ref"], authentication["generation"], principal=principal
+            )
+            observation = self.commander_suite.observe(
+                start,
+                credential,
+                current_guard=lambda: self._commander_current_guard(start, principal),
+            )
+        except Exception:
+            observation = {
+                "status": "failed",
+                "reason_codes": ["COMMANDER_NATIVE_PROBE_UNAVAILABLE"],
+                "scenarios": [],
+            }
+        now = self._now()
+        fixture_observation = source.get("observation_origin") == "c_fixed_suite_test_double"
+        record: dict[str, Any] = {
+            "schema_version": "karajan.profile-qualification.v1",
+            "id": observation_id,
+            "project_id": project_id,
+            "principal": principal,
+            "status": observation.get("status", "failed") if fixture_observation else "failed",
+            "qualification_scope": SCOPE,
+            "suite_ref": SUITE_REF,
+            "provenance": "fixture" if fixture_observation else "official",
+            "runtime_tools_status": "not_run",
+            "live_qualified": False,
+            "dispatch_eligible": False,
+            "binding": binding,
+            "observed_at": now,
+            "valid_until": now + validity_seconds,
+            "observation": observation,
+            "reason_codes": list(observation.get("reason_codes", [])),
+            "limitations": ["Commander native probe is not configured in this store/source slice."],
+        }
+        with self._owned(project_id, principal) as db:
+            try:
+                self._commander_current_locked(db, start, principal)
+            except Exception:
+                record["reason_codes"].append("COMMANDER_SOURCE_CHANGED")
+            db.execute(
+                "INSERT INTO profile_qualification_records VALUES (?,?,?)",
+                (observation_id, encoded(record), digest(record)),
+            )
+        return record
+
+    @contextmanager
+    def _commander_current_guard(self, start: dict[str, Any], principal: str) -> Iterator[None]:
+        with self._owned(start["project_id"], principal) as db:
+            self._commander_current_locked(db, start, principal)
+            yield
+
+    def _commander_current_locked(
+        self, db: sqlite3.Connection, start: dict[str, Any], principal: str
+    ) -> None:
+        from .go_commander_suite import SCOPE, SUITE_REF
+
+        row = db.execute(
+            "SELECT * FROM profile_qualification_starts WHERE id=? AND principal=?",
+            (start["qualification_id"], principal),
+        ).fetchone()
+        if row is None or self._checked_start(db, row).get("execution_start") != start:
+            raise QualificationError("QUALIFICATION_START_CHANGED")
+        if db.execute(
+            "SELECT 1 FROM profile_qualification_records WHERE id=?", (row["id"],)
+        ).fetchone():
+            raise QualificationError("QUALIFICATION_ALREADY_COMPLETED")
+        if db.execute(
+            "SELECT 1 FROM profile_qualification_revocations WHERE id=?", (row["id"],)
+        ).fetchone():
+            raise QualificationError("QUALIFICATION_REVOKED")
+        now = self._now()
+        if not start["started_at"] <= now < start["expires_at"]:
+            raise QualificationError("QUALIFICATION_EXPIRED")
+        registration = start["profile_binding"]["registration"]
+        starts = db.execute(
+            "SELECT * FROM profile_qualification_starts WHERE project_id=? ORDER BY rowid DESC",
+            (start["project_id"],),
+        ).fetchall()
+        for candidate in starts:
+            candidate_binding = self._checked_start(db, candidate)
+            if (
+                candidate_binding.get("qualification_scope") == SCOPE
+                and candidate_binding.get("suite_ref") == SUITE_REF
+                and candidate_binding.get("profile_binding", {}).get("registration", {}).get("id")
+                == registration["id"]
+                and candidate_binding.get("profile_binding", {})
+                .get("registration", {})
+                .get("revision")
+                == registration["revision"]
+            ):
+                if candidate["id"] != start["qualification_id"]:
+                    raise QualificationError("QUALIFICATION_SUPERSEDED")
+                break
+        ref = {"id": registration["id"], "revision": registration["revision"]}
+        current = self._binding(db, start["project_id"], ref)
+        if current != start["profile_binding"] or not registration["enabled"]:
+            raise QualificationError("PROFILE_IDENTITY_MISMATCH")
+        if self.credentials is None or self.commander_suite is None:
+            raise QualificationError("COMMANDER_QUALIFICATION_SOURCE_UNCONFIGURED")
+        authentication = self.credentials.current_locked(
+            db, start["project_id"], registration["profile"]["auth_ref"], principal=principal
+        )
+        if (
+            authentication != start["authentication_source"]
+            or self.commander_suite.source(current, authentication) != start["source"]
+        ):
+            raise QualificationError("COMMANDER_SOURCE_CHANGED")
 
     def qualify_runtime_tools(
         self,
