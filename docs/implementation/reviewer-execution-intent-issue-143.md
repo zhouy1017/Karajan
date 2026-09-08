@@ -130,3 +130,31 @@ results above remain historical records and are not attributed to this source
 candidate.
 
 The affected command ran in a local captured process because it exceeds the interactive 30-second yield; its exit code and final pytest summary above were observed before recording this result.
+
+## CI-default relative-tokenizer fixture repair (2026-09-08)
+
+The earlier `43ebc45` / PR #150 CI failure was a separate entry failure: the
+test directly read the unset `KARAJAN_OPENCODE_LINUX_BINARY` variable and
+raised `KeyError`. The no-override runtime lookup already repaired that case.
+
+The subsequent current-head CI failure at `3cb14cf` (run `34224575469`,
+Linux job `102055632775`) was a distinct `TASK_BOOTSTRAP_INVALID` failure in
+`write_go_task_bootstrap` / `GoTaskSettings.from_document`: CI supplied the
+literal relative tokenizer value `.cache/go-context-artifacts`, while the
+fixture passed that relative path into the trusted absolute-path descriptor.
+The remote result was `1 failed, 3077 passed, 7 skipped, 2 warnings` in
+`1406.32s`; only
+`test_existing_factory_reopens_identity_and_rechecks_own_descriptor` failed.
+
+The fixture now resolves its already-existing, asserted tokenizer directory
+before constructing `GoTaskSettings`. Product descriptor validation remains
+unchanged, CI globals remain unchanged, and no production source is modified.
+
+| Command | Result |
+| --- | --- |
+| `env -u KARAJAN_OPENCODE_LINUX_BINARY KARAJAN_REQUIRE_OPENCODE_ISOLATION=1 KARAJAN_REQUIRE_GO_TOKENIZER=1 KARAJAN_GO_TOKENIZER_DIRECTORY=.cache/go-context-artifacts HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 PYTHONPATH=backend:tests:tests/projects:tests/runs:tests/candidates /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest tests/runs/test_reviewer_execution_bootstrap.py::test_existing_factory_reopens_identity_and_rechecks_own_descriptor -q -p no:cacheprovider --basetemp=/tmp/karajan-dg01-reviewer-relative-red` | **Red before repair:** `TASK_BOOTSTRAP_INVALID`, `1 failed in 5.31s`. |
+| Same command with `--basetemp=/tmp/karajan-dg01-reviewer-relative-green` after the fixture-only repair | **Green:** `1 passed in 9.11s`. |
+
+This follow-up is limited to the bootstrap fixture and this evidence record;
+the broader candidate checks and any CI dispatch must use the resulting commit
+instead of being attributed to the prior `f70bb0e` candidate.

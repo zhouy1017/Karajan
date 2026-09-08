@@ -88,7 +88,7 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
 ):
     """The production factory reads the pinned runtime and existing descriptors."""
     runtime = linux_runtime_artifact()
-    tokenizer = Path(os.environ["KARAJAN_GO_TOKENIZER_DIRECTORY"])
+    tokenizer = Path(os.environ["KARAJAN_GO_TOKENIZER_DIRECTORY"]).resolve()
     assert runtime.is_file() and tokenizer.is_dir()
     intents, (run_id, _), candidates, _, _ = _passed_reviewer_subject(binding_case)
     reviewer = intents.admissions.advance(
