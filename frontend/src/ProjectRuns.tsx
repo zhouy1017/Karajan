@@ -101,8 +101,28 @@ function planningBlockedMessage(reasonCode?: string) {
       return "规划已取消。";
     case "PLANNING_EXECUTION_BINDING_STALE":
       return "规划版本已失效，请重新读取。";
+    case "COMMANDER_QUALIFICATION_REQUIRED":
+    case "COMMANDER_QUALIFICATION_EXPIRED":
+    case "COMMANDER_QUALIFICATION_CHANGED":
+    case "COMMANDER_PROFILE_FACTS_EXPIRED":
+    case "COMMANDER_ROUTE_NOT_AUTHORIZED":
+      return "当前 Commander 资格不可用，请先完成或更新资格核验。";
+    case "PLANNING_BUDGET_EXHAUSTED":
+    case "PLANNING_BUDGET_EXPIRED":
+    case "PLANNING_BUDGET_SCOPE_MISMATCH":
+    case "PLANNING_BUDGET_USAGE_INVALID":
+    case "PLANNING_BUDGET_USAGE_MISSING":
+    case "PLANNING_ESTIMATE_EXCEEDS_BUDGET":
+    case "PLANNING_FINITE_BUDGET_REQUIRED":
+      return "当前规划预算不足或已失效，请检查预算范围和剩余额度。";
+    case "PLANNING_CAPACITY_DENIED":
+    case "PLANNING_CAPACITY_BINDING_REQUIRED":
+    case "PLANNING_CAPACITY_ACTIVATION_UNKNOWN":
+      return "当前规划资源容量不可用，请检查容量授权和绑定状态。";
     default:
-      return "当前规划暂不能执行。";
+      return reasonCode
+        ? `当前规划暂不能执行（服务端代码：${reasonCode}）。`
+        : "当前规划暂不能执行。";
   }
 }
 type Handoff = {

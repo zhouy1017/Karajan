@@ -374,6 +374,51 @@ it("shows an execution block without offering a second execution", async () => {
   expect(screen.queryByRole("button", { name: "生成计划" })).toBeNull();
 });
 
+it.each([
+  [
+    "COMMANDER_QUALIFICATION_REQUIRED",
+    "当前 Commander 资格不可用，请先完成或更新资格核验。",
+  ],
+  [
+    "PLANNING_BUDGET_EXHAUSTED",
+    "当前规划预算不足或已失效，请检查预算范围和剩余额度。",
+  ],
+  [
+    "PLANNING_REASON_FROM_SERVER",
+    "当前规划暂不能执行（服务端代码：PLANNING_REASON_FROM_SERVER）。",
+  ],
+])(
+  "explains blocked planning reason %s without offering execution",
+  async (reasonCode, message) => {
+    let execute = false;
+    vi.stubGlobal("fetch", async (path: string) => {
+      if (path.startsWith("/v1/runs?")) return Response.json({ items: [run] });
+      if (path === "/v1/runs/run-1") return Response.json(run);
+      if (path === "/v1/runs/run-1/planning")
+        return Response.json({
+          ...blockedPlanning,
+          planning: {
+            ...blockedPlanning.planning,
+            availability: { state: "blocked", reason_code: reasonCode },
+          },
+        });
+      if (path === "/v1/runs/run-1/planning-execute") {
+        execute = true;
+        throw new Error("blocked planning must not execute");
+      }
+      throw new Error(`Unexpected request: ${path}`);
+    });
+
+    renderRuns();
+    await userEvent.click(
+      await screen.findByRole("button", { name: "增加问候语" }),
+    );
+    expect(await screen.findByText(message)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "生成计划" })).toBeNull();
+    expect(execute).toBe(false);
+  },
+);
+
 it("reuses an unknown execution key after the workbench is remounted", async () => {
   const writes: RequestInit[] = [];
   let attempts = 0;
