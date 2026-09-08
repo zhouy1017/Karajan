@@ -1,7 +1,45 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { RunProject } from "./ProjectRuns";
 
+type RegisteredPolicy = {
+  id: string;
+  revision: number;
+  digest: string;
+  constraints: {
+    profile_refs: { id: string; revision: number }[];
+    channel_ids: string[];
+    tools: string[];
+    data_destinations: string[];
+    required_capabilities: string[];
+    min_isolation: "tool_sandboxed";
+  };
+  validation?: {
+    checks: { id: string }[];
+    review: { id: string };
+  };
+};
+
 type Configuration = {
+  execution_policy: {
+    id: string;
+    revision: number;
+    digest: string;
+    authorization: {
+      channel_ids: string[];
+      tools: string[];
+      data_destinations: string[];
+      required_capabilities: string[];
+      min_isolation: "tool_sandboxed";
+      currency_limits: Record<string, string>;
+      max_attempt_duration_seconds: number;
+      max_quality_repair_rounds: number;
+      stage_permissions: Record<
+        string,
+        { normal: boolean; quality_indices: number[] }
+      >;
+      checks?: string[];
+    };
+  };
   approved_profile_refs: { id: string; revision: number }[];
   rulebook: {
     profile_groups: { commander_qualified: { id: string; revision: number }[] };
@@ -16,6 +54,40 @@ type Configuration = {
     }[];
   };
 };
+
+function policyForRun(
+  policy: RegisteredPolicy,
+  configuration: Configuration,
+): Configuration["execution_policy"] {
+  const validationChecks = policy.validation
+    ? [
+        ...policy.validation.checks.map((check) => check.id),
+        policy.validation.review.id,
+      ]
+    : ["independent_review"];
+  const budget = configuration.resources.budgets.find(
+    (item) => item.id === configuration.rulebook.resource_policy.run_budget_ref,
+  );
+  if (!budget) throw new Error("EXECUTION_POLICY_BUDGET_MISSING");
+  return {
+    id: policy.id,
+    revision: policy.revision,
+    digest: policy.digest,
+    authorization: {
+      ...policy.constraints,
+      currency_limits: budget.currency_limits as Record<string, string>,
+      max_attempt_duration_seconds: budget.max_duration_seconds,
+      max_quality_repair_rounds: 0,
+      stage_permissions: {
+        normal: {
+          normal: true,
+          quality_indices: validationChecks.map((_, index) => index),
+        },
+      },
+      checks: validationChecks,
+    },
+  };
+}
 type FormProps = {
   project: RunProject;
   csrf: string;
@@ -100,7 +172,22 @@ function RunDraft({ project, csrf, onSaved }: FormProps) {
         if (!response.ok) throw new Error();
         const saved = await response.json();
         if (saved.project_revision !== project.revision) throw new Error();
-        if (active) setConfiguration(saved.configuration);
+        if (!active) return;
+        let next = saved.configuration as Configuration;
+        if (!next.execution_policy) {
+          const policiesResponse = await fetch(
+            `/v1/projects/${encodeURIComponent(project.id)}/execution-policies`,
+          );
+          if (!policiesResponse.ok) throw new Error();
+          const policies = (await policiesResponse.json())
+            .items as RegisteredPolicy[];
+          const policy = [...policies].sort(
+            (a, b) => b.revision - a.revision,
+          )[0];
+          if (!policy) throw new Error();
+          next = { ...next, execution_policy: policyForRun(policy, next) };
+        }
+        if (active) setConfiguration(next);
       })
       .catch(() => {
         if (active) setError("无法读取当前配置，请重新打开项目。");
@@ -117,19 +204,32 @@ function RunDraft({ project, csrf, onSaved }: FormProps) {
     if (sending.current || !storageKey || storageError) return;
     let current = command.current;
     if (!current) {
-      if (!configuration || !budget || commander === "") return;
+      if (
+        !configuration ||
+        !budget ||
+        !configuration.execution_policy ||
+        commander === ""
+      )
+        return;
       const profile =
         configuration.rulebook.profile_groups.commander_qualified[
           Number(commander)
         ];
       if (!profile) return;
       const body = JSON.stringify({
+        schema_version: "karajan.create-run.v2",
         project_id: project.id,
         project_revision: project.revision,
         configuration_digest: project.configuration.digest,
+        execution_policy: {
+          id: configuration.execution_policy.id,
+          revision: configuration.execution_policy.revision,
+          digest: configuration.execution_policy.digest,
+        },
         requirement: { goal, acceptance: lines(acceptance) },
         participants: [{ principal: "lead", profile, purpose: "lead" }],
         authorization: {
+          ...configuration.execution_policy.authorization,
           profile_refs: configuration.approved_profile_refs,
           read_paths: lines(readPaths),
           write_paths: lines(writePaths),

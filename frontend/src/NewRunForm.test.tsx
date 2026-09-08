@@ -21,6 +21,22 @@ function configured(revision = 2) {
   return Response.json({
     project_revision: revision,
     configuration: {
+      execution_policy: {
+        id: "planning-policy",
+        revision: 1,
+        digest: "p".repeat(64),
+        authorization: {
+          channel_ids: ["commander"],
+          tools: [],
+          data_destinations: ["local"],
+          required_capabilities: ["design_reasoning", "structured_plan_output"],
+          min_isolation: "tool_sandboxed",
+          currency_limits: { USD: "0" },
+          max_attempt_duration_seconds: 300,
+          max_quality_repair_rounds: 0,
+          stage_permissions: { normal: { normal: true, quality_indices: [] } },
+        },
+      },
       approved_profile_refs: [{ id: "lead-profile", revision: 1 }],
       rulebook: {
         profile_groups: {
@@ -324,6 +340,27 @@ it("saves the users requirement against the displayed project snapshot and reuse
       return Response.json({
         project_revision: 2,
         configuration: {
+          execution_policy: {
+            id: "planning-policy",
+            revision: 1,
+            digest: "p".repeat(64),
+            authorization: {
+              channel_ids: ["commander"],
+              tools: [],
+              data_destinations: ["local"],
+              required_capabilities: [
+                "design_reasoning",
+                "structured_plan_output",
+              ],
+              min_isolation: "tool_sandboxed",
+              currency_limits: { USD: "0" },
+              max_attempt_duration_seconds: 300,
+              max_quality_repair_rounds: 0,
+              stage_permissions: {
+                normal: { normal: true, quality_indices: [] },
+              },
+            },
+          },
           approved_profile_refs: [
             { id: "lead-profile", revision: 1 },
             { id: "worker-profile", revision: 2 },
@@ -397,6 +434,12 @@ it("saves the users requirement against the displayed project snapshot and reuse
     new Headers(writes[1].headers).get("Idempotency-Key"),
   );
   const body = JSON.parse(writes[0].body as string);
+  expect(body.schema_version).toBe("karajan.create-run.v2");
+  expect(body.execution_policy).toEqual({
+    id: "planning-policy",
+    revision: 1,
+    digest: "p".repeat(64),
+  });
   expect(body.configuration_digest).toBe("c".repeat(64));
   expect(body.requirement).toEqual({
     goal: "增加问候语",
