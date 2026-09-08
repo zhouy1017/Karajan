@@ -289,6 +289,36 @@ class PlanningExecution:
             raise RunError("PLANNING_EXECUTION_BINDING_STALE")
         return dict(intent)
 
+    def _trusted_snapshot_binding(
+        self, execution: dict[str, Any], principal: str
+    ) -> dict[str, Any]:
+        """Rebuild v1 identity from the durable Run, never from execution JSON.
+
+        This intentionally does not require an intent to still be awaiting a
+        receipt: a snapshot already committed before a later cancellation is
+        historical evidence and remains readable.  Its identity fields must,
+        however, still be exactly those recorded in the Run.
+        """
+        run = self._owner_run(execution["run_id"], principal)
+        intent = next(
+            (item for item in run["planning_intents"] if item["id"] == execution["intent_id"]),
+            None,
+        )
+        if not isinstance(intent, dict):
+            raise RunError("PLANNING_EXECUTION_BINDING_STALE")
+        try:
+            return self._binding(run, intent, execution["id"])
+        except (KeyError, TypeError):
+            raise RunError("PLANNING_EXECUTION_BINDING_STALE") from None
+
+    def _snapshot_binding(self, execution: dict[str, Any], principal: str) -> dict[str, Any]:
+        binding = execution.get("binding")
+        if not isinstance(binding, dict) or execution.get("binding_sha256") != digest(binding):
+            raise RunError("PLANNING_EXECUTION_BINDING_STALE")
+        if self._trusted_snapshot_binding(execution, principal) != binding:
+            raise RunError("PLANNING_EXECUTION_BINDING_STALE")
+        return binding
+
     def _command(
         self,
         db: sqlite3.Connection,
@@ -384,9 +414,7 @@ class PlanningExecution:
         for value in (execution_id, principal, command_key):
             identifier(value)
         execution = self.get(execution_id, principal=principal)
-        binding = execution.get("binding")
-        if not isinstance(binding, dict) or execution.get("binding_sha256") != digest(binding):
-            raise RunError("PLANNING_EXECUTION_BINDING_STALE")
+        binding = self._snapshot_binding(execution, principal)
         store = self.snapshots
         freeze = None if store is None else getattr(store, "freeze", None)
         read = None if store is None else getattr(store, "read", None)
@@ -419,9 +447,7 @@ class PlanningExecution:
 
     def read_repository_snapshot(self, execution_id: str, *, principal: str) -> dict[str, Any]:
         execution = self.get(execution_id, principal=principal)
-        binding = execution.get("binding")
-        if not isinstance(binding, dict) or execution.get("binding_sha256") != digest(binding):
-            raise RunError("PLANNING_EXECUTION_BINDING_STALE")
+        binding = self._snapshot_binding(execution, principal)
         read = None if self.snapshots is None else getattr(self.snapshots, "read", None)
         if not callable(read):
             raise RunError("PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE")

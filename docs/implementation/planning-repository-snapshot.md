@@ -42,3 +42,21 @@ reopen/replay, blob/manifest/deleted-ledger rejection without Capacity changes,
 Git replace/environment poisoning, and repository-root aliases. This is local
 production-bootstrap evidence only: no native transport, Journal call, Host,
 provider request, model call, qualification, or plan submission is exercised.
+
+## Original AC coverage (candidate `f95fe89b0435b80a251213d18f7302df6850d555` + worktree)
+
+| Original acceptance condition | Actual evidence | Result |
+| --- | --- | --- |
+| Registered Project/Run/intent/execution create one persistent identity-bound snapshot, including paths, requirement/acceptance and modes/digests. | `test_factory_freezes_registered_base_bytes_and_reopens`; actual SQLite ProjectRegistry, RunPlanner, protected factory and Git base tree. | C/P passed |
+| Replay, reopen, worktree changes, concurrent producers and a lost command reply recover precisely the original snapshot. | Base-tree/reopen test; `test_real_store_instances_concurrently_preserve_one_original_snapshot`; `test_committed_snapshot_survives_lost_command_reply_cancel_and_source_change` commits the producer SQLite transaction before simulating the lost controller reply. | C/P passed |
+| Wrong identities, changed Run term/configuration/authorization, tampered execution binding or binding digest, manifest/blob corruption, and missing ledgers fail closed without repair. | `test_changed_trusted_run_record_rejects_unfrozen_execution_without_snapshot`, `test_persisted_snapshot_binding_tamper_is_stable_and_does_not_create`, factory tamper/deleted-ledger tests, and malformed-manifest test. | C/P passed |
+| Traversal, symlink/reparse, unapproved or empty paths, registered-root aliases/corrupt base, and fixed file/byte limits reject completely without clipping. | `test_unapproved_or_symlink_base_entry_is_rejected`, `test_repository_root_alias_is_rejected`, Git hardening test, and `test_limits_and_malformed_persisted_manifest_reject_without_partial_snapshot`. | C/P passed |
+| Freeze/read/replay have no Capacity/native/Host/Journal/model/Plan/qualification effects. | Snapshot/execution tests compare the real Capacity SQLite snapshot before and after; these test modules do not construct native, Host, Journal, provider, qualification or submit effects. | C/P passed for local absence; S not run |
+| #110/#111 binding, begin/replay, submitted receipt recovery, cancellation/source and concurrency regressions stay intact; checks pass. | `pytest --basetemp=/tmp/karajan-dg01-final3 tests/orchestration/test_planning_snapshot.py tests/runs/test_planning_execution.py tests/runs/test_planning_admission.py -q` on WSL Ubuntu, 2026-09-08: `77 passed in 18.95s`. | P passed |
+
+The initial Windows invocation could not enumerate its inherited
+`C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo` (`PermissionError` before
+tests); it is recorded as an environment failure, not product evidence. The
+reproducible candidate command above uses the required fresh Linux `/tmp`
+basetemp. Full native/provider qualification remains **not_run**; this leaf
+does not claim S evidence or transport authority for an historical snapshot.

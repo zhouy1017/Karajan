@@ -253,7 +253,7 @@ class PlanningRepositorySnapshotStore:
                 ).fetchall()
         except ExistingStoreError:
             raise RunError("PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE") from None
-        except sqlite3.Error:
+        except (sqlite3.Error, json.JSONDecodeError, TypeError):
             raise RunError("PLANNING_REPOSITORY_SNAPSHOT_CHANGED") from None
         try:
             if not isinstance(result, dict) or set(result) != {
@@ -295,9 +295,11 @@ class PlanningRepositorySnapshotStore:
                 )
                 or not isinstance(result["base_sha"], str)
                 or not isinstance(result["files"], list)
+                or len(result["files"]) > _MAX_FILES
                 or not isinstance(result["total_bytes"], int)
                 or isinstance(result["total_bytes"], bool)
                 or result["total_bytes"] < 0
+                or result["total_bytes"] > _MAX_BYTES
                 or result["snapshot_sha256"]
                 != digest({key: value for key, value in result.items() if key != "snapshot_sha256"})
             ):
@@ -320,6 +322,7 @@ class PlanningRepositorySnapshotStore:
                 expected[item["path"]] = item
             if (
                 not expected
+                or len(expected) > _MAX_FILES
                 or sum(item["size"] for item in expected.values()) != result["total_bytes"]
                 or len(blobs) != len(expected)
                 or any(

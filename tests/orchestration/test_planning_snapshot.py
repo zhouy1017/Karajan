@@ -1,8 +1,10 @@
 import json
 import sqlite3
 import subprocess
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+import karajan.orchestration.planning_snapshot as planning_snapshot
 import pytest
 from karajan.orchestration.planning_snapshot import PlanningRepositorySnapshotStore
 from karajan.runs import RunError
@@ -173,3 +175,91 @@ def test_repository_root_alias_is_rejected(tmp_path: Path):
     }
     with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SOURCE_INVALID$"):
         PlanningRepositorySnapshotStore(tmp_path / "snapshots.sqlite").freeze(binding, run, project)
+
+
+def test_limits_and_malformed_persisted_manifest_reject_without_partial_snapshot(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    root = tmp_path / "repo"
+    root.mkdir()
+    _git(root, "init")
+    (root / "input.txt").write_bytes(b"too large")
+    _git(root, "add", ".")
+    _git(root, "-c", "user.name=x", "-c", "user.email=x@y.z", "commit", "-m", "base")
+    binding = {
+        "execution_id": "execution",
+        "run_id": "run",
+        "intent_id": "intent",
+        "requirement_sha256": "a" * 64,
+        "authorization_ceiling_sha256": "c" * 64,
+    }
+    run = {
+        "project_id": "project",
+        "configuration_snapshot": {"project_revision": 1},
+        "authorization_ceiling": {"read_paths": ["input.txt"]},
+    }
+    project = {
+        "id": "project",
+        "revision": 1,
+        "repository": {
+            "root": str(root.resolve()),
+            "identity_sha256": "b" * 64,
+            "base_sha": _git(root, "rev-parse", "HEAD"),
+        },
+    }
+    database = tmp_path / "snapshots.sqlite"
+    monkeypatch.setattr(planning_snapshot, "_MAX_BYTES", 1)
+    store = PlanningRepositorySnapshotStore(database)
+    with pytest.raises(RunError, match="^PLANNING_SNAPSHOT_LIMIT_EXCEEDED$"):
+        store.freeze(binding, run, project)
+    with sqlite3.connect(database) as db:
+        assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 0
+        assert db.execute("SELECT count(*) FROM blobs").fetchone()[0] == 0
+
+    monkeypatch.setattr(planning_snapshot, "_MAX_BYTES", 8_000_000)
+    store.freeze(binding, run, project)
+    with sqlite3.connect(database) as db:
+        db.execute("UPDATE snapshots SET data=?", ("{not json",))
+    with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_CHANGED$"):
+        store.read(binding)
+
+
+def test_real_store_instances_concurrently_preserve_one_original_snapshot(tmp_path: Path):
+    root = tmp_path / "repo"
+    root.mkdir()
+    _git(root, "init")
+    (root / "input.txt").write_bytes(b"original bytes")
+    _git(root, "add", ".")
+    _git(root, "-c", "user.name=x", "-c", "user.email=x@y.z", "commit", "-m", "base")
+    binding = {
+        "execution_id": "execution",
+        "run_id": "run",
+        "intent_id": "intent",
+        "requirement_sha256": "a" * 64,
+        "authorization_ceiling_sha256": "c" * 64,
+    }
+    run = {
+        "project_id": "project",
+        "configuration_snapshot": {"project_revision": 1},
+        "authorization_ceiling": {"read_paths": ["input.txt"]},
+    }
+    project = {
+        "id": "project",
+        "revision": 1,
+        "repository": {
+            "root": str(root.resolve()),
+            "identity_sha256": "b" * 64,
+            "base_sha": _git(root, "rev-parse", "HEAD"),
+        },
+    }
+    database = tmp_path / "snapshots.sqlite"
+    stores = [PlanningRepositorySnapshotStore(database), PlanningRepositorySnapshotStore(database)]
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        results = list(workers.map(lambda store: store.freeze(binding, run, project), stores))
+    assert results[0] == results[1]
+    assert PlanningRepositorySnapshotStore(database).read(binding)["content"] == {
+        "input.txt": b"original bytes"
+    }
+    with sqlite3.connect(database) as db:
+        assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 1
+        assert db.execute("SELECT count(*) FROM blobs").fetchone()[0] == 1

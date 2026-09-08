@@ -3,6 +3,7 @@
 import hashlib
 import json
 import sqlite3
+import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from pathlib import Path
@@ -333,6 +334,161 @@ def test_cancelled_execution_cannot_create_a_first_repository_snapshot(
     with sqlite3.connect(database) as db:
         assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 0
     assert authorities.capacity.snapshot() == before
+
+
+@pytest.mark.parametrize("field", ["term", "configuration", "authorization"])
+def test_changed_trusted_run_record_rejects_unfrozen_execution_without_snapshot(
+    configured: dict, tmp_path: Path, field: str
+) -> None:
+    """The v1 binding is rebuilt from Run SQLite, never trusted from execution JSON."""
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    database = tmp_path / "snapshots.sqlite"
+    service.snapshots = PlanningRepositorySnapshotStore(database)
+    execution = service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
+    with service.planner._transaction() as db:
+        changed = service.planner._get(db, run["id"])
+        if field == "term":
+            changed["commander"]["term"] = 2
+        elif field == "configuration":
+            changed["configuration_snapshot"]["digest"] = "f" * 64
+        else:
+            changed["authorization_ceiling"]["read_paths"] = ["different"]
+        service.planner._save(db, changed)
+    before = authorities.capacity.snapshot()
+    with pytest.raises(RunError, match="^PLANNING_EXECUTION_BINDING_STALE$"):
+        service.freeze_repository_snapshot(execution["id"], principal="owner", command_key="freeze")
+    with sqlite3.connect(database) as db:
+        assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 0
+        assert db.execute("SELECT count(*) FROM blobs").fetchone()[0] == 0
+    assert authorities.capacity.snapshot() == before
+
+
+@pytest.mark.parametrize("tamper", ["binding", "binding_sha256"])
+def test_persisted_snapshot_binding_tamper_is_stable_and_does_not_create(
+    configured: dict, tmp_path: Path, tamper: str
+) -> None:
+    service, run, intent, _ = planning_case(tmp_path, configured)
+    database = tmp_path / "snapshots.sqlite"
+    service.snapshots = PlanningRepositorySnapshotStore(database)
+    execution = service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
+    with service._transaction() as db:
+        changed = service._load(db, execution["id"])
+        if tamper == "binding":
+            changed["binding"]["budget_ref"] = "forged"
+            changed["binding_sha256"] = digest(changed["binding"])
+        else:
+            changed["binding_sha256"] = "f" * 64
+        service._save(db, changed)
+    for operation in (
+        lambda: service.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="freeze"
+        ),
+        lambda: service.read_repository_snapshot(execution["id"], principal="owner"),
+    ):
+        with pytest.raises(RunError, match="^PLANNING_EXECUTION_BINDING_STALE$"):
+            operation()
+    with sqlite3.connect(database) as db:
+        assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 0
+
+
+def test_committed_snapshot_survives_lost_command_reply_cancel_and_source_change(
+    configured: dict, tmp_path: Path
+) -> None:
+    registry = configured["registry"]
+    project = registry.get(configured["id"])
+    root = Path(project["repository"]["root"])
+    (root / "src").mkdir(exist_ok=True)
+    (root / "tests").mkdir(exist_ok=True)
+    (root / "src" / "snapshot.txt").write_bytes(b"original snapshot\n")
+    (root / "tests" / "snapshot.txt").write_bytes(b"original test snapshot\n")
+    subprocess.run(
+        ["git", "-C", str(root), "add", "src/snapshot.txt", "tests/snapshot.txt"], check=True
+    )
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "-c",
+            "user.name=x",
+            "-c",
+            "user.email=x@y.z",
+            "commit",
+            "-m",
+            "snapshot",
+        ],
+        check=True,
+    )
+    registry.update(
+        project["id"],
+        {
+            "name": project["name"],
+            "base_ref": project["repository"]["base_ref"],
+            "target_branch": project["target_branch"],
+            "allowed_target_branches": project["allowed_target_branches"],
+        },
+        expected_revision=project["revision"],
+        command_key="registered-snapshot-base",
+        principal="owner",
+    )
+    configured.update(registry.get(project["id"]))
+    configured["registry"] = registry
+    service, run, intent, _ = planning_case(tmp_path, configured)
+    database = tmp_path / "snapshots.sqlite"
+    store = PlanningRepositorySnapshotStore(database)
+    service.snapshots = store
+    execution = service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
+
+    # This is the real first producer's committed snapshot transaction; only
+    # its controller reply/command receipt is lost.
+    committed = store.freeze(execution["binding"], run, registry.get(project["id"]))
+    service.cancel(execution["id"], principal="owner", command_key="cancel")
+    (root / "src" / "snapshot.txt").write_bytes(b"later source bytes\n")
+    subprocess.run(["git", "-C", str(root), "add", "src/snapshot.txt"], check=True)
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "-c",
+            "user.name=x",
+            "-c",
+            "user.email=x@y.z",
+            "commit",
+            "-m",
+            "later",
+        ],
+        check=True,
+    )
+    current = registry.get(project["id"])
+    registry.update(
+        project["id"],
+        {
+            "name": current["name"],
+            "base_ref": current["repository"]["base_ref"],
+            "target_branch": current["target_branch"],
+            "allowed_target_branches": current["allowed_target_branches"],
+        },
+        expected_revision=current["revision"],
+        command_key="later-source",
+        principal="owner",
+    )
+    reopened = PlanningExecution(
+        service.database, service.planner, snapshots=PlanningRepositorySnapshotStore(database)
+    )
+    assert (
+        reopened.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="lost-reply-key"
+        )
+        == committed
+    )
+    assert reopened.read_repository_snapshot(execution["id"], principal="owner")["content"] == {
+        "src/snapshot.txt": b"original snapshot\n",
+        "tests/snapshot.txt": b"original test snapshot\n",
+    }
+    with sqlite3.connect(database) as db:
+        assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 1
+        assert db.execute("SELECT count(*) FROM blobs").fetchone()[0] == 2
 
 
 def test_production_label_cannot_promote_a_test_double(configured: dict, tmp_path: Path) -> None:

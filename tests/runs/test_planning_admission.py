@@ -1572,6 +1572,7 @@ def test_persistent_factory_rebuilds_production_reader_and_reserves_nothing_with
 ) -> None:
     _, authority, _, execution = _case(tmp_path, configured)
     control = _protected_factory_control(tmp_path, authority)
+    provision_planning_repository_snapshots(control)
     service = PlanningExecution.from_trusted_factory(control)
     assert service.admissions is not None
     production = service.admissions.advance(execution["id"], "owner", "factory-admit")
@@ -1616,6 +1617,7 @@ def test_fixture_admission_cannot_be_relabelled_after_production_reopen(
     assert admitted["phase"] == "admitted"
     assert authority.read_admission(execution["binding"])["authority_kind"] == "fixture"
     control = _protected_factory_control(tmp_path, authority)
+    provision_planning_repository_snapshots(control)
     production = PlanningExecution.from_trusted_factory(control)
     assert production.admissions is not None
     with pytest.raises(RunError, match="PLANNING_ADMISSION_PROVENANCE_FORBIDDEN"):
