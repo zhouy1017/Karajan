@@ -334,20 +334,29 @@ class FixtureGoPlanningProducer:
         if self.runtime is None:
             relay.start()
         else:
+            runtime, work_root = self.runtime, self.work_root
+            if work_root is None:
+                raise RunError("PLANNING_NATIVE_CONFIGURATION_INVALID")
             socket_root = _relay_socket_root()
             socket = socket_root.path / "inference.sock"
             relay.start(unix_socket=socket)
-            self.work_root.mkdir(mode=0o700, parents=True, exist_ok=True)
-            directory = self.work_root / ("planning-" + binding["execution_id"])
+            work_root.mkdir(mode=0o700, parents=True, exist_ok=True)
+            directory = work_root / ("planning-" + binding["execution_id"])
+            projection_path = "planning-input.json"
             projection = {
-                "path": "planning-input.json",
+                "path": projection_path,
                 "sha256": hashlib.sha256(b"").hexdigest(),
                 "writable": False,
             }
             native = IsolatedOpenCode(
-                self.runtime, directory, socket, relay.capability, projection=[projection], no_tools=True
+                runtime,
+                directory,
+                socket,
+                relay.capability,
+                projection=[projection],
+                no_tools=True,
             )
-            (native.workspace / projection["path"]).write_bytes(b"")
+            (native.workspace / projection_path).write_bytes(b"")
         try:
             if native is None:
                 with httpx.Client(trust_env=False, timeout=10) as client:

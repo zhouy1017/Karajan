@@ -7,12 +7,10 @@ from pathlib import Path
 
 import httpx
 import pytest
-
 from karajan.adapters.opencode.go_context import GoRequestAccounting
 from karajan.adapters.opencode.go_journal import GoCallJournal
 from karajan.orchestration.planning_input import PlanningModelInput
 from karajan.orchestration.planning_transport import FixtureGoPlanningProducer
-
 
 pytestmark = pytest.mark.skipif(sys.platform != "linux", reason="Linux namespaces required")
 
