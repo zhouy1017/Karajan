@@ -68,6 +68,69 @@ class PlanningProducer(Protocol):
     ) -> bytes: ...
 
 
+def observe_production_output_source(
+    control_directory: Path, admissions: Any, binding: dict[str, Any]
+) -> dict[str, Any]:
+    """Read the live authority that makes a stored production output usable.
+
+    This is bound while the OutputAuthority is built. Recovery may call
+    ``PlanningExecution`` directly, so the arm-time source cannot become a
+    historical authority merely because no ``PlanningTransport`` was reopened.
+    The Commander reader performs the protected descriptor, runtime, tokenizer
+    and sealed-current-credential observation; this helper creates no grant,
+    reservation, or provider send.
+    """
+    from karajan.orchestration.go_commander_qualification import (
+        read_commander_qualification_settings,
+        validate_commander_qualification_settings,
+    )
+    from karajan.orchestration.planning_admission import (
+        COMMANDER_QUALIFICATION_READER_VERSION,
+        COMMANDER_QUALIFICATION_SCOPE,
+    )
+
+    settings, descriptor_sha256 = read_commander_qualification_settings(control_directory)
+    validate_commander_qualification_settings(admissions.planner.projects, settings)
+    current = admissions.current_output_source(binding)
+    qualification = admissions.qualifications.read_commander(
+        binding,
+        scope=COMMANDER_QUALIFICATION_SCOPE,
+        reader_version=COMMANDER_QUALIFICATION_READER_VERSION,
+    )
+    qualified = (
+        qualification
+        if isinstance(qualification, dict)
+        and qualification.get("schema_version") == "karajan.commander-qualification.v1"
+        and qualification.get("scope") == COMMANDER_QUALIFICATION_SCOPE
+        and qualification.get("reader_version") == COMMANDER_QUALIFICATION_READER_VERSION
+        and qualification.get("binding_sha256") == digest(binding)
+        and qualification.get("provenance") == "official"
+        and isinstance(qualification.get("source_generation_sha256"), str)
+        and isinstance(qualification.get("record_sha256"), str)
+        and isinstance(qualification.get("valid_until"), (int, float))
+        and qualification["valid_until"] > admissions.planner.clock()
+        else None
+    )
+    accounting = GoRequestAccounting(settings.tokenizer_directory)
+    return {
+        "schema_version": "karajan.production-go-planning-output-source.v2",
+        "binding_sha256": digest(binding),
+        "descriptor_sha256": descriptor_sha256,
+        "runtime_sha256": _sha256_file(settings.runtime),
+        "tokenizer_source": accounting.source(),
+        # This hash includes the sealed credential/authentication observation
+        # even when Commander is not currently qualified. Arm still succeeds
+        # in that case so admission records its specific durable denial.
+        "current_source_sha256": digest(current),
+        "qualification_source_sha256": (
+            qualified["source_generation_sha256"] if qualified is not None else None
+        ),
+        "qualification_record_sha256": (
+            qualified["record_sha256"] if qualified is not None else None
+        ),
+    }
+
+
 class PlanningOutputStore:
     """Durable OutputAuthority fed solely by a private planning producer."""
 
@@ -288,8 +351,6 @@ class PlanningTransport:
             raise RunError("PLANNING_OUTPUT_AUTHORITY_INVALID")
         self.execution, self.accounting = execution, accounting
         self.producer, self.outputs = producer, outputs
-        if producer.authority_kind == "production":
-            self.outputs.bind_source_reader(producer.source)
 
     @classmethod
     def from_trusted_factory(cls, control_directory: Path) -> PlanningTransport:
@@ -585,12 +646,14 @@ class FixtureGoPlanningProducer:
         *,
         timeout_seconds: int = 90,
         completion_guard: Callable[[], AbstractContextManager[dict[str, Any]]] | None = None,
+        start_native: bool = True,
     ) -> bytes:
         if type(timeout_seconds) is not int or timeout_seconds < 1:
             raise RunError("PLANNING_NATIVE_TIMEOUT_INVALID")
-        started = native.start()
-        if started.get("state") != "running":
-            raise RunError("PLANNING_NATIVE_START_FAILED")
+        if start_native:
+            started = native.start()
+            if started.get("state") != "running":
+                raise RunError("PLANNING_NATIVE_START_FAILED")
         session = native.request("POST", "/session", {"title": "Planning", "agent": "probe"})
         native.request(
             "POST",
@@ -612,6 +675,8 @@ class FixtureGoPlanningProducer:
             ]
             if complete:
                 with _allowed() if completion_guard is None else completion_guard():
+                    if len(complete) != 1:
+                        raise RunError("PLANNING_NATIVE_OUTPUT_AMBIGUOUS")
                     text = "".join(
                         part.get("text", "")
                         for part in complete[-1].get("parts", [])
@@ -687,25 +752,18 @@ class ProductionGoPlanningProducer:
         )
 
     def source(self, binding: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "schema_version": "karajan.production-go-planning-output-source.v1",
-            "binding_sha256": digest(binding),
-            "descriptor_sha256": self.descriptor_sha256,
-            "runtime_sha256": _sha256_file(self.runtime),
-            "tokenizer_source": self.accounting.source(),
-        }
+        if self.execution.admissions is None:
+            raise RunError("PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE")
+        return observe_production_output_source(
+            self.execution.admissions.control_directory, self.execution.admissions, binding
+        )
 
     def revalidate_source(self, binding: dict[str, Any]) -> dict[str, Any]:
         """Recheck current production authority before consuming old output."""
-        if self.execution.admissions is None:
-            raise RunError("PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE")
-        admissions: Any = self.execution.admissions
-        with admissions.effect_guard(
-            binding["execution_id"],
-            binding["owner"],
-            "planning-output-revalidate:" + binding["execution_id"],
-        ):
-            return self.source(binding)
+        # The OutputAuthority reader is deliberately read-only. Holding an
+        # admission effect guard here would retain execution/Run/Capacity while
+        # it re-enters the Project source reader, creating a nested DB lock.
+        return self.source(binding)
 
     def _authentication(self, binding: dict[str, Any]) -> tuple[dict[str, Any], Any]:
         run = self.execution.planner.get(binding["run_id"], principal=binding["owner"])
@@ -827,6 +885,7 @@ class ProductionGoPlanningProducer:
             native = None
             content: bytes | None = None
             relay_result: dict[str, Any] | None = None
+            native_cleanup: dict[str, Any] | None = None
             try:
                 socket = socket_root.path / "inference.sock"
                 relay.start(unix_socket=socket)
@@ -864,13 +923,34 @@ class ProductionGoPlanningProducer:
                         binding["owner"],
                         "planning-native-complete:" + binding["execution_id"],
                     ),
+                    start_native=False,
                 )
             finally:
                 if native is not None:
-                    native.close()
-                relay_result = relay.close()
-                _cleanup_relay_socket_root(socket_root)
-            if content is None or relay_result is None or relay_result["status"] != "closed":
+                    try:
+                        native_cleanup = native.close()
+                    except Exception:
+                        native_cleanup = {"local_stop": "unknown"}
+                try:
+                    relay_result = relay.close()
+                except Exception:
+                    relay_result = {"status": "unknown"}
+                if (
+                    native_cleanup is not None
+                    and native_cleanup.get("local_stop") == "confirmed"
+                    and relay_result.get("status") == "closed"
+                ):
+                    try:
+                        _cleanup_relay_socket_root(socket_root)
+                    except Exception:
+                        relay_result = {"status": "unknown"}
+            if (
+                content is None
+                or native_cleanup is None
+                or native_cleanup.get("local_stop") != "confirmed"
+                or relay_result is None
+                or relay_result.get("status") != "closed"
+            ):
                 raise RunError("PLANNING_NATIVE_CLEANUP_UNKNOWN")
             self._assert_completed_call(grant_id)
             return content

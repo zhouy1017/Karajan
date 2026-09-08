@@ -17,10 +17,14 @@ from pathlib import Path
 from threading import Barrier, Event
 from typing import Any
 
+import httpx
 import karajan.capacity.store as capacity_store
 import karajan.orchestration.planning_admission as planning_admission
 import karajan.orchestration.planning_snapshot as planning_snapshot
 import pytest
+from karajan.adapters.opencode.go_context import GoRequestAccounting
+from karajan.adapters.opencode.go_journal import GoCallJournal
+from karajan.adapters.opencode.go_relay import GoRelay
 from karajan.capacity import CapacityStore
 from karajan.orchestration.go_commander_qualification import (
     CommanderCredentialSource,
@@ -34,12 +38,16 @@ from karajan.orchestration.planning_admission import (
 )
 from karajan.orchestration.planning_bootstrap import PLANNING_ADMISSION_BOOTSTRAP
 from karajan.orchestration.planning_execution import PlanningExecution
+from karajan.orchestration.planning_input import PlanningModelInput
 from karajan.orchestration.planning_snapshot import (
     PlanningRepositorySnapshotStore,
     provision_planning_repository_snapshots,
     snapshot_database,
 )
-from karajan.orchestration.planning_transport import PlanningOutputStore
+from karajan.orchestration.planning_transport import (
+    PlanningOutputStore,
+    ProductionGoPlanningProducer,
+)
 from karajan.projects import ProjectRegistry
 from karajan.projects.credential_sources import (
     CredentialSourceError,
@@ -259,6 +267,68 @@ def _case(
     return PlanningExecution(tmp_path / "planning.sqlite", planner), authority, run, execution
 
 
+class _LocalPlanningCredential:
+    def reveal(self) -> str:
+        return "local-planning-fixture-secret"
+
+
+class _LocalPlanningCredentials:
+    def current(self, project_id: str, auth_ref: str, *, principal: str) -> dict[str, Any]:
+        del project_id, auth_ref, principal
+        return {"generation": "local-fixture-generation", "source": {"id": "fixture"}}
+
+    def resolve_exact(
+        self, project_id: str, auth_ref: str, generation: str, *, principal: str
+    ) -> _LocalPlanningCredential:
+        del project_id, auth_ref, generation, principal
+        return _LocalPlanningCredential()
+
+
+def _native_model_input(accounting: GoRequestAccounting) -> PlanningModelInput:
+    request = {
+        "model": "glm-5.3-flash",
+        "stream": True,
+        "max_tokens": 1024,
+        "messages": [
+            {"role": "system", "content": "Return only JSON."},
+            {"role": "user", "content": "Return one plan."},
+        ],
+        "reasoning_effort": "max",
+        "clear_thinking": False,
+    }
+    payload = json.dumps(request, separators=(",", ":")).encode()
+    return PlanningModelInput.model_construct(
+        request=request,
+        request_bytes=payload,
+        artifact_bytes=payload,
+        artifact_sha256="a" * 64,
+        accounting_source=accounting.source(),
+        execution_policy={
+            "max_context_tokens": 7168,
+            "context_policy": {"reserved_output_tokens": 1024},
+        },
+    )
+
+
+def _local_response() -> httpx.Response:
+    body = {
+        "model": "glm-5.3-flash",
+        "choices": [
+            {
+                "index": 0,
+                "delta": {"content": '{"summary":"native"}', "tool_calls": None},
+                "finish_reason": "stop",
+            }
+        ],
+        "usage": {"prompt_tokens": 20, "completion_tokens": 2, "total_tokens": 22},
+    }
+    return httpx.Response(
+        200,
+        headers={"content-type": "text/event-stream"},
+        content=("data: " + json.dumps(body) + "\n\ndata: [DONE]\n\n").encode(),
+    )
+
+
 def test_two_intents_share_the_original_frozen_planning_budget(
     configured: dict, tmp_path: Path
 ) -> None:
@@ -286,6 +356,158 @@ def test_two_intents_share_the_original_frozen_planning_budget(
     assert denied["phase"] == "denied"
     assert denied["reason_codes"] == ["PLANNING_BUDGET_EXHAUSTED"]
     assert len(authority.capacity.snapshot()["reservations"]) == 1
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="native planning requires Linux namespaces")
+def test_production_native_send_releases_guard_for_cancelled_wait(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The real production producer does not hold the admission lock while waiting.
+
+    The Commander facts are the explicit fixture authority used throughout this
+    C/P test module.  The producer, admission effect guard, Journal, Relay and
+    isolated OpenCode process are production code; only the upstream response
+    is local and no provider credential or qualification is forged.
+    """
+    runtime = os.environ.get("KARAJAN_GO_RUNTIME")
+    tokenizer = os.environ.get("KARAJAN_GO_TOKENIZER_DIRECTORY")
+    if runtime is None or tokenizer is None:
+        pytest.skip("prepared native runtime and tokenizer are required")
+    service, authority, run, execution = _case(tmp_path, configured)
+    service.admissions = authority
+    admitted = authority.advance(execution["id"], "owner", "native-admit")
+    assert admitted["phase"] == "admitted"
+    accounting = GoRequestAccounting(Path(tokenizer))
+    journal = GoCallJournal(tmp_path / "production-journal.sqlite")
+    entered, release = Event(), Event()
+
+    class DelayedResponse(httpx.SyncByteStream):
+        def __iter__(self) -> Any:
+            entered.set()
+            assert release.wait(timeout=10)
+            yield _local_response().content
+
+    def upstream(_request: httpx.Request) -> httpx.Response:
+        # MockTransport calls this synchronously while client.stream opens.
+        # Delay body iteration instead, which is the real response wait after
+        # the relay has released its one send guard.
+        return httpx.Response(
+            200, headers={"content-type": "text/event-stream"}, stream=DelayedResponse()
+        )
+
+    class LocalRelay(GoRelay):
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            kwargs["client_factory"] = lambda: httpx.Client(
+                transport=httpx.MockTransport(upstream), trust_env=False
+            )
+            super().__init__(*args, **kwargs)
+
+    monkeypatch.setattr("karajan.orchestration.planning_transport.GoRelay", LocalRelay)
+    producer = ProductionGoPlanningProducer(
+        service,
+        accounting,
+        journal,
+        Path(runtime),
+        tmp_path / "native-work",
+        _LocalPlanningCredentials(),
+        "b" * 64,
+    )
+    # This is only the local native-wait bound. It does not alter the admitted
+    # Capacity request or the Run budget; the test needs a bounded producer
+    # teardown after proving cancellation was not blocked by the send guard.
+    native_admission = {**admitted, "estimate": {**admitted["estimate"], "duration_seconds": 15}}
+    with ThreadPoolExecutor(max_workers=1) as workers:
+        pending = workers.submit(
+            producer.produce,
+            _native_model_input(accounting),
+            binding=execution["binding"],
+            admission=native_admission,
+        )
+        if not entered.wait(timeout=20):
+            assert pending.done(), "relay never crossed its production send guard"
+            pending.result()
+        cancelled_at = time.monotonic()
+        cancelled = service.cancel(execution["id"], principal="owner", command_key="cancel-wait")
+        assert time.monotonic() - cancelled_at < 2
+        assert cancelled["state"] == "cancelled"
+        release.set()
+        with pytest.raises(RunError) as failed:
+            pending.result(timeout=30)
+        assert failed.value.code in {
+            "PLANNING_EXECUTION_CANCELLED",
+            "PLANNING_EFFECT_NOT_ADMITTED",
+            "PLANNING_NATIVE_TIMEOUT",
+        }
+    assert service.planner.get(run["id"], principal="owner")["plans"] == []
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="native planning requires Linux namespaces")
+@pytest.mark.parametrize("failure", ["journal", "cleanup"])
+def test_production_native_output_requires_durable_completion_and_cleanup(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str
+) -> None:
+    """Delivered relay bytes never become output when durable proof is incomplete."""
+    runtime = os.environ.get("KARAJAN_GO_RUNTIME")
+    tokenizer = os.environ.get("KARAJAN_GO_TOKENIZER_DIRECTORY")
+    if runtime is None or tokenizer is None:
+        pytest.skip("prepared native runtime and tokenizer are required")
+    service, authority, run, execution = _case(tmp_path, configured)
+    service.admissions = authority
+    admitted = authority.advance(execution["id"], "owner", "native-admit")
+    assert admitted["phase"] == "admitted"
+    accounting = GoRequestAccounting(Path(tokenizer))
+    journal = GoCallJournal(tmp_path / "production-journal.sqlite")
+
+    class LocalRelay(GoRelay):
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            kwargs["client_factory"] = lambda: httpx.Client(
+                transport=httpx.MockTransport(lambda _request: _local_response()), trust_env=False
+            )
+            super().__init__(*args, **kwargs)
+
+    monkeypatch.setattr("karajan.orchestration.planning_transport.GoRelay", LocalRelay)
+    if failure == "journal":
+        monkeypatch.setattr(
+            journal,
+            "complete_call",
+            lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("journal failed")),
+        )
+    else:
+        from karajan.isolation.opencode_runtime import IsolatedOpenCode
+
+        original_close = IsolatedOpenCode.close
+
+        def incomplete_close(native: IsolatedOpenCode) -> dict[str, Any]:
+            original_close(native)
+            return {"local_stop": "unknown"}
+
+        monkeypatch.setattr(IsolatedOpenCode, "close", incomplete_close)
+    producer = ProductionGoPlanningProducer(
+        service,
+        accounting,
+        journal,
+        Path(runtime),
+        tmp_path / "native-work",
+        _LocalPlanningCredentials(),
+        "b" * 64,
+    )
+    native_admission = {**admitted, "estimate": {**admitted["estimate"], "duration_seconds": 90}}
+
+    expected = (
+        "PLANNING_NATIVE_COMPLETION_UNKNOWN"
+        if failure == "journal"
+        else "PLANNING_NATIVE_CLEANUP_UNKNOWN"
+    )
+    with pytest.raises(RunError, match=rf"^{expected}$"):
+        producer.produce(
+            _native_model_input(
+                accounting
+            ), binding=execution["binding"], admission=native_admission
+        )
+    snapshot = journal.snapshot("planning-native-" + execution["id"])
+    if failure == "journal":
+        assert snapshot["calls"][0]["state"] == "send_unknown"
+    assert service.planner.get(run["id"], principal="owner")["plans"] == []
 
 
 def test_two_runs_contend_for_commander_protected_full_capacity_vector(
@@ -1908,6 +2130,64 @@ def test_persistent_factory_rebuilds_production_reader_and_reserves_nothing_with
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
+def test_factory_output_arm_preserves_missing_commander_as_durable_denial(
+    configured: dict, tmp_path: Path
+) -> None:
+    """Output source observation must not bypass the ordinary Commander denial."""
+    runtime = os.environ.get("KARAJAN_GO_RUNTIME")
+    tokenizer = os.environ.get("KARAJAN_GO_TOKENIZER_DIRECTORY")
+    if runtime is None or tokenizer is None:
+        pytest.skip("prepared runtime and tokenizer are required")
+    _, authority, run, execution = _case(tmp_path, configured)
+    credential_private = tmp_path / "output-source-private"
+    key = credential_private / "source.key"
+    profile = run["configuration_snapshot"]["configuration"]["resources"]["profiles"][0]
+    auth_ref = profile["profile"]["auth_ref"]
+    credentials = CredentialSourceStore(
+        authority.planner.projects,
+        sources={(run["project_id"], auth_ref): LocalKeyFile("output-source", key)},
+        private_directory=credential_private,
+    )
+    key.write_text("local-source-fixture\n", encoding="utf-8")
+    key.chmod(0o600)
+    credentials.register(
+        run["project_id"], auth_ref, principal="owner", command_key="source-register"
+    )
+    control = _protected_factory_control(tmp_path, authority)
+    journal_path = credential_private / "journal.sqlite"
+    GoCallJournal(journal_path)
+    journal_path.chmod(0o600)
+    work_root = credential_private / "work"
+    work_root.mkdir(mode=0o700)
+    write_commander_qualification_settings(
+        control,
+        CommanderQualificationSettings(
+            Path(runtime),
+            Path(tokenizer),
+            credential_private,
+            (CommanderCredentialSource(run["project_id"], auth_ref, "output-source", key),),
+            journal_path=journal_path,
+            work_root=work_root,
+        ),
+    )
+    ledger = tmp_path / "protected-state" / "planning-output.sqlite"
+    PlanningOutputStore(ledger, authority_kind="production")
+    ledger.chmod(0o600)
+
+    reopened = PlanningExecution.from_trusted_factory(control)
+    assert reopened.outputs is not None
+    reader = reopened.outputs._source_reader
+    assert callable(reader)
+    reopened.outputs.arm(execution["binding"], reader(execution["binding"]))
+    denied = reopened.admissions.advance(execution["id"], "owner", "missing-commander")
+
+    assert denied["phase"] == "denied"
+    assert denied["reason_codes"] == ["COMMANDER_QUALIFICATION_REQUIRED"]
+    assert reopened.capacity is not None
+    assert reopened.capacity.snapshot()["reservations"] == []
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
 def test_persistent_factory_requires_complete_existing_store_set(
     configured: dict, tmp_path: Path
 ) -> None:
@@ -1954,6 +2234,68 @@ def test_persistent_factory_rejects_output_ledger_alias_without_writes(
     with pytest.raises(RunError, match="^PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE$"):
         PlanningExecution.from_trusted_factory(control)
     assert external.read_bytes() == before
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
+def test_retained_factory_rejects_replaced_output_ledger(
+    configured: dict, tmp_path: Path
+) -> None:
+    """The output authority keeps its original private inode through recovery."""
+    _, authority, _, execution = _case(tmp_path, configured)
+    control = _protected_factory_control(tmp_path, authority)
+    state = tmp_path / "protected-state"
+    ledger = state / "planning-output.sqlite"
+    PlanningOutputStore(ledger, authority_kind="production")
+    ledger.chmod(0o600)
+    retained = PlanningExecution.from_trusted_factory(control)
+    replacement = tmp_path / "replacement-output.sqlite"
+    shutil.copy2(ledger, replacement)
+    replacement.replace(ledger)
+
+    with pytest.raises(RunError, match="^PLANNING_ADMISSION_BOOTSTRAP_CHANGED$"):
+        retained.get(execution["id"], principal="owner")
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
+def test_direct_factory_submit_rechecks_live_output_source_before_claim(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A recovered execution cannot accept output armed under a stale source."""
+    service, authority, run, execution = _case(tmp_path, configured)
+    source_version = {"value": "before"}
+
+    def live_source(_control: Path, _admissions: Any, binding: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "schema_version": "test.live-output-source.v1",
+            "binding_sha256": digest(binding),
+            "source": source_version["value"],
+        }
+
+    monkeypatch.setattr(
+        "karajan.orchestration.planning_transport.observe_production_output_source",
+        live_source,
+    )
+    source = live_source(tmp_path, authority, execution["binding"])
+    with service._transaction() as db:
+        pending = service._load(db, execution["id"])
+        pending["state"] = "awaiting_output"
+        pending["output_source_sha256"] = digest(source)
+        service._save(db, pending)
+    control = _protected_factory_control(tmp_path, authority)
+    ledger = tmp_path / "protected-state" / "planning-output.sqlite"
+    raw_outputs = PlanningOutputStore(ledger, authority_kind="production")
+    raw_outputs.arm(execution["binding"], source)
+    raw_outputs.publish(execution["binding"], b'{"summary":"stale"}')
+    ledger.chmod(0o600)
+
+    recovered = PlanningExecution.from_trusted_factory(control)
+    assert recovered.outputs is not None
+    source_version["value"] = "after"
+    result = recovered.submit(execution["id"], principal="owner", command_key="direct-stale")
+
+    assert result["state"] == "blocked"
+    assert result["reason_codes"] == ["PLANNING_OUTPUT_SOURCE_INVALID"]
+    assert recovered.planner.get(run["id"], principal="owner")["plans"] == []
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")

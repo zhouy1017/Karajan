@@ -11,6 +11,7 @@ from karajan.adapters.opencode.go_context import GoRequestAccounting
 from karajan.adapters.opencode.go_journal import GoCallJournal
 from karajan.orchestration.planning_input import PlanningModelInput
 from karajan.orchestration.planning_transport import FixtureGoPlanningProducer
+from karajan.runs import RunError
 
 pytestmark = pytest.mark.skipif(sys.platform != "linux", reason="Linux namespaces required")
 
@@ -83,3 +84,35 @@ def test_native_fixture_relay_journal_returns_only_final_assistant_content(tmp_p
     journal = producer.journal.snapshot("planning-execution")
     assert journal["calls"][0]["outcome"]["protocol_passed"] is True
     assert journal["state"] == "revoked"
+
+
+def test_native_output_rejects_multiple_completed_assistant_finals() -> None:
+    """Shared production completion logic cannot choose an arbitrary last final."""
+
+    class Native:
+        def start(self) -> dict[str, object]:
+            return {"state": "running"}
+
+        def request(self, method: str, route: str, body: object = None) -> object:
+            del body
+            if method == "POST" and route == "/session":
+                return {"id": "one"}
+            if method == "POST":
+                return {}
+            return [
+                {
+                    "info": {"role": "assistant", "time": {"completed": 1}, "finish": "stop"},
+                    "parts": [{"type": "text", "text": "first"}],
+                },
+                {
+                    "info": {"role": "assistant", "time": {"completed": 2}, "finish": "stop"},
+                    "parts": [{"type": "text", "text": "second"}],
+                },
+            ]
+
+    model_input = PlanningModelInput.model_construct(
+        request={"messages": [{}, {"content": "prompt"}]},
+        request_bytes=b"{}",
+    )
+    with pytest.raises(RunError, match="^PLANNING_NATIVE_OUTPUT_AMBIGUOUS$"):
+        FixtureGoPlanningProducer._native_output(Native(), model_input, timeout_seconds=1)  # type: ignore[arg-type]

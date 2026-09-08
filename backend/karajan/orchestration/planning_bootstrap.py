@@ -307,7 +307,10 @@ def provision_planning_bootstrap(
         execution = PlanningExecution(state / "planning-execution.sqlite", planner)
         from karajan.orchestration.planning_transport import PlanningOutputStore
 
-        PlanningOutputStore(state / "planning-output.sqlite", authority_kind="production")
+        output_ledger = state / "planning-output.sqlite"
+        PlanningOutputStore(output_ledger, authority_kind="production")
+        output_ledger.chmod(0o600)
+        _private(output_ledger)
 
         class NoCommanderFacts:
             def read_commander(

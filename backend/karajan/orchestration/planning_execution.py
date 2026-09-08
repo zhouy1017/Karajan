@@ -200,9 +200,20 @@ class PlanningExecution:
                 output_database = _canonical_existing(str(output_database), directory=False)
                 from karajan.projects.credential_sources import _private
 
+                from .planning_transport import observe_production_output_source
+
                 _private(output_database)
                 outputs = PlanningOutputStore(
                     output_database, authority_kind="production", existing_only=True
+                )
+                # This binding is owned by the execution factory itself. A
+                # direct submit/recovery does not construct PlanningTransport,
+                # yet it must re-observe the current Commander authority before
+                # accepting an unclaimed persisted output.
+                outputs.bind_source_reader(
+                    lambda binding: observe_production_output_source(
+                        settings.control_directory, admissions, binding
+                    )
                 )
             except (OSError, RunError, ValueError, sqlite3.Error) as error:
                 raise RunError("PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE") from error

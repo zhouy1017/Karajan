@@ -176,6 +176,27 @@ class PersistentCommanderQualificationReader:
             project_database=self.planner.projects.database,
         ).source(current, generation)
 
+    def current_output_source(self, binding: dict[str, Any]) -> dict[str, Any]:
+        """Read current protected producer material without requiring a pass.
+
+        Output arming precedes admission.  A missing or failed Commander record
+        must therefore remain an ordinary durable admission denial, rather than
+        becoming a transport-only source exception.  This retains only the
+        Project reader transaction needed for the existing sealed-current
+        credential observation and never enters Capacity or an effect guard.
+        """
+        run = self.planner.get(binding["run_id"], principal=binding["owner"])
+        registration = self._registration(run, binding)
+        if registration is None:
+            raise RunError("COMMANDER_SOURCE_UNAVAILABLE")
+        with self.qualifications._owned(run["project_id"], binding["owner"]) as db:
+            current = self.qualifications._binding(
+                db,
+                run["project_id"],
+                {"id": registration["id"], "revision": registration["revision"]},
+            )
+            return self._current_source(db, run["project_id"], current, binding["owner"])
+
     @staticmethod
     def _registration(run: dict[str, Any], binding: dict[str, Any]) -> dict[str, Any] | None:
         """Resolve the frozen Commander profile without inventing a Plan."""
@@ -1539,6 +1560,13 @@ class PlanningAdmissionAuthority:
             record["reason_codes"] = activation.get("reason_codes", [])
             self._save(db, record)
         return self._finish_command(record, principal, command_key, payload)
+
+    def current_output_source(self, binding: dict[str, Any]) -> dict[str, Any]:
+        """Expose the read-only current Commander material to OutputAuthority."""
+        reader = getattr(self.qualifications, "current_output_source", None)
+        if not callable(reader):
+            raise RunError("COMMANDER_SOURCE_UNAVAILABLE")
+        return reader(binding)
 
     def read_admission(self, binding: dict[str, Any]) -> object:
         """Read the original durable record only; it never calls Capacity."""
