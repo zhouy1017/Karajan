@@ -1,5 +1,7 @@
 """Business Relay grants stay distinct from legacy and qualification records."""
 
+import hashlib
+import json
 import os
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
@@ -194,21 +196,22 @@ def test_business_grant_uses_relay_journal_and_actual_accounting(
     journal = GoCallJournal(tmp_path / "journal.sqlite", clock=lambda: 1000.0)
     grant = journal.create_grant(binding, grant_id="grant")
     upstream = []
-    fields = {
-        key: binding[key]
-        for key in (
-            ("planning_binding_sha256", "admission_sha256", "input_sha256")
-            if context_type is GoPlanningRelayContext
-            else ("review_binding_sha256", "reviewer_input_sha256", "candidate_checks_sha256")
-        )
-    }
-    context = context_type(accounting=accounting, **binding["context"], **fields)
+    context = _business_context(accounting, binding, context_type)
 
     def receive(request):
         snapshot = journal.snapshot("grant")
         assert snapshot["request_count"] == 1
-        assert snapshot["calls"][0]["state"] == "send_unknown"
-        assert snapshot["calls"][0]["request_context"]["source_sha256"] == source
+        call = snapshot["calls"][0]
+        assert call["state"] == "send_unknown"
+        actual_payload = json.loads(request.content)
+        expected = accounting.measure(
+            actual_payload,
+            **{key: value for key, value in binding["context"].items() if key != "source_sha256"},
+        )
+        assert call["request_context"] == expected
+        assert call["request_context"]["request_digest"] == hashlib.sha256(
+            request.content
+        ).hexdigest()
         upstream.append(request)
         return answer(stream(event(usage={"prompt_tokens": 20, "completion_tokens": 2})))
 
@@ -228,7 +231,19 @@ def test_business_grant_uses_relay_journal_and_actual_accounting(
     finally:
         relay.close()
     assert len(upstream) == 1
-    assert journal.snapshot("grant")["calls"][0]["state"] == "response_received"
+    reopened = GoCallJournal(journal.path, clock=lambda: 1001.0)
+    reopened_snapshot = reopened.snapshot("grant")
+    call = reopened_snapshot["calls"][0]
+    assert call["call_id"] == relay.receipts[0]["journal_call_id"]
+    assert reopened_snapshot["binding"] == binding
+    assert call["request_context"]["request_digest"] == hashlib.sha256(
+        upstream[0].content
+    ).hexdigest()
+    assert call["outcome"]["state"] == "response_received"
+    assert call["outcome"]["usage"] == {"prompt_tokens": 20, "completion_tokens": 2}
+    assert call["outcome"]["protocol_passed"] is True
+    assert relay.receipts[0]["usage"] == {"prompt_tokens": 20, "completion_tokens": 2}
+    assert relay.receipts[0]["protocol_passed"] is True
 
 
 @contextmanager
@@ -248,34 +263,19 @@ def test_business_relay_rejects_invalid_authority_before_journal_or_upstream(
     binding = factory(source)
     journal = GoCallJournal(tmp_path / "journal.sqlite", clock=lambda: 1000.0)
     grant = journal.create_grant(binding, grant_id="grant")
-    fields = {
-        key: binding[key]
-        for key in (
-            ("planning_binding_sha256", "admission_sha256", "input_sha256")
-            if context_type is GoPlanningRelayContext
-            else ("review_binding_sha256", "reviewer_input_sha256", "candidate_checks_sha256")
-        )
-    }
-    context = context_type(accounting=accounting, **binding["context"], **fields)
+    context = _business_context(accounting, binding, context_type)
     if fault == "cross":
         other = _reviewer(source) if context_type is GoPlanningRelayContext else _planning(source)
-        other_fields = {
-            key: other[key]
-            for key in (
-                ("review_binding_sha256", "reviewer_input_sha256", "candidate_checks_sha256")
-                if context_type is GoPlanningRelayContext
-                else ("planning_binding_sha256", "admission_sha256", "input_sha256")
-            )
-        }
         other_type = (
             GoReviewerRelayContext
             if context_type is GoPlanningRelayContext
             else GoPlanningRelayContext
         )
-        context = other_type(accounting=accounting, **other["context"], **other_fields)
+        context = _business_context(accounting, other, other_type)
     elif fault == "source":
         changed = {**binding["context"], "source_sha256": "0" * 64}
-        context = context_type(accounting=accounting, **changed, **fields)
+        changed_binding = {**binding, "context": changed}
+        context = _business_context(accounting, changed_binding, context_type)
     upstream = []
     relay = GoRelay(
         SECRET,
@@ -393,6 +393,154 @@ def _tool_event(name: str) -> bytes:
     )
 
 
+def _tool_request(name: str, variant: str) -> dict[str, object]:
+    request = payload()
+    if variant == "declaration":
+        request["tools"] = [{"type": "function", "function": {"name": name, "parameters": {}}}]
+    else:
+        request["messages"] = [
+            {"role": "user", "content": "Inspect this candidate."},
+            {
+                "role": "assistant",
+                "content": None,
+                "tool_calls": [
+                    {
+                        "id": "call_1",
+                        "type": "function",
+                        "function": {"name": name, "arguments": "{}"},
+                    }
+                ],
+            },
+            {"role": "tool", "tool_call_id": "call_1", "content": "source"},
+            {"role": "user", "content": "Continue."},
+        ]
+    return request
+
+
+@pytest.mark.parametrize("variant", ["declaration", "assistant_tool_calls_and_history"])
+@pytest.mark.parametrize("name", ["read", "edit", "shell", "mcp", "unknown"])
+def test_business_planning_rejects_every_request_tool_variant_before_send(
+    tmp_path, accounting, variant, name
+):
+    binding = _planning(digest(accounting.source()))
+    journal = GoCallJournal(tmp_path / "journal.sqlite", clock=lambda: 1000.0)
+    grant = journal.create_grant(binding, grant_id="grant")
+    upstream = []
+    relay = _business_relay(
+        journal,
+        grant,
+        binding,
+        _business_context(accounting, binding, GoPlanningRelayContext),
+        _allowed,
+        upstream,
+        lambda _: _metered_answer(),
+    )
+    relay.start()
+    try:
+        assert post(relay, _tool_request(name, variant)).status_code == 403
+    finally:
+        relay.close()
+    assert journal.snapshot("grant")["calls"] == []
+    assert upstream == []
+
+
+@pytest.mark.parametrize("name", ["read", "edit", "shell", "mcp", "unknown"])
+def test_business_planning_rejects_every_returned_tool_variant_after_accounted_send(
+    tmp_path, accounting, name
+):
+    binding = _planning(digest(accounting.source()))
+    journal = GoCallJournal(tmp_path / "journal.sqlite", clock=lambda: 1000.0)
+    grant = journal.create_grant(binding, grant_id="grant")
+    upstream = []
+    relay = _business_relay(
+        journal,
+        grant,
+        binding,
+        _business_context(accounting, binding, GoPlanningRelayContext),
+        _allowed,
+        upstream,
+        lambda _: answer(_tool_event(name)),
+    )
+    relay.start()
+    try:
+        assert post(relay).status_code == 502
+        assert post(relay).status_code == 503
+    finally:
+        relay.close()
+    saved = journal.snapshot("grant")
+    assert len(upstream) == saved["request_count"] == 1
+    assert saved["calls"][0]["state"] == "response_received"
+    assert saved["calls"][0]["outcome"]["protocol_passed"] is False
+
+
+@pytest.mark.parametrize("variant", ["declaration", "assistant_tool_calls_and_history", "returned"])
+def test_business_reviewer_allows_read_through_relay_journal_and_stream_identity(
+    tmp_path, accounting, variant
+):
+    binding = _reviewer(digest(accounting.source()))
+    journal = GoCallJournal(tmp_path / "journal.sqlite", clock=lambda: 1000.0)
+    grant = journal.create_grant(binding, grant_id="grant")
+    upstream = []
+    relay = _business_relay(
+        journal,
+        grant,
+        binding,
+        _business_context(accounting, binding, GoReviewerRelayContext),
+        _allowed,
+        upstream,
+        lambda _: answer(
+            _tool_event("read") if variant == "returned" else _metered_answer().content
+        ),
+    )
+    relay.start()
+    try:
+        request = _tool_request("read", variant) if variant != "returned" else payload()
+        assert post(relay, request).status_code == 200, relay.receipts
+    finally:
+        relay.close()
+    saved = GoCallJournal(journal.path, clock=lambda: 1001.0).snapshot("grant")
+    assert len(upstream) == saved["request_count"] == 1
+    assert saved["calls"][0]["state"] == "response_received"
+    assert saved["calls"][0]["outcome"]["protocol_passed"] is True
+    assert relay.receipts[0]["tool_names"] == (["read"] if variant == "returned" else [])
+
+
+@pytest.mark.parametrize("variant", ["declaration", "assistant_tool_calls_and_history", "returned"])
+@pytest.mark.parametrize("name", ["edit", "shell", "mcp", "unknown"])
+def test_business_reviewer_rejects_nonread_tool_identities_with_correct_send_boundary(
+    tmp_path, accounting, variant, name
+):
+    binding = _reviewer(digest(accounting.source()))
+    journal = GoCallJournal(tmp_path / "journal.sqlite", clock=lambda: 1000.0)
+    grant = journal.create_grant(binding, grant_id="grant")
+    upstream = []
+    relay = _business_relay(
+        journal,
+        grant,
+        binding,
+        _business_context(accounting, binding, GoReviewerRelayContext),
+        _allowed,
+        upstream,
+        lambda _: answer(_tool_event(name) if variant == "returned" else _metered_answer().content),
+    )
+    relay.start()
+    try:
+        request = _tool_request(name, variant) if variant != "returned" else payload()
+        assert post(relay, request).status_code == (502 if variant == "returned" else 403)
+        if variant == "returned":
+            assert post(relay).status_code == 503
+    finally:
+        relay.close()
+    saved = journal.snapshot("grant")
+    if variant == "returned":
+        assert len(upstream) == saved["request_count"] == 1
+        assert saved["calls"][0]["state"] == "response_received"
+        assert saved["calls"][0]["outcome"]["protocol_passed"] is False
+    else:
+        assert saved["calls"] == []
+        assert upstream == []
+
+
 @pytest.mark.parametrize(
     "factory, context_type",
     [(_planning, GoPlanningRelayContext), (_reviewer, GoReviewerRelayContext)],
@@ -400,22 +548,14 @@ def _tool_event(name: str) -> bytes:
 @pytest.mark.parametrize(
     "response", ["tool", "malformed", "missing_usage", "over_input", "over_output"]
 )
-def test_business_response_failures_remain_unknown_and_withdraw_future_send(
+def test_business_response_validation_failures_are_accounted_and_withdraw_future_send(
     tmp_path, accounting, factory, context_type, response
 ):
     source = digest(accounting.source())
     binding = factory(source)
     journal = GoCallJournal(tmp_path / "journal.sqlite", clock=lambda: 1000.0)
     grant = journal.create_grant(binding, grant_id="grant")
-    fields = {
-        key: binding[key]
-        for key in (
-            ("planning_binding_sha256", "admission_sha256", "input_sha256")
-            if context_type is GoPlanningRelayContext
-            else ("review_binding_sha256", "reviewer_input_sha256", "candidate_checks_sha256")
-        )
-    }
-    context = context_type(accounting=accounting, **binding["context"], **fields)
+    context = _business_context(accounting, binding, context_type)
     upstream = []
 
     def receive(request):
@@ -470,15 +610,7 @@ def test_business_guard_rechecks_current_withdrawal_before_each_send(
     binding = factory(source)
     journal = GoCallJournal(tmp_path / "journal.sqlite", clock=lambda: 1000.0)
     grant = journal.create_grant(binding, grant_id="grant")
-    fields = {
-        key: binding[key]
-        for key in (
-            ("planning_binding_sha256", "admission_sha256", "input_sha256")
-            if context_type is GoPlanningRelayContext
-            else ("review_binding_sha256", "reviewer_input_sha256", "candidate_checks_sha256")
-        )
-    }
-    context = context_type(accounting=accounting, **binding["context"], **fields)
+    context = _business_context(accounting, binding, context_type)
     current = {"allowed": True, "enters": 0}
     upstream = []
 
@@ -619,7 +751,7 @@ def test_business_lost_begin_reply_keeps_one_unknown_slot_without_replay_or_refu
 
 
 @pytest.mark.parametrize("factory, context_type", _BUSINESS_CONTEXTS)
-def test_business_lost_completion_keeps_unknown_without_a_retry_or_refund(
+def test_business_lost_completion_acknowledgement_keeps_unknown_without_a_retry_or_refund(
     tmp_path, accounting, factory, context_type, monkeypatch
 ):
     source = digest(accounting.source())

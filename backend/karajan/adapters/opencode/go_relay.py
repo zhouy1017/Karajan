@@ -405,8 +405,43 @@ class GoRelayContext:
         )
 
 
+class _BusinessRelayAccounting:
+    """Shared accounting only; business authority remains on the typed contexts."""
+
+    accounting: GoRequestAccounting
+    source_sha256: str
+    approved_input_tokens: int
+    reserved_output_tokens: int
+    operating_context_tokens: int
+    fixed_margin: int
+    ratio_margin_basis_points: int
+
+    def limits(self) -> dict[str, Any]:
+        return GoBusinessRequestLimits.model_validate(
+            {
+                "source_sha256": self.source_sha256,
+                "approved_input_tokens": self.approved_input_tokens,
+                "reserved_output_tokens": self.reserved_output_tokens,
+                "operating_context_tokens": self.operating_context_tokens,
+                "fixed_margin": self.fixed_margin,
+                "ratio_margin_basis_points": self.ratio_margin_basis_points,
+            }
+        ).model_dump()
+
+    def measure(self, payload: dict[str, Any]) -> dict[str, Any]:
+        from karajan.routing.compiler import digest
+
+        if self.limits()["source_sha256"] != digest(self.accounting.source()):
+            from .go_context import GoContextError
+
+            raise GoContextError("CONTEXT_SOURCE_CHANGED")
+        limits = self.limits()
+        del limits["source_sha256"]
+        return self.accounting.measure(payload, **limits)
+
+
 @dataclass(frozen=True)
-class GoPlanningRelayContext:
+class GoPlanningRelayContext(_BusinessRelayAccounting):
     """Controller-built planning wire limits; native requests cannot construct it."""
 
     accounting: GoRequestAccounting = field(repr=False)
@@ -420,32 +455,9 @@ class GoPlanningRelayContext:
     fixed_margin: int
     ratio_margin_basis_points: int
 
-    def limits(self) -> dict[str, Any]:
-        return GoBusinessRequestLimits.model_validate(
-            {
-                "source_sha256": self.source_sha256,
-                "approved_input_tokens": self.approved_input_tokens,
-                "reserved_output_tokens": self.reserved_output_tokens,
-                "operating_context_tokens": self.operating_context_tokens,
-                "fixed_margin": self.fixed_margin,
-                "ratio_margin_basis_points": self.ratio_margin_basis_points,
-            }
-        ).model_dump()
-
-    def measure(self, payload: dict[str, Any]) -> dict[str, Any]:
-        from karajan.routing.compiler import digest
-
-        if self.limits()["source_sha256"] != digest(self.accounting.source()):
-            from .go_context import GoContextError
-
-            raise GoContextError("CONTEXT_SOURCE_CHANGED")
-        limits = self.limits()
-        del limits["source_sha256"]
-        return self.accounting.measure(payload, **limits)
-
 
 @dataclass(frozen=True)
-class GoReviewerRelayContext:
+class GoReviewerRelayContext(_BusinessRelayAccounting):
     """Controller-built Reviewer wire limits, separate from qualification probes."""
 
     accounting: GoRequestAccounting = field(repr=False)
@@ -458,30 +470,6 @@ class GoReviewerRelayContext:
     operating_context_tokens: int
     fixed_margin: int
     ratio_margin_basis_points: int
-
-    def limits(self) -> dict[str, Any]:
-        return GoBusinessRequestLimits.model_validate(
-            {
-                "source_sha256": self.source_sha256,
-                "approved_input_tokens": self.approved_input_tokens,
-                "reserved_output_tokens": self.reserved_output_tokens,
-                "operating_context_tokens": self.operating_context_tokens,
-                "fixed_margin": self.fixed_margin,
-                "ratio_margin_basis_points": self.ratio_margin_basis_points,
-            }
-        ).model_dump()
-
-    def measure(self, payload: dict[str, Any]) -> dict[str, Any]:
-        from karajan.routing.compiler import digest
-
-        if self.limits()["source_sha256"] != digest(self.accounting.source()):
-            from .go_context import GoContextError
-
-            raise GoContextError("CONTEXT_SOURCE_CHANGED")
-        limits = self.limits()
-        del limits["source_sha256"]
-        return self.accounting.measure(payload, **limits)
-
 
 @dataclass(frozen=True)
 class GoQualificationContext:

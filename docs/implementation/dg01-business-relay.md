@@ -48,14 +48,14 @@ upstream is an `httpx.MockTransport` and is counted by the fixture.
 | Original AC | Specific focused tests |
 | --- | --- |
 | 1 — durable schemas, strict binding/context, legacy recovery and tamper rejection | `test_business_bindings_are_durable_and_context_bound`; `test_business_context_tamper_is_pre_send_and_legacy_is_readable` |
-| 2 — Relay HTTP ordering, one `send_unknown`, measured wire digest, completion/reopen | `test_business_grant_uses_relay_journal_and_actual_accounting` |
+| 2 — Relay HTTP ordering, one `send_unknown`, measured wire digest, completion/reopen | `test_business_grant_uses_relay_journal_and_actual_accounting` — in the actual `MockTransport` callback, independently measures JSON decoded from received `request.content`, compares every `ContextMeasurement` field and the SHA-256 of those bytes before send, then reopens SQLite to compare the original call ID, grant binding, digest, provider usage, and sanitized receipt outcome. |
 | 3 — invalid/missing/cross authority rejects before slot or upstream | `test_business_relay_rejects_invalid_authority_before_journal_or_upstream` |
-| 4 — Planning/Reviewer wire-tool policy and invalid response/accounting evidence | `test_business_relay_rejects_invalid_authority_before_journal_or_upstream`; `test_business_response_failures_remain_unknown_and_withdraw_future_send` |
-| 5 — guard recheck and enter/exit/begin/complete lost-return counterexamples | `test_business_guard_rechecks_current_withdrawal_before_each_send`; `test_business_guard_lifecycle_faults_do_not_refund_or_repeat_send`; `test_business_lost_begin_reply_keeps_one_unknown_slot_without_replay_or_refund`; `test_business_lost_completion_keeps_unknown_without_a_retry_or_refund` |
+| 4 — Planning/Reviewer wire-tool policy and invalid response/accounting evidence | `test_business_planning_rejects_every_request_tool_variant_before_send` covers each declaration plus structurally valid assistant `tool_calls`/returned-tool history; `test_business_planning_rejects_every_returned_tool_variant_after_accounted_send`; `test_business_reviewer_allows_read_through_relay_journal_and_stream_identity`; `test_business_reviewer_rejects_nonread_tool_identities_with_correct_send_boundary`; `test_business_response_validation_failures_are_accounted_and_withdraw_future_send` |
+| 5 — guard recheck and enter/exit/begin/complete lost-return counterexamples | `test_business_guard_rechecks_current_withdrawal_before_each_send`; `test_business_guard_lifecycle_faults_do_not_refund_or_repeat_send`; `test_business_lost_begin_reply_keeps_one_unknown_slot_without_replay_or_refund`; `test_business_lost_completion_acknowledgement_keeps_unknown_without_a_retry_or_refund` |
 | 6 — cap, expiry/revoke, replay and concurrent distinct calls | `test_business_grant_limits_preserve_history_and_never_reauthorize_replay`; `test_business_grant_concurrent_distinct_calls_stop_at_original_cap` |
 | 7 — business Relay/Journal/context/send-guard regression boundary | `test_go_business_relay_grants.py`; affected OpenCode adapter suite; Ruff; backend mypy |
 
-`test_business_response_failures_remain_unknown_and_withdraw_future_send` is
+`test_business_response_validation_failures_are_accounted_and_withdraw_future_send` is
 not evidence for a lost send: its persisted call is `response_received` with a
 durable protocol/accounting failure.  In contrast,
 `test_business_lost_begin_reply_keeps_one_unknown_slot_without_replay_or_refund`
@@ -70,6 +70,28 @@ the withdrawal reason.  They prove that the shared Relay invokes its required
 guard before every send; they do not claim native cancellation or qualification
 implementation, which remains with the native consumers.
 
+## Frozen Reviewer contract mapping
+
+This leaf deliberately does not invent a native caller DTO.  The reviewed #143
+sources establish the names a future native producer must map while it holds its
+current Reviewer guard:
+
+| Relay binding field | Existing #143 / compiler source |
+| --- | --- |
+| `subject.project_id`, `subject.run_id`, `subject.reviewer_operation_id`, `subject.worker_operation_id`, `subject.reviewer_task_id` | `compiler_binding()` returns `project_id`, `run_id`, `reviewer_operation_id`, `worker_operation_id`, and `task_id` respectively. |
+| common `attempt_id` | `compiler_binding()` returns `planned_attempt_id`; it is the controller attempt identity, not a newly supplied native value. |
+| `subject.execution_id` | `ReviewerExecutionIntents.prepare()` creates durable `execution_id`; the future native producer must read this exact intent record. |
+| `review_binding_sha256` | the durable intent's `binding_digest`, built from the controller-owned compiler binding plus execution source facts. |
+| `reviewer_input_sha256` | `compiler_binding()["reviewer_input"]["sha256"]`, which is `ReviewerInput.content_sha256` from `compile_reviewer_input()`. |
+| `candidate_checks_sha256` | a future native producer must digest the exact compiler binding `candidate` identity together with `reviewer_input.check_evidence_ids`; no existing DTO exposes a precomputed replacement key. |
+
+The compiler input artifact is not the full native wire: OpenCode can add
+session/system/history fields.  The producer must therefore construct the
+typed context and binding from those durable controller records, while the relay
+continues to measure and persist the actual completed HTTP request.  This is a
+documented future-native responsibility, not C/P evidence supplied by this
+leaf.
+
 ## Reproducible validation record — 2026-09-08
 
 All commands run from this worktree using
@@ -79,8 +101,8 @@ and a fresh `--basetemp` below this worktree.
 
 | Check | Exact command | Actual result |
 | --- | --- | --- |
-| Focused business AC suite | `$env:KARAJAN_GO_TOKENIZER_DIRECTORY = 'C:/Users/Chooo/Playground/Karajan/.cache/go-context-artifacts'; C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m pytest tests/adapters/opencode/test_go_business_relay_grants.py -q --basetemp C:/Users/Chooo/Playground/Karajan/.cache/dg01-business-relay-20260908/.pytest-business-144` | `55 passed in 5.50s` |
-| Affected OpenCode adapter suite | `$env:KARAJAN_GO_TOKENIZER_DIRECTORY = 'C:/Users/Chooo/Playground/Karajan/.cache/go-context-artifacts'; C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m pytest tests/adapters/opencode/test_go_business_relay_grants.py tests/adapters/opencode/test_go_journal.py tests/adapters/opencode/test_go_relay_context.py tests/adapters/opencode/test_go_relay_journal.py -q --basetemp C:/Users/Chooo/Playground/Karajan/.cache/dg01-business-relay-20260908/.pytest-affected-144` | `125 passed in 9.92s` |
+| Focused business AC suite | `$env:KARAJAN_GO_TOKENIZER_DIRECTORY = 'C:/Users/Chooo/Playground/Karajan/.cache/go-context-artifacts'; C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m pytest tests/adapters/opencode/test_go_business_relay_grants.py -q --basetemp C:/Users/Chooo/Playground/Karajan/.cache/dg01-business-relay-20260908/.pytest-business-144-repair-2` | `85 passed in 8.05s` |
+| Affected OpenCode adapter suite | `$env:KARAJAN_GO_TOKENIZER_DIRECTORY = 'C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m pytest tests/adapters/opencode/test_go_business_relay_grants.py tests/adapters/opencode/test_go_journal.py tests/adapters/opencode/test_go_relay_context.py tests/adapters/opencode/test_go_relay_journal.py -q --basetemp C:/Users/Chooo/Playground/Karajan/.cache/dg01-business-relay-20260908/.pytest-affected-144-final` | `155 passed in 11.56s` |
 | Ruff | `C:/Users/Chooo/Playground/Karajan/.venv/Scripts/ruff.exe check .` | `All checks passed!` |
 | Backend mypy | `C:/Users/Chooo/Playground/Karajan/.venv/Scripts/mypy.exe backend` | `Success: no issues found in 150 source files` |
 
