@@ -12,8 +12,9 @@ import sqlite3
 import uuid
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal, Protocol
+from typing import Any, Literal, Protocol, cast
 
 from pydantic import Field, ValidationError
 
@@ -74,6 +75,22 @@ class PlanningOutputAuthority(Protocol):
     def read_output(self, execution_id: str, binding: dict[str, Any]) -> object: ...
 
 
+@dataclass(frozen=True, slots=True, repr=False)
+class _TrustedFactoryAuthority:
+    """Private bootstrap and store identities captured by one factory."""
+
+    control_directory: Path
+    bootstrap_sha256: str
+    settings_document: dict[str, Any]
+    identities: tuple[tuple[Path, tuple[int, int]], ...]
+
+
+def _path_identity(path: Path) -> tuple[int, int]:
+    """Keep stable filesystem identity; SQLite writes do not change this."""
+    info = path.lstat()
+    return info.st_dev, info.st_ino
+
+
 class PlanningExecution:
     """Persist controller-side planning stages without granting runtime authority."""
 
@@ -85,8 +102,10 @@ class PlanningExecution:
         admissions: PlanningAdmissionAuthority | None = None,
         outputs: PlanningOutputAuthority | None = None,
         capacity: CapacityStore | None = None,
+        snapshots: object | None = None,
         allow_fixture_authorities: bool = False,
         _trusted_authority_ids: frozenset[int] = frozenset(),
+        _trusted_factory_authority: _TrustedFactoryAuthority | None = None,
         existing_only: bool = False,
         clock: Callable[[], float] | None = None,
     ) -> None:
@@ -97,11 +116,13 @@ class PlanningExecution:
         self.admissions = admissions
         self.outputs = outputs
         self.capacity = capacity
+        self.snapshots = snapshots
         self.allow_fixture_authorities = allow_fixture_authorities
         # Production tags are evidence fields, never a caller-controlled grant.
         # Only the controller factory below can bind the exact authority objects
         # it rebuilt from fixed persistent configuration.
         self._trusted_authority_ids = _trusted_authority_ids
+        self._trusted_factory_authority = _trusted_factory_authority
         self.existing_only = existing_only
         self.clock = planner.clock if clock is None else clock
         if not existing_only:
@@ -134,16 +155,87 @@ class PlanningExecution:
     ) -> "PlanningExecution":
         """Rebuild the admission port from the protected persistent bootstrap."""
         from .planning_admission import open_persistent_planning_admission
+        from .planning_bootstrap import (
+            PLANNING_ADMISSION_BOOTSTRAP,
+            assert_planning_bootstrap_current,
+            read_planning_bootstrap,
+        )
+        from .planning_snapshot import PlanningRepositorySnapshotStore, snapshot_database
 
+        settings, bootstrap_sha256 = read_planning_bootstrap(control_directory)
         admissions = open_persistent_planning_admission(control_directory)
+        # The admission factory has independently opened its read-only ports.
+        # Re-read the descriptor before retaining their pathname identities so
+        # construction itself cannot race a substitution.
+        settings = assert_planning_bootstrap_current(control_directory, bootstrap_sha256)
+        try:
+            ledger = snapshot_database(control_directory)
+        except Exception as error:
+            raise RunError("PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE") from error
+        # Snapshot production was introduced after the original #110/#111
+        # execution records.  An absent ledger therefore means this deployment
+        # can only recover its pre-snapshot controller history; it does not
+        # cause a reader to provision a new private store.  Once a ledger has a
+        # filesystem spelling, however, it might contain evidence required by
+        # a newer execution.  Open it strictly so a corrupt or aliased ledger
+        # remains a fail-closed factory error rather than being mistaken for
+        # historical absence.  ``is_symlink`` also catches a dangling alias.
+        snapshots: object | None = None
+        if ledger.exists() or ledger.is_symlink():
+            try:
+                snapshots = PlanningRepositorySnapshotStore(
+                    ledger,
+                    existing_only=True,
+                    private_root=settings.state_directory,
+                )
+            except Exception as error:
+                raise RunError("PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE") from error
+        protected_paths = (
+            settings.control_directory / PLANNING_ADMISSION_BOOTSTRAP,
+            settings.state_directory,
+            settings.planning_execution_database,
+            settings.planning_admission_database,
+            settings.capacity_database,
+            settings.projects_database,
+            settings.state_directory / "runs.sqlite",
+        )
+        try:
+            trusted_factory_authority = _TrustedFactoryAuthority(
+                settings.control_directory,
+                bootstrap_sha256,
+                settings.document(),
+                tuple((path, _path_identity(path)) for path in protected_paths),
+            )
+        except OSError as error:
+            raise RunError("PLANNING_ADMISSION_BOOTSTRAP_CHANGED") from error
         return cls(
             admissions.execution_database,
             admissions.planner,
             admissions=admissions,
             capacity=admissions.capacity,
+            snapshots=snapshots,
             existing_only=True,
             _trusted_authority_ids=frozenset({id(admissions)}),
+            _trusted_factory_authority=trusted_factory_authority,
         )
+
+    def _assert_trusted_factory_authority_current(self) -> None:
+        """Reject retained aliases/replacements before reopening controller state."""
+        trusted = self._trusted_factory_authority
+        if trusted is None:
+            return
+        from .planning_bootstrap import assert_planning_bootstrap_current
+
+        try:
+            settings = assert_planning_bootstrap_current(
+                trusted.control_directory, trusted.bootstrap_sha256
+            )
+            if settings.document() != trusted.settings_document or any(
+                _path_identity(path) != expected for path, expected in trusted.identities
+            ):
+                raise ValueError()
+        except (OSError, ValueError, RunError):
+            raise RunError("PLANNING_ADMISSION_BOOTSTRAP_CHANGED") from None
 
     def _authority_allowed(self, authority: object, kind: str) -> bool:
         if kind == "fixture":
@@ -201,6 +293,7 @@ class PlanningExecution:
 
     @contextmanager
     def _transaction(self) -> Iterator[sqlite3.Connection]:
+        self._assert_trusted_factory_authority_current()
         db = open_database(self.database, existing_only=self.existing_only, isolation_level=None)
         db.row_factory = sqlite3.Row
         try:
@@ -216,10 +309,25 @@ class PlanningExecution:
 
     @staticmethod
     def _load(db: sqlite3.Connection, execution_id: str) -> dict[str, Any]:
-        row = db.execute("SELECT data FROM executions WHERE id=?", (execution_id,)).fetchone()
+        row = db.execute(
+            "SELECT run_id,intent_id,state,data FROM executions WHERE id=?", (execution_id,)
+        ).fetchone()
         if row is None:
             raise RunError("PLANNING_EXECUTION_NOT_FOUND")
-        return dict(json.loads(row["data"]))
+        try:
+            execution = json.loads(row["data"])
+        except (TypeError, json.JSONDecodeError):
+            raise RunError("PLANNING_EXECUTION_BINDING_STALE") from None
+        # The SQLite primary key is the public request identity.  Do not let a
+        # substituted, internally consistent JSON row reconstruct authority
+        # for another execution owned by the same principal.
+        if (
+            not isinstance(execution, dict)
+            or execution.get("id") != execution_id
+            or any(execution.get(key) != row[key] for key in ("run_id", "intent_id", "state"))
+        ):
+            raise RunError("PLANNING_EXECUTION_BINDING_STALE")
+        return dict(execution)
 
     @staticmethod
     def _save(db: sqlite3.Connection, execution: dict[str, Any]) -> None:
@@ -237,7 +345,11 @@ class PlanningExecution:
 
     @staticmethod
     def _binding(run: dict[str, Any], intent: dict[str, Any], execution_id: str) -> dict[str, Any]:
-        participant = run["commander"]
+        # The intent is the controller-sealed record of the Commander that
+        # created this execution.  ``run.commander`` is deliberately live: a
+        # later approved handoff must not rewrite an existing execution's v1
+        # identity merely because historical evidence is being read.
+        participant = intent
         configuration = run["configuration_snapshot"]
         return {
             "schema_version": "karajan.planning-execution-binding.v1",
@@ -278,6 +390,36 @@ class PlanningExecution:
         ):
             raise RunError("PLANNING_EXECUTION_BINDING_STALE")
         return dict(intent)
+
+    def _trusted_snapshot_binding(
+        self, execution: dict[str, Any], principal: str
+    ) -> dict[str, Any]:
+        """Rebuild v1 identity from the durable Run, never from execution JSON.
+
+        This intentionally does not require an intent to still be awaiting a
+        receipt: a snapshot already committed before a later cancellation is
+        historical evidence and remains readable.  Its identity fields must,
+        however, still be exactly those recorded in the Run.
+        """
+        run = self._owner_run(execution["run_id"], principal)
+        intent = next(
+            (item for item in run["planning_intents"] if item["id"] == execution["intent_id"]),
+            None,
+        )
+        if not isinstance(intent, dict):
+            raise RunError("PLANNING_EXECUTION_BINDING_STALE")
+        try:
+            return self._binding(run, intent, execution["id"])
+        except (KeyError, TypeError):
+            raise RunError("PLANNING_EXECUTION_BINDING_STALE") from None
+
+    def _snapshot_binding(self, execution: dict[str, Any], principal: str) -> dict[str, Any]:
+        binding = execution.get("binding")
+        if not isinstance(binding, dict) or execution.get("binding_sha256") != digest(binding):
+            raise RunError("PLANNING_EXECUTION_BINDING_STALE")
+        if self._trusted_snapshot_binding(execution, principal) != binding:
+            raise RunError("PLANNING_EXECUTION_BINDING_STALE")
+        return binding
 
     def _command(
         self,
@@ -362,6 +504,150 @@ class PlanningExecution:
             execution = self._load(db, execution_id)
         self._owner_run(execution["run_id"], principal)
         return execution
+
+    def freeze_repository_snapshot(
+        self, execution_id: str, *, principal: str, command_key: str
+    ) -> dict[str, Any]:
+        """Create or recover the one private base-tree snapshot for this execution.
+
+        The caller supplies only durable IDs.  Missing production provisioning is
+        fail-closed and never changes admission, capacity, or Run state.
+        """
+        for value in (execution_id, principal, command_key):
+            identifier(value)
+        execution = self.get(execution_id, principal=principal)
+        binding = self._snapshot_binding(execution, principal)
+        store = self.snapshots
+        freeze = None if store is None else getattr(store, "freeze", None)
+        read = None if store is None else getattr(store, "read", None)
+        if not callable(freeze) or not callable(read):
+            raise RunError("PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE")
+
+        @contextmanager
+        def current_authority() -> Iterator[tuple[dict[str, Any], dict[str, Any]]]:
+            """Hold Execution then Run authority through manifest publication.
+
+            Every operation that needs both locks takes Execution before Run
+            (notably cancellation's owner check).  Git/CAS preparation occurs
+            before this guard; only the reference commit is serialized here.
+            """
+            with self._transaction() as db:
+                current = self._load(db, execution_id)
+                if current["cancel_requested"]:
+                    raise RunError("PLANNING_EXECUTION_CANCELLED")
+                stored = current.get("binding")
+                if (
+                    not isinstance(stored, dict)
+                    or current.get("binding_sha256") != digest(stored)
+                    or stored != binding
+                ):
+                    raise RunError("PLANNING_EXECUTION_BINDING_STALE")
+                with self.planner._transaction() as runs:
+                    run = self.planner._get(runs, current["run_id"])
+                    self.planner._owner(run, principal)
+                    intent = self._intent(run, current["intent_id"])
+                    if self._binding(run, intent, execution_id) != binding:
+                        raise RunError("PLANNING_EXECUTION_BINDING_STALE")
+                    # Project is the final source authority.  Keep its short
+                    # writer transaction through the manifest/reference commit
+                    # after Execution -> Run, matching the controller lock
+                    # order used by the other planning boundaries.
+                    with self.planner.projects._transaction() as projects:
+                        self.planner.projects._current(
+                            projects,
+                            run["project_id"],
+                            run["configuration_snapshot"]["project_revision"],
+                        )
+                        yield current, run
+
+        def freeze_current() -> dict[str, Any]:
+            try:
+                return {key: value for key, value in read(binding).items() if key != "content"}
+            except RunError as error:
+                if str(error) != "PLANNING_REPOSITORY_SNAPSHOT_NOT_FOUND":
+                    raise
+            # This pre-prepare read rejects an already revoked identity without
+            # holding writers during Git. The same guard is acquired again and
+            # retained by the store for the final reference publication.
+            with current_authority() as (_, run):
+                prepared_run = run
+            # Registry access precedes slow Git preparation and is deliberately
+            # outside the held Execution/Run writer chain.
+            project = self.planner.projects.get(prepared_run["project_id"])
+            return cast(
+                dict[str, Any], freeze(binding, prepared_run, project, guard=current_authority)
+            )
+
+        # Reserve the command identity before Git/CAS publication.  The
+        # pending receipt intentionally survives a reply loss: only this exact
+        # payload may resume it, while a different execution/key type is
+        # rejected before it can publish another snapshot.
+        payload = ["freeze_repository_snapshot", execution_id]
+        replay: dict[str, Any] | None = None
+        with self._transaction() as db:
+            prior = db.execute(
+                "SELECT payload,result FROM commands WHERE principal=? AND key=?",
+                (principal, command_key),
+            ).fetchone()
+            if prior is not None:
+                if prior["payload"] != encoded(payload):
+                    raise RunError("IDEMPOTENCY_CONFLICT")
+                recorded = dict(json.loads(prior["result"]))
+                if recorded.get("state") != "freeze_repository_snapshot_pending":
+                    replay = recorded
+            else:
+                db.execute(
+                    "INSERT INTO commands VALUES (?,?,?,?)",
+                    (
+                        principal,
+                        command_key,
+                        encoded(payload),
+                        encoded({"state": "freeze_repository_snapshot_pending"}),
+                    ),
+                )
+        # Historical artifact verification deliberately happens after the
+        # controller writer is gone: cancellation and other Run writers can
+        # progress while a large, but bounded, snapshot is checked.
+        if replay is not None:
+            verified = read(binding)
+            manifest = {key: value for key, value in verified.items() if key != "content"}
+            if replay != manifest:
+                raise RunError("PLANNING_REPOSITORY_SNAPSHOT_CHANGED")
+            return manifest
+        result = freeze_current()
+        concurrent_receipt: dict[str, Any] | None = None
+        with self._transaction() as db:
+            prior = db.execute(
+                "SELECT payload,result FROM commands WHERE principal=? AND key=?",
+                (principal, command_key),
+            ).fetchone()
+            if prior is None or prior["payload"] != encoded(payload):
+                raise RunError("IDEMPOTENCY_CONFLICT")
+            recorded = dict(json.loads(prior["result"]))
+            if recorded.get("state") == "freeze_repository_snapshot_pending":
+                db.execute(
+                    "UPDATE commands SET result=? WHERE principal=? AND key=?",
+                    (encoded(result), principal, command_key),
+                )
+                return result
+            concurrent_receipt = recorded
+        # Another claimant can finish between our store read and this short
+        # receipt transaction.  Verify outside the controller writer just as
+        # the ordinary replay path does, and return the sealed manifest rather
+        # than mutable command-ledger metadata.
+        verified = read(binding)
+        manifest = {key: value for key, value in verified.items() if key != "content"}
+        if concurrent_receipt != manifest:
+            raise RunError("PLANNING_REPOSITORY_SNAPSHOT_CHANGED")
+        return manifest
+
+    def read_repository_snapshot(self, execution_id: str, *, principal: str) -> dict[str, Any]:
+        execution = self.get(execution_id, principal=principal)
+        binding = self._snapshot_binding(execution, principal)
+        read = None if self.snapshots is None else getattr(self.snapshots, "read", None)
+        if not callable(read):
+            raise RunError("PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE")
+        return cast(dict[str, Any], read(binding))
 
     def admit(self, execution_id: str, *, principal: str, command_key: str) -> dict[str, Any]:
         """Advance only a trusted durable admission authority once.

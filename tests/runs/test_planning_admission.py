@@ -1,8 +1,12 @@
 """C evidence for durable planning admission; no provider is contacted."""
 
+import inspect
 import json
 import os
 import shutil
+import socket
+import sqlite3
+import subprocess
 import sys
 import time
 from collections.abc import Callable
@@ -10,11 +14,12 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
-from threading import Barrier
+from threading import Barrier, Event
 from typing import Any
 
 import karajan.capacity.store as capacity_store
 import karajan.orchestration.planning_admission as planning_admission
+import karajan.orchestration.planning_snapshot as planning_snapshot
 import pytest
 from karajan.capacity import CapacityStore
 from karajan.orchestration.go_task_runtime import (
@@ -29,6 +34,11 @@ from karajan.orchestration.planning_admission import (
 )
 from karajan.orchestration.planning_bootstrap import PLANNING_ADMISSION_BOOTSTRAP
 from karajan.orchestration.planning_execution import PlanningExecution
+from karajan.orchestration.planning_snapshot import (
+    PlanningRepositorySnapshotStore,
+    provision_planning_repository_snapshots,
+    snapshot_database,
+)
 from karajan.projects import ProjectRegistry
 from karajan.projects.credential_sources import (
     CredentialSourceError,
@@ -39,7 +49,7 @@ from karajan.projects.qualification import ProfileQualificationStore
 from karajan.runs import RunError, RunPlanner
 from karajan.runs.planning import digest
 from test_planning import create_request
-from test_routing_authorization import policy_request, request_v2
+from test_routing_authorization import policy_request, request_v2, submit_request
 
 pytest_plugins = ["test_planning"]
 
@@ -430,7 +440,7 @@ def test_two_runs_contend_for_commander_protected_full_capacity_vector(
 def test_missing_commander_fact_is_a_production_zero_reservation_denial(
     configured: dict, tmp_path: Path
 ) -> None:
-    _, authority, _, execution = _case(tmp_path, configured)
+    _, authority, run, execution = _case(tmp_path, configured)
     authority.authority_kind = "production"
     denied = authority.advance(execution["id"], "owner", "advance")
 
@@ -881,6 +891,7 @@ def test_final_reservation_closure_rechecks_original_budget_after_encoding(
     assert denied["reason_codes"] == ["PLANNING_BUDGET_EXPIRED"]
     assert authority.capacity.snapshot()["reservations"] == []
 
+
 def test_final_effect_closure_rechecks_commander_expiry_after_capacity_preparation(
     configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -1225,6 +1236,490 @@ def test_persistent_factory_missing_descriptor_rejects_without_creating_stores(
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
+def test_persistent_factory_keeps_historical_execution_readable_without_snapshot_ledger(
+    configured: dict, tmp_path: Path
+) -> None:
+    _, authority, _, execution = _case(tmp_path, configured)
+    control = _protected_factory_control(tmp_path, authority)
+    state = tmp_path / "protected-state"
+    ledger = snapshot_database(control)
+    artifacts = state / "planning-repository-snapshot-blobs"
+    service = PlanningExecution.from_trusted_factory(control)
+    assert service.snapshots is None
+    assert service.get(execution["id"], principal="owner")["id"] == execution["id"]
+    for operation in (
+        lambda: service.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="freeze"
+        ),
+        lambda: service.read_repository_snapshot(execution["id"], principal="owner"),
+    ):
+        with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE$"):
+            operation()
+    assert not ledger.exists()
+    assert not artifacts.exists()
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
+def test_persistent_factory_recovers_committed_submission_without_snapshot_ledger(
+    configured: dict, tmp_path: Path
+) -> None:
+    service, authority, run, execution = _case(tmp_path, configured)
+    persisted_run = service.planner.get(run["id"], principal="owner")
+    intent = next(
+        item for item in persisted_run["planning_intents"] if item["id"] == execution["intent_id"]
+    )
+    request = {"run_id": run["id"], **submit_request(persisted_run, intent)}
+    command_key = "planning-execution-submit:" + execution["id"]
+    receipt = service.planner._submit_planning_execution_plan(
+        run["id"],
+        execution["intent_id"],
+        request,
+        execution_id=execution["id"],
+        binding_sha256=execution["binding_sha256"],
+        principal="owner",
+        command_key=command_key,
+    )
+    with service._transaction() as db:
+        pending = service._load(db, execution["id"])
+        pending.update(
+            {
+                "state": "submit_claimed",
+                "submission_request": request,
+                "submission_command_key": command_key,
+                "submission_principal": "lead",
+                "submission_started": True,
+            }
+        )
+        service._save(db, pending)
+    control = _protected_factory_control(tmp_path, authority)
+    state = tmp_path / "protected-state"
+    ledger = snapshot_database(control)
+    artifacts = state / "planning-repository-snapshot-blobs"
+    before_capacity = authority.capacity.snapshot()
+    before_plans = service.planner.get(run["id"], principal="owner")["plans"]
+
+    reopened = PlanningExecution.from_trusted_factory(control)
+    assert reopened.snapshots is None
+    recovered = reopened.submit(execution["id"], principal="owner", command_key="recover")
+
+    assert recovered["state"] == "submitted"
+    assert recovered["submission"] == receipt
+    assert reopened.get(execution["id"], principal="owner")["submission"] == receipt
+    assert reopened.capacity is not None
+    assert reopened.capacity.snapshot() == before_capacity
+    assert reopened.planner.get(run["id"], principal="owner")["plans"] == before_plans == [receipt]
+    assert not ledger.exists()
+    assert not artifacts.exists()
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
+def test_persistent_factory_opens_a_provisioned_snapshot_ledger(
+    configured: dict, tmp_path: Path
+) -> None:
+    _, authority, _, _ = _case(tmp_path, configured)
+    control = _protected_factory_control(tmp_path, authority)
+    path = provision_planning_repository_snapshots(control)
+    assert path.exists() and path.stat().st_mode & 0o077 == 0
+    PlanningRepositorySnapshotStore(path, existing_only=True)
+    service = PlanningExecution.from_trusted_factory(control)
+    assert service.snapshots is not None
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
+def test_retained_factory_rejects_cancelled_execution_store_swap_during_git_prepare(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A stale pre-cancel authority cannot publish after real Git preparation."""
+    registry = configured["registry"]
+    project = registry.get(configured["id"])
+    root = Path(project["repository"]["root"])
+    (root / "src").mkdir(exist_ok=True)
+    (root / "tests").mkdir(exist_ok=True)
+    source = root / "src" / "retained-authority.txt"
+    source.write_bytes(b"registered base bytes\n")
+    test_source = root / "tests" / "retained-authority-test.txt"
+    test_source.write_bytes(b"registered test base bytes\n")
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "add",
+            "src/retained-authority.txt",
+            "tests/retained-authority-test.txt",
+        ],
+        check=True,
+    )
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "-c",
+            "user.name=x",
+            "-c",
+            "user.email=x@y.z",
+            "commit",
+            "-m",
+            "snapshot",
+        ],
+        check=True,
+    )
+    registry.update(
+        project["id"],
+        {
+            "name": project["name"],
+            "base_ref": project["repository"]["base_ref"],
+            "target_branch": project["target_branch"],
+            "allowed_target_branches": project["allowed_target_branches"],
+        },
+        expected_revision=project["revision"],
+        command_key="update-base",
+        principal="owner",
+    )
+    configured.update(registry.get(project["id"]))
+    configured["registry"] = registry
+    _, authority, _, execution = _case(tmp_path, configured)
+    ProfileQualificationStore(authority.planner.projects)
+    control = _protected_factory_control(tmp_path, authority)
+    ledger = provision_planning_repository_snapshots(control)
+    retained = PlanningExecution.from_trusted_factory(control)
+    assert retained.capacity is not None
+    capacity_before = retained.capacity.snapshot()
+    execution_store = tmp_path / "protected-state" / "planning-execution.sqlite"
+    stale_copy = tmp_path / "pre-cancel-planning-execution.sqlite"
+    shutil.copy2(execution_store, stale_copy)
+    entered = Event()
+    release = Event()
+    original_git = PlanningRepositorySnapshotStore._git
+
+    def slow_first_git(*args: Any, **kwargs: Any) -> bytes:
+        result = original_git(*args, **kwargs)
+        if not entered.is_set():
+            entered.set()
+            assert release.wait(timeout=5)
+        return result
+
+    monkeypatch.setattr(PlanningRepositorySnapshotStore, "_git", slow_first_git)
+    held = tmp_path / "held-planning-execution.sqlite"
+    with ThreadPoolExecutor(max_workers=1) as workers:
+        publication = workers.submit(
+            retained.freeze_repository_snapshot,
+            execution["id"],
+            principal="owner",
+            command_key="freeze-after-cancel",
+        )
+        assert entered.wait(timeout=5)
+        cancelled = retained.cancel(execution["id"], principal="owner", command_key="cancel")
+        assert cancelled["cancel_requested"] is True
+        execution_store.rename(held)
+        execution_store.symlink_to(stale_copy)
+        release.set()
+        with pytest.raises(RunError, match="^PLANNING_ADMISSION_BOOTSTRAP_CHANGED$"):
+            publication.result(timeout=10)
+    with sqlite3.connect(ledger) as db:
+        assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 0
+    assert stale_copy.read_bytes() != held.read_bytes()
+    execution_store.unlink()
+    held.rename(execution_store)
+    reopened = PlanningExecution.from_trusted_factory(control)
+    assert reopened.get(execution["id"], principal="owner")["cancel_requested"] is True
+    assert reopened.capacity is not None
+    assert reopened.capacity.snapshot() == capacity_before
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
+def test_factory_freezes_registered_base_bytes_and_reopens(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    registry = configured["registry"]
+    project = registry.get(configured["id"])
+    root = Path(project["repository"]["root"])
+    (root / "src").mkdir(exist_ok=True)
+    (root / "tests").mkdir(exist_ok=True)
+    source = root / "src" / "planning-input.txt"
+    source.write_bytes(b"registered base bytes\n")
+    test_source = root / "tests" / "planning-input-test.txt"
+    test_source.write_bytes(b"registered test base bytes\n")
+    subprocess.run(
+        ["git", "-C", str(root), "add", "src/planning-input.txt", "tests/planning-input-test.txt"],
+        check=True,
+    )
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "-c",
+            "user.name=x",
+            "-c",
+            "user.email=x@y.z",
+            "commit",
+            "-m",
+            "snapshot",
+        ],
+        check=True,
+    )
+    registry.update(
+        project["id"],
+        {
+            "name": project["name"],
+            "base_ref": project["repository"]["base_ref"],
+            "target_branch": project["target_branch"],
+            "allowed_target_branches": project["allowed_target_branches"],
+        },
+        expected_revision=project["revision"],
+        command_key="update-base",
+        principal="owner",
+    )
+    configured.update(registry.get(project["id"]))
+    configured["registry"] = registry
+    _, authority, run, execution = _case(tmp_path, configured)
+    # Provision the applicable Qualification ledger before the protected
+    # factory copies its owned SQLite state into the fixture boundary.
+    ProfileQualificationStore(authority.planner.projects)
+    control = _protected_factory_control(tmp_path, authority)
+    provision_planning_repository_snapshots(control)
+    service = PlanningExecution.from_trusted_factory(control)
+    assert service.capacity is not None
+    before = service.capacity.snapshot()
+    # These are the real ledgers rebuilt by the protected planning factory.
+    # The factory has no Journal, Host, native runtime, model adapter, or
+    # output transport path; manufacturing an empty Journal would not observe
+    # a receiver.  The applicable controller effect boundaries here are the
+    # real Project qualification records, Run plan records, and Capacity
+    # reservations.  Physical native/model/provider absence is recorded as
+    # not_run in the implementation evidence, not promoted to a ledger claim.
+    assert service.outputs is None
+    _qualification = ProfileQualificationStore(service.planner.projects)
+    process_call_sites: list[tuple[str, str]] = []
+    network_calls: list[object] = []
+    original_popen = subprocess.Popen
+    original_connect = socket.socket.connect
+
+    def observe_process(*args: Any, **kwargs: Any) -> subprocess.Popen[Any]:
+        # ``subprocess.run`` is only a convenience wrapper.  Observe the
+        # shared child-creation boundary, so an executor using Popen directly
+        # cannot bypass this fixture.  Attribute fixed Git reads by their
+        # Python call provenance instead of guessing an OS-specific argv form.
+        source_frame = next(
+            (
+                frame
+                for frame in inspect.stack()
+                if frame.frame.f_globals.get("__name__") == planning_snapshot.__name__
+            ),
+            None,
+        )
+        process_call_sites.append(
+            (
+                planning_snapshot.__name__ if source_frame is not None else "unexpected",
+                source_frame.function if source_frame is not None else "unexpected",
+            )
+        )
+        return original_popen(*args, **kwargs)
+
+    def observe_network(sock: socket.socket, address: object) -> object:
+        network_calls.append(address)
+        return original_connect(sock, address)
+
+    # These are actual OS receiving boundaries for this process.  The factory
+    # has no configured Host, Journal, native runtime, model adapter, or output
+    # receiver to observe directly; any unexpected child creation is instead
+    # caught at Popen, and every network connect is recorded here.
+    monkeypatch.setattr(subprocess, "Popen", observe_process)
+    monkeypatch.setattr(socket.socket, "connect", observe_network)
+
+    def effect_counts() -> tuple[int, int, int]:
+        with sqlite3.connect(service.planner.projects.database) as db:
+            qualified = db.execute("SELECT count(*) FROM profile_qualification_records").fetchone()[
+                0
+            ]
+        current = service.planner.get(run["id"], principal="owner")
+        reservations = service.capacity.snapshot()["reservations"]
+        return qualified, len(current["plans"]), len(reservations)
+
+    effects_before = effect_counts()
+    frozen = service.freeze_repository_snapshot(
+        execution["id"], principal="owner", command_key="freeze"
+    )
+    assert frozen["repository_identity_sha256"] == project["repository"]["identity_sha256"]
+    assert frozen["base_sha"] == configured["repository"]["base_sha"]
+    assert frozen["requirement_sha256"] == execution["binding"]["requirement_sha256"]
+    assert (
+        frozen["authorization_ceiling_sha256"]
+        == execution["binding"]["authorization_ceiling_sha256"]
+    )
+    assert frozen["read_paths_sha256"] == digest(run["authorization_ceiling"]["read_paths"])
+    assert [item["mode"] for item in frozen["files"]] == ["100644", "100644"]
+    assert service.read_repository_snapshot(execution["id"], principal="owner")["content"] == {
+        "src/planning-input.txt": b"registered base bytes\n",
+        "tests/planning-input-test.txt": b"registered test base bytes\n",
+    }
+    source.write_bytes(b"worktree changed\n")
+    reopened = PlanningExecution.from_trusted_factory(control)
+    assert (
+        reopened.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="freeze"
+        )
+        == frozen
+    )
+    assert (
+        reopened.read_repository_snapshot(execution["id"], principal="owner")["content"][
+            "src/planning-input.txt"
+        ]
+        == b"registered base bytes\n"
+    )
+    # Keep using this already-open trusted factory while replacing each private
+    # spelling with a compatible repository-controlled copy.  The retained
+    # reader must reject before SQLite or blob materialization can follow the
+    # alias; restoring the original inode/directory proves the valid replay
+    # remains available without repairing or rewriting either copy.
+    ledger = snapshot_database(control)
+    artifacts = ledger.parent / "planning-repository-snapshot-blobs"
+    external_ledger = tmp_path / "repository-controlled-retained-ledger.sqlite"
+    shutil.copy2(ledger, external_ledger)
+    external_ledger_before = external_ledger.read_bytes()
+    held_ledger = ledger.parent / ".retained-ledger"
+    ledger.rename(held_ledger)
+    ledger.symlink_to(external_ledger)
+    for operation in (
+        lambda: reopened.read_repository_snapshot(execution["id"], principal="owner"),
+        lambda: reopened.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="freeze"
+        ),
+    ):
+        with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE$"):
+            operation()
+    assert external_ledger.read_bytes() == external_ledger_before
+    ledger.unlink()
+    held_ledger.rename(ledger)
+
+    external_artifacts = tmp_path / "repository-controlled-retained-blobs"
+    shutil.copytree(artifacts, external_artifacts)
+    external_blobs_before = {item.name: item.read_bytes() for item in external_artifacts.iterdir()}
+    held_artifacts = artifacts.parent / ".retained-blobs"
+    artifacts.rename(held_artifacts)
+    artifacts.symlink_to(external_artifacts, target_is_directory=True)
+    for operation in (
+        lambda: reopened.read_repository_snapshot(execution["id"], principal="owner"),
+        lambda: reopened.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="freeze"
+        ),
+    ):
+        with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE$"):
+            operation()
+    assert {
+        item.name: item.read_bytes() for item in external_artifacts.iterdir()
+    } == external_blobs_before
+    artifacts.unlink()
+    held_artifacts.rename(artifacts)
+    assert isinstance(reopened.snapshots, PlanningRepositorySnapshotStore)
+    external_root = tmp_path / "repository-controlled-retained-private-root"
+    shutil.copytree(ledger.parent, external_root)
+    external_root_ledger = external_root / ledger.name
+    external_root_before = external_root_ledger.read_bytes()
+    held_root = tmp_path / "retained-private-root"
+    ledger.parent.rename(held_root)
+    ledger.parent.symlink_to(external_root, target_is_directory=True)
+    for operation in (
+        lambda: reopened.snapshots.read(execution["binding"]),
+        reopened.snapshots._connect,
+    ):
+        with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE$"):
+            operation()
+    assert external_root_ledger.read_bytes() == external_root_before
+    ledger.parent.unlink()
+    held_root.rename(ledger.parent)
+    assert reopened.read_repository_snapshot(execution["id"], principal="owner")["content"] == {
+        "src/planning-input.txt": b"registered base bytes\n",
+        "tests/planning-input-test.txt": b"registered test base bytes\n",
+    }
+    # A saved freeze-command replay verifies immutable bytes outside the
+    # Execution/Run writers.  Cancellation therefore completes while this
+    # deliberately slow historical reader is paused, and the original bytes
+    # remain available after cancellation.
+    assert isinstance(reopened.snapshots, PlanningRepositorySnapshotStore)
+    entered = Event()
+    release = Event()
+    original_read = reopened.snapshots.read
+
+    def slow_read(binding: dict[str, Any]) -> dict[str, Any]:
+        entered.set()
+        assert release.wait(timeout=5)
+        return original_read(binding)
+
+    monkeypatch.setattr(reopened.snapshots, "read", slow_read)
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        replay = workers.submit(
+            reopened.freeze_repository_snapshot,
+            execution["id"],
+            principal="owner",
+            command_key="freeze",
+        )
+        assert entered.wait(timeout=5)
+        cancelled = workers.submit(
+            service.cancel, execution["id"], principal="owner", command_key="cancel"
+        )
+        assert cancelled.result(timeout=2)["cancel_requested"]
+        release.set()
+        assert replay.result(timeout=5) == frozen
+    assert original_read(execution["binding"])["content"] == {
+        "src/planning-input.txt": b"registered base bytes\n",
+        "tests/planning-input-test.txt": b"registered test base bytes\n",
+    }
+    assert service.capacity.snapshot() == before
+    assert effect_counts() == effects_before
+    assert process_call_sites == [(planning_snapshot.__name__, "_git")] * (
+        1 + 2 * len(frozen["files"])
+    )
+    assert network_calls == []
+
+    ledger = snapshot_database(control)
+    artifact = Path(
+        ledger.parent / "planning-repository-snapshot-blobs" / frozen["files"][0]["sha256"]
+    )
+    artifact.write_bytes(b"tampered")
+    # A saved public command receipt is not authority to skip immutable-store
+    # verification: replay must fail just like an explicit reader call.
+    with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_CHANGED$"):
+        reopened.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="freeze"
+        )
+    with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_CHANGED$"):
+        reopened.read_repository_snapshot(execution["id"], principal="owner")
+    with sqlite3.connect(ledger) as db:
+        assert artifact.read_bytes() == b"tampered"
+        db.execute("UPDATE snapshots SET data=?", ("{}",))
+    with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_CHANGED$"):
+        reopened.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="freeze"
+        )
+    with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_CHANGED$"):
+        reopened.read_repository_snapshot(execution["id"], principal="owner")
+    assert service.capacity.snapshot() == before
+    assert effect_counts() == effects_before
+
+    ledger.unlink()
+    with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE$"):
+        reopened.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="freeze"
+        )
+    # A ledger removed after publication prevents snapshot recovery, but it is
+    # not grounds to deny the old controller factory all existing-only reads.
+    # The reopened factory exposes no snapshot port and each snapshot operation
+    # still fails closed without provisioning a replacement ledger.
+    historical = PlanningExecution.from_trusted_factory(control)
+    assert historical.snapshots is None
+    with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE$"):
+        historical.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="freeze"
+        )
+    with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE$"):
+        historical.read_repository_snapshot(execution["id"], principal="owner")
+    assert not ledger.exists()
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
 def test_persistent_reader_observes_material_sealed_current_generation(
     configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -1448,6 +1943,7 @@ def test_persistent_factory_rebuilds_production_reader_and_reserves_nothing_with
 ) -> None:
     _, authority, _, execution = _case(tmp_path, configured)
     control = _protected_factory_control(tmp_path, authority)
+    provision_planning_repository_snapshots(control)
     service = PlanningExecution.from_trusted_factory(control)
     assert service.admissions is not None
     production = service.admissions.advance(execution["id"], "owner", "factory-admit")
@@ -1484,6 +1980,32 @@ def test_persistent_factory_rejects_run_database_alias(configured: dict, tmp_pat
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
+@pytest.mark.parametrize("alias", ["symlink", "hardlink"])
+def test_persistent_factory_rejects_snapshot_ledger_alias_without_writes(
+    configured: dict, tmp_path: Path, alias: str
+) -> None:
+    _, authority, _, _ = _case(tmp_path, configured)
+    control = _protected_factory_control(tmp_path, authority)
+    ledger = provision_planning_repository_snapshots(control)
+    state = ledger.parent
+    external = tmp_path / "repository-controlled-snapshot.sqlite"
+    shutil.copy2(ledger, external)
+    if alias == "symlink":
+        ledger.unlink()
+        ledger.symlink_to(external)
+    else:
+        # Keep the protected spelling as a two-link inode: it is just as
+        # unsuitable as a symlink even though SQLite can open it.
+        ledger.unlink()
+        os.link(external, ledger)
+    before = external.read_bytes()
+    with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE$"):
+        PlanningExecution.from_trusted_factory(control)
+    assert external.read_bytes() == before
+    assert not list((state / "planning-repository-snapshot-blobs").iterdir())
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
 def test_fixture_admission_cannot_be_relabelled_after_production_reopen(
     configured: dict, tmp_path: Path
 ) -> None:
@@ -1492,6 +2014,7 @@ def test_fixture_admission_cannot_be_relabelled_after_production_reopen(
     assert admitted["phase"] == "admitted"
     assert authority.read_admission(execution["binding"])["authority_kind"] == "fixture"
     control = _protected_factory_control(tmp_path, authority)
+    provision_planning_repository_snapshots(control)
     production = PlanningExecution.from_trusted_factory(control)
     assert production.admissions is not None
     with pytest.raises(RunError, match="PLANNING_ADMISSION_PROVENANCE_FORBIDDEN"):

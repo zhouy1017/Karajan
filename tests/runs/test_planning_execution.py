@@ -2,6 +2,11 @@
 
 import hashlib
 import json
+import os
+import sqlite3
+import subprocess
+import sys
+import time
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from pathlib import Path
@@ -11,9 +16,11 @@ from typing import Any
 import pytest
 from karajan.capacity import CapacityStore
 from karajan.orchestration.planning_execution import PlanningExecution
+from karajan.orchestration.planning_snapshot import PlanningRepositorySnapshotStore
+from karajan.projects import ProjectRegistry
 from karajan.runs import RunError, RunPlanner
 from karajan.runs.planning import digest
-from test_planning import create_request, proposal
+from test_planning import create_request, handoff_request, proposal
 from test_routing_authorization import policy_request, request_v2, submit_request
 
 pytest_plugins = ["test_planning"]
@@ -208,6 +215,284 @@ def begin(
     return execution
 
 
+def snapshot_case(
+    configured: dict, tmp_path: Path
+) -> tuple[
+    PlanningExecution, dict, dict, FixtureAuthorities, PlanningRepositorySnapshotStore, dict
+]:
+    """Create one real registered-base snapshot subject for receipt tests."""
+    registry = configured["registry"]
+    project = registry.get(configured["id"])
+    root = Path(project["repository"]["root"])
+    (root / "src").mkdir(exist_ok=True)
+    (root / "tests").mkdir(exist_ok=True)
+    (root / "src" / "snapshot-subject.txt").write_bytes(b"snapshot source\n")
+    (root / "tests" / "snapshot-subject.txt").write_bytes(b"snapshot test\n")
+    subprocess.run(
+        ["git", "-C", str(root), "add", "src/snapshot-subject.txt", "tests/snapshot-subject.txt"],
+        check=True,
+    )
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "-c",
+            "user.name=x",
+            "-c",
+            "user.email=x@y.z",
+            "commit",
+            "-m",
+            "snapshot subject",
+        ],
+        check=True,
+    )
+    registry.update(
+        project["id"],
+        {
+            "name": project["name"],
+            "base_ref": project["repository"]["base_ref"],
+            "target_branch": project["target_branch"],
+            "allowed_target_branches": project["allowed_target_branches"],
+        },
+        expected_revision=project["revision"],
+        command_key="snapshot-subject-base",
+        principal="owner",
+    )
+    current = {**registry.get(project["id"]), "registry": registry}
+    service, run, intent, authorities = planning_case(tmp_path, current)
+    store = PlanningRepositorySnapshotStore(tmp_path / "snapshots.sqlite")
+    service.snapshots = store
+    execution = service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
+    return service, run, intent, authorities, store, execution
+
+
+def public_snapshot_flow(
+    tmp_path: Path, *, object_format: str, repository_name: str = "repository"
+) -> tuple[PlanningExecution, PlanningRepositorySnapshotStore, dict[str, Any], Path]:
+    """Exercise the public registered-base producer, including a child tree."""
+    root = tmp_path / repository_name
+    root.mkdir()
+    subprocess.run(
+        ["git", "init", "--object-format=" + object_format, str(root)],
+        check=True,
+        capture_output=True,
+    )
+    (root / "src" / "nested").mkdir(parents=True)
+    (root / "tests" / "nested").mkdir(parents=True)
+    (root / "src" / "nested" / "input.txt").write_bytes(b"nested source bytes\n")
+    (root / "tests" / "nested" / "input.txt").write_bytes(b"nested test bytes\n")
+    subprocess.run(["git", "-C", str(root), "add", "src", "tests"], check=True)
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "-c",
+            "user.name=Fixture",
+            "-c",
+            "user.email=fixture@example.invalid",
+            "commit",
+            "-m",
+            "nested snapshot fixture",
+        ],
+        check=True,
+    )
+    registry = ProjectRegistry(tmp_path / "projects.sqlite", [tmp_path])
+    created = registry.create(
+        {
+            "name": "Object format fixture",
+            "repository_path": str(root),
+            "base_ref": "HEAD",
+            "target_branch": "main",
+            "allowed_target_branches": ["main"],
+        },
+        command_key="project",
+        principal="owner",
+    )
+    configuration = json.loads(
+        (Path(__file__).parents[2] / "examples/projects/offline-configuration.json").read_text()
+    )
+    preview = registry.preview_configuration(
+        created["id"], configuration, command_key="preview", principal="owner"
+    )
+    configured = registry.apply_configuration(
+        created["id"],
+        preview["preview_id"],
+        expected_revision=1,
+        command_key="apply",
+        principal="owner",
+    )
+    planner = RunPlanner(tmp_path / "runs.sqlite", registry)
+    run = planner.create(create_request(configured), command_key="run", principal="owner")
+    intent = planner.planning_intent(run["id"], term=1, command_key="intent", principal="lead")
+    service = PlanningExecution(tmp_path / "planning-execution.sqlite", planner)
+    store = PlanningRepositorySnapshotStore(tmp_path / "snapshots.sqlite")
+    service.snapshots = store
+    execution = service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
+    return service, store, execution, root
+
+
+@pytest.mark.parametrize("object_format", ["sha1", "sha256"])
+def test_public_snapshot_flow_supports_registered_git_object_format(
+    tmp_path: Path, object_format: str
+) -> None:
+    """Registry -> planner -> execution preserves nested approved source objects."""
+    service, store, execution, root = public_snapshot_flow(
+        tmp_path, object_format=object_format
+    )
+    project = service.planner.projects.get(execution["binding"]["project_id"])
+    manifest = service.freeze_repository_snapshot(
+        execution["id"], principal="owner", command_key="freeze"
+    )
+
+    assert manifest["base_sha"] == project["repository"]["base_sha"]
+    assert len(manifest["base_sha"]) == {"sha1": 40, "sha256": 64}[object_format]
+    assert manifest["binding_sha256"] == digest(execution["binding"])
+    assert [(entry["path"], entry["mode"], entry["sha256"]) for entry in manifest["files"]] == [
+        ("src/nested/input.txt", "100644", hashlib.sha256(b"nested source bytes\n").hexdigest()),
+        ("tests/nested/input.txt", "100644", hashlib.sha256(b"nested test bytes\n").hexdigest()),
+    ]
+    assert store.read(execution["binding"])["content"] == {
+        "src/nested/input.txt": b"nested source bytes\n",
+        "tests/nested/input.txt": b"nested test bytes\n",
+    }
+
+    reopened = PlanningExecution(
+        service.database, service.planner, snapshots=PlanningRepositorySnapshotStore(store.database)
+    )
+    assert reopened.read_repository_snapshot(execution["id"], principal="owner")["content"] == {
+        "src/nested/input.txt": b"nested source bytes\n",
+        "tests/nested/input.txt": b"nested test bytes\n",
+    }
+    assert root.is_dir()
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Git alternate separators differ on Windows")
+def test_public_snapshot_flow_preserves_literal_colon_repository_path(tmp_path: Path) -> None:
+    """A registered POSIX root is one alternate pathname, not a list injection."""
+    service, _, execution, _ = public_snapshot_flow(
+        tmp_path, object_format="sha1", repository_name='repository:one"quote\\slash'
+    )
+
+    manifest = service.freeze_repository_snapshot(
+        execution["id"], principal="owner", command_key="freeze"
+    )
+    assert manifest["base_sha"] == service.planner.projects.get(execution["binding"]["project_id"])[
+        "repository"
+    ]["base_sha"]
+
+
+@pytest.mark.skipif(os.name == "nt", reason="the owned-child stop fixture uses POSIX SIGSTOP")
+def test_killed_publisher_recovers_original_command_and_shared_cas_content(
+    configured: dict, tmp_path: Path
+) -> None:
+    """A process death after atomic publish leaves a usable one-name CAS object."""
+    service, run, _, authorities, store, first = snapshot_case(configured, tmp_path)
+    second_intent = service.planner.planning_intent(
+        run["id"], term=1, command_key="second-intent", principal="lead"
+    )
+    second = service.begin(
+        run["id"], second_intent["id"], principal="owner", command_key="second-begin"
+    )
+    marker = tmp_path / "publisher-reached-post-rename"
+    root = Path(service.planner.projects.get(run["project_id"])["repository"]["root"])
+    child = """
+import os
+import signal
+import sys
+from pathlib import Path
+from karajan.orchestration.planning_execution import PlanningExecution
+from karajan.orchestration.planning_snapshot import PlanningRepositorySnapshotStore
+from karajan.projects import ProjectRegistry
+from karajan.runs import RunPlanner
+
+(
+    execution_database,
+    run_database,
+    project_database,
+    root,
+    snapshot_database,
+    execution_id,
+    marker,
+) = sys.argv[1:]
+projects = ProjectRegistry(Path(project_database), [Path(root).parent], existing_only=True)
+planner = RunPlanner(Path(run_database), projects, existing_only=True)
+store = PlanningRepositorySnapshotStore(Path(snapshot_database), existing_only=True)
+original = store._published_content
+def pause_after_atomic_publish(target, content):
+    result = original(target, content)
+    Path(marker).write_text("published", encoding="ascii")
+    os.kill(os.getpid(), signal.SIGSTOP)
+    return result
+store._published_content = pause_after_atomic_publish
+execution = PlanningExecution(
+    Path(execution_database), planner, snapshots=store, existing_only=True
+)
+execution.freeze_repository_snapshot(
+    execution_id, principal="owner", command_key="freeze"
+)
+"""
+    child_process = subprocess.Popen(
+        [
+            sys.executable,
+            "-c",
+            child,
+            str(service.database),
+            str(service.planner.database),
+            str(service.planner.projects.database),
+            str(root),
+            str(store.database),
+            first["id"],
+            str(marker),
+        ],
+        cwd=Path.cwd(),
+    )
+    deadline = time.monotonic() + 10
+    while not marker.exists() and time.monotonic() < deadline:
+        time.sleep(0.01)
+    assert marker.read_text(encoding="ascii") == "published"
+    # This is the child created above; no shared test runner or other process is
+    # signalled.  SIGKILL models process death only, not physical power loss.
+    child_process.kill()
+    assert child_process.wait(timeout=5) != 0
+
+    reopened_projects = ProjectRegistry(
+        service.planner.projects.database, [root.parent], existing_only=True
+    )
+    reopened_planner = RunPlanner(service.planner.database, reopened_projects, existing_only=True)
+    reopened_store = PlanningRepositorySnapshotStore(store.database, existing_only=True)
+    reopened = PlanningExecution(
+        service.database, reopened_planner, snapshots=reopened_store, existing_only=True
+    )
+    before_capacity = authorities.capacity.snapshot()
+    original_manifest = reopened.freeze_repository_snapshot(
+        first["id"], principal="owner", command_key="freeze"
+    )
+    later_manifest = reopened.freeze_repository_snapshot(
+        second["id"], principal="owner", command_key="second-freeze"
+    )
+    assert original_manifest["execution_id"] == first["id"]
+    assert later_manifest["execution_id"] == second["id"]
+    assert reopened.read_repository_snapshot(first["id"], principal="owner")["content"] == {
+        "src/snapshot-subject.txt": b"snapshot source\n",
+        "tests/snapshot-subject.txt": b"snapshot test\n",
+    }
+    assert authorities.capacity.snapshot() == before_capacity
+    with pytest.raises(RunError, match="^RUN_NOT_FOUND$"):
+        reopened.read_repository_snapshot(first["id"], principal="lead")
+    with sqlite3.connect(store.database) as db:
+        assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 2
+        assert db.execute("SELECT count(*) FROM files").fetchone()[0] == 4
+    with sqlite3.connect(service.database) as db:
+        assert db.execute(
+            "SELECT count(*) FROM commands WHERE principal=? AND key=?", ("owner", "freeze")
+        ).fetchone()[0] == 1
+    for entry in original_manifest["files"]:
+        artifact = store.artifacts / entry["sha256"]
+        assert artifact.stat().st_nlink == 1
+
+
 def test_id_only_output_consumption_reopens_exact_capacity_receipt_and_plan(
     configured: dict, tmp_path: Path
 ) -> None:
@@ -299,6 +584,708 @@ def test_production_default_rejects_fixture_authorities(configured: dict, tmp_pa
     assert blocked["submission"] is None
 
 
+def test_repository_snapshot_is_id_only_and_has_no_capacity_effect(
+    configured: dict, tmp_path: Path
+) -> None:
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    service.snapshots = PlanningRepositorySnapshotStore(tmp_path / "snapshots.sqlite")
+    execution = service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
+    before = authorities.capacity.snapshot()
+    with pytest.raises(RunError, match="PLANNING_SNAPSHOT_PATH_EMPTY"):
+        service.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="snapshot"
+        )
+    assert authorities.capacity.snapshot() == before
+    with pytest.raises(RunError, match="RUN_NOT_FOUND"):
+        service.freeze_repository_snapshot(execution["id"], principal="lead", command_key="other")
+
+
+def test_snapshot_read_rejects_same_owner_execution_row_substitution_without_repair(
+    configured: dict, tmp_path: Path
+) -> None:
+    """The requested execution primary key anchors all snapshot authority reads."""
+    service, run, _, authorities, store, first = snapshot_case(configured, tmp_path)
+    second_intent = service.planner.planning_intent(
+        run["id"], term=1, command_key="second-intent", principal="lead"
+    )
+    second = service.begin(
+        run["id"], second_intent["id"], principal="owner", command_key="second-begin"
+    )
+    first_manifest = service.freeze_repository_snapshot(
+        first["id"], principal="owner", command_key="first-freeze"
+    )
+    second_manifest = service.freeze_repository_snapshot(
+        second["id"], principal="owner", command_key="second-freeze"
+    )
+    assert first_manifest["execution_id"] != second_manifest["execution_id"]
+    with sqlite3.connect(service.database) as db:
+        second_data = db.execute(
+            "SELECT data FROM executions WHERE id=?", (second["id"],)
+        ).fetchone()[0]
+        commands_before = db.execute(
+            "SELECT principal,key,payload,result FROM commands ORDER BY principal,key"
+        ).fetchall()
+        db.execute("UPDATE executions SET data=? WHERE id=?", (second_data, first["id"]))
+        db.commit()
+    with sqlite3.connect(store.database) as db:
+        snapshots_before = db.execute(
+            "SELECT binding_sha256,data,source_sha256,manifest_sha256 "
+            "FROM snapshots ORDER BY binding_sha256"
+        ).fetchall()
+        files_before = db.execute(
+            "SELECT binding_sha256,path,sha256 FROM files ORDER BY binding_sha256,path"
+        ).fetchall()
+    before_capacity = authorities.capacity.snapshot()
+
+    for operation in (
+        lambda: service.get(first["id"], principal="owner"),
+        lambda: service.read_repository_snapshot(first["id"], principal="owner"),
+        lambda: service.freeze_repository_snapshot(
+            first["id"], principal="owner", command_key="substituted-freeze"
+        ),
+    ):
+        with pytest.raises(RunError, match="^PLANNING_EXECUTION_BINDING_STALE$"):
+            operation()
+    assert (
+        service.read_repository_snapshot(second["id"], principal="owner")["execution_id"]
+        == second["id"]
+    )
+    with pytest.raises(RunError, match="RUN_NOT_FOUND"):
+        service.read_repository_snapshot(second["id"], principal="lead")
+
+    with sqlite3.connect(service.database) as db:
+        assert (
+            db.execute("SELECT data FROM executions WHERE id=?", (first["id"],)).fetchone()[0]
+            == second_data
+        )
+        assert db.execute(
+            "SELECT principal,key,payload,result FROM commands ORDER BY principal,key"
+        ).fetchall() == commands_before
+    with sqlite3.connect(store.database) as db:
+        assert db.execute(
+            "SELECT binding_sha256,data,source_sha256,manifest_sha256 "
+            "FROM snapshots ORDER BY binding_sha256"
+        ).fetchall() == snapshots_before
+        assert db.execute(
+            "SELECT binding_sha256,path,sha256 FROM files ORDER BY binding_sha256,path"
+        ).fetchall() == files_before
+    assert authorities.capacity.snapshot() == before_capacity
+
+
+def test_snapshot_rejects_same_owner_run_and_intent_substitution_before_first_write(
+    configured: dict, tmp_path: Path
+) -> None:
+    """Indexed execution identity must win over rehashed embedded JSON authority."""
+    service, first_run, _, authorities, store, first = snapshot_case(configured, tmp_path)
+    registry = service.planner.projects
+    project = registry.get(first_run["project_id"])
+    root = Path(project["repository"]["root"])
+    (root / "src" / "snapshot-subject.txt").write_bytes(b"second run bytes\n")
+    subprocess.run(
+        ["git", "-C", str(root), "add", "src/snapshot-subject.txt"], check=True
+    )
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "-c",
+            "user.name=x",
+            "-c",
+            "user.email=x@y.z",
+            "commit",
+            "-m",
+            "second snapshot subject",
+        ],
+        check=True,
+    )
+    registry.update(
+        project["id"],
+        {
+            "name": project["name"],
+            "base_ref": project["repository"]["base_ref"],
+            "target_branch": project["target_branch"],
+            "allowed_target_branches": project["allowed_target_branches"],
+        },
+        expected_revision=project["revision"],
+        command_key="second-snapshot-base",
+        principal="owner",
+    )
+    second_project = registry.get(project["id"])
+    second_run = service.planner.create(
+        create_request(second_project), command_key="second-run", principal="owner"
+    )
+    second_intent = service.planner.planning_intent(
+        second_run["id"], term=1, command_key="second-intent", principal="lead"
+    )
+    second = service.begin(
+        second_run["id"], second_intent["id"], principal="owner", command_key="second-begin"
+    )
+    with sqlite3.connect(service.database) as db:
+        forged = json.loads(
+            db.execute("SELECT data FROM executions WHERE id=?", (second["id"],)).fetchone()[0]
+        )
+        forged["id"] = first["id"]
+        forged["binding"]["execution_id"] = first["id"]
+        forged["binding"]["attempt_id"] = "planning:" + first["id"]
+        forged["binding_sha256"] = digest(forged["binding"])
+        db.execute("UPDATE executions SET data=? WHERE id=?", (json.dumps(forged), first["id"]))
+        db.commit()
+    with sqlite3.connect(store.database) as db:
+        before_rows = (
+            db.execute("SELECT count(*) FROM snapshots").fetchone()[0],
+            db.execute("SELECT count(*) FROM files").fetchone()[0],
+        )
+    before_capacity = authorities.capacity.snapshot()
+
+    for operation in (
+        lambda: service.get(first["id"], principal="owner"),
+        lambda: service.read_repository_snapshot(first["id"], principal="owner"),
+        lambda: service.freeze_repository_snapshot(
+            first["id"], principal="owner", command_key="forged-first-freeze"
+        ),
+    ):
+        with pytest.raises(RunError, match="^PLANNING_EXECUTION_BINDING_STALE$"):
+            operation()
+    with sqlite3.connect(store.database) as db:
+        assert before_rows == (
+            db.execute("SELECT count(*) FROM snapshots").fetchone()[0],
+            db.execute("SELECT count(*) FROM files").fetchone()[0],
+        )
+    assert authorities.capacity.snapshot() == before_capacity
+
+    second_manifest = service.freeze_repository_snapshot(
+        second["id"], principal="owner", command_key="second-freeze"
+    )
+    assert service.read_repository_snapshot(second["id"], principal="owner")["content"] == {
+        "src/snapshot-subject.txt": b"second run bytes\n",
+        "tests/snapshot-subject.txt": b"snapshot test\n",
+    }
+    assert second_manifest["run_id"] == second_run["id"]
+    with pytest.raises(RunError, match="^RUN_NOT_FOUND$"):
+        service.get(second["id"], principal="lead")
+
+
+@pytest.mark.parametrize("field", ["base_sha", "file_metadata", "snapshot_id"])
+def test_snapshot_command_replay_rejects_corrupted_manifest_receipt(
+    configured: dict, tmp_path: Path, field: str
+) -> None:
+    service, _, _, authorities, store, execution = snapshot_case(configured, tmp_path)
+    command_key = "freeze"
+    manifest = service.freeze_repository_snapshot(
+        execution["id"], principal="owner", command_key=command_key
+    )
+    corrupted = deepcopy(manifest)
+    if field == "base_sha":
+        corrupted["base_sha"] = "0" * len(corrupted["base_sha"])
+    elif field == "file_metadata":
+        corrupted["files"][0]["mode"] = "100755"
+    else:
+        corrupted["snapshot_sha256"] = "0" * 64
+    with sqlite3.connect(service.database) as db:
+        db.execute(
+            "UPDATE commands SET result=? WHERE principal=? AND key=?",
+            (json.dumps(corrupted, separators=(",", ":")), "owner", command_key),
+        )
+        db.commit()
+    before_capacity = authorities.capacity.snapshot()
+    verified = store.read(execution["binding"])
+
+    with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_CHANGED$"):
+        service.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key=command_key
+        )
+
+    with sqlite3.connect(service.database) as db:
+        assert json.loads(
+            db.execute(
+                "SELECT result FROM commands WHERE principal=? AND key=?", ("owner", command_key)
+            ).fetchone()[0]
+        ) == corrupted
+    assert store.read(execution["binding"]) == verified
+    assert authorities.capacity.snapshot() == before_capacity
+
+
+def test_snapshot_concurrent_receipt_branch_rejects_corrupted_manifest(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    service, _, _, _, store, execution = snapshot_case(configured, tmp_path)
+    command_key = "freeze"
+    original_freeze = store.freeze
+
+    def publish_then_replace_receipt(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        manifest = original_freeze(*args, **kwargs)
+        corrupted = deepcopy(manifest)
+        corrupted["base_sha"] = "0" * len(corrupted["base_sha"])
+        with sqlite3.connect(service.database) as db:
+            db.execute(
+                "UPDATE commands SET result=? WHERE principal=? AND key=?",
+                (json.dumps(corrupted, separators=(",", ":")), "owner", command_key),
+            )
+            db.commit()
+        return manifest
+
+    monkeypatch.setattr(store, "freeze", publish_then_replace_receipt)
+    with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_CHANGED$"):
+        service.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key=command_key
+        )
+    assert store.read(execution["binding"])["execution_id"] == execution["id"]
+
+
+def test_cancelled_execution_cannot_create_a_first_repository_snapshot(
+    configured: dict, tmp_path: Path
+) -> None:
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    database = tmp_path / "snapshots.sqlite"
+    service.snapshots = PlanningRepositorySnapshotStore(database)
+    execution = service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
+    before = authorities.capacity.snapshot()
+    service.cancel(execution["id"], principal="owner", command_key="cancel")
+    with pytest.raises(RunError, match="^PLANNING_EXECUTION_CANCELLED$"):
+        service.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="snapshot"
+        )
+    with sqlite3.connect(database) as db:
+        assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 0
+    assert authorities.capacity.snapshot() == before
+
+
+@pytest.mark.parametrize("revocation", ["cancel", "handoff", "project"])
+def test_snapshot_publication_holds_authority_after_final_check(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, revocation: str
+) -> None:
+    """A revocation cannot commit in the final authority-to-manifest interval."""
+    registry = configured["registry"]
+    project = registry.get(configured["id"])
+    root = Path(project["repository"]["root"])
+    (root / "src").mkdir(exist_ok=True)
+    (root / "tests").mkdir(exist_ok=True)
+    (root / "src" / "race.txt").write_bytes(b"snapshot race\n")
+    (root / "tests" / "race.txt").write_bytes(b"snapshot race\n")
+    subprocess.run(
+        ["git", "-C", str(root), "add", "src/race.txt", "tests/race.txt"], check=True
+    )
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "-c",
+            "user.name=x",
+            "-c",
+            "user.email=x@y.z",
+            "commit",
+            "-m",
+            "race",
+        ],
+        check=True,
+    )
+    registry.update(
+        project["id"],
+        {
+            "name": project["name"],
+            "base_ref": project["repository"]["base_ref"],
+            "target_branch": project["target_branch"],
+            "allowed_target_branches": project["allowed_target_branches"],
+        },
+        expected_revision=project["revision"],
+        command_key="registered-race-base",
+        principal="owner",
+    )
+    configured.update(registry.get(project["id"]))
+    configured["registry"] = registry
+    service, run, intent, _ = planning_case(tmp_path, configured)
+    database = tmp_path / "snapshots.sqlite"
+    store = PlanningRepositorySnapshotStore(database)
+    service.snapshots = store
+    execution = service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
+    reached = Event()
+    release = Event()
+    original_connect = store._connect
+    connections = 0
+    handoff = (
+        service.planner.propose_handoff(
+            run["id"], handoff_request(0), command_key="handoff", principal="owner"
+        )
+        if revocation == "handoff"
+        else None
+    )
+
+    def pause_before_publication() -> sqlite3.Connection:
+        nonlocal connections
+        connections += 1
+        # The first connection is the missing-snapshot read. The second is
+        # the manifest writer, immediately after the candidate's final check.
+        if connections == 2:
+            reached.set()
+            assert release.wait(timeout=5)
+        return original_connect()
+
+    monkeypatch.setattr(store, "_connect", pause_before_publication)
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        frozen = workers.submit(
+            service.freeze_repository_snapshot,
+            execution["id"],
+            principal="owner",
+            command_key="freeze",
+        )
+        assert reached.wait(timeout=5)
+        if revocation == "cancel":
+
+            def revoke() -> dict[str, Any]:
+                return service.cancel(execution["id"], principal="owner", command_key="cancel")
+
+        elif revocation == "handoff":
+            assert handoff is not None
+
+            def revoke() -> dict[str, Any]:
+                return service.planner.decide_handoff(
+                    run["id"],
+                    {
+                        "handoff_id": handoff["id"],
+                        "handoff_digest": handoff["digest"],
+                        "term": 1,
+                        "decision": "approve",
+                    },
+                    command_key="decide-handoff",
+                    principal="owner",
+                )
+        else:
+
+            def revoke() -> dict[str, Any]:
+                current = registry.get(project["id"])
+                return registry.update(
+                    project["id"],
+                    {
+                        "name": current["name"],
+                        "base_ref": current["repository"]["base_ref"],
+                        "target_branch": current["target_branch"],
+                        "allowed_target_branches": current["allowed_target_branches"],
+                    },
+                    expected_revision=current["revision"],
+                    command_key="project-update-during-freeze",
+                    principal="owner",
+                )
+        revocation_finished = Event()
+
+        def revoke_and_record() -> dict[str, Any]:
+            result = revoke()
+            revocation_finished.set()
+            return result
+
+        revoked = workers.submit(revoke_and_record)
+        # bcc releases authority before the paused manifest transaction, so
+        # this real cancellation/handoff completes here. A held guard must
+        # instead make it wait until publication has finished.
+        assert not revocation_finished.wait(timeout=0.3)
+        release.set()
+        frozen.result(timeout=5)
+        revoked.result(timeout=5)
+    with sqlite3.connect(database) as db:
+        assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 1
+
+
+def test_freeze_command_reservation_prevents_cross_execution_publication(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The durable command identity is claimed before the first CAS publish."""
+    registry = configured["registry"]
+    project = registry.get(configured["id"])
+    root = Path(project["repository"]["root"])
+    (root / "src").mkdir(exist_ok=True)
+    (root / "tests").mkdir(exist_ok=True)
+    (root / "src" / "reservation.txt").write_bytes(b"source")
+    (root / "tests" / "reservation.txt").write_bytes(b"test")
+    subprocess.run(
+        ["git", "-C", str(root), "add", "src/reservation.txt", "tests/reservation.txt"],
+        check=True,
+    )
+    subprocess.run(
+        [
+            "git", "-C", str(root), "-c", "user.name=x", "-c", "user.email=x@y.z",
+            "commit", "-m", "reservation",
+        ],
+        check=True,
+    )
+    registry.update(
+        project["id"],
+        {
+            "name": project["name"],
+            "base_ref": project["repository"]["base_ref"],
+            "target_branch": project["target_branch"],
+            "allowed_target_branches": project["allowed_target_branches"],
+        },
+        expected_revision=project["revision"],
+        command_key="reservation-base",
+        principal="owner",
+    )
+    configured.update(registry.get(project["id"]))
+    configured["registry"] = registry
+    service, run, intent, _ = planning_case(tmp_path, configured)
+    second_intent = service.planner.planning_intent(
+        run["id"], term=1, command_key="intent-two", principal="lead"
+    )
+    first = service.begin(run["id"], intent["id"], principal="owner", command_key="begin-one")
+    second = service.begin(
+        run["id"], second_intent["id"], principal="owner", command_key="begin-two"
+    )
+    store = PlanningRepositorySnapshotStore(tmp_path / "snapshots.sqlite")
+    service.snapshots = store
+    entered, release = Event(), Event()
+    publish = store._publish
+
+    def slow_publish(sha: str, content: bytes) -> None:
+        entered.set()
+        assert release.wait(timeout=5)
+        publish(sha, content)
+
+    monkeypatch.setattr(store, "_publish", slow_publish)
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        first_freeze = workers.submit(
+            service.freeze_repository_snapshot,
+            first["id"],
+            principal="owner",
+            command_key="same-freeze-key",
+        )
+        assert entered.wait(timeout=5)
+        conflict = workers.submit(
+            service.freeze_repository_snapshot,
+            second["id"],
+            principal="owner",
+            command_key="same-freeze-key",
+        )
+        with pytest.raises(RunError, match="^IDEMPOTENCY_CONFLICT$"):
+            conflict.result(timeout=2)
+        release.set()
+        first_freeze.result(timeout=5)
+    with sqlite3.connect(store.database) as db:
+        assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 1
+
+
+@pytest.mark.parametrize("field", ["term", "configuration", "authorization"])
+def test_changed_trusted_run_record_rejects_unfrozen_execution_without_snapshot(
+    configured: dict, tmp_path: Path, field: str
+) -> None:
+    """The v1 binding is rebuilt from Run SQLite, never trusted from execution JSON."""
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    database = tmp_path / "snapshots.sqlite"
+    service.snapshots = PlanningRepositorySnapshotStore(database)
+    execution = service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
+    with service.planner._transaction() as db:
+        changed = service.planner._get(db, run["id"])
+        if field == "term":
+            changed["commander"]["term"] = 2
+        elif field == "configuration":
+            changed["configuration_snapshot"]["digest"] = "f" * 64
+        else:
+            changed["authorization_ceiling"]["read_paths"] = ["different"]
+        service.planner._save(db, changed)
+    before = authorities.capacity.snapshot()
+    with pytest.raises(RunError, match="^PLANNING_EXECUTION_BINDING_STALE$"):
+        service.freeze_repository_snapshot(execution["id"], principal="owner", command_key="freeze")
+    with sqlite3.connect(database) as db:
+        assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 0
+        assert db.execute("SELECT count(*) FROM files").fetchone()[0] == 0
+    assert authorities.capacity.snapshot() == before
+
+
+@pytest.mark.parametrize("tamper", ["binding", "binding_sha256"])
+def test_persisted_snapshot_binding_tamper_is_stable_and_does_not_create(
+    configured: dict, tmp_path: Path, tamper: str
+) -> None:
+    service, run, intent, _ = planning_case(tmp_path, configured)
+    database = tmp_path / "snapshots.sqlite"
+    service.snapshots = PlanningRepositorySnapshotStore(database)
+    execution = service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
+    with service._transaction() as db:
+        changed = service._load(db, execution["id"])
+        if tamper == "binding":
+            changed["binding"]["budget_ref"] = "forged"
+            changed["binding_sha256"] = digest(changed["binding"])
+        else:
+            changed["binding_sha256"] = "f" * 64
+        service._save(db, changed)
+    for operation in (
+        lambda: service.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="freeze"
+        ),
+        lambda: service.read_repository_snapshot(execution["id"], principal="owner"),
+    ):
+        with pytest.raises(RunError, match="^PLANNING_EXECUTION_BINDING_STALE$"):
+            operation()
+    with sqlite3.connect(database) as db:
+        assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 0
+
+
+@pytest.mark.parametrize("receipt", ["lost", "saved"])
+def test_committed_snapshot_survives_commander_handoff_and_source_change(
+    configured: dict, tmp_path: Path, receipt: str
+) -> None:
+    registry = configured["registry"]
+    project = registry.get(configured["id"])
+    root = Path(project["repository"]["root"])
+    (root / "src").mkdir(exist_ok=True)
+    (root / "tests").mkdir(exist_ok=True)
+    (root / "src" / "snapshot.txt").write_bytes(b"original snapshot\n")
+    (root / "tests" / "snapshot.txt").write_bytes(b"original test snapshot\n")
+    subprocess.run(
+        ["git", "-C", str(root), "add", "src/snapshot.txt", "tests/snapshot.txt"], check=True
+    )
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "-c",
+            "user.name=x",
+            "-c",
+            "user.email=x@y.z",
+            "commit",
+            "-m",
+            "snapshot",
+        ],
+        check=True,
+    )
+    registry.update(
+        project["id"],
+        {
+            "name": project["name"],
+            "base_ref": project["repository"]["base_ref"],
+            "target_branch": project["target_branch"],
+            "allowed_target_branches": project["allowed_target_branches"],
+        },
+        expected_revision=project["revision"],
+        command_key="registered-snapshot-base",
+        principal="owner",
+    )
+    configured.update(registry.get(project["id"]))
+    configured["registry"] = registry
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    database = tmp_path / "snapshots.sqlite"
+    store = PlanningRepositorySnapshotStore(database)
+    service.snapshots = store
+    execution = service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
+
+    # In the lost-receipt case, the real producer committed before its public
+    # command receipt was saved.  This crosses the public command reservation
+    # and actual snapshot publication boundary, then loses only the reply.
+    # The saved case exercises command-ledger replay after a legitimate Run
+    # Commander transition.
+    if receipt == "lost":
+        published: list[dict[str, Any]] = []
+        original_freeze = store.freeze
+
+        def lose_reply(*args: Any, **kwargs: Any) -> dict[str, Any]:
+            value = original_freeze(*args, **kwargs)
+            published.append(value)
+            raise RunError("simulated reply loss")
+
+        store.freeze = lose_reply  # type: ignore[method-assign]
+        with pytest.raises(RunError, match="^simulated reply loss$"):
+            service.freeze_repository_snapshot(
+                execution["id"], principal="owner", command_key="freeze"
+            )
+        assert len(published) == 1
+        committed = published[0]
+    else:
+        committed = service.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="freeze"
+        )
+    handoff = service.planner.propose_handoff(
+        run["id"], handoff_request(0), command_key="handoff", principal="owner"
+    )
+    service.planner.decide_handoff(
+        run["id"],
+        {
+            "handoff_id": handoff["id"],
+            "handoff_digest": handoff["digest"],
+            "term": 1,
+            "decision": "approve",
+        },
+        command_key="decide-handoff",
+        principal="owner",
+    )
+    (root / "src" / "snapshot.txt").write_bytes(b"later source bytes\n")
+    subprocess.run(["git", "-C", str(root), "add", "src/snapshot.txt"], check=True)
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "-c",
+            "user.name=x",
+            "-c",
+            "user.email=x@y.z",
+            "commit",
+            "-m",
+            "later",
+        ],
+        check=True,
+    )
+    current = registry.get(project["id"])
+    registry.update(
+        project["id"],
+        {
+            "name": current["name"],
+            "base_ref": current["repository"]["base_ref"],
+            "target_branch": current["target_branch"],
+            "allowed_target_branches": current["allowed_target_branches"],
+        },
+        expected_revision=current["revision"],
+        command_key="later-source",
+        principal="owner",
+    )
+    reopened = PlanningExecution(
+        service.database, service.planner, snapshots=PlanningRepositorySnapshotStore(database)
+    )
+    before = authorities.capacity.snapshot()
+    assert (
+        reopened.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="freeze"
+        )
+        == committed
+    )
+    assert reopened.read_repository_snapshot(execution["id"], principal="owner")["content"] == {
+        "src/snapshot.txt": b"original snapshot\n",
+        "tests/snapshot.txt": b"original test snapshot\n",
+    }
+    assert authorities.capacity.snapshot() == before
+    with sqlite3.connect(database) as db:
+        assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 1
+        assert db.execute("SELECT count(*) FROM files").fetchone()[0] == 2
+
+
+def test_handoff_rejects_first_snapshot_for_original_execution(
+    configured: dict, tmp_path: Path
+) -> None:
+    """A historical identity can recover evidence, never create it after handoff."""
+    service, run, intent, _ = planning_case(tmp_path, configured)
+    database = tmp_path / "snapshots.sqlite"
+    service.snapshots = PlanningRepositorySnapshotStore(database)
+    execution = service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
+    handoff = service.planner.propose_handoff(
+        run["id"], handoff_request(0), command_key="handoff", principal="owner"
+    )
+    service.planner.decide_handoff(
+        run["id"],
+        {
+            "handoff_id": handoff["id"],
+            "handoff_digest": handoff["digest"],
+            "term": 1,
+            "decision": "approve",
+        },
+        command_key="decide-handoff",
+        principal="owner",
+    )
+
+    with pytest.raises(RunError, match="^PLANNING_EXECUTION_BINDING_STALE$"):
+        service.freeze_repository_snapshot(execution["id"], principal="owner", command_key="freeze")
+    with sqlite3.connect(database) as db:
+        assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 0
+        assert db.execute("SELECT count(*) FROM files").fetchone()[0] == 0
+
+
 def test_production_label_cannot_promote_a_test_double(configured: dict, tmp_path: Path) -> None:
     service, run, intent, authorities = planning_case(tmp_path, configured)
     execution = begin(service, run, intent, authorities)
@@ -388,9 +1375,7 @@ def test_exact_run_receipt_recovers_lost_reply_without_resubmission(
         execution["id"], principal="owner", command_key="submit"
     )
     assert recovered["state"] == "submitted"
-    assert service.planner.get(run["id"], principal="owner")["plans"] == [
-        recovered["submission"]
-    ]
+    assert service.planner.get(run["id"], principal="owner")["plans"] == [recovered["submission"]]
 
 
 def test_reopened_unstarted_claim_without_receipt_never_submits(
@@ -445,8 +1430,7 @@ def test_concurrent_submitters_create_at_most_one_plan(configured: dict, tmp_pat
         )
 
     assert all(
-        submission["state"] in {"submission_unknown", "submitted"}
-        for submission in submissions
+        submission["state"] in {"submission_unknown", "submitted"} for submission in submissions
     ), [submission["state"] for submission in submissions]
     plans = service.planner.get(run["id"], principal="owner")["plans"]
     assert len(plans) == 1
@@ -457,9 +1441,7 @@ def test_concurrent_submitters_create_at_most_one_plan(configured: dict, tmp_pat
     assert recovered["submission"] == plans[0]
 
 
-def test_delayed_capture_cannot_rollback_a_submitted_plan(
-    configured: dict, tmp_path: Path
-) -> None:
+def test_delayed_capture_cannot_rollback_a_submitted_plan(configured: dict, tmp_path: Path) -> None:
     service, run, intent, authorities = planning_case(tmp_path, configured)
     execution = begin(service, run, intent, authorities)
     authorities.activate()
@@ -481,17 +1463,18 @@ def test_delayed_capture_cannot_rollback_a_submitted_plan(
         )
         assert captured.wait(5), "delayed capture did not read output"
         authorities.read_output = original_output  # type: ignore[method-assign]
-        submitted = service.submit(
-            execution["id"], principal="owner", command_key="submit-first"
-        )
+        submitted = service.submit(execution["id"], principal="owner", command_key="submit-first")
         assert submitted["state"] == "submitted"
         release.set()
         late = delayed.result(timeout=5)
 
     assert late["state"] == "submitted"
-    assert service.get(execution["id"], principal="owner")["submission_request"][
-        "expected_plan_revision"
-    ] == 0
+    assert (
+        service.get(execution["id"], principal="owner")["submission_request"][
+            "expected_plan_revision"
+        ]
+        == 0
+    )
     recovered = service.submit(execution["id"], principal="owner", command_key="submit-recovery")
     assert recovered["state"] == "submitted"
     assert recovered["submission"] == submitted["submission"]
@@ -551,9 +1534,7 @@ def test_delayed_capture_cannot_take_an_active_claim(
         submitted = active.result(timeout=5)
 
     assert submitted["state"] == "submitted"
-    assert service.planner.get(run["id"], principal="owner")["plans"] == [
-        submitted["submission"]
-    ]
+    assert service.planner.get(run["id"], principal="owner")["plans"] == [submitted["submission"]]
 
 
 def test_matching_run_receipt_repairs_a_stale_submission_state(
@@ -607,9 +1588,7 @@ def test_receipt_only_recovery_cannot_stop_a_claiming_submitter(
         submitted = first.result(timeout=5)
 
     assert submitted["state"] == "submitted"
-    assert service.planner.get(run["id"], principal="owner")["plans"] == [
-        submitted["submission"]
-    ]
+    assert service.planner.get(run["id"], principal="owner")["plans"] == [submitted["submission"]]
 
 
 @pytest.mark.parametrize(
@@ -730,8 +1709,7 @@ def test_begin_replay_survives_original_intent_state_change(
     authorities.activate()
     service.submit(execution["id"], principal="owner", command_key="submit")
     assert (
-        service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
-        == execution
+        service.begin(run["id"], intent["id"], principal="owner", command_key="begin") == execution
     )
 
 
