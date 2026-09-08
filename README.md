@@ -2,11 +2,13 @@
 
 面向个人的多来源 Agent 代码交付平台：Commander 理解需求，用户确认计划，平台按 Rulebook 和服务配额组织实现、测试、审查并交付 PR。
 
+当前开发入口是 [当前业务顺序](docs/planning/business-first.md)，第一演示围绕工作台小需求→真实只读 Planning→精确批准；其后才推进 Candidate、checks、独立 Reviewer、同一 PR及更大范围。该入口也规定 Luna/Terra/Astra 的模型分工和最短验证链。原 PRD 与 Issue 流程继续有效。
+
 ## 产品需求与实施规划
 
 - [PRD v1](docs/prd/karajan-v1.md)：用户故事、功能需求、可观察验收和首版边界；[GitHub 父任务 #1](https://github.com/zhouy1017/Karajan/issues/1)。
 - [M0–M4 路线图](docs/planning/roadmap.md)：M0 探针顺序、阶段出口与后续拆票时机。
-- [开发到交付的阶段 Goals](docs/planning/delivery-goals/README.md)：简短启动 prompt、原验收归属、依赖和出口；[2026-09-08 复审](docs/planning/review-20260908.md) 记录问题与修复证据。
+- [历史阶段范围映射](docs/planning/delivery-goals/README.md)：保留原验收归属和出口；[2026-09-08 复审](docs/planning/review-20260908.md) 记录问题与修复证据。当前领取顺序使用上方业务入口。
 - [GitHub Issues](https://github.com/zhouy1017/Karajan/issues)：任务状态与依赖关系；[跟踪约定](docs/agents/issue-tracker.md)。
 
 PRD、8 个 M0 Issues、20 个 M1–M4 实现任务和独立 CI 任务已发布。M0 契约、执行恢复、预算和运行探针已分批实现，本地项目工作台已可登记仓库与预览、保存配置；真实账户资格尚未通过。后续任务见 [完整任务清单](docs/planning/v1-backlog.md) 与 [需求覆盖审计](docs/implementation/requirement-coverage.md)；GitHub 实际编号见 [发布记录](docs/planning/v1/github-publication.json)。

@@ -1,5 +1,10 @@
 # DG01：Planning／Reviewer 可信执行闭环
 
+> 历史安排：当前执行入口为 [业务顺序](../business-first.md)。下方仅保留当时的范围、验收与派发记录，不作为当前调度指令。
+
+<details>
+<summary>历史阶段内容（原验收保留）</summary>
+
 目标：完成 #112/#116 的 C/P 原范围，使真实本机 runner 在受控本地服务下从持久意图推进到可信输出、Evidence 和当前 receipt。消费 DG00 修复，不以 fixture 证明 S 或启用生产交付。
 
 ## 开始与分解
@@ -19,3 +24,5 @@
 证据：真实 SQLite/Capacity、本地 HTTP fixture、Linux native/进程/隔离的 C/P，逐 effect 接收计数、崩溃重开和取消负例；工具缺失或平台不支持准确标记。独立双审、当前 CI、进入 dev 后按原 AC 关叶子并回填父票。完整父票未满足时保持 Open。
 
 下一步：DG02；#107 可独立预检，#18/#19 前置准备并行。
+
+</details>

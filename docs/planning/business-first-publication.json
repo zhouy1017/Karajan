@@ -1,0 +1,57 @@
+{
+  "date": "2026-09-08T15:06:10Z",
+  "scope": "GitHub issue metadata and bodies only; no source/docs worktree edits",
+  "beforeSnapshot": ".cache/business-first-20260908/issues-before.json",
+  "openIssues": 40,
+  "closed": 0,
+  "notPlanned": 0,
+  "labelActions": {
+    "status:in-progress": [
+      1,
+      12,
+      93,
+      153
+    ],
+    "status:blocked": [
+      112
+    ],
+    "status:awaiting-merge": [
+      151
+    ],
+    "status:queued": 34,
+    "ready-for-agentRemoved": 34
+  },
+  "bodyActions": {
+    "businessFirstHeaderAdded": 39,
+    "issue153BodyUnchanged": true,
+    "historyBlocksMoved": {
+      "112": 2,
+      "116": 1,
+      "142": 5,
+      "143": 5,
+      "146": 0,
+      "147": 2,
+      "149": 1,
+      "151": 1
+    }
+  },
+  "verification": {
+    "allOpen": true,
+    "exactlyOneStatusEach": true,
+    "statusCounts": {
+      "status:in-progress": 4,
+      "status:queued": 34,
+      "status:blocked": 1,
+      "status:awaiting-merge": 1
+    },
+    "originalCheckboxTextsPreserved": true,
+    "checkboxCountBefore": 306,
+    "checkboxCountAfter": 306,
+    "specialHeadersVerified": true,
+    "issue153HeaderSkippedPerInstruction": true
+  },
+  "failures": [],
+  "businessIssue": "https://github.com/zhouy1017/Karajan/issues/153",
+  "documentationPR": "https://github.com/zhouy1017/Karajan/pull/154",
+  "note": "Historical cleanup snapshot; live status remains on GitHub. Original bodies and evidence are retained in each Issue."
+}

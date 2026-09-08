@@ -1,5 +1,7 @@
 # 并行编码派发快照（2026-09-07）
 
+> 历史快照：当前业务顺序以 [当前业务顺序](../business-first.md) 为唯一入口；本文件正文、`publication.json`、关系核验和 manifest hash 只用于追溯，不是当前派发命令。
+
 本次派发以 `dev@6cf89abc1a6ca8cb99d76f82191dc7d82efeb05b`、既有开发计划和父 Issue 原验收条件为基线。GitHub Issues 是实时状态来源；本目录记录发布时的任务正文与关系，`labels_at_snapshot` 不代表读取时的当前状态。
 
 用户指定 gpt-5.6-luna 与 gpt-5.6-terra 承担编码及各自的 CI/审查修复，gpt-6-astra high 独立审查；指挥者负责设计、依赖与验收调度。审查分别记录 Standards 和 Spec，固定候选 commit，保留失败反例；旧候选通过不替代当前候选的 CI。Issue 验收和合入流程见 [Issue 跟踪流程](../../agents/issue-tracker.md)。
