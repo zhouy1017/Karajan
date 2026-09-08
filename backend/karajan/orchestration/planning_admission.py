@@ -1566,7 +1566,10 @@ class PlanningAdmissionAuthority:
         reader = getattr(self.qualifications, "current_output_source", None)
         if not callable(reader):
             raise RunError("COMMANDER_SOURCE_UNAVAILABLE")
-        return reader(binding)
+        source = reader(binding)
+        if not isinstance(source, dict):
+            raise RunError("COMMANDER_SOURCE_UNAVAILABLE")
+        return source
 
     def read_admission(self, binding: dict[str, Any]) -> object:
         """Read the original durable record only; it never calls Capacity."""

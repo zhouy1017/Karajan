@@ -1447,6 +1447,48 @@ def _protected_factory_control(tmp_path: Path, authority: PlanningAdmissionAutho
     return control
 
 
+def _output_source_control(
+    tmp_path: Path, authority: PlanningAdmissionAuthority, run: dict[str, Any]
+) -> tuple[Path, Path]:
+    """Install a real private Commander source without creating a qualification pass."""
+    runtime = os.environ.get("KARAJAN_GO_RUNTIME")
+    tokenizer = os.environ.get("KARAJAN_GO_TOKENIZER_DIRECTORY")
+    if runtime is None or tokenizer is None:
+        pytest.skip("prepared runtime and tokenizer are required")
+    credential_private = tmp_path / "output-source-private"
+    key = credential_private / "source.key"
+    profile = run["configuration_snapshot"]["configuration"]["resources"]["profiles"][0]
+    auth_ref = profile["profile"]["auth_ref"]
+    credentials = CredentialSourceStore(
+        authority.planner.projects,
+        sources={(run["project_id"], auth_ref): LocalKeyFile("output-source", key)},
+        private_directory=credential_private,
+    )
+    key.write_text("local-source-fixture\n", encoding="utf-8")
+    key.chmod(0o600)
+    credentials.register(
+        run["project_id"], auth_ref, principal="owner", command_key="source-register"
+    )
+    control = _protected_factory_control(tmp_path, authority)
+    journal_path = credential_private / "journal.sqlite"
+    GoCallJournal(journal_path)
+    journal_path.chmod(0o600)
+    work_root = credential_private / "work"
+    work_root.mkdir(mode=0o700)
+    write_commander_qualification_settings(
+        control,
+        CommanderQualificationSettings(
+            Path(runtime),
+            Path(tokenizer),
+            credential_private,
+            (CommanderCredentialSource(run["project_id"], auth_ref, "output-source", key),),
+            journal_path=journal_path,
+            work_root=work_root,
+        ),
+    )
+    return control, key
+
+
 def test_persistent_factory_missing_descriptor_rejects_without_creating_stores(
     tmp_path: Path,
 ) -> None:
@@ -2134,42 +2176,8 @@ def test_factory_output_arm_preserves_missing_commander_as_durable_denial(
     configured: dict, tmp_path: Path
 ) -> None:
     """Output source observation must not bypass the ordinary Commander denial."""
-    runtime = os.environ.get("KARAJAN_GO_RUNTIME")
-    tokenizer = os.environ.get("KARAJAN_GO_TOKENIZER_DIRECTORY")
-    if runtime is None or tokenizer is None:
-        pytest.skip("prepared runtime and tokenizer are required")
     _, authority, run, execution = _case(tmp_path, configured)
-    credential_private = tmp_path / "output-source-private"
-    key = credential_private / "source.key"
-    profile = run["configuration_snapshot"]["configuration"]["resources"]["profiles"][0]
-    auth_ref = profile["profile"]["auth_ref"]
-    credentials = CredentialSourceStore(
-        authority.planner.projects,
-        sources={(run["project_id"], auth_ref): LocalKeyFile("output-source", key)},
-        private_directory=credential_private,
-    )
-    key.write_text("local-source-fixture\n", encoding="utf-8")
-    key.chmod(0o600)
-    credentials.register(
-        run["project_id"], auth_ref, principal="owner", command_key="source-register"
-    )
-    control = _protected_factory_control(tmp_path, authority)
-    journal_path = credential_private / "journal.sqlite"
-    GoCallJournal(journal_path)
-    journal_path.chmod(0o600)
-    work_root = credential_private / "work"
-    work_root.mkdir(mode=0o700)
-    write_commander_qualification_settings(
-        control,
-        CommanderQualificationSettings(
-            Path(runtime),
-            Path(tokenizer),
-            credential_private,
-            (CommanderCredentialSource(run["project_id"], auth_ref, "output-source", key),),
-            journal_path=journal_path,
-            work_root=work_root,
-        ),
-    )
+    control, _ = _output_source_control(tmp_path, authority, run)
     ledger = tmp_path / "protected-state" / "planning-output.sqlite"
     PlanningOutputStore(ledger, authority_kind="production")
     ledger.chmod(0o600)
@@ -2257,40 +2265,50 @@ def test_retained_factory_rejects_replaced_output_ledger(
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
+@pytest.mark.parametrize("mutation", ["hardlink", "permissions"])
+def test_retained_factory_rechecks_output_ledger_privacy(
+    configured: dict, tmp_path: Path, mutation: str
+) -> None:
+    """A retained output authority rejects mutable privacy without an inode swap."""
+    _, authority, _, execution = _case(tmp_path, configured)
+    control = _protected_factory_control(tmp_path, authority)
+    ledger = tmp_path / "protected-state" / "planning-output.sqlite"
+    PlanningOutputStore(ledger, authority_kind="production")
+    ledger.chmod(0o600)
+    retained = PlanningExecution.from_trusted_factory(control)
+    if mutation == "hardlink":
+        os.link(ledger, tmp_path / "second-output-ledger-link.sqlite")
+    else:
+        ledger.chmod(0o644)
+
+    with pytest.raises(RunError, match="^PLANNING_ADMISSION_BOOTSTRAP_CHANGED$"):
+        retained.get(execution["id"], principal="owner")
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
 def test_direct_factory_submit_rechecks_live_output_source_before_claim(
-    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    configured: dict, tmp_path: Path
 ) -> None:
     """A recovered execution cannot accept output armed under a stale source."""
     service, authority, run, execution = _case(tmp_path, configured)
-    source_version = {"value": "before"}
-
-    def live_source(_control: Path, _admissions: Any, binding: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "schema_version": "test.live-output-source.v1",
-            "binding_sha256": digest(binding),
-            "source": source_version["value"],
-        }
-
-    monkeypatch.setattr(
-        "karajan.orchestration.planning_transport.observe_production_output_source",
-        live_source,
-    )
-    source = live_source(tmp_path, authority, execution["binding"])
-    with service._transaction() as db:
-        pending = service._load(db, execution["id"])
-        pending["state"] = "awaiting_output"
-        pending["output_source_sha256"] = digest(source)
-        service._save(db, pending)
-    control = _protected_factory_control(tmp_path, authority)
+    control, key = _output_source_control(tmp_path, authority, run)
     ledger = tmp_path / "protected-state" / "planning-output.sqlite"
     raw_outputs = PlanningOutputStore(ledger, authority_kind="production")
-    raw_outputs.arm(execution["binding"], source)
-    raw_outputs.publish(execution["binding"], b'{"summary":"stale"}')
     ledger.chmod(0o600)
-
     recovered = PlanningExecution.from_trusted_factory(control)
     assert recovered.outputs is not None
-    source_version["value"] = "after"
+    reader = recovered.outputs._source_reader
+    assert callable(reader)
+    source = reader(execution["binding"])
+    raw_outputs.arm(execution["binding"], source)
+    raw_outputs.publish(execution["binding"], b'{"summary":"stale"}')
+    with recovered._transaction() as db:
+        pending = recovered._load(db, execution["id"])
+        pending["state"] = "awaiting_output"
+        pending["output_source_sha256"] = digest(source)
+        recovered._save(db, pending)
+    key.write_text("local-source-changed\n", encoding="utf-8")
+    key.chmod(0o600)
     result = recovered.submit(execution["id"], principal="owner", command_key="direct-stale")
 
     assert result["state"] == "blocked"

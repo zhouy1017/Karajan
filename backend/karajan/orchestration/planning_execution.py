@@ -84,6 +84,7 @@ class _TrustedFactoryAuthority:
     bootstrap_sha256: str
     settings_document: dict[str, Any]
     identities: tuple[tuple[Path, tuple[int, int]], ...]
+    private_files: tuple[Path, ...]
 
 
 def _path_identity(path: Path) -> tuple[int, int]:
@@ -233,6 +234,7 @@ class PlanningExecution:
                 bootstrap_sha256,
                 settings.document(),
                 tuple((path, _path_identity(path)) for path in protected_paths),
+                (output_database,) if outputs is not None else (),
             )
         except OSError as error:
             raise RunError("PLANNING_ADMISSION_BOOTSTRAP_CHANGED") from error
@@ -255,7 +257,12 @@ class PlanningExecution:
         trusted = self._trusted_factory_authority
         if trusted is None:
             return
-        from .planning_bootstrap import assert_planning_bootstrap_current
+        from karajan.projects.credential_sources import _private
+
+        from .planning_bootstrap import (
+            _canonical_existing,
+            assert_planning_bootstrap_current,
+        )
 
         try:
             settings = assert_planning_bootstrap_current(
@@ -265,6 +272,10 @@ class PlanningExecution:
                 _path_identity(path) != expected for path, expected in trusted.identities
             ):
                 raise ValueError()
+            for path in trusted.private_files:
+                if _canonical_existing(str(path), directory=False) != path:
+                    raise ValueError()
+                _private(path)
         except (OSError, ValueError, RunError):
             raise RunError("PLANNING_ADMISSION_BOOTSTRAP_CHANGED") from None
 
