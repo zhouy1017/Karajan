@@ -218,6 +218,96 @@ def test_base_tree_read_disables_local_replace_refs_and_git_environment(
     ] == {"src/a.txt": b"registered"}
 
 
+@pytest.mark.skipif(os.name == "nt", reason="the hostile ext transport fixture needs POSIX touch")
+def test_missing_promisor_blob_cannot_run_repository_configured_helper(
+    tmp_path: Path,
+) -> None:
+    """A source-repository transport may never execute in the controller reader."""
+    root = tmp_path / "repo"
+    root.mkdir()
+    _git(root, "init")
+    (root / "src").mkdir()
+    source = root / "src" / "input.txt"
+    source.write_bytes(b"only in the registered base\n")
+    _git(root, "add", ".")
+    _git(root, "-c", "user.name=x", "-c", "user.email=x@y.z", "commit", "-m", "base")
+    base = _git(root, "rev-parse", "HEAD")
+    blob = _git(root, "rev-parse", base + ":src/input.txt")
+    marker = tmp_path / "repository-config-helper-ran"
+    # This is a deliberately local-only hostile repository fixture.  If Git
+    # reads this config while trying to lazily fetch the missing blob, ext::
+    # starts a local helper and creates the marker; no network endpoint or credentials are
+    # involved in the feedback loop.
+    _git(root, "config", "protocol.ext.allow", "always")
+    _git(root, "config", "remote.origin.url", "ext::touch " + str(marker))
+    _git(root, "config", "remote.origin.promisor", "true")
+    _git(root, "config", "remote.origin.partialclonefilter", "blob:none")
+    _git(root, "config", "extensions.partialClone", "origin")
+    (root / ".git" / "objects" / blob[:2] / blob[2:]).unlink()
+    legacy_env = {
+        key: os.environ[key]
+        for key in ("PATH", "TEMP", "TMP")
+        if key in os.environ
+    }
+    legacy_env.update(
+        {
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "GIT_CONFIG_GLOBAL": os.devnull,
+            "GIT_NO_REPLACE_OBJECTS": "1",
+            "GIT_OPTIONAL_LOCKS": "0",
+            "GIT_TERMINAL_PROMPT": "0",
+        }
+    )
+    # This reproduces the former receiving boundary exactly enough to prove
+    # that the fixture really does cause an OS child/helper effect.  It is a
+    # local ``touch`` only; the fixed store below must leave no second marker.
+    subprocess.run(
+        [
+            "git",
+            "--no-replace-objects",
+            "-C",
+            str(root),
+            "-c",
+            "core.hooksPath=" + os.devnull,
+            "-c",
+            "core.fsmonitor=false",
+            "-c",
+            "credential.helper=",
+            "-c",
+            "protocol.allow=never",
+            "cat-file",
+            "-s",
+            base + ":src/input.txt",
+        ],
+        capture_output=True,
+        timeout=10,
+        env=legacy_env,
+        check=False,
+    )
+    assert marker.is_file()
+    marker.unlink()
+    binding = {
+        "execution_id": "execution",
+        "run_id": "run",
+        "intent_id": "intent",
+        "requirement_sha256": "a" * 64,
+        "authorization_ceiling_sha256": "c" * 64,
+    }
+    run = {
+        "project_id": "project",
+        "configuration_snapshot": {"project_revision": 1},
+        "authorization_ceiling": {"read_paths": ["src"]},
+    }
+    project = {
+        "id": "project",
+        "revision": 1,
+        "repository": {"root": str(root.resolve()), "identity_sha256": "b" * 64, "base_sha": base},
+    }
+    with pytest.raises(RunError, match="^PLANNING_SNAPSHOT_BASE_UNAVAILABLE$"):
+        PlanningRepositorySnapshotStore(tmp_path / "snapshots.sqlite").freeze(binding, run, project)
+    assert not marker.exists()
+
+
 def test_repository_root_alias_is_rejected(tmp_path: Path):
     root = tmp_path / "repo"
     root.mkdir()

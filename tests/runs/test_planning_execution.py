@@ -442,6 +442,100 @@ def test_snapshot_read_rejects_same_owner_execution_row_substitution_without_rep
     assert authorities.capacity.snapshot() == before_capacity
 
 
+def test_snapshot_rejects_same_owner_run_and_intent_substitution_before_first_write(
+    configured: dict, tmp_path: Path
+) -> None:
+    """Indexed execution identity must win over rehashed embedded JSON authority."""
+    service, first_run, _, authorities, store, first = snapshot_case(configured, tmp_path)
+    registry = service.planner.projects
+    project = registry.get(first_run["project_id"])
+    root = Path(project["repository"]["root"])
+    (root / "src" / "snapshot-subject.txt").write_bytes(b"second run bytes\n")
+    subprocess.run(
+        ["git", "-C", str(root), "add", "src/snapshot-subject.txt"], check=True
+    )
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "-c",
+            "user.name=x",
+            "-c",
+            "user.email=x@y.z",
+            "commit",
+            "-m",
+            "second snapshot subject",
+        ],
+        check=True,
+    )
+    registry.update(
+        project["id"],
+        {
+            "name": project["name"],
+            "base_ref": project["repository"]["base_ref"],
+            "target_branch": project["target_branch"],
+            "allowed_target_branches": project["allowed_target_branches"],
+        },
+        expected_revision=project["revision"],
+        command_key="second-snapshot-base",
+        principal="owner",
+    )
+    second_project = registry.get(project["id"])
+    second_run = service.planner.create(
+        create_request(second_project), command_key="second-run", principal="owner"
+    )
+    second_intent = service.planner.planning_intent(
+        second_run["id"], term=1, command_key="second-intent", principal="lead"
+    )
+    second = service.begin(
+        second_run["id"], second_intent["id"], principal="owner", command_key="second-begin"
+    )
+    with sqlite3.connect(service.database) as db:
+        forged = json.loads(
+            db.execute("SELECT data FROM executions WHERE id=?", (second["id"],)).fetchone()[0]
+        )
+        forged["id"] = first["id"]
+        forged["binding"]["execution_id"] = first["id"]
+        forged["binding"]["attempt_id"] = "planning:" + first["id"]
+        forged["binding_sha256"] = digest(forged["binding"])
+        db.execute("UPDATE executions SET data=? WHERE id=?", (json.dumps(forged), first["id"]))
+        db.commit()
+    with sqlite3.connect(store.database) as db:
+        before_rows = (
+            db.execute("SELECT count(*) FROM snapshots").fetchone()[0],
+            db.execute("SELECT count(*) FROM files").fetchone()[0],
+        )
+    before_capacity = authorities.capacity.snapshot()
+
+    for operation in (
+        lambda: service.get(first["id"], principal="owner"),
+        lambda: service.read_repository_snapshot(first["id"], principal="owner"),
+        lambda: service.freeze_repository_snapshot(
+            first["id"], principal="owner", command_key="forged-first-freeze"
+        ),
+    ):
+        with pytest.raises(RunError, match="^PLANNING_EXECUTION_BINDING_STALE$"):
+            operation()
+    with sqlite3.connect(store.database) as db:
+        assert before_rows == (
+            db.execute("SELECT count(*) FROM snapshots").fetchone()[0],
+            db.execute("SELECT count(*) FROM files").fetchone()[0],
+        )
+    assert authorities.capacity.snapshot() == before_capacity
+
+    second_manifest = service.freeze_repository_snapshot(
+        second["id"], principal="owner", command_key="second-freeze"
+    )
+    assert service.read_repository_snapshot(second["id"], principal="owner")["content"] == {
+        "src/snapshot-subject.txt": b"second run bytes\n",
+        "tests/snapshot-subject.txt": b"snapshot test\n",
+    }
+    assert second_manifest["run_id"] == second_run["id"]
+    with pytest.raises(RunError, match="^RUN_NOT_FOUND$"):
+        service.get(second["id"], principal="lead")
+
+
 @pytest.mark.parametrize("field", ["base_sha", "file_metadata", "snapshot_id"])
 def test_snapshot_command_replay_rejects_corrupted_manifest_receipt(
     configured: dict, tmp_path: Path, field: str

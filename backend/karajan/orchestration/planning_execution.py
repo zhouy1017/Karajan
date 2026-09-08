@@ -244,7 +244,9 @@ class PlanningExecution:
 
     @staticmethod
     def _load(db: sqlite3.Connection, execution_id: str) -> dict[str, Any]:
-        row = db.execute("SELECT data FROM executions WHERE id=?", (execution_id,)).fetchone()
+        row = db.execute(
+            "SELECT run_id,intent_id,state,data FROM executions WHERE id=?", (execution_id,)
+        ).fetchone()
         if row is None:
             raise RunError("PLANNING_EXECUTION_NOT_FOUND")
         try:
@@ -254,7 +256,11 @@ class PlanningExecution:
         # The SQLite primary key is the public request identity.  Do not let a
         # substituted, internally consistent JSON row reconstruct authority
         # for another execution owned by the same principal.
-        if not isinstance(execution, dict) or execution.get("id") != execution_id:
+        if (
+            not isinstance(execution, dict)
+            or execution.get("id") != execution_id
+            or any(execution.get(key) != row[key] for key in ("run_id", "intent_id", "state"))
+        ):
             raise RunError("PLANNING_EXECUTION_BINDING_STALE")
         return dict(execution)
 

@@ -1466,6 +1466,73 @@ def test_factory_freezes_registered_base_bytes_and_reopens(
         ]
         == b"registered base bytes\n"
     )
+    # Keep using this already-open trusted factory while replacing each private
+    # spelling with a compatible repository-controlled copy.  The retained
+    # reader must reject before SQLite or blob materialization can follow the
+    # alias; restoring the original inode/directory proves the valid replay
+    # remains available without repairing or rewriting either copy.
+    ledger = snapshot_database(control)
+    artifacts = ledger.parent / "planning-repository-snapshot-blobs"
+    external_ledger = tmp_path / "repository-controlled-retained-ledger.sqlite"
+    shutil.copy2(ledger, external_ledger)
+    external_ledger_before = external_ledger.read_bytes()
+    held_ledger = ledger.parent / ".retained-ledger"
+    ledger.rename(held_ledger)
+    ledger.symlink_to(external_ledger)
+    for operation in (
+        lambda: reopened.read_repository_snapshot(execution["id"], principal="owner"),
+        lambda: reopened.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="freeze"
+        ),
+    ):
+        with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE$"):
+            operation()
+    assert external_ledger.read_bytes() == external_ledger_before
+    ledger.unlink()
+    held_ledger.rename(ledger)
+
+    external_artifacts = tmp_path / "repository-controlled-retained-blobs"
+    shutil.copytree(artifacts, external_artifacts)
+    external_blobs_before = {
+        item.name: item.read_bytes() for item in external_artifacts.iterdir()
+    }
+    held_artifacts = artifacts.parent / ".retained-blobs"
+    artifacts.rename(held_artifacts)
+    artifacts.symlink_to(external_artifacts, target_is_directory=True)
+    for operation in (
+        lambda: reopened.read_repository_snapshot(execution["id"], principal="owner"),
+        lambda: reopened.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="freeze"
+        ),
+    ):
+        with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE$"):
+            operation()
+    assert {
+        item.name: item.read_bytes() for item in external_artifacts.iterdir()
+    } == external_blobs_before
+    artifacts.unlink()
+    held_artifacts.rename(artifacts)
+    assert isinstance(reopened.snapshots, PlanningRepositorySnapshotStore)
+    external_root = tmp_path / "repository-controlled-retained-private-root"
+    shutil.copytree(ledger.parent, external_root)
+    external_root_ledger = external_root / ledger.name
+    external_root_before = external_root_ledger.read_bytes()
+    held_root = tmp_path / "retained-private-root"
+    ledger.parent.rename(held_root)
+    ledger.parent.symlink_to(external_root, target_is_directory=True)
+    for operation in (
+        lambda: reopened.snapshots.read(execution["binding"]),
+        reopened.snapshots._connect,
+    ):
+        with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE$"):
+            operation()
+    assert external_root_ledger.read_bytes() == external_root_before
+    ledger.parent.unlink()
+    held_root.rename(ledger.parent)
+    assert reopened.read_repository_snapshot(execution["id"], principal="owner")["content"] == {
+        "src/planning-input.txt": b"registered base bytes\n",
+        "tests/planning-input-test.txt": b"registered test base bytes\n",
+    }
     # A saved freeze-command replay verifies immutable bytes outside the
     # Execution/Run writers.  Cancellation therefore completes while this
     # deliberately slow historical reader is paused, and the original bytes

@@ -143,6 +143,12 @@ class PlanningRepositorySnapshotStore:
             raise RunError("PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE") from None
 
     def _connect(self) -> sqlite3.Connection:
+        # ``open_database`` resolves its input spelling before SQLite opens it.
+        # Re-establish the controller-owned path boundary immediately before
+        # every connection, rather than trusting a check made by a factory that
+        # may have remained alive while an attacker replaced a path component.
+        if self.private_root is not None:
+            self._validate_private(self.database.exists())
         db = open_database(self.database, existing_only=self.existing_only, isolation_level=None)
         db.execute("PRAGMA foreign_keys=ON")
         return db
@@ -187,7 +193,48 @@ class PlanningRepositorySnapshotStore:
             return False
 
     @staticmethod
-    def _git(root: Path, *args: str) -> bytes:
+    def _git_objects(root: Path) -> Path:
+        """Find source objects without asking Git to load source configuration."""
+        dot_git = root / ".git"
+        try:
+            info = dot_git.lstat()
+            if stat.S_ISDIR(info.st_mode) and not stat.S_ISLNK(info.st_mode):
+                git_dir = dot_git
+            elif stat.S_ISREG(info.st_mode) and not stat.S_ISLNK(info.st_mode):
+                text = dot_git.read_text(encoding="utf-8")
+                if not text.startswith("gitdir: ") or "\n" not in text:
+                    raise ValueError()
+                location = text.removeprefix("gitdir: ").splitlines()[0]
+                if not location or "\0" in location:
+                    raise ValueError()
+                git_dir = (root / location).resolve(strict=True)
+                if not stat.S_ISDIR(git_dir.lstat().st_mode):
+                    raise ValueError()
+            else:
+                raise ValueError()
+            common = git_dir
+            common_file = git_dir / "commondir"
+            if common_file.exists():
+                common_info = common_file.lstat()
+                if not stat.S_ISREG(common_info.st_mode) or stat.S_ISLNK(common_info.st_mode):
+                    raise ValueError()
+                relative = common_file.read_text(encoding="utf-8").strip()
+                if not relative or "\0" in relative:
+                    raise ValueError()
+                common = (git_dir / relative).resolve(strict=True)
+                if not stat.S_ISDIR(common.lstat().st_mode):
+                    raise ValueError()
+            objects = common / "objects"
+            object_info = objects.lstat()
+            if not stat.S_ISDIR(object_info.st_mode) or stat.S_ISLNK(object_info.st_mode):
+                raise ValueError()
+            return objects
+        except (OSError, UnicodeError, ValueError):
+            raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE") from None
+
+    @classmethod
+    def _git(cls, root: Path, *args: str) -> bytes:
+        source_objects = cls._git_objects(root)
         env = {
             k: os.environ[k]
             for k in ("SystemRoot", "WINDIR", "PATH", "TEMP", "TMP")
@@ -202,30 +249,50 @@ class PlanningRepositorySnapshotStore:
                 "GIT_TERMINAL_PROMPT": "0",
             }
         )
-        try:
-            r = subprocess.run(
-                [
-                    "git",
-                    "--no-replace-objects",
-                    "-C",
-                    str(root),
-                    "-c",
-                    "core.hooksPath=" + os.devnull,
-                    "-c",
-                    "core.fsmonitor=false",
-                    "-c",
-                    "credential.helper=",
-                    "-c",
-                    "protocol.allow=never",
-                    *args,
-                ],
-                capture_output=True,
-                timeout=10,
-                env=env,
-                check=False,
+        # Do not execute Git with ``-C root``: that reads the untrusted local
+        # config.  A fresh bare object reader contains only controller-written
+        # config and sees the registered repository solely as an object
+        # alternate.  In particular it has no promisor remote, so a missing
+        # object fails locally instead of invoking a configured transport.
+        with tempfile.TemporaryDirectory(prefix="karajan-planning-reader-") as directory:
+            reader = Path(directory) / "reader.git"
+            (reader / "objects").mkdir(parents=True)
+            (reader / "refs" / "heads").mkdir(parents=True)
+            (reader / "refs" / "tags").mkdir(parents=True)
+            (reader / "HEAD").write_text("ref: refs/heads/empty\n", encoding="ascii")
+            (reader / "config").write_text(
+                "[core]\nrepositoryformatversion = 0\nbare = true\n", encoding="ascii"
             )
-        except (OSError, subprocess.TimeoutExpired):
-            raise RunError("PLANNING_SNAPSHOT_GIT_UNAVAILABLE") from None
+            env.update(
+                {
+                    "GIT_DIR": str(reader),
+                    "GIT_OBJECT_DIRECTORY": str(reader / "objects"),
+                    "GIT_ALTERNATE_OBJECT_DIRECTORIES": str(source_objects),
+                }
+            )
+            try:
+                r = subprocess.run(
+                    [
+                        "git",
+                        "--no-replace-objects",
+                        "--git-dir=" + str(reader),
+                        "-c",
+                        "core.hooksPath=" + os.devnull,
+                        "-c",
+                        "core.fsmonitor=false",
+                        "-c",
+                        "credential.helper=",
+                        "-c",
+                        "protocol.allow=never",
+                        *args,
+                    ],
+                    capture_output=True,
+                    timeout=10,
+                    env=env,
+                    check=False,
+                )
+            except (OSError, subprocess.TimeoutExpired):
+                raise RunError("PLANNING_SNAPSHOT_GIT_UNAVAILABLE") from None
         if r.returncode:
             raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE")
         return r.stdout
@@ -239,6 +306,8 @@ class PlanningRepositorySnapshotStore:
         already been flushed before that rename, and is flushed once more here
         before its SQLite reference is committed.
         """
+        if self.private_root is not None:
+            self._validate_private(True)
         if os.name == "nt":
             if target is None:
                 raise OSError("Windows artifact target required")
@@ -260,6 +329,8 @@ class PlanningRepositorySnapshotStore:
     def _published_content(self, target: Path, content: bytes) -> bool:
         """Accept only our short-lived link(2) overlap, never a durable alias."""
         for _ in range(100):
+            if self.private_root is not None:
+                self._validate_private(True)
             info = target.lstat()
             if stat.S_ISREG(info.st_mode) and not stat.S_ISLNK(info.st_mode):
                 if info.st_nlink == 1:
@@ -275,6 +346,8 @@ class PlanningRepositorySnapshotStore:
         raise ValueError()
 
     def _publish(self, sha: str, content: bytes) -> None:
+        if self.private_root is not None:
+            self._validate_private(True)
         target = self.artifacts / sha
         if target.exists():
             try:
@@ -322,6 +395,8 @@ class PlanningRepositorySnapshotStore:
         *,
         guard: object = None,
     ) -> dict[str, Any]:
+        if self.private_root is not None:
+            self._validate_private(True)
         key = digest(binding)
         if project.get("id") != run.get("project_id") or project.get("revision") != run.get(
             "configuration_snapshot", {}
@@ -444,6 +519,8 @@ class PlanningRepositorySnapshotStore:
         return result
 
     def read(self, binding: dict[str, Any]) -> dict[str, Any]:
+        if self.private_root is not None:
+            self._validate_private(True)
         key = digest(binding)
         try:
             with self._connect() as db:
@@ -534,6 +611,8 @@ class PlanningRepositorySnapshotStore:
                 raise ValueError()
             content = {}
             for p, x in expected.items():
+                if self.private_root is not None:
+                    self._validate_private(True)
                 target = self.artifacts / x["sha256"]
                 info = target.lstat()
                 if (
