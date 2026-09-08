@@ -384,27 +384,48 @@ class PlanningExecution:
         for value in (execution_id, principal, command_key):
             identifier(value)
         execution = self.get(execution_id, principal=principal)
+        binding = execution.get("binding")
+        if not isinstance(binding, dict) or execution.get("binding_sha256") != digest(binding):
+            raise RunError("PLANNING_EXECUTION_BINDING_STALE")
         store = self.snapshots
         freeze = None if store is None else getattr(store, "freeze", None)
-        if not callable(freeze):
+        read = None if store is None else getattr(store, "read", None)
+        if not callable(freeze) or not callable(read):
             raise RunError("PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE")
-        run = self._owner_run(execution["run_id"], principal)
-        project = self.planner.projects.get(run["project_id"])
+
+        def freeze_current() -> dict[str, Any]:
+            try:
+                return {key: value for key, value in read(binding).items() if key != "content"}
+            except RunError as error:
+                if str(error) != "PLANNING_REPOSITORY_SNAPSHOT_NOT_FOUND":
+                    raise
+            if execution.get("cancel_requested"):
+                raise RunError("PLANNING_EXECUTION_CANCELLED")
+            run = self._owner_run(execution["run_id"], principal)
+            intent = self._intent(run, execution["intent_id"])
+            if self._binding(run, intent, execution_id) != binding:
+                raise RunError("PLANNING_EXECUTION_BINDING_STALE")
+            project = self.planner.projects.get(run["project_id"])
+            return cast(dict[str, Any], freeze(binding, run, project))
+
         with self._transaction() as db:
             return self._command(
                 db,
                 principal,
                 command_key,
                 ["freeze_repository_snapshot", execution_id],
-                lambda: freeze(execution["binding"], run, project),
+                freeze_current,
             )
 
     def read_repository_snapshot(self, execution_id: str, *, principal: str) -> dict[str, Any]:
         execution = self.get(execution_id, principal=principal)
+        binding = execution.get("binding")
+        if not isinstance(binding, dict) or execution.get("binding_sha256") != digest(binding):
+            raise RunError("PLANNING_EXECUTION_BINDING_STALE")
         read = None if self.snapshots is None else getattr(self.snapshots, "read", None)
         if not callable(read):
             raise RunError("PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE")
-        return cast(dict[str, Any], read(execution["binding"]))
+        return cast(dict[str, Any], read(binding))
 
     def admit(self, execution_id: str, *, principal: str, command_key: str) -> dict[str, Any]:
         """Advance only a trusted durable admission authority once.
