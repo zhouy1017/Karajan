@@ -1,5 +1,7 @@
 # 测试与合并质量门
 
+当前测试顺序与模型入口见 [当前业务顺序](../planning/business-first.md)：先测首个业务演示及其必要边界，再测同一 Candidate 的 checks、独立 Review 与同一 PR；只在已有具体失败或复杂度明确升级时提高模型档位。质量门、独立审查和授权仍按本文及 [Issue 流程](../agents/issue-tracker.md) 执行。
+
 仓库自动检查入口是 [CI workflow](../../.github/workflows/ci.yml)。PR 和 merge queue 的稳定必需汇总检查名为 `quality-gate`。它仅证明当前提交完成了下面的快速检查；不代表完整回归、产品 PRD 或任何真实模型服务资格。
 
 ## 触发和目标
@@ -11,6 +13,14 @@
 正常可用 runner 的目标是从首个 job 开始至 `quality-gate` 完成为少于 180 秒，平台排队时间单列。workflow 的 timeout 只是故障保护，不能证明该目标已经达成；每个候选须在自己的 GitHub run 中记录队列、各 job 与关键路径时长。uv 与 npm 都按锁文件启用依赖缓存，以缩短正常重复运行，缓存未命中仍必须保持同一检查语义。
 
 同一事件和 PR/分支只保留最新运行；被取消的运行不算通过。merge queue 是独立事件，必须单独订阅才会为 merge group 报告 `quality-gate`。
+
+## CI 修复职责
+
+当前角色和模型分工以 [当前业务顺序](../planning/business-first.md) 为准：边界明确的修复交 Luna，生命周期、共享状态、隔离及复杂 CI 交 Terra，Standards／Spec 由独立 Astra reviewer 核对。Commander 提供固定失败 SHA、job/日志、反例、独占文件及复验入口，负责调度和机械集成。
+
+修复不得通过删除必需检查、忽略退出码或放宽验收条件消除红灯。修复后的当前候选重新取得受影响回归、独立审查及必需 CI；模型回复不能代替证据。模型不可用时如实保存复现并改派适合且已获准的 worker，继续其他独立工作。
+
+开发 PR 是否可合入 `dev` 按当前会话授权及 [Issue 流程](../agents/issue-tracker.md) 执行；这里不另设逐票批准要求，也不自行授予合并权限。Karajan 产品生成的 PR 继续由产品用户决定合并。远端 ruleset 的 approving review count 当前为 0，双轴独立审查由 Commander 逐候选核验报告；不能把平台 CI 绿灯解释为审查已完成。
 
 ## PR / merge queue 快速门禁
 

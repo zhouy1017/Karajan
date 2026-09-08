@@ -1,12 +1,12 @@
 # Karajan v1 实施路线图
 
-按阶段执行入口：[DG00–DG07 Goals](delivery-goals/README.md)。原 M0–M4 的范围与验收保持不变；DG 是本次剩余工作的执行分组，不是替代里程碑。
+当前执行入口：[业务顺序](business-first.md)。原 M0–M4 范围与验收保留；[DG 文档](delivery-goals/README.md) 仅作历史范围映射。
 
 日期：2026-09-05。依据：[PRD v1](../prd/karajan-v1.md)、[已确认架构](../architecture/README.md)和[实施与验收矩阵](../architecture/05-build-and-validation.md)。
 
 已发布 [PRD 父任务 #1](https://github.com/zhouy1017/Karajan/issues/1)、8 个 M0 Issues、20 个 M1–M4 任务和 [CI 任务 #10](https://github.com/zhouy1017/Karajan/issues/10)。已取得固定 Go 场景的真实证据，完整来源资格与产品交付仍须按原范围验收。任务详情见 [完整拆分](v1-backlog.md)，实际编号及关系核验状态见 [后续任务发布记录](v1/github-publication.json)。M0-01 等是规格标识，#2 等是实际 GitHub 编号。
 
-2026-09-08 执行修订：上一批五个 PR 已合入 `dev@7263b87479ba4c710b1efae056b8141f6b8af7b6`，合并提交的 [CI 全部成功](https://github.com/zhouy1017/Karajan/actions/runs/34177101538)。下一批优先并行推进 #112 Planning 与 #116 Reviewer 的实际执行接线，#107 按其限定资格范围独立准备；其后完成 #113/#117 真实链、#14 产品交付，再按原 M1–M4 依赖继续。具体任务边界、派发循环和交付条件见 [新 Commander 交接 prompt](commander-handoff-20260908.md)。这是执行顺序修订，不缩减五来源及完整 v1 出口；实时状态以 GitHub 为准。
+当前顺序以 [当前业务顺序](business-first.md) 和 [#153 业务简报](business-first-issue.md) 为准：先完成工作台到真实 Planning 的首个演示，再推进同一需求的 Candidate、checks、独立 Reviewer 和同一 PR；并行、多来源、完整资源与维护属于后续范围。本文的 M0–M4 依赖和原 AC 保留为历史范围映射，实时状态以 GitHub 为准。
 
 ## 1. 路线与完成语义
 
@@ -113,6 +113,6 @@ PRD #1 是父级需求，正文保留 Parent 与 Blocked by 链接；原生关�
 
 用户已授权全程设计、拆票、实现与 GitHub 测试门禁。2026-09-06 用户另行提供 Go 密钥并授权固定官方 Go 通道实测，额度由 provider 限制；该诊断授权取代 Go 原先的暂停调用安排，其他通道现金调用仍暂停。已完成的实际模型/工具诊断与完整来源资格分别记录，v1 出口条件不变；实际证据逐项回填 [需求覆盖审计](../implementation/requirement-coverage.md)。
 
-2026-09-08 授权追加：用户明确 ChatGPT/Codex 与 Claude 按设计走官方订阅，并授权这两条订阅的真实测试调用；Go 既有授权继续有效。#18/#19 的订阅预检与独立资格准备可和 Go 主线并行，前置 C/P 与具体运行配置满足后执行原有界 S，无需重复询问测试使用权限。现金 API 暂停不覆盖这些订阅调用，但仍覆盖订阅外的现金 API/额外余额/现金后备。固定实际订阅认证与计费路径、Profile/runtime/model、OS/隔离及限额后逐项留证；本次授权记录不声称已经发出请求或通过资格。#8 的一订阅加一 API 及完整 v1 原出口不变。
+2026-09-08 授权事实保留：用户明确 ChatGPT/Codex 与 Claude 按设计走官方订阅，Go 既有授权继续有效；现金 API、订阅外余额与现金后备仍受原边界约束。#18/#19 的授权和资格证据按各自原 AC 记录，不作为当前业务顺序的并行命令；当前顺序见 [当前业务顺序](business-first.md)。#8 的一订阅加一 API 及完整 v1 原出口不变。
 
 每次 runtime、操作系统、认证方式、计费通道或关键工具边界变化，相关资格需重新验收。范围或用户行为变化更新 PRD 和设计决定；探针发现事实差异则先记录限制与影响，再决定替换适配器或修改接口。发布规划、关闭调查任务、能力通过和 v1 完成是四个不同事实。
