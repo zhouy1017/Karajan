@@ -1,5 +1,6 @@
 """C evidence for durable planning admission; no provider is contacted."""
 
+import inspect
 import json
 import os
 import shutil
@@ -1313,23 +1314,41 @@ def test_factory_freezes_registered_base_bytes_and_reopens(
     # not_run in the implementation evidence, not promoted to a ledger claim.
     assert service.outputs is None
     _qualification = ProfileQualificationStore(service.planner.projects)
-    process_calls: list[list[str]] = []
+    process_call_sites: list[tuple[str, str]] = []
     network_calls: list[object] = []
-    original_run = planning_snapshot.subprocess.run
+    original_popen = subprocess.Popen
     original_connect = socket.socket.connect
 
-    def observe_process(args: list[str], *extra: object, **kwargs: object) -> object:
-        process_calls.append(list(args))
-        return original_run(args, *extra, **kwargs)
+    def observe_process(*args: Any, **kwargs: Any) -> subprocess.Popen[Any]:
+        # ``subprocess.run`` is only a convenience wrapper.  Observe the
+        # shared child-creation boundary, so an executor using Popen directly
+        # cannot bypass this fixture.  Attribute fixed Git reads by their
+        # Python call provenance instead of guessing an OS-specific argv form.
+        source_frame = next(
+            (
+                frame
+                for frame in inspect.stack()
+                if frame.frame.f_globals.get("__name__") == planning_snapshot.__name__
+            ),
+            None,
+        )
+        process_call_sites.append(
+            (
+                planning_snapshot.__name__ if source_frame is not None else "unexpected",
+                source_frame.function if source_frame is not None else "unexpected",
+            )
+        )
+        return original_popen(*args, **kwargs)
 
     def observe_network(sock: socket.socket, address: object) -> object:
         network_calls.append(address)
         return original_connect(sock, address)
 
-    # These are actual OS receiving boundaries for this process.  Snapshot
-    # collection is allowed to invoke its fixed Git reader, but cannot start a
-    # Host/native executor or contact a model/provider.
-    monkeypatch.setattr(planning_snapshot.subprocess, "run", observe_process)
+    # These are actual OS receiving boundaries for this process.  The factory
+    # has no configured Host, Journal, native runtime, model adapter, or output
+    # receiver to observe directly; any unexpected child creation is instead
+    # caught at Popen, and every network connect is recorded here.
+    monkeypatch.setattr(subprocess, "Popen", observe_process)
     monkeypatch.setattr(socket.socket, "connect", observe_network)
 
     def effect_counts() -> tuple[int, int, int]:
@@ -1407,7 +1426,9 @@ def test_factory_freezes_registered_base_bytes_and_reopens(
     }
     assert service.capacity.snapshot() == before
     assert effect_counts() == effects_before
-    assert process_calls and all(call[0] == "git" for call in process_calls)
+    assert process_call_sites == [
+        (planning_snapshot.__name__, "_git")
+    ] * (1 + 2 * len(frozen["files"]))
     assert network_calls == []
 
     ledger = snapshot_database(control)

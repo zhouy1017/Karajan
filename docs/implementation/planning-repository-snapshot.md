@@ -94,26 +94,29 @@ pytest base directory: `tests/orchestration/test_planning_snapshot.py`,
 RunPlanner / PlanningExecution provisioning, base bytes after worktree change,
 reopen/replay, saved-command replay after CAS-file/manifest/deleted-ledger rejection without Capacity changes,
 Git replace/environment poisoning, and repository-root aliases. This is local
-production-bootstrap evidence only: the fixture's actual temporary Journal,
-Qualification, Run, and Capacity ledgers are inspected, but no native transport,
-Host, provider request, model call, qualification operation, or plan submission
-is exercised.
+production-bootstrap evidence only: the fixture's actual temporary
+Qualification, Run, and Capacity ledgers are inspected. The protected factory
+has no configured Journal, Host, native runtime, model adapter, or output
+receiver, so no unconnected Journal is counted. Physical provider/native
+observations are therefore unavailable (`not_run`), while the actual shared
+process-creation boundary and sockets remain observable.
 
 ```bash
 KARAJAN_GO_TOKENIZER_DIRECTORY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-context-artifacts \
 PYTHONPATH=backend:tests:tests/projects:tests/runs:tests/candidates \
 /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest \
-  --basetemp=/tmp/karajan-142-final-post-ac5 \
+  --basetemp=/tmp/karajan-142-popen-linux-final \
   tests/orchestration/test_planning_snapshot.py \
   tests/runs/test_planning_execution.py tests/runs/test_planning_admission.py -q
 ```
 
-On 2026-09-08 this exact Linux command completed with `89 passed in 22.05s`.
+On 2026-09-08, after the shared-Popen observer correction, this exact Linux
+command completed with `89 passed in 22.85s`.
 The first fresh Linux invocation omitted `KARAJAN_GO_TOKENIZER_DIRECTORY` and
 failed two tokenizer-dependent admission tests; it is retained as an environment
 failure, and the new basetemp rerun above is the applicable result. Windows used
 the pinned `.venv/Scripts/pytest.exe`, the same three modules, and fresh
-`.cache/142-windows-final-post-ac5`, completing `75 passed, 14 skipped in 31.46s`.
+`.cache/142-popen-windows-final-rerun`, completing `75 passed, 14 skipped in 34.61s`.
 
 ## Original AC coverage
 
@@ -132,7 +135,14 @@ reported that its unguarded Windows FFI references lacked `ctypes.WinDLL`,
 `34218754710` failed likewise. This is a candidate failure, not infrastructure
 or a test-timeout result; the follow-up uses platform-guarded, typed ctypes
 bindings while retaining the Windows write-through no-replace publication
-protocol.
+protocol. CLI8 then ran `mypy --platform linux backend/karajan` and
+`mypy --platform win32 backend/karajan`; each reported `Success: no issues
+found in 151 source files` on the platform-guarded follow-up. That type-check
+result repairs the original WindowsAPI CI failure; it is not a replacement for
+fresh review or CI of a later candidate.
+
+The rows below are candidate-local evidence and limitations, not a declaration
+that the full original AC has passed before the required exact review and CI.
 
 | Original acceptance condition | Actual evidence | Result |
 | --- | --- | --- |
@@ -140,8 +150,8 @@ protocol.
 | Replay, reopen, worktree changes, concurrent producers and a lost command reply recover precisely the original snapshot. | Public same-key/different-execution concurrent freeze rejects before a second publication; a public command reserves, publishes, loses its reply, then recovers the same snapshot. Handoff/source and paused-reader cancellation retain historical bytes. | Local C/P: final command below |
 | Wrong identities, changed Run term/configuration/authorization, tampered execution binding or binding digest, manifest/blob corruption, and missing ledgers fail closed without repair. | The metadata matrix includes valid `100644 → 100755` with recomputed self-hash; the separately stored full-manifest digest rejects it. | Local C/P: final command below |
 | Traversal, symlink/reparse, unapproved or empty paths, registered-root aliases/corrupt base, and fixed file/byte limits reject completely without clipping. | A Linux Git tree containing approved `src/a\\b.txt` rejects before blobs/references, preserves bytes/mode, and leaves zero manifest/references/artifacts. Other bounds and alias cases remain. | Local C/P: final command below; Windows reparse unsupported/not_run |
-| Freeze/read/replay have no Capacity/native/Host/Journal/model/Plan/qualification effects. | The protected factory invokes public freeze/read/replay/failure and compares its actual Project qualification records, Run plans, and Capacity reservations; it observes the process boundary (only fixed `git` reads) and zero network connects. Its bootstrap has no configured Journal, Host, native runtime, model adapter, or output transport receiver; no unconnected Journal fixture is counted. | Applicable controller-ledger C/P: final command below; Journal/Host/native/model/provider physical P/S not_run |
-| #110/#111 binding, begin/replay, submitted receipt recovery, historical handoff/source recovery and concurrency regressions stay intact; checks pass. | The three-module command above includes cancellation/handoff, Project update, command reservation/recovery, and durable-publication regressions. | Linux 89 passed / 22.05s; Windows 75 passed, 14 scoped skips / 31.46s |
+| Freeze/read/replay have no Capacity/native/Host/Journal/model/Plan/qualification effects. | The protected factory invokes public freeze/read/replay/failure and compares actual Project qualification records, Run plans, and Capacity reservations. It wraps the shared `subprocess.Popen` creation boundary (not merely `subprocess.run`): every observed child is attributed to the snapshot reader by Python provenance and count, without executable-argv formatting guesses; zero socket connects are also recorded. The bootstrap has no configured Journal, Host, native runtime, model adapter, or output receiver, so no unconnected Journal is counted and those unavailable physical P/S observers remain `not_run`. | Applicable controller-ledger C/P: final command below; Journal/Host/native/model/provider physical P/S not_run |
+| #110/#111 binding, begin/replay, submitted receipt recovery, historical handoff/source recovery and concurrency regressions stay intact; checks pass. | The three-module command above includes cancellation/handoff, Project update, command reservation/recovery, and durable-publication regressions. | Linux 89 passed / 22.85s; Windows 75 passed, 14 scoped skips / 34.61s |
 
 The initial Windows invocation could not enumerate its inherited
 `C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo` (`PermissionError` before
@@ -149,9 +159,9 @@ tests); it is recorded as an environment failure, not product evidence. At
 predecessor `36a9764444a2820c1a7614c9ac25a94fff2d0259`, a fresh Windows
 snapshot basetemp had `5 failed, 2 skipped in 1.96s`: each positive producer
 case reached the intentional unsupported `_sync_artifacts` branch and raised
-`PLANNING_REPOSITORY_SNAPSHOT_CHANGED`. On 2026-09-08, the current candidate's
-fresh Windows basetemp ran the three modules with `75 passed, 14 skipped in
-31.46s`. Its skips are test-account symlink permissions, the Linux-only
+`PLANNING_REPOSITORY_SNAPSHOT_CHANGED`. On 2026-09-08, after the shared-Popen
+observer correction, the current candidate's fresh Windows basetemp ran the
+three modules with `75 passed, 14 skipped in 34.61s`. Its skips are test-account symlink permissions, the Linux-only
 backslash-filename regression, POSIX-only hard-link overlap, and Linux-private
 deployment tests; generic concurrent Store freezing passed
 on Windows. This is local Windows P evidence for the durable no-replace
