@@ -59,9 +59,9 @@ Broker 绑定 Attempt、fence、Profile 摘要和一次性合成能力，逐次�
 | `timeout_once` | provider 保持在响应头之前，`timeout=400ms` 先于 `headerTimeout=500ms` 触发；原生 `session.error` 后才释放，只有一次 provider 请求和原始 receipt、最终文本为空、无 retry，报告 `runtime_error`。 |
 | `header_timeout_once` | provider 同样保持在响应头之前，`headerTimeout=500ms` 显著先于 `timeout=2000ms`；收到原生 `session.status/retry` 的 `Provider response headers timed out after 500ms` 后才释放，真实 session retry 完成工具循环，保留三次独立接收（首个晚到 broker receipt 为 `RemoteDisconnected`），报告 `completed`。 |
 
-当前候选根目录 `9e91bb18d544b19f9d27c142d6e07edbcdfad33c` 的 Windows 记录为 16 项通过、59.32 秒；完整 Ruff 与 `mypy` 的 Windows/Linux 平台检查均通过，每个平台报告 150 个源文件无问题。精确 Git archive 的 Linux 记录使用实际 ELF 的 OpenCode 1.18.29，SHA-256 为 `ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650`，16 项通过、111.79 秒。作者记录的同一候选另有 Windows 58.521 秒、Linux 122.032 秒，以及另外三次 Windows `header_timeout_once` 重复；这些重复单独归属于该作者记录，不能合并为一次运行。
+Commander 对候选 `9e91bb18d544b19f9d27c142d6e07edbcdfad33c` 的独立 Windows 核验记录为 16 项通过、59.32 秒；完整 Ruff 与 `mypy` 的 Windows/Linux 平台检查均通过，每个平台报告 150 个源文件无问题。精确 Git archive 的 Linux 记录使用实际 ELF 的 OpenCode 1.18.29，SHA-256 为 `ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650`，16 项通过、111.79 秒。作者记录的同一候选另有 Windows 58.521 秒、Linux 122.032 秒，以及另外三次 Windows `header_timeout_once` 重复；这些重复单独归属于该作者记录，不能合并为一次运行。
 
-上述当前候选观察只使用本地 fake provider，属于 C/P 证据；不构成 S 证据或任何 qualification。源码至本次文档提交未改变，本次提交也没有重新测试整个矩阵。原始 race failure 仍是 2026-09-05 的历史证据；就当前保证而言由上述 2026-09-08 候选观察明确取代，但不将过去改写成新的 #151 测试。
+上述当前候选观察只使用本地 fake provider，属于 C/P 证据；不构成 S 证据或任何 qualification。源码至本次文档提交未改变，本次提交也没有重新测试整个矩阵。2026-09-05 表格保留当时的观察；2026-09-08 的 dev CI 失败和 Commander 对 0e53567 的复现仍分别保留在修复记录中。当前行为保证只依据上述 2026-09-08 候选证据，不将任何历史观察改写为新测试。
 
 超时、重试和取消结论只适用于这些明确注入方式与观察窗口。没有测试所有断线阶段，也不从客户端 abort 或 TCP 断开推断远端推理停止、退款或账单结清。
 
@@ -87,4 +87,4 @@ uv run --frozen --extra dev ruff check backend/karajan/adapters/opencode tests/a
 uv run --frozen --extra dev mypy backend/karajan/adapters/opencode
 ```
 
-本机首轮 11 项公共入口测试与完整 9 场景 CLI 示例已通过；审查后增加代理、重定向和清理失败回归，既有实现记录为最终 15 项测试通过（46.75 秒），完整 10 场景 CLI 示例退出状态符合预期。#151 当前候选的 16 项记录和平台静态检查见上文；它们仍是本地 C/P 证据，不替代 S qualification。源码未因本次文档提交改变，新的根目录文档核验、独立审查和当前 CI 仍是 Commander 的门槛，不在此标记 #151 关闭或 CI 通过。工具协议选择、管理接口和取消调用依据 [官方 server 文档](https://opencode.ai/docs/server/) 与实际二进制 `/doc`，Chat Completions 使用官方支持的 `@ai-sdk/openai-compatible` 配置。[官方 provider 文档](https://opencode.ai/docs/providers/)
+本机首轮 11 项公共入口测试与完整 9 场景 CLI 示例已通过；审查后增加代理、重定向和清理失败回归，既有实现记录为最终 15 项测试通过（46.75 秒），完整 10 场景 CLI 示例退出状态符合预期。#151 当前候选的 16 项记录和平台静态检查见上文；它们仍是本地 C/P 证据，不替代 S qualification。源码未因本次文档提交改变，后续文档核验、独立审查和当前 CI 仍是 Commander 的门槛，不在此标记 #151 关闭或 CI 通过。工具协议选择、管理接口和取消调用依据 [官方 server 文档](https://opencode.ai/docs/server/) 与实际二进制 `/doc`，Chat Completions 使用官方支持的 `@ai-sdk/openai-compatible` 配置。[官方 provider 文档](https://opencode.ai/docs/providers/)
