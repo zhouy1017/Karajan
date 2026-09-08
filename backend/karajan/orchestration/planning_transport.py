@@ -78,6 +78,7 @@ class PlanningOutputStore:
             raise RunError("PLANNING_OUTPUT_AUTHORITY_INVALID")
         self.database = database.absolute()
         self.authority_kind = authority_kind
+        self._source_reader: Callable[[dict[str, Any]], dict[str, Any]] | None = None
         if existing_only and not self.database.is_file():
             raise RunError("PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE")
         if not existing_only:
@@ -156,6 +157,11 @@ class PlanningOutputStore:
                 raise RunError("PLANNING_OUTPUT_SOURCE_CHANGED")
         return self.read_source(binding)
 
+    def bind_source_reader(self, reader: Callable[[dict[str, Any]], dict[str, Any]]) -> None:
+        if self._source_reader is not None and self._source_reader is not reader:
+            raise RunError("PLANNING_OUTPUT_SOURCE_READER_CHANGED")
+        self._source_reader = reader
+
     def publish(self, binding: dict[str, Any], content: bytes) -> dict[str, Any]:
         execution_id, binding_sha256 = self._binding(binding)
         if type(content) is not bytes or len(content) > 1_000_000:
@@ -228,12 +234,20 @@ class PlanningOutputStore:
             ).fetchone()
         if row is None or row[0] != binding_sha256:
             raise RunError("PLANNING_OUTPUT_SOURCE_UNAVAILABLE")
-        return {
+        source = {
             "schema_version": "karajan.planning-output-source.v1",
             "binding_sha256": binding_sha256,
             "authority_kind": self.authority_kind,
             "source_sha256": row[1],
         }
+        if self._source_reader is not None:
+            try:
+                current = self._source_reader(binding)
+            except Exception as error:
+                raise RunError("PLANNING_OUTPUT_SOURCE_UNAVAILABLE") from error
+            if digest(current) != source["source_sha256"]:
+                raise RunError("PLANNING_OUTPUT_SOURCE_CHANGED")
+        return source
 
     def read_output(self, execution_id: str, binding: dict[str, Any]) -> dict[str, Any]:
         expected_execution_id, binding_sha256 = self._binding(binding)
@@ -274,6 +288,8 @@ class PlanningTransport:
             raise RunError("PLANNING_OUTPUT_AUTHORITY_INVALID")
         self.execution, self.accounting = execution, accounting
         self.producer, self.outputs = producer, outputs
+        if producer.authority_kind == "production":
+            self.outputs.bind_source_reader(producer.source)
 
     @classmethod
     def from_trusted_factory(cls, control_directory: Path) -> PlanningTransport:
