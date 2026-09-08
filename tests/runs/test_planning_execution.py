@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from pathlib import Path
@@ -314,6 +315,24 @@ def test_repository_snapshot_is_id_only_and_has_no_capacity_effect(
     assert authorities.capacity.snapshot() == before
     with pytest.raises(RunError, match="RUN_NOT_FOUND"):
         service.freeze_repository_snapshot(execution["id"], principal="lead", command_key="other")
+
+
+def test_cancelled_execution_cannot_create_a_first_repository_snapshot(
+    configured: dict, tmp_path: Path
+) -> None:
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    database = tmp_path / "snapshots.sqlite"
+    service.snapshots = PlanningRepositorySnapshotStore(database)
+    execution = service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
+    before = authorities.capacity.snapshot()
+    service.cancel(execution["id"], principal="owner", command_key="cancel")
+    with pytest.raises(RunError, match="^PLANNING_EXECUTION_CANCELLED$"):
+        service.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="snapshot"
+        )
+    with sqlite3.connect(database) as db:
+        assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 0
+    assert authorities.capacity.snapshot() == before
 
 
 def test_production_label_cannot_promote_a_test_double(configured: dict, tmp_path: Path) -> None:
