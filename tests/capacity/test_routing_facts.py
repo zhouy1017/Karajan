@@ -8,7 +8,12 @@ from pathlib import Path
 from threading import Event
 
 import pytest
-from karajan.capacity import CapacityError, CapacityStore
+from karajan.capacity import (
+    CapacityBoundaryFacts,
+    CapacityError,
+    CapacityStore,
+    derive_capacity_boundary_facts,
+)
 from test_shared_capacity import consume, end, pool, refresh, request, setup
 
 
@@ -94,6 +99,186 @@ def test_raw_remaining_uncovered_and_future_are_separate_and_explicit_coverage_i
     assert weekly["observation"]["received_at"] == 1003.0
     assert weekly["observation"]["observation"]["coverage_ref"] == "verified-request-ids"
     assert weekly["observation"]["observation"]["covered_usage_ids"] == ["first-call"]
+
+
+def test_boundary_view_excludes_only_the_owned_unconsumed_claim(tmp_path: Path) -> None:
+    store = setup(tmp_path)
+    generous(store)
+    own = active(store, "own", "8")
+    consume(store, own, "own-usage", "3")
+    other = active(store, "other", "2", run="run-b", profile="fast-b")
+    source = store.routing_facts(account_ids=("shared-account",))
+    expected = next(
+        row["reservation"]["request"]
+        for row in source.as_dict()["accounts"][0]["admissions"]
+        if row["admission_id"] == own
+    )
+
+    derived = derive_capacity_boundary_facts(
+        CapacityBoundaryFacts(source, owned_admission_id=own), expected_request=expected
+    )
+    account = derived["accounts"][0]
+    assert account["held_attempts"] == 1
+    assert account["held_admission_ids"] == [other]
+    assert all(pool["future_reserved"] == "2.000000" for pool in account["pools"])
+    assert all(pool["local_uncovered"] == "3.000000" for pool in account["pools"])
+    # The immutable source remains complete, including the exact owner and
+    # source provenance used to derive this narrower evaluator view.
+    original = source.as_dict()["accounts"][0]
+    assert original["held_attempts"] == 2
+    assert set(original["held_admission_ids"]) == {own, other}
+    assert source.as_dict()["source_summary"]["reservations"]["row_count"] == 2
+    assert derived["derived_capacity_boundary"] == {
+        "from_capacity_facts_sha256": source.sha256,
+        "excluded_owned_admission_id": own,
+    }
+
+
+@pytest.mark.parametrize(
+    ("used", "expected_future"), [("3", "5.000000"), ("8", "0.000000"), ("10", "0.000000")]
+)
+def test_boundary_view_uses_only_unconsumed_demand_even_when_usage_reaches_or_exceeds_it(
+    tmp_path: Path, used: str, expected_future: str
+) -> None:
+    store = setup(tmp_path)
+    generous(store)
+    own = active(store, "own", "8")
+    consume(store, own, "own-usage", used)
+    source = store.routing_facts(account_ids=("shared-account",))
+    expected = source.as_dict()["accounts"][0]["admissions"][0]["reservation"]["request"]
+
+    derived = derive_capacity_boundary_facts(
+        CapacityBoundaryFacts(source, owned_admission_id=own), expected_request=expected
+    )
+    raw = source.as_dict()["accounts"][0]
+    view = derived["accounts"][0]
+    assert all(pool["future_reserved"] == expected_future for pool in raw["pools"])
+    assert all(pool["future_reserved"] == "0.000000" for pool in view["pools"])
+    # Actual consumption remains a real local charge; the helper only removes
+    # the still-planned slice of the admission it proved it owns.
+    assert all(pool["local_uncovered"] == f"{used}.000000" for pool in view["pools"])
+
+
+@pytest.mark.parametrize("mode", ["covered", "cross_window"])
+def test_boundary_view_does_not_reconstruct_or_remove_covered_or_old_window_usage(
+    tmp_path: Path, mode: str
+) -> None:
+    store = setup(tmp_path)
+    generous(store)
+    own = active(store, "own", "8")
+    consume(store, own, "own-usage", "3")
+    if mode == "covered":
+        store.clock = lambda: 1002.0
+        for pool_id in ("short", "weekly", "allowance"):
+            refresh(store, pool_id, "80", at=1002.0, covered=["own-usage"])
+    else:
+        store.clock = lambda: 2001.0
+        refresh(store, "short", "80", at=2001.0, window="window-2", reset=3000.0)
+    source = store.routing_facts(account_ids=("shared-account",))
+    expected = source.as_dict()["accounts"][0]["admissions"][0]["reservation"]["request"]
+
+    derived = derive_capacity_boundary_facts(
+        CapacityBoundaryFacts(source, owned_admission_id=own), expected_request=expected
+    )
+    raw_short = next(
+        pool for pool in source.as_dict()["accounts"][0]["pools"] if pool["id"] == "short"
+    )
+    view_short = next(pool for pool in derived["accounts"][0]["pools"] if pool["id"] == "short")
+    assert raw_short["future_reserved"] == "5.000000"
+    assert view_short["future_reserved"] == "0.000000"
+    assert view_short["local_uncovered"] == raw_short["local_uncovered"]
+
+
+def test_boundary_view_rejects_an_unproven_or_rebound_owned_claim(tmp_path: Path) -> None:
+    store = setup(tmp_path)
+    generous(store)
+    own = active(store, "own")
+    source = store.routing_facts(account_ids=("shared-account",))
+    expected = source.as_dict()["accounts"][0]["admissions"][0]["reservation"]["request"]
+    changed = {**expected, "run_id": "other-run"}
+
+    with pytest.raises(CapacityError, match="^CAPACITY_BOUNDARY_OWNERSHIP_INVALID$"):
+        derive_capacity_boundary_facts(
+            CapacityBoundaryFacts(source, owned_admission_id=own), expected_request=changed
+        )
+    with pytest.raises(CapacityError, match="^CAPACITY_BOUNDARY_OWNERSHIP_INVALID$"):
+        derive_capacity_boundary_facts(
+            CapacityBoundaryFacts(source, owned_admission_id="not-owned"), expected_request=expected
+        )
+    assert source.as_dict()["accounts"][0]["held_admission_ids"] == [own]
+
+
+def test_boundary_view_handles_two_valid_claims_with_future_above_the_input_maximum(
+    tmp_path: Path,
+) -> None:
+    store = setup(tmp_path)
+    policy = store.snapshot()["policies"][-1]["policy"]
+    policy["conservative_mode"] = {
+        "enabled": True,
+        "max_local_active_attempts": 4,
+        "max_attempt_duration_seconds": 30,
+        "observation_max_age_seconds": 10,
+        "cooldown_seconds": 20,
+    }
+    store.activate_policy(policy, expected_revision=1, command_key="aggregate-unknown-policy")
+    store.clock = lambda: 1001.0
+    for pool_id in ("short", "weekly", "allowance"):
+        refresh(store, pool_id, None, metric="unknown")
+    demand = "5000000000000"
+    first = request("aggregate-first")
+    second = request("aggregate-second", run="run-b", profile="fast-b")
+    first["demand"] = dict.fromkeys(first["demand"], demand)
+    second["demand"] = dict.fromkeys(second["demand"], demand)
+    first_admission = store.admit(first, command_key="aggregate-first")
+    second_admission = store.admit(second, command_key="aggregate-second")
+    assert first_admission["decision"] == second_admission["decision"] == "admitted"
+    store.activate(first_admission["admission_id"], command_key="aggregate-first-activate")
+    store.activate(second_admission["admission_id"], command_key="aggregate-second-activate")
+    source = store.routing_facts(account_ids=("shared-account",))
+    facts = source.as_dict()
+    first_request = next(
+        item["reservation"]["request"]
+        for item in facts["accounts"][0]["admissions"]
+        if item["admission_id"] == first_admission["admission_id"]
+    )
+
+    derived = derive_capacity_boundary_facts(
+        CapacityBoundaryFacts(source, owned_admission_id=first_admission["admission_id"]),
+        expected_request=first_request,
+    )
+    assert all(
+        pool["future_reserved"] == "10000000000000.000000"
+        for pool in facts["accounts"][0]["pools"]
+    )
+    assert all(
+        pool["future_reserved"] == "5000000000000.000000"
+        for pool in derived["accounts"][0]["pools"]
+    )
+    # The reviewer/planning consumer converts the derived view, not the raw
+    # fragment. Raw diagnostics retain the aggregate provenance but are not a
+    # rejection channel in `_capacity_snapshot`.
+    from karajan.orchestration.routing import _capacity_snapshot
+
+    snapshot, diagnostics = _capacity_snapshot(
+        derived,
+        {
+            "profiles": [
+                {
+                    "id": "fast-a",
+                    "revision": 1,
+                    "profile": {
+                        "id": "fast-a",
+                        "revision": 1,
+                        "binding": {"account_id": "shared-account"},
+                    },
+                    "quota_pool_refs": ["short", "weekly", "allowance"],
+                }
+            ]
+        },
+    )
+    assert all(pool["future_reserved"] == "5000000000000.000000" for pool in snapshot["pools"])
+    assert "ROUTING_QUANTITY_OUT_OF_RANGE:short" in diagnostics[0]["reason_codes"]
+    assert source.sha256 == hashlib.sha256(source.canonical_json.encode()).hexdigest()
 
 
 def test_all_account_pools_and_runs_share_one_held_count(tmp_path: Path) -> None:

@@ -240,6 +240,36 @@ class TaskSnapshot(TaskClassification):
     authorization: Authorization
 
 
+class PlanningTaskSnapshot(TaskClassification):
+    """Pre-Plan planning identity; it cannot be an approved Task identity."""
+
+    schema_version: Literal["karajan.routing.planning.v1"]
+    run_id: Identifier
+    intent_id: Identifier
+    execution_id: Identifier
+    planning_binding_sha256: Digest
+    required_capabilities: Names
+    tools: Names
+    context_tokens: Positive
+    reserved_output_tokens: Count = 0
+    duration_seconds: Positive
+    stage: Literal["normal"]
+    quality_stage_index: Literal[0]
+    failure_reason: Literal[None] = None
+    previous_profile: Literal[None] = None
+    quality_repair_rounds_used: Literal[0]
+    planned_attempt_id: Identifier
+    planned_context_id: Identifier
+    authorization: Authorization
+
+    @model_validator(mode="after")
+    def planning_identity_is_lead_commander(self) -> "PlanningTaskSnapshot":
+        """Keep a pre-Plan identity from being used for another task role."""
+        if self.role != "commander" or self.purpose != "lead":
+            raise ValueError("planning routing is commander lead only")
+        return self
+
+
 class ProfileFacts(Contract):
     profile: ProfileRef
     profile_digest: Digest

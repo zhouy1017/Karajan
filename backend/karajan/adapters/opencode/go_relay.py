@@ -685,6 +685,17 @@ class GoRelay:
     def _read_request(self, handler: Any) -> tuple[dict[str, Any], str]:
         self._set_request_body_budget(handler, 0)
         if handler.path != "/v1/chat/completions":
+            lengths = handler.headers.get_all("Content-Length", [])
+            if (
+                not handler.headers.get_all("Transfer-Encoding")
+                and len(lengths) == 1
+                and re.fullmatch(r"[0-9]{1,9}", lengths[0]) is not None
+            ):
+                # Preserve path precedence while consuming a bounded ordinary
+                # body before closing the HTTP connection. Invalid or
+                # ambiguous framing stays at zero: it cannot be safely
+                # inferred or drained.
+                self._set_request_body_budget(handler, int(lengths[0]))
             raise _Rejected("INVALID_PATH", 404)
         lengths = handler.headers.get_all("Content-Length", [])
         valid_length = (

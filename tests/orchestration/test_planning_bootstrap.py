@@ -1,0 +1,199 @@
+"""C-level checks for the protected planning bootstrap boundary."""
+
+import hashlib
+import json
+import sqlite3
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+from karajan.orchestration.planning_bootstrap import (
+    PLANNING_ADMISSION_BOOTSTRAP,
+    assert_planning_bootstrap_current,
+    read_planning_bootstrap,
+)
+from karajan.projects import ProjectRegistry
+from karajan.runs import RunError
+
+pytestmark = pytest.mark.skipif(
+    sys.platform == "win32", reason="Linux mode evidence is platform-specific"
+)
+
+
+@pytest.fixture
+def deployment(tmp_path: Path) -> tuple[Path, dict[str, str]]:
+    allowed = tmp_path / "repositories"
+    repository = allowed / "project"
+    repository.mkdir(parents=True)
+    (repository / ".git").mkdir()
+    control = tmp_path / "control"
+    state = tmp_path / "state"
+    control.mkdir(mode=0o700)
+    state.mkdir(mode=0o700)
+    subprocess.run(
+        ["git", "init", "--initial-branch=main", str(repository)],
+        check=True,
+        capture_output=True,
+    )
+    (repository / "README").write_text("fixture\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(repository), "add", "README"], check=True, capture_output=True)
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(repository),
+            "-c",
+            "user.name=Fixture",
+            "-c",
+            "user.email=fixture@example.invalid",
+            "commit",
+            "-qm",
+            "fixture",
+        ],
+        check=True,
+        capture_output=True,
+    )
+    projects = ProjectRegistry(state / "projects.sqlite", [allowed])
+    projects.create(
+        {
+            "name": "bootstrap fixture",
+            "repository_path": str(repository),
+            "base_ref": "main",
+            "target_branch": "main",
+            "allowed_target_branches": ["main"],
+        },
+        command_key="create-project",
+        principal="owner",
+    )
+    # These stores are only existence probes here. Their owners open them later.
+    # ``runs.sqlite`` is likewise mandatory: the planning bootstrap now rejects
+    # a missing or aliased Run ledger before its factory can reopen it.
+    for name in (
+        "runs.sqlite",
+        "planning-execution.sqlite",
+        "planning-admission.sqlite",
+        "capacity.sqlite",
+    ):
+        sqlite3.connect(state / name).close()
+    for path in state.glob("*.sqlite"):
+        path.chmod(0o600)
+    paths = {
+        "state_directory": str(state),
+        "planning_execution_database": str(state / "planning-execution.sqlite"),
+        "planning_admission_database": str(state / "planning-admission.sqlite"),
+        "capacity_database": str(state / "capacity.sqlite"),
+        "projects_database": str(state / "projects.sqlite"),
+    }
+    return control, {**paths, "allowed_root": str(allowed)}
+
+
+def _write(control: Path, fields: dict[str, object], *, raw: bytes | None = None) -> bytes:
+    path = control / PLANNING_ADMISSION_BOOTSTRAP
+    data = raw if raw is not None else json.dumps(fields, separators=(",", ":")).encode()
+    path.write_bytes(data)
+    path.chmod(0o600)
+    return data
+
+
+def _document(case: tuple[Path, dict[str, str]]) -> dict[str, object]:
+    control, values = case
+    return {
+        "schema_version": "karajan.planning-admission-bootstrap.v1",
+        "state_directory": values["state_directory"],
+        "planning_execution_database": values["planning_execution_database"],
+        "planning_admission_database": values["planning_admission_database"],
+        "capacity_database": values["capacity_database"],
+        "projects_database": values["projects_database"],
+        "allowed_roots": [values["allowed_root"]],
+    }
+
+
+def test_reads_existing_private_deployment_and_rechecks_digest(deployment) -> None:
+    control, _ = deployment
+    raw = _write(control, _document(deployment))
+    settings, digest = read_planning_bootstrap(control)
+
+    assert settings.control_directory == control
+    assert settings.projects_database.exists()
+    assert digest == hashlib.sha256(raw).hexdigest()
+    assert assert_planning_bootstrap_current(control, digest) == settings
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        lambda value: {**value, "unexpected": True},
+        lambda value: {**value, "state_directory": "relative-state"},
+        lambda value: {**value, "allowed_roots": []},
+    ],
+)
+def test_descriptor_shape_and_paths_are_strict(deployment, mutation) -> None:
+    control, _ = deployment
+    _write(control, mutation(_document(deployment)))
+    with pytest.raises(RunError, match="^PLANNING_ADMISSION_BOOTSTRAP_INVALID$"):
+        read_planning_bootstrap(control)
+
+
+def test_duplicate_keys_and_oversized_descriptor_are_rejected(deployment) -> None:
+    control, _ = deployment
+    value = _document(deployment)
+    duplicate = json.dumps(value, separators=(",", ":")).replace(
+        '"schema_version":', '"schema_version":"duplicate","schema_version":', 1
+    )
+    _write(control, value, raw=duplicate.encode())
+    with pytest.raises(RunError, match="^PLANNING_ADMISSION_BOOTSTRAP_INVALID$"):
+        read_planning_bootstrap(control)
+    _write(control, value, raw=b"{" + b"x" * (32 * 1024) + b"}")
+    with pytest.raises(RunError, match="^PLANNING_ADMISSION_BOOTSTRAP_INVALID$"):
+        read_planning_bootstrap(control)
+
+
+def test_repository_containing_control_plane_is_rejected_without_writes(deployment) -> None:
+    control, values = deployment
+    repository = Path(values["allowed_root"]) / "project"
+    inside = repository / "control"
+    inside.mkdir()
+    inside.chmod(0o700)
+    state = Path(values["state_directory"])
+    document = _document(deployment)
+    document["state_directory"] = str(state)
+    _write(inside, document)
+    before = (repository / ".git").stat()
+    with pytest.raises(RunError, match="^PLANNING_ADMISSION_BOOTSTRAP_INVALID$"):
+        read_planning_bootstrap(inside)
+    after = (repository / ".git").stat()
+    assert (before.st_mode, before.st_size) == (after.st_mode, after.st_size)
+    assert control.exists()
+
+
+def test_permission_link_missing_store_and_current_digest_fail_closed(deployment) -> None:
+    control, values = deployment
+    _write(control, _document(deployment))
+    digest = read_planning_bootstrap(control)[1]
+    control.chmod(0o755)
+    with pytest.raises(RunError, match="^PLANNING_ADMISSION_BOOTSTRAP_INVALID$"):
+        read_planning_bootstrap(control)
+    control.chmod(0o700)
+    replacement = control / PLANNING_ADMISSION_BOOTSTRAP
+    saved = control.parent / "saved-bootstrap.json"
+    replacement.replace(saved)
+    replacement.symlink_to(saved)
+    with pytest.raises(RunError, match="^PLANNING_ADMISSION_BOOTSTRAP_INVALID$"):
+        read_planning_bootstrap(control)
+    replacement.unlink()
+    saved.replace(replacement)
+    replacement.write_bytes(replacement.read_bytes() + b" ")
+    replacement.chmod(0o600)
+    with pytest.raises(RunError, match="^PLANNING_ADMISSION_BOOTSTRAP_CHANGED$"):
+        assert_planning_bootstrap_current(control, digest)
+    document = _document(deployment)
+    document["capacity_database"] = str(Path(values["state_directory"]) / "missing.sqlite")
+    _write(control, document)
+    with pytest.raises(RunError, match="^PLANNING_ADMISSION_BOOTSTRAP_INVALID$"):
+        read_planning_bootstrap(control)
+    assert not Path(document["capacity_database"]).exists()
+    Path(values["state_directory"]).joinpath("runs.sqlite").unlink()
+    _write(control, _document(deployment))
+    with pytest.raises(RunError, match="^PLANNING_ADMISSION_BOOTSTRAP_INVALID$"):
+        read_planning_bootstrap(control)

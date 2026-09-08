@@ -13,6 +13,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from contextlib import contextmanager
 from dataclasses import asdict
+from pathlib import Path
 from threading import Event
 
 import pytest
@@ -91,10 +92,23 @@ else:
 
 def observed(path, timeout=8):
     deadline = time.monotonic() + timeout
+    last_observation_error = None
     while time.monotonic() < deadline:
         if path.exists():
-            return json.loads(path.read_text())
+            try:
+                return json.loads(path.read_text())
+            except (PermissionError, UnicodeDecodeError, json.JSONDecodeError) as error:
+                # Windows can briefly deny a just-replaced file while another
+                # handle closes it.  Keep the original bounded observation
+                # deadline, while a permanent permission or malformed result
+                # still fails once that deadline expires.
+                last_observation_error = error
         time.sleep(0.01)
+    if last_observation_error is not None:
+        pytest.fail(
+            f"Observation remained unreadable or incomplete: {path.name} "
+            f"({type(last_observation_error).__name__})"
+        )
     pytest.fail(f"Missing real child observation: {path}")
 
 
@@ -227,7 +241,7 @@ def test_lost_live_supervisor_cannot_leave_a_child_authorized(tmp_path):
             print("supervisor_loss_result: registered child also observed exited")
 
 
-def test_unprovable_supervisor_identity_is_rejected_by_live_registered_child(tmp_path):
+def test_unprovable_supervisor_identity_is_rejected_by_live_registered_child(tmp_path, monkeypatch):
     with child_host(tmp_path) as (host, output, _, _, _):
         # Deliberate corruption port: the real supervisor remains alive, but its
         # stored incarnation can no longer establish containment.
@@ -235,7 +249,37 @@ def test_unprovable_supervisor_identity_is_rejected_by_live_registered_child(tmp
             db.execute("UPDATE executions SET supervisor_birth='unproven-incarnation'")
         (output / "check").touch()
         assert observed(output / "after.json")["decision"] == "RUNNER_CONTAINMENT_UNPROVEN"
+        # The child has published this real observation atomically. Simulate
+        # the short Windows close/replace read window on the next file only;
+        # the bounded observer must retry, while a permanent denial still
+        # reaches its existing timeout failure.
+        actual_read_text = Path.read_text
+        transient = {"remaining": 2}
+
+        def read_text(path, *args, **kwargs):
+            if path == output / "done.json" and transient["remaining"]:
+                transient["remaining"] -= 1
+                raise PermissionError("controlled transient read window")
+            return actual_read_text(path, *args, **kwargs)
+
+        monkeypatch.setattr(Path, "read_text", read_text)
         observed(output / "done.json")
+        assert transient["remaining"] == 0
+
+
+def test_observed_permanent_read_failure_is_bounded_and_explicit(tmp_path, monkeypatch):
+    target = tmp_path / "permanently-unreadable.json"
+    target.write_text("{}")
+    actual_read_text = Path.read_text
+
+    def always_denied(path, *args, **kwargs):
+        if path == target:
+            raise PermissionError("controlled permanent denial")
+        return actual_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", always_denied)
+    with pytest.raises(pytest.fail.Exception, match="Observation remained unreadable"):
+        observed(target, timeout=0.03)
 
 
 def test_legacy_execution_schema_migration_preserves_accepted_start_without_respawn(tmp_path):

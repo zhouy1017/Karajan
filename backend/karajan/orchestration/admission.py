@@ -3,17 +3,18 @@
 import json
 import sqlite3
 import uuid
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
 from karajan.capacity import CapacityError
-from karajan.routing.compiler import digest
+from karajan.routing.compiler import RoutingError, digest
 from karajan.runs import RunError
 from karajan.runs.planning import encoded, identifier
 from karajan.storage import open_database, require_schema
 
+from .execution_budget import capture_run_budget_boundary
 from .routing import ApprovedRunRouting
 
 
@@ -34,6 +35,10 @@ class ApprovedTaskAdmission:
         ):
             raise RunError("EXISTING_STORE_PARENT_MODE_REQUIRED")
         self.database, self.routing = database.resolve(), routing
+        # Installed after ApprovedReviewerBindings is constructed.  Keeping this
+        # controller-owned avoids a public Reviewer payload or a second source
+        # of Candidate authority.
+        self.reviewer_bindings: Any | None = None
         self.existing_only = existing_only
         if not existing_only:
             self.database.parent.mkdir(parents=True, exist_ok=True)
@@ -84,6 +89,61 @@ class ApprovedTaskAdmission:
     def _owner(self, run_id: str, principal: str) -> None:
         self.routing.planner.get(run_id, principal=principal)
 
+    def set_reviewer_bindings(self, bindings: Any) -> None:
+        """Attach the current-subject authority after the cyclic services exist."""
+        if getattr(bindings, "admissions", None) is not self:
+            raise RunError("REVIEW_BINDING_ADMISSION_MISMATCH")
+        self.reviewer_bindings = bindings
+
+    def _reviewer_context(
+        self, db: sqlite3.Connection, run_id: str, task_id: str, principal: str
+    ) -> dict[str, Any] | None:
+        """Locate the one persisted Worker operation for an approved Reviewer."""
+        with self.routing.planner.activation_guard(run_id) as run:
+            self.routing.planner._owner(run, principal)
+            plan = next(
+                (
+                    row
+                    for row in run["plans"]
+                    if row["plan_revision"] == run["active_plan_revision"]
+                ),
+                None,
+            )
+            task = (
+                next((row for row in plan["plan"]["tasks"] if row["id"] == task_id), None)
+                if plan is not None
+                else None
+            )
+            if task is None or task["role"] != "reviewer":
+                return None
+            bindings = self.reviewer_bindings
+            if bindings is None:
+                # Preserve the established public admission result for an
+                # approved reviewer-shaped task before #115's controller is
+                # installed: the generic assessor records its immutable
+                # EXECUTION_LINEAGE_REQUIRED blocker and never reserves.
+                return None
+            dependencies = task.get("depends_on")
+            if not isinstance(dependencies, list) or len(dependencies) != 1:
+                raise RunError("UNIQUE_APPROVED_REVIEWER_DEPENDENCY_REQUIRED")
+            rows = [
+                dict(json.loads(row["data"]))
+                for row in db.execute(
+                    "SELECT data FROM operations WHERE run_id=? AND task_id=?",
+                    (run_id, dependencies[0]),
+                ).fetchall()
+            ]
+            rows = [
+                row
+                for row in rows
+                if row.get("workspace") is not None
+                and row.get("execution", {}).get("collection") is not None
+                and not row.get("cancel_requested")
+            ]
+            if len(rows) != 1:
+                raise RunError("REVIEW_WORKER_LINEAGE_REQUIRED")
+            return rows[0]
+
     @staticmethod
     def _load(db: sqlite3.Connection, run_id: str, operation_id: str) -> dict[str, Any]:
         row = db.execute(
@@ -107,9 +167,68 @@ class ApprovedTaskAdmission:
             ),
         )
 
+    def _reviewer_activation_identity(
+        self, db: sqlite3.Connection, operation: dict[str, Any]
+    ) -> None:
+        """Require the persisted Reviewer lineage before making an activation intent."""
+        request = operation.get("request")
+        assessment = operation.get("assessment")
+        lineage = assessment.get("reviewer_lineage") if isinstance(assessment, dict) else None
+        worker_operation_id = operation.get("depends_on_operation_id")
+        if (
+            not isinstance(request, dict)
+            or request.get("role") != "reviewer"
+            or not isinstance(lineage, dict)
+            or not isinstance(worker_operation_id, str)
+            or lineage.get("worker_operation_id") != worker_operation_id
+        ):
+            raise RunError("REVIEWER_OPERATION_REQUIRED")
+        worker = self._load(db, operation["run_id"], worker_operation_id)
+        if (
+            worker["id"] == operation["id"]
+            or worker.get("task_id") != lineage.get("worker_task_id")
+        ):
+            raise RunError("REVIEWER_OPERATION_REQUIRED")
+
     def _refresh(self, db: sqlite3.Connection, operation: dict[str, Any]) -> dict[str, Any]:
-        if "execution" in operation or operation["state"] != "reserved":
+        activation = operation.get("reviewer_activation")
+        request = operation.get("request")
+        reviewer_recovery = (
+            isinstance(request, dict)
+            and request.get("role") == "reviewer"
+            and operation["state"] == "reconciliation_required"
+            and isinstance(operation.get("capacity_receipt"), dict)
+            and isinstance(activation, dict)
+            and activation.get("admission_id")
+            == operation["capacity_receipt"].get("admission_id")
+            and isinstance(activation.get("command_key"), str)
+            and (
+                ("receipt" in activation and activation["receipt"] is None)
+                or (
+                    isinstance(activation.get("receipt"), dict)
+                    and activation["receipt"].get("decision") == "capacity_revalidated"
+                )
+            )
+        )
+        if "execution" in operation or (
+            operation["state"] != "reserved" and not reviewer_recovery
+        ):
             return operation
+        if isinstance(activation, dict):
+            receipt = self.routing.capacity.command_receipt(
+                "activate",
+                {"admission_id": activation["admission_id"]},
+                command_key=activation["command_key"],
+            )
+            if receipt is not None:
+                activation["receipt"] = receipt
+                if receipt.get("decision") == "capacity_revalidated":
+                    operation["reason_codes"] = []
+                else:
+                    # Keep the immutable rejected receipt, then derive the current
+                    # reservation state below. A past rejection cannot mask expiry.
+                    operation["reason_codes"] = list(receipt.get("reason_codes", []))
+                self._save(db, operation)
         facts = self.routing.capacity.routing_facts()
         admission_id = operation["capacity_receipt"]["admission_id"]
         current = next(
@@ -122,6 +241,13 @@ class ApprovedTaskAdmission:
             None,
         )
         reason = None
+        active_with_exact_reviewer_receipt = (
+            current is not None
+            and current["stored_state"] == "active"
+            and isinstance(activation, dict)
+            and isinstance(activation.get("receipt"), dict)
+            and activation["receipt"].get("decision") == "capacity_revalidated"
+        )
         if current is None:
             operation["state"], reason = "reconciliation_required", "CAPACITY_ADMISSION_MISSING"
         elif current["stored_state"] == "expired" or current["exclusion_reason"] == (
@@ -130,7 +256,23 @@ class ApprovedTaskAdmission:
             operation["state"], reason = "expired", "RESERVATION_EXPIRED_UNSENT"
         elif current["stored_state"] == "released":
             operation["state"], reason = "released", "RESERVATION_RELEASED"
-        elif current["stored_state"] != "reserved":
+        elif (
+            active_with_exact_reviewer_receipt
+            and reviewer_recovery
+            and not operation.get("cancel_requested")
+        ):
+            # A concurrent read can observe the Capacity activation after it
+            # commits but before its caller stores the exact receipt. Once
+            # both durable facts agree, this Reviewer operation has recovered
+            # its original hold; do not strand it in reconciliation.
+            operation["state"] = "reserved"
+            operation["reason_codes"] = []
+            operation["capacity_status"] = {
+                "facts_sha256": facts.sha256,
+                "admission": current,
+            }
+            self._save(db, operation)
+        elif current["stored_state"] != "reserved" and not active_with_exact_reviewer_receipt:
             operation["state"], reason = (
                 "reconciliation_required",
                 "EXECUTION_RECONCILIATION_REQUIRED",
@@ -173,15 +315,33 @@ class ApprovedTaskAdmission:
             ).fetchone():
                 raise RunError("TASK_ADMISSION_PENDING")
             identity = str(uuid.uuid4())
-            assessment = self.routing.assess(
-                run_id, task_id, principal=principal, command_key="admission-assess:" + identity
-            )
+            reviewer_worker = self._reviewer_context(db, run_id, task_id, principal)
+            if reviewer_worker is None:
+                assessment = self.routing.assess(
+                    run_id, task_id, principal=principal, command_key="admission-assess:" + identity
+                )
+            else:
+                bindings = self.reviewer_bindings
+                if bindings is None:
+                    raise RunError("REVIEWER_BINDING_CONTROLLER_REQUIRED")
+                assessment = self.routing.assess_reviewer(
+                    run_id,
+                    task_id,
+                    principal=principal,
+                    command_key="admission-assess:" + identity,
+                    worker_operation=reviewer_worker,
+                    candidates=bindings.candidates,
+                    reviewer_validator=bindings,
+                )
             request = _request(assessment)
             operation = {
                 "schema_version": "karajan.approved-task-admission.v1",
                 "id": identity,
                 "run_id": run_id,
                 "task_id": task_id,
+                "depends_on_operation_id": assessment.get("reviewer_lineage", {}).get(
+                    "worker_operation_id"
+                ),
                 "planned_attempt_id": assessment["planned_attempt_id"],
                 "planned_context_id": assessment["planned_context_id"],
                 "state": "queued" if request else "blocked",
@@ -189,6 +349,9 @@ class ApprovedTaskAdmission:
                 "assessment": assessment,
                 "request": request,
                 "capacity_receipt": None,
+                "reviewer_activation": (
+                    None if assessment.get("reviewer_lineage") is not None else "not_applicable"
+                ),
                 "revalidation": None,
                 "cancel_requested": False,
                 "cancellation_receipt": None,
@@ -222,29 +385,207 @@ class ApprovedTaskAdmission:
             # A lost response is recovered without re-authorizing or re-sending.
             receipt = self.routing.capacity.command_receipt("admit", request, command_key=key)
             if receipt is None:
-                with self.routing.admission_guard(
-                    run_id,
-                    operation["task_id"],
-                    principal=principal,
-                    attempt_id=operation["planned_attempt_id"],
-                    context_id=operation["planned_context_id"],
-                ) as current:
-                    operation["revalidation"] = current
-                    current_request = _request(current)
-                    if current_request is None or current_request != request:
-                        operation["state"] = "blocked"
-                        operation["reason_codes"] = current["reason_codes"] or [
-                            "APPROVED_ADMISSION_INPUT_CHANGED"
-                        ]
-                        self._save(db, operation)
-                        return operation
-                    receipt = self.routing.capacity.admit(request, command_key=key)
+                reviewer_worker = self._reviewer_context(
+                    db, run_id, operation["task_id"], principal
+                )
+                bindings = self.reviewer_bindings
+                if reviewer_worker is not None:
+                    if bindings is None:
+                        raise RunError("REVIEWER_BINDING_CONTROLLER_REQUIRED")
+                    # Keep the original Run lock while Project facts and the
+                    # Capacity transaction are acquired.  The callback runs
+                    # after Capacity has its actual write lock, so time spent
+                    # waiting for either lock cannot admit past this Run's
+                    # existing cumulative deadline or mint a new claim.
+                    with self.routing.planner.activation_guard(run_id) as run:
+                        self.routing.planner._owner(run, principal)
+                        with self.routing.reviewer_admission_guard(
+                            run_id,
+                            operation["task_id"],
+                            principal=principal,
+                            attempt_id=operation["planned_attempt_id"],
+                            context_id=operation["planned_context_id"],
+                            worker_operation=reviewer_worker,
+                            candidates=bindings.candidates,
+                            reviewer_validator=bindings,
+                            _held_run=run,
+                        ) as current:
+                            operation["revalidation"] = current
+                            current_request = _request(current)
+                            provenance_changed = (
+                                current["state"] == "selected"
+                                and operation["assessment"].get("reviewer_lineage")
+                                != current.get("reviewer_lineage")
+                            )
+                            if (
+                                current_request is None
+                                or current_request != request
+                                or provenance_changed
+                            ):
+                                operation["state"] = "blocked"
+                                operation["reason_codes"] = (
+                                    ["REVIEWER_ADMISSION_PROVENANCE_CHANGED"]
+                                    if provenance_changed
+                                    else current["reason_codes"]
+                                    or ["APPROVED_ADMISSION_INPUT_CHANGED"]
+                                )
+                                self._save(db, operation)
+                                return operation
+
+                            run_budget_boundary: Any | None = None
+                            capacity_quota_fence: Any | None = None
+                            reviewer_temporal_fence: Any | None = None
+
+                            def check_budget_at_reservation() -> None:
+                                nonlocal run_budget_boundary, reviewer_temporal_fence
+                                source_recheck = getattr(current, "recheck_source", None)
+                                if not callable(source_recheck):
+                                    raise RunError("REVIEWER_QUALIFICATION_SOURCE_CHANGED")
+                                reviewer_temporal_fence = self.routing.reviewer_boundary_guard(
+                                    current,
+                                    worker_operation=reviewer_worker,
+                                    candidates=bindings.candidates,
+                                    clock=lambda: self.routing.capacity.clock(),
+                                    source_recheck=source_recheck,
+                                )
+                                run_budget_boundary = capture_run_budget_boundary(
+                                    db,
+                                    run,
+                                    operation_id=operation["id"],
+                                    attempt_id=operation["planned_attempt_id"],
+                                )
+
+                            capacity_boundary: Any | None = None
+
+                            def check_reviewer_capacity_route(boundary: Any) -> None:
+                                nonlocal capacity_boundary, capacity_quota_fence
+                                capacity_boundary = boundary
+                                capacity_quota_fence = (
+                                    self.routing.reviewer_capacity_boundary_guard(
+                                        current, request=request, boundary=boundary
+                                    )
+                                )
+
+                            def check_reviewer_final_reservation_boundary() -> Callable[[], None]:
+                                if (
+                                    capacity_boundary is None
+                                    or capacity_quota_fence is None
+                                    or run_budget_boundary is None
+                                    or reviewer_temporal_fence is None
+                                ):
+                                    raise RunError("REVIEWER_CAPACITY_BOUNDARY_INVALID")
+
+                                def final_check() -> None:
+                                    capacity_now = self.routing.capacity.clock()
+                                    try:
+                                        capacity_quota_fence.assert_current(as_of=capacity_now)
+                                    except RoutingError:
+                                        raise RunError(
+                                            "REVIEWER_CAPACITY_REVALIDATION_FAILED"
+                                        ) from None
+                                    reviewer_temporal_fence.assert_current(as_of=capacity_now)
+                                    run_budget_boundary.assert_new_admission_allowed(
+                                        now=self.routing.planner.clock()
+                                    )
+
+                                return final_check
+
+                            try:
+                                receipt = self.routing.capacity.admit(
+                                    request,
+                                    command_key=key,
+                                    before_reserve=check_budget_at_reservation,
+                                    after_capacity_facts=check_reviewer_capacity_route,
+                                    before_reservation_write=check_reviewer_final_reservation_boundary,
+                                )
+                            except RunError as error:
+                                operation["state"] = "blocked"
+                                operation["reason_codes"] = [error.code]
+                                self._save(db, operation)
+                                return operation
+                else:
+                    guard = self.routing.admission_guard(
+                        run_id,
+                        operation["task_id"],
+                        principal=principal,
+                        attempt_id=operation["planned_attempt_id"],
+                        context_id=operation["planned_context_id"],
+                    )
+                    with guard as current:
+                        operation["revalidation"] = current
+                        current_request = _request(current)
+                        if current_request is None or current_request != request:
+                            operation["state"] = "blocked"
+                            operation["reason_codes"] = current["reason_codes"] or [
+                                "APPROVED_ADMISSION_INPUT_CHANGED"
+                            ]
+                            self._save(db, operation)
+                            return operation
+                        receipt = self.routing.capacity.admit(request, command_key=key)
             operation["capacity_receipt"] = receipt
             operation["state"] = "reserved" if receipt["decision"] == "admitted" else "blocked"
             operation["reason_codes"] = receipt["reason_codes"]
             self._refresh(db, operation)
             self._save(db, operation)
             return operation
+
+    def activate_reviewer(
+        self, run_id: str, operation_id: str, *, principal: str
+    ) -> dict[str, Any]:
+        """Record and recover the one Reviewer Capacity activation by operation ID.
+
+        A lost response leaves the durable intent in place. Later ``get`` and
+        ``reconcile_reviewer`` only read this exact command receipt; they never
+        nominate an activation key or issue a replacement Capacity effect.
+        """
+        for value in (run_id, operation_id, principal):
+            identifier(value)
+        self._owner(run_id, principal)
+        with self._transaction() as db:
+            operation = self._load(db, run_id, operation_id)
+            self._reviewer_activation_identity(db, operation)
+            operation = self._refresh(db, operation)
+            if operation.get("cancel_requested"):
+                raise RunError("REVIEWER_OPERATION_CANCELLED")
+            if operation.get("state") != "reserved" or not operation.get("capacity_receipt"):
+                raise RunError("RESERVED_REVIEWER_OPERATION_REQUIRED")
+            activation = operation.get("reviewer_activation")
+            if activation is None:
+                activation = {
+                    "admission_id": operation["capacity_receipt"]["admission_id"],
+                    "command_key": "reviewer-activate:" + operation_id,
+                    "receipt": None,
+                }
+                operation["reviewer_activation"] = activation
+                self._save(db, operation)
+            receipt = self.routing.capacity.command_receipt(
+                "activate",
+                {"admission_id": activation["admission_id"]},
+                command_key=activation["command_key"],
+            )
+            if receipt is not None:
+                activation["receipt"] = receipt
+                self._save(db, operation)
+                return self._refresh(db, operation)
+        # The intent is already durable. A retry uses this same key and
+        # Capacity's idempotent receipt; it cannot create another activation.
+        receipt = self.routing.capacity.activate(
+            activation["admission_id"], command_key=activation["command_key"]
+        )
+        with self._transaction() as db:
+            operation = self._load(db, run_id, operation_id)
+            current = operation.get("reviewer_activation")
+            if current != activation:
+                raise RunError("REVIEWER_ACTIVATION_INTENT_CHANGED")
+            current["receipt"] = receipt
+            self._save(db, operation)
+            return self._refresh(db, operation)
+
+    def reconcile_reviewer(
+        self, run_id: str, operation_id: str, *, principal: str
+    ) -> dict[str, Any]:
+        """Read the persisted Reviewer activation receipt without an effect."""
+        return self.get(run_id, operation_id, principal=principal)
 
     def cancel(self, run_id: str, operation_id: str, *, principal: str) -> dict[str, Any]:
         for value in (run_id, operation_id, principal):
@@ -302,6 +643,138 @@ class ApprovedTaskAdmission:
             operation["reason_codes"] = []
             self._save(db, operation)
             return operation
+
+    @contextmanager
+    def reviewer_reserved_effect_guard(
+        self, run_id: str, operation_id: str, *, principal: str
+    ) -> Iterator[dict[str, Any]]:
+        """Fence a future Reviewer effect to its original operation and Capacity hold.
+
+        This exposes no native start or send capability.  A #116 consumer uses
+        this ID-only port at its real boundary; it receives the Reviewer record
+        only after the stored Worker lineage, current binding, exact request,
+        cancellation state, Project facts, and already-active Capacity hold all
+        agree.  The guard never creates or activates a reservation.
+        """
+        for value in (run_id, operation_id, principal):
+            identifier(value)
+        self._owner(run_id, principal)
+        with self._transaction() as db:
+            operation = self._refresh(db, self._load(db, run_id, operation_id))
+            if operation.get("cancel_requested"):
+                raise RunError("REVIEWER_OPERATION_CANCELLED")
+            worker_operation_id = operation.get("depends_on_operation_id")
+            if not isinstance(worker_operation_id, str):
+                raise RunError("REVIEW_WORKER_LINEAGE_REQUIRED")
+            worker_operation = self._load(db, run_id, worker_operation_id)
+            bindings = self.reviewer_bindings
+            if bindings is None:
+                raise RunError("REVIEWER_BINDING_CONTROLLER_REQUIRED")
+            request = operation.get("request")
+            capacity_receipt = operation.get("capacity_receipt")
+            activation = operation.get("reviewer_activation")
+            if (
+                operation.get("state") != "reserved"
+                or not isinstance(request, dict)
+                or not isinstance(capacity_receipt, dict)
+                or not isinstance(capacity_receipt.get("admission_id"), str)
+                or not isinstance(activation, dict)
+                or not isinstance(activation.get("receipt"), dict)
+                or activation["receipt"].get("decision") != "capacity_revalidated"
+                or activation["receipt"].get("admission_id") != capacity_receipt["admission_id"]
+            ):
+                raise RunError("RESERVED_REVIEWER_OPERATION_REQUIRED")
+            with self.routing.planner.activation_guard(run_id) as run:
+                self.routing.planner._owner(run, principal)
+                with self.routing._reviewer_reserved_execution_guard(
+                    run_id,
+                    operation,
+                    worker_operation,
+                    principal=principal,
+                    candidates=bindings.candidates,
+                    reviewer_validator=bindings,
+                    _held_run=run,
+                ) as current:
+                    if (
+                        current["state"] != "selected"
+                        or current["reviewer_operation_id"] != operation_id
+                        or current["original_assessment_digest"]
+                        != operation["assessment"]["digest"]
+                        or current["route"]["selected_profile"]
+                        != operation["assessment"]["route"]["selected_profile"]
+                        or current["planned_attempt_id"] != operation["planned_attempt_id"]
+                        or current["planned_context_id"] != operation["planned_context_id"]
+                        or _request(current) != request
+                    ):
+                        raise RunError("REVIEWER_RESERVED_ROUTE_NOT_CURRENT")
+                    # This is the existing Reviewer admission's Capacity transaction;
+                    # it excludes only its own hold and cannot issue another claim.
+                    run_budget_boundary: Any | None = None
+                    capacity_quota_fence: Any | None = None
+                    reviewer_temporal_fence: Any | None = None
+
+                    def check_reviewer_effect_boundary() -> None:
+                        nonlocal run_budget_boundary, reviewer_temporal_fence
+                        source_recheck = getattr(current, "recheck_source", None)
+                        if not callable(source_recheck):
+                            raise RunError("REVIEWER_QUALIFICATION_SOURCE_CHANGED")
+                        reviewer_temporal_fence = self.routing.reviewer_boundary_guard(
+                            current,
+                            worker_operation=worker_operation,
+                            candidates=bindings.candidates,
+                            clock=lambda: self.routing.capacity.clock(),
+                            source_recheck=source_recheck,
+                        )
+                        run_budget_boundary = capture_run_budget_boundary(
+                            db,
+                            run,
+                            operation_id=operation["id"],
+                            attempt_id=operation["planned_attempt_id"],
+                        )
+
+                    capacity_boundary: Any | None = None
+
+                    def check_reviewer_capacity_route(boundary: Any) -> None:
+                        nonlocal capacity_boundary, capacity_quota_fence
+                        capacity_boundary = boundary
+                        capacity_quota_fence = self.routing.reviewer_capacity_boundary_guard(
+                            current, request=request, boundary=boundary
+                        )
+
+                    def check_reviewer_final_effect_boundary() -> Callable[[], None]:
+                        if (
+                            capacity_boundary is None
+                            or capacity_quota_fence is None
+                            or run_budget_boundary is None
+                            or reviewer_temporal_fence is None
+                        ):
+                            raise RunError("REVIEWER_CAPACITY_BOUNDARY_INVALID")
+
+                        def final_check() -> None:
+                            capacity_now = self.routing.capacity.clock()
+                            try:
+                                capacity_quota_fence.assert_current(as_of=capacity_now)
+                            except RoutingError:
+                                raise RunError("REVIEWER_CAPACITY_REVALIDATION_FAILED") from None
+                            reviewer_temporal_fence.assert_current(as_of=capacity_now)
+                            run_budget_boundary.assert_current_or_new_admission_allowed(
+                                now=self.routing.planner.clock()
+                            )
+
+                        return final_check
+
+                    with self.routing.capacity.pre_effect_guard(
+                        capacity_receipt["admission_id"],
+                        expected_request=request,
+                        before_effect=check_reviewer_effect_boundary,
+                        after_capacity_facts=check_reviewer_capacity_route,
+                        before_effect_yield=check_reviewer_final_effect_boundary,
+                    ) as capacity:
+                        yield {
+                            "operation": operation,
+                            "revalidation": current,
+                            "capacity": capacity,
+                        }
 
 
 def _request(assessment: dict[str, Any]) -> dict[str, Any] | None:

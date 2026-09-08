@@ -126,6 +126,23 @@ class _ReviewerQualificationGrant(_GrantBinding):
     context: GoQualificationLimits
 
 
+class _PlanningSubject(Contract):
+    kind: Literal["planning_execution"]
+    project_id: Identifier
+    run_id: Identifier
+    intent_id: Identifier
+    execution_id: Identifier
+
+
+class _PlanningGrantBinding(_CommonGrantBinding):
+    schema_version: Literal["karajan.go-planning-grant.v1"]
+    subject: _PlanningSubject
+    planning_binding_sha256: _Digest
+    admission_sha256: _Digest
+    input_sha256: _Digest
+    authentication_source_digest: _Digest
+
+
 class _TaskSubject(Contract):
     kind: Literal["task_attempt"]
     project_id: Identifier
@@ -199,12 +216,22 @@ def _encoded(value: object) -> str:
 
 
 def _binding(value: object) -> dict[str, Any]:
-    if isinstance(value, dict) and "subject" in value:
-        return _validated(_TaskGrantBinding, value)
-    if isinstance(value, dict) and "schema_version" in value:
-        if value["schema_version"] == "karajan.go-reviewer-qualification-grant.v1":
-            return _validated(_ReviewerQualificationGrant, value)
+    if not isinstance(value, dict):
+        raise GoJournalError("GO_JOURNAL_INPUT_INVALID")
+    schema_version = value.get("schema_version")
+    if schema_version == "karajan.go-planning-grant.v1":
+        return _validated(_PlanningGrantBinding, value)
+    if schema_version == "karajan.go-reviewer-qualification-grant.v1":
+        return _validated(_ReviewerQualificationGrant, value)
+    if schema_version == "karajan.go-qualification-grant.v2":
         return _validated(_QualificationGrantV2, value)
+    if schema_version is not None or "schema_version" in value:
+        # A versioned binding must be dispatched by its exact schema. In
+        # particular, never let an unknown planning/qualification version fall
+        # through to the legacy shape or the task subject shape.
+        raise GoJournalError("GO_JOURNAL_INPUT_INVALID")
+    if "subject" in value:
+        return _validated(_TaskGrantBinding, value)
     legacy = _validated(_GrantBinding, value)
     # Preserve the legacy public shape and key order, including canonical JSON
     # used to authenticate grants already persisted by earlier versions.

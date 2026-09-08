@@ -281,13 +281,21 @@ def test_active_old_namespace_blocks_ready_subject_and_concurrent_cancel(project
             for future in futures:
                 future.result(25)
         deadline = time.monotonic() + 12
+        converged = False
         while time.monotonic() < deadline:
             final = services.reconcile(*ids, principal="owner")
-            if final["checks"]["phase"] == "cancelled" and final["checks"]["runs"][0].get(
-                "observation"
+            first_current = final["checks"]["runs"][0]
+            cleanup = first_current.get("cleanup", {})
+            if (
+                final["checks"]["phase"] == "cancelled"
+                and first_current.get("observation", {}).get("local_stop") == "confirmed"
+                and cleanup.get("native", {}).get("local_stop") == "confirmed"
+                and cleanup.get("host", {}).get("status") == "confirmed"
             ):
+                converged = True
                 break
             time.sleep(0.05)
+        assert converged, "Owned native and Host cancellation did not converge within 12 seconds"
         (tmp_path / "active-subject-report.json").write_text(json.dumps(final, indent=2))
         assert final["subject"] == before["subject"] and not final.get("history")
         assert observe_process(identity) in {"exited", "identity_mismatch"}

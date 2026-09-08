@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 from pydantic import ValidationError
 
-from karajan.storage import require_schema
+from karajan.storage import ExistingStoreError, require_schema
 
 from .models import ProfileRef, RegisteredProfile
 from .publication import digest, effective_catalog
@@ -55,6 +55,17 @@ class QualificationError(ValueError):
     @property
     def code(self) -> str:
         return str(self)
+
+
+class _CommanderFacts(dict[str, Any]):
+    """A private Project-locked Commander fact with an external-source refresh."""
+
+    def __init__(self, value: dict[str, Any], refresh: Callable[[], dict[str, Any] | None]) -> None:
+        super().__init__(value)
+        self._refresh = refresh
+
+    def recheck(self) -> dict[str, Any] | None:
+        return self._refresh()
 
 
 def _safe_root(path: Path) -> Path:
@@ -107,6 +118,9 @@ class ProfileQualificationStore:
         credentials: "CredentialSourceStore | None" = None,
         go_suite: "FixedGoSuite | None" = None,
         reviewer_suite: "FixedGoReviewerSuite | None" = None,
+        commander_source: Callable[[sqlite3.Connection, str, dict[str, Any], str], dict[str, Any]]
+        | None = None,
+        commander_reader_only: bool = False,
     ) -> None:
         self.projects = projects
         self.clock = clock
@@ -115,23 +129,30 @@ class ProfileQualificationStore:
         self.credentials = credentials
         self.go_suite = go_suite
         self.reviewer_suite = reviewer_suite
+        self.commander_source = commander_source
+        self.commander_store_available = True
         if projects.existing_only:
-            require_schema(
-                projects.database,
-                {
-                    "profile_qualification_starts": [
-                        "id",
-                        "project_id",
-                        "principal",
-                        "command_key",
-                        "request_digest",
-                        "binding",
-                    ],
-                    "profile_qualification_records": ["id", "record", "digest"],
-                    "profile_qualification_revocations": ["id", "record"],
-                    "profile_qualification_start_seals": ["id", "digest"],
-                },
-            )
+            try:
+                require_schema(
+                    projects.database,
+                    {
+                        "profile_qualification_starts": [
+                            "id",
+                            "project_id",
+                            "principal",
+                            "command_key",
+                            "request_digest",
+                            "binding",
+                        ],
+                        "profile_qualification_records": ["id", "record", "digest"],
+                        "profile_qualification_revocations": ["id", "record"],
+                        "profile_qualification_start_seals": ["id", "digest"],
+                    },
+                )
+            except ExistingStoreError:
+                if not commander_reader_only:
+                    raise
+                self.commander_store_available = False
             return
         with projects._transaction() as db:
             db.execute(
@@ -957,6 +978,151 @@ class ProfileQualificationStore:
             return self._facts(db, project_id, frozen_registration, scope, fixture_root)
 
     @contextmanager
+    def commander_facts_guard(
+        self,
+        project_id: str,
+        frozen_registration: dict[str, Any],
+        *,
+        principal: str,
+        scope: str,
+        reader_version: str,
+    ) -> Iterator[dict[str, Any] | None]:
+        """Read one current Commander qualification while retaining the Project lock.
+
+        This is deliberately a reader only. #113 owns the producer and must
+        create a sealed existing start/record; callers cannot upload a passing
+        Commander observation here. Until a trusted current source reader is
+        configured, this yields ``None`` rather than treating descriptor text,
+        frozen configuration, Worker, or Reviewer facts as Commander evidence.
+        """
+        if scope != "commander_planning.v1" or reader_version != (
+            "karajan.commander-qualification-reader.v1"
+        ):
+            yield None
+            return
+        with self._owned(project_id, principal) as db:
+            if not self.commander_store_available or self.commander_source is None:
+                yield None
+                return
+            source = self.commander_source
+
+            def refresh() -> dict[str, Any] | None:
+                # Material is external to this Project transaction. A later
+                # recheck can fail its seal after the first observation; that
+                # becomes a no-fact at the Capacity boundary.
+                try:
+                    frozen = RegisteredProfile.model_validate(frozen_registration).model_dump()
+                    current = self._binding(
+                        db,
+                        project_id,
+                        {"id": frozen["id"], "revision": frozen["revision"]},
+                    )
+                    current_source = source(db, project_id, current, principal)
+                    return self._commander_facts_locked(
+                        db, project_id, frozen_registration, scope, current_source
+                    )
+                except (QualificationError, TypeError, ValueError):
+                    return None
+
+            result = refresh()
+            yield _CommanderFacts(result, refresh) if result is not None else None
+
+    def _commander_facts_locked(
+        self,
+        db: sqlite3.Connection,
+        project_id: str,
+        frozen_registration: dict[str, Any],
+        scope: str,
+        current_source: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        """Validate current catalog, sealed start, record, revoke, source and facts."""
+        from karajan.routing.models import ProfileFacts
+
+        if not isinstance(current_source, dict):
+            return None
+        frozen = RegisteredProfile.model_validate(frozen_registration).model_dump()
+        current = self._binding(
+            db, project_id, {"id": frozen["id"], "revision": frozen["revision"]}
+        )
+        if current["registration"] != frozen or not frozen["enabled"]:
+            return None
+        starts = db.execute(
+            "SELECT * FROM profile_qualification_starts WHERE project_id=? ORDER BY rowid DESC",
+            (project_id,),
+        ).fetchall()
+        profile_ref = {"id": frozen["id"], "revision": frozen["revision"]}
+        latest = next(
+            (
+                row
+                for row in starts
+                if (
+                    (candidate := self._checked_start(db, row)).get("qualification_scope") == scope
+                    and isinstance(candidate.get("profile_binding"), dict)
+                    and candidate["profile_binding"].get("registration", {}).get("id")
+                    == profile_ref["id"]
+                    and candidate["profile_binding"].get("registration", {}).get("revision")
+                    == profile_ref["revision"]
+                )
+            ),
+            None,
+        )
+        if latest is None:
+            return None
+        start = self._checked_start(db, latest)
+        # A newer start for this Commander scope/profile supersedes every older
+        # result even when its source changed, failed, expired or was revoked.
+        # Never fall back to an old pass.
+        if start.get("profile_binding") != current or start.get("source") != current_source:
+            return None
+        try:
+            record = self._record(db, latest["id"])
+        except QualificationError:
+            return None
+        commander_record = record.get("commander_facts")
+        facts = (
+            commander_record.get("profile_facts") if isinstance(commander_record, dict) else None
+        )
+        if (
+            record.get("binding") != start
+            or record.get("qualification_scope") != scope
+            or record.get("status") != "passed"
+            or record.get("provenance") != "official"
+            or db.execute(
+                "SELECT 1 FROM profile_qualification_revocations WHERE id=?", (record["id"],)
+            ).fetchone()
+            is not None
+            or not record.get("observed_at", float("inf"))
+            <= self._now()
+            < record.get("valid_until", float("-inf"))
+            or not isinstance(facts, dict)
+            or not isinstance(facts.get("valid_until"), (int, float))
+            or facts["valid_until"] <= self._now()
+        ):
+            return None
+        commander = record.get("commander_facts")
+        if not isinstance(commander, dict):
+            return None
+        facts = ProfileFacts.model_validate(commander.get("profile_facts")).model_dump()
+        evidence = commander.get("capability_evidence")
+        generation = commander.get("source_generation_sha256")
+        if (
+            facts["profile"] != {"id": frozen["id"], "revision": frozen["revision"]}
+            or facts["profile_digest"] != digest(frozen["profile"])
+            or "commander" not in facts["roles"]
+            or not isinstance(evidence, list)
+            or generation != digest(current_source)
+        ):
+            return None
+        return {
+            "profile_facts": facts,
+            "capability_evidence": evidence,
+            "source_generation_sha256": generation,
+            "record_sha256": digest(record),
+            "valid_until": record["valid_until"],
+            "provenance": "official",
+        }
+
+    @contextmanager
     def routing_facts_guard(
         self,
         project_id: str,
@@ -994,6 +1160,10 @@ class ProfileQualificationStore:
                 else:
                     rows.append({"profile": ref, "qualification": qualified, "reason_codes": []})
             yield {
+                # Internal orchestration consumers may validate another
+                # controller-owned binding under this exact held transaction.
+                # It is not a public Project read handle.
+                "project_db": db,
                 "catalog": catalog,
                 "profiles": rows,
                 "qualification_scope": scope,

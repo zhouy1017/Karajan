@@ -125,7 +125,12 @@ def approved_check_candidate(
     )
     submission = submit_request(run, intent)
     for task in submission["plan"]["tasks"]:
-        task.update(tools=["read", "edit"], complexity="T1", risk="standard", context_tokens=6000)
+        task.update(
+            tools=["read"] if task["role"] == "reviewer" else ["read", "edit"],
+            complexity="T1",
+            risk="standard",
+            context_tokens=6000,
+        )
     plan = planner.submit_plan(run["id"], submission, principal="lead", command_key="checks-plan")
     planner.approve_plan(
         run["id"], approve_request(plan), principal="owner", command_key="checks-approve"

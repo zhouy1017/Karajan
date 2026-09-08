@@ -55,7 +55,10 @@ def test_exactly_one_slot_and_one_demand_are_not_charged_again_for_the_same_admi
     original = store.activate(admission_id, command_key="activate")
     before = store.snapshot()
 
-    with store.pre_effect_guard(admission_id, expected_request=value) as current:
+    seen = []
+    with store.pre_effect_guard(
+        admission_id, expected_request=value, after_capacity_facts=seen.append
+    ) as current:
         assert current["decision"] == "capacity_revalidated"
         assert current["reason_codes"] == []
         assert current["available_before"] == {"short": "3.000000", "weekly": "3.000000"}
@@ -66,6 +69,220 @@ def test_exactly_one_slot_and_one_demand_are_not_charged_again_for_the_same_admi
         assert current["activation_allowed"] is False
     assert store.snapshot() == before
     assert len(before["lifecycle"]) == 1
+    assert len(seen) == 1
+    assert seen[0].owned_admission_id == admission_id
+    facts = seen[0].facts.as_dict()
+    assert [row["admission_id"] for row in facts["accounts"][0]["admissions"]] == [admission_id]
+
+
+def test_pre_effect_callback_rechecks_observation_expiry_before_yield(ledger):
+    store, clock = ledger
+    value = bound_request(store)
+    admission_id = store.admit(value, command_key="reserve")["admission_id"]
+    store.activate(admission_id, command_key="activate")
+    before = store.snapshot()
+
+    def delayed_controller_read() -> None:
+        clock[0] = 1005.0
+
+    with pytest.raises(CapacityError, match="^OBSERVATION_STALE:short$"):
+        with store.pre_effect_guard(
+            admission_id, expected_request=value, before_effect=delayed_controller_read
+        ):
+            pytest.fail("stale Capacity facts entered the effect guard")
+    assert store.snapshot() == before
+
+
+def test_pre_effect_callback_uses_post_callback_checked_at(ledger):
+    store, clock = ledger
+    value = bound_request(store)
+    admission_id = store.admit(value, command_key="reserve")["admission_id"]
+    store.activate(admission_id, command_key="activate")
+
+    def delayed_controller_read() -> None:
+        clock[0] = 1001.0
+
+    with store.pre_effect_guard(
+        admission_id, expected_request=value, before_effect=delayed_controller_read
+    ) as current:
+        assert current["checked_at"] == 1001.0
+
+
+def test_pre_effect_callback_failure_changes_no_active_hold(ledger):
+    store, _ = ledger
+    value = bound_request(store)
+    admission_id = store.admit(value, command_key="reserve")["admission_id"]
+    store.activate(admission_id, command_key="activate")
+    before = store.snapshot()
+
+    def unavailable_controller_read() -> None:
+        raise RuntimeError("CANDIDATE_ARTIFACT_UNAVAILABLE")
+
+    with pytest.raises(RuntimeError, match="^CANDIDATE_ARTIFACT_UNAVAILABLE$"):
+        with store.pre_effect_guard(
+            admission_id, expected_request=value, before_effect=unavailable_controller_read
+        ):
+            pytest.fail("failed controller read entered the effect guard")
+    assert store.snapshot() == before
+
+
+def test_pre_effect_facts_callback_failure_changes_no_active_hold(ledger):
+    store, _ = ledger
+    value = bound_request(store)
+    admission_id = store.admit(value, command_key="reserve")["admission_id"]
+    store.activate(admission_id, command_key="activate")
+    before = store.snapshot()
+
+    def rejected_conservative_route(_) -> None:
+        raise RuntimeError("ROUTE_CONSERVATIVE_LIMIT_EXCEEDED")
+
+    with pytest.raises(RuntimeError, match="^ROUTE_CONSERVATIVE_LIMIT_EXCEEDED$"):
+        with store.pre_effect_guard(
+            admission_id,
+            expected_request=value,
+            after_capacity_facts=rejected_conservative_route,
+        ):
+            pytest.fail("a failed route calculation entered the effect guard")
+    assert store.snapshot() == before
+
+
+def test_pre_effect_final_callback_rechecks_its_clock_before_yield(ledger):
+    store, clock = ledger
+    value = bound_request(store)
+    admission_id = store.admit(value, command_key="reserve")["admission_id"]
+    store.activate(admission_id, command_key="activate")
+    before = store.snapshot()
+    callbacks: list[str] = []
+
+    def late_run_deadline_check() -> None:
+        callbacks.append("yield")
+        clock[0] = 1005.0
+
+    with pytest.raises(CapacityError, match="^OBSERVATION_STALE:short$"):
+        with store.pre_effect_guard(
+            admission_id,
+            expected_request=value,
+            before_effect_yield=late_run_deadline_check,
+        ):
+            pytest.fail("final stale facts entered the effect guard")
+    assert callbacks == ["yield"]
+    assert store.snapshot() == before
+
+
+def test_pre_effect_final_callback_can_defer_its_scalar_check_until_yield(ledger):
+    store, clock = ledger
+    value = bound_request(store)
+    admission_id = store.admit(value, command_key="reserve")["admission_id"]
+    store.activate(admission_id, command_key="activate")
+    before = store.snapshot()
+    callbacks: list[str] = []
+
+    def prepare_final_check():
+        callbacks.append("prepare")
+
+        def final_check() -> None:
+            callbacks.append("final")
+            clock[0] = 1005.0
+
+        return final_check
+
+    with pytest.raises(CapacityError, match="^OBSERVATION_STALE:short$"):
+        with store.pre_effect_guard(
+            admission_id,
+            expected_request=value,
+            before_effect_yield=prepare_final_check,
+        ):
+            pytest.fail("final stale facts entered the effect guard")
+    assert callbacks == ["prepare", "final"]
+    assert store.snapshot() == before
+
+
+def test_pre_effect_rejects_a_clock_that_regresses_after_callback_preparation(ledger):
+    store, clock = ledger
+    value = bound_request(store)
+    admission_id = store.admit(value, command_key="reserve")["admission_id"]
+    store.activate(admission_id, command_key="activate")
+    before = store.snapshot()
+
+    def prepare_final_check():
+        clock[0] = 1001.0
+
+        def regressing_final_check() -> None:
+            clock[0] = 1000.0
+
+        return regressing_final_check
+
+    with pytest.raises(CapacityError, match="^CAPACITY_CLOCK_REGRESSED$"):
+        with store.pre_effect_guard(
+            admission_id,
+            expected_request=value,
+            before_effect_yield=prepare_final_check,
+        ):
+            pytest.fail("regressed Capacity facts entered the effect guard")
+    assert store.snapshot() == before
+
+
+def test_pre_effect_rechecks_expiry_after_capacity_reads_without_a_final_callback(
+    ledger, monkeypatch
+):
+    store, clock = ledger
+    clock[0] = 1006.0
+    for pool in ("short", "weekly"):
+        store.observe(
+            {
+                "pool_id": pool,
+                "window_id": "window-2" if pool == "short" else "window-1",
+                "observed_at": clock[0],
+                "reset_at": 2000.0 if pool == "short" else 10000.0,
+                "source": "fixture",
+                "source_ref": "fresh-window-for-expiry-boundary",
+                "metric": "remaining",
+                "amount": "20",
+                "limit": "20",
+                "covered_usage_ids": [],
+            },
+            command_key="fresh-window-for-expiry-" + pool,
+        )
+    value = bound_request(store)
+    admission_id = store.admit(value, command_key="reserve")["admission_id"]
+    store.activate(admission_id, command_key="activate")
+    clock[0] = 1035.0
+    before = store.snapshot()
+    original = store._observation
+
+    def delayed_observation(*args):
+        observed = original(*args)
+        clock[0] = 1036.0
+        return observed
+
+    monkeypatch.setattr(store, "_observation", delayed_observation)
+    with pytest.raises(CapacityError, match="^RESERVATION_EXPIRED$"):
+        with store.pre_effect_guard(admission_id, expected_request=value):
+            pytest.fail("an expired active reservation entered the effect guard")
+    assert store.snapshot() == before
+
+
+def test_pre_effect_rejects_a_clock_that_regresses_after_its_capacity_evaluation(
+    ledger, monkeypatch
+):
+    store, clock = ledger
+    value = bound_request(store)
+    admission_id = store.admit(value, command_key="reserve")["admission_id"]
+    store.activate(admission_id, command_key="activate")
+    clock[0] = 1001.0
+    before = store.snapshot()
+    original = store._observation
+
+    def regressing_observation(*args):
+        observed = original(*args)
+        clock[0] = 1000.0
+        return observed
+
+    monkeypatch.setattr(store, "_observation", regressing_observation)
+    with pytest.raises(CapacityError, match="^CAPACITY_CLOCK_REGRESSED$"):
+        with store.pre_effect_guard(admission_id, expected_request=value):
+            pytest.fail("a regressed Capacity clock entered the effect guard")
+    assert store.snapshot() == before
 
 
 @pytest.mark.parametrize("other_state", ["reserved", "active", "unknown"])
@@ -94,10 +311,17 @@ def test_other_runs_holds_remain_charged_when_excluding_only_the_original_admiss
     observation(store, "short", "5", at=clock[0])
     before = store.snapshot()
 
+    seen = []
     with pytest.raises(CapacityError, match="^QUOTA_INSUFFICIENT:short$"):
-        with store.pre_effect_guard(admission_id, expected_request=value):
+        with store.pre_effect_guard(
+            admission_id, expected_request=value, after_capacity_facts=seen.append
+        ):
             pytest.fail("The other Run consumes the remaining quota")
     assert store.snapshot() == before
+    assert seen[0].owned_admission_id == admission_id
+    assert {
+        row["admission_id"] for row in seen[0].facts.as_dict()["accounts"][0]["admissions"]
+    } == {admission_id, other_id}
 
 
 def test_recorded_usage_remains_charged_after_its_admission_ends(ledger):
@@ -159,10 +383,14 @@ def test_only_active_unexpired_reservations_can_enter_the_guard(ledger, state):
         clock[0] = 1030.0
     before = store.snapshot()
     reason = "RESERVATION_EXPIRED" if state == "expired" else "ADMISSION_NOT_ACTIVE"
+    callbacks = []
     with pytest.raises(CapacityError, match=f"^{reason}$"):
-        with store.pre_effect_guard(admission_id, expected_request=value):
+        with store.pre_effect_guard(
+            admission_id, expected_request=value, after_capacity_facts=callbacks.append
+        ):
             pytest.fail("No new effect allowed")
     assert store.snapshot() == before
+    assert callbacks == []
 
 
 @pytest.mark.parametrize("field", ["run_id", "authorization_ref", "demand", "expected_capacity"])
@@ -179,10 +407,14 @@ def test_complete_original_request_cannot_be_rebound_before_effect(ledger, field
     else:
         changed[field] = "another-binding"
     before = store.snapshot()
+    callbacks = []
     with pytest.raises(CapacityError, match="^ADMISSION_REQUEST_MISMATCH$"):
-        with store.pre_effect_guard(admission_id, expected_request=changed):
+        with store.pre_effect_guard(
+            admission_id, expected_request=changed, after_capacity_facts=callbacks.append
+        ):
             pytest.fail("A numerical synonym or changed binding is not the exact request")
     assert store.snapshot() == before
+    assert callbacks == []
 
 
 def test_legacy_activation_stays_supported_but_cannot_bypass_the_new_bound_effect_guard(ledger):

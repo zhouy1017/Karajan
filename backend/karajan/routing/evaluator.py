@@ -7,7 +7,7 @@ from karajan.contracts.credentials import contains_credential
 from karajan.projects.models import ProfileRef
 
 from .compiler import RoutingError, compile_rulebook, digest, parse, reference
-from .models import CapacitySnapshot, PolicySnapshot, TaskSnapshot
+from .models import CapacitySnapshot, PlanningTaskSnapshot, PolicySnapshot, TaskSnapshot
 from .quotas import check_quota, check_reserved_inputs
 from .ranking import check_cash, rank
 from .selection import CLASSES, select_compiled_rule, validate_classification
@@ -308,7 +308,7 @@ def evaluate_profile_membership(
         observed = float(as_of)
     except (ValueError, TypeError, OverflowError):
         raise RoutingError("MEMBERSHIP_AS_OF_INVALID") from None
-    task = parse(TaskSnapshot, task_snapshot, "TASK_SNAPSHOT_INVALID")
+    task = parse_task_snapshot(task_snapshot)
     policy = parse(PolicySnapshot, policy_snapshot, "POLICY_SNAPSHOT_INVALID")
     compiled = compile_rulebook(policy["rulebook"])
     _validate(task, policy)
@@ -350,16 +350,26 @@ def evaluate_reserved_profile(
     policy_snapshot: dict[str, Any],
     capacity_snapshot: dict[str, Any],
     profile_ref: dict[str, Any],
+    *,
+    revalidate_quota: bool = False,
 ) -> dict[str, Any]:
     """Recheck one fixed Profile without authorizing activation or reserving again.
 
     This pure input check does not prove that a reservation exists. The controller
     must bind these snapshots and the exact Profile to its held admission, then use
-    Capacity activation/pre-effect checks for current quota availability. Cash,
-    authorization, qualification and complete bound demand are still checked here.
+    Capacity activation/pre-effect checks for current quota availability. A
+    held controller may opt into the same pure quota algorithm against a fresh
+    immutable Capacity snapshot. Cash, authorization, qualification and
+    complete bound demand are still checked here.
     """
     ref = parse(ProfileRef, profile_ref, "RESERVED_PROFILE_REFERENCE_INVALID")
-    return _evaluate(task_snapshot, policy_snapshot, capacity_snapshot, reserved_profile=ref)
+    return _evaluate(
+        task_snapshot,
+        policy_snapshot,
+        capacity_snapshot,
+        reserved_profile=ref,
+        revalidate_reserved_quota=revalidate_quota,
+    )
 
 
 def _evaluate(
@@ -368,8 +378,9 @@ def _evaluate(
     capacity_snapshot: dict[str, Any],
     *,
     reserved_profile: dict[str, Any] | None = None,
+    revalidate_reserved_quota: bool = False,
 ) -> dict[str, Any]:
-    task = parse(TaskSnapshot, task_snapshot, "TASK_SNAPSHOT_INVALID")
+    task = parse_task_snapshot(task_snapshot)
     policy = parse(PolicySnapshot, policy_snapshot, "POLICY_SNAPSHOT_INVALID")
     capacity = parse(CapacitySnapshot, capacity_snapshot, "CAPACITY_SNAPSHOT_INVALID")
     compiled = compile_rulebook(policy["rulebook"])
@@ -414,7 +425,7 @@ def _evaluate(
         return report
     report["reason_codes"] = []
     for candidate in report["candidates"]:
-        if reserved_profile is None:
+        if reserved_profile is None or revalidate_reserved_quota:
             check_quota(candidate, task, policy, capacity, rule)
         else:
             check_reserved_inputs(candidate, task, policy, capacity, rule)
@@ -432,3 +443,10 @@ def _evaluate(
             "NO_ELIGIBLE_PROFILE" if report["candidates"] else "NO_STAGE_CANDIDATE"
         ]
     return report
+
+
+def parse_task_snapshot(value: dict[str, Any]) -> dict[str, Any]:
+    """Dispatch Task and planning identities into the same routing algorithm."""
+    schema = value.get("schema_version") if isinstance(value, dict) else None
+    model = TaskSnapshot if schema == "karajan.routing.task.v1" else PlanningTaskSnapshot
+    return parse(model, value, "TASK_SNAPSHOT_INVALID")

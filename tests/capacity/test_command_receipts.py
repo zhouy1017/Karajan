@@ -4,9 +4,10 @@ from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from threading import Barrier
 
+import karajan.capacity.store as capacity_store
 import pytest
 from karajan.capacity import CapacityError, CapacityStore
-from test_admission_bindings import bound_request, ledger, request
+from test_admission_bindings import bound_request, ledger, observation, request
 
 __all__ = ["ledger"]
 
@@ -287,3 +288,340 @@ def test_receipt_only_accepts_the_defined_recovery_kinds_and_strict_payloads(led
     with pytest.raises(CapacityError, match="^CAPACITY_INPUT_INVALID$"):
         store.command_receipt("reconcile", {"admission_id": "unknown"}, command_key="unknown")
     assert store.snapshot() == before
+
+
+def test_admit_boundary_callback_skips_exact_historical_receipt(ledger):
+    store, _ = ledger
+    value = request()
+    original = store.admit(value, command_key="historical-admit")
+    callbacks: list[str] = []
+
+    replayed = store.admit(
+        value,
+        command_key="historical-admit",
+        before_reserve=lambda: callbacks.append("called"),
+        after_capacity_facts=lambda _: callbacks.append("facts"),
+        before_reservation_write=lambda: callbacks.append("write"),
+    )
+
+    assert replayed == original
+    assert callbacks == []
+
+
+def test_admit_boundary_callback_rolls_back_before_reservation_and_receipt(ledger):
+    store, _ = ledger
+    value = request()
+    before = store.snapshot()
+    callbacks: list[str] = []
+
+    def deadline_expired() -> None:
+        callbacks.append("called")
+        raise RuntimeError("RUN_DURATION_LIMIT")
+
+    with pytest.raises(RuntimeError, match="^RUN_DURATION_LIMIT$"):
+        store.admit(value, command_key="deadline-expired", before_reserve=deadline_expired)
+
+    assert callbacks == ["called"]
+    assert store.snapshot() == before
+    assert store.command_receipt("admit", value, command_key="deadline-expired") is None
+
+
+def test_admit_facts_callback_is_full_and_has_no_owned_claim(ledger):
+    store, _ = ledger
+    seen = []
+
+    admitted = store.admit(
+        request(),
+        command_key="boundary-facts",
+        after_capacity_facts=seen.append,
+    )
+
+    assert admitted["decision"] == "admitted"
+    assert len(seen) == 1
+    assert seen[0].owned_admission_id is None
+    assert seen[0].facts.as_dict()["account_ids"] == ["account"]
+
+
+def test_admit_facts_callback_failure_rolls_back_reservation_and_receipt(ledger):
+    store, _ = ledger
+    value = request()
+    before = store.snapshot()
+
+    def forbidden_boundary_calculation(_) -> None:
+        raise RuntimeError("ROUTE_CONSERVATIVE_LIMIT_EXCEEDED")
+
+    with pytest.raises(RuntimeError, match="^ROUTE_CONSERVATIVE_LIMIT_EXCEEDED$"):
+        store.admit(
+            value,
+            command_key="boundary-facts-failure",
+            after_capacity_facts=forbidden_boundary_calculation,
+        )
+
+    assert store.snapshot() == before
+    assert store.command_receipt("admit", value, command_key="boundary-facts-failure") is None
+
+
+def test_admit_final_callback_runs_after_capacity_reads_and_rechecks_its_clock(ledger, monkeypatch):
+    store, clock = ledger
+    reads: list[str] = []
+    original = store._observation
+
+    def delayed_observation(*args):
+        observed = original(*args)
+        reads.append("observation")
+        clock[0] = 1005.0
+        return observed
+
+    monkeypatch.setattr(store, "_observation", delayed_observation)
+    callbacks: list[str] = []
+    rejected = store.admit(
+        request(),
+        command_key="final-capacity-temporal",
+        before_reservation_write=lambda: callbacks.append("write"),
+    )
+
+    assert reads
+    assert callbacks == []
+    assert rejected["decision"] == "rejected"
+    assert "OBSERVATION_STALE:short" in rejected["reason_codes"]
+    assert store.snapshot()["reservations"] == []
+
+
+def test_admit_final_callback_failure_rolls_back_reservation_and_receipt(ledger):
+    store, _ = ledger
+    value = request()
+    before = store.snapshot()
+
+    def expired_run_deadline() -> None:
+        raise RuntimeError("RUN_DURATION_LIMIT")
+
+    with pytest.raises(RuntimeError, match="^RUN_DURATION_LIMIT$"):
+        store.admit(
+            value,
+            command_key="final-capacity-deadline",
+            before_reservation_write=expired_run_deadline,
+        )
+
+    assert store.snapshot() == before
+    assert store.command_receipt("admit", value, command_key="final-capacity-deadline") is None
+
+
+def test_admit_final_callback_can_defer_its_scalar_check_until_the_write_tail(ledger):
+    store, clock = ledger
+    calls: list[str] = []
+
+    def prepare_final_check():
+        calls.append("prepare")
+
+        def final_check() -> None:
+            calls.append("final")
+            clock[0] = 1001.0
+
+        return final_check
+
+    admitted = store.admit(
+        request(), command_key="deferred-final-check", before_reservation_write=prepare_final_check
+    )
+
+    assert admitted["decision"] == "admitted"
+    assert calls == ["prepare", "final"]
+    reservation = store.snapshot()["reservations"][0]
+    assert reservation["created_at"] == 1000.0
+    assert reservation["expires_at"] == 1030.0
+
+
+def test_admit_rejects_when_reservation_encoding_consumes_its_lifetime(ledger, monkeypatch):
+    store, clock = ledger
+    policy = store.snapshot()["policies"][-1]["policy"]
+    policy["observation_max_age_seconds"] = 1000
+    store.activate_policy(policy, expected_revision=1, command_key="long-observation-window")
+    clock[0] = 1006.0
+    for pool in ("short", "weekly"):
+        observation(store, pool, "20", at=clock[0], window="window-2")
+    original = capacity_store.encoded
+
+    def delayed_reservation_encoding(value):
+        result = original(value)
+        if isinstance(value, dict) and value.get("state") == "reserved":
+            clock[0] = 1036.0
+        return result
+
+    monkeypatch.setattr(capacity_store, "encoded", delayed_reservation_encoding)
+    rejected = store.admit(request(), command_key="encoding-crosses-reservation-expiry")
+
+    assert rejected["decision"] == "rejected"
+    assert rejected["reason_codes"] == ["RESERVATION_EXPIRED"]
+    assert store.snapshot()["reservations"] == []
+
+
+def test_admit_rolls_back_when_a_clock_regresses_after_its_creation_sample(ledger, monkeypatch):
+    store, clock = ledger
+    original = capacity_store.encoded
+
+    def regress_after_encoding(value):
+        result = original(value)
+        if isinstance(value, dict) and value.get("state") == "reserved":
+            clock[0] = 1000.0
+        return result
+
+    def advance_controller_clock() -> None:
+        clock[0] = 1001.0
+
+    monkeypatch.setattr(capacity_store, "encoded", regress_after_encoding)
+    with pytest.raises(CapacityError, match="^CAPACITY_CLOCK_REGRESSED$"):
+        store.admit(
+            request(),
+            command_key="encoding-regresses-after-creation",
+            before_reservation_write=advance_controller_clock,
+        )
+
+    assert store.snapshot()["reservations"] == []
+    assert store.command_receipt(
+        "admit", request(), command_key="encoding-regresses-after-creation"
+    ) is None
+
+
+def test_admit_rolls_back_an_earlier_expiry_when_a_recheck_clock_regresses(ledger):
+    store, clock = ledger
+    held = store.admit(
+        {**request("held"), "duration_seconds": 3}, command_key="short-lived-held"
+    )
+    clock[0] = 1004.0
+    before = store.snapshot()
+
+    def regress_before_recheck() -> None:
+        clock[0] = 1002.0
+
+    with pytest.raises(CapacityError, match="^CAPACITY_CLOCK_REGRESSED$"):
+        store.admit(
+            request("candidate"),
+            command_key="regressed-recheck",
+            before_reserve=regress_before_recheck,
+        )
+
+    assert store.snapshot() == before
+    assert store.snapshot()["reservations"] == [
+        {**before["reservations"][0], "id": held["admission_id"], "state": "reserved"}
+    ]
+    assert (
+        store.command_receipt("admit", request("candidate"), command_key="regressed-recheck")
+        is None
+    )
+
+
+def test_admit_rolls_back_an_earlier_expiry_when_its_final_clock_regresses(
+    ledger, monkeypatch
+):
+    store, clock = ledger
+    held = store.admit(
+        {**request("final-held"), "duration_seconds": 3}, command_key="final-short-lived-held"
+    )
+    clock[0] = 1004.0
+    before = store.snapshot()
+    original = capacity_store.encoded
+
+    def regress_after_new_reservation_encoding(value):
+        result = original(value)
+        if isinstance(value, dict) and value.get("state") == "reserved":
+            clock[0] = 1002.0
+        return result
+
+    monkeypatch.setattr(capacity_store, "encoded", regress_after_new_reservation_encoding)
+    with pytest.raises(CapacityError, match="^CAPACITY_CLOCK_REGRESSED$"):
+        store.admit(request("final-candidate"), command_key="final-regressed-recheck")
+
+    assert store.snapshot() == before
+    assert store.snapshot()["reservations"] == [
+        {**before["reservations"][0], "id": held["admission_id"], "state": "reserved"}
+    ]
+    assert (
+        store.command_receipt(
+            "admit", request("final-candidate"), command_key="final-regressed-recheck"
+        )
+        is None
+    )
+
+
+@pytest.mark.parametrize("phase", ["post_evaluation", "creation", "final"])
+def test_admit_rolls_back_an_earlier_expiry_at_every_late_clock_sample(
+    ledger, monkeypatch, phase
+):
+    store, clock = ledger
+    held = store.admit(
+        {**request("late-held-" + phase), "duration_seconds": 3},
+        command_key="late-short-lived-held-" + phase,
+    )
+    clock[0] = 1004.0
+    before = store.snapshot()
+    kwargs = {}
+
+    if phase == "post_evaluation":
+        original_evaluation = store._admission_evaluation
+
+        def regress_after_evaluation(*args):
+            result = original_evaluation(*args)
+            clock[0] = 1002.0
+            return result
+
+        monkeypatch.setattr(store, "_admission_evaluation", regress_after_evaluation)
+    elif phase == "creation":
+
+        def regress_before_creation() -> None:
+            clock[0] = 1002.0
+
+        kwargs["before_reservation_write"] = regress_before_creation
+    else:
+        original_encoding = capacity_store.encoded
+
+        def regress_after_encoding(value):
+            result = original_encoding(value)
+            if isinstance(value, dict) and value.get("state") == "reserved":
+                clock[0] = 1002.0
+            return result
+
+        monkeypatch.setattr(capacity_store, "encoded", regress_after_encoding)
+
+    candidate = request("late-candidate-" + phase)
+    with pytest.raises(CapacityError, match="^CAPACITY_CLOCK_REGRESSED$"):
+        store.admit(candidate, command_key="late-regressed-" + phase, **kwargs)
+
+    assert store.snapshot() == before
+    assert store.snapshot()["reservations"] == [
+        {**before["reservations"][0], "id": held["admission_id"], "state": "reserved"}
+    ]
+    assert store.command_receipt("admit", candidate, command_key="late-regressed-" + phase) is None
+
+
+def test_admit_rechecks_time_and_uses_the_post_callback_reservation_clock(ledger):
+    store, clock = ledger
+    calls: list[str] = []
+
+    def delayed_controller_read() -> None:
+        calls.append("called")
+        clock[0] = 1001.0
+
+    admitted = store.admit(
+        request(), command_key="post-callback-clock", before_reserve=delayed_controller_read
+    )
+    reservation = store.snapshot()["reservations"][0]
+    assert calls == ["called"]
+    assert admitted["decision"] == "admitted"
+    assert reservation["created_at"] == 1001.0
+    assert reservation["expires_at"] == 1031.0
+
+
+def test_admit_rechecks_observation_expiry_after_a_blocking_callback(ledger):
+    store, clock = ledger
+    calls: list[str] = []
+
+    def delayed_controller_read() -> None:
+        calls.append("called")
+        clock[0] = 1005.0
+
+    rejected = store.admit(
+        request(), command_key="post-callback-stale", before_reserve=delayed_controller_read
+    )
+    assert calls == ["called"]
+    assert rejected["decision"] == "rejected"
+    assert "OBSERVATION_STALE:short" in rejected["reason_codes"]
+    assert store.snapshot()["reservations"] == []

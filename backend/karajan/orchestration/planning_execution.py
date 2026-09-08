@@ -86,6 +86,7 @@ class PlanningExecution:
         outputs: PlanningOutputAuthority | None = None,
         capacity: CapacityStore | None = None,
         allow_fixture_authorities: bool = False,
+        _trusted_authority_ids: frozenset[int] = frozenset(),
         existing_only: bool = False,
         clock: Callable[[], float] | None = None,
     ) -> None:
@@ -97,6 +98,10 @@ class PlanningExecution:
         self.outputs = outputs
         self.capacity = capacity
         self.allow_fixture_authorities = allow_fixture_authorities
+        # Production tags are evidence fields, never a caller-controlled grant.
+        # Only the controller factory below can bind the exact authority objects
+        # it rebuilt from fixed persistent configuration.
+        self._trusted_authority_ids = _trusted_authority_ids
         self.existing_only = existing_only
         self.clock = planner.clock if clock is None else clock
         if not existing_only:
@@ -121,6 +126,78 @@ class PlanningExecution:
                 "CREATE TABLE IF NOT EXISTS commands (principal TEXT NOT NULL, key TEXT NOT NULL, "
                 "payload TEXT NOT NULL, result TEXT NOT NULL, PRIMARY KEY(principal,key))"
             )
+
+    @classmethod
+    def from_trusted_factory(
+        cls,
+        control_directory: Path,
+    ) -> "PlanningExecution":
+        """Rebuild the admission port from the protected persistent bootstrap."""
+        from .planning_admission import open_persistent_planning_admission
+
+        admissions = open_persistent_planning_admission(control_directory)
+        return cls(
+            admissions.execution_database,
+            admissions.planner,
+            admissions=admissions,
+            capacity=admissions.capacity,
+            existing_only=True,
+            _trusted_authority_ids=frozenset({id(admissions)}),
+        )
+
+    def _authority_allowed(self, authority: object, kind: str) -> bool:
+        if kind == "fixture":
+            return self.allow_fixture_authorities
+        return kind == "production" and id(authority) in self._trusted_authority_ids
+
+    @staticmethod
+    def _monotonic_admission(previous: object, fresh: dict[str, Any]) -> bool:
+        """Allow exact completion or one receipt-proven unknown enrichment."""
+        if previous is None:
+            return True
+        if not isinstance(previous, dict) or previous == fresh:
+            return previous == fresh
+        if previous.get("state") != "unknown" or fresh.get("state") not in {
+            "unknown",
+            "admitted",
+            "denied",
+        }:
+            return False
+        immutable = all(
+            previous.get(key) == fresh.get(key)
+            for key in (
+                "schema_version",
+                "binding_sha256",
+                "authority_kind",
+                "source_sha256",
+                "budget_ref",
+                "capacity_request",
+                "capacity_command_key",
+                "capacity_activation_command_key",
+            )
+        )
+        if not immutable:
+            return False
+        if fresh.get("state") in {"admitted", "denied"}:
+            return previous.get("capacity_activation_request") == fresh.get(
+                "capacity_activation_request"
+            )
+        # A lost admit reply has no receipt or activation request in the first
+        # read-only evidence. It may be enriched only with the receipt returned
+        # by that exact persisted command and its derived activation identity;
+        # it remains unknown and cannot activate, claim, refund or rebind.
+        receipt = fresh.get("capacity_receipt")
+        return (
+            previous.get("capacity_receipt") is None
+            and previous.get("capacity_activation_request") == {}
+            and previous.get("capacity_activation_receipt") is None
+            and isinstance(receipt, dict)
+            and receipt.get("decision") == "admitted"
+            and isinstance(receipt.get("admission_id"), str)
+            and fresh.get("capacity_activation_request")
+            == {"admission_id": receipt["admission_id"]}
+            and fresh.get("capacity_activation_receipt") is None
+        )
 
     @contextmanager
     def _transaction(self) -> Iterator[sqlite3.Connection]:
@@ -246,6 +323,7 @@ class PlanningExecution:
                 return dict(json.loads(prior["result"]))
         intent = self._intent(run, intent_id)
         with self._transaction() as db:
+
             def create() -> dict[str, Any]:
                 if db.execute(
                     "SELECT 1 FROM executions WHERE run_id=? AND intent_id=? "
@@ -275,9 +353,7 @@ class PlanningExecution:
                 self._save(db, result)
                 return result
 
-            return self._command(
-                db, principal, command_key, replay_payload, create
-            )
+            return self._command(db, principal, command_key, replay_payload, create)
 
     def get(self, execution_id: str, *, principal: str) -> dict[str, Any]:
         for value in (execution_id, principal):
@@ -286,6 +362,32 @@ class PlanningExecution:
             execution = self._load(db, execution_id)
         self._owner_run(execution["run_id"], principal)
         return execution
+
+    def admit(self, execution_id: str, *, principal: str, command_key: str) -> dict[str, Any]:
+        """Advance only a trusted durable admission authority once.
+
+        ``reconcile`` intentionally remains receipt-only, so a reconnect cannot
+        turn an observation into a fresh capacity claim.
+        """
+        for value in (execution_id, principal, command_key):
+            identifier(value)
+        self.get(execution_id, principal=principal)
+        authority = self.admissions
+        advance = None if authority is None else getattr(authority, "advance", None)
+        if not callable(advance) or id(authority) not in self._trusted_authority_ids:
+            return self._blocked(
+                execution_id, principal, "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE"
+            )
+        try:
+            advance(execution_id, principal, command_key)
+        except (RunError, ValueError):
+            # The immutable authority record is the only result consumers see.
+            pass
+        if self.outputs is None:
+            # #112 owns the output transport. Admission remains observable via
+            # its sealed receipt without treating missing output as a denial.
+            return self.get(execution_id, principal=principal)
+        return self.reconcile(execution_id, principal=principal)
 
     def cancel(self, execution_id: str, *, principal: str, command_key: str) -> dict[str, Any]:
         for value in (execution_id, principal, command_key):
@@ -329,14 +431,30 @@ class PlanningExecution:
             ).model_dump()
         except (ValidationError, TypeError, ValueError):
             return self._blocked(execution_id, principal, "PLANNING_ADMISSION_EVIDENCE_INVALID")
-        if evidence["authority_kind"] == "fixture" and not self.allow_fixture_authorities:
-            return self._blocked(execution_id, principal, "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN")
-        if evidence["authority_kind"] == "production":
-            # This slice deliberately has no production factory.  A caller or
-            # test double cannot promote itself by selecting a different tag.
+        if not self._authority_allowed(self.admissions, evidence["authority_kind"]):
             return self._blocked(
-                execution_id, principal, "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE"
+                execution_id,
+                principal,
+                "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN"
+                if evidence["authority_kind"] == "fixture"
+                else "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE",
             )
+        # An interrupted Capacity effect is neither an approval nor a denial.
+        # Keep the controller resumable and let a later ID-only admission read
+        # the original durable receipt; do not convert uncertainty to a
+        # terminal blocked execution.
+        if evidence["state"] == "unknown":
+            with self._transaction() as db:
+                current = self._load(db, execution_id)
+                if current["cancel_requested"]:
+                    return current
+                if not self._monotonic_admission(current["admission"], evidence):
+                    return self._blocked_locked(db, current, "PLANNING_ADMISSION_EVIDENCE_CHANGED")
+                current["admission"] = evidence
+                current["state"] = "admission_unknown"
+                current["reason_codes"] = ["PLANNING_ADMISSION_UNKNOWN"]
+                self._save(db, current)
+                return current
         if self.capacity is None:
             return self._blocked(execution_id, principal, "PLANNING_CAPACITY_AUTHORITY_UNAVAILABLE")
         if (
@@ -395,11 +513,13 @@ class PlanningExecution:
             ).model_dump()
         except (ValidationError, TypeError, ValueError):
             return self._blocked(execution_id, principal, "PLANNING_OUTPUT_SOURCE_INVALID")
-        if source["authority_kind"] == "fixture" and not self.allow_fixture_authorities:
-            return self._blocked(execution_id, principal, "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN")
-        if source["authority_kind"] == "production":
+        if not self._authority_allowed(self.outputs, source["authority_kind"]):
             return self._blocked(
-                execution_id, principal, "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE"
+                execution_id,
+                principal,
+                "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN"
+                if source["authority_kind"] == "fixture"
+                else "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE",
             )
         if source["binding_sha256"] != execution["binding_sha256"]:
             return self._blocked(execution_id, principal, "PLANNING_OUTPUT_SOURCE_BINDING_MISMATCH")
@@ -407,7 +527,7 @@ class PlanningExecution:
             current = self._load(db, execution_id)
             if current["cancel_requested"]:
                 return current
-            if current["admission"] not in (None, evidence):
+            if not self._monotonic_admission(current["admission"], evidence):
                 return self._blocked_locked(db, current, "PLANNING_ADMISSION_EVIDENCE_CHANGED")
             current["admission"] = evidence
             if current.get("output_source_sha256") not in (None, source["source_sha256"]):
@@ -416,9 +536,11 @@ class PlanningExecution:
             current["state"] = (
                 "awaiting_output" if evidence["state"] == "admitted" else "admission_unknown"
             )
-            current["reason_codes"] = [] if evidence["state"] == "admitted" else [
-                "PLANNING_ADMISSION_" + evidence["state"].upper()
-            ]
+            current["reason_codes"] = (
+                []
+                if evidence["state"] == "admitted"
+                else ["PLANNING_ADMISSION_" + evidence["state"].upper()]
+            )
             self._save(db, current)
             return current
 
@@ -463,16 +585,17 @@ class PlanningExecution:
             ).model_dump()
         except (ValidationError, TypeError, ValueError):
             return self._blocked(execution["id"], principal, "PLANNING_OUTPUT_SOURCE_INVALID")
-        if current_source["authority_kind"] == "fixture" and not self.allow_fixture_authorities:
-            return self._blocked(execution["id"], principal, "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN")
-        if current_source["authority_kind"] == "production":
+        if not self._authority_allowed(self.outputs, current_source["authority_kind"]):
             return self._blocked(
-                execution["id"], principal, "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE"
+                execution["id"],
+                principal,
+                "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN"
+                if current_source["authority_kind"] == "fixture"
+                else "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE",
             )
-        if (
-            current_source["binding_sha256"] != execution["binding_sha256"]
-            or current_source["source_sha256"] != execution.get("output_source_sha256")
-        ):
+        if current_source["binding_sha256"] != execution["binding_sha256"] or current_source[
+            "source_sha256"
+        ] != execution.get("output_source_sha256"):
             return self._blocked(execution["id"], principal, "PLANNING_OUTPUT_SOURCE_CHANGED")
         try:
             evidence = PlanningOutputEvidence.model_validate(
@@ -482,11 +605,13 @@ class PlanningExecution:
             return self._blocked(execution["id"], principal, "PLANNING_OUTPUT_EVIDENCE_INVALID")
         content: bytes = evidence.pop("content")
         actual_sha256 = hashlib.sha256(content).hexdigest()
-        if evidence["authority_kind"] == "fixture" and not self.allow_fixture_authorities:
-            return self._blocked(execution["id"], principal, "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN")
-        if evidence["authority_kind"] == "production":
+        if not self._authority_allowed(self.outputs, evidence["authority_kind"]):
             return self._blocked(
-                execution["id"], principal, "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE"
+                execution["id"],
+                principal,
+                "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN"
+                if evidence["authority_kind"] == "fixture"
+                else "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE",
             )
         if (
             evidence["execution_id"] != execution["id"]
@@ -551,16 +676,17 @@ class PlanningExecution:
             ).model_dump()
         except (ValidationError, TypeError, ValueError):
             return self._blocked(execution_id, principal, "PLANNING_OUTPUT_SOURCE_INVALID")
-        if source["authority_kind"] == "fixture" and not self.allow_fixture_authorities:
-            return self._blocked(execution_id, principal, "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN")
-        if source["authority_kind"] == "production":
+        if not self._authority_allowed(self.outputs, source["authority_kind"]):
             return self._blocked(
-                execution_id, principal, "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE"
+                execution_id,
+                principal,
+                "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN"
+                if source["authority_kind"] == "fixture"
+                else "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE",
             )
-        if (
-            source["binding_sha256"] != execution["binding_sha256"]
-            or source["source_sha256"] != execution.get("output_source_sha256")
-        ):
+        if source["binding_sha256"] != execution["binding_sha256"] or source[
+            "source_sha256"
+        ] != execution.get("output_source_sha256"):
             return self._blocked(execution_id, principal, "PLANNING_OUTPUT_SOURCE_CHANGED")
         with self._transaction() as db:
             current = self._load(db, execution_id)

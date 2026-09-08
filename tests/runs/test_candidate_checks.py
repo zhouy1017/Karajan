@@ -410,6 +410,23 @@ class LateReceiptBoundary(CheckProcessBoundary):
         return None if self.cancel_calls == 1 else self.inspect(execution)
 
 
+class PermanentUnknownBoundary(CheckProcessBoundary):
+    """A trusted runner whose owned receipt remains unknown across recovery."""
+
+    def run(self, execution, *, start_guard, cancelled):
+        from dataclasses import replace
+
+        observed = replace(
+            super().run(execution, start_guard=start_guard, cancelled=cancelled),
+            local_stop="unknown",
+        )
+        self.observations[execution["check_run_id"]] = observed
+        return observed
+
+    def cancel(self, execution):
+        return self.inspect(execution)
+
+
 class CheckHostIdentityBoundary(RunnerHost):
     """Only direct-child authority is synthetic; prepare/start/ledger are actual Host."""
 
@@ -494,14 +511,42 @@ def test_public_cancel_retains_host_until_native_receipt_arrives(projected, tmp_
             Snapshot("prepared", row["attempt_id"], "exited", None),
         )[1],
     )
-    service.cancel(*case.args, principal="owner")
+    pending = service.cancel(*case.args, principal="owner")
+    assert pending["checks"]["phase"] == "cancellation_pending"
+    assert pending["checks"]["runs"][0]["cleanup"]["native"]["local_stop"] == "unknown"
     assert host_calls == []
     runner.release.set()
     worker.join(10)
     assert not worker.is_alive()
-    assert service.get(*case.args, principal="owner")["checks"]["runs"][0]["observation"]
-    service.reconcile(*case.args, principal="owner")
+    completed = service.reconcile(*case.args, principal="owner")
+    first = completed["checks"]["runs"][0]
+    assert completed["checks"]["phase"] == "cancelled"
+    assert first["observation"]["local_stop"] == "confirmed"
+    assert first["cleanup"]["native"]["local_stop"] == "confirmed"
+    assert first["cleanup"]["host"]["state"] == "exited"
     assert host_calls == [(row["attempt_id"], "cancel:" + check_id)]
+    history = ApprovedCandidateChecks(case.admissions, case.candidates, runner=runner, host=host)
+    assert history.reconcile(*case.args, principal="owner") == completed
+
+
+def test_permanent_unknown_cancel_never_becomes_confirmed_or_starts_next_check(
+    projected, tmp_path
+):
+    case, service, runner, host = check_workflow(
+        projected, tmp_path, exits=(0, 0), runner=PermanentUnknownBoundary()
+    )
+    observed = run_next_boundary_check(case, service, host)
+    assert observed["checks"]["runs"][0]["observation"]["local_stop"] == "unknown"
+    pending = service.cancel(*case.args, principal="owner")
+    assert pending["checks"]["phase"] == "cancellation_pending"
+    first, second = pending["checks"]["runs"]
+    assert first["cleanup"]["native"]["local_stop"] == "unknown"
+    assert first.get("evidence") is None
+    assert "claimed_at" not in second and second.get("native_claim") is None
+    history = ApprovedCandidateChecks(case.admissions, case.candidates, runner=runner, host=host)
+    for _ in range(2):
+        assert history.reconcile(*case.args, principal="owner") == pending
+    assert runner.starts == 1
 
 
 def test_public_history_cancel_stops_host_from_persisted_observation(
