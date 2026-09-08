@@ -18,6 +18,7 @@ SCENARIOS = frozenset(
         "rate_limit_once",
         "disconnect_once",
         "timeout_once",
+        "header_timeout_once",
         "cancel_stream",
         "admission_limit",
         "cleanup_fault",
@@ -58,6 +59,7 @@ class ProbeReport:
     )
     cleanup: dict[str, Any] = field(default_factory=dict)
     configuration_accepted: bool = False
+    timeout_lifecycle: dict[str, Any] = field(default_factory=dict)
 
 
 class OpenCodeProbe:
@@ -82,7 +84,16 @@ class OpenCodeProbe:
         )
         if scenario == "timeout_once":
             server.config["provider"]["fixture"]["options"].update(
-                {"timeout": 500, "headerTimeout": 500}
+                # This is deliberately the terminal *request* deadline case.  Its
+                # distinct header-timeout/retry counterpart is below.
+                {"timeout": 400, "headerTimeout": 500}
+            )
+            server.environment["OPENCODE_CONFIG_CONTENT"] = json.dumps(server.config)
+        elif scenario == "header_timeout_once":
+            # Keep a material gap: the native header deadline must beat the general
+            # request deadline without depending on adjacent scheduler ticks.
+            server.config["provider"]["fixture"]["options"].update(
+                {"timeout": 2000, "headerTimeout": 500}
             )
             server.environment["OPENCODE_CONFIG_CONTENT"] = json.dumps(server.config)
         actual_config = json.loads(json.dumps(server.config))
@@ -120,6 +131,7 @@ class OpenCodeProbe:
                     receipts=list(transport.receipts),
                     provider_requests=list(transport.requests),
                     events=list(server.events),
+                    timeout_lifecycle=dict(transport.timeout_lifecycle),
                 )
                 if cleanup["errors"] or cleanup.get("server", {}).get("status") == "unknown":
                     report = replace(report, status="unknown")
@@ -203,6 +215,9 @@ class OpenCodeProbe:
         while time.monotonic() < until:
             if cancellation:
                 break
+            if scenario == "header_timeout_once" and self._has_native_retry(server.events):
+                transport.timeout_lifecycle["native_retry"] = "session.status"
+                transport.timeout_header_release.set()
             messages = server.request("GET", f"/session/{session_id}/message")
             for message in messages:
                 if message["info"]["role"] == "assistant" and message["info"].get("time", {}).get(
@@ -214,6 +229,13 @@ class OpenCodeProbe:
             if final_text or any(event["type"] == "session.error" for event in server.events):
                 break
             time.sleep(0.05)
+        native_terminal = (
+            "session.error"
+            if any(event["type"] == "session.error" for event in server.events)
+            else "not_observed"
+        )
+        if scenario == "timeout_once":
+            transport.timeout_lifecycle["native_terminal"] = native_terminal
         report = ProbeReport(
             version,
             secret,
@@ -224,6 +246,7 @@ class OpenCodeProbe:
             list(server.events),
             cancellation,
             configuration_accepted=True,
+            timeout_lifecycle=dict(transport.timeout_lifecycle),
             status=(
                 "cancel_observed"
                 if cancellation
@@ -235,3 +258,11 @@ class OpenCodeProbe:
             ),
         )
         return report
+
+    @staticmethod
+    def _has_native_retry(events: list[dict[str, Any]]) -> bool:
+        return any(
+            event.get("type") == "session.status"
+            and event.get("properties", {}).get("status", {}).get("type") == "retry"
+            for event in events
+        )
