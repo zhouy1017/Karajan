@@ -22,7 +22,9 @@ else:
     from _opencode_projection import projection_files
 
 
-def validate_request(method: str, route: str, body: object, sessions: set[str]) -> None:
+def validate_request(
+    method: str, route: str, body: object, sessions: set[str], *, no_tools: bool | None = None
+) -> None:
     valid = method == "GET" and route in {"/config", "/path", "/global/health"} and body is None
     if method == "POST" and route == "/session":
         valid = (
@@ -51,7 +53,12 @@ def validate_request(method: str, route: str, body: object, sessions: set[str]) 
                 and isinstance(parts[0]["text"], str)
                 and 0
                 < len(parts[0]["text"])
-                <= (262_144 if Path("/control/no-tools").is_file() else 8192)
+                <= (
+                    262_144
+                    if no_tools is True
+                    or (no_tools is None and Path("/control/no-tools").is_file())
+                    else 8192
+                )
             )
     if not valid:
         raise ValueError("MANAGEMENT_REQUEST_NOT_ALLOWED")
@@ -127,8 +134,14 @@ def send(control: socket.socket, value: dict[str, Any]) -> None:
 
 
 def configuration(
-    capability: str, projection: list[dict[str, Any]] | None = None, *, no_tools: bool = False
+    capability: str,
+    projection: list[dict[str, Any]] | None = None,
+    *,
+    no_tools: bool = False,
+    output_tokens: int = 4096,
 ) -> dict[str, Any]:
+    if type(output_tokens) is not int or not 0 < output_tokens <= 4096:
+        raise ValueError("OUTPUT_TOKEN_LIMIT_REQUIRED")
     rows: list[dict[str, Any]] = (
         projection_files(projection)
         if projection is not None
@@ -184,7 +197,7 @@ def configuration(
                     "glm-5.3-flash": {
                         "name": "glm-5.3-flash",
                         "tool_call": True,
-                        "limit": {"context": 16384, "output": 4096},
+                        "limit": {"context": 16384, "output": output_tokens},
                     }
                 },
             }
@@ -294,6 +307,9 @@ def main(control_fd: int) -> None:
     )
     if version.stdout.strip() != b"1.18.29":
         raise ValueError("RUNTIME_VERSION_MISMATCH")
+    output_tokens = startup.get("output_tokens")
+    if type(output_tokens) is not int:
+        raise ValueError("OUTPUT_TOKEN_LIMIT_REQUIRED")
     bridge = ThreadingHTTPServer(("127.0.0.1", 5001), InferenceBridge)
     bridge.daemon_threads = True
     threading.Thread(target=bridge.serve_forever, daemon=True).start()
@@ -307,6 +323,7 @@ def main(control_fd: int) -> None:
                 startup["capability"],
                 json.loads(Path("/control/projection.json").read_text()),
                 no_tools=Path("/control/no-tools").is_file(),
+                output_tokens=output_tokens,
             )
         ),
         "OPENCODE_SERVER_PASSWORD": password,

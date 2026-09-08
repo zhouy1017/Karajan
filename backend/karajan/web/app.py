@@ -152,30 +152,32 @@ def create_app(
         if planning_control_directory is not None
         else None
     )
+    controller_execution = planning_execution or (
+        planning_transport.execution if planning_transport is not None else None
+    )
+    controller_execution = controller_execution or (
+        production_transport.execution if production_transport is not None else None
+    )
     projects = (
-        production_transport.execution.planner.projects
-        if production_transport is not None
+        controller_execution.planner.projects
+        if controller_execution is not None
         else ProjectRegistry(state_directory / "projects.sqlite", allowed_roots)
     )
     register_project_routes(app, projects)
     register_simulation_routes(app, projects)
     planner = (
-        production_transport.execution.planner
-        if production_transport is not None
+        controller_execution.planner
+        if controller_execution is not None
         else RunPlanner(state_directory / "runs.sqlite", projects)
     )
     capacity = (
-        production_transport.execution.capacity
-        if production_transport is not None and production_transport.execution.capacity is not None
+        controller_execution.capacity
+        if controller_execution is not None and controller_execution.capacity is not None
         else CapacityStore(state_directory / "capacity.sqlite")
     )
     register_run_routes(app, planner)
-    execution = planning_execution or (
-        production_transport.execution
-        if production_transport is not None
-        else PlanningExecution(
+    execution = controller_execution or PlanningExecution(
         state_directory / "planning-execution.sqlite", planner
-        )
     )
     if execution.planner is not planner:
         raise ValueError("Planning execution must use this application's Run planner")

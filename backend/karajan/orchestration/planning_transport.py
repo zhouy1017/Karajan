@@ -526,6 +526,7 @@ class FixtureGoPlanningProducer:
                 directory,
                 socket,
                 relay.capability,
+                output_tokens=reserved,
                 projection=[projection],
                 no_tools=True,
             )
@@ -554,7 +555,11 @@ class FixtureGoPlanningProducer:
                 _cleanup_relay_socket_root(socket_root)
 
     @staticmethod
-    def _native_output(native: IsolatedOpenCode, model_input: PlanningModelInput) -> bytes:
+    def _native_output(
+        native: IsolatedOpenCode, model_input: PlanningModelInput, *, timeout_seconds: int = 90
+    ) -> bytes:
+        if type(timeout_seconds) is not int or timeout_seconds < 1:
+            raise RunError("PLANNING_NATIVE_TIMEOUT_INVALID")
         started = native.start()
         if started.get("state") != "running":
             raise RunError("PLANNING_NATIVE_START_FAILED")
@@ -568,7 +573,7 @@ class FixtureGoPlanningProducer:
                 "parts": [{"type": "text", "text": model_input.request["messages"][1]["content"]}],
             },
         )
-        deadline = time.monotonic() + 90
+        deadline = time.monotonic() + timeout_seconds
         while time.monotonic() < deadline:
             messages = native.request("GET", f"/session/{session['id']}/message")
             complete = [
@@ -708,6 +713,12 @@ class ProductionGoPlanningProducer:
             raise RunError("PLANNING_INPUT_POLICY_UNSUPPORTED")
         if self.accounting.source() != model_input.accounting_source:
             raise RunError("PLANNING_ACCOUNTING_SOURCE_CHANGED")
+        estimate = admission.get("estimate")
+        duration_seconds = (
+            estimate.get("duration_seconds") if isinstance(estimate, dict) else None
+        )
+        if type(duration_seconds) is not int or duration_seconds < 1:
+            raise RunError("PLANNING_ADMISSION_EVIDENCE_INVALID")
         authentication, credential = self._authentication(binding)
         runtime_digest = _sha256_file(self.runtime)
         grant_binding = {
@@ -719,7 +730,7 @@ class ProductionGoPlanningProducer:
             "channel": "opencode-go",
             "model": "glm-5.3-flash",
             "auth_generation": authentication["generation"],
-            "expires_at": self.execution.clock() + 300,
+            "expires_at": self.execution.clock() + duration_seconds,
             "max_requests": 1,
             "subject": {
                 key: binding[key]
@@ -782,6 +793,7 @@ class ProductionGoPlanningProducer:
                     self.work_root / ("planning-" + binding["execution_id"]),
                     socket,
                     relay.capability,
+                    output_tokens=reserved,
                     projection=[{
                         "path": projection_path,
                         "sha256": hashlib.sha256(_artifact_bytes(model_input)).hexdigest(),
@@ -795,7 +807,9 @@ class ProductionGoPlanningProducer:
                     binding["owner"],
                     "planning-native-start:" + binding["execution_id"],
                 ):
-                    return FixtureGoPlanningProducer._native_output(native, model_input)
+                    return FixtureGoPlanningProducer._native_output(
+                        native, model_input, timeout_seconds=duration_seconds
+                    )
             finally:
                 if native is not None:
                     native.close()

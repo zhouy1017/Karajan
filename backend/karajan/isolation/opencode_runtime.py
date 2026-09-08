@@ -70,6 +70,7 @@ class IsolatedOpenCode:
     _lifecycle_lock: threading.RLock
     _close_lock: threading.RLock
     _projection: list[dict[str, Any]] | None
+    _no_tools: bool
     _started_successfully: bool
 
     def __init__(
@@ -80,6 +81,7 @@ class IsolatedOpenCode:
         capability: str,
         *,
         model_id: str = "glm-5.3-flash",
+        output_tokens: int = 4096,
         projection: list[dict[str, Any]] | None = None,
         no_tools: bool = False,
     ) -> None:
@@ -87,6 +89,8 @@ class IsolatedOpenCode:
             raise ValueError("LINUX_NAMESPACES_REQUIRED")
         if model_id != "glm-5.3-flash":
             raise ValueError("FIXED_MODEL_REQUIRED")
+        if type(output_tokens) is not int or not 0 < output_tokens <= 4096:
+            raise ValueError("OUTPUT_TOKEN_LIMIT_REQUIRED")
         if not capability or len(capability) > 256 or not capability.isprintable():
             raise ValueError("LOCAL_CAPABILITY_INVALID")
         self._projection = projection_files(projection) if projection is not None else None
@@ -105,6 +109,7 @@ class IsolatedOpenCode:
         self._owned_workspace = self.workspace
         self.capability = capability
         self.model_id = model_id
+        self.output_tokens = output_tokens
         self._process: subprocess.Popen[bytes] | None = None
         self._control: socket.socket | None = None
         self._snapshot: dict[str, Any] = {
@@ -198,7 +203,14 @@ class IsolatedOpenCode:
                         stderr=log,
                     )
             inner.close()
-            self._send({"capability": self.capability, "model_id": self.model_id}, outer)
+            self._send(
+                {
+                    "capability": self.capability,
+                    "model_id": self.model_id,
+                    "output_tokens": self.output_tokens,
+                },
+                outer,
+            )
             welcome = self._receive(outer)
             with self._lifecycle_lock:
                 if self._snapshot["state"] != "starting":
@@ -231,7 +243,7 @@ class IsolatedOpenCode:
     def request(self, method: str, route: str, body: object = None) -> Any:
         with self._request_lock:
             with self._lifecycle_lock:
-                validate_request(method, route, body, self._sessions)
+                validate_request(method, route, body, self._sessions, no_tools=self._no_tools)
                 if self._control is None or self._snapshot["state"] != "running":
                     raise ValueError("RUNTIME_NOT_RUNNING")
                 control = self._control
