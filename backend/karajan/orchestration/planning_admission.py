@@ -89,20 +89,17 @@ class PersistentCommanderQualificationReader:
         self.qualifications = qualifications
         self.control_directory = control_directory
         self._source_settings: Any | None = None
-        self._source_descriptor_sha256: str | None = None
         self._credentials: CredentialSourceStore | None = None
-        # Construction opens its own existing Project transactions, so it must
-        # occur before commander_facts_guard owns the Project connection. An
-        # absent/invalid deployment source is a no-fact condition, not a
-        # factory promotion or a second credential ledger.
+        # CredentialSourceStore performs its own Project transactions, so build
+        # the existing-only handle before commander_facts_guard owns one. The
+        # descriptor is still re-read below before every facts read/effect;
+        # cached material is never a substitute for that current check.
         try:
             from karajan.orchestration.go_commander_qualification import (
                 read_commander_qualification_settings,
             )
 
-            settings, descriptor_sha256 = read_commander_qualification_settings(
-                self.control_directory
-            )
+            settings, _ = read_commander_qualification_settings(self.control_directory)
             self._credentials = CredentialSourceStore(
                 self.planner.projects,
                 sources={
@@ -113,9 +110,7 @@ class PersistentCommanderQualificationReader:
                 existing_only=True,
             )
             self._source_settings = settings
-            self._source_descriptor_sha256 = descriptor_sha256
         except (CredentialSourceError, OSError, RunError, ValueError):
-            self._source_settings = None
             self._credentials = None
 
     def _current_source(
@@ -133,24 +128,52 @@ class PersistentCommanderQualificationReader:
         )
         from karajan.projects.go_commander_suite import FixedGoCommanderSuite
 
-        settings = self._source_settings
+        settings, descriptor_sha256 = read_commander_qualification_settings(self.control_directory)
+        cached = self._source_settings
         credentials = self._credentials
-        descriptor_sha256 = self._source_descriptor_sha256
-        if settings is None or credentials is None or descriptor_sha256 is None:
+        if cached is None or credentials is None:
             raise RunError("COMMANDER_SOURCE_UNAVAILABLE")
-        current_settings, current_descriptor_sha256 = read_commander_qualification_settings(
-            self.control_directory
-        )
-        if current_settings.document() != settings.document():
+        if settings.document() != cached.document():
             raise RunError("COMMANDER_SOURCE_CHANGED")
+        from karajan.orchestration.go_commander_qualification import (
+            validate_commander_qualification_settings,
+        )
+        legacy_history_only = settings.journal_path is None or settings.work_root is None
+        if not legacy_history_only:
+            validate_commander_qualification_settings(
+                self.planner.projects,
+                settings,
+                repositories=(Path(current["repository"]["root"]).absolute(),),
+            )
         profile = current["registration"]["profile"]
         generation = credentials.current_locked(
             db, project_id, profile["auth_ref"], principal=principal
         )
-        if current_descriptor_sha256 != descriptor_sha256:
-            raise RunError("COMMANDER_SOURCE_CHANGED")
+        if legacy_history_only:
+            # This keeps old v2 material seals observable for record/history
+            # recovery, but deliberately makes its source unequal to every
+            # production start: it has no Journal/work-root authority.
+            source = FixedGoCommanderSuite(
+                settings.runtime,
+                settings.tokenizer_directory,
+                descriptor_sha256,
+                descriptor_path=self.control_directory / "commander-qualification-source.v2.json",
+                project_database=self.planner.projects.database,
+            ).source(current, generation)
+            source["legacy_history_only"] = True
+            return source
+        assert settings.journal_path is not None
+        assert settings.work_root is not None
+        from karajan.adapters.opencode.go_journal import GoCallJournal
+
         return FixedGoCommanderSuite(
-            settings.runtime, settings.tokenizer_directory, descriptor_sha256
+            settings.runtime,
+            settings.tokenizer_directory,
+            descriptor_sha256,
+            journal=GoCallJournal(settings.journal_path, existing_only=True),
+            work_root=settings.work_root,
+            descriptor_path=self.control_directory / "commander-qualification-source.v2.json",
+            project_database=self.planner.projects.database,
         ).source(current, generation)
 
     @staticmethod

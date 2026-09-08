@@ -5,8 +5,6 @@ the sealed grant, fixed source and the controller-held credential.  A local HTTP
 peer can exercise the exact native wire in tests, but is marked fixture and can
 never be promoted by the producer or the current-facts reader.
 """
-# ruff: noqa: E501, E701, E702
-
 import hashlib
 import json
 import time
@@ -60,12 +58,41 @@ def _prompt(scenario: str, spec: dict[str, Any]) -> str:
     objective = case["input"]["objective"]
     if not isinstance(objective, str):
         raise ValueError("COMMANDER_PROBE_SPEC_INVALID")
-    # The JSON itself is untrusted model input only; no repository file or tool is available.
+    # The expected solution remains verifier-private. The model receives complete
+    # requirements and constraints, rather than a JSON object it can copy.
     return (
         objective
         + "\nReturn exactly one JSON object, no markdown.\n"
-        + json.dumps(case["input"]["plan"], sort_keys=True, separators=(",", ":"))
+        + json.dumps(case["input"], sort_keys=True, separators=(",", ":"))
     )
+
+
+def _semantically_valid(plan: dict[str, Any], spec: dict[str, Any], scenario: str) -> bool:
+    """Check the capability claim, not merely that PlanV2 accepts the JSON."""
+    expected = spec["cases"][scenario]["expected_plan"]
+    try:
+        authorization = plan["authorization"]
+        tasks = {task["id"]: task for task in plan["tasks"]}
+        required = {"inspect-contract", "design-change", "verify-contract"}
+        return (
+            plan == expected
+            and authorization["tools"] == []
+            and authorization["read_paths"] == ["inline"]
+            and authorization["write_paths"] == []
+            and authorization["delivery"] == "none"
+            and set(tasks) == required
+            and tasks["inspect-contract"]["depends_on"] == []
+            and tasks["design-change"]["depends_on"] == ["inspect-contract"]
+            and tasks["verify-contract"]["depends_on"] == ["design-change"]
+            and all(task["tools"] == [] for task in tasks.values())
+            and all(
+                set(["design_reasoning", "structured_plan_output"])
+                <= set(task["required_capabilities"])
+                for task in tasks.values()
+            )
+        )
+    except (KeyError, TypeError):
+        return False
 
 
 def commander_runtime_source(runtime: Path, accounting: GoRequestAccounting) -> dict[str, Any]:
@@ -241,7 +268,7 @@ def observe_go_commander_probe(
         if len(final["text"].encode()) > spec["evidence_limits"]["final_output_bytes"]:
             raise ValueError("COMMANDER_OUTPUT_LIMIT_EXCEEDED")
         plan = parse_planning_output(final["text"], version="v2").model_dump(mode="json")
-        if plan != spec["cases"][scenario]["expected_plan"]:
+        if not _semantically_valid(plan, spec, scenario):
             raise ValueError("FIXED_PLAN_SEMANTICS_MISMATCH")
         record["native_final"], record["parsed_plan"] = final, plan
     except PlanningOutputError as error:

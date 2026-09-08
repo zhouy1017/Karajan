@@ -514,6 +514,11 @@ class ProfileQualificationStore:
             or self.commander_suite.source(current, authentication) != start["source"]
         ):
             raise QualificationError("COMMANDER_SOURCE_CHANGED")
+        # Source hashing and credential-material verification are external
+        # reads. They can consume the remaining lease, so sample the trusted
+        # clock again immediately before the guarded effect is released.
+        if not start["started_at"] <= self._now() < start["expires_at"]:
+            raise QualificationError("QUALIFICATION_EXPIRED")
 
     def qualify_runtime_tools(
         self,

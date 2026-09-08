@@ -1,0 +1,105 @@
+"""Protected Commander source and semantic-probe regression coverage."""
+
+import hashlib
+import json
+import os
+from copy import deepcopy
+from pathlib import Path
+
+import pytest
+from karajan.isolation.go_commander_probe import _prompt, _semantically_valid
+from karajan.orchestration.go_commander_qualification import (
+    CommanderCredentialSource,
+    CommanderQualificationSettings,
+    read_commander_qualification_settings,
+    write_commander_qualification_settings,
+)
+from karajan.projects.go_commander_suite import probe_spec
+from karajan.runs.planning_output import parse_planning_output
+
+
+def _settings(tmp_path: Path) -> CommanderQualificationSettings:
+    return CommanderQualificationSettings(
+        runtime=tmp_path / "runtime",
+        tokenizer_directory=tmp_path / "tokenizer",
+        credential_private_directory=tmp_path / "private",
+        credential_sources=(
+            CommanderCredentialSource("project", "auth", "source", tmp_path / "key"),
+        ),
+        journal_path=tmp_path / "journal.sqlite",
+        work_root=tmp_path / "work",
+    )
+
+
+def test_settings_versions_have_exact_key_sets(tmp_path: Path) -> None:
+    legacy = _settings(tmp_path).document()
+    legacy["schema_version"] = "karajan.commander-qualification-settings.v2"
+    legacy.pop("journal_path")
+    legacy.pop("work_root")
+    assert CommanderQualificationSettings.from_document(legacy).journal_path is None
+    legacy["journal_path"] = "/controller/journal.sqlite"
+    with pytest.raises(Exception, match="COMMANDER_QUALIFICATION_BOOTSTRAP_INVALID"):
+        CommanderQualificationSettings.from_document(legacy)
+
+
+@pytest.mark.skipif(
+    os.name != "posix", reason="Windows DACL fixture requires host ACL provisioning"
+)
+def test_protected_descriptor_round_trip_reads_without_directory_fsync(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    control = tmp_path / "control"
+    control.mkdir(mode=0o700)
+    settings = _settings(tmp_path)
+    path = write_commander_qualification_settings(control, settings)
+    calls: list[int] = []
+    original = os.fsync
+
+    def tracked(fd: int) -> None:
+        calls.append(fd)
+        original(fd)
+
+    monkeypatch.setattr(os, "fsync", tracked)
+    observed, digest = read_commander_qualification_settings(control)
+    assert observed.document() == settings.document()
+    assert len(digest) == 64
+    assert calls == []
+    assert path.read_bytes()
+
+
+@pytest.mark.parametrize("scenario", ["legal_plan", "denied_tool"])
+def test_probe_prompt_hides_expected_plan_and_rejects_plausible_escalation(scenario: str) -> None:
+    spec = probe_spec()
+    expected = spec["cases"][scenario]["expected_plan"]
+    prompt = _prompt(scenario, spec)
+    assert '"inspect-contract"' not in prompt
+    parsed = parse_planning_output(json.dumps(expected), version="v2").model_dump(mode="json")
+    assert _semantically_valid(parsed, spec, scenario)
+    wrong = deepcopy(parsed)
+    wrong["authorization"]["tools"] = ["shell"]
+    wrong["tasks"][1]["tools"] = ["shell"]
+    assert not _semantically_valid(wrong, spec, scenario)
+
+
+@pytest.mark.skipif(os.name != "posix", reason="Pinned Linux source material is required")
+def test_suite_rechecks_the_actual_descriptor_before_a_new_effect(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from karajan.projects.go_commander_suite import FixedGoCommanderSuite
+
+    runtime = os.environ.get("KARAJAN_OPENCODE_LINUX_BINARY")
+    tokenizer = os.environ.get("KARAJAN_GO_TOKENIZER_DIRECTORY")
+    if runtime is None or tokenizer is None:
+        pytest.skip("Pinned Linux source material is not configured")
+    descriptor = tmp_path / "descriptor.json"
+    descriptor.write_text("first", encoding="utf-8")
+    digest = hashlib.sha256(descriptor.read_bytes()).hexdigest()
+    suite = FixedGoCommanderSuite(
+        Path(runtime), Path(tokenizer), digest, descriptor_path=descriptor
+    )
+    bound = {"registration": {"profile": {"id": "commander", "revision": 1}}}
+    auth = {"generation": "synthetic", "source": {"id": "synthetic"}}
+    suite.source(bound, auth)
+    descriptor.write_text("second", encoding="utf-8")
+    with pytest.raises(Exception, match="COMMANDER_SOURCE_CHANGED"):
+        suite.source(bound, auth)
