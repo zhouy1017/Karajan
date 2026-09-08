@@ -1,5 +1,10 @@
 # DG02：Go 当前资格到真实业务审查
 
+> 历史安排：当前执行入口为 [业务顺序](../business-first.md)。下方仅保留当时的范围、验收与派发记录，不作为当前调度指令。
+
+<details>
+<summary>历史阶段内容（原验收保留）</summary>
+
 目标：完成 #107/#113/#117 各自限定范围，得到真实需求→只读 Planning→owner 精确批准→Worker Candidate→完整 Checks→独立 Reviewer Evidence/当前 receipt。此阶段尚不等于完整 v1 或完整 M1 出口。
 
 ## 顺序与边界
@@ -16,4 +21,5 @@
 逐项原 AC 有 S/C/P 与适用 G 证据，真实来源和业务 Candidate 关联可读回；旧 term、取消、失败 Checks、不确定 Review、来源失效均拒绝升级为通过。当前候选经独立双审和必需 CI 后按授权进入 dev。
 
 完成名称：Go 真实规划与审查链完成。Go 的 PR 交付在 DG03；#12 顾问/人工交接、#13 两来源/T2/T3 等父范围继续保留。缺少具体 owner 批准时只阻塞该链，推进 DG03 离线接线及 DG04 订阅准备。
-# 历史安排：当前业务顺序见 [当前业务顺序](../business-first.md)；本文件保留原范围与原 AC，供追溯。
+
+</details>
