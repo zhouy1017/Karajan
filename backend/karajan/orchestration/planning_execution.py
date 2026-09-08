@@ -247,7 +247,11 @@ class PlanningExecution:
 
     @staticmethod
     def _binding(run: dict[str, Any], intent: dict[str, Any], execution_id: str) -> dict[str, Any]:
-        participant = run["commander"]
+        # The intent is the controller-sealed record of the Commander that
+        # created this execution.  ``run.commander`` is deliberately live: a
+        # later approved handoff must not rewrite an existing execution's v1
+        # identity merely because historical evidence is being read.
+        participant = intent
         configuration = run["configuration_snapshot"]
         return {
             "schema_version": "karajan.planning-execution-binding.v1",

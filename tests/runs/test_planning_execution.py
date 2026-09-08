@@ -16,7 +16,7 @@ from karajan.orchestration.planning_execution import PlanningExecution
 from karajan.orchestration.planning_snapshot import PlanningRepositorySnapshotStore
 from karajan.runs import RunError, RunPlanner
 from karajan.runs.planning import digest
-from test_planning import create_request, proposal
+from test_planning import create_request, handoff_request, proposal
 from test_routing_authorization import policy_request, request_v2, submit_request
 
 pytest_plugins = ["test_planning"]
@@ -391,8 +391,9 @@ def test_persisted_snapshot_binding_tamper_is_stable_and_does_not_create(
         assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 0
 
 
-def test_committed_snapshot_survives_lost_command_reply_cancel_and_source_change(
-    configured: dict, tmp_path: Path
+@pytest.mark.parametrize("receipt", ["lost", "saved"])
+def test_committed_snapshot_survives_commander_handoff_and_source_change(
+    configured: dict, tmp_path: Path, receipt: str
 ) -> None:
     registry = configured["registry"]
     project = registry.get(configured["id"])
@@ -433,16 +434,35 @@ def test_committed_snapshot_survives_lost_command_reply_cancel_and_source_change
     )
     configured.update(registry.get(project["id"]))
     configured["registry"] = registry
-    service, run, intent, _ = planning_case(tmp_path, configured)
+    service, run, intent, authorities = planning_case(tmp_path, configured)
     database = tmp_path / "snapshots.sqlite"
     store = PlanningRepositorySnapshotStore(database)
     service.snapshots = store
     execution = service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
 
-    # This is the real first producer's committed snapshot transaction; only
-    # its controller reply/command receipt is lost.
-    committed = store.freeze(execution["binding"], run, registry.get(project["id"]))
-    service.cancel(execution["id"], principal="owner", command_key="cancel")
+    # In the lost-receipt case, the real producer committed before its public
+    # command receipt was saved.  The saved case exercises command-ledger
+    # replay after a legitimate Run Commander transition.
+    if receipt == "lost":
+        committed = store.freeze(execution["binding"], run, registry.get(project["id"]))
+    else:
+        committed = service.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="freeze"
+        )
+    handoff = service.planner.propose_handoff(
+        run["id"], handoff_request(0), command_key="handoff", principal="owner"
+    )
+    service.planner.decide_handoff(
+        run["id"],
+        {
+            "handoff_id": handoff["id"],
+            "handoff_digest": handoff["digest"],
+            "term": 1,
+            "decision": "approve",
+        },
+        command_key="decide-handoff",
+        principal="owner",
+    )
     (root / "src" / "snapshot.txt").write_bytes(b"later source bytes\n")
     subprocess.run(["git", "-C", str(root), "add", "src/snapshot.txt"], check=True)
     subprocess.run(
@@ -476,9 +496,10 @@ def test_committed_snapshot_survives_lost_command_reply_cancel_and_source_change
     reopened = PlanningExecution(
         service.database, service.planner, snapshots=PlanningRepositorySnapshotStore(database)
     )
+    before = authorities.capacity.snapshot()
     assert (
         reopened.freeze_repository_snapshot(
-            execution["id"], principal="owner", command_key="lost-reply-key"
+            execution["id"], principal="owner", command_key="freeze"
         )
         == committed
     )
@@ -486,9 +507,40 @@ def test_committed_snapshot_survives_lost_command_reply_cancel_and_source_change
         "src/snapshot.txt": b"original snapshot\n",
         "tests/snapshot.txt": b"original test snapshot\n",
     }
+    assert authorities.capacity.snapshot() == before
     with sqlite3.connect(database) as db:
         assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 1
         assert db.execute("SELECT count(*) FROM blobs").fetchone()[0] == 2
+
+
+def test_handoff_rejects_first_snapshot_for_original_execution(
+    configured: dict, tmp_path: Path
+) -> None:
+    """A historical identity can recover evidence, never create it after handoff."""
+    service, run, intent, _ = planning_case(tmp_path, configured)
+    database = tmp_path / "snapshots.sqlite"
+    service.snapshots = PlanningRepositorySnapshotStore(database)
+    execution = service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
+    handoff = service.planner.propose_handoff(
+        run["id"], handoff_request(0), command_key="handoff", principal="owner"
+    )
+    service.planner.decide_handoff(
+        run["id"],
+        {
+            "handoff_id": handoff["id"],
+            "handoff_digest": handoff["digest"],
+            "term": 1,
+            "decision": "approve",
+        },
+        command_key="decide-handoff",
+        principal="owner",
+    )
+
+    with pytest.raises(RunError, match="^PLANNING_EXECUTION_BINDING_STALE$"):
+        service.freeze_repository_snapshot(execution["id"], principal="owner", command_key="freeze")
+    with sqlite3.connect(database) as db:
+        assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 0
+        assert db.execute("SELECT count(*) FROM blobs").fetchone()[0] == 0
 
 
 def test_production_label_cannot_promote_a_test_double(configured: dict, tmp_path: Path) -> None:

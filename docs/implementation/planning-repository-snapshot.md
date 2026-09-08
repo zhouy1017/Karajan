@@ -11,6 +11,24 @@ and command key only. They neither accept content nor a repository path. Missing
 or historical snapshots remain unreadable for new native transport; existing
 execution records still retain their prior read-only recovery semantics.
 
+### Historical Commander handoff recovery
+
+The v1 execution binding's term, principal, and profile are reconstructed from
+the original durable planning intent: the controller-sealed creation identity,
+not the mutable current `run.commander`.  Thus, after an approved public
+`RunPlanner.propose_handoff` / `decide_handoff` changes the Commander term and
+profile, a snapshot that was already committed remains readable and its original
+freeze key can be replayed.  This holds both when the original snapshot commit
+lost its PlanningExecution command receipt and when that receipt was saved.  A
+later ProjectRegistry base/source transition still returns the old manifest and
+bytes, with no new snapshot blobs or Capacity effects.  In contrast, an old
+execution with no committed snapshot still fails its first freeze after the
+handoff: fresh freezing rechecks the current intent/Commander authority.
+
+This historical reconstruction does not accept execution JSON as authority. The
+execution binding digest and every non-Commander identity field are still
+matched against durable Run/intent state, so a tampered binding is rejected.
+
 Production provisioning calls `provision_planning_repository_snapshots` using
 the existing protected planning bootstrap. This creates the fixed ledger in the
 private state directory. The trusted factory opens it in `existing_only` mode.
@@ -48,11 +66,11 @@ provider request, model call, qualification, or plan submission is exercised.
 | Original acceptance condition | Actual evidence | Result |
 | --- | --- | --- |
 | Registered Project/Run/intent/execution create one persistent identity-bound snapshot, including paths, requirement/acceptance and modes/digests. | `test_factory_freezes_registered_base_bytes_and_reopens`; actual SQLite ProjectRegistry, RunPlanner, protected factory and Git base tree. | C/P passed |
-| Replay, reopen, worktree changes, concurrent producers and a lost command reply recover precisely the original snapshot. | Base-tree/reopen test; `test_real_store_instances_concurrently_preserve_one_original_snapshot`; `test_committed_snapshot_survives_lost_command_reply_cancel_and_source_change` commits the producer SQLite transaction before simulating the lost controller reply. | C/P passed |
+| Replay, reopen, worktree changes, concurrent producers and a lost command reply recover precisely the original snapshot. | Base-tree/reopen test; `test_real_store_instances_concurrently_preserve_one_original_snapshot`; `test_committed_snapshot_survives_commander_handoff_and_source_change` exercises a real approved Commander handoff plus later ProjectRegistry source transition for both a lost and saved original freeze receipt, returning the old manifest/bytes without new blobs or Capacity effects. | C/P passed |
 | Wrong identities, changed Run term/configuration/authorization, tampered execution binding or binding digest, manifest/blob corruption, and missing ledgers fail closed without repair. | `test_changed_trusted_run_record_rejects_unfrozen_execution_without_snapshot`, `test_persisted_snapshot_binding_tamper_is_stable_and_does_not_create`, factory tamper/deleted-ledger tests, and malformed-manifest test. | C/P passed |
 | Traversal, symlink/reparse, unapproved or empty paths, registered-root aliases/corrupt base, and fixed file/byte limits reject completely without clipping. | `test_unapproved_or_symlink_base_entry_is_rejected`, `test_repository_root_alias_is_rejected`, Git hardening test, and `test_limits_and_malformed_persisted_manifest_reject_without_partial_snapshot`. | C/P passed |
 | Freeze/read/replay have no Capacity/native/Host/Journal/model/Plan/qualification effects. | Snapshot/execution tests compare the real Capacity SQLite snapshot before and after; these test modules do not construct native, Host, Journal, provider, qualification or submit effects. | C/P passed for local absence; S not run |
-| #110/#111 binding, begin/replay, submitted receipt recovery, cancellation/source and concurrency regressions stay intact; checks pass. | `pytest --basetemp=/tmp/karajan-dg01-final3 tests/orchestration/test_planning_snapshot.py tests/runs/test_planning_execution.py tests/runs/test_planning_admission.py -q` on WSL Ubuntu, 2026-09-08: `77 passed in 18.95s`. | P passed |
+| #110/#111 binding, begin/replay, submitted receipt recovery, historical handoff/source recovery and concurrency regressions stay intact; checks pass. | `KARAJAN_GO_TOKENIZER_DIRECTORY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-context-artifacts PYTHONPATH=backend:tests:tests/projects:tests/runs:tests/candidates /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest --basetemp=/tmp/karajan-142-impact-tokenizer tests/orchestration/test_planning_snapshot.py tests/runs/test_planning_execution.py tests/runs/test_planning_admission.py -q` on WSL Ubuntu, 2026-09-08: `79 passed in 18.18s`. | P passed |
 
 The initial Windows invocation could not enumerate its inherited
 `C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo` (`PermissionError` before
