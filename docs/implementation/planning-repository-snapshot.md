@@ -54,8 +54,22 @@ keys protect the manifest/reference ledger.
 Approved entries may be an exact file or a directory prefix. Absolute,
 relative-alias, traversal, backslash, symlink, submodule, unsupported mode,
 empty/unmatched approval, and more than 2,000 files or 8,000,000 bytes fail
-closed. Blob sizes are queried before their bodies, so a rejected blob is not
-first loaded into memory. The registered root must be a non-aliased directory.
+closed. Blob sizes are queried before their bodies, and the reader checks the
+regular CAS file's `st_size` against its manifest before a bounded
+`manifest_size + 1` read. The registered root must be a non-aliased directory.
+On POSIX, a publisher fsyncs both the temporary blob and its artifact directory
+after linking/unlinking and before SQLite records references. Windows has no
+equivalent directory-fsync implementation in this boundary, so publication
+fails closed there; Windows reparse behavior remains unsupported evidence, not
+a portability claim.
+
+The CAS protocol permits only a competing publisher's brief two-link interval:
+it waits for that temporary name to disappear, then requires a regular,
+single-link file with exactly the original bytes. A persistent second hardlink
+is still rejected. The manifest's repository identity, Git base object ID, and
+approved-path digest must have their expected types and match the independently
+sealed source digest in SQLite; recomputing the manifest's self-digest cannot
+rebind them.
 
 Candidate evidence for this snapshot-authority worktree is WSL Ubuntu with Python 3.12 and a private `/tmp`
 pytest base directory: `tests/orchestration/test_planning_snapshot.py`,
@@ -64,19 +78,36 @@ pytest base directory: `tests/orchestration/test_planning_snapshot.py`,
 RunPlanner / PlanningExecution provisioning, base bytes after worktree change,
 reopen/replay, saved-command replay after CAS-file/manifest/deleted-ledger rejection without Capacity changes,
 Git replace/environment poisoning, and repository-root aliases. This is local
-production-bootstrap evidence only: no native transport, Journal call, Host,
-provider request, model call, qualification, or plan submission is exercised.
+production-bootstrap evidence only: the fixture's actual temporary Journal,
+Qualification, Run, and Capacity ledgers are inspected, but no native transport,
+Host, provider request, model call, qualification operation, or plan submission
+is exercised.
 
-## Original AC coverage (current candidate worktree)
+```bash
+KARAJAN_GO_TOKENIZER_DIRECTORY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-context-artifacts \
+PYTHONPATH=backend:tests:tests/projects:tests/runs:tests/candidates \
+/tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest \
+  --basetemp=/tmp/karajan-142-final \
+  tests/orchestration/test_planning_snapshot.py \
+  tests/runs/test_planning_execution.py tests/runs/test_planning_admission.py -q
+```
+
+## Original AC coverage
+
+The independent static-review red candidate was
+`44d1aa88aed38a2d2f1183b0c9568e3d233e8489`. The green implementation candidate
+whose source/tests are covered below is
+`5158aab22ca493100c1f13f129da9e76d1e96322`; this evidence-report commit is a
+documentation-only follow-up.
 
 | Original acceptance condition | Actual evidence | Result |
 | --- | --- | --- |
-| Registered Project/Run/intent/execution create one persistent identity-bound snapshot, including paths, requirement/acceptance and modes/digests. | `test_factory_freezes_registered_base_bytes_and_reopens`; actual SQLite ProjectRegistry, RunPlanner, protected factory and Git base tree. | C/P passed |
-| Replay, reopen, worktree changes, concurrent producers and a lost command reply recover precisely the original snapshot. | Base-tree/reopen test; `test_real_store_instances_concurrently_preserve_one_original_snapshot`; `test_committed_snapshot_survives_commander_handoff_and_source_change` exercises a real approved Commander handoff plus later ProjectRegistry source transition for both a lost and saved original freeze receipt, returning the old manifest/bytes without new CAS references or Capacity effects. | C/P passed |
-| Wrong identities, changed Run term/configuration/authorization, tampered execution binding or binding digest, manifest/blob corruption, and missing ledgers fail closed without repair. | `test_changed_trusted_run_record_rejects_unfrozen_execution_without_snapshot`, `test_persisted_snapshot_binding_tamper_is_stable_and_does_not_create`, factory tamper/deleted-ledger tests, and malformed-manifest test. | C/P passed |
-| Traversal, symlink/reparse, unapproved or empty paths, registered-root aliases/corrupt base, and fixed file/byte limits reject completely without clipping. | `test_unapproved_or_symlink_base_entry_is_rejected`, `test_repository_root_alias_is_rejected`, Git hardening test, and `test_limits_and_malformed_persisted_manifest_reject_without_partial_snapshot`, which separately observes zero manifests/references after a real `_MAX_FILES=1` two-file freeze and after `_MAX_BYTES=1`. | C/P passed |
-| Freeze/read/replay have no Capacity/native/Host/Journal/model/Plan/qualification effects. | Snapshot/execution tests compare the real factory-reopened Capacity ledger before and after, while directly counting persisted manifest/reference records. `test_factory_freezes_registered_base_bytes_and_reopens` directly replays a saved command after artifact/manifest/ledger corruption. Native, Host, Journal, provider, qualification and submit stores are not opened by this local path. | C passed; P/S not_run |
-| #110/#111 binding, begin/replay, submitted receipt recovery, historical handoff/source recovery and concurrency regressions stay intact; checks pass. | `KARAJAN_GO_TOKENIZER_DIRECTORY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-context-artifacts PYTHONPATH=backend:tests:tests/projects:tests/runs:tests/candidates /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest --basetemp=/tmp/karajan-142-author-final tests/orchestration/test_planning_snapshot.py tests/runs/test_planning_execution.py tests/runs/test_planning_admission.py -q` on WSL Ubuntu, 2026-09-08: `83 passed in 20.30s`. `test_snapshot_publication_holds_authority_after_final_check` pauses the real store immediately before reference publication: cancellation and approved handoff remain blocked until publication commits, proving the short held-authority interval and that Git/CAS preparation is outside it. | P passed |
+| Registered Project/Run/intent/execution create one persistent identity-bound snapshot, including paths, requirement/acceptance and modes/digests. | `test_factory_freezes_registered_base_bytes_and_reopens`; actual SQLite ProjectRegistry, RunPlanner, protected factory and Git base tree. | Linux local C/P passed |
+| Replay, reopen, worktree changes, concurrent producers and a lost command reply recover precisely the original snapshot. | Base-tree/reopen test; forced `linkcount==2` interleaving in `test_concurrent_publish_waits_only_for_its_temporary_link`; real approved Commander handoff/source-transition recovery; and a saved command replay whose reader is paused while cancellation completes, retaining original bytes. | Linux local C/P passed |
+| Wrong identities, changed Run term/configuration/authorization, tampered execution binding or binding digest, manifest/blob corruption, and missing ledgers fail closed without repair. | Existing binding/ledger corruption cases plus recomputed-self-hash metadata matrix (`repository_identity_sha256`, `base_sha`, `read_paths_sha256`) in `test_base_tree_snapshot_is_immutable_and_directory_paths_are_expanded`. | Linux local C/P passed |
+| Traversal, symlink/reparse, unapproved or empty paths, registered-root aliases/corrupt base, and fixed file/byte limits reject completely without clipping. | Direct traversal, unmatched approval, corrupt Git base, unchanged original bytes/mode and zero-manifest tests; Linux symlink and root-alias tests; sparse oversized replacement checks `st_size` before bounded consumption. | Traversal/unapproved/corrupt-base/limits/Linux symlink C/P passed; Windows reparse unsupported/not_run |
+| Freeze/read/replay have no Capacity/native/Host/Journal/model/Plan/qualification effects. | The protected-factory test snapshots actual Run plans and Capacity reservations, an actual temporary `GoCallJournal` call ledger, and the copied `ProfileQualificationStore` record ledger before/after freeze, read, saved replay and failures. The fixture intentionally supplies no Host or provider adapter: zero Journal rows is a receiving-boundary result only, while physical native/model/provider absence remains not_run. | Local ledger C/P passed; Host/native/model/provider physical P/S not_run |
+| #110/#111 binding, begin/replay, submitted receipt recovery, historical handoff/source recovery and concurrency regressions stay intact; checks pass. | Linux command below, 2026-09-08, after the blockers: `84 passed in 19.04s`. `test_snapshot_publication_holds_authority_after_final_check` retains the short FINAL PUBLICATION interval: cancellation/handoff wait only through the final manifest commit. | Linux P passed |
 
 The initial Windows invocation could not enumerate its inherited
 `C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo` (`PermissionError` before
