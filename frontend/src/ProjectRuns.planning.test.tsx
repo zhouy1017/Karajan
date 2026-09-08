@@ -83,7 +83,7 @@ it("starts persisted planning with an empty body and shows the actual blocked st
   await userEvent.click(
     await screen.findByRole("button", { name: "准备规划" }),
   );
-  expect(screen.getAllByText("规划已准备，执行服务尚未就绪。")).toHaveLength(2);
+  expect(screen.getAllByText("规划已准备，执行服务尚未就绪。")).toHaveLength(1);
   expect(writes).toHaveLength(1);
   expect(writes[0].body).toBe("{}");
   expect(new Headers(writes[0].headers).get("X-CSRF-Token")).toBe(
@@ -185,4 +185,71 @@ it("keeps an existing plan's exact approval action available", async () => {
   await screen.findByText("现有计划");
   expect(screen.queryByRole("button", { name: "准备规划" })).toBeNull();
   expect(screen.getByRole("button", { name: "确认这份计划" })).toBeTruthy();
+});
+
+it("disables preparation when the persisted planning status cannot be read", async () => {
+  vi.stubGlobal("fetch", async (path: string) => {
+    if (path.startsWith("/v1/runs?")) return Response.json({ items: [run] });
+    if (path === "/v1/runs/run-1") return Response.json(run);
+    if (path === "/v1/runs/run-1/planning")
+      throw new TypeError("planning read failed");
+    throw new Error(`Unexpected request: ${path}`);
+  });
+
+  renderRuns();
+  await userEvent.click(
+    await screen.findByRole("button", { name: "增加问候语" }),
+  );
+  expect(
+    (await screen.findAllByText("规划状态读取失败，请重新读取。")).length,
+  ).toBeGreaterThan(1);
+  expect(screen.queryByRole("button", { name: "准备规划" })).toBeNull();
+});
+
+it("ignores a late planning read after the project selection changes", async () => {
+  let resolveFirstPlanning: ((response: Response) => void) | undefined;
+  const firstPlanning = new Promise<Response>((resolve) => {
+    resolveFirstPlanning = resolve;
+  });
+  const secondRun = {
+    ...run,
+    id: "run-2",
+    requirement: { ...run.requirement, goal: "第二个需求" },
+  };
+  vi.stubGlobal("fetch", async (path: string) => {
+    if (path === "/v1/runs?project_id=project-1")
+      return Response.json({ items: [run] });
+    if (path === "/v1/runs?project_id=project-2")
+      return Response.json({ items: [secondRun] });
+    if (path === "/v1/runs/run-1") return Response.json(run);
+    if (path === "/v1/runs/run-2") return Response.json(secondRun);
+    if (path === "/v1/runs/run-1/planning") return firstPlanning;
+    if (path === "/v1/runs/run-2/planning")
+      return Response.json({
+        ...blockedPlanning,
+        run: secondRun,
+        planning: null,
+      });
+    throw new Error(`Unexpected request: ${path}`);
+  });
+
+  const view = render(<ProjectRuns project={project} csrf="csrf-fixture" />);
+  await userEvent.click(
+    await screen.findByRole("button", { name: "增加问候语" }),
+  );
+  view.rerender(
+    <ProjectRuns
+      project={{ ...project, id: "project-2", name: "第二个项目" }}
+      csrf="csrf-fixture"
+    />,
+  );
+  await userEvent.click(
+    await screen.findByRole("button", { name: "第二个需求" }),
+  );
+  expect(screen.getAllByText("第二个需求").length).toBeGreaterThan(1);
+  resolveFirstPlanning?.(Response.json({ ...blockedPlanning, planning: null }));
+  await waitFor(() =>
+    expect(screen.getAllByText("第二个需求").length).toBeGreaterThan(1),
+  );
+  expect(screen.queryByText("增加问候语")).toBeNull();
 });
