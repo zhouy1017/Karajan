@@ -337,10 +337,17 @@ class FixtureGoPlanningProducer:
             socket_root = _relay_socket_root()
             socket = socket_root.path / "inference.sock"
             relay.start(unix_socket=socket)
+            self.work_root.mkdir(mode=0o700, parents=True, exist_ok=True)
             directory = self.work_root / ("planning-" + binding["execution_id"])
+            projection = {
+                "path": "planning-input.json",
+                "sha256": hashlib.sha256(b"").hexdigest(),
+                "writable": False,
+            }
             native = IsolatedOpenCode(
-                self.runtime, directory, socket, relay.capability, projection=[], no_tools=True
+                self.runtime, directory, socket, relay.capability, projection=[projection], no_tools=True
             )
+            (native.workspace / projection["path"]).write_bytes(b"")
         try:
             if native is None:
                 with httpx.Client(trust_env=False, timeout=10) as client:
@@ -357,6 +364,7 @@ class FixtureGoPlanningProducer:
                 return _sse_content(response.content)
             return self._native_output(native, model_input)
         finally:
+            self.journal.revoke_grant(grant_id)
             if native is not None:
                 native.close()
             relay.close()
