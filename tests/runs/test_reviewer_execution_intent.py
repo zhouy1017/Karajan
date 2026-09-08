@@ -1,6 +1,7 @@
 """C coverage for the pre-native Reviewer execution ledger."""
 
 import json
+import os
 import sys
 import time
 from copy import deepcopy
@@ -47,6 +48,64 @@ def _service(tmp_path: Path, binding_case):
         reviewer["id"],
         intents,
     )
+
+
+@pytest.mark.parametrize("contents", [b"", b"not a sqlite ledger"])
+def test_existing_only_rejects_empty_or_malformed_ledger_without_repair(
+    tmp_path, binding_case, contents
+):
+    service, _, _, _ = _service(tmp_path, binding_case)
+    database = tmp_path / "invalid-reviewer.sqlite"
+    database.write_bytes(contents)
+    with pytest.raises(RunError, match="REVIEWER_EXECUTION_LEDGER_UNAVAILABLE"):
+        ReviewerExecutionIntents(
+            database,
+            service.admissions,
+            service.candidates,
+            source=service.source,
+            host=RunnerHost(service.host.directory, existing_only=True),
+            launch_compiler=service.launch_compiler,
+            existing_only=True,
+        )
+    assert database.read_bytes() == contents
+
+
+def test_existing_only_rejects_deleted_ledger_before_reopening_or_creating_it(
+    tmp_path, binding_case
+):
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+    reopened = ReviewerExecutionIntents(
+        service.database,
+        service.admissions,
+        service.candidates,
+        source=service.source,
+        host=RunnerHost(service.host.directory, existing_only=True),
+        launch_compiler=service.launch_compiler,
+        existing_only=True,
+    )
+    service.database.unlink()
+    with pytest.raises(RunError, match="REVIEWER_EXECUTION_LEDGER_MISSING"):
+        reopened.read(run_id, reviewer_id, principal="owner")
+    assert not service.database.exists()
+
+
+def test_existing_only_rejects_hardlinked_ledger_before_opening_it(tmp_path, binding_case):
+    service, _, _, _ = _service(tmp_path, binding_case)
+    alias = tmp_path / "reviewer-alias.sqlite"
+    os.link(service.database, alias)
+    before = service.database.read_bytes()
+    with pytest.raises(RunError, match="REVIEWER_EXECUTION_LEDGER_UNAVAILABLE"):
+        ReviewerExecutionIntents(
+            alias,
+            service.admissions,
+            service.candidates,
+            source=service.source,
+            host=RunnerHost(service.host.directory, existing_only=True),
+            launch_compiler=service.launch_compiler,
+            existing_only=True,
+        )
+    assert service.database.read_bytes() == before
 
 
 def test_prepare_is_durable_and_freezes_compiler_identity(tmp_path, binding_case):
@@ -105,9 +164,9 @@ def test_unregistered_or_unstarted_host_cannot_claim_observer(tmp_path, binding_
 @pytest.mark.skipif(
     sys.platform == "win32", reason="Host direct-child identity is Linux P evidence"
 )
-@pytest.mark.parametrize("lost_reply", [False, True], ids=["reply", "lost-reply"])
+@pytest.mark.parametrize("mode", ["reply", "lost-reply", "concurrent"])
 def test_existing_store_direct_child_claim_is_one_shot_and_cancelled_recovery_stays_blocked(
-    tmp_path, binding_case, lost_reply
+    tmp_path, binding_case, mode
 ):
     """A registered Host child, rather than the controller, owns the claim."""
     service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
@@ -132,7 +191,7 @@ def test_existing_store_direct_child_claim_is_one_shot_and_cancelled_recovery_st
                 run_id,
                 reviewer_id,
                 "owner",
-                *(("lost-reply",) if lost_reply else ()),
+                *((mode,) if mode != "reply" else ()),
             ),
             tmp_path,
             20,
@@ -181,18 +240,20 @@ def test_existing_store_direct_child_claim_is_one_shot_and_cancelled_recovery_st
     result_path = tmp_path / "reviewer-execution-test-child-result.json"
     deadline = time.monotonic() + 30
     while (
-        lost_reply
+        mode == "lost-reply"
         and service.read(run_id, reviewer_id, principal="owner")["effect_claim"] is None
     ):
         assert time.monotonic() < deadline, "lost-reply direct child did not commit"
         time.sleep(0.02)
-    while not lost_reply and not result_path.exists():
+    while mode != "lost-reply" and not result_path.exists():
         assert time.monotonic() < deadline, "registered direct child did not reply"
         time.sleep(0.02)
-    result = {} if lost_reply else json.loads(result_path.read_text())
+    result = {} if mode == "lost-reply" else json.loads(result_path.read_text())
     assert result.get("claim_allowed", True) is True, result
+    if mode == "concurrent":
+        assert sorted(result["claims"]) == [False, True]
     claimed = service.read(run_id, reviewer_id, principal="owner")
-    if not lost_reply:
+    if mode != "lost-reply":
         assert claimed["effect_claim"]["runner"]["pid"] == result["pid"]
     else:
         assert not result_path.exists()

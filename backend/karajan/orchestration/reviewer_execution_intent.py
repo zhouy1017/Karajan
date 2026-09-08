@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import stat
 import uuid
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
@@ -16,6 +17,7 @@ from karajan.candidates import CandidateStore
 from karajan.execution import ProcessSpec, RunnerHost
 from karajan.routing.compiler import digest
 from karajan.runs import RunError
+from karajan.storage import ExistingStoreError, open_database, require_schema
 
 from .admission import ApprovedTaskAdmission
 from .go_execution_intent import GoExecutionIntents
@@ -61,8 +63,9 @@ class ReviewerExecutionIntents:
         self.source, self.host, self.launch_compiler = source, host, launch_compiler
         self.current_source = current_source
         self.existing_only = existing_only
-        if existing_only and not self.database.is_file():
-            raise RunError("REVIEWER_EXECUTION_LEDGER_MISSING")
+        if existing_only:
+            self._validate_existing_ledger()
+            self._require_existing_schema()
         if not existing_only:
             self.database.parent.mkdir(parents=True, exist_ok=True)
         with self._db() as db:
@@ -75,16 +78,59 @@ class ReviewerExecutionIntents:
                     "UNIQUE(principal, command_key), UNIQUE(run_id, reviewer_operation_id))"
                 )
 
+    def _validate_existing_ledger(self) -> None:
+        """Reject an absent or aliased fixed ledger before SQLite resolves it."""
+        try:
+            info = self.database.lstat()
+            if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+                raise ValueError
+        except FileNotFoundError:
+            raise RunError("REVIEWER_EXECUTION_LEDGER_MISSING") from None
+        except (OSError, ValueError):
+            raise RunError("REVIEWER_EXECUTION_LEDGER_UNAVAILABLE") from None
+
+    def _require_existing_schema(self) -> None:
+        try:
+            require_schema(
+                self.database,
+                {
+                    "reviewer_executions": [
+                        "execution_id",
+                        "run_id",
+                        "reviewer_operation_id",
+                        "principal",
+                        "command_key",
+                        "intent",
+                        "state",
+                    ]
+                },
+            )
+        except ExistingStoreError:
+            raise RunError("REVIEWER_EXECUTION_LEDGER_UNAVAILABLE") from None
+
     @contextmanager
     def _db(self) -> Iterator[sqlite3.Connection]:
-        db = sqlite3.connect(self.database, timeout=10, isolation_level=None)
+        if self.existing_only:
+            self._validate_existing_ledger()
+            self._require_existing_schema()
+        try:
+            db = open_database(
+                self.database, existing_only=self.existing_only, isolation_level=None
+            )
+        except ExistingStoreError:
+            raise RunError("REVIEWER_EXECUTION_LEDGER_UNAVAILABLE") from None
         db.row_factory = sqlite3.Row
         try:
+            db.execute("PRAGMA foreign_keys=ON")
+            db.execute("PRAGMA synchronous=FULL")
             db.execute("BEGIN IMMEDIATE")
             yield db
             db.commit()
         except BaseException:
-            db.rollback()
+            try:
+                db.rollback()
+            except sqlite3.Error:
+                pass
             raise
         finally:
             db.close()

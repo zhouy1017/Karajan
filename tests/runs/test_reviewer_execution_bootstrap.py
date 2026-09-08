@@ -15,6 +15,7 @@ from karajan.orchestration.reviewer_execution_bootstrap import (
 )
 from karajan.orchestration.reviewer_execution_intent import (
     ReviewerExecutionIntents,
+    ReviewerExecutionSource,
     ReviewerLaunchSpec,
 )
 from karajan.runs import RunError
@@ -63,10 +64,8 @@ def test_tampered_descriptor_is_rejected(tmp_path):
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="fixed Reviewer factory is Linux-only")
-def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
-    tmp_path, binding_case, monkeypatch
-):
-    """Real stores; the deployment envelope is an explicitly test-only port."""
+def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(tmp_path, binding_case):
+    """The production factory reads the pinned runtime and existing descriptors."""
     runtime = Path(os.environ["KARAJAN_OPENCODE_LINUX_BINARY"])
     tokenizer = Path(os.environ["KARAJAN_GO_TOKENIZER_DIRECTORY"])
     assert runtime.is_file() and tokenizer.is_dir()
@@ -93,8 +92,9 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
     }
     for name, source in stores.items():
         shutil.copyfile(source, state / name)
-    # Test-only port of the existing credential-store seal.  No source is
-    # configured and the factory never resolves a credential or model here.
+    # Existing credential material is copied solely to preserve the original
+    # descriptor's private-store shape; factory construction never resolves it
+    # or makes a model/provider request.
     credential_private = binding_case[1].original.credentials._directory
     for name in ("material-seal.key", "material-seals.sqlite"):
         shutil.copyfile(credential_private / name, private / name)
@@ -118,12 +118,7 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
     )
     (tmp_path / "task-work").mkdir(mode=0o700)
     write_go_task_bootstrap(task)
-    monkeypatch.setattr(
-        "karajan.orchestration.go_task_runtime.deployment_source",
-        lambda *_: {"schema_version": "test.reviewer-factory-deployment.v1"},
-    )
     database = tmp_path / "reviewer.sqlite"
-    database.touch()
     reviewer_settings = ReviewerExecutionSettings(
         control,
         database,
@@ -132,9 +127,18 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
         task.host_directory,
     )
     provision_reviewer_execution_bootstrap(reviewer_settings)
+    # Explicit private provisioning, never an accepted empty ``touch()`` DB.
+    ReviewerExecutionIntents(
+        database,
+        intents.admissions,
+        candidates,
+        source=ReviewerExecutionSource("1" * 64, "2" * 64),
+        host=RunnerHost(intents.host.directory, existing_only=True),
+        launch_compiler=lambda _: ReviewerLaunchSpec(ProcessSpec(("fixture",), tmp_path), "3" * 64),
+    )
 
     # Production opens actual existing descriptors/stores and hashes the pinned
-    # runtime/tokenizer source.  This does not qualify or call a model.
+    # runtime/tokenizer source. This does not qualify or call a model.
     first = open_reviewer_execution_intents(control)
     seeded = ReviewerExecutionIntents(
         database,
@@ -154,10 +158,18 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
     # historical-read failure.  The next effect guard must see it.
     descriptor = control / "reviewer-execution-bootstrap.json"
     other = tmp_path / "other.sqlite"
-    other.touch()
+    ReviewerExecutionIntents(
+        other,
+        intents.admissions,
+        candidates,
+        source=first.source,
+        host=RunnerHost(intents.host.directory, existing_only=True),
+        launch_compiler=first.launch_compiler,
+    )
+    other_before = other.read_bytes()
     changed = reviewer_settings.document() | {"execution_database": str(other)}
     descriptor.write_text(json.dumps(changed, sort_keys=True, separators=(",", ":")) + "\n")
     with pytest.raises(RunError, match="REVIEWER_EXECUTION_BOOTSTRAP_CHANGED"):
         reopened.freeze_launch(run_id, reviewer["id"], principal="owner")
     assert reopened.read(run_id, reviewer["id"], principal="owner") == original
-    assert other.read_bytes() == b""
+    assert other.read_bytes() == other_before

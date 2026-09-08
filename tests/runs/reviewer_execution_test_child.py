@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import threading
 from copy import deepcopy
 from pathlib import Path
 
@@ -97,12 +98,38 @@ def _service(directory: Path) -> ReviewerExecutionIntents:
 def main() -> int:
     run_id, reviewer_id, principal, *mode = sys.argv[1:]
     lost_reply = mode == ["lost-reply"]
+    concurrent = mode == ["concurrent"]
     directory = Path.cwd()
     result = {"pid": os.getpid()}
     try:
-        result["claim_allowed"] = _service(directory).claim_registered_observer(
-            run_id, reviewer_id, principal=principal, timeout_seconds=5
-        )["claim_allowed"]
+        if concurrent:
+            # Two independently reopened facades contend as the one actual
+            # registered direct child.  No controller-supplied identity or
+            # synthetic second child participates in the claim.
+            barrier = threading.Barrier(2)
+            replies: list[dict[str, object] | None] = [None, None]
+
+            def claim(slot: int) -> None:
+                service = _service(directory)
+                barrier.wait(timeout=5)
+                replies[slot] = service.claim_registered_observer(
+                    run_id, reviewer_id, principal=principal, timeout_seconds=5
+                )
+
+            threads = [threading.Thread(target=claim, args=(slot,)) for slot in range(2)]
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join(timeout=10)
+                if thread.is_alive():
+                    raise RuntimeError("claim thread did not complete")
+            if any(reply is None for reply in replies):
+                raise RuntimeError("claim reply missing")
+            result["claims"] = [bool(reply["claim_allowed"]) for reply in replies if reply]
+        else:
+            result["claim_allowed"] = _service(directory).claim_registered_observer(
+                run_id, reviewer_id, principal=principal, timeout_seconds=5
+            )["claim_allowed"]
     except Exception as error:  # output is test-local and content-free
         result["error"] = type(error).__name__ + ":" + str(error)
     if lost_reply:
@@ -110,7 +137,7 @@ def main() -> int:
         # controller reply without fabricating a runner identity in the parent.
         os._exit(0)
     (directory / "reviewer-execution-test-child-result.json").write_text(json.dumps(result))
-    return 0 if result.get("claim_allowed") else 1
+    return 0 if result.get("claim_allowed") or result.get("claims") else 1
 
 
 if __name__ == "__main__":
