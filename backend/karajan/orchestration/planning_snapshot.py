@@ -192,6 +192,7 @@ class PlanningRepositorySnapshotStore:
                 "base_sha": repo["base_sha"],
                 "read_paths_sha256": digest(paths),
                 "requirement_sha256": binding["requirement_sha256"],
+                "authorization_ceiling_sha256": binding["authorization_ceiling_sha256"],
                 "files": files,
                 "total_bytes": sum(len(c) for _, _, c in rows),
             }

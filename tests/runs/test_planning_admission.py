@@ -3,6 +3,8 @@
 import json
 import os
 import shutil
+import sqlite3
+import subprocess
 import sys
 import time
 from collections.abc import Callable
@@ -29,8 +31,11 @@ from karajan.orchestration.planning_admission import (
 )
 from karajan.orchestration.planning_bootstrap import PLANNING_ADMISSION_BOOTSTRAP
 from karajan.orchestration.planning_execution import PlanningExecution
-from karajan.orchestration.planning_snapshot import provision_planning_repository_snapshots
-from karajan.orchestration.planning_snapshot import PlanningRepositorySnapshotStore
+from karajan.orchestration.planning_snapshot import (
+    PlanningRepositorySnapshotStore,
+    provision_planning_repository_snapshots,
+    snapshot_database,
+)
 from karajan.projects import ProjectRegistry
 from karajan.projects.credential_sources import (
     CredentialSourceError,
@@ -432,7 +437,7 @@ def test_two_runs_contend_for_commander_protected_full_capacity_vector(
 def test_missing_commander_fact_is_a_production_zero_reservation_denial(
     configured: dict, tmp_path: Path
 ) -> None:
-    _, authority, _, execution = _case(tmp_path, configured)
+    _, authority, run, execution = _case(tmp_path, configured)
     authority.authority_kind = "production"
     denied = authority.advance(execution["id"], "owner", "advance")
 
@@ -1240,6 +1245,107 @@ def test_persistent_factory_requires_provisioned_snapshot_ledger(
     PlanningRepositorySnapshotStore(path, existing_only=True)
     service = PlanningExecution.from_trusted_factory(control)
     assert service.snapshots is not None
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
+def test_factory_freezes_registered_base_bytes_and_reopens(
+    configured: dict, tmp_path: Path
+) -> None:
+    registry = configured["registry"]
+    project = registry.get(configured["id"])
+    root = Path(project["repository"]["root"])
+    (root / "src").mkdir(exist_ok=True)
+    (root / "tests").mkdir(exist_ok=True)
+    source = root / "src" / "planning-input.txt"
+    source.write_bytes(b"registered base bytes\n")
+    test_source = root / "tests" / "planning-input-test.txt"
+    test_source.write_bytes(b"registered test base bytes\n")
+    subprocess.run(
+        ["git", "-C", str(root), "add", "src/planning-input.txt", "tests/planning-input-test.txt"],
+        check=True,
+    )
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "-c",
+            "user.name=x",
+            "-c",
+            "user.email=x@y.z",
+            "commit",
+            "-m",
+            "snapshot",
+        ],
+        check=True,
+    )
+    registry.update(
+        project["id"],
+        {
+            "name": project["name"],
+            "base_ref": project["repository"]["base_ref"],
+            "target_branch": project["target_branch"],
+            "allowed_target_branches": project["allowed_target_branches"],
+        },
+        expected_revision=project["revision"],
+        command_key="update-base",
+        principal="owner",
+    )
+    configured.update(registry.get(project["id"]))
+    configured["registry"] = registry
+    _, authority, run, execution = _case(tmp_path, configured)
+    before = authority.capacity.snapshot()
+    control = _protected_factory_control(tmp_path, authority)
+    provision_planning_repository_snapshots(control)
+    service = PlanningExecution.from_trusted_factory(control)
+    frozen = service.freeze_repository_snapshot(
+        execution["id"], principal="owner", command_key="freeze"
+    )
+    assert frozen["repository_identity_sha256"] == project["repository"]["identity_sha256"]
+    assert frozen["base_sha"] == configured["repository"]["base_sha"]
+    assert frozen["requirement_sha256"] == execution["binding"]["requirement_sha256"]
+    assert (
+        frozen["authorization_ceiling_sha256"]
+        == execution["binding"]["authorization_ceiling_sha256"]
+    )
+    assert frozen["read_paths_sha256"] == digest(run["authorization_ceiling"]["read_paths"])
+    assert [item["mode"] for item in frozen["files"]] == ["100644", "100644"]
+    assert service.read_repository_snapshot(execution["id"], principal="owner")["content"] == {
+        "src/planning-input.txt": b"registered base bytes\n",
+        "tests/planning-input-test.txt": b"registered test base bytes\n",
+    }
+    source.write_bytes(b"worktree changed\n")
+    reopened = PlanningExecution.from_trusted_factory(control)
+    assert (
+        reopened.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="freeze"
+        )
+        == frozen
+    )
+    assert (
+        reopened.read_repository_snapshot(execution["id"], principal="owner")["content"][
+            "src/planning-input.txt"
+        ]
+        == b"registered base bytes\n"
+    )
+    assert authority.capacity.snapshot() == before
+
+    ledger = snapshot_database(control)
+    with sqlite3.connect(ledger) as db:
+        db.execute("UPDATE blobs SET content=?", (b"tampered",))
+    with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_CHANGED$"):
+        reopened.read_repository_snapshot(execution["id"], principal="owner")
+    with sqlite3.connect(ledger) as db:
+        assert db.execute("SELECT content FROM blobs").fetchone()[0] == b"tampered"
+        db.execute("UPDATE snapshots SET data=?", ("{}",))
+    with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_CHANGED$"):
+        reopened.read_repository_snapshot(execution["id"], principal="owner")
+    assert authority.capacity.snapshot() == before
+
+    ledger.unlink()
+    with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE$"):
+        PlanningExecution.from_trusted_factory(control)
+    assert not ledger.exists()
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")

@@ -26,6 +26,7 @@ def test_base_tree_snapshot_is_immutable_and_directory_paths_are_expanded(tmp_pa
         "run_id": "run",
         "intent_id": "intent",
         "requirement_sha256": "a" * 64,
+        "authorization_ceiling_sha256": "c" * 64,
     }
     run = {
         "project_id": "project",
@@ -60,6 +61,7 @@ def test_unapproved_or_symlink_base_entry_is_rejected(tmp_path: Path):
         "run_id": "run",
         "intent_id": "intent",
         "requirement_sha256": "a" * 64,
+        "authorization_ceiling_sha256": "c" * 64,
     }
     run = {
         "project_id": "project",
