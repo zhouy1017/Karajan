@@ -178,6 +178,24 @@ class PlanningWorkbench:
             return {"state": "blocked", "reason_code": "PLANNING_EXECUTION_CANCELLED"}
         if execution is not None and execution["binding"]["term"] != run["commander"]["term"]:
             return {"state": "blocked", "reason_code": "PLANNING_EXECUTION_BINDING_STALE"}
+        if execution is not None and execution["state"] in {
+            "blocked",
+            "admission_unknown",
+            "submission_unknown",
+        }:
+            reason_codes = execution.get("reason_codes")
+            reason = (
+                reason_codes[0]
+                if isinstance(reason_codes, list)
+                and reason_codes
+                and isinstance(reason_codes[0], str)
+                else "PLANNING_EXECUTION_UNKNOWN"
+            )
+            return {"state": "blocked", "reason_code": reason}
+        if execution is not None and execution["state"] == "awaiting_output":
+            # A durable dispatch claim may be pending after an interrupted
+            # local/native request.  It cannot safely be sent again.
+            return {"state": "blocked", "reason_code": "PLANNING_OUTPUT_PENDING"}
         if self.execution.outputs is None:
             return {"state": "blocked", "reason_code": "PLANNING_TRANSPORT_UNAVAILABLE"}
         return {"state": "awaiting"}

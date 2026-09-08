@@ -152,6 +152,19 @@ def approval(plan: dict) -> dict:
     }
 
 
+def test_owner_can_discover_and_read_only_registered_execution_policies(v2_plan: tuple) -> None:
+    client, _, _, run, _, _ = v2_plan
+    base = f"/v1/projects/{run['project_id']}/execution-policies"
+    listed = client.get(base)
+    assert listed.status_code == 200
+    assert [(item["id"], item["revision"]) for item in listed.json()["items"]] == [
+        ("web-owner-policy", 1)
+    ]
+    exact = client.get(base + "/web-owner-policy/revisions/1")
+    assert exact.status_code == 200
+    assert exact.json() == listed.json()["items"][0]
+
+
 def test_http_exposes_the_frozen_v2_scope_and_replays_the_exact_owner_approval(
     v2_plan: tuple,
 ) -> None:

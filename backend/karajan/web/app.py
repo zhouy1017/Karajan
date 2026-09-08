@@ -124,6 +124,7 @@ def create_app(
     frontend_directory: Path | None = None,
     planning_execution: PlanningExecution | None = None,
     planning_transport: PlanningTransport | None = None,
+    planning_control_directory: Path | None = None,
 ) -> FastAPI:
     BootstrapInput(token=bootstrap_token)
     parsed_origin = urlsplit(origin)
@@ -142,17 +143,43 @@ def create_app(
     sessions = SessionStore(state_directory / "sessions.sqlite", bootstrap_token)
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
     app.add_middleware(BodyLimitMiddleware)
-    projects = ProjectRegistry(state_directory / "projects.sqlite", allowed_roots)
+    if planning_control_directory is not None and (
+        planning_execution is not None or planning_transport is not None
+    ):
+        raise ValueError("Planning controller cannot be combined with injected planning services")
+    production_transport = (
+        PlanningTransport.from_trusted_factory(planning_control_directory)
+        if planning_control_directory is not None
+        else None
+    )
+    projects = (
+        production_transport.execution.planner.projects
+        if production_transport is not None
+        else ProjectRegistry(state_directory / "projects.sqlite", allowed_roots)
+    )
     register_project_routes(app, projects)
     register_simulation_routes(app, projects)
-    planner = RunPlanner(state_directory / "runs.sqlite", projects)
-    capacity = CapacityStore(state_directory / "capacity.sqlite")
+    planner = (
+        production_transport.execution.planner
+        if production_transport is not None
+        else RunPlanner(state_directory / "runs.sqlite", projects)
+    )
+    capacity = (
+        production_transport.execution.capacity
+        if production_transport is not None and production_transport.execution.capacity is not None
+        else CapacityStore(state_directory / "capacity.sqlite")
+    )
     register_run_routes(app, planner)
-    execution = planning_execution or PlanningExecution(
+    execution = planning_execution or (
+        production_transport.execution
+        if production_transport is not None
+        else PlanningExecution(
         state_directory / "planning-execution.sqlite", planner
+        )
     )
     if execution.planner is not planner:
         raise ValueError("Planning execution must use this application's Run planner")
+    planning_transport = planning_transport or production_transport
     if planning_transport is not None and planning_transport.execution is not execution:
         raise ValueError("Planning transport must use this application's execution controller")
     planning = PlanningWorkbench(

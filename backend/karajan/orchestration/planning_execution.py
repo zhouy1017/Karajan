@@ -40,6 +40,7 @@ class PlanningAdmissionEvidence(Contract):
     capacity_activation_command_key: str
     capacity_activation_receipt: dict[str, Any] | None
     state: Literal["admitted", "denied", "unknown"]
+    reason_codes: list[str] = Field(default_factory=list, max_length=8)
 
 
 class PlanningOutputEvidence(Contract):
@@ -161,6 +162,7 @@ class PlanningExecution:
             read_planning_bootstrap,
         )
         from .planning_snapshot import PlanningRepositorySnapshotStore, snapshot_database
+        from .planning_transport import PlanningOutputStore
 
         settings, bootstrap_sha256 = read_planning_bootstrap(control_directory)
         admissions = open_persistent_planning_admission(control_directory)
@@ -208,14 +210,26 @@ class PlanningExecution:
             )
         except OSError as error:
             raise RunError("PLANNING_ADMISSION_BOOTSTRAP_CHANGED") from error
+        output_database = settings.state_directory / "planning-output.sqlite"
+        outputs = None
+        if output_database.exists() or output_database.is_symlink():
+            try:
+                outputs = PlanningOutputStore(
+                    output_database, authority_kind="production", existing_only=True
+                )
+            except (OSError, RunError, sqlite3.Error) as error:
+                raise RunError("PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE") from error
         return cls(
             admissions.execution_database,
             admissions.planner,
             admissions=admissions,
+            outputs=outputs,
             capacity=admissions.capacity,
             snapshots=snapshots,
             existing_only=True,
-            _trusted_authority_ids=frozenset({id(admissions)}),
+            _trusted_authority_ids=frozenset(
+                {id(admissions)} if outputs is None else {id(admissions), id(outputs)}
+            ),
             _trusted_factory_authority=trusted_factory_authority,
         )
 
@@ -749,6 +763,16 @@ class PlanningExecution:
                 current["reason_codes"] = ["PLANNING_ADMISSION_UNKNOWN"]
                 self._save(db, current)
                 return current
+        if evidence["state"] == "denied":
+            reason_codes = evidence.get("reason_codes")
+            reason = (
+                reason_codes[0]
+                if isinstance(reason_codes, list)
+                and reason_codes
+                and isinstance(reason_codes[0], str)
+                else "PLANNING_ADMISSION_DENIED"
+            )
+            return self._blocked(execution_id, principal, reason)
         if self.capacity is None:
             return self._blocked(execution_id, principal, "PLANNING_CAPACITY_AUTHORITY_UNAVAILABLE")
         if (

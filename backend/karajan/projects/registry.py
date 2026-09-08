@@ -793,6 +793,20 @@ class ProjectRegistry:
                 raise ProjectError("EXECUTION_POLICY_NOT_FOUND")
             return dict(json.loads(row["record"]))
 
+    def list_execution_policies(self, project_id: str, *, principal: str) -> list[dict[str, Any]]:
+        """Return owner-visible immutable policy references without selecting one."""
+        project_id = identifier(project_id)
+        with self._transaction() as db:
+            self._require_owner(db, project_id, principal)
+            return [
+                dict(json.loads(row["record"]))
+                for row in db.execute(
+                    "SELECT record FROM execution_policies WHERE project_id=? "
+                    "ORDER BY id, revision",
+                    (project_id,),
+                )
+            ]
+
     def _replay(
         self, db: sqlite3.Connection, principal: str, key: str, digest: str
     ) -> dict[str, Any] | None:

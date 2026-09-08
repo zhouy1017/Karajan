@@ -269,8 +269,10 @@ def provision_planning_bootstrap(
     """Explicitly provision empty controller stores and one protected descriptor.
 
     This setup action creates no Project, Run, Commander qualification, admission,
-    execution, output, or Plan.  Runtime factories subsequently reopen only these
-    fixed stores through ``read_planning_bootstrap``.
+    execution, admission decision, output artifact, or Plan.  It does create
+    the otherwise empty output ledger so a runtime factory never provisions
+    one while assembling production authority. Runtime factories subsequently
+    reopen only these fixed stores through ``read_planning_bootstrap``.
     """
     from karajan.capacity import CapacityStore
     from karajan.orchestration.planning_admission import PlanningAdmissionAuthority
@@ -291,8 +293,14 @@ def provision_planning_bootstrap(
         planner = RunPlanner(state / "runs.sqlite", projects)
         capacity = CapacityStore(state / "capacity.sqlite")
         execution = PlanningExecution(state / "planning-execution.sqlite", planner)
+        from karajan.orchestration.planning_transport import PlanningOutputStore
+
+        PlanningOutputStore(state / "planning-output.sqlite", authority_kind="production")
+
         class NoCommanderFacts:
-            def read_commander(self, binding: dict[str, Any], *, scope: str, reader_version: str) -> None:
+            def read_commander(
+                self, binding: dict[str, Any], *, scope: str, reader_version: str
+            ) -> None:
                 del binding, scope, reader_version
                 return None
 

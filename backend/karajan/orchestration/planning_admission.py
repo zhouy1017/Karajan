@@ -1572,6 +1572,7 @@ class PlanningAdmissionAuthority:
                 "capacity_activate_unknown",
             }
             else "denied",
+            "reason_codes": record.get("reason_codes", []),
         }
 
     @contextmanager
