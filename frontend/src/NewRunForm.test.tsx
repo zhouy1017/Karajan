@@ -26,6 +26,7 @@ function configured(revision = 2) {
         revision: 1,
         digest: "p".repeat(64),
         authorization: {
+          profile_refs: [{ id: "lead-profile", revision: 1 }],
           channel_ids: ["commander"],
           tools: [],
           data_destinations: ["local"],
@@ -345,6 +346,10 @@ it("saves the users requirement against the displayed project snapshot and reuse
             revision: 1,
             digest: "p".repeat(64),
             authorization: {
+              profile_refs: [
+                { id: "lead-profile", revision: 1 },
+                { id: "worker-profile", revision: 2 },
+              ],
               channel_ids: ["commander"],
               tools: [],
               data_destinations: ["local"],

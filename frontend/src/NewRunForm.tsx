@@ -25,6 +25,7 @@ type Configuration = {
     revision: number;
     digest: string;
     authorization: {
+      profile_refs: { id: string; revision: number }[];
       channel_ids: string[];
       tools: string[];
       data_destinations: string[];
@@ -230,7 +231,8 @@ function RunDraft({ project, csrf, onSaved }: FormProps) {
         participants: [{ principal: "lead", profile, purpose: "lead" }],
         authorization: {
           ...configuration.execution_policy.authorization,
-          profile_refs: configuration.approved_profile_refs,
+          profile_refs:
+            configuration.execution_policy.authorization.profile_refs,
           read_paths: lines(readPaths),
           write_paths: lines(writePaths),
           budget_ref: budget.id,
