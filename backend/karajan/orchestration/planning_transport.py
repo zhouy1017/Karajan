@@ -387,7 +387,13 @@ class PlanningTransport:
                 execution_id=execution_id,
                 principal=principal,
             )
-            self._register_controller_estimate(current, model_input, principal=principal)
+            try:
+                self._register_controller_estimate(current, model_input, principal=principal)
+            except RunError as error:
+                if str(error) != "PLANNING_ESTIMATE_SOURCE_UNAVAILABLE":
+                    raise
+            # This records a read-only output identity.  ``admit`` verifies it
+            # before it can transition to awaiting_output; it does not send.
             self.outputs.arm(current["binding"], self.producer.source(current["binding"]))
             current = self.execution.admit(
                 execution_id, principal=principal, command_key="planning-admit:" + execution_id

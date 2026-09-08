@@ -63,6 +63,28 @@ from test_routing_authorization import policy_request, request_v2, submit_reques
 pytest_plugins = ["test_planning"]
 
 
+def _prepared_runtime() -> Path:
+    configured = os.environ.get("KARAJAN_OPENCODE_LINUX_BINARY") or os.environ.get(
+        "KARAJAN_GO_RUNTIME"
+    )
+    runtime = Path(configured) if configured else None
+    if runtime is None or not runtime.is_file():
+        if os.environ.get("KARAJAN_REQUIRE_OPENCODE_ISOLATION") == "1":
+            pytest.fail("Prepared fixed Linux OpenCode artifact is required")
+        pytest.skip("Prepared Linux OpenCode artifact is not available")
+    return runtime
+
+
+def _prepared_tokenizer() -> Path:
+    configured = os.environ.get("KARAJAN_GO_TOKENIZER_DIRECTORY")
+    tokenizer = Path(configured) if configured else Path(".cache/go-context-artifacts")
+    if not tokenizer.is_dir():
+        if os.environ.get("KARAJAN_REQUIRE_GO_TOKENIZER") == "1":
+            pytest.fail("Prepared Go tokenizer artifacts are required")
+        pytest.skip("Prepared Go tokenizer artifacts are not available")
+    return tokenizer
+
+
 @pytest.fixture
 def configured(project: tuple[Any, dict, Path]) -> dict:
     registry, value, _ = project
@@ -369,10 +391,8 @@ def test_production_native_send_releases_guard_for_cancelled_wait(
     isolated OpenCode process are production code; only the upstream response
     is local and no provider credential or qualification is forged.
     """
-    runtime = os.environ.get("KARAJAN_GO_RUNTIME")
-    tokenizer = os.environ.get("KARAJAN_GO_TOKENIZER_DIRECTORY")
-    if runtime is None or tokenizer is None:
-        pytest.skip("prepared native runtime and tokenizer are required")
+    runtime = _prepared_runtime()
+    tokenizer = _prepared_tokenizer()
     service, authority, run, execution = _case(tmp_path, configured)
     service.admissions = authority
     admitted = authority.advance(execution["id"], "owner", "native-admit")
@@ -407,7 +427,7 @@ def test_production_native_send_releases_guard_for_cancelled_wait(
         service,
         accounting,
         journal,
-        Path(runtime),
+        runtime,
         tmp_path / "native-work",
         _LocalPlanningCredentials(),
         "b" * 64,
@@ -447,10 +467,8 @@ def test_production_native_output_requires_durable_completion_and_cleanup(
     configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str
 ) -> None:
     """Delivered relay bytes never become output when durable proof is incomplete."""
-    runtime = os.environ.get("KARAJAN_GO_RUNTIME")
-    tokenizer = os.environ.get("KARAJAN_GO_TOKENIZER_DIRECTORY")
-    if runtime is None or tokenizer is None:
-        pytest.skip("prepared native runtime and tokenizer are required")
+    runtime = _prepared_runtime()
+    tokenizer = _prepared_tokenizer()
     service, authority, run, execution = _case(tmp_path, configured)
     service.admissions = authority
     admitted = authority.advance(execution["id"], "owner", "native-admit")
@@ -486,7 +504,7 @@ def test_production_native_output_requires_durable_completion_and_cleanup(
         service,
         accounting,
         journal,
-        Path(runtime),
+        runtime,
         tmp_path / "native-work",
         _LocalPlanningCredentials(),
         "b" * 64,
@@ -671,6 +689,19 @@ def test_missing_commander_fact_is_a_production_zero_reservation_denial(
     assert denied["reason_codes"] == ["COMMANDER_QUALIFICATION_REQUIRED"]
     assert authority.capacity.snapshot()["reservations"] == []
     assert COMMANDER_QUALIFICATION_SCOPE == "commander_planning.v1"
+
+
+def test_missing_commander_fact_precedes_missing_estimate_without_reservation(
+    configured: dict, tmp_path: Path
+) -> None:
+    _, authority, _, execution = _case(tmp_path, configured, register_estimate=False)
+    authority.authority_kind = "production"
+
+    denied = authority.advance(execution["id"], "owner", "qualification-before-estimate")
+
+    assert denied["phase"] == "denied"
+    assert denied["reason_codes"] == ["COMMANDER_QUALIFICATION_REQUIRED"]
+    assert authority.capacity.snapshot()["reservations"] == []
 
 
 def test_missing_estimate_is_a_public_idempotent_zero_reservation_denial(
@@ -1451,10 +1482,8 @@ def _output_source_control(
     tmp_path: Path, authority: PlanningAdmissionAuthority, run: dict[str, Any]
 ) -> tuple[Path, Path]:
     """Install a real private Commander source without creating a qualification pass."""
-    runtime = os.environ.get("KARAJAN_GO_RUNTIME")
-    tokenizer = os.environ.get("KARAJAN_GO_TOKENIZER_DIRECTORY")
-    if runtime is None or tokenizer is None:
-        pytest.skip("prepared runtime and tokenizer are required")
+    runtime = _prepared_runtime()
+    tokenizer = _prepared_tokenizer()
     credential_private = tmp_path / "output-source-private"
     key = credential_private / "source.key"
     profile = run["configuration_snapshot"]["configuration"]["resources"]["profiles"][0]
@@ -1478,8 +1507,8 @@ def _output_source_control(
     write_commander_qualification_settings(
         control,
         CommanderQualificationSettings(
-            Path(runtime),
-            Path(tokenizer),
+            runtime,
+            tokenizer,
             credential_private,
             (CommanderCredentialSource(run["project_id"], auth_ref, "output-source", key),),
             journal_path=journal_path,

@@ -1315,17 +1315,6 @@ class PlanningAdmissionAuthority:
                 command_key,
                 payload,
             )
-        # Route construction needs the concrete demand and duration.  Deny it
-        # before dereferencing the estimate so a provisioner omission is an
-        # idempotent, zero-effect command outcome rather than a claimed-key
-        # placeholder that cannot be replayed.
-        if not isinstance(record.get("estimate"), dict):
-            return self._finish_command(
-                self._deny(record, "PLANNING_ESTIMATE_MISSING"),
-                principal,
-                command_key,
-                payload,
-            )
         profile = binding["profile"]
         registration = next(
             (
@@ -1366,6 +1355,12 @@ class PlanningAdmissionAuthority:
             and qualification.get("provenance") != "official"
         ):
             record = self._deny(record, "COMMANDER_QUALIFICATION_REQUIRED")
+        elif not isinstance(record.get("estimate"), dict):
+            # An unavailable capacity observation cannot obscure the distinct
+            # Commander qualification gate. A qualified Commander still
+            # reaches this zero-effect, idempotent estimate denial before any
+            # route or reservation can be claimed.
+            record = self._deny(record, "PLANNING_ESTIMATE_MISSING")
         else:
             route_sources = self._evaluate_planning_route(run, binding, record, qualification)
             route, reserved = route_sources["route"], route_sources["reserved"]

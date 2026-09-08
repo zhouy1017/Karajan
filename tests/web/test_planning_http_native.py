@@ -312,3 +312,145 @@ def test_authenticated_v2_planning_executes_one_native_fixture_send_and_persists
         restored = client.get(f"/v1/runs/{run_id}/planning", headers=headers)
         assert restored.status_code == 200
         assert restored.json()["run"]["plans"][0]["plan"] == plan
+
+def test_unobserved_capacity_persists_commander_qualification_block_without_send(
+    tmp_path: Path, project: tuple[ProjectRegistry, dict[str, Any], Path]
+) -> None:
+    registry, configured, _ = project
+    profile_document = registry.get_configuration(configured["id"])["configuration"]
+    policy = registry.register_execution_policy(
+        configured["id"], _v2_policy(configured), command_key="policy", principal="owner"
+    )
+    planner = RunPlanner(tmp_path / "runs.sqlite", registry)
+    capacity = CapacityStore(tmp_path / "capacity.sqlite", clock=lambda: 1000.0)
+    capacity.register_pool(
+        {
+            "id": "service-fixture",
+            "account_id": "fixture-account",
+            "kind": "service",
+            "unit": "percent",
+            "window_kind": "unknown",
+        },
+        command_key="pool",
+    )
+    capacity.register_profile(
+        {
+            "id": "fixture-profile",
+            "revision": 1,
+            "account_id": "fixture-account",
+            "pool_ids": ["service-fixture"],
+        },
+        command_key="profile",
+    )
+    capacity.activate_policy(
+        {
+            "account_id": "fixture-account",
+            "max_active_attempts": 1,
+            "max_attempt_duration_seconds": 60,
+            "observation_max_age_seconds": 30,
+            "require_official_observation": False,
+            "safety_margin": {},
+            "lead_reserve": {},
+            "lead_reserved_slots": 0,
+            "conservative_mode": {
+                "enabled": True,
+                "max_local_active_attempts": 1,
+                "max_attempt_duration_seconds": 60,
+                "observation_max_age_seconds": 30,
+                "cooldown_seconds": 10,
+            },
+        },
+        expected_revision=0,
+        command_key="policy",
+    )
+    execution_database = tmp_path / "planning.sqlite"
+    authority = PlanningAdmissionAuthority(
+        tmp_path / "planning-admissions.sqlite",
+        execution_database,
+        planner,
+        capacity,
+        FixtureCommander(
+            {
+                "profile": {"id": "fixture-profile", "revision": 1},
+                "profile_digest": digest(profile_document["resources"]["profiles"][0]["profile"]),
+                "runtime_version": "1",
+                "roles": ["commander"],
+                "tools": ["fixture-tools"],
+                "context_tokens": 16384,
+                "data_destination": "local-fixture",
+                "budget_enforcement": "bounded_calls",
+                "provenance": "fixture",
+                "evidence_ref": "fixture:commander",
+                "observed_at": 0.0,
+                "valid_until": 2_000_000_000.0,
+            },
+            available=False,
+        ),
+        authority_kind="production",
+    )
+    outputs = PlanningOutputStore(tmp_path / "planning-outputs.sqlite", authority_kind="production")
+    execution = PlanningExecution(
+        execution_database,
+        planner,
+        admissions=authority,
+        outputs=outputs,
+        capacity=capacity,
+        snapshots=PlanningRepositorySnapshotStore(tmp_path / "planning-snapshots.sqlite"),
+        _trusted_authority_ids=frozenset({id(authority)}),
+    )
+
+    class NoProducer:
+        authority_kind = "production"
+
+        def source(self, binding: dict[str, Any]) -> dict[str, Any]:
+            del binding
+            return {"kind": "read-only-source"}
+
+        def produce(self, *args: object, **kwargs: object) -> bytes:
+            raise AssertionError("denied admission must not send a producer request")
+
+    transport = PlanningTransport(
+        execution,
+        GoRequestAccounting(Path(os.environ["KARAJAN_GO_TOKENIZER_DIRECTORY"])),
+        NoProducer(),
+        outputs,
+    )
+    app = create_app(
+        tmp_path / "web-state",
+        origin=ORIGIN,
+        bootstrap_token="unobserved",
+        planning_execution=execution,
+        planning_transport=transport,
+    )
+    with TestClient(app, base_url=ORIGIN) as client:
+        headers = _headers(client, "unobserved")
+        request = request_v2(configured, policy)
+        request["authorization"].update(read_paths=["original.txt"], write_paths=["original.txt"])
+        run = client.post(
+            "/v1/runs", json=request, headers={**headers, "Idempotency-Key": "create"}
+        ).json()
+        client.post(
+            f"/v1/runs/{run['id']}/planning-start",
+            json={},
+            headers={**headers, "Idempotency-Key": "start"},
+        )
+        result = client.post(
+            f"/v1/runs/{run['id']}/planning-execute",
+            json={},
+            headers={**headers, "Idempotency-Key": "execute"},
+        )
+
+    assert result.status_code == 200
+    planning = result.json()["planning"]
+    assert planning["execution"] == {
+        "id": planning["execution"]["id"],
+        "binding_sha256": planning["execution"]["binding_sha256"],
+        "state": "blocked",
+        "cancel_requested": False,
+        "reason_codes": ["COMMANDER_QUALIFICATION_REQUIRED"],
+    }
+    assert planning["availability"] == {
+        "state": "blocked",
+        "reason_code": "COMMANDER_QUALIFICATION_REQUIRED",
+    }
+    assert capacity.snapshot()["reservations"] == []
