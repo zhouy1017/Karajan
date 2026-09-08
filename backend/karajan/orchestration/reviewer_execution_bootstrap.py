@@ -233,9 +233,14 @@ def open_reviewer_execution_intents(
     projects = ProjectRegistry(
         reviewer.state_directory / "projects.sqlite", task.allowed_roots, existing_only=True
     )
-    # This check deliberately precedes every execution-ledger open.  It uses
-    # the registered source roots, not caller-provided or descriptor-guessed
-    # paths, and does not create or repair either side.
+    # These checks deliberately precede every effect composition. They use
+    # actual registered source roots, not descriptor-guessed paths, and do not
+    # create or repair either side. The Registry has to open first to reveal
+    # those roots; each control DB is then rejected before its own controller
+    # is composed.
+    for name in ("projects.sqlite", "runs.sqlite", "capacity.sqlite", "task-admissions.sqlite"):
+        if _ledger_in_registered_repository(reviewer.state_directory / name, projects):
+            raise RunError("REVIEWER_EXECUTION_STATE_IN_REPOSITORY")
     if _ledger_in_registered_repository(reviewer.execution_database, projects):
         raise RunError("REVIEWER_EXECUTION_LEDGER_IN_REPOSITORY")
     if _host_in_registered_repository(reviewer.host_directory, projects):

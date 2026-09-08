@@ -759,6 +759,13 @@ class ApprovedTaskAdmission:
                         )
 
                     def check_reviewer_final_effect_boundary() -> Callable[[], None]:
+                        # The receiver may have waited behind its own SQLite
+                        # writer. Re-read the producer-owned Candidate CAS and
+                        # complete Check logs only after that writer is held,
+                        # before retaining the scalar temporal checks below.
+                        # This preserves operation -> Run -> Project ->
+                        # Capacity ownership and accepts no caller material.
+                        check_reviewer_effect_boundary()
                         if (
                             capacity_boundary is None
                             or capacity_quota_fence is None

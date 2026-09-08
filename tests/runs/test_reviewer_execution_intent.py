@@ -282,6 +282,125 @@ def test_ledger_uses_wal_and_compiler_does_not_hold_its_writer(tmp_path, binding
     assert observed == ["wal"]
 
 
+def test_missing_check_log_after_host_writer_wait_blocks_prepare(tmp_path, binding_case):
+    """A Check CAS object must still exist when Host receives its write turn."""
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    intent = service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+    worker = service.admissions.get(
+        run_id, intent["worker_operation_id"], principal="owner"
+    )
+    log = Path(worker["validation"]["checks"]["runs"][0]["evidence"]["log"]["path"])
+    assert log.is_file()
+    reached, outcome = threading.Event(), []
+    original_prepare = service.host.prepare
+
+    def prepare(*args, **kwargs):
+        reached.set()
+        return original_prepare(*args, **kwargs)
+
+    service.host.prepare = prepare
+    holder = sqlite3.connect(service.host.database, isolation_level=None, timeout=5)
+    holder.execute("BEGIN IMMEDIATE")
+
+    def freeze():
+        try:
+            service.freeze_launch(run_id, reviewer_id, principal="owner")
+        except BaseException as error:
+            outcome.append(error)
+
+    thread = threading.Thread(target=freeze)
+    thread.start()
+    assert reached.wait(5)
+    log.unlink()
+    holder.commit()
+    holder.close()
+    thread.join(10)
+    assert not thread.is_alive()
+    assert outcome and isinstance(outcome[0], RunError)
+    with pytest.raises(KeyError):
+        service.host.inspect(intent["planned_attempt_id"])
+
+
+@pytest.mark.parametrize("boundary", ["prepare", "claim"])
+def test_missing_check_log_after_receiving_writer_wait_blocks_prepare_and_claim(
+    tmp_path, binding_case, boundary
+):
+    """The same receiver-writer recheck applies to ledger prepare and claim."""
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    reviewer = service.admissions.get(run_id, reviewer_id, principal="owner")
+    worker = service.admissions.get(
+        run_id, reviewer["depends_on_operation_id"], principal="owner"
+    )
+    log = Path(worker["validation"]["checks"]["runs"][0]["evidence"]["log"]["path"])
+    assert log.is_file()
+    reached, outcome = threading.Event(), []
+
+    if boundary == "prepare":
+        original_db = service._db
+
+        @contextmanager
+        def writer(*, write=True):
+            if write:
+                reached.set()
+            with original_db(write=write) as db:
+                yield db
+
+        service._db = writer
+
+        def action():
+            return service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+
+        database = service.database
+    else:
+        service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+        service.freeze_launch(run_id, reviewer_id, principal="owner")
+        from karajan.execution._platform import process_identity
+
+        identity = process_identity(os.getpid())
+        assert identity is not None
+
+        @contextmanager
+        def current_runner(*args, **kwargs):
+            reached.set()
+            yield identity
+
+        def wait_for_runner(*args, **kwargs):
+            return identity
+
+        service.host.wait_for_runner_registration = wait_for_runner
+        service.host.current_runner_guard = current_runner
+
+        def action():
+            return service.claim_registered_observer(
+                run_id, reviewer_id, principal="owner", timeout_seconds=0.01
+            )
+
+        database = service.database
+
+    holder = sqlite3.connect(database, isolation_level=None, timeout=5)
+    holder.execute("BEGIN IMMEDIATE")
+
+    def invoke():
+        try:
+            action()
+        except BaseException as error:
+            outcome.append(error)
+
+    thread = threading.Thread(target=invoke)
+    thread.start()
+    assert reached.wait(5)
+    log.unlink()
+    holder.commit()
+    holder.close()
+    thread.join(10)
+    assert not thread.is_alive()
+    assert outcome and isinstance(outcome[0], RunError)
+    if boundary == "prepare":
+        assert service.read(run_id, reviewer_id, principal="owner") is None
+    else:
+        assert service.read(run_id, reviewer_id, principal="owner")["effect_claim"] is None
+
+
 @pytest.mark.parametrize("boundary", ["new_intent", "host", "control", "claim"])
 def test_reservation_only_expiry_after_real_sqlite_writer_wait_blocks_the_actual_effect(
     tmp_path, binding_case, boundary

@@ -308,6 +308,31 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
         json.dumps(reviewer_settings.document(), sort_keys=True, separators=(",", ":")) + "\n"
     )
     repository = Path(intents.admissions.routing.planner.projects.list()[0]["repository"]["root"])
+    repository_state = repository / "reviewer-control-state"
+    repository_state.mkdir()
+    for name, source in stores.items():
+        shutil.copyfile(source, repository_state / name)
+    state_before = {name: (repository_state / name).read_bytes() for name in stores}
+    task_state_inside_repository = original_task | {"state_directory": str(repository_state)}
+    task_descriptor.write_text(
+        json.dumps(task_state_inside_repository, sort_keys=True, separators=(",", ":")) + "\n"
+    )
+    reviewer_state_inside_repository = reviewer_settings.document() | {
+        "state_directory": str(repository_state)
+    }
+    descriptor.write_text(
+        json.dumps(reviewer_state_inside_repository, sort_keys=True, separators=(",", ":")) + "\n"
+    )
+    with pytest.raises(RunError, match="REVIEWER_EXECUTION_STATE_IN_REPOSITORY"):
+        open_reviewer_execution_intents(control)
+    assert {name: (repository_state / name).read_bytes() for name in stores} == state_before
+
+    task_descriptor.write_text(
+        json.dumps(original_task, sort_keys=True, separators=(",", ":")) + "\n"
+    )
+    descriptor.write_text(
+        json.dumps(reviewer_settings.document(), sort_keys=True, separators=(",", ":")) + "\n"
+    )
     repository_host = repository / "reviewer-host-storage"
     repository_host.mkdir()
     RunnerHost(repository_host)
