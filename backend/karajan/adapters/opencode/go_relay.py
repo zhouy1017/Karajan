@@ -162,7 +162,9 @@ def _text_channels(
             _text_channels(item, channels, (*path, index))
 
 
-def _stream_facts(raw: bytes, secret: str) -> dict[str, Any]:
+def _stream_facts(
+    raw: bytes, secret: str, observed_usage: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Accept the single-choice Chat Completions stream used by this diagnostic."""
     if secret.encode() in raw:
         raise _Rejected("UPSTREAM_CREDENTIAL_ECHO")
@@ -177,7 +179,10 @@ def _stream_facts(raw: bytes, secret: str) -> dict[str, Any]:
     done = False
     cost: str | None = None
     finish: str | None = None
-    usage: dict[str, Any] = {}
+    # A malformed stream is still evidence that the upstream reported usage.
+    # Keep that allowlisted fact in the original receipt before any later
+    # framing/protocol rejection; it can neither refund nor authorize a send.
+    usage: dict[str, Any] = observed_usage if observed_usage is not None else {}
     names: dict[int, str] = {}
     null_name_fragments = 0
     channels: dict[tuple[str | int, ...], list[str]] = {}
@@ -576,6 +581,68 @@ class GoReviewerQualificationContext:
         return self.accounting.measure(payload, **limits)
 
 
+@dataclass(frozen=True)
+class GoCommanderQualificationContext:
+    """Fixed no-tools Commander probe accounting, never Planning authority.
+
+    The complete current tokenizer/accounting source is bound by its digest;
+    callers cannot substitute a nominal source boolean or looser limits.
+    """
+
+    accounting: GoRequestAccounting = field(repr=False)
+    source_sha256: str
+    probe_spec_digest: str
+    scenario: Literal["legal_plan", "denied_tool"]
+    approved_input_tokens: int
+    reserved_output_tokens: int
+    operating_context_tokens: int
+    fixed_margin: int
+    ratio_margin_basis_points: int
+
+    def __post_init__(self) -> None:
+        if (
+            type(self.probe_spec_digest) is not str
+            or re.fullmatch(r"[0-9a-f]{64}", self.probe_spec_digest) is None
+            or self.scenario not in ("legal_plan", "denied_tool")
+            or (
+                self.approved_input_tokens,
+                self.reserved_output_tokens,
+                self.operating_context_tokens,
+                self.fixed_margin,
+                self.ratio_margin_basis_points,
+            )
+            != (12_288, 4_096, 16_384, 2_048, 2_000)
+        ):
+            raise ValueError("COMMANDER_QUALIFICATION_CONTEXT_INVALID")
+        self.limits()
+
+    def limits(self) -> dict[str, Any]:
+        try:
+            return GoQualificationLimits.model_validate(
+                {
+                    "source_sha256": self.source_sha256,
+                    "approved_input_tokens": self.approved_input_tokens,
+                    "reserved_output_tokens": self.reserved_output_tokens,
+                    "operating_context_tokens": self.operating_context_tokens,
+                    "fixed_margin": self.fixed_margin,
+                    "ratio_margin_basis_points": self.ratio_margin_basis_points,
+                }
+            ).model_dump()
+        except ValidationError:
+            raise ValueError("COMMANDER_QUALIFICATION_CONTEXT_INVALID") from None
+
+    def measure(self, payload: dict[str, Any]) -> dict[str, Any]:
+        from karajan.routing.compiler import digest
+
+        from .go_context import GoContextError
+
+        if digest(self.accounting.source()) != self.source_sha256:
+            raise GoContextError("CONTEXT_SOURCE_CHANGED")
+        limits = self.limits()
+        del limits["source_sha256"]
+        return self.accounting.measure(payload, **limits)
+
+
 class GoRelay:
     """One local diagnostic, at most six validated upstream send attempts.
 
@@ -597,6 +664,7 @@ class GoRelay:
         context: GoRelayContext
         | GoQualificationContext
         | GoReviewerQualificationContext
+        | GoCommanderQualificationContext
         | GoPlanningRelayContext
         | GoReviewerRelayContext
         | None = None,
@@ -636,6 +704,31 @@ class GoRelay:
             if authorization is not None
             else None
         )
+        if (
+            self._authorization is not None
+            and self._authorization.binding.get("schema_version")
+            == "karajan.go-commander-qualification-grant.v1"
+        ):
+            # Reject a malformed controller assembly before exposing a local
+            # listener. The same comparisons are repeated at every send:
+            # accounting source can change after construction and a guard can
+            # be revoked between sends.
+            if not isinstance(context, GoCommanderQualificationContext) or not callable(send_guard):
+                raise ValueError("COMMANDER_QUALIFICATION_RELAY_INVALID")
+            try:
+                from karajan.routing.compiler import digest
+
+                context_matches = (
+                    digest(context.accounting.source()) == context.source_sha256
+                    and context.probe_spec_digest
+                    == self._authorization.binding.get("probe_spec_digest")
+                    and context.scenario == self._authorization.binding.get("scenario")
+                    and context.limits() == self._authorization.binding.get("context")
+                )
+            except Exception:
+                context_matches = False
+            if not context_matches:
+                raise ValueError("COMMANDER_QUALIFICATION_RELAY_INVALID")
 
     @property
     def capability(self) -> str:
@@ -904,25 +997,57 @@ class GoRelay:
                 not task_grant
                 and binding.get("schema_version") == "karajan.go-reviewer-qualification-grant.v1"
             )
+            commander_qualification = (
+                not task_grant
+                and binding.get("schema_version")
+                == "karajan.go-commander-qualification-grant.v1"
+            )
             planning_native = binding.get("schema_version") == "karajan.go-planning-native-grant.v1"
             reviewer_native = binding.get("schema_version") == "karajan.go-reviewer-native-grant.v1"
             business_native = planning_native or reviewer_native
             if task_grant and self._context is None:
                 raise _Rejected("TASK_CONTEXT_ACCOUNTING_REQUIRED", 403)
-            if (qualification_v2 or reviewer_qualification) and self._context is None:
+            if (
+                qualification_v2 or reviewer_qualification or commander_qualification
+            ) and self._context is None:
                 raise _Rejected("QUALIFICATION_CONTEXT_ACCOUNTING_REQUIRED", 403)
-            if business_native and self._send_guard is None:
+            if (business_native or commander_qualification) and self._send_guard is None:
                 raise _Rejected("TASK_SEND_GUARD_REJECTED", 403)
             if business_native and self._context is None:
                 raise _Rejected("TASK_CONTEXT_ACCOUNTING_REQUIRED", 403)
             if "schema_version" in binding and not (
-                qualification_v2 or reviewer_qualification or business_native
+                qualification_v2
+                or reviewer_qualification
+                or commander_qualification
+                or business_native
             ):
                 raise _Rejected("GO_JOURNAL_INPUT_INVALID", 403)
             if self._context is not None:
                 from .go_context import GoContextError
 
-                if isinstance(self._context, GoReviewerQualificationContext):
+                if isinstance(self._context, GoCommanderQualificationContext):
+                    if (
+                        not commander_qualification
+                        or self._context.probe_spec_digest != binding.get("probe_spec_digest")
+                        or self._context.scenario != binding.get("scenario")
+                        or self._context.limits() != binding.get("context")
+                    ):
+                        raise _Rejected("QUALIFICATION_CONTEXT_BINDING_MISMATCH", 403)
+                    # Fixed inline Commander planning has an explicit empty
+                    # declaration and no historic/native tool turns.  Thus no
+                    # shell, MCP, permission, or tool request can cross this
+                    # relay boundary under the qualification grant.
+                    if (
+                        payload.get("tools") != []
+                        or "tool_choice" in payload
+                        or "parallel_tool_calls" in payload
+                        or any(
+                            message.get("role") == "tool" or message.get("tool_calls")
+                            for message in payload["messages"]
+                        )
+                    ):
+                        raise _Rejected("UNAPPROVED_TOOL", 403)
+                elif isinstance(self._context, GoReviewerQualificationContext):
                     if (
                         not reviewer_qualification
                         or self._context.probe_spec_digest != binding.get("probe_spec_digest")
@@ -1063,10 +1188,10 @@ class GoRelay:
                         raise _Rejected("UPSTREAM_RESPONSE_TOO_LARGE")
                     content.extend(chunk)
                 receipt["upstream_response_complete"] = True
-                facts = _stream_facts(bytes(content), self._secret)
+                facts = _stream_facts(bytes(content), self._secret, receipt["usage"])
                 allowed_tools = (
                     frozenset()
-                    if planning_native
+                    if planning_native or commander_qualification
                     else frozenset({"read"})
                     if reviewer_qualification or reviewer_native
                     else _TOOLS
