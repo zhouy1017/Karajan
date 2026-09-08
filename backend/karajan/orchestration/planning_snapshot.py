@@ -15,7 +15,7 @@ from typing import Any
 
 from karajan.runs import RunError
 from karajan.runs.planning import digest, encoded
-from karajan.storage import open_database, require_schema
+from karajan.storage import ExistingStoreError, open_database, require_schema
 
 _NAME = "planning-repository-snapshots.sqlite"
 _MAX_FILES = 2_000
@@ -60,7 +60,6 @@ class PlanningRepositorySnapshotStore:
                     "CREATE TABLE IF NOT EXISTS snapshots "
                     "(binding_sha256 TEXT PRIMARY KEY, data TEXT NOT NULL)"
                 )
-                db.commit()
                 db.execute(
                     "CREATE TABLE IF NOT EXISTS blobs (binding_sha256 TEXT NOT NULL, "
                     "path TEXT NOT NULL, content BLOB NOT NULL, "
@@ -93,18 +92,48 @@ class PlanningRepositorySnapshotStore:
         return sorted(set(result))
 
     @staticmethod
-    def _git(root: Path, *args: str, binary: bool = False) -> bytes:
+    def _sha256(value: object) -> bool:
+        if not isinstance(value, str) or len(value) != 64:
+            return False
+        try:
+            int(value, 16)
+        except ValueError:
+            return False
+        return True
+
+    @staticmethod
+    def _git(root: Path, *args: str) -> bytes:
         env = {
             key: os.environ[key]
             for key in ("SystemRoot", "WINDIR", "PATH", "TEMP", "TMP")
             if key in os.environ
         }
         env.update(
-            {"GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull, "GIT_OPTIONAL_LOCKS": "0"}
+            {
+                "GIT_CONFIG_NOSYSTEM": "1",
+                "GIT_CONFIG_GLOBAL": os.devnull,
+                "GIT_NO_REPLACE_OBJECTS": "1",
+                "GIT_OPTIONAL_LOCKS": "0",
+                "GIT_TERMINAL_PROMPT": "0",
+            }
         )
         try:
             result = subprocess.run(
-                ["git", "-C", str(root), "-c", "core.hooksPath=" + os.devnull, *args],
+                [
+                    "git",
+                    "--no-replace-objects",
+                    "-C",
+                    str(root),
+                    "-c",
+                    "core.hooksPath=" + os.devnull,
+                    "-c",
+                    "core.fsmonitor=false",
+                    "-c",
+                    "credential.helper=",
+                    "-c",
+                    "protocol.allow=never",
+                    *args,
+                ],
                 capture_output=True,
                 timeout=10,
                 env=env,
@@ -182,6 +211,10 @@ class PlanningRepositorySnapshotStore:
                 {"path": p, "mode": m, "size": len(c), "sha256": hashlib.sha256(c).hexdigest()}
                 for p, m, c in rows
             ]
+            requirement_sha = binding.get("requirement_sha256")
+            authorization_sha = binding.get("authorization_ceiling_sha256")
+            if not self._sha256(requirement_sha) or not self._sha256(authorization_sha):
+                raise RunError("PLANNING_REPOSITORY_SOURCE_INVALID")
             result = {
                 "schema_version": "karajan.planning-repository-snapshot.v1",
                 "binding_sha256": binding_sha,
@@ -191,8 +224,8 @@ class PlanningRepositorySnapshotStore:
                 "repository_identity_sha256": repo["identity_sha256"],
                 "base_sha": repo["base_sha"],
                 "read_paths_sha256": digest(paths),
-                "requirement_sha256": binding["requirement_sha256"],
-                "authorization_ceiling_sha256": binding["authorization_ceiling_sha256"],
+                "requirement_sha256": requirement_sha,
+                "authorization_ceiling_sha256": authorization_sha,
                 "files": files,
                 "total_bytes": sum(len(c) for _, _, c in rows),
             }
@@ -206,33 +239,99 @@ class PlanningRepositorySnapshotStore:
 
     def read(self, binding: dict[str, Any]) -> dict[str, Any]:
         binding_sha = digest(binding)
-        with self._connect() as db:
-            row = db.execute(
-                "SELECT data FROM snapshots WHERE binding_sha256=?", (binding_sha,)
-            ).fetchone()
-            if row is None:
-                raise RunError("PLANNING_REPOSITORY_SNAPSHOT_NOT_FOUND")
-            result = json.loads(row[0])
+        try:
+            with self._connect() as db:
+                row = db.execute(
+                    "SELECT data FROM snapshots WHERE binding_sha256=?", (binding_sha,)
+                ).fetchone()
+                if row is None:
+                    raise RunError("PLANNING_REPOSITORY_SNAPSHOT_NOT_FOUND")
+                result = json.loads(row[0])
+                blobs = db.execute(
+                    "SELECT path,content FROM blobs WHERE binding_sha256=? ORDER BY path",
+                    (binding_sha,),
+                ).fetchall()
+        except ExistingStoreError:
+            raise RunError("PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE") from None
+        except sqlite3.Error:
+            raise RunError("PLANNING_REPOSITORY_SNAPSHOT_CHANGED") from None
+        try:
+            if not isinstance(result, dict) or set(result) != {
+                "schema_version",
+                "binding_sha256",
+                "execution_id",
+                "run_id",
+                "intent_id",
+                "repository_identity_sha256",
+                "base_sha",
+                "read_paths_sha256",
+                "requirement_sha256",
+                "authorization_ceiling_sha256",
+                "files",
+                "total_bytes",
+                "snapshot_sha256",
+            }:
+                raise ValueError
             if (
-                result.get("binding_sha256") != binding_sha
+                result["schema_version"] != "karajan.planning-repository-snapshot.v1"
+                or result["binding_sha256"] != binding_sha
                 or any(
-                    result.get(key) != binding.get(key)
+                    result[key] != binding.get(key)
                     for key in ("execution_id", "run_id", "intent_id")
                 )
-                or result.get("snapshot_sha256")
+                or result["requirement_sha256"] != binding.get("requirement_sha256")
+                or result["authorization_ceiling_sha256"]
+                != binding.get("authorization_ceiling_sha256")
+                or not all(
+                    self._sha256(result[key])
+                    for key in (
+                        "binding_sha256",
+                        "repository_identity_sha256",
+                        "read_paths_sha256",
+                        "requirement_sha256",
+                        "authorization_ceiling_sha256",
+                        "snapshot_sha256",
+                    )
+                )
+                or not isinstance(result["base_sha"], str)
+                or not isinstance(result["files"], list)
+                or not isinstance(result["total_bytes"], int)
+                or isinstance(result["total_bytes"], bool)
+                or result["total_bytes"] < 0
+                or result["snapshot_sha256"]
                 != digest({key: value for key, value in result.items() if key != "snapshot_sha256"})
             ):
                 raise RunError("PLANNING_REPOSITORY_SNAPSHOT_CHANGED")
-            blobs = db.execute(
-                "SELECT path,content FROM blobs WHERE binding_sha256=? ORDER BY path",
-                (binding_sha,),
-            ).fetchall()
-        expected = {item["path"]: item for item in result["files"]}
-        if len(blobs) != len(expected) or any(
-            item[0] not in expected
-            or hashlib.sha256(item[1]).hexdigest() != expected[item[0]]["sha256"]
-            or len(item[1]) != expected[item[0]]["size"]
-            for item in blobs
-        ):
-            raise RunError("PLANNING_REPOSITORY_SNAPSHOT_CHANGED")
+            expected: dict[str, dict[str, Any]] = {}
+            for item in result["files"]:
+                if (
+                    not isinstance(item, dict)
+                    or set(item) != {"path", "mode", "size", "sha256"}
+                    or not isinstance(item["path"], str)
+                    or item["path"] in expected
+                    or self._paths([item["path"]]) != [item["path"]]
+                    or item["mode"] not in {"100644", "100755"}
+                    or not isinstance(item["size"], int)
+                    or isinstance(item["size"], bool)
+                    or item["size"] < 0
+                    or not self._sha256(item["sha256"])
+                ):
+                    raise ValueError
+                expected[item["path"]] = item
+            if (
+                not expected
+                or sum(item["size"] for item in expected.values()) != result["total_bytes"]
+                or len(blobs) != len(expected)
+                or any(
+                    not isinstance(item[0], str)
+                    or not isinstance(item[1], bytes)
+                    or item[0] not in expected
+                    or hashlib.sha256(item[1]).hexdigest() != expected[item[0]]["sha256"]
+                    or len(item[1]) != expected[item[0]]["size"]
+                    for item in blobs
+                )
+            ):
+                raise ValueError
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+            raise RunError("PLANNING_REPOSITORY_SNAPSHOT_CHANGED") from None
         return {**result, "content": {path: bytes(content) for path, content in blobs}}
