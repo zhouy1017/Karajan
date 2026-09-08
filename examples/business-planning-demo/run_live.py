@@ -8,6 +8,7 @@ opens the credential file or contacts a provider.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import subprocess
 import sys
@@ -18,6 +19,10 @@ SCOPE = "commander_planning.v1"
 AUTH_REF = "secret:go-commander"
 SOURCE_ID = "opencode-go"
 SUITE_REF = {"id": "opencode-go-commander-planning-linux", "revision": 2}
+ACCOUNT_ID = "opencode-go"
+CHANNEL_ID = "opencode-go-channel"
+POOL_ID = "opencode-go-requests"
+POLICY_ID = "business-planning-demo"
 
 
 def _repo_root() -> Path:
@@ -119,6 +124,7 @@ def _configuration() -> dict[str, Any]:
     registration = configuration["resources"]["profiles"][0]
     profile = registration["profile"]
     registration["id"] = profile["id"] = "commander"
+    registration["model_family"] = "glm-5.3-flash"
     profile["auth_ref"] = AUTH_REF
     profile["required_permissions"] = []
     profile["binding"].update(
@@ -126,15 +132,191 @@ def _configuration() -> dict[str, Any]:
         runtime_version="1.18.29",
         model_id="glm-5.3-flash",
         auth_mode="api_key",
+        account_id=ACCOUNT_ID,
+        channel_id=CHANNEL_ID,
         native_settings={"suite_ref": SUITE_REF},
     )
-    configuration["resources"]["accounts"][0].update(provider_id=SOURCE_ID, secret_ref=AUTH_REF)
+    account = configuration["resources"]["accounts"][0]
+    account.update(id=ACCOUNT_ID, provider_id=SOURCE_ID, secret_ref=AUTH_REF)
+    configuration["resources"]["channels"][0].update(id=CHANNEL_ID, account_id=ACCOUNT_ID)
+    pool = configuration["resources"]["quota_pools"][0]
+    pool.update(
+        id=POOL_ID,
+        account_id=ACCOUNT_ID,
+        unit="requests",
+        limit=None,
+        observation_state="unknown",
+    )
+    registration["quota_pool_refs"] = [POOL_ID]
+    configuration["resources"]["capacity_policies"] = [
+        {
+            "account_id": ACCOUNT_ID,
+            "conservative_mode": {
+                "enabled": True,
+                "max_local_active_attempts": 1,
+                "max_attempt_duration_seconds": 300,
+                "observation_max_age_seconds": 600,
+                "cooldown_seconds": 60,
+            },
+        }
+    ]
+    # This demo is a planning-only surface.  Keep the rulebook finite and do
+    # not expose worker, review, or autonomous tool routes.
+    configuration["rulebook"]["profile_groups"] = {
+        "commander_qualified": [{"id": "commander", "revision": 1}]
+    }
+    configuration["rulebook"]["rules"] = [
+        {
+            "id": "lead-planning",
+            "priority": 100,
+            "when": {"role": "commander", "purpose": "lead"},
+            "eligible_groups": ["commander_qualified"],
+            "capabilities_all": ["design_reasoning", "structured_plan_output"],
+            "handoff": "explicit_checkpoint_record",
+            "reroute": "propose_checkpoint_handoff_require_user_decision",
+        }
+    ]
+    # These are owner configuration declarations.  They are intentionally
+    # unknown until the public #147 qualification produces current facts.
+    registration["capability_evidence"] = [
+        {
+            "capability": capability,
+            "status": "not_run",
+            "profile_digest": None,
+            "runtime_version": None,
+            "evidence_ref": None,
+            "provenance": None,
+        }
+        for capability in ("design_reasoning", "structured_plan_output")
+    ]
     configuration["approved_profile_refs"] = [{"id": "commander", "revision": 1}]
     configuration["rulebook"]["revision"] = 2
     for refs in configuration["rulebook"]["profile_groups"].values():
         for ref in refs:
             ref["id"] = "commander"
     return configuration
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _execution_policy(project: dict[str, Any], tokenizer_directory: Path) -> dict[str, Any]:
+    from karajan.adapters.opencode.go_context import GoRequestAccounting
+    from karajan.routing.compiler import digest
+
+    accounting = GoRequestAccounting(tokenizer_directory)
+    validation_source = _repo_root() / "tests" / "web" / "test_planning_demo_setup.py"
+    environment = {"id": "python-candidate", "revision": 1}
+    return {
+        "schema_version": "karajan.execution-policy.v2",
+        "id": POLICY_ID,
+        "revision": 1,
+        "configuration_digest": project["configuration"]["digest"],
+        "constraints": {
+            "profile_refs": [{"id": "commander", "revision": 1}],
+            "channel_ids": [CHANNEL_ID],
+            "tools": [],
+            "data_destinations": ["controller"],
+            "required_capabilities": ["design_reasoning", "structured_plan_output"],
+            "min_isolation": "tool_sandboxed",
+        },
+        "risk_policy": {
+            "id": "business-planning-risk",
+            "revision": 1,
+            "mapping": {"standard": "T1", "critical": "T3"},
+            "path_floors": [],
+        },
+        "channel_destinations": {CHANNEL_ID: "controller"},
+        "tool_policy": {"id": "no-autonomous-tools", "revision": 1, "tool_permissions": {}},
+        "context_policy": {
+            "id": "go-reference-context",
+            "revision": 1,
+            "input_accounting": "explicit_approved_upper_bound",
+            "reserved_output_tokens": 4096,
+            "measurement": {
+                "method": "reference_tokenizer_estimate",
+                "source_sha256": digest(accounting.source()),
+                "fixed_margin": 2048,
+                "ratio_margin_basis_points": 1000,
+            },
+        },
+        "max_context_tokens": 16384,
+        "validation": {
+            "id": "controlled-python-candidate",
+            "revision": 1,
+            "checks": [
+                {
+                    "id": "demo-tests",
+                    "revision": 1,
+                    "argv": ["python", "-m", "pytest", "tests/web/test_planning_demo_setup.py"],
+                    "environment_ref": environment,
+                    "timeout_seconds": 300,
+                }
+            ],
+            "environments": [
+                {
+                    **environment,
+                    "runtime_kind": "controlled-python-candidate",
+                    "platform": "windows_x64",
+                    "source_sha256": _sha256(validation_source),
+                    "filesystem": "candidate_copy",
+                    "network": "none",
+                    "env": {"PYTHONUTF8": "1"},
+                    "max_log_bytes": 262144,
+                }
+            ],
+            "review": {
+                "id": "independent_review",
+                "revision": 1,
+                "environment_ref": environment,
+                "context_policy": "candidate_and_acceptance_only",
+                "independence_policy": "existing_candidate_independence_v1",
+            },
+        },
+    }
+
+
+def _register_capacity(bootstrap: Any) -> dict[str, Any]:
+    from karajan.capacity import CapacityStore
+
+    capacity = CapacityStore(bootstrap.capacity_database, existing_only=True)
+    pool = capacity.register_pool(
+        {
+            "id": POOL_ID,
+            "account_id": ACCOUNT_ID,
+            "kind": "service",
+            "unit": "requests",
+            "window_kind": "unknown",
+        },
+        command_key="register-demo-capacity-pool",
+    )
+    profile = capacity.register_profile(
+        {"id": "commander", "revision": 1, "account_id": ACCOUNT_ID, "pool_ids": [POOL_ID]},
+        command_key="register-demo-capacity-profile",
+    )
+    policy = capacity.activate_policy(
+        {
+            "account_id": ACCOUNT_ID,
+            "max_active_attempts": 1,
+            "max_attempt_duration_seconds": 300,
+            "observation_max_age_seconds": 600,
+            "require_official_observation": False,
+            "safety_margin": {},
+            "lead_reserve": {},
+            "lead_reserved_slots": 0,
+            "conservative_mode": {
+                "enabled": True,
+                "max_local_active_attempts": 1,
+                "max_attempt_duration_seconds": 300,
+                "observation_max_age_seconds": 600,
+                "cooldown_seconds": 60,
+            },
+        },
+        expected_revision=0,
+        command_key="register-demo-capacity-policy",
+    )
+    return {"pool": pool, "profile": profile, "policy": policy, "observation": "unknown"}
 
 
 def _live(values: dict[str, Path], *, qualifier: Any | None = None) -> dict[str, Any]:
@@ -187,6 +369,14 @@ def _live(values: dict[str, Path], *, qualifier: Any | None = None) -> dict[str,
         principal="owner",
         command_key="apply-demo-config",
     )
+    project = projects.get(project["id"])
+    execution_policy = projects.register_execution_policy(
+        project["id"],
+        _execution_policy(project, values["tokenizer"].resolve()),
+        principal="owner",
+        command_key="register-demo-execution-policy",
+    )
+    capacity_registration = _register_capacity(bootstrap)
 
     private = root / "credential-private"
     control = planning_control
@@ -236,6 +426,19 @@ def _live(values: dict[str, Path], *, qualifier: Any | None = None) -> dict[str,
         "work_root": str(work_root),
         "secret_ref": AUTH_REF,
         "source": {"provider_id": SOURCE_ID, "profile_id": "commander", "revision": 1},
+        "execution_policy": {
+            "id": execution_policy["id"],
+            "revision": execution_policy["revision"],
+            "digest": execution_policy["digest"],
+            "schema_version": execution_policy["schema_version"],
+        },
+        "capacity": {
+            "account_id": ACCOUNT_ID,
+            "profile_id": "commander",
+            "pool_id": POOL_ID,
+            "policy_revision": capacity_registration["policy"]["revision"],
+            "observation": "unknown",
+        },
         "credential_generation": generation.get("generation"),
         "start": {
             "id": start.get("id"),
