@@ -37,9 +37,11 @@ class LocalTransport:
         self.capability = uuid.uuid4().hex
         self.receipts: list[dict[str, Any]] = []
         self.requests: list[dict[str, Any]] = []
+        self.timeout_lifecycle: dict[str, Any] = {}
         self.tool_output_observed = False
         self.streaming = threading.Event()
         self.stopping = threading.Event()
+        self.timeout_header_release = threading.Event()
         self._lock = threading.Lock()
         self.provider = ThreadingHTTPServer(("127.0.0.1", 0), self._provider_handler())
         self.broker = ThreadingHTTPServer(("127.0.0.1", 0), self._broker_handler())
@@ -57,6 +59,7 @@ class LocalTransport:
 
     def close(self) -> None:
         self.stopping.set()
+        self.timeout_header_release.set()
         for server in (self.broker, self.provider):
             server.shutdown()
             server.server_close()
@@ -88,8 +91,24 @@ class LocalTransport:
                     self.connection.shutdown(socket.SHUT_RDWR)
                     self.close_connection = True
                     return
-                if fault == "timeout_once":
-                    time.sleep(1.5)
+                if fault in {"timeout_once", "header_timeout_once"}:
+                    transport.timeout_lifecycle["provider_header_wait"] = "started"
+                    started = time.monotonic()
+                    released = transport.timeout_header_release.wait(timeout=5)
+                    observation["header_wait_seconds"] = time.monotonic() - started
+                    if released:
+                        transport.timeout_lifecycle["provider_release"] = (
+                            "after_native_error_cleanup"
+                            if fault == "timeout_once"
+                            and transport.timeout_lifecycle.get("native_terminal")
+                            == "session.error"
+                            else "after_native_retry"
+                            if fault == "header_timeout_once"
+                            and transport.timeout_lifecycle.get("native_retry") == "session.status"
+                            else "cleanup_without_native_terminal"
+                        )
+                    else:
+                        transport.timeout_lifecycle["provider_release"] = "safety_deadline"
                     observation["response_status"] = None
                     self.close_connection = True
                     return

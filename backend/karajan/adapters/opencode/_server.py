@@ -110,6 +110,9 @@ class OfficialServer:
                 "HTTP_PROXY": "http://127.0.0.1:1",
                 "HTTPS_PROXY": "http://127.0.0.1:1",
                 "NO_PROXY": "127.0.0.1,localhost",
+                "http_proxy": "http://127.0.0.1:1",
+                "https_proxy": "http://127.0.0.1:1",
+                "no_proxy": "127.0.0.1,localhost",
             }
         )
         for flag in (
