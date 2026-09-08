@@ -8,8 +8,12 @@ import os
 import stat
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING, cast
 
 from karajan.runs import RunError
+
+if TYPE_CHECKING:
+    from .reviewer_execution_intent import ReviewerExecutionIntents
 
 _NAME = "reviewer-execution-bootstrap.json"
 _SCHEMA = "karajan.reviewer-execution-bootstrap.v1"
@@ -108,3 +112,128 @@ def open_existing_reviewer_execution_bootstrap(
         return settings, hashlib.sha256(raw).hexdigest()
     except (OSError, ValueError, TypeError, json.JSONDecodeError):
         raise RunError("REVIEWER_EXECUTION_BOOTSTRAP_INVALID") from None
+
+
+def open_reviewer_execution_intents(control_directory: Path) -> ReviewerExecutionIntents:
+    """Open the fixed Reviewer execution facade from provisioned controller state.
+
+    This deliberately has no run, principal, profile, argv, or source arguments.
+    It is a reader/composer: every store must already exist and it never starts a
+    Host process.  The Go-task deployment descriptor is the second, fixed seal
+    for the shared controller stores and executable provenance.
+    """
+    # Imports stay here to keep the descriptor reader usable during bootstrap
+    # diagnostics without opening qualification assets.
+    from karajan.adapters.opencode.go_context import GoRequestAccounting
+    from karajan.candidates import CandidateStore
+    from karajan.capacity import CapacityStore
+    from karajan.execution import ProcessSpec, RunnerHost
+    from karajan.projects import ProjectRegistry
+    from karajan.runs import RunPlanner
+
+    from .admission import ApprovedTaskAdmission
+    from .go_task_runtime import _plain, _read_bootstrap
+    from .qualification_services import GoQualificationSettings, open_go_qualification_store
+    from .reviewer_binding import ApprovedReviewerBindings
+    from .reviewer_execution_intent import (
+        ReviewerExecutionIntents,
+        ReviewerExecutionSource,
+        ReviewerLaunchSpec,
+    )
+    from .routing import ApprovedRunRouting
+
+    reviewer, reviewer_digest = open_existing_reviewer_execution_bootstrap(control_directory)
+    task, task_digest = _read_bootstrap(control_directory)
+    if (
+        task.control_directory != reviewer.control_directory
+        or task.state_directory != reviewer.state_directory
+        or task.candidate_directory != reviewer.candidate_directory
+        or task.host_directory != reviewer.host_directory
+    ):
+        raise RunError("REVIEWER_EXECUTION_BOOTSTRAP_MISMATCH")
+    # A current qualification composition is intentionally real, but only
+    # constructs existing sealed stores.  It does not qualify, call a provider,
+    # or turn any test fixture into an official qualification.
+    for path in (reviewer.state_directory, reviewer.candidate_directory, reviewer.host_directory):
+        _plain(path, directory=True)
+    for name in ("projects.sqlite", "runs.sqlite", "capacity.sqlite", "task-admissions.sqlite"):
+        _plain(reviewer.state_directory / name)
+    _plain(reviewer.host_directory / "runnerhost.sqlite3")
+    projects = ProjectRegistry(
+        reviewer.state_directory / "projects.sqlite", task.allowed_roots, existing_only=True
+    )
+    planner = RunPlanner(reviewer.state_directory / "runs.sqlite", projects, existing_only=True)
+    capacity = CapacityStore(reviewer.state_directory / "capacity.sqlite", existing_only=True)
+    qualification = GoQualificationSettings(
+        task.runtime,
+        task.tokenizer_directory,
+        task.journal_path,
+        task.qualification_work_root,
+        task.qualification_work_root,
+        task.credential_private_directory,
+        task.credential_sources,
+    )
+    qualifications = open_go_qualification_store(projects, qualification, for_current=True)
+    routing = ApprovedRunRouting(planner, qualifications, capacity)
+    admissions = ApprovedTaskAdmission(
+        reviewer.state_directory / "task-admissions.sqlite", routing, existing_only=True
+    )
+    candidates = CandidateStore(reviewer.candidate_directory, existing_only=True)
+    host = RunnerHost(reviewer.host_directory, existing_only=True)
+    ApprovedReviewerBindings(admissions, candidates, qualifications)
+
+    def current_source() -> ReviewerExecutionSource:
+        """Bind the fixed deployment and this exact non-native child entry."""
+        accounting = GoRequestAccounting(task.tokenizer_directory)
+        # deployment_source performs the fixed bootstrap/platform/interpreter
+        # checks.  Hashing this source file prevents a changed child from
+        # inheriting a previously prepared identity.
+        from karajan.isolation.go_probe import source_digest
+
+        from .go_task_runtime import deployment_source
+
+        deployment = deployment_source(task, accounting)
+        entry = Path(__file__).with_name("reviewer_execution_runner.py").resolve()
+        _plain(entry)
+        envelope = {
+            "schema_version": "karajan.reviewer-execution-runner-source.v1",
+            "deployment": deployment,
+            "reviewer_bootstrap_sha256": reviewer_digest,
+            "task_bootstrap_sha256": task_digest,
+            "entry_path": str(entry),
+            "entry_sha256": hashlib.sha256(entry.read_bytes()).hexdigest(),
+            "transport": "fixed_reviewer_observer_no_native",
+        }
+        return ReviewerExecutionSource(source_digest(envelope), source_digest(deployment))
+
+    def launch(intent: dict[str, object]) -> ReviewerLaunchSpec:
+        current_source()
+        values = tuple(intent[key] for key in ("run_id", "reviewer_operation_id", "principal"))
+        if not all(isinstance(value, str) for value in values):
+            raise RunError("REVIEWER_EXECUTION_LAUNCH_INVALID")
+        run_id, reviewer_operation_id, principal = (cast(str, value) for value in values)
+        return ReviewerLaunchSpec(
+            ProcessSpec(
+                (
+                    str(task.python_executable),
+                    "-I",
+                    str(Path(__file__).with_name("reviewer_execution_runner.py").resolve()),
+                    run_id,
+                    reviewer_operation_id,
+                    principal,
+                ),
+                reviewer.control_directory,
+            ),
+            task_digest,
+        )
+
+    return ReviewerExecutionIntents(
+        reviewer.execution_database,
+        admissions,
+        candidates,
+        source=current_source(),
+        host=host,
+        launch_compiler=launch,
+        current_source=current_source,
+        existing_only=True,
+    )

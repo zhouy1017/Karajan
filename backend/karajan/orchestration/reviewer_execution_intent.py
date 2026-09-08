@@ -54,10 +54,12 @@ class ReviewerExecutionIntents:
         source: ReviewerExecutionSource,
         host: RunnerHost,
         launch_compiler: Callable[[dict[str, Any]], ReviewerLaunchSpec],
+        current_source: Callable[[], ReviewerExecutionSource] | None = None,
         existing_only: bool = False,
     ) -> None:
         self.database, self.admissions, self.candidates = Path(database), admissions, candidates
         self.source, self.host, self.launch_compiler = source, host, launch_compiler
+        self.current_source = current_source
         self.existing_only = existing_only
         if existing_only and not self.database.is_file():
             raise RunError("REVIEWER_EXECUTION_LEDGER_MISSING")
@@ -224,6 +226,8 @@ class ReviewerExecutionIntents:
 
     @contextmanager
     def _current_guard(self, value: dict[str, Any]) -> Iterator[None]:
+        if self.current_source is not None and self.current_source() != self.source:
+            raise RunError("REVIEWER_EXECUTION_SOURCE_CHANGED")
         binding, compiled = self._compiled(
             value["run_id"], value["reviewer_operation_id"], value["principal"]
         )
