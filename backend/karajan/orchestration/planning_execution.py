@@ -660,7 +660,13 @@ class PlanningExecution:
         self.get(execution_id, principal=principal)
         authority = self.admissions
         advance = None if authority is None else getattr(authority, "advance", None)
-        if not callable(advance) or id(authority) not in self._trusted_authority_ids:
+        fixture_allowed = (
+            getattr(authority, "authority_kind", None) == "fixture"
+            and self.allow_fixture_authorities
+        )
+        if not callable(advance) or not (
+            id(authority) in self._trusted_authority_ids or fixture_allowed
+        ):
             return self._blocked(
                 execution_id, principal, "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE"
             )

@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import secrets
 import sqlite3
 import time
 from collections.abc import Callable, Iterator
@@ -27,7 +26,7 @@ from karajan.adapters.opencode.go_context import GoRequestAccounting
 from karajan.adapters.opencode.go_journal import GoCallJournal
 from karajan.adapters.opencode.go_relay import GoPlanningRelayContext, GoRelay, GoRelayAuthorization
 from karajan.runs import RunError
-from karajan.runs.planning import digest, encoded, identifier
+from karajan.runs.planning import digest, identifier
 
 from .planning_execution import PlanningExecution
 from .planning_input import PlanningModelInput, compile_planning_input
@@ -61,12 +60,14 @@ class PlanningOutputStore:
         with self._transaction() as db:
             db.execute(
                 "CREATE TABLE IF NOT EXISTS planning_output_sources ("
-                "execution_id TEXT PRIMARY KEY, binding_sha256 TEXT NOT NULL, source_sha256 TEXT NOT NULL)"
+                "execution_id TEXT PRIMARY KEY, binding_sha256 TEXT NOT NULL, "
+                "source_sha256 TEXT NOT NULL)"
             )
             db.execute(
                 "CREATE TABLE IF NOT EXISTS planning_outputs ("
-                "execution_id TEXT PRIMARY KEY, binding_sha256 TEXT NOT NULL, source_sha256 TEXT NOT NULL, "
-                "content BLOB NOT NULL, content_sha256 TEXT NOT NULL)"
+                "execution_id TEXT PRIMARY KEY, binding_sha256 TEXT NOT NULL, "
+                "source_sha256 TEXT NOT NULL, content BLOB NOT NULL, "
+                "content_sha256 TEXT NOT NULL)"
             )
 
     @contextmanager
@@ -96,7 +97,8 @@ class PlanningOutputStore:
         source_sha256 = digest(source)
         with self._transaction() as db:
             row = db.execute(
-                "SELECT binding_sha256,source_sha256 FROM planning_output_sources WHERE execution_id=?",
+                "SELECT binding_sha256,source_sha256 FROM planning_output_sources "
+                "WHERE execution_id=?",
                 (execution_id,),
             ).fetchone()
             if row is None:
@@ -114,21 +116,23 @@ class PlanningOutputStore:
             raise RunError("PLANNING_OUTPUT_INVALID")
         with self._transaction() as db:
             source = db.execute(
-                "SELECT binding_sha256,source_sha256 FROM planning_output_sources WHERE execution_id=?",
+                "SELECT binding_sha256,source_sha256 FROM planning_output_sources "
+                "WHERE execution_id=?",
                 (execution_id,),
             ).fetchone()
             if source is None or source[0] != binding_sha256:
                 raise RunError("PLANNING_OUTPUT_SOURCE_UNAVAILABLE")
             content_sha256 = hashlib.sha256(content).hexdigest()
             row = db.execute(
-                "SELECT binding_sha256,source_sha256,content_sha256 FROM planning_outputs WHERE execution_id=?",
+                "SELECT binding_sha256,source_sha256,content_sha256 FROM planning_outputs "
+                "WHERE execution_id=?",
                 (execution_id,),
             ).fetchone()
             expected = (binding_sha256, source[1], content_sha256)
             if row is None:
                 db.execute(
                     "INSERT INTO planning_outputs VALUES (?,?,?,?,?)",
-                    (execution_id, *expected, content),
+                    (execution_id, binding_sha256, source[1], content, content_sha256),
                 )
             elif tuple(row) != expected:
                 raise RunError("PLANNING_OUTPUT_EVIDENCE_CHANGED")
@@ -138,7 +142,8 @@ class PlanningOutputStore:
         execution_id, binding_sha256 = self._binding(binding)
         with sqlite3.connect(self.database) as db:
             row = db.execute(
-                "SELECT binding_sha256,source_sha256 FROM planning_output_sources WHERE execution_id=?",
+                "SELECT binding_sha256,source_sha256 FROM planning_output_sources "
+                "WHERE execution_id=?",
                 (execution_id,),
             ).fetchone()
         if row is None or row[0] != binding_sha256:
@@ -231,11 +236,12 @@ class FixtureGoPlanningProducer:
     def __init__(
         self,
         journal: GoCallJournal,
+        accounting: GoRequestAccounting,
         *,
         upstream: Callable[[httpx.Request], httpx.Response],
         now: Callable[[], float] = time.time,
     ) -> None:
-        self.journal, self.upstream, self.now = journal, upstream, now
+        self.journal, self.accounting, self.upstream, self.now = journal, accounting, upstream, now
 
     def source(self, binding: dict[str, Any]) -> dict[str, Any]:
         return {
@@ -260,7 +266,9 @@ class FixtureGoPlanningProducer:
         maximum = policy.get("max_context_tokens")
         if type(reserved) is not int or type(maximum) is not int:
             raise RunError("PLANNING_INPUT_POLICY_UNSUPPORTED")
-        source_sha256 = digest(self._accounting_source(model_input))
+        if self.accounting.source() != model_input.accounting_source:
+            raise RunError("PLANNING_ACCOUNTING_SOURCE_CHANGED")
+        source_sha256 = digest(model_input.accounting_source)
         grant_binding = {
             "schema_version": "karajan.go-planning-native-grant.v1",
             "attempt_id": binding["attempt_id"],
@@ -296,7 +304,7 @@ class FixtureGoPlanningProducer:
         grant_id = "planning-" + binding["execution_id"]
         grant = self.journal.create_grant(grant_binding, grant_id=grant_id)
         context = GoPlanningRelayContext(
-            accounting=self._accounting(model_input),
+            accounting=self.accounting,
             **grant_binding["context"],
             planning_binding_sha256=grant_binding["planning_binding_sha256"],
             admission_sha256=grant_binding["admission_sha256"],
@@ -331,23 +339,6 @@ class FixtureGoPlanningProducer:
         finally:
             relay.close()
 
-    @staticmethod
-    def _accounting_source(model_input: PlanningModelInput) -> dict[str, Any]:
-        source = model_input.accounting_source
-        if not isinstance(source, dict):
-            raise RunError("PLANNING_INPUT_INVALID")
-        return source
-
-    @staticmethod
-    def _accounting(model_input: PlanningModelInput) -> GoRequestAccounting:
-        # The source was created by the same compiler-owned accounting object;
-        # the fixture constructor passes that object through an internal marker.
-        accounting = getattr(model_input, "_fixture_accounting", None)
-        if not isinstance(accounting, GoRequestAccounting):
-            raise RunError("PLANNING_FIXTURE_ACCOUNTING_UNAVAILABLE")
-        return accounting
-
-
 @contextmanager
 def _allowed() -> Iterator[None]:
     yield
@@ -359,7 +350,11 @@ def _sse_content(raw: bytes) -> bytes:
         text = raw.decode("utf-8")
         pieces: list[str] = []
         for event in text.replace("\r\n", "\n").split("\n\n"):
-            data = [line[5:].removeprefix(" ") for line in event.split("\n") if line.startswith("data:")]
+            data = [
+                line[5:].removeprefix(" ")
+                for line in event.split("\n")
+                if line.startswith("data:")
+            ]
             if not data or "\n".join(data) == "[DONE]":
                 continue
             value = json.loads("\n".join(data))

@@ -16,6 +16,7 @@ from fastapi import FastAPI, Request
 from pydantic import BaseModel, ConfigDict
 
 from karajan.orchestration.planning_execution import PlanningExecution
+from karajan.orchestration.planning_transport import PlanningTransport
 from karajan.runs import RunError, RunPlanner
 from karajan.runs.planning import identifier
 
@@ -28,13 +29,25 @@ class PlanningStartInput(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
 
+class PlanningExecuteInput(BaseModel):
+    """The browser can request execution but cannot select its inputs."""
+
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+
 class PlanningWorkbench:
     """Persist one owner request before using the Commander and execution ledgers."""
 
-    def __init__(self, database: Path, planner: RunPlanner, execution: PlanningExecution) -> None:
+    def __init__(
+        self,
+        database: Path,
+        planner: RunPlanner,
+        execution: PlanningExecution,
+        transport: PlanningTransport | None = None,
+    ) -> None:
         self.database = database
         self.planner = planner
-        self.execution = execution
+        self.execution, self.transport = execution, transport
         self.database.parent.mkdir(parents=True, exist_ok=True)
         with self._transaction() as db:
             db.execute(
@@ -229,6 +242,17 @@ class PlanningWorkbench:
         record = self._save(record, execution_id=execution["id"])
         return self._project(self.planner.get(run_id, principal=principal), record)
 
+    def execute(self, run_id: str, *, principal: str, command_key: str) -> dict[str, Any]:
+        """Recover one original identity, then advance only its fixed transport."""
+        started = self.start(run_id, principal=principal, command_key=command_key)
+        planning = started["planning"]
+        if planning is None or planning["execution"] is None or self.transport is None:
+            return started
+        self.transport.execute(
+            planning["execution"]["id"], principal=principal, command_key=command_key
+        )
+        return self.read(run_id, principal=principal)
+
 
 def register_planning_routes(app: FastAPI, workbench: PlanningWorkbench) -> None:
     @app.get("/v1/runs/{run_id}/planning")
@@ -239,3 +263,10 @@ def register_planning_routes(app: FastAPI, workbench: PlanningWorkbench) -> None
     def start_planning(run_id: str, request: Request, data: PlanningStartInput) -> dict[str, Any]:
         del data
         return workbench.start(run_id, principal="owner", command_key=command_key(request))
+
+    @app.post("/v1/runs/{run_id}/planning-execute")
+    def execute_planning(
+        run_id: str, request: Request, data: PlanningExecuteInput
+    ) -> dict[str, Any]:
+        del data
+        return workbench.execute(run_id, principal="owner", command_key=command_key(request))

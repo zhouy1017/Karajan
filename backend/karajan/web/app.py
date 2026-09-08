@@ -19,6 +19,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from karajan.capacity import CapacityStore
 from karajan.orchestration.admission import ApprovedTaskAdmission
 from karajan.orchestration.planning_execution import PlanningExecution
+from karajan.orchestration.planning_transport import PlanningTransport
 from karajan.orchestration.routing import ApprovedRunRouting
 from karajan.projects import ProjectRegistry
 from karajan.projects.qualification import ProfileQualificationStore
@@ -121,6 +122,8 @@ def create_app(
     bootstrap_token: str,
     allowed_roots: Sequence[Path] = (),
     frontend_directory: Path | None = None,
+    planning_execution: PlanningExecution | None = None,
+    planning_transport: PlanningTransport | None = None,
 ) -> FastAPI:
     BootstrapInput(token=bootstrap_token)
     parsed_origin = urlsplit(origin)
@@ -145,10 +148,15 @@ def create_app(
     planner = RunPlanner(state_directory / "runs.sqlite", projects)
     capacity = CapacityStore(state_directory / "capacity.sqlite")
     register_run_routes(app, planner)
+    execution = planning_execution or PlanningExecution(
+        state_directory / "planning-execution.sqlite", planner
+    )
+    if execution.planner is not planner:
+        raise ValueError("Planning execution must use this application's Run planner")
+    if planning_transport is not None and planning_transport.execution is not execution:
+        raise ValueError("Planning transport must use this application's execution controller")
     planning = PlanningWorkbench(
-        state_directory / "workbench-planning.sqlite",
-        planner,
-        PlanningExecution(state_directory / "planning-execution.sqlite", planner),
+        state_directory / "workbench-planning.sqlite", planner, execution, planning_transport
     )
     register_planning_routes(app, planning)
     register_resource_routes(app, capacity)
