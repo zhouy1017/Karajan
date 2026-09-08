@@ -161,7 +161,10 @@ def _live(values: dict[str, Path], *, qualifier: Any | None = None) -> dict[str,
     from karajan.projects import ProjectRegistry
     from karajan.projects.credential_sources import CredentialSourceStore, LocalKeyFile
 
-    projects = ProjectRegistry(root / "projects.sqlite", [root])
+    planning_control = (root / "control").absolute()
+    planning_state = (root / "planning-state").absolute()
+    bootstrap = provision_planning_bootstrap(planning_control, planning_state, (repository,))
+    projects = ProjectRegistry(bootstrap.projects_database, bootstrap.allowed_roots)
     project = projects.create(
         {
             "name": "#153 Commander planning demo",
@@ -186,14 +189,10 @@ def _live(values: dict[str, Path], *, qualifier: Any | None = None) -> dict[str,
     )
 
     private = root / "credential-private"
-    control = (root / "control").absolute()
-    planning_control = (root / "planning-control").absolute()
-    planning_state = (root / "planning-state").absolute()
-    provision_planning_bootstrap(planning_control, planning_state, (repository,))
+    control = planning_control
     journal_path = root / "commander-journal.sqlite"
     work_root = root / "commander-work"
-    for directory in (control, work_root):
-        directory.mkdir(mode=0o700)
+    work_root.mkdir(mode=0o700)
     journal_path.touch(mode=0o600)
     settings = CommanderQualificationSettings(
         values["runtime"].resolve(),

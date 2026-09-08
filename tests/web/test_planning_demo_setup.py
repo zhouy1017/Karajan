@@ -69,6 +69,7 @@ def test_live_setup_reaches_qualification_boundary_without_provider(tmp_path: Pa
         assert kwargs["principal"] == "owner"
         assert kwargs["validity_seconds"] == 3600
         assert store.commander_suite is not None
+        assert store.projects.database == state / "planning-state" / "projects.sqlite"
         raise StopBeforeProvider
 
     values = {
@@ -88,9 +89,9 @@ def test_live_setup_reaches_qualification_boundary_without_provider(tmp_path: Pa
     assert (repository / "greeting.py").read_bytes() == (
         b'def greet(name: str) -> str:\n    return f"Hello, {name}!"\n'
     )
-    assert (state / "projects.sqlite").is_file()
+    assert (state / "planning-state" / "projects.sqlite").is_file()
     assert (state / "control" / "commander-qualification-source.v2.json").is_file()
-    assert (state / "planning-control" / "planning-admission-bootstrap.json").is_file()
+    assert (state / "control" / "planning-admission-bootstrap.json").is_file()
     assert (state / "planning-state" / "projects.sqlite").is_file()
     assert (state / "planning-state" / "planning-admission.sqlite").is_file()
     assert (state / "commander-journal.sqlite").is_file()
