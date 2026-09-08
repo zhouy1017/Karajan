@@ -1,13 +1,22 @@
 """Business Relay grants stay distinct from legacy and qualification records."""
 
 import os
+from contextlib import contextmanager
 from pathlib import Path
 
+import httpx
 import pytest
 from karajan.adapters.opencode.go_context import GoRequestAccounting
 from karajan.adapters.opencode.go_journal import GoCallJournal, GoJournalError
+from karajan.adapters.opencode.go_relay import (
+    GoPlanningRelayContext,
+    GoRelay,
+    GoRelayAuthorization,
+    GoReviewerRelayContext,
+)
 from karajan.routing.compiler import digest
-from test_go_context import measure, payload
+from test_go_context import measure
+from test_go_relay import CANARY, SECRET, answer, event, payload, post, stream
 
 
 @pytest.fixture(scope="module")
@@ -95,15 +104,24 @@ def test_business_bindings_are_durable_and_context_bound(tmp_path, accounting, f
     journal = GoCallJournal(tmp_path / "journal.sqlite", clock=lambda: 1000.0)
     created = journal.create_grant(binding, grant_id="grant")
     call = journal.begin_call(
-        "grant", "relay-owned-call", capability=created["capability"], binding=binding,
+        "grant",
+        "relay-owned-call",
+        capability=created["capability"],
+        binding=binding,
         request_context=_measurement(accounting, binding),
     )
     assert call["send_allowed"] is True
     assert journal.snapshot("grant")["calls"][0]["state"] == "send_unknown"
-    assert journal.begin_call(
-        "grant", "relay-owned-call", capability=created["capability"], binding=binding,
-        request_context=_measurement(accounting, binding),
-    )["send_allowed"] is False
+    assert (
+        journal.begin_call(
+            "grant",
+            "relay-owned-call",
+            capability=created["capability"],
+            binding=binding,
+            request_context=_measurement(accounting, binding),
+        )["send_allowed"]
+        is False
+    )
 
 
 def test_business_context_tamper_is_pre_send_and_legacy_is_readable(tmp_path, accounting):
@@ -121,3 +139,57 @@ def test_business_context_tamper_is_pre_send_and_legacy_is_readable(tmp_path, ac
     old = journal.create_grant(legacy, grant_id="old")
     result = journal.authenticate_grant("old", capability=old["capability"], binding=legacy)
     assert result["binding"] == legacy
+
+
+@pytest.mark.parametrize(
+    "factory, context_type",
+    [(_planning, GoPlanningRelayContext), (_reviewer, GoReviewerRelayContext)],
+)
+def test_business_grant_uses_relay_journal_and_actual_accounting(
+    tmp_path, accounting, factory, context_type
+):
+    source = digest(accounting.source())
+    binding = factory(source)
+    journal = GoCallJournal(tmp_path / "journal.sqlite", clock=lambda: 1000.0)
+    grant = journal.create_grant(binding, grant_id="grant")
+    upstream = []
+    fields = {
+        key: binding[key]
+        for key in (
+            ("planning_binding_sha256", "admission_sha256", "input_sha256")
+            if context_type is GoPlanningRelayContext
+            else ("review_binding_sha256", "reviewer_input_sha256", "candidate_checks_sha256")
+        )
+    }
+    context = context_type(accounting=accounting, **binding["context"], **fields)
+
+    def receive(request):
+        snapshot = journal.snapshot("grant")
+        assert snapshot["request_count"] == 1
+        assert snapshot["calls"][0]["state"] == "send_unknown"
+        assert snapshot["calls"][0]["request_context"]["source_sha256"] == source
+        upstream.append(request)
+        return answer(stream(event(usage={"prompt_tokens": 20, "completion_tokens": 2})))
+
+    relay = GoRelay(
+        SECRET,
+        CANARY,
+        context=context,
+        authorization=GoRelayAuthorization(journal, "grant", binding, grant["capability"]),
+        send_guard=lambda: _allowed(),
+        client_factory=lambda: httpx.Client(
+            transport=httpx.MockTransport(receive), trust_env=False
+        ),
+    )
+    relay.start()
+    try:
+        assert post(relay).status_code == 200, relay.receipts
+    finally:
+        relay.close()
+    assert len(upstream) == 1
+    assert journal.snapshot("grant")["calls"][0]["state"] == "response_received"
+
+
+@contextmanager
+def _allowed():
+    yield
