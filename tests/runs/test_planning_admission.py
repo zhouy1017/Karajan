@@ -49,7 +49,7 @@ from karajan.projects.qualification import ProfileQualificationStore
 from karajan.runs import RunError, RunPlanner
 from karajan.runs.planning import digest
 from test_planning import create_request
-from test_routing_authorization import policy_request, request_v2
+from test_routing_authorization import policy_request, request_v2, submit_request
 
 pytest_plugins = ["test_planning"]
 
@@ -1236,13 +1236,88 @@ def test_persistent_factory_missing_descriptor_rejects_without_creating_stores(
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
-def test_persistent_factory_requires_provisioned_snapshot_ledger(
+def test_persistent_factory_keeps_historical_execution_readable_without_snapshot_ledger(
+    configured: dict, tmp_path: Path
+) -> None:
+    _, authority, _, execution = _case(tmp_path, configured)
+    control = _protected_factory_control(tmp_path, authority)
+    state = tmp_path / "protected-state"
+    ledger = snapshot_database(control)
+    artifacts = state / "planning-repository-snapshot-blobs"
+    service = PlanningExecution.from_trusted_factory(control)
+    assert service.snapshots is None
+    assert service.get(execution["id"], principal="owner")["id"] == execution["id"]
+    for operation in (
+        lambda: service.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="freeze"
+        ),
+        lambda: service.read_repository_snapshot(execution["id"], principal="owner"),
+    ):
+        with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE$"):
+            operation()
+    assert not ledger.exists()
+    assert not artifacts.exists()
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
+def test_persistent_factory_recovers_committed_submission_without_snapshot_ledger(
+    configured: dict, tmp_path: Path
+) -> None:
+    service, authority, run, execution = _case(tmp_path, configured)
+    persisted_run = service.planner.get(run["id"], principal="owner")
+    intent = next(
+        item for item in persisted_run["planning_intents"] if item["id"] == execution["intent_id"]
+    )
+    request = {"run_id": run["id"], **submit_request(persisted_run, intent)}
+    command_key = "planning-execution-submit:" + execution["id"]
+    receipt = service.planner._submit_planning_execution_plan(
+        run["id"],
+        execution["intent_id"],
+        request,
+        execution_id=execution["id"],
+        binding_sha256=execution["binding_sha256"],
+        principal="owner",
+        command_key=command_key,
+    )
+    with service._transaction() as db:
+        pending = service._load(db, execution["id"])
+        pending.update(
+            {
+                "state": "submit_claimed",
+                "submission_request": request,
+                "submission_command_key": command_key,
+                "submission_principal": "lead",
+                "submission_started": True,
+            }
+        )
+        service._save(db, pending)
+    control = _protected_factory_control(tmp_path, authority)
+    state = tmp_path / "protected-state"
+    ledger = snapshot_database(control)
+    artifacts = state / "planning-repository-snapshot-blobs"
+    before_capacity = authority.capacity.snapshot()
+    before_plans = service.planner.get(run["id"], principal="owner")["plans"]
+
+    reopened = PlanningExecution.from_trusted_factory(control)
+    assert reopened.snapshots is None
+    recovered = reopened.submit(execution["id"], principal="owner", command_key="recover")
+
+    assert recovered["state"] == "submitted"
+    assert recovered["submission"] == receipt
+    assert reopened.get(execution["id"], principal="owner")["submission"] == receipt
+    assert reopened.capacity is not None
+    assert reopened.capacity.snapshot() == before_capacity
+    assert reopened.planner.get(run["id"], principal="owner")["plans"] == before_plans == [receipt]
+    assert not ledger.exists()
+    assert not artifacts.exists()
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
+def test_persistent_factory_opens_a_provisioned_snapshot_ledger(
     configured: dict, tmp_path: Path
 ) -> None:
     _, authority, _, _ = _case(tmp_path, configured)
     control = _protected_factory_control(tmp_path, authority)
-    with pytest.raises(RunError, match="PLANNING_REPOSITORY_SNAPSHOT"):
-        PlanningExecution.from_trusted_factory(control)
     path = provision_planning_repository_snapshots(control)
     assert path.exists() and path.stat().st_mode & 0o077 == 0
     PlanningRepositorySnapshotStore(path, existing_only=True)
@@ -1461,8 +1536,18 @@ def test_factory_freezes_registered_base_bytes_and_reopens(
         reopened.freeze_repository_snapshot(
             execution["id"], principal="owner", command_key="freeze"
         )
+    # A ledger removed after publication prevents snapshot recovery, but it is
+    # not grounds to deny the old controller factory all existing-only reads.
+    # The reopened factory exposes no snapshot port and each snapshot operation
+    # still fails closed without provisioning a replacement ledger.
+    historical = PlanningExecution.from_trusted_factory(control)
+    assert historical.snapshots is None
     with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE$"):
-        PlanningExecution.from_trusted_factory(control)
+        historical.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="freeze"
+        )
+    with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE$"):
+        historical.read_repository_snapshot(execution["id"], principal="owner")
     assert not ledger.exists()
 
 

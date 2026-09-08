@@ -211,6 +211,58 @@ def begin(
     return execution
 
 
+def snapshot_case(
+    configured: dict, tmp_path: Path
+) -> tuple[
+    PlanningExecution, dict, dict, FixtureAuthorities, PlanningRepositorySnapshotStore, dict
+]:
+    """Create one real registered-base snapshot subject for receipt tests."""
+    registry = configured["registry"]
+    project = registry.get(configured["id"])
+    root = Path(project["repository"]["root"])
+    (root / "src").mkdir(exist_ok=True)
+    (root / "tests").mkdir(exist_ok=True)
+    (root / "src" / "snapshot-subject.txt").write_bytes(b"snapshot source\n")
+    (root / "tests" / "snapshot-subject.txt").write_bytes(b"snapshot test\n")
+    subprocess.run(
+        ["git", "-C", str(root), "add", "src/snapshot-subject.txt", "tests/snapshot-subject.txt"],
+        check=True,
+    )
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "-c",
+            "user.name=x",
+            "-c",
+            "user.email=x@y.z",
+            "commit",
+            "-m",
+            "snapshot subject",
+        ],
+        check=True,
+    )
+    registry.update(
+        project["id"],
+        {
+            "name": project["name"],
+            "base_ref": project["repository"]["base_ref"],
+            "target_branch": project["target_branch"],
+            "allowed_target_branches": project["allowed_target_branches"],
+        },
+        expected_revision=project["revision"],
+        command_key="snapshot-subject-base",
+        principal="owner",
+    )
+    current = {**registry.get(project["id"]), "registry": registry}
+    service, run, intent, authorities = planning_case(tmp_path, current)
+    store = PlanningRepositorySnapshotStore(tmp_path / "snapshots.sqlite")
+    service.snapshots = store
+    execution = service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
+    return service, run, intent, authorities, store, execution
+
+
 def test_id_only_output_consumption_reopens_exact_capacity_receipt_and_plan(
     configured: dict, tmp_path: Path
 ) -> None:
@@ -316,6 +368,145 @@ def test_repository_snapshot_is_id_only_and_has_no_capacity_effect(
     assert authorities.capacity.snapshot() == before
     with pytest.raises(RunError, match="RUN_NOT_FOUND"):
         service.freeze_repository_snapshot(execution["id"], principal="lead", command_key="other")
+
+
+def test_snapshot_read_rejects_same_owner_execution_row_substitution_without_repair(
+    configured: dict, tmp_path: Path
+) -> None:
+    """The requested execution primary key anchors all snapshot authority reads."""
+    service, run, _, authorities, store, first = snapshot_case(configured, tmp_path)
+    second_intent = service.planner.planning_intent(
+        run["id"], term=1, command_key="second-intent", principal="lead"
+    )
+    second = service.begin(
+        run["id"], second_intent["id"], principal="owner", command_key="second-begin"
+    )
+    first_manifest = service.freeze_repository_snapshot(
+        first["id"], principal="owner", command_key="first-freeze"
+    )
+    second_manifest = service.freeze_repository_snapshot(
+        second["id"], principal="owner", command_key="second-freeze"
+    )
+    assert first_manifest["execution_id"] != second_manifest["execution_id"]
+    with sqlite3.connect(service.database) as db:
+        second_data = db.execute(
+            "SELECT data FROM executions WHERE id=?", (second["id"],)
+        ).fetchone()[0]
+        commands_before = db.execute(
+            "SELECT principal,key,payload,result FROM commands ORDER BY principal,key"
+        ).fetchall()
+        db.execute("UPDATE executions SET data=? WHERE id=?", (second_data, first["id"]))
+        db.commit()
+    with sqlite3.connect(store.database) as db:
+        snapshots_before = db.execute(
+            "SELECT binding_sha256,data,source_sha256,manifest_sha256 "
+            "FROM snapshots ORDER BY binding_sha256"
+        ).fetchall()
+        files_before = db.execute(
+            "SELECT binding_sha256,path,sha256 FROM files ORDER BY binding_sha256,path"
+        ).fetchall()
+    before_capacity = authorities.capacity.snapshot()
+
+    for operation in (
+        lambda: service.get(first["id"], principal="owner"),
+        lambda: service.read_repository_snapshot(first["id"], principal="owner"),
+        lambda: service.freeze_repository_snapshot(
+            first["id"], principal="owner", command_key="substituted-freeze"
+        ),
+    ):
+        with pytest.raises(RunError, match="^PLANNING_EXECUTION_BINDING_STALE$"):
+            operation()
+    assert (
+        service.read_repository_snapshot(second["id"], principal="owner")["execution_id"]
+        == second["id"]
+    )
+    with pytest.raises(RunError, match="RUN_NOT_FOUND"):
+        service.read_repository_snapshot(second["id"], principal="lead")
+
+    with sqlite3.connect(service.database) as db:
+        assert (
+            db.execute("SELECT data FROM executions WHERE id=?", (first["id"],)).fetchone()[0]
+            == second_data
+        )
+        assert db.execute(
+            "SELECT principal,key,payload,result FROM commands ORDER BY principal,key"
+        ).fetchall() == commands_before
+    with sqlite3.connect(store.database) as db:
+        assert db.execute(
+            "SELECT binding_sha256,data,source_sha256,manifest_sha256 "
+            "FROM snapshots ORDER BY binding_sha256"
+        ).fetchall() == snapshots_before
+        assert db.execute(
+            "SELECT binding_sha256,path,sha256 FROM files ORDER BY binding_sha256,path"
+        ).fetchall() == files_before
+    assert authorities.capacity.snapshot() == before_capacity
+
+
+@pytest.mark.parametrize("field", ["base_sha", "file_metadata", "snapshot_id"])
+def test_snapshot_command_replay_rejects_corrupted_manifest_receipt(
+    configured: dict, tmp_path: Path, field: str
+) -> None:
+    service, _, _, authorities, store, execution = snapshot_case(configured, tmp_path)
+    command_key = "freeze"
+    manifest = service.freeze_repository_snapshot(
+        execution["id"], principal="owner", command_key=command_key
+    )
+    corrupted = deepcopy(manifest)
+    if field == "base_sha":
+        corrupted["base_sha"] = "0" * len(corrupted["base_sha"])
+    elif field == "file_metadata":
+        corrupted["files"][0]["mode"] = "100755"
+    else:
+        corrupted["snapshot_sha256"] = "0" * 64
+    with sqlite3.connect(service.database) as db:
+        db.execute(
+            "UPDATE commands SET result=? WHERE principal=? AND key=?",
+            (json.dumps(corrupted, separators=(",", ":")), "owner", command_key),
+        )
+        db.commit()
+    before_capacity = authorities.capacity.snapshot()
+    verified = store.read(execution["binding"])
+
+    with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_CHANGED$"):
+        service.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key=command_key
+        )
+
+    with sqlite3.connect(service.database) as db:
+        assert json.loads(
+            db.execute(
+                "SELECT result FROM commands WHERE principal=? AND key=?", ("owner", command_key)
+            ).fetchone()[0]
+        ) == corrupted
+    assert store.read(execution["binding"]) == verified
+    assert authorities.capacity.snapshot() == before_capacity
+
+
+def test_snapshot_concurrent_receipt_branch_rejects_corrupted_manifest(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    service, _, _, _, store, execution = snapshot_case(configured, tmp_path)
+    command_key = "freeze"
+    original_freeze = store.freeze
+
+    def publish_then_replace_receipt(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        manifest = original_freeze(*args, **kwargs)
+        corrupted = deepcopy(manifest)
+        corrupted["base_sha"] = "0" * len(corrupted["base_sha"])
+        with sqlite3.connect(service.database) as db:
+            db.execute(
+                "UPDATE commands SET result=? WHERE principal=? AND key=?",
+                (json.dumps(corrupted, separators=(",", ":")), "owner", command_key),
+            )
+            db.commit()
+        return manifest
+
+    monkeypatch.setattr(store, "freeze", publish_then_replace_receipt)
+    with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_CHANGED$"):
+        service.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key=command_key
+        )
+    assert store.read(execution["binding"])["execution_id"] == execution["id"]
 
 
 def test_cancelled_execution_cannot_create_a_first_repository_snapshot(

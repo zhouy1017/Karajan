@@ -142,13 +142,27 @@ class PlanningExecution:
         admissions = open_persistent_planning_admission(control_directory)
         try:
             settings, _ = read_planning_bootstrap(control_directory)
-            snapshots = PlanningRepositorySnapshotStore(
-                snapshot_database(control_directory),
-                existing_only=True,
-                private_root=settings.state_directory,
-            )
+            ledger = snapshot_database(control_directory)
         except Exception as error:
             raise RunError("PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE") from error
+        # Snapshot production was introduced after the original #110/#111
+        # execution records.  An absent ledger therefore means this deployment
+        # can only recover its pre-snapshot controller history; it does not
+        # cause a reader to provision a new private store.  Once a ledger has a
+        # filesystem spelling, however, it might contain evidence required by
+        # a newer execution.  Open it strictly so a corrupt or aliased ledger
+        # remains a fail-closed factory error rather than being mistaken for
+        # historical absence.  ``is_symlink`` also catches a dangling alias.
+        snapshots: object | None = None
+        if ledger.exists() or ledger.is_symlink():
+            try:
+                snapshots = PlanningRepositorySnapshotStore(
+                    ledger,
+                    existing_only=True,
+                    private_root=settings.state_directory,
+                )
+            except Exception as error:
+                raise RunError("PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE") from error
         return cls(
             admissions.execution_database,
             admissions.planner,
@@ -233,7 +247,16 @@ class PlanningExecution:
         row = db.execute("SELECT data FROM executions WHERE id=?", (execution_id,)).fetchone()
         if row is None:
             raise RunError("PLANNING_EXECUTION_NOT_FOUND")
-        return dict(json.loads(row["data"]))
+        try:
+            execution = json.loads(row["data"])
+        except (TypeError, json.JSONDecodeError):
+            raise RunError("PLANNING_EXECUTION_BINDING_STALE") from None
+        # The SQLite primary key is the public request identity.  Do not let a
+        # substituted, internally consistent JSON row reconstruct authority
+        # for another execution owned by the same principal.
+        if not isinstance(execution, dict) or execution.get("id") != execution_id:
+            raise RunError("PLANNING_EXECUTION_BINDING_STALE")
+        return dict(execution)
 
     @staticmethod
     def _save(db: sqlite3.Connection, execution: dict[str, Any]) -> None:
@@ -515,9 +538,13 @@ class PlanningExecution:
         # controller writer is gone: cancellation and other Run writers can
         # progress while a large, but bounded, snapshot is checked.
         if replay is not None:
-            read(binding)
-            return replay
+            verified = read(binding)
+            manifest = {key: value for key, value in verified.items() if key != "content"}
+            if replay != manifest:
+                raise RunError("PLANNING_REPOSITORY_SNAPSHOT_CHANGED")
+            return manifest
         result = freeze_current()
+        concurrent_receipt: dict[str, Any] | None = None
         with self._transaction() as db:
             prior = db.execute(
                 "SELECT payload,result FROM commands WHERE principal=? AND key=?",
@@ -532,7 +559,16 @@ class PlanningExecution:
                     (encoded(result), principal, command_key),
                 )
                 return result
-            return recorded
+            concurrent_receipt = recorded
+        # Another claimant can finish between our store read and this short
+        # receipt transaction.  Verify outside the controller writer just as
+        # the ordinary replay path does, and return the sealed manifest rather
+        # than mutable command-ledger metadata.
+        verified = read(binding)
+        manifest = {key: value for key, value in verified.items() if key != "content"}
+        if concurrent_receipt != manifest:
+            raise RunError("PLANNING_REPOSITORY_SNAPSHOT_CHANGED")
+        return manifest
 
     def read_repository_snapshot(self, execution_id: str, *, principal: str) -> dict[str, Any]:
         execution = self.get(execution_id, principal=principal)
