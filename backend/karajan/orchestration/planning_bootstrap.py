@@ -278,6 +278,7 @@ def provision_planning_bootstrap(
     from karajan.orchestration.planning_admission import PlanningAdmissionAuthority
     from karajan.orchestration.planning_execution import PlanningExecution
     from karajan.projects import ProjectRegistry
+    from karajan.projects.demand import AttemptEstimateStore
     from karajan.runs import RunPlanner
 
     control, state = control_directory.absolute(), state_directory.absolute()
@@ -291,7 +292,18 @@ def provision_planning_bootstrap(
         _private(state, directory=True)
         projects = ProjectRegistry(state / "projects.sqlite", roots)
         planner = RunPlanner(state / "runs.sqlite", projects)
+        # Normal application composition always constructs ApprovedRunRouting,
+        # whose estimate ledger is in the protected project store.  Provision
+        # its empty schema here; no estimate is registered by this action.
+        AttemptEstimateStore(planner)
         capacity = CapacityStore(state / "capacity.sqlite")
+        # ``create_app`` also opens this normal routing assessment ledger with
+        # all planning stores in existing-only mode.  Create its schema while
+        # provisioning, without assessing a task or reserving capacity.
+        from karajan.orchestration.routing import ApprovedRunRouting
+        from karajan.projects.qualification import ProfileQualificationStore
+
+        ApprovedRunRouting(planner, ProfileQualificationStore(projects), capacity)
         execution = PlanningExecution(state / "planning-execution.sqlite", planner)
         from karajan.orchestration.planning_transport import PlanningOutputStore
 

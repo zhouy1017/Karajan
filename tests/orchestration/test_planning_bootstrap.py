@@ -11,6 +11,7 @@ import pytest
 from karajan.orchestration.planning_bootstrap import (
     PLANNING_ADMISSION_BOOTSTRAP,
     assert_planning_bootstrap_current,
+    provision_planning_bootstrap,
     read_planning_bootstrap,
 )
 from karajan.projects import ProjectRegistry
@@ -118,6 +119,29 @@ def test_reads_existing_private_deployment_and_rechecks_digest(deployment) -> No
     assert settings.projects_database.exists()
     assert digest == hashlib.sha256(raw).hexdigest()
     assert assert_planning_bootstrap_current(control, digest) == settings
+
+
+def test_provisioning_creates_empty_normal_routing_dependencies(tmp_path: Path) -> None:
+    """A protected normal app may reopen its routing readers without evidence."""
+    from karajan.capacity import CapacityStore
+    from karajan.orchestration.routing import ApprovedRunRouting
+    from karajan.projects.qualification import ProfileQualificationStore
+    from karajan.runs import RunPlanner
+
+    roots = tmp_path / "repositories"
+    roots.mkdir()
+    settings = provision_planning_bootstrap(
+        tmp_path / "control", tmp_path / "state", (roots,)
+    )
+    projects = ProjectRegistry(
+        settings.projects_database, settings.allowed_roots, existing_only=True
+    )
+    planner = RunPlanner(settings.state_directory / "runs.sqlite", projects, existing_only=True)
+    capacity = CapacityStore(settings.capacity_database, existing_only=True)
+
+    routing = ApprovedRunRouting(planner, ProfileQualificationStore(projects), capacity)
+
+    assert routing.estimates.planner is planner
 
 
 @pytest.mark.parametrize(
