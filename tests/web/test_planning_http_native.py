@@ -3,6 +3,7 @@
 import json
 import os
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -268,11 +269,18 @@ def test_authenticated_v2_planning_executes_one_native_fixture_send_and_persists
         )
         assert executed.status_code == 202, executed.json()
         assert executed.json()["command"]["state"] == "accepted"
-        assert executed.json()["run"]["plans"], (
-            executed.json(),
+        deadline = time.monotonic() + 10
+        observed = executed.json()
+        while time.monotonic() < deadline:
+            observed = client.get(f"/v1/runs/{run['id']}/planning", headers=headers).json()
+            if observed["run"]["plans"]:
+                break
+            time.sleep(0.05)
+        assert observed["run"]["plans"], (
+            observed,
             execution.get(binding["execution_id"], principal="owner"),
         )
-        assert executed.json()["run"]["plans"][0]["plan"] == plan
+        assert observed["run"]["plans"][0]["plan"] == plan
         retried = client.post(
             f"/v1/runs/{run['id']}/planning-execute",
             json={},

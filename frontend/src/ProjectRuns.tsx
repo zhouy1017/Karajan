@@ -91,6 +91,7 @@ type PlanningRead = {
   schema_version: "karajan.workbench-planning.v1";
   run: Run;
   planning: PlanningStatus | null;
+  command?: { id: string; state: string; reason_code?: string };
 };
 type PlanningExecuteReceipt = PlanningRead & {
   command?: { id: string; state: string };
@@ -305,11 +306,23 @@ function RunWorkbench({
         setPlanningReadError(false);
         if (
           refreshed.plans.length ||
-          result.planning?.availability.state !== "awaiting"
+          result.planning?.availability.state !== "awaiting" ||
+          result.command?.state === "failed" ||
+          result.command?.state === "unknown"
         ) {
-          sessionStorage.removeItem(commandStorageKey);
-          command.current = null;
-          setNotice("");
+          if (result.command?.state === "failed") {
+            setError(
+              result.command.reason_code
+                ? `生成计划未完成（服务端代码：${result.command.reason_code}）。`
+                : "生成计划未完成，请重新读取。",
+            );
+          } else if (result.command?.state === "unknown") {
+            setNotice("生成计划结果未知；可使用同一请求身份重新读取。");
+          } else {
+            sessionStorage.removeItem(commandStorageKey);
+            command.current = null;
+            setNotice("");
+          }
           return;
         }
       } catch {

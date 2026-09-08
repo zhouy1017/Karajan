@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import sqlite3
+import stat
 import sys
 import time
 from collections.abc import Callable, Iterator
@@ -50,6 +52,38 @@ def _artifact_bytes(model_input: PlanningModelInput) -> bytes:
     if type(request) is bytes:
         return request
     raise RunError("PLANNING_INPUT_INVALID")
+
+
+def _native_log_evidence(directory: Path, cleanup: dict[str, Any]) -> dict[str, Any]:
+    """Read exactly the stopped owned namespace log without unbounded buffering."""
+    if cleanup.get("local_stop") != "confirmed":
+        raise RunError("PLANNING_NATIVE_LOG_EVIDENCE_UNAVAILABLE")
+    path = directory / "namespace.log"
+    limit = 1_048_576
+    try:
+        descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+        try:
+            before = os.fstat(descriptor)
+            if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1:
+                raise OSError
+            with os.fdopen(descriptor, "rb", closefd=False) as stream:
+                content = stream.read(limit + 1)
+            after = os.fstat(descriptor)
+        finally:
+            os.close(descriptor)
+        if len(content) > limit or after.st_size > limit:
+            raise RunError("PLANNING_NATIVE_LOG_LIMIT_EXCEEDED")
+        if (
+            (before.st_dev, before.st_ino, before.st_mode, before.st_nlink)
+            != (after.st_dev, after.st_ino, after.st_mode, after.st_nlink)
+            or after.st_size != len(content)
+        ):
+            raise OSError
+    except RunError:
+        raise
+    except OSError:
+        raise RunError("PLANNING_NATIVE_LOG_EVIDENCE_UNAVAILABLE") from None
+    return {"bytes": len(content), "sha256": hashlib.sha256(content).hexdigest()}
 
 
 class PlanningProducer(Protocol):
@@ -639,6 +673,7 @@ class FixtureGoPlanningProducer:
         )
         socket_root = None
         native = None
+        native_log_error: str | None = None
         if self.runtime is None:
             relay.start()
         else:
@@ -684,10 +719,18 @@ class FixtureGoPlanningProducer:
         finally:
             self.journal.revoke_grant(grant_id)
             if native is not None:
-                native.close()
+                try:
+                    cleanup = native.close()
+                    _native_log_evidence(native.directory, cleanup)
+                except RunError as error:
+                    native_log_error = error.code
+                except Exception:
+                    native_log_error = "PLANNING_NATIVE_LOG_EVIDENCE_UNAVAILABLE"
             relay.close()
             if socket_root is not None:
                 _cleanup_relay_socket_root(socket_root)
+            if native_log_error is not None:
+                raise RunError(native_log_error)
 
     @staticmethod
     def _native_output(
@@ -941,6 +984,8 @@ class ProductionGoPlanningProducer:
             content: bytes | None = None
             relay_result: dict[str, Any] | None = None
             native_cleanup: dict[str, Any] | None = None
+            native_log: dict[str, Any] | None = None
+            native_log_error: str | None = None
             try:
                 socket = socket_root.path / "inference.sock"
                 relay.start(unix_socket=socket)
@@ -984,8 +1029,12 @@ class ProductionGoPlanningProducer:
                 if native is not None:
                     try:
                         native_cleanup = native.close()
+                        native_log = _native_log_evidence(native.directory, native_cleanup)
+                    except RunError as error:
+                        native_log_error = error.code
                     except Exception:
                         native_cleanup = {"local_stop": "unknown"}
+                        native_log_error = "PLANNING_NATIVE_LOG_EVIDENCE_UNAVAILABLE"
                 try:
                     relay_result = relay.close()
                 except Exception:
@@ -1003,10 +1052,11 @@ class ProductionGoPlanningProducer:
                 content is None
                 or native_cleanup is None
                 or native_cleanup.get("local_stop") != "confirmed"
+                or native_log is None
                 or relay_result is None
                 or relay_result.get("status") != "closed"
             ):
-                raise RunError("PLANNING_NATIVE_CLEANUP_UNKNOWN")
+                raise RunError(native_log_error or "PLANNING_NATIVE_CLEANUP_UNKNOWN")
             self._assert_completed_call(grant_id)
             return content
         finally:

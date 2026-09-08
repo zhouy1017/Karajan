@@ -67,9 +67,14 @@ class PlanningWorkbench:
                 "CREATE TABLE IF NOT EXISTS planning_execute_commands ("
                 "principal TEXT NOT NULL, key TEXT NOT NULL, run_id TEXT NOT NULL, "
                 "command_id TEXT NOT NULL, execution_id TEXT, binding_sha256 TEXT, "
-                "state TEXT NOT NULL, created_at REAL NOT NULL, "
+                "state TEXT NOT NULL, reason_code TEXT, created_at REAL NOT NULL, "
                 "PRIMARY KEY(principal, key))"
             )
+            columns = {
+                row[1] for row in db.execute("PRAGMA table_info(planning_execute_commands)")
+            }
+            if "reason_code" not in columns:
+                db.execute("ALTER TABLE planning_execute_commands ADD COLUMN reason_code TEXT")
 
     @contextmanager
     def _transaction(self) -> Iterator[sqlite3.Connection]:
@@ -167,6 +172,7 @@ class PlanningWorkbench:
             "execution_id": None,
             "binding_sha256": None,
             "state": "accepted",
+            "reason_code": None,
             "created_at": self.planner.clock(),
         }
         with self._transaction() as db:
@@ -178,7 +184,7 @@ class PlanningWorkbench:
                 db.execute(
                     "INSERT INTO planning_execute_commands VALUES "
                     "(:principal,:key,:run_id,:command_id,:execution_id,:binding_sha256,"
-                    ":state,:created_at)",
+                    ":state,:reason_code,:created_at)",
                     record,
                 )
                 return record
@@ -210,9 +216,35 @@ class PlanningWorkbench:
                 )
         return {**record, "execution_id": expected[0], "binding_sha256": expected[1]}
 
+    def _finish_execute(
+        self,
+        record: dict[str, Any],
+        *,
+        state: str,
+        reason_code: str | None = None,
+    ) -> None:
+        with self._transaction() as db:
+            db.execute(
+                "UPDATE planning_execute_commands SET state=?, reason_code=? "
+                "WHERE principal=? AND key=? AND command_id=?",
+                (state, reason_code, record["principal"], record["key"], record["command_id"]),
+            )
+
+    def _execute_command_for_run(self, run_id: str, principal: str) -> dict[str, Any] | None:
+        with self._transaction() as db:
+            row = db.execute(
+                "SELECT * FROM planning_execute_commands WHERE run_id=? AND principal=? "
+                "ORDER BY created_at DESC LIMIT 1",
+                (run_id, principal),
+            ).fetchone()
+        return None if row is None else dict(row)
+
     @staticmethod
     def _command_view(record: dict[str, Any]) -> dict[str, str]:
-        return {"id": record["command_id"], "state": record["state"]}
+        view = {"id": record["command_id"], "state": record["state"]}
+        if isinstance(record.get("reason_code"), str):
+            view["reason_code"] = record["reason_code"]
+        return view
 
     @staticmethod
     def _intent_view(intent: dict[str, Any]) -> dict[str, Any]:
@@ -298,7 +330,9 @@ class PlanningWorkbench:
                 "ORDER BY created_at DESC LIMIT 1",
                 (run_id, principal),
             ).fetchone()
-        return self._project(run, None if row is None else dict(row))
+        result = self._project(run, None if row is None else dict(row))
+        command = self._execute_command_for_run(run_id, principal)
+        return result if command is None else {**result, "command": self._command_view(command)}
 
     def start(self, run_id: str, *, principal: str, command_key: str) -> dict[str, Any]:
         for value in (run_id, principal, command_key):
@@ -355,13 +389,36 @@ class PlanningWorkbench:
                 # Retrying this durable command may overlap a prior process,
                 # but PlanningTransport's pre-effect receipt and dispatch
                 # claim ensure it cannot create another native session/send.
-                self.transport.execute(
+                outcome = self.transport.execute(
                     execution["id"], principal=principal, command_key=command_key
                 )
+                outcome_state = outcome.get("state")
+                reason_codes = outcome.get("reason_codes")
+                reason = (
+                    reason_codes[0]
+                    if isinstance(reason_codes, list)
+                    and reason_codes
+                    and isinstance(reason_codes[0], str)
+                    else None
+                )
+                if outcome_state == "submitted":
+                    self._finish_execute(command, state="completed")
+                elif outcome_state == "blocked":
+                    self._finish_execute(command, state="failed", reason_code=reason)
+                else:
+                    self._finish_execute(
+                        command,
+                        state="unknown",
+                        reason_code=reason or "PLANNING_EXECUTE_COMMAND_UNKNOWN",
+                    )
+            except RunError as error:
+                self._finish_execute(command, state="failed", reason_code=error.code)
             except Exception:
-                # The execution ledger is the recovery authority.  Its saved
-                # unknown state remains visible from the snapshot endpoint.
-                pass
+                self._finish_execute(
+                    command,
+                    state="unknown",
+                    reason_code="PLANNING_EXECUTE_COMMAND_UNKNOWN",
+                )
 
         Thread(target=advance, daemon=True).start()
         return {**self.read(run_id, principal=principal), "command": self._command_view(command)}

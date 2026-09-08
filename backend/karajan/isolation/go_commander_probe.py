@@ -8,6 +8,7 @@ never be promoted by the producer or the current-facts reader.
 
 import hashlib
 import json
+import os
 import stat
 import time
 from collections.abc import Callable
@@ -145,15 +146,24 @@ def _native_log_evidence(directory: Path, cleanup: dict[str, Any]) -> dict[str, 
         raise ValueError("NATIVE_LOG_EVIDENCE_UNAVAILABLE")
     path = directory / "native" / "namespace.log"
     try:
-        info = path.lstat()
-        if not stat.S_ISREG(info.st_mode) or stat.S_ISLNK(info.st_mode) or info.st_nlink != 1:
+        descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+        try:
+            before = os.fstat(descriptor)
+            if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1:
+                raise OSError
+            with os.fdopen(descriptor, "rb", closefd=False) as stream:
+                content = stream.read(_NATIVE_LOG_BYTES + 1)
+            after = os.fstat(descriptor)
+        finally:
+            os.close(descriptor)
+        if len(content) > _NATIVE_LOG_BYTES or after.st_size > _NATIVE_LOG_BYTES:
+            raise ValueError("COMMANDER_NATIVE_LOG_LIMIT_EXCEEDED")
+        if (
+            (before.st_dev, before.st_ino, before.st_mode, before.st_nlink)
+            != (after.st_dev, after.st_ino, after.st_mode, after.st_nlink)
+            or after.st_size != len(content)
+        ):
             raise OSError
-        size = info.st_size
-        if size > _NATIVE_LOG_BYTES:
-            raise ValueError("COMMANDER_NATIVE_LOG_LIMIT_EXCEEDED")
-        content = path.read_bytes()
-        if len(content) != size or len(content) > _NATIVE_LOG_BYTES:
-            raise ValueError("COMMANDER_NATIVE_LOG_LIMIT_EXCEEDED")
     except ValueError:
         raise
     except OSError:

@@ -3,7 +3,7 @@
 from pathlib import Path
 
 import pytest
-from karajan.orchestration.planning_transport import PlanningOutputStore
+from karajan.orchestration.planning_transport import PlanningOutputStore, _native_log_evidence
 from karajan.runs import RunError
 
 
@@ -46,3 +46,13 @@ def test_execute_key_is_bound_to_one_execution_before_any_dispatch(tmp_path: Pat
         store.claim_execute_command(
             {"execution_id": "second"}, principal="owner", command_key="execute"
         )
+
+
+def test_transport_native_log_evidence_rejects_missing_or_oversized_logs(tmp_path: Path) -> None:
+    with pytest.raises(RunError, match="^PLANNING_NATIVE_LOG_EVIDENCE_UNAVAILABLE$"):
+        _native_log_evidence(tmp_path, {"local_stop": "confirmed"})
+
+    log = tmp_path / "namespace.log"
+    log.write_bytes(b"x" * (1_048_576 + 1))
+    with pytest.raises(RunError, match="^PLANNING_NATIVE_LOG_LIMIT_EXCEEDED$"):
+        _native_log_evidence(tmp_path, {"local_stop": "confirmed"})
