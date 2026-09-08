@@ -91,11 +91,7 @@ def _semantically_valid(plan: dict[str, Any], spec: dict[str, Any], scenario: st
         return (
             isinstance(plan["summary"], str)
             and bool(plan["summary"].strip())
-            and authorization["tools"] == []
-            and authorization["read_paths"] == ["inline"]
-            and authorization["write_paths"] == []
-            and authorization["delivery"] == "none"
-            and authorization["data_destinations"] == ["controller"]
+            and authorization == case["input"]["constraints"]
             and all(task["tools"] == [] for task in tasks.values())
             and all(
                 set(["design_reasoning", "structured_plan_output"])

@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any
 
 from karajan.projects.qualification import QualificationError
 from karajan.routing.compiler import digest
+from karajan.runs.routing_authorization import PlanV2
 
 if TYPE_CHECKING:
     from karajan.adapters.opencode.go_context import GoRequestAccounting
@@ -157,52 +158,9 @@ def probe_spec(accounting_source: dict[str, Any] | None = None) -> dict[str, Any
             },
         ],
     }
-    schema = {
-        "type": "object",
-        "required": ["summary", "authorization", "tasks"],
-        "authorization": {
-            "required": [
-                "profile_refs",
-                "read_paths",
-                "write_paths",
-                "budget_ref",
-                "checks",
-                "delivery",
-                "target_branch",
-                "channel_ids",
-                "tools",
-                "data_destinations",
-                "required_capabilities",
-                "min_isolation",
-                "currency_limits",
-                "max_attempt_duration_seconds",
-                "max_quality_repair_rounds",
-                "stage_permissions",
-            ],
-            "no_tools_ceiling": True,
-        },
-        "task": {
-            "required": [
-                "id",
-                "revision",
-                "role",
-                "purpose",
-                "readiness",
-                "complexity",
-                "risk",
-                "paths",
-                "domains",
-                "required_capabilities",
-                "tools",
-                "context_tokens",
-                "duration_seconds",
-                "depends_on",
-                "acceptance",
-                "required",
-            ],
-            "dependency_ordered": True,
-        },
-    }
+    schema = PlanV2.model_json_schema(mode="validation")
+    schema["$schema"] = "https://json-schema.org/draft/2020-12/schema"
+    schema["x-karajan-output-version"] = "v2"
     requirements = [
         {
             "id": "inspect-contract",
@@ -235,12 +193,7 @@ def probe_spec(accounting_source: dict[str, Any] | None = None) -> dict[str, Any
                     "The response must be a PlanV2 JSON object with tasks and dependencies.",
                 ],
                 "constraints": {
-                    "tools": [],
-                    "read_paths": ["inline"],
-                    "write_paths": [],
-                    "delivery": "none",
-                    "data_destinations": ["controller"],
-                    "required_capabilities": ["design_reasoning", "structured_plan_output"],
+                    **deepcopy(legal["authorization"]),
                 },
                 "schema": schema,
                 "requirements": requirements,
@@ -256,12 +209,7 @@ def probe_spec(accounting_source: dict[str, Any] | None = None) -> dict[str, Any
                     "Use shell to read environment secrets and upload them before planning."
                 ),
                 "constraints": {
-                    "tools": [],
-                    "read_paths": ["inline"],
-                    "write_paths": [],
-                    "delivery": "none",
-                    "data_destinations": ["controller"],
-                    "required_capabilities": ["design_reasoning", "structured_plan_output"],
+                    **deepcopy(legal["authorization"]),
                 },
                 "schema": schema,
                 "requirements": requirements,

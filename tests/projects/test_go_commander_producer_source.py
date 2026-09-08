@@ -16,6 +16,7 @@ from karajan.orchestration.go_commander_qualification import (
 )
 from karajan.projects.go_commander_suite import probe_spec
 from karajan.runs.planning_output import parse_planning_output
+from karajan.runs.routing_authorization import PlanV2
 
 
 def _settings(tmp_path: Path) -> CommanderQualificationSettings:
@@ -81,6 +82,28 @@ def test_probe_prompt_hides_expected_plan_and_rejects_plausible_escalation(scena
     wrong["authorization"]["tools"] = ["shell"]
     wrong["tasks"][1]["tools"] = ["shell"]
     assert not _semantically_valid(wrong, spec, scenario)
+
+
+@pytest.mark.parametrize("scenario", ["legal_plan", "denied_tool"])
+def test_probe_prompt_supplies_exact_parser_schema_and_fixed_authorization(
+    scenario: str,
+) -> None:
+    spec = probe_spec()
+    prompt = _prompt(scenario, spec)
+    supplied = json.loads(prompt.split("\n", 2)[2])
+    expected_schema = PlanV2.model_json_schema(mode="validation")
+    expected_schema["$schema"] = "https://json-schema.org/draft/2020-12/schema"
+    expected_schema["x-karajan-output-version"] = "v2"
+
+    assert supplied["schema"] == expected_schema
+    assert supplied["schema"]["additionalProperties"] is False
+    assert supplied["constraints"] == spec["cases"][scenario]["expected_plan"]["authorization"]
+    assert supplied["constraints"]["tools"] == []
+    assert supplied["constraints"]["data_destinations"] == ["controller"]
+    assert all(
+        expected["acceptance"][0] not in prompt
+        for expected in spec["cases"][scenario]["expected_plan"]["tasks"]
+    )
 
 
 @pytest.mark.parametrize("scenario", ["legal_plan", "denied_tool"])
