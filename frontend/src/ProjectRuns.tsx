@@ -221,6 +221,9 @@ function RunWorkbench({
         (result.project_id !== undefined && result.project_id !== project.id)
       )
         throw new Error("计划与当前项目不一致，请重新打开需求。");
+      // A successful read makes a previous transient planning read failure
+      // stale, including when the run already contains a plan.
+      setPlanningReadError(false);
       // Existing plans already carry the authoritative snapshot used by the
       // approval flow; planning status is only needed before a plan exists.
       if (result.plans.length) {
@@ -238,6 +241,7 @@ function RunWorkbench({
         if (!current()) return false;
         if (planningResult.run?.id !== id)
           throw new Error("规划状态与当前需求不一致。");
+        setPlanningReadError(false);
         setSelected({
           ...planningResult.run,
           planning: planningResult.planning,
@@ -283,29 +287,29 @@ function RunWorkbench({
     const endpoint = `/v1/runs/${encodeURIComponent(selected.id)}/planning-start`;
     const identity = endpoint + "{}";
     const commandStorageKey = `karajan:planning-command:${selected.id}`;
-    if (command.current?.identity !== identity) {
-      const storedKey = sessionStorage.getItem(commandStorageKey);
-      command.current = {
-        identity,
-        key: storedKey ?? crypto.randomUUID(),
-      };
-      sessionStorage.setItem(commandStorageKey, command.current.key);
-    }
     try {
+      if (command.current?.identity !== identity) {
+        const storedKey = sessionStorage.getItem(commandStorageKey);
+        const key = storedKey ?? crypto.randomUUID();
+        sessionStorage.setItem(commandStorageKey, key);
+        command.current = { identity, key };
+      }
+      const commandKey = command.current?.key;
+      if (!commandKey) throw new Error("无法建立准备规划请求身份，请重试。");
       const response = await fetch(endpoint, {
         method: "POST",
         body: "{}",
         headers: {
           "Content-Type": "application/json",
           "X-CSRF-Token": csrf,
-          "Idempotency-Key": command.current.key,
+          "Idempotency-Key": commandKey,
         },
       });
       if (!session.active || reading.current !== generation) return;
       if (!response.ok) throw new Error("准备规划未被接受，请重试。");
       const refreshed = await openRun(selected.id);
-      command.current = null;
       sessionStorage.removeItem(commandStorageKey);
+      command.current = null;
       if (session.active)
         setNotice(refreshed ? "" : "规划请求已提交，请重新打开需求读取状态。");
     } catch (cause) {
@@ -331,29 +335,29 @@ function RunWorkbench({
     const endpoint = `/v1/runs/${encodeURIComponent(id)}/planning-execute`;
     const identity = endpoint + "{}";
     const commandStorageKey = `karajan:planning-execute-command:${id}`;
-    if (command.current?.identity !== identity) {
-      const storedKey = sessionStorage.getItem(commandStorageKey);
-      command.current = {
-        identity,
-        key: storedKey ?? crypto.randomUUID(),
-      };
-      sessionStorage.setItem(commandStorageKey, command.current.key);
-    }
     try {
+      if (command.current?.identity !== identity) {
+        const storedKey = sessionStorage.getItem(commandStorageKey);
+        const key = storedKey ?? crypto.randomUUID();
+        sessionStorage.setItem(commandStorageKey, key);
+        command.current = { identity, key };
+      }
+      const commandKey = command.current?.key;
+      if (!commandKey) throw new Error("无法建立生成计划请求身份，请重试。");
       const response = await fetch(endpoint, {
         method: "POST",
         body: "{}",
         headers: {
           "Content-Type": "application/json",
           "X-CSRF-Token": csrf,
-          "Idempotency-Key": command.current.key,
+          "Idempotency-Key": commandKey,
         },
       });
       if (!session.active || reading.current !== generation) return;
       if (!response.ok) throw new Error("生成计划未被接受，请重试。");
       const refreshed = await openRun(id);
-      command.current = null;
       sessionStorage.removeItem(commandStorageKey);
+      command.current = null;
       if (session.active)
         setNotice(
           refreshed ? "" : "生成计划请求已提交，请重新打开需求读取状态。",

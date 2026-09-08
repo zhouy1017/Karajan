@@ -63,6 +63,7 @@ function renderRuns() {
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
@@ -213,6 +214,79 @@ it("disables preparation when the persisted planning status cannot be read", asy
   ).toBeGreaterThan(1);
   expect(screen.queryByRole("button", { name: "准备规划" })).toBeNull();
 });
+
+it("restores preparation after a failed planning read succeeds on retry", async () => {
+  let planningReads = 0;
+  vi.stubGlobal("fetch", async (path: string) => {
+    if (path.startsWith("/v1/runs?")) return Response.json({ items: [run] });
+    if (path === "/v1/runs/run-1") return Response.json(run);
+    if (path === "/v1/runs/run-1/planning") {
+      planningReads += 1;
+      if (planningReads === 1) throw new TypeError("planning read failed");
+      return Response.json({ ...blockedPlanning, planning: null });
+    }
+    throw new Error(`Unexpected request: ${path}`);
+  });
+
+  renderRuns();
+  const runButton = await screen.findByRole("button", { name: "增加问候语" });
+  await userEvent.click(runButton);
+  expect(
+    (await screen.findAllByText("规划状态读取失败，请重新读取。")).length,
+  ).toBeGreaterThan(1);
+  expect(screen.queryByRole("button", { name: "准备规划" })).toBeNull();
+
+  await userEvent.click(runButton);
+  expect(
+    (
+      (await screen.findByRole("button", {
+        name: "准备规划",
+      })) as HTMLButtonElement
+    ).disabled,
+  ).toBe(false);
+  expect(planningReads).toBe(2);
+});
+
+it.each([
+  ["preparation", "准备规划", "/v1/runs/run-1/planning-start"],
+  ["execution", "生成计划", "/v1/runs/run-1/planning-execute"],
+])(
+  "recovers busy state when %s command storage fails",
+  async (_label, buttonName, endpoint) => {
+    vi.stubGlobal("sessionStorage", {
+      getItem() {
+        throw new Error("session storage unavailable");
+      },
+      setItem() {
+        throw new Error("session storage unavailable");
+      },
+      removeItem() {
+        throw new Error("session storage unavailable");
+      },
+    });
+    vi.stubGlobal("fetch", async (path: string) => {
+      if (path.startsWith("/v1/runs?")) return Response.json({ items: [run] });
+      if (path === "/v1/runs/run-1") return Response.json(run);
+      if (path === "/v1/runs/run-1/planning")
+        return Response.json(
+          endpoint.endsWith("start")
+            ? { ...blockedPlanning, planning: null }
+            : awaitingPlanning,
+        );
+      if (path === endpoint) throw new Error("command should not be sent");
+      throw new Error(`Unexpected request: ${path}`);
+    });
+
+    renderRuns();
+    await userEvent.click(
+      await screen.findByRole("button", { name: "增加问候语" }),
+    );
+    const button = await screen.findByRole("button", { name: buttonName });
+    await userEvent.click(button);
+    expect(await screen.findByText("session storage unavailable")).toBeTruthy();
+    expect((button as HTMLButtonElement).disabled).toBe(false);
+  },
+);
 
 it("ignores a late planning read after the project selection changes", async () => {
   let resolveFirstPlanning: ((response: Response) => void) | undefined;
