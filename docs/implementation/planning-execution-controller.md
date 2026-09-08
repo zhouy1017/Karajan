@@ -24,9 +24,12 @@ request/key 分别只读重开 `admit` 和 `activate` receipt，并逐字段比�
 输出捕获后先持久保存完整、已解析的 `submit_plan` request 与固定 key。状态依次为
 `output_captured`（尚未 claim）、`submit_claimed`（可能已进入 Run store）、`submission_unknown`
 （claim 后找不到 receipt）和 `submitted`。恢复只通过 `RunPlanner.command_receipt` 读取该固定
-request/key；已 claim 且 receipt 缺失不会再次提交。取消在 claim 前落为 `cancelled`；claim 后只记录
-取消请求并返回 unknown，避免把已经或可能已经提交的计划误报为取消。Run 提交前的 guard 会再次读取
-控制器的取消请求，所以先完成的取消不会落 Plan。
+request/key；已 claim 且 receipt 缺失不会再次提交。receipt-only 恢复会返回观察性的 unknown，
+但保留 durable `submit_claimed`，因为它不能分辨崩溃的 claimant 与仍在进入 Run store 的 claimant；
+后续 `get` 读出的 claim 仍表示未核清，且不给恢复者提交权。取消在 claim 前落为 `cancelled`；claim 后
+只记录取消请求并返回 unknown，避免把已经或可能已经提交的计划误报为取消。Run 提交前的 guard 先读取
+取消、在不持控制器锁时读取并校验当前 output source，随后再次读取取消；因此 source read 中或之前完成的
+取消不会落 Plan。
 
 复核反例保存在 `.cache/standards-92934b5/` 和 `.cache/reviewer-high-110/`，原件不改写。
 旧 Standards 的两个注入都发生在新加入的 `submit_claimed` 之后：`SystemExit` 后没有 Run receipt

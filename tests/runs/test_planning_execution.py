@@ -548,6 +548,32 @@ def test_cancellation_observed_before_run_submit_prevents_plan(
     assert service.planner.get(run["id"], principal="owner")["plans"] == []
 
 
+def test_cancellation_during_submission_guard_source_read_prevents_plan(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authorities)
+    authorities.activate()
+    original_submit = service.planner._submit_planning_execution_plan
+    original_source = authorities.read_source
+
+    def cancel_during_source_read(binding: dict[str, Any]) -> object:
+        cancelled = service.cancel(execution["id"], principal="owner", command_key="cancel")
+        assert cancelled["cancel_requested"]
+        return original_source(binding)
+
+    def submit_with_guard_cancellation(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        authorities.read_source = cancel_during_source_read  # type: ignore[method-assign]
+        return original_submit(*args, **kwargs)
+
+    monkeypatch.setattr(
+        service.planner, "_submit_planning_execution_plan", submit_with_guard_cancellation
+    )
+    rejected = service.submit(execution["id"], principal="owner", command_key="submit")
+    assert rejected["submission"] is None
+    assert service.planner.get(run["id"], principal="owner")["plans"] == []
+
+
 def test_source_drift_after_capture_blocks_reopened_claim(
     configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

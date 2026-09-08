@@ -808,6 +808,14 @@ class PlanningExecution:
             "source_sha256"
         ] != current.get("output_source_sha256"):
             raise RunError("PLANNING_OUTPUT_SOURCE_CHANGED")
+        # The authority read is deliberately outside the controller lock.  A
+        # cancellation may therefore arrive while it is in progress, so make
+        # the final decision from a fresh durable observation.
+        with self._transaction() as db:
+            current = self._load(db, execution_id)
+            self._owner_run(current["run_id"], principal)
+            if current["cancel_requested"]:
+                raise RunError("PLANNING_EXECUTION_CANCELLED")
 
     def _record_submission(
         self, execution_id: str, principal: str, submission: dict[str, Any]
