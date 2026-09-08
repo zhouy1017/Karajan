@@ -41,7 +41,7 @@ Broker 绑定 Attempt、fence、Profile 摘要和一次性合成能力，逐次�
 | `tool_loop` | 两次模型 HTTP 请求，真实 read 工具结果进入第二次请求；收到 server SSE 文本增量与工具事件 |
 | `rate_limit_once` | provider 第一次返回 429；真实会话重试后完成工具循环，共三次独立准入 |
 | `disconnect_once` | provider 首次在响应头前断线；真实重试后完成，共三次独立准入 |
-| `timeout_once` | provider 首次延迟响应，执行器 500 ms 超时报 `UnknownError: The operation timed out.`；本场景观察到一次接收，没有重试，报告 runtime_error |
+| `timeout_once` | provider 首次请求保持在响应头之前，直到观察到原生 `session.error` 后的本地清理才释放；执行器 500 ms 超时报 `UnknownError: The operation timed out.`；本场景观察到一次接收，没有重试，报告 runtime_error |
 | `cancel_stream` | provider 保持流；管理 abort 回执为 true，随后至少 0.5 秒内没有新增模型请求；保存取消时间与观察窗口 |
 | `admission_limit` | 第一次请求可读工具，第二次模型请求被 broker 403 拒绝，provider 只收到一次 |
 | `cleanup_fault` | 实际工具循环后，在 server 清理完成处注入异常；仍关闭本地 HTTP peers、保存全部轨迹并报告 unknown |

@@ -58,6 +58,7 @@ class ProbeReport:
     )
     cleanup: dict[str, Any] = field(default_factory=dict)
     configuration_accepted: bool = False
+    timeout_lifecycle: dict[str, Any] = field(default_factory=dict)
 
 
 class OpenCodeProbe:
@@ -120,6 +121,7 @@ class OpenCodeProbe:
                     receipts=list(transport.receipts),
                     provider_requests=list(transport.requests),
                     events=list(server.events),
+                    timeout_lifecycle=dict(transport.timeout_lifecycle),
                 )
                 if cleanup["errors"] or cleanup.get("server", {}).get("status") == "unknown":
                     report = replace(report, status="unknown")
@@ -214,6 +216,13 @@ class OpenCodeProbe:
             if final_text or any(event["type"] == "session.error" for event in server.events):
                 break
             time.sleep(0.05)
+        native_terminal = (
+            "session.error"
+            if any(event["type"] == "session.error" for event in server.events)
+            else "not_observed"
+        )
+        if scenario == "timeout_once":
+            transport.timeout_lifecycle["native_terminal"] = native_terminal
         report = ProbeReport(
             version,
             secret,
@@ -224,6 +233,7 @@ class OpenCodeProbe:
             list(server.events),
             cancellation,
             configuration_accepted=True,
+            timeout_lifecycle=dict(transport.timeout_lifecycle),
             status=(
                 "cancel_observed"
                 if cancellation

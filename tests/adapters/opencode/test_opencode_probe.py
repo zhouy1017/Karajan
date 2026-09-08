@@ -168,6 +168,12 @@ def test_header_timeout_is_reported_as_error_without_inventing_a_retry(tmp_path:
     assert report.final_text == ""
     assert len(report.receipts) == 1
     assert report.provider_requests[0]["fault"] == "timeout_once"
+    assert report.timeout_lifecycle == {
+        "provider_header_wait": "started",
+        "provider_release": "after_native_error_cleanup",
+        "native_terminal": "session.error",
+    }
+    assert report.provider_requests[0]["header_wait_seconds"] >= 0.4
     errors = [event for event in report.events if event["type"] == "session.error"]
     assert len(errors) == 1
     assert errors[0]["properties"]["error"]["data"]["message"] == "The operation timed out."
