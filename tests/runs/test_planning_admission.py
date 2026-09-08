@@ -39,6 +39,7 @@ from karajan.orchestration.planning_snapshot import (
     provision_planning_repository_snapshots,
     snapshot_database,
 )
+from karajan.orchestration.planning_transport import PlanningOutputStore
 from karajan.projects import ProjectRegistry
 from karajan.projects.credential_sources import (
     CredentialSourceError,
@@ -1930,6 +1931,29 @@ def test_persistent_factory_rejects_run_database_alias(configured: dict, tmp_pat
     (state / "runs.sqlite").symlink_to(target)
     with pytest.raises(RunError, match="^PLANNING_ADMISSION_BOOTSTRAP_INVALID$"):
         PlanningExecution.from_trusted_factory(control)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
+@pytest.mark.parametrize("alias", ["symlink", "hardlink"])
+def test_persistent_factory_rejects_output_ledger_alias_without_writes(
+    configured: dict, tmp_path: Path, alias: str
+) -> None:
+    _, authority, _, _ = _case(tmp_path, configured)
+    control = _protected_factory_control(tmp_path, authority)
+    state = tmp_path / "protected-state"
+    ledger = state / "planning-output.sqlite"
+    PlanningOutputStore(ledger, authority_kind="production")
+    external = tmp_path / "repository-controlled-output.sqlite"
+    shutil.copy2(ledger, external)
+    ledger.unlink()
+    if alias == "symlink":
+        ledger.symlink_to(external)
+    else:
+        os.link(external, ledger)
+    before = external.read_bytes()
+    with pytest.raises(RunError, match="^PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE$"):
+        PlanningExecution.from_trusted_factory(control)
+    assert external.read_bytes() == before
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")

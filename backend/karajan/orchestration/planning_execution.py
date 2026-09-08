@@ -158,6 +158,7 @@ class PlanningExecution:
         from .planning_admission import open_persistent_planning_admission
         from .planning_bootstrap import (
             PLANNING_ADMISSION_BOOTSTRAP,
+            _canonical_existing,
             assert_planning_bootstrap_current,
             read_planning_bootstrap,
         )
@@ -192,6 +193,19 @@ class PlanningExecution:
                 )
             except Exception as error:
                 raise RunError("PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE") from error
+        output_database = settings.state_directory / "planning-output.sqlite"
+        outputs = None
+        if output_database.exists() or output_database.is_symlink():
+            try:
+                output_database = _canonical_existing(str(output_database), directory=False)
+                from karajan.projects.credential_sources import _private
+
+                _private(output_database)
+                outputs = PlanningOutputStore(
+                    output_database, authority_kind="production", existing_only=True
+                )
+            except (OSError, RunError, ValueError, sqlite3.Error) as error:
+                raise RunError("PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE") from error
         protected_paths = (
             settings.control_directory / PLANNING_ADMISSION_BOOTSTRAP,
             settings.state_directory,
@@ -200,6 +214,7 @@ class PlanningExecution:
             settings.capacity_database,
             settings.projects_database,
             settings.state_directory / "runs.sqlite",
+            *((output_database,) if outputs is not None else ()),
         )
         try:
             trusted_factory_authority = _TrustedFactoryAuthority(
@@ -210,15 +225,6 @@ class PlanningExecution:
             )
         except OSError as error:
             raise RunError("PLANNING_ADMISSION_BOOTSTRAP_CHANGED") from error
-        output_database = settings.state_directory / "planning-output.sqlite"
-        outputs = None
-        if output_database.exists() or output_database.is_symlink():
-            try:
-                outputs = PlanningOutputStore(
-                    output_database, authority_kind="production", existing_only=True
-                )
-            except (OSError, RunError, sqlite3.Error) as error:
-                raise RunError("PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE") from error
         return cls(
             admissions.execution_database,
             admissions.planner,

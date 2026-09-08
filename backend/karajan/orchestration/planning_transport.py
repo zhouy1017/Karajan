@@ -16,7 +16,7 @@ import sqlite3
 import sys
 import time
 from collections.abc import Callable, Iterator
-from contextlib import contextmanager
+from contextlib import AbstractContextManager, contextmanager
 from pathlib import Path
 from typing import Any, Protocol
 from uuid import uuid4
@@ -30,6 +30,7 @@ from karajan.isolation.go_task import _cleanup_relay_socket_root, _relay_socket_
 from karajan.isolation.opencode_runtime import IsolatedOpenCode
 from karajan.runs import RunError
 from karajan.runs.planning import digest, identifier
+from karajan.storage import require_schema
 
 from .planning_execution import PlanningExecution
 from .planning_input import PlanningModelInput, compile_planning_input
@@ -75,25 +76,29 @@ class PlanningOutputStore:
     ) -> None:
         if authority_kind not in {"fixture", "production"}:
             raise RunError("PLANNING_OUTPUT_AUTHORITY_INVALID")
-        self.database = database.resolve()
+        self.database = database.absolute()
         self.authority_kind = authority_kind
         if existing_only and not self.database.is_file():
             raise RunError("PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE")
         if not existing_only:
             self.database.parent.mkdir(parents=True, exist_ok=True)
+        if existing_only:
+            require_schema(
+                self.database,
+                {
+                    "planning_output_sources": ["execution_id", "binding_sha256", "source_sha256"],
+                    "planning_outputs": [
+                        "execution_id",
+                        "binding_sha256",
+                        "source_sha256",
+                        "content",
+                        "content_sha256",
+                    ],
+                    "planning_output_claims": ["execution_id", "binding_sha256", "state"],
+                },
+            )
         with self._transaction() as db:
-            if existing_only:
-                tables = {
-                    row[0]
-                    for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")
-                }
-                if not {
-                    "planning_output_sources",
-                    "planning_outputs",
-                    "planning_output_claims",
-                } <= tables:
-                    raise RunError("PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE")
-            else:
+            if not existing_only:
                 db.execute(
                     "CREATE TABLE IF NOT EXISTS planning_output_sources ("
                     "execution_id TEXT PRIMARY KEY, binding_sha256 TEXT NOT NULL, "
@@ -290,6 +295,9 @@ class PlanningTransport:
             # Another process either owns the one dispatch attempt or has
             # already published its immutable output.  Only the latter may be
             # submitted; a pending attempt remains visible without a resend.
+            revalidate = getattr(self.producer, "revalidate_source", None)
+            if callable(revalidate):
+                self.outputs.arm(current["binding"], revalidate(current["binding"]))
             if self.outputs.claim_dispatch(current["binding"]) != "completed":
                 return current
         if current["state"] == "awaiting_admission":
@@ -556,7 +564,11 @@ class FixtureGoPlanningProducer:
 
     @staticmethod
     def _native_output(
-        native: IsolatedOpenCode, model_input: PlanningModelInput, *, timeout_seconds: int = 90
+        native: IsolatedOpenCode,
+        model_input: PlanningModelInput,
+        *,
+        timeout_seconds: int = 90,
+        completion_guard: Callable[[], AbstractContextManager[dict[str, Any]]] | None = None,
     ) -> bytes:
         if type(timeout_seconds) is not int or timeout_seconds < 1:
             raise RunError("PLANNING_NATIVE_TIMEOUT_INVALID")
@@ -583,14 +595,15 @@ class FixtureGoPlanningProducer:
                 and message.get("info", {}).get("time", {}).get("completed")
             ]
             if complete:
-                text = "".join(
-                    part.get("text", "")
-                    for part in complete[-1].get("parts", [])
-                    if part.get("type") == "text" and isinstance(part.get("text"), str)
-                )
-                if complete[-1].get("info", {}).get("finish") == "stop" and text:
-                    return text.encode("utf-8")
-                raise RunError("PLANNING_NATIVE_OUTPUT_INVALID")
+                with _allowed() if completion_guard is None else completion_guard():
+                    text = "".join(
+                        part.get("text", "")
+                        for part in complete[-1].get("parts", [])
+                        if part.get("type") == "text" and isinstance(part.get("text"), str)
+                    )
+                    if complete[-1].get("info", {}).get("finish") == "stop" and text:
+                        return text.encode("utf-8")
+                    raise RunError("PLANNING_NATIVE_OUTPUT_INVALID")
             time.sleep(0.1)
         raise RunError("PLANNING_NATIVE_TIMEOUT")
 
@@ -666,6 +679,18 @@ class ProductionGoPlanningProducer:
             "tokenizer_source": self.accounting.source(),
         }
 
+    def revalidate_source(self, binding: dict[str, Any]) -> dict[str, Any]:
+        """Recheck current production authority before consuming old output."""
+        if self.execution.admissions is None:
+            raise RunError("PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE")
+        admissions: Any = self.execution.admissions
+        with admissions.effect_guard(
+            binding["execution_id"],
+            binding["owner"],
+            "planning-output-revalidate:" + binding["execution_id"],
+        ):
+            return self.source(binding)
+
     def _authentication(self, binding: dict[str, Any]) -> tuple[dict[str, Any], Any]:
         run = self.execution.planner.get(binding["run_id"], principal=binding["owner"])
         profiles = run["configuration_snapshot"]["configuration"]["resources"]["profiles"]
@@ -701,6 +726,7 @@ class ProductionGoPlanningProducer:
     ) -> bytes:
         if sys.platform != "linux" or self.execution.admissions is None:
             raise RunError("PLANNING_NATIVE_CONFIGURATION_INVALID")
+        admissions: Any = self.execution.admissions
         policy = model_input.execution_policy
         context_policy = policy.get("context_policy")
         maximum = policy.get("max_context_tokens")
@@ -753,7 +779,7 @@ class ProductionGoPlanningProducer:
         }
         grant_id = "planning-native-" + binding["execution_id"]
         try:
-            with self.execution.admissions.effect_guard(
+            with admissions.effect_guard(
                 binding["execution_id"],
                 binding["owner"],
                 "planning-native-grant:" + binding["execution_id"],
@@ -775,7 +801,7 @@ class ProductionGoPlanningProducer:
                     self.journal, grant_id, grant_binding, grant["capability"]
                 ),
                 context=context,
-                send_guard=lambda: self.execution.admissions.effect_guard(
+                send_guard=lambda: admissions.effect_guard(
                     binding["execution_id"],
                     binding["owner"],
                     "planning-native-send:" + binding["execution_id"],
@@ -783,6 +809,8 @@ class ProductionGoPlanningProducer:
             )
             socket_root = _relay_socket_root()
             native = None
+            content: bytes | None = None
+            relay_result: dict[str, Any] | None = None
             try:
                 socket = socket_root.path / "inference.sock"
                 relay.start(unix_socket=socket)
@@ -802,21 +830,52 @@ class ProductionGoPlanningProducer:
                     no_tools=True,
                 )
                 (native.workspace / projection_path).write_bytes(_artifact_bytes(model_input))
-                with self.execution.admissions.effect_guard(
+                # Starting the isolated native process is an effect, but its
+                # model wait must not retain the execution/Run/Capacity locks:
+                # Relay re-enters the send guard on another thread.
+                with admissions.effect_guard(
                     binding["execution_id"],
                     binding["owner"],
                     "planning-native-start:" + binding["execution_id"],
                 ):
-                    return FixtureGoPlanningProducer._native_output(
-                        native, model_input, timeout_seconds=duration_seconds
-                    )
+                    native.start()
+                content = FixtureGoPlanningProducer._native_output(
+                    native,
+                    model_input,
+                    timeout_seconds=duration_seconds,
+                    completion_guard=lambda: admissions.effect_guard(
+                        binding["execution_id"],
+                        binding["owner"],
+                        "planning-native-complete:" + binding["execution_id"],
+                    ),
+                )
             finally:
                 if native is not None:
                     native.close()
-                relay.close()
+                relay_result = relay.close()
                 _cleanup_relay_socket_root(socket_root)
+            if content is None or relay_result is None or relay_result["status"] != "closed":
+                raise RunError("PLANNING_NATIVE_CLEANUP_UNKNOWN")
+            self._assert_completed_call(grant_id)
+            return content
         finally:
             self.journal.revoke_grant(grant_id)
+
+    def _assert_completed_call(self, grant_id: str) -> None:
+        snapshot = self.journal.snapshot(grant_id)
+        calls = snapshot.get("calls")
+        if snapshot.get("state") != "active" or not isinstance(calls, list) or len(calls) != 1:
+            raise RunError("PLANNING_NATIVE_COMPLETION_UNKNOWN")
+        outcome = calls[0].get("outcome") if isinstance(calls[0], dict) else None
+        if not isinstance(outcome, dict) or (
+            outcome.get("state") != "response_received"
+            or outcome.get("protocol_passed") is not True
+            or not isinstance(outcome.get("usage"), dict)
+            or not isinstance(outcome.get("response_bytes"), int)
+            or outcome["response_bytes"] < 1
+            or outcome.get("reason_codes")
+        ):
+            raise RunError("PLANNING_NATIVE_COMPLETION_UNKNOWN")
 
 @contextmanager
 def _allowed() -> Iterator[None]:
