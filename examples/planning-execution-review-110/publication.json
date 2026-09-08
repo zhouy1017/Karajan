@@ -1,0 +1,79 @@
+{
+  "candidate": "66cff1de755e488af8aa755fe2664632050f5400",
+  "base": "6cf89abc1a6ca8cb99d76f82191dc7d82efeb05b",
+  "issue": 110,
+  "pr": 119,
+  "scope": "C only; independent Standards and Spec; final release CI and merge remain separate",
+  "files": [
+    {
+      "path": "spec/docs-snapshot-review.json",
+      "bytes": 2511,
+      "sha256": "1b8ae94db07db3bf065b0a75398b27e2fe8ec27a8fe1626d997f5d1661dd4ab8",
+      "source_file": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-110\\66cff-publication\\docs-snapshot-review.json",
+      "exact_copy": true
+    },
+    {
+      "path": "spec/independent_spec_cases.py.txt",
+      "bytes": 8245,
+      "sha256": "0d2fe0457d229f7e6c1b06963d857686ea7ed8968c357d8861322d179458c170",
+      "source_file": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-110\\66cff-publication\\independent_spec_cases.py.txt",
+      "exact_copy": true
+    },
+    {
+      "path": "spec/manifest.json",
+      "bytes": 1755,
+      "sha256": "32fee4837a5fa8bf067b252283b5290035a3dfc5596b4f72308e2f591e54a218",
+      "source_file": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-110\\66cff-publication\\manifest.json",
+      "exact_copy": true
+    },
+    {
+      "path": "spec/review.md",
+      "bytes": 2964,
+      "sha256": "2910325f0679dfa6309bcc9bf8bfca427753fcbafeb6dc27c230f36c50c55332",
+      "source_file": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-110\\66cff-publication\\review.md",
+      "exact_copy": true
+    },
+    {
+      "path": "spec/stdout.txt",
+      "bytes": 101,
+      "sha256": "73e941696f2bb8cd023be776d58b83d901c3a2e55f9ab820d272d787887a5bc6",
+      "source_file": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-110\\66cff-publication\\stdout.txt",
+      "exact_copy": true
+    },
+    {
+      "path": "spec/tests.xml",
+      "bytes": 1972,
+      "sha256": "a494178cf44c0a90856579b33cf02ec81ac1bc8f801e8758a1e3c7dd4a909e11",
+      "source_file": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-110\\66cff-publication\\tests.xml",
+      "exact_copy": true
+    },
+    {
+      "path": "standards/execution.json",
+      "bytes": 763,
+      "sha256": "b50c781da6c099b5ca124cdbd03139e51d632cc1f7e1222e0b09f0a6b2176388",
+      "source_file": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\dispatch-planning-execution\\.cache\\standards-110-final-bundle\\execution.json",
+      "exact_copy": true
+    },
+    {
+      "path": "standards/pytest.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_file": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\dispatch-planning-execution\\.cache\\standards-110-final-bundle\\pytest.stderr.log",
+      "exact_copy": true
+    },
+    {
+      "path": "standards/pytest.stdout.log",
+      "bytes": 100,
+      "sha256": "0445d3aeb7652068bd873d7c8eafe0ee1613d4ec6c4ac5a5333c6e7fb03b9330",
+      "source_file": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\dispatch-planning-execution\\.cache\\standards-110-final-bundle\\pytest.stdout.log",
+      "exact_copy": true
+    },
+    {
+      "path": "standards/test_current_boundaries.py.txt",
+      "bytes": 3419,
+      "sha256": "3924830fc67bcaae8defe8421a9e7cc7f805031e0bb42e515730cd9b478c9faa",
+      "source_file": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\dispatch-planning-execution\\.cache\\standards-110-final-bundle\\test_current_boundaries.py",
+      "exact_copy": true
+    }
+  ]
+}

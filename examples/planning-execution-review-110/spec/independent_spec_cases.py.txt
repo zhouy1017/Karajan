@@ -1,0 +1,129 @@
+"""Independent follow-up of #110 C behavior, source 66c3d48; adapted fixtures explicitly activate original Capacity admission."""
+from copy import deepcopy
+import pytest
+from tests.orchestration.test_planning_execution import planning_case, begin
+from karajan.orchestration.planning_execution import PlanningExecution
+
+pytest_plugins = ['tests.runs.test_planning']
+
+@pytest.fixture
+def configured(project):
+    registry, value, _ = project
+    return {**deepcopy(value), 'registry': registry}
+
+def fixture_case(tmp_path, configured, *, activate=True):
+    service, run, intent, authority = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authority)
+    if activate:
+        authority.activate()
+    return service, run, intent, authority, execution
+
+def test_cancel_before_claim_is_successful_and_no_plan(tmp_path, configured, monkeypatch):
+    service, run, intent, authority, execution = fixture_case(tmp_path, configured)
+    original = service._claim_submission
+    def cancel_before_claim(*args, **kwargs):
+        cancelled = service.cancel(execution['id'], principal='owner', command_key='cancel')
+        assert cancelled['state'] == 'cancelled'
+        return original(*args, **kwargs)
+    monkeypatch.setattr(service, '_claim_submission', cancel_before_claim)
+    assert service.submit(execution['id'], principal='owner', command_key='submit')['state'] == 'cancelled'
+    assert not service.planner.get(run['id'], principal='owner')['plans']
+
+def test_started_claim_without_receipt_never_resubmits(tmp_path, configured, monkeypatch):
+    service, run, intent, authority, execution = fixture_case(tmp_path, configured)
+    def interrupt_before_run_write(*args, **kwargs):
+        raise SystemExit('original started claim reply unknown')
+    monkeypatch.setattr(service.planner, '_submit_planning_execution_plan', interrupt_before_run_write)
+    with pytest.raises(SystemExit): service.submit(execution['id'], principal='owner', command_key='submit')
+    def forbidden(*args, **kwargs): raise AssertionError('must not redispatch')
+    monkeypatch.setattr(service.planner, '_submit_planning_execution_plan', forbidden)
+    reopened = PlanningExecution(service.database, service.planner)
+    for _ in range(2):
+        recovered = reopened.submit(execution['id'], principal='owner', command_key='submit')
+        assert recovered['state'] == 'submission_unknown'
+        assert recovered['submission'] is None
+    assert not service.planner.get(run['id'], principal='owner')['plans']
+
+def test_real_committed_lost_reply_recovers_without_live_authorities(tmp_path, configured, monkeypatch):
+    service, run, intent, authority, execution = fixture_case(tmp_path, configured)
+    original = service.planner._submit_planning_execution_plan
+    def lose_reply(*args, **kwargs):
+        original(*args, **kwargs)
+        raise RuntimeError('lost after real RunPlanner commit')
+    monkeypatch.setattr(service.planner, '_submit_planning_execution_plan', lose_reply)
+    with pytest.raises(RuntimeError): service.submit(execution['id'], principal='owner', command_key='submit')
+    def forbidden(*args, **kwargs): raise AssertionError('no repeat submission allowed')
+    monkeypatch.setattr(service.planner, '_submit_planning_execution_plan', forbidden)
+    recovered = PlanningExecution(service.database, service.planner).submit(execution['id'], principal='owner', command_key='submit')
+    assert recovered['state'] == 'submitted'
+    assert service.planner.get(run['id'], principal='owner')['plans'] == [recovered['submission']]
+    assert service.begin(run['id'], intent['id'], principal='owner', command_key='begin') == execution
+
+def test_mismatched_admit_receipt_is_rejected(tmp_path, configured):
+    service, run, intent, authority, execution = fixture_case(tmp_path, configured)
+    original = authority.read_admission
+    def changed(binding):
+        evidence = original(binding)
+        evidence['capacity_receipt'] = {'unrelated':'receipt'}
+        evidence['capacity_command_key'] = 'unissued-key'
+        return evidence
+    authority.read_admission = changed
+    result = service.submit(execution['id'], principal='owner', command_key='submit')
+    assert result['submission'] is None
+    assert 'PLANNING_CAPACITY_RECEIPT_MISMATCH' in result['reason_codes']
+
+def test_frozen_source_mismatched_output_is_rejected(tmp_path, configured):
+    service, run, intent, authority, execution = fixture_case(tmp_path, configured)
+    service.reconcile(execution['id'], principal='owner')
+    authority.output_source = 'c' * 64
+    result = service.submit(execution['id'], principal='owner', command_key='submit')
+    assert result['submission'] is None
+
+def test_current_source_change_cannot_use_late_old_output(tmp_path, configured):
+    service, run, intent, authority, execution = fixture_case(tmp_path, configured)
+    service.reconcile(execution['id'], principal='owner')
+    old_output = authority.read_output(execution['id'], execution['binding'])
+    authority.output_source = 'c' * 64
+    authority.read_output = lambda *args: old_output
+    result = service.submit(execution['id'], principal='owner', command_key='submit')
+    assert result['submission'] is None, {'current_source':authority.read_source(execution['binding'])['source_sha256'], 'accepted_source': result['output']['source_sha256'], 'state':result['state']}
+
+def test_activation_receipt_missing_never_submits(tmp_path, configured):
+    service, run, intent, authority, execution = fixture_case(tmp_path, configured, activate=False)
+    seen = []
+    original = authority.capacity.command_receipt
+    def observed(kind, request, *, command_key):
+        seen.append(kind)
+        return original(kind, request, command_key=command_key)
+    authority.capacity.command_receipt = observed
+    result = service.submit(execution['id'], principal='owner', command_key='submit')
+    assert result['submission'] is None, {'state':result['state'], 'queried_receipt_kinds':seen, 'fixture_prepared_only_admit':True}
+
+@pytest.mark.parametrize('change', ['key', 'request', 'receipt'])
+def test_forged_activation_is_rejected_after_real_activation(tmp_path, configured, change):
+    service, run, intent, authority, execution = fixture_case(tmp_path, configured)
+    original = authority.read_admission
+    def forged(binding):
+        evidence = original(binding)
+        assert evidence['capacity_activation_receipt']['decision'] == 'capacity_revalidated'
+        if change == 'key': evidence['capacity_activation_command_key'] = 'never-issued-key'
+        elif change == 'request': evidence['capacity_activation_request'] = {'admission_id':'another'}
+        else: evidence['capacity_activation_receipt'] = {'decision':'capacity_revalidated', 'admission_id':'another'}
+        return evidence
+    authority.read_admission = forged
+    result = service.submit(execution['id'], principal='owner', command_key='submit')
+    assert result['submission'] is None
+    assert result['reason_codes'] == ['PLANNING_CAPACITY_ACTIVATION_MISMATCH']
+
+def test_source_drift_after_captured_output_before_claim_blocks_on_restart(tmp_path, configured, monkeypatch):
+    service, run, intent, authority, execution = fixture_case(tmp_path, configured)
+    def crash_before_claim(*args, **kwargs): raise SystemExit('output captured, no submission claim')
+    monkeypatch.setattr(service, '_claim_submission', crash_before_claim)
+    with pytest.raises(SystemExit):
+        service.submit(execution['id'], principal='owner', command_key='submit')
+    assert service.get(execution['id'], principal='owner')['state'] == 'output_captured'
+    assert not service.planner.get(run['id'], principal='owner')['plans']
+    authority.output_source = 'c' * 64
+    reopened = PlanningExecution(service.database, service.planner, admissions=authority, outputs=authority, capacity=authority.capacity, allow_fixture_authorities=True)
+    result = reopened.submit(execution['id'], principal='owner', command_key='submit')
+    assert result['submission'] is None, {'state': result['state'], 'current_source': authority.output_source, 'output_source': result['output']['source_sha256']}

@@ -1,0 +1,120 @@
+{
+  "verified_at_utc": "2026-09-07T06:40:21.451177+00:00",
+  "method": "GitHub REST native sub_issues and dependencies/blocked_by read-back",
+  "parents": {
+    "93": [
+      109,
+      110,
+      111,
+      112,
+      113
+    ],
+    "95": [
+      96,
+      99,
+      100,
+      104,
+      106,
+      107,
+      114,
+      115,
+      116,
+      117
+    ]
+  },
+  "issues": [
+    {
+      "number": 109,
+      "native_parent_expected": 93,
+      "parent_membership_verified": true,
+      "blocked_by_observed": [],
+      "body_sha256_verified": true
+    },
+    {
+      "number": 110,
+      "native_parent_expected": 93,
+      "parent_membership_verified": true,
+      "blocked_by_observed": [
+        109
+      ],
+      "body_sha256_verified": true
+    },
+    {
+      "number": 111,
+      "native_parent_expected": 93,
+      "parent_membership_verified": true,
+      "blocked_by_observed": [
+        110
+      ],
+      "body_sha256_verified": true
+    },
+    {
+      "number": 112,
+      "native_parent_expected": 93,
+      "parent_membership_verified": true,
+      "blocked_by_observed": [
+        110
+      ],
+      "body_sha256_verified": true
+    },
+    {
+      "number": 113,
+      "native_parent_expected": 93,
+      "parent_membership_verified": true,
+      "blocked_by_observed": [
+        111,
+        112
+      ],
+      "body_sha256_verified": true
+    },
+    {
+      "number": 114,
+      "native_parent_expected": 95,
+      "parent_membership_verified": true,
+      "blocked_by_observed": [
+        101,
+        104
+      ],
+      "body_sha256_verified": true
+    },
+    {
+      "number": 115,
+      "native_parent_expected": 95,
+      "parent_membership_verified": true,
+      "blocked_by_observed": [
+        100,
+        101,
+        106
+      ],
+      "body_sha256_verified": true
+    },
+    {
+      "number": 116,
+      "native_parent_expected": 95,
+      "parent_membership_verified": true,
+      "blocked_by_observed": [
+        114,
+        115
+      ],
+      "body_sha256_verified": true
+    },
+    {
+      "number": 117,
+      "native_parent_expected": 95,
+      "parent_membership_verified": true,
+      "blocked_by_observed": [
+        107,
+        113,
+        116
+      ],
+      "body_sha256_verified": true
+    },
+    {
+      "number": 120,
+      "native_parent_expected": null,
+      "parent_membership_verified": "standalone; no parent assigned in this publication",
+      "blocked_by_observed": [],
+      "body_sha256_verified": true
+    }
+  ]
+}

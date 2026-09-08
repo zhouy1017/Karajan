@@ -1,0 +1,47 @@
+{
+  "candidate": "66cff1de755e488af8aa755fe2664632050f5400",
+  "base": "6cf89abc1a6ca8cb99d76f82191dc7d82efeb05b",
+  "result": "Spec passed: all original findings closed within C scope",
+  "tests": {
+    "independent": 11,
+    "author_targeted": 1,
+    "passed": 12
+  },
+  "files": [
+    {
+      "original": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-110\\test_66c3_spec.py",
+      "published": "independent_spec_cases.py.txt",
+      "bytes": 8245,
+      "sha256": "0d2fe0457d229f7e6c1b06963d857686ea7ed8968c357d8861322d179458c170",
+      "exact_copy": true
+    },
+    {
+      "original": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-110\\66cff.txt",
+      "published": "stdout.txt",
+      "bytes": 101,
+      "sha256": "73e941696f2bb8cd023be776d58b83d901c3a2e55f9ab820d272d787887a5bc6",
+      "exact_copy": true
+    },
+    {
+      "original": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-110\\66cff.xml",
+      "published": "tests.xml",
+      "bytes": 1972,
+      "sha256": "a494178cf44c0a90856579b33cf02ec81ac1bc8f801e8758a1e3c7dd4a909e11",
+      "exact_copy": true
+    },
+    {
+      "original": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-110\\66cff-final-review.md",
+      "published": "review.md",
+      "bytes": 2964,
+      "sha256": "2910325f0679dfa6309bcc9bf8bfca427753fcbafeb6dc27c230f36c50c55332",
+      "exact_copy": true
+    },
+    {
+      "original": "C:\\Users\\Chooo\\Playground\\Karajan\\.cache\\reviewer-high-110\\66c3-docs.json",
+      "published": "docs-snapshot-review.json",
+      "bytes": 2511,
+      "sha256": "1b8ae94db07db3bf065b0a75398b27e2fe8ec27a8fe1626d997f5d1661dd4ab8",
+      "exact_copy": true
+    }
+  ]
+}

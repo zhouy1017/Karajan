@@ -508,6 +508,101 @@ class RunPlanner:
 
         return self._command("submit_plan", request, principal, command_key, apply)
 
+    def command_receipt(
+        self, kind: str, request: dict[str, Any], *, principal: str, command_key: str
+    ) -> dict[str, Any] | None:
+        """Read one exact Run command receipt without opening a write transaction."""
+        if kind != "submit_plan":
+            raise RunError("COMMAND_RECEIPT_KIND_UNSUPPORTED")
+        identifier(principal)
+        identifier(command_key)
+        if not isinstance(request, dict) or not isinstance(request.get("run_id"), str):
+            raise RunError("PLANNING_INPUT_INVALID")
+        run_id = request["run_id"]
+        identifier(run_id)
+        version_two = request.get("schema_version") == "karajan.submit-plan.v2"
+        value = {
+            "run_id": run_id,
+            **parse(SubmitPlanV2 if version_two else SubmitPlan, {
+                key: item for key, item in request.items() if key != "run_id"
+            }),
+        }
+        identity = digest([kind, value])
+        db = sqlite3.connect(self.database.resolve().as_uri() + "?mode=ro", uri=True, timeout=10)
+        db.row_factory = sqlite3.Row
+        try:
+            row = db.execute(
+                "SELECT digest,result,error FROM run_commands WHERE principal=? AND key=?",
+                (principal, command_key),
+            ).fetchone()
+        finally:
+            db.close()
+        if row is None:
+            return None
+        if row["digest"] != identity:
+            raise RunError("IDEMPOTENCY_CONFLICT")
+        if row["error"]:
+            raise RunError(row["error"])
+        return dict(json.loads(row["result"]))
+
+    def _submit_planning_execution_plan(
+        self,
+        run_id: str,
+        intent_id: str,
+        request: dict[str, Any],
+        *,
+        execution_id: str,
+        binding_sha256: str,
+        principal: str,
+        command_key: str,
+        submission_guard: Callable[[], None] | None = None,
+    ) -> dict[str, Any]:
+        """Internal controller port; no HTTP route accepts this material.
+
+        The planning-execution controller has already read and sealed a trusted
+        output.  This method only turns that sealed identity into the existing
+        receipt state and immediately reuses the normal plan validator.
+        """
+        for value in (run_id, intent_id, execution_id, binding_sha256, principal, command_key):
+            identifier(value)
+        with self._transaction() as db:
+            run = self._get(db, run_id)
+            self._owner(run, principal)
+            intent = next((row for row in run["planning_intents"] if row["id"] == intent_id), None)
+            if intent is None:
+                raise RunError("PLANNING_INTENT_NOT_FOUND")
+            self._term(run, intent["term"])
+            if intent["principal"] != run["commander"]["principal"]:
+                raise RunError("ONLY_CURRENT_COMMANDER_CAN_SUBMIT")
+            receipt_ref = "planning-execution:" + execution_id
+            receipt = {
+                "receipt_ref": receipt_ref,
+                "authority_revision": binding_sha256,
+                "run_id": run_id,
+                "intent_id": intent_id,
+                "term": intent["term"],
+                "principal": intent["principal"],
+                "profile": intent["profile"],
+                "budget_ref": intent["budget_ref"],
+                "state": "admitted",
+                "provenance": "planning_execution",
+            }
+            if intent["receipt"] is None:
+                intent["receipt"], intent["state"] = receipt, "admitted"
+                self._save(db, run)
+            elif intent["receipt"] != receipt or intent["state"] != "admitted":
+                raise RunError("PLANNING_EXECUTION_RECEIPT_CONFLICT")
+        if request.get("term") != receipt["term"] or request.get("intent_id") != intent_id:
+            raise RunError("PLANNING_EXECUTION_SUBMISSION_BINDING_MISMATCH")
+        if submission_guard is not None:
+            submission_guard()
+        return self.submit_plan(
+            run_id,
+            {key: value for key, value in request.items() if key != "run_id"},
+            principal=receipt["principal"],
+            command_key=command_key,
+        )
+
     def approve_plan(
         self, run_id: str, request: dict[str, Any], *, command_key: str, principal: str
     ) -> dict[str, Any]:
