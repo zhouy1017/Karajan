@@ -993,7 +993,7 @@ def test_business_lost_begin_reply_keeps_one_unknown_slot_without_replay_or_refu
 
 
 @pytest.mark.parametrize("factory, context_type", _BUSINESS_CONTEXTS)
-def test_business_lost_completion_acknowledgement_keeps_unknown_without_a_retry_or_refund(
+def test_business_lost_completion_ack_preserves_committed_response_received_without_retry_or_refund(
     tmp_path, accounting, factory, context_type, monkeypatch
 ):
     source = digest(accounting.source())
