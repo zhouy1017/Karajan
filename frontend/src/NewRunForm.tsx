@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { RunProject } from "./ProjectRuns";
 
 type RegisteredPolicy = {
+  schema_version?:
+    "karajan.execution-policy.v1" | "karajan.execution-policy.v2";
   id: string;
   revision: number;
   digest: string;
@@ -55,6 +57,18 @@ type Configuration = {
     }[];
   };
 };
+type PlanningPreparationReadiness = {
+  schema_version: "karajan.planning-preparation-readiness.v1";
+  project_id: string;
+  configuration_revision: number;
+  configuration_digest: string | null;
+  configuration_status: "draft" | "offline_valid" | string;
+  v2_preparation_allowed: boolean;
+  qualification_state: "unknown" | string;
+  qualification_pending: boolean | null;
+  reason_codes: string[];
+  activation_allowed: false;
+};
 
 function policyForRun(
   policy: RegisteredPolicy,
@@ -88,6 +102,19 @@ function policyForRun(
       checks: validationChecks,
     },
   };
+}
+
+function selectPolicy(policies: RegisteredPolicy[]): RegisteredPolicy {
+  const v2 = policies.filter(
+    (policy) => policy.schema_version === "karajan.execution-policy.v2",
+  );
+  const ids = [...new Set(v2.map((policy) => policy.id))];
+  if (ids.length !== 1) throw new Error("EXECUTION_POLICY_ID_AMBIGUOUS");
+  const selected = v2
+    .filter((policy) => policy.id === ids[0])
+    .sort((a, b) => b.revision - a.revision)[0];
+  if (!selected) throw new Error("EXECUTION_POLICY_NOT_FOUND");
+  return selected;
 }
 type FormProps = {
   project: RunProject;
@@ -167,12 +194,32 @@ function RunDraft({ project, csrf, onSaved }: FormProps) {
   }, [csrf, project.id]);
   useEffect(() => {
     let active = true;
-    if (project.configuration.status !== "offline_valid") return;
+    if (
+      project.configuration.status !== "offline_valid" &&
+      project.configuration.status !== "draft"
+    )
+      return;
     fetch(`/v1/projects/${encodeURIComponent(project.id)}/configuration`)
       .then(async (response) => {
         if (!response.ok) throw new Error();
         const saved = await response.json();
         if (saved.project_revision !== project.revision) throw new Error();
+        if (project.configuration.status === "draft") {
+          const readinessResponse = await fetch(
+            `/v1/projects/${encodeURIComponent(project.id)}/planning-preparation-readiness`,
+          );
+          if (!readinessResponse.ok) throw new Error();
+          const readiness =
+            (await readinessResponse.json()) as PlanningPreparationReadiness;
+          if (
+            readiness.schema_version !==
+              "karajan.planning-preparation-readiness.v1" ||
+            readiness.project_id !== project.id ||
+            readiness.configuration_digest !== project.configuration.digest ||
+            !readiness.v2_preparation_allowed
+          )
+            throw new Error();
+        }
         if (!active) return;
         let next = saved.configuration as Configuration;
         if (!next.execution_policy) {
@@ -182,10 +229,7 @@ function RunDraft({ project, csrf, onSaved }: FormProps) {
           if (!policiesResponse.ok) throw new Error();
           const policies = (await policiesResponse.json())
             .items as RegisteredPolicy[];
-          const policy = [...policies].sort(
-            (a, b) => b.revision - a.revision,
-          )[0];
-          if (!policy) throw new Error();
+          const policy = selectPolicy(policies);
           next = { ...next, execution_policy: policyForRun(policy, next) };
         }
         if (active) setConfiguration(next);
@@ -311,8 +355,10 @@ function RunDraft({ project, csrf, onSaved }: FormProps) {
   }
   if (
     project.configuration.status !== "offline_valid" &&
+    !configuration &&
     !pending &&
-    storageKey
+    storageKey &&
+    !error
   )
     return (
       <p className="muted">先补齐项目配置，再保存带有执行范围的新需求。</p>
@@ -403,6 +449,12 @@ function RunDraft({ project, csrf, onSaved }: FormProps) {
               .map((ref) => `${ref.id}（版本 ${ref.revision}）`)
               .join("、")}
             。实际任务分配以待确认计划为准。
+          </p>
+        )}
+        {!pending && configuration?.execution_policy && (
+          <p className="field-help">
+            执行政策：{configuration.execution_policy.id}（版本{" "}
+            {configuration.execution_policy.revision}）。
           </p>
         )}
         {!pending && budget && (

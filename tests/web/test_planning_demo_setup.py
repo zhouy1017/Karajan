@@ -6,6 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from fastapi.testclient import TestClient
+
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "examples" / "business-planning-demo" / "run_live.py"
 
@@ -61,7 +63,12 @@ def test_live_setup_reaches_qualification_boundary_without_provider(tmp_path: Pa
     class StopBeforeProvider(Exception):
         pass
 
+    qualification_project_id: str | None = None
+    configuration_digest: str | None = None
+
     def stop_at_qualification(store, project_id, profile_ref, **kwargs):
+        nonlocal qualification_project_id, configuration_digest
+        qualification_project_id = project_id
         assert project_id
         assert profile_ref == {"id": "commander", "revision": 1}
         assert kwargs["principal"] == "owner"
@@ -69,6 +76,7 @@ def test_live_setup_reaches_qualification_boundary_without_provider(tmp_path: Pa
         assert store.commander_suite is not None
         assert store.projects.database == state / "planning-state" / "projects.sqlite"
         configured = store.projects.get_configuration(project_id)["configuration"]
+        configuration_digest = store.projects.get(project_id)["configuration"]["digest"]
         evidence = configured["resources"]["profiles"][0]["capability_evidence"]
         assert {row["capability"] for row in evidence} == {
             "design_reasoning",
@@ -109,6 +117,19 @@ def test_live_setup_reaches_qualification_boundary_without_provider(tmp_path: Pa
     assert (state / "control" / "planning-admission-bootstrap.json").is_file()
     assert (state / "planning-state" / "projects.sqlite").is_file()
     assert (state / "planning-state" / "planning-admission.sqlite").is_file()
+    projection = module._journal_scenario_projection(
+        state / "commander-journal.sqlite",
+        [{"scenario": "missing", "grant_id": "grant-not-present"}],
+    )
+    assert projection == [
+        {
+            "scenario": "missing",
+            "grant_id": "grant-not-present",
+            "state": "unknown",
+            "request_count": None,
+            "status": "not_run",
+        }
+    ]
     sys.path.insert(0, str(ROOT / "backend"))
     from karajan.capacity import CapacityStore
 
@@ -146,6 +167,31 @@ def test_live_setup_reaches_qualification_boundary_without_provider(tmp_path: Pa
         planning_control_directory=state / "control",
     )
     assert app is not None
+    assert qualification_project_id is not None
+    assert configuration_digest is not None
+    with TestClient(app, base_url="http://127.0.0.1:8765") as client:
+        login = client.post(
+            "/v1/session/bootstrap",
+            json={"token": "test-bootstrap-token"},
+            headers={"Origin": "http://127.0.0.1:8765"},
+        )
+        assert login.status_code == 200
+        readiness = client.get(
+            f"/v1/projects/{qualification_project_id}/planning-preparation-readiness"
+        )
+        assert readiness.status_code == 200
+        assert readiness.json() == {
+            "schema_version": "karajan.planning-preparation-readiness.v1",
+            "project_id": qualification_project_id,
+            "configuration_revision": 1,
+            "configuration_digest": configuration_digest,
+            "configuration_status": "draft",
+            "v2_preparation_allowed": True,
+            "qualification_state": "unknown",
+            "qualification_pending": True,
+            "reason_codes": ["CAPABILITY_NOT_PASSED"],
+            "activation_allowed": False,
+        }
     assert (state / "commander-journal.sqlite").is_file()
     assert (state / "commander-work").is_dir()
     assert (state / "credential-private").is_dir()

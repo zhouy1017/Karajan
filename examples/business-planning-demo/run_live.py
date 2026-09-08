@@ -319,6 +319,40 @@ def _register_capacity(bootstrap: Any) -> dict[str, Any]:
     return {"pool": pool, "profile": profile, "policy": policy, "observation": "unknown"}
 
 
+def _journal_scenario_projection(
+    journal_path: Path, scenarios: list[object]
+) -> list[dict[str, Any]]:
+    """Project only durable, non-secret journal facts for the public report."""
+    from karajan.adapters.opencode.go_journal import GoCallJournal
+
+    journal = GoCallJournal(journal_path, existing_only=True)
+    projection: list[dict[str, Any]] = []
+    for scenario in scenarios:
+        grant_id = scenario.get("grant_id") if isinstance(scenario, dict) else None
+        snapshot: dict[str, Any] | None = None
+        if isinstance(grant_id, str) and grant_id:
+            try:
+                candidate = journal.snapshot(grant_id)
+            except Exception:
+                candidate = None
+            if isinstance(candidate, dict):
+                snapshot = candidate
+        count = snapshot.get("request_count") if snapshot is not None else None
+        safe_count = count if type(count) is int and count >= 0 else None
+        state = snapshot.get("state") if snapshot is not None else "unknown"
+        safe_state = state if isinstance(state, str) else "unknown"
+        projection.append(
+            {
+                "scenario": scenario.get("scenario") if isinstance(scenario, dict) else None,
+                "grant_id": grant_id,
+                "state": safe_state,
+                "request_count": safe_count,
+                "status": "observed" if snapshot is not None else "not_run",
+            }
+        )
+    return projection
+
+
 def _live(values: dict[str, Path], *, qualifier: Any | None = None) -> dict[str, Any]:
     root = values["directory"].resolve()
     if root.exists() or root.is_symlink():
@@ -412,6 +446,7 @@ def _live(values: dict[str, Path], *, qualifier: Any | None = None) -> dict[str,
     )
     start = store.get_command_start(project["id"], "qualify-commander-planning", principal="owner")
     scenarios = start.get("binding", {}).get("execution_start", {}).get("scenarios", [])
+    scenario_projection = _journal_scenario_projection(journal_path, scenarios)
     return {
         "schema_version": "karajan.business-planning-demo.v1",
         "scope": SCOPE,
@@ -441,9 +476,12 @@ def _live(values: dict[str, Path], *, qualifier: Any | None = None) -> dict[str,
         },
         "credential_generation": generation.get("generation"),
         "start": {
+            "command_key": "qualify-commander-planning",
             "id": start.get("id"),
             "completed": start.get("completed"),
-            "request_counts": [row.get("request_count") for row in scenarios],
+            "request_counts": [row["request_count"] for row in scenario_projection],
+            "scenario_states": [row["state"] for row in scenario_projection],
+            "scenarios": scenario_projection,
         },
         "dispatch_eligible": False,
         "business_execution": "owned by web planning factory",

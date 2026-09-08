@@ -17,45 +17,48 @@ const project = {
   target_branch: "main",
   configuration: { status: "offline_valid", digest: "c".repeat(64) },
 };
-function configured(revision = 2) {
-  return Response.json({
-    project_revision: revision,
-    configuration: {
-      execution_policy: {
-        id: "planning-policy",
-        revision: 1,
-        digest: "p".repeat(64),
-        authorization: {
-          profile_refs: [{ id: "lead-profile", revision: 1 }],
-          channel_ids: ["commander"],
-          tools: [],
-          data_destinations: ["local"],
-          required_capabilities: ["design_reasoning", "structured_plan_output"],
-          min_isolation: "tool_sandboxed",
-          currency_limits: { USD: "0" },
-          max_attempt_duration_seconds: 300,
-          max_quality_repair_rounds: 0,
-          stage_permissions: { normal: { normal: true, quality_indices: [] } },
-        },
-      },
-      approved_profile_refs: [{ id: "lead-profile", revision: 1 }],
-      rulebook: {
-        profile_groups: {
-          commander_qualified: [{ id: "lead-profile", revision: 1 }],
-        },
-        resource_policy: { run_budget_ref: "run" },
-      },
-      resources: {
-        budgets: [
-          {
-            id: "run",
-            currency_limits: { USD: "0" },
-            max_total_attempts: 8,
-            max_duration_seconds: 300,
-          },
-        ],
+function configured(revision = 2, includePolicy = true) {
+  const configuration = {
+    execution_policy: {
+      id: "planning-policy",
+      revision: 1,
+      digest: "p".repeat(64),
+      authorization: {
+        profile_refs: [{ id: "lead-profile", revision: 1 }],
+        channel_ids: ["commander"],
+        tools: [],
+        data_destinations: ["local"],
+        required_capabilities: ["design_reasoning", "structured_plan_output"],
+        min_isolation: "tool_sandboxed" as const,
+        currency_limits: { USD: "0" },
+        max_attempt_duration_seconds: 300,
+        max_quality_repair_rounds: 0,
+        stage_permissions: { normal: { normal: true, quality_indices: [] } },
       },
     },
+    approved_profile_refs: [{ id: "lead-profile", revision: 1 }],
+    rulebook: {
+      profile_groups: {
+        commander_qualified: [{ id: "lead-profile", revision: 1 }],
+      },
+      resource_policy: { run_budget_ref: "run" },
+    },
+    resources: {
+      budgets: [
+        {
+          id: "run",
+          currency_limits: { USD: "0" },
+          max_total_attempts: 8,
+          max_duration_seconds: 300,
+        },
+      ],
+    },
+  };
+  if (!includePolicy)
+    delete (configuration as { execution_policy?: unknown }).execution_policy;
+  return Response.json({
+    project_revision: revision,
+    configuration,
   });
 }
 async function fillRequirement() {
@@ -456,4 +459,121 @@ it("saves the users requirement against the displayed project snapshot and reuse
     { id: "worker-profile", revision: 2 },
   ]);
   expect(body.authorization.checks).toContain("independent_review");
+});
+
+it("loads one registered v2 policy while capability qualification is pending", async () => {
+  const writes: RequestInit[] = [];
+  vi.stubGlobal("fetch", async (path: string, options?: RequestInit) => {
+    if (path.endsWith("/configuration")) return configured(2, false);
+    if (path.endsWith("/planning-preparation-readiness"))
+      return Response.json({
+        schema_version: "karajan.planning-preparation-readiness.v1",
+        project_id: "project-1",
+        configuration_revision: 2,
+        configuration_digest: "c".repeat(64),
+        configuration_status: "draft",
+        v2_preparation_allowed: true,
+        qualification_state: "unknown",
+        qualification_pending: true,
+        reason_codes: ["CAPABILITY_NOT_PASSED"],
+        activation_allowed: false,
+      });
+    if (path.endsWith("/execution-policies"))
+      return Response.json({
+        items: [
+          {
+            schema_version: "karajan.execution-policy.v2",
+            id: "planning-policy",
+            revision: 2,
+            digest: "q".repeat(64),
+            constraints: {
+              profile_refs: [{ id: "lead-profile", revision: 1 }],
+              channel_ids: ["commander"],
+              tools: [],
+              data_destinations: ["local"],
+              required_capabilities: [
+                "design_reasoning",
+                "structured_plan_output",
+              ],
+              min_isolation: "tool_sandboxed",
+            },
+            validation: {
+              checks: [{ id: "candidate-tests" }],
+              review: { id: "independent_review" },
+            },
+          },
+        ],
+      });
+    writes.push(options!);
+    return Response.json({ id: "run-1" }, { status: 201 });
+  });
+  render(
+    <NewRunForm
+      project={{
+        ...project,
+        configuration: { status: "draft", digest: "c".repeat(64) },
+      }}
+      csrf="draft-session"
+      onSaved={vi.fn()}
+    />,
+  );
+  expect(
+    await screen.findByText("执行政策：planning-policy（版本 2）。"),
+  ).toBeTruthy();
+  await fillRequirement();
+  expect(writes).toHaveLength(1);
+  const body = JSON.parse(writes[0].body as string);
+  expect(body.execution_policy).toEqual({
+    id: "planning-policy",
+    revision: 2,
+    digest: "q".repeat(64),
+  });
+});
+
+it("does not choose a v2 policy across multiple policy ids", async () => {
+  vi.stubGlobal("fetch", async (path: string) => {
+    if (path.endsWith("/configuration")) return configured(2, false);
+    if (path.endsWith("/planning-preparation-readiness"))
+      return Response.json({
+        schema_version: "karajan.planning-preparation-readiness.v1",
+        project_id: "project-1",
+        configuration_revision: 2,
+        configuration_digest: "c".repeat(64),
+        configuration_status: "draft",
+        v2_preparation_allowed: true,
+        qualification_state: "unknown",
+        qualification_pending: true,
+        reason_codes: ["CAPABILITY_NOT_PASSED"],
+        activation_allowed: false,
+      });
+    if (path.endsWith("/execution-policies"))
+      return Response.json({
+        items: [
+          {
+            schema_version: "karajan.execution-policy.v2",
+            id: "alpha",
+            revision: 1,
+          },
+          {
+            schema_version: "karajan.execution-policy.v2",
+            id: "beta",
+            revision: 3,
+          },
+        ],
+      });
+    throw new Error("unexpected request");
+  });
+  render(
+    <NewRunForm
+      project={{
+        ...project,
+        configuration: { status: "draft", digest: "c".repeat(64) },
+      }}
+      csrf="ambiguous-session"
+      onSaved={vi.fn()}
+    />,
+  );
+  expect((await screen.findByRole("alert")).textContent).toContain(
+    "无法读取当前配置",
+  );
 });
