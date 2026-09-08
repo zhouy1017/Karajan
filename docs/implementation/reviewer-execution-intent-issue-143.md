@@ -20,7 +20,7 @@ detached recovery operation, including after cancellation or source changes.
 
 | Original acceptance condition | Evidence | Result |
 | --- | --- | --- |
-| Real lineage/CAS/Checks/Capacity create one complete intent; forged or incomplete material creates none | `tests/runs/test_reviewer_execution_intent.py` together with existing `test_reviewer_binding.py` coverage; focused collection blocked below | P (prior local unit coverage; this candidate's full focused run not collected) |
+| Real lineage/CAS/Checks/Capacity create one complete intent; forged or incomplete material creates none | `tests/runs/test_reviewer_execution_intent.py` together with existing `test_reviewer_binding.py` coverage | C (the focused suite collects with the repository's fixture paths) |
 | Replay, concurrency, reopen and tamper preserve/reject exact identity | intent ledger implementation and focused intent tests; collection blocked | P |
 | Re-enter current admission/compiler before prepare and claim; changed input/source blocks effects | `ReviewerExecutionIntents._current_guard`; source recomputation added in this candidate | C |
 | Durable Host prepare/control and read-only inspection; no facade start | `test_reviewer_execution_intent.py`; no `Host.start` call in facade | C |
@@ -37,11 +37,11 @@ this checkout.  No native/provider or real qualification claim is made.
 | Command | Result |
 | --- | --- |
 | `C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m pytest tests/runs/test_reviewer_execution_bootstrap.py -q --basetemp .../.cache/dg01-bootstrap-2` | `3 passed in 0.23s` |
-| `C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m pytest tests/runs/test_reviewer_execution_bootstrap.py tests/runs/test_reviewer_execution_intent.py -q --basetemp .../.cache/dg01-reviewer-focused` | not collected: `ModuleNotFoundError: test_projected_qualification_store` imported transitively by the runs fixtures |
+| `PYTHONPATH='backend;tests;tests/projects;tests/runs;tests/candidates'; C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m pytest tests/runs/test_reviewer_execution_bootstrap.py tests/runs/test_reviewer_execution_intent.py -q --basetemp .../.cache/dg01-reviewer-focused` | `8 passed in 12.13s` |
 | `C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m ruff check .` | `All checks passed!` |
 | `C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m mypy backend` | `Success: no issues found in 154 source files` |
 | `wsl -d Ubuntu -- bash -lc 'cd /mnt/c/.../dg01-reviewer-20260908 && /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest tests/runs/test_reviewer_execution_bootstrap.py -q --basetemp /tmp/karajan-dg01-bootstrap-20260908'` | `3 passed in 1.26s` |
 
-The Linux direct-child test is not recorded as run: this Windows checkout's
-focused suite fails collection before a test can be selected, and no test or
-runtime dependency was altered to mask that failure.
+The fixture module is at `tests/projects/test_projected_qualification_store.py`.
+The focused runs suite requires its repository test paths in `PYTHONPATH`; this
+is a collection configuration requirement, not a missing dependency or blocker.
