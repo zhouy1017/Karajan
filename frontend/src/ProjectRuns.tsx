@@ -41,9 +41,31 @@ type Plan = {
     }[];
   };
 };
+type PlanningStatus = {
+  intent: {
+    id: string;
+    term: number;
+    principal: string;
+    profile: { id: string; revision: number };
+    budget_ref: string;
+    state: string;
+  } | null;
+  execution: {
+    id: string;
+    binding_sha256: string;
+    state: string;
+    cancel_requested: boolean;
+    reason_codes: string[];
+  } | null;
+  availability: {
+    state: "blocked" | string;
+    reason_code?: string;
+  };
+};
 type Run = {
   schema_version?: string;
   id: string;
+  project_id?: string;
   requirement: { goal: string; acceptance: string[] };
   commander: { term: number; principal: string };
   active_plan_revision: number | null;
@@ -51,6 +73,7 @@ type Run = {
   dispatch_enabled: boolean;
   plans: Plan[];
   handoffs: Handoff[];
+  planning?: PlanningStatus | null;
   configuration_snapshot?: {
     configuration: {
       resources: {
@@ -63,6 +86,11 @@ type Run = {
       };
     };
   };
+};
+type PlanningRead = {
+  schema_version: "karajan.workbench-planning.v1";
+  run: Run;
+  planning: PlanningStatus | null;
 };
 type Handoff = {
   id: string;
@@ -151,14 +179,40 @@ function RunWorkbench({
     try {
       const response = await fetch(`/v1/runs/${encodeURIComponent(id)}`);
       if (!response.ok) throw new Error("无法读取当前计划，请重试。");
-      const result = await response.json();
+      const result = (await response.json()) as Run;
       if (!current()) return false;
       if (
         result.id !== id ||
         (result.project_id !== undefined && result.project_id !== project.id)
       )
         throw new Error("计划与当前项目不一致，请重新打开需求。");
-      setSelected(result);
+      // Existing plans already carry the authoritative snapshot used by the
+      // approval flow; planning status is only needed before a plan exists.
+      if (result.plans.length) {
+        setSelected(result);
+        return true;
+      }
+      let planning: PlanningStatus | null | undefined;
+      try {
+        const planningResponse = await fetch(
+          `/v1/runs/${encodeURIComponent(id)}/planning`,
+        );
+        if (planningResponse.ok) {
+          const planningResult =
+            (await planningResponse.json()) as PlanningRead;
+          if (planningResult.run?.id === id) {
+            setSelected({
+              ...planningResult.run,
+              planning: planningResult.planning,
+            });
+            return true;
+          }
+        }
+      } catch {
+        // Older workbench servers expose planning only through the run snapshot.
+      }
+      planning = result.planning;
+      setSelected({ ...result, planning });
       return true;
     } catch (cause) {
       if (current())
@@ -166,6 +220,49 @@ function RunWorkbench({
       return false;
     } finally {
       if (current()) setBusy(false);
+    }
+  }
+
+  async function startPlanning() {
+    if (!selected || sending.current) return;
+    sending.current = true;
+    const session = lifetime.current;
+    const generation = reading.current;
+    setBusy(true);
+    setError("");
+    setNotice("准备规划请求已提交，正在读取实际状态…");
+    const endpoint = `/v1/runs/${encodeURIComponent(selected.id)}/planning-start`;
+    const identity = endpoint + "{}";
+    if (command.current?.identity !== identity)
+      command.current = { identity, key: crypto.randomUUID() };
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        body: "{}",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrf,
+          "Idempotency-Key": command.current.key,
+        },
+      });
+      if (!session.active || reading.current !== generation) return;
+      if (!response.ok) throw new Error("准备规划未被接受，请重试。");
+      const refreshed = await openRun(selected.id);
+      command.current = null;
+      if (session.active)
+        setNotice(
+          refreshed
+            ? "规划已准备，执行服务尚未就绪。"
+            : "规划请求已提交，请重新打开需求读取状态。",
+        );
+    } catch (cause) {
+      if (session.active)
+        setError(
+          cause instanceof Error ? cause.message : "准备规划结果未知，请重试。",
+        );
+    } finally {
+      sending.current = false;
+      if (session.active) setBusy(false);
     }
   }
 
@@ -311,6 +408,8 @@ function RunWorkbench({
     selected?.configuration_snapshot?.configuration.resources.budgets.find(
       (item) => item.id === handoff?.resource_impact.budget_ref,
     );
+  const planning = selected?.planning;
+  const canStartPlanning = !!selected && !plan && !planning;
   return (
     <section className="project-form">
       <h2>{project.name} · 需求与计划</h2>
@@ -446,6 +545,34 @@ function RunWorkbench({
             主 Commander · {selected.commander.principal} · 第{" "}
             {selected.commander.term} 任
           </p>
+          {!plan && (
+            <section
+              className="preview-result"
+              aria-labelledby="planning-status"
+            >
+              <h3 id="planning-status">规划准备</h3>
+              {!planning ? (
+                <>
+                  <p>需求已保存。准备规划会由受信服务读取需求和仓库状态。</p>
+                  <button
+                    disabled={busy || !canStartPlanning}
+                    onClick={() => void startPlanning()}
+                  >
+                    准备规划
+                  </button>
+                </>
+              ) : planning.availability.state === "blocked" ? (
+                <>
+                  <p role="status">规划已准备，执行服务尚未就绪。</p>
+                  <p className="field-help">
+                    当前服务暂不能继续执行，需求和规划状态已保留。
+                  </p>
+                </>
+              ) : (
+                <p role="status">正在准备规划，请稍候读取实际状态。</p>
+              )}
+            </section>
+          )}
           {plan ? (
             <>
               <h3>计划第 {plan.plan_revision} 版</h3>

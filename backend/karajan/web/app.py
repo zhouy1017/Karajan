@@ -18,6 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from karajan.capacity import CapacityStore
 from karajan.orchestration.admission import ApprovedTaskAdmission
+from karajan.orchestration.planning_execution import PlanningExecution
 from karajan.orchestration.routing import ApprovedRunRouting
 from karajan.projects import ProjectRegistry
 from karajan.projects.qualification import ProfileQualificationStore
@@ -26,6 +27,7 @@ from karajan.runs import RunPlanner
 from .admission import register_admission_routes
 from .approved_routing import register_approved_routing_routes
 from .body_limit import BodyLimitMiddleware
+from .planning import PlanningWorkbench, register_planning_routes
 from .projects import register_project_routes
 from .resources import register_resource_routes
 from .runs import register_run_routes
@@ -143,6 +145,12 @@ def create_app(
     planner = RunPlanner(state_directory / "runs.sqlite", projects)
     capacity = CapacityStore(state_directory / "capacity.sqlite")
     register_run_routes(app, planner)
+    planning = PlanningWorkbench(
+        state_directory / "workbench-planning.sqlite",
+        planner,
+        PlanningExecution(state_directory / "planning-execution.sqlite", planner),
+    )
+    register_planning_routes(app, planning)
     register_resource_routes(app, capacity)
     routing = ApprovedRunRouting(planner, ProfileQualificationStore(projects), capacity)
     register_approved_routing_routes(app, routing)
