@@ -78,6 +78,18 @@ def test_base_tree_snapshot_is_immutable_and_directory_paths_are_expanded(tmp_pa
         db.commit()
     with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_CHANGED$"):
         store.read(binding)
+    with sqlite3.connect(tmp_path / "snapshots.sqlite") as db:
+        db.execute("UPDATE snapshots SET data=?", (json.dumps(original),))
+        manifest = json.loads(json.dumps(original))
+        manifest["files"][0]["mode"] = "100755"
+        manifest["snapshot_sha256"] = digest(
+            {key: value for key, value in manifest.items() if key != "snapshot_sha256"}
+        )
+        db.execute("UPDATE snapshots SET data=?", (json.dumps(manifest),))
+        db.commit()
+    # A recomputed self-hash cannot replace the independent full-manifest seal.
+    with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_CHANGED$"):
+        store.read(binding)
 
 
 def test_unapproved_or_symlink_base_entry_is_rejected(tmp_path: Path):
@@ -114,6 +126,51 @@ def test_unapproved_or_symlink_base_entry_is_rejected(tmp_path: Path):
     }
     with pytest.raises(RunError, match="PLANNING_SNAPSHOT_ENTRY_UNSUPPORTED"):
         PlanningRepositorySnapshotStore(tmp_path / "snapshots.sqlite").freeze(binding, run, project)
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Windows cannot create a backslash filename")
+def test_selected_git_path_invalid_to_snapshot_protocol_rejects_before_publication(
+    tmp_path: Path,
+):
+    root = tmp_path / "repo"
+    root.mkdir()
+    _git(root, "init")
+    (root / "src").mkdir()
+    source = root / "src" / "a\\b.txt"
+    source.write_bytes(b"original bytes")
+    original_bytes, original_mode = source.read_bytes(), stat.S_IMODE(source.stat().st_mode)
+    _git(root, "add", ".")
+    _git(root, "-c", "user.name=x", "-c", "user.email=x@y.z", "commit", "-m", "base")
+    binding = {
+        "execution_id": "execution",
+        "run_id": "run",
+        "intent_id": "intent",
+        "requirement_sha256": "a" * 64,
+        "authorization_ceiling_sha256": "c" * 64,
+    }
+    run = {
+        "project_id": "project",
+        "configuration_snapshot": {"project_revision": 1},
+        "authorization_ceiling": {"read_paths": ["src"]},
+    }
+    project = {
+        "id": "project",
+        "revision": 1,
+        "repository": {
+            "root": str(root.resolve()),
+            "identity_sha256": "b" * 64,
+            "base_sha": _git(root, "rev-parse", "HEAD"),
+        },
+    }
+    store = PlanningRepositorySnapshotStore(tmp_path / "snapshots.sqlite")
+    with pytest.raises(RunError, match="^PLANNING_SNAPSHOT_PATHS_INVALID$"):
+        store.freeze(binding, run, project)
+    assert source.read_bytes() == original_bytes
+    assert stat.S_IMODE(source.stat().st_mode) == original_mode
+    with sqlite3.connect(store.database) as db:
+        assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 0
+        assert db.execute("SELECT count(*) FROM files").fetchone()[0] == 0
+    assert list(store.artifacts.iterdir()) == []
 
 
 def test_base_tree_read_disables_local_replace_refs_and_git_environment(

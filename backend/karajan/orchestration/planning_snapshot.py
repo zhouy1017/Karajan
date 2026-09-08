@@ -65,7 +65,7 @@ class PlanningRepositorySnapshotStore:
             require_schema(
                 database,
                 {
-                    "snapshots": ["binding_sha256", "data", "source_sha256"],
+                    "snapshots": ["binding_sha256", "data", "source_sha256", "manifest_sha256"],
                     "files": ["binding_sha256", "path", "sha256"],
                 },
             )
@@ -80,11 +80,13 @@ class PlanningRepositorySnapshotStore:
             db.execute(
                 "CREATE TABLE IF NOT EXISTS snapshots "
                 "(binding_sha256 TEXT PRIMARY KEY, data TEXT NOT NULL, "
-                "source_sha256 TEXT)"
+                "source_sha256 TEXT, manifest_sha256 TEXT)"
             )
             columns = {row[1] for row in db.execute("PRAGMA table_info(snapshots)")}
             if "source_sha256" not in columns:
                 db.execute("ALTER TABLE snapshots ADD COLUMN source_sha256 TEXT")
+            if "manifest_sha256" not in columns:
+                db.execute("ALTER TABLE snapshots ADD COLUMN manifest_sha256 TEXT")
             db.execute(
                 "CREATE TABLE IF NOT EXISTS files (binding_sha256 TEXT NOT NULL "
                 "REFERENCES snapshots(binding_sha256) ON DELETE CASCADE, "
@@ -340,6 +342,11 @@ class PlanningRepositorySnapshotStore:
             path = raw.decode("utf-8", "strict")
             if not self._allowed(path, paths):
                 continue
+            # Git permits names that the snapshot protocol deliberately cannot
+            # represent (notably a backslash).  Validate selected tree entries
+            # before reading blobs or publishing any artifact so a bad member
+            # cannot occupy an unreadable immutable binding.
+            self._paths([path])
             if kind != "blob" or mode not in {"100644", "100755"}:
                 raise RunError("PLANNING_SNAPSHOT_ENTRY_UNSUPPORTED")
             for x in matched:
@@ -385,6 +392,10 @@ class PlanningRepositorySnapshotStore:
             }
         )
         result["snapshot_sha256"] = digest(result)
+        # This database value is a separate seal over every manifest field;
+        # ``snapshot_sha256`` is retained as an internal consistency check,
+        # not treated as independent authority.
+        manifest_sha256 = digest(result)
         for _, _, c in rows:
             self._publish(hashlib.sha256(c).hexdigest(), c)
         # A controller guard is deliberately after slow preparation and held
@@ -407,8 +418,8 @@ class PlanningRepositorySnapshotStore:
                     previous = True
                 else:
                     db.execute(
-                        "INSERT INTO snapshots VALUES (?,?,?)",
-                        (key, encoded(result), source_sha256),
+                        "INSERT INTO snapshots VALUES (?,?,?,?)",
+                        (key, encoded(result), source_sha256, manifest_sha256),
                     )
                     db.executemany(
                         "INSERT INTO files VALUES (?,?,?)",
@@ -424,7 +435,9 @@ class PlanningRepositorySnapshotStore:
         try:
             with self._connect() as db:
                 row = db.execute(
-                    "SELECT data,source_sha256 FROM snapshots WHERE binding_sha256=?", (key,)
+                    "SELECT data,source_sha256,manifest_sha256 FROM snapshots "
+                    "WHERE binding_sha256=?",
+                    (key,),
                 ).fetchone()
                 refs = db.execute(
                     "SELECT path,sha256 FROM files WHERE binding_sha256=? ORDER BY path", (key,)
@@ -467,6 +480,7 @@ class PlanningRepositorySnapshotStore:
                         for k in ("repository_identity_sha256", "base_sha", "read_paths_sha256")
                     }
                 )
+                or row[2] != digest(result)
                 or any(
                     result[k] != binding.get(k)
                     for k in (

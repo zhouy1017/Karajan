@@ -72,7 +72,20 @@ single-link file with exactly the original bytes. A persistent second hardlink
 is still rejected. The manifest's repository identity, Git base object ID, and
 approved-path digest must have their expected types and match the independently
 sealed source digest in SQLite; recomputing the manifest's self-digest cannot
-rebind them.
+rebind them. A second independently stored manifest digest seals the complete
+canonical manifest (including every path, mode, size, and blob digest); the
+manifest self-digest remains only an internal consistency check. Git tree names
+selected by an approved prefix are validated with exactly the reader protocol
+rules before any CAS blob or reference is published, so a Git-valid backslash
+name cannot consume an unreadable binding.
+
+Before Git/CAS publication, PlanningExecution durably reserves the exact
+`(principal, command_key, freeze execution_id)` identity. A lost reply leaves
+that reservation pending; only that original command can recover and complete
+it. The final reference commit holds Execution → Run → ProjectRegistry
+authority and rechecks the Run-recorded Project revision. A real Project update
+therefore waits through publication or makes a first freeze fail before
+references are committed.
 
 Candidate evidence for this snapshot-authority worktree is WSL Ubuntu with Python 3.12 and a private `/tmp`
 pytest base directory: `tests/orchestration/test_planning_snapshot.py`,
@@ -90,27 +103,36 @@ is exercised.
 KARAJAN_GO_TOKENIZER_DIRECTORY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-context-artifacts \
 PYTHONPATH=backend:tests:tests/projects:tests/runs:tests/candidates \
 /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest \
-  --basetemp=/tmp/karajan-142-final \
+  --basetemp=/tmp/karajan-142-final-post-ac5 \
   tests/orchestration/test_planning_snapshot.py \
   tests/runs/test_planning_execution.py tests/runs/test_planning_admission.py -q
 ```
 
+On 2026-09-08 this exact Linux command completed with `89 passed in 22.05s`.
+The first fresh Linux invocation omitted `KARAJAN_GO_TOKENIZER_DIRECTORY` and
+failed two tokenizer-dependent admission tests; it is retained as an environment
+failure, and the new basetemp rerun above is the applicable result. Windows used
+the pinned `.venv/Scripts/pytest.exe`, the same three modules, and fresh
+`.cache/142-windows-final-post-ac5`, completing `75 passed, 14 skipped in 31.46s`.
+
 ## Original AC coverage
 
 The independent static-review red candidate was
-`44d1aa88aed38a2d2f1183b0c9568e3d233e8489`. The green implementation candidate
-whose source/tests are covered below is
-`5158aab22ca493100c1f13f129da9e76d1e96322`; this evidence-report commit is a
-documentation-only follow-up.
+`ad7bd56dd27314ec1b3a27eb7098729b17bcb45f`: Standards recorded the selected
+Git-path and unconnected-Journal P2s (plus nonblocking fixture duplication),
+while Spec recorded command reservation, complete-manifest sealing, Project
+publication revalidation, and connected zero-effect evidence P2s. Those red
+findings are retained as provenance; predecessor test results do not override
+them.
 
 | Original acceptance condition | Actual evidence | Result |
 | --- | --- | --- |
 | Registered Project/Run/intent/execution create one persistent identity-bound snapshot, including paths, requirement/acceptance and modes/digests. | `test_factory_freezes_registered_base_bytes_and_reopens`; actual SQLite ProjectRegistry, RunPlanner, protected factory and Git base tree. | Linux local C/P passed |
-| Replay, reopen, worktree changes, concurrent producers and a lost command reply recover precisely the original snapshot. | Base-tree/reopen test; forced `linkcount==2` interleaving in `test_concurrent_publish_waits_only_for_its_temporary_link`; real approved Commander handoff/source-transition recovery; and a saved command replay whose reader is paused while cancellation completes, retaining original bytes. | Linux local C/P passed |
-| Wrong identities, changed Run term/configuration/authorization, tampered execution binding or binding digest, manifest/blob corruption, and missing ledgers fail closed without repair. | Existing binding/ledger corruption cases plus recomputed-self-hash metadata matrix (`repository_identity_sha256`, `base_sha`, `read_paths_sha256`) in `test_base_tree_snapshot_is_immutable_and_directory_paths_are_expanded`. | Linux local C/P passed |
-| Traversal, symlink/reparse, unapproved or empty paths, registered-root aliases/corrupt base, and fixed file/byte limits reject completely without clipping. | Direct traversal, unmatched approval, corrupt Git base, unchanged original bytes/mode and zero-manifest tests; Linux symlink and root-alias tests; sparse oversized replacement checks `st_size` before bounded consumption. | Traversal/unapproved/corrupt-base/limits/Linux symlink C/P passed; Windows reparse unsupported/not_run |
-| Freeze/read/replay have no Capacity/native/Host/Journal/model/Plan/qualification effects. | The protected-factory test snapshots actual Run plans and Capacity reservations, an actual temporary `GoCallJournal` call ledger, and the copied `ProfileQualificationStore` record ledger before/after freeze, read, saved replay and failures. The fixture intentionally supplies no Host or provider adapter: zero Journal rows is a receiving-boundary result only, while physical native/model/provider absence remains not_run. | Local ledger C/P passed; Host/native/model/provider physical P/S not_run |
-| #110/#111 binding, begin/replay, submitted receipt recovery, historical handoff/source recovery and concurrency regressions stay intact; checks pass. | Linux command below, 2026-09-08, after the platform repair: `86 passed in 20.58s`, including durable-publication failure and persistent-alias regressions. `test_snapshot_publication_holds_authority_after_final_check` retains the short FINAL PUBLICATION interval: cancellation/handoff wait only through the final manifest commit. | Linux P passed; Windows snapshot/execution subset P passed (below) |
+| Replay, reopen, worktree changes, concurrent producers and a lost command reply recover precisely the original snapshot. | Public same-key/different-execution concurrent freeze rejects before a second publication; a public command reserves, publishes, loses its reply, then recovers the same snapshot. Handoff/source and paused-reader cancellation retain historical bytes. | Local C/P: final command below |
+| Wrong identities, changed Run term/configuration/authorization, tampered execution binding or binding digest, manifest/blob corruption, and missing ledgers fail closed without repair. | The metadata matrix includes valid `100644 → 100755` with recomputed self-hash; the separately stored full-manifest digest rejects it. | Local C/P: final command below |
+| Traversal, symlink/reparse, unapproved or empty paths, registered-root aliases/corrupt base, and fixed file/byte limits reject completely without clipping. | A Linux Git tree containing approved `src/a\\b.txt` rejects before blobs/references, preserves bytes/mode, and leaves zero manifest/references/artifacts. Other bounds and alias cases remain. | Local C/P: final command below; Windows reparse unsupported/not_run |
+| Freeze/read/replay have no Capacity/native/Host/Journal/model/Plan/qualification effects. | The protected factory invokes public freeze/read/replay/failure and compares its actual Project qualification records, Run plans, and Capacity reservations; it observes the process boundary (only fixed `git` reads) and zero network connects. Its bootstrap has no configured Journal, Host, native runtime, model adapter, or output transport receiver; no unconnected Journal fixture is counted. | Applicable controller-ledger C/P: final command below; Journal/Host/native/model/provider physical P/S not_run |
+| #110/#111 binding, begin/replay, submitted receipt recovery, historical handoff/source recovery and concurrency regressions stay intact; checks pass. | The three-module command above includes cancellation/handoff, Project update, command reservation/recovery, and durable-publication regressions. | Linux 89 passed / 22.05s; Windows 75 passed, 14 scoped skips / 31.46s |
 
 The initial Windows invocation could not enumerate its inherited
 `C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo` (`PermissionError` before
@@ -118,11 +140,11 @@ tests); it is recorded as an environment failure, not product evidence. At
 predecessor `36a9764444a2820c1a7614c9ac25a94fff2d0259`, a fresh Windows
 snapshot basetemp had `5 failed, 2 skipped in 1.96s`: each positive producer
 case reached the intentional unsupported `_sync_artifacts` branch and raised
-`PLANNING_REPOSITORY_SNAPSHOT_CHANGED`. On 2026-09-08, this candidate's fresh
-Windows basetemp ran the same three modules with `73 passed, 13 skipped in
-28.45s`; the snapshot module itself was `6 passed, 3 skipped in 2.78s`. Its
-skips are the two pre-existing test-account symlink permissions and the
-POSIX-only hard-link overlap test; generic concurrent Store freezing passed
+`PLANNING_REPOSITORY_SNAPSHOT_CHANGED`. On 2026-09-08, the current candidate's
+fresh Windows basetemp ran the three modules with `75 passed, 14 skipped in
+31.46s`. Its skips are test-account symlink permissions, the Linux-only
+backslash-filename regression, POSIX-only hard-link overlap, and Linux-private
+deployment tests; generic concurrent Store freezing passed
 on Windows. This is local Windows P evidence for the durable no-replace
 publication protocol, not physical power-loss evidence. Full native/provider
 qualification remains **not_run**; this leaf does not claim S evidence or

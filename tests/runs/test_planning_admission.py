@@ -3,6 +3,7 @@
 import json
 import os
 import shutil
+import socket
 import sqlite3
 import subprocess
 import sys
@@ -17,8 +18,8 @@ from typing import Any
 
 import karajan.capacity.store as capacity_store
 import karajan.orchestration.planning_admission as planning_admission
+import karajan.orchestration.planning_snapshot as planning_snapshot
 import pytest
-from karajan.adapters.opencode.go_journal import GoCallJournal
 from karajan.capacity import CapacityStore
 from karajan.orchestration.go_task_runtime import (
     GoTaskCredentialSource,
@@ -1303,25 +1304,42 @@ def test_factory_freezes_registered_base_bytes_and_reopens(
     service = PlanningExecution.from_trusted_factory(control)
     assert service.capacity is not None
     before = service.capacity.snapshot()
-    # These are the actual local receiving ledgers applicable to a planning
-    # snapshot, deliberately constructed empty.  Snapshot failure/read/replay
-    # must not create a Journal call, qualification record, Run plan, or
-    # Capacity reservation.  No Host is started and no provider adapter is
-    # supplied in this fixture, so the zero Journal rows are bounded evidence
-    # for this local receiving boundary, not a claim about a physical provider.
-    journal = GoCallJournal(tmp_path / "snapshot-journal.sqlite")
+    # These are the real ledgers rebuilt by the protected planning factory.
+    # The factory has no Journal, Host, native runtime, model adapter, or
+    # output transport path; manufacturing an empty Journal would not observe
+    # a receiver.  The applicable controller effect boundaries here are the
+    # real Project qualification records, Run plan records, and Capacity
+    # reservations.  Physical native/model/provider absence is recorded as
+    # not_run in the implementation evidence, not promoted to a ledger claim.
+    assert service.outputs is None
     _qualification = ProfileQualificationStore(service.planner.projects)
+    process_calls: list[list[str]] = []
+    network_calls: list[object] = []
+    original_run = planning_snapshot.subprocess.run
+    original_connect = socket.socket.connect
 
-    def effect_counts() -> tuple[int, int, int, int]:
-        with sqlite3.connect(journal.path) as db:
-            calls = db.execute("SELECT count(*) FROM go_calls").fetchone()[0]
+    def observe_process(args: list[str], *extra: object, **kwargs: object) -> object:
+        process_calls.append(list(args))
+        return original_run(args, *extra, **kwargs)
+
+    def observe_network(sock: socket.socket, address: object) -> object:
+        network_calls.append(address)
+        return original_connect(sock, address)
+
+    # These are actual OS receiving boundaries for this process.  Snapshot
+    # collection is allowed to invoke its fixed Git reader, but cannot start a
+    # Host/native executor or contact a model/provider.
+    monkeypatch.setattr(planning_snapshot.subprocess, "run", observe_process)
+    monkeypatch.setattr(socket.socket, "connect", observe_network)
+
+    def effect_counts() -> tuple[int, int, int]:
         with sqlite3.connect(service.planner.projects.database) as db:
             qualified = db.execute(
                 "SELECT count(*) FROM profile_qualification_records"
             ).fetchone()[0]
         current = service.planner.get(run["id"], principal="owner")
         reservations = service.capacity.snapshot()["reservations"]
-        return calls, qualified, len(current["plans"]), len(reservations)
+        return qualified, len(current["plans"]), len(reservations)
 
     effects_before = effect_counts()
     frozen = service.freeze_repository_snapshot(
@@ -1389,6 +1407,8 @@ def test_factory_freezes_registered_base_bytes_and_reopens(
     }
     assert service.capacity.snapshot() == before
     assert effect_counts() == effects_before
+    assert process_calls and all(call[0] == "git" for call in process_calls)
+    assert network_calls == []
 
     ledger = snapshot_database(control)
     artifact = Path(

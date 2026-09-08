@@ -454,7 +454,17 @@ class PlanningExecution:
                     intent = self._intent(run, current["intent_id"])
                     if self._binding(run, intent, execution_id) != binding:
                         raise RunError("PLANNING_EXECUTION_BINDING_STALE")
-                    yield current, run
+                    # Project is the final source authority.  Keep its short
+                    # writer transaction through the manifest/reference commit
+                    # after Execution -> Run, matching the controller lock
+                    # order used by the other planning boundaries.
+                    with self.planner.projects._transaction() as projects:
+                        self.planner.projects._current(
+                            projects,
+                            run["project_id"],
+                            run["configuration_snapshot"]["project_revision"],
+                        )
+                        yield current, run
 
         def freeze_current() -> dict[str, Any]:
             try:
@@ -474,8 +484,10 @@ class PlanningExecution:
                 dict[str, Any], freeze(binding, prepared_run, project, guard=current_authority)
             )
 
-        # Command receipt lookup is short; preparation and Git never run under
-        # the execution writer.  A saved success is still read/verified.
+        # Reserve the command identity before Git/CAS publication.  The
+        # pending receipt intentionally survives a reply loss: only this exact
+        # payload may resume it, while a different execution/key type is
+        # rejected before it can publish another snapshot.
         payload = ["freeze_repository_snapshot", execution_id]
         replay: dict[str, Any] | None = None
         with self._transaction() as db:
@@ -486,7 +498,19 @@ class PlanningExecution:
             if prior is not None:
                 if prior["payload"] != encoded(payload):
                     raise RunError("IDEMPOTENCY_CONFLICT")
-                replay = dict(json.loads(prior["result"]))
+                recorded = dict(json.loads(prior["result"]))
+                if recorded.get("state") != "freeze_repository_snapshot_pending":
+                    replay = recorded
+            else:
+                db.execute(
+                    "INSERT INTO commands VALUES (?,?,?,?)",
+                    (
+                        principal,
+                        command_key,
+                        encoded(payload),
+                        encoded({"state": "freeze_repository_snapshot_pending"}),
+                    ),
+                )
         # Historical artifact verification deliberately happens after the
         # controller writer is gone: cancellation and other Run writers can
         # progress while a large, but bounded, snapshot is checked.
@@ -495,8 +519,20 @@ class PlanningExecution:
             return replay
         result = freeze_current()
         with self._transaction() as db:
-            # A concurrent first freezer may have recorded the same command.
-            return self._command(db, principal, command_key, payload, lambda: result)
+            prior = db.execute(
+                "SELECT payload,result FROM commands WHERE principal=? AND key=?",
+                (principal, command_key),
+            ).fetchone()
+            if prior is None or prior["payload"] != encoded(payload):
+                raise RunError("IDEMPOTENCY_CONFLICT")
+            recorded = dict(json.loads(prior["result"]))
+            if recorded.get("state") == "freeze_repository_snapshot_pending":
+                db.execute(
+                    "UPDATE commands SET result=? WHERE principal=? AND key=?",
+                    (encoded(result), principal, command_key),
+                )
+                return result
+            return recorded
 
     def read_repository_snapshot(self, execution_id: str, *, principal: str) -> dict[str, Any]:
         execution = self.get(execution_id, principal=principal)

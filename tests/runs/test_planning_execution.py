@@ -336,7 +336,7 @@ def test_cancelled_execution_cannot_create_a_first_repository_snapshot(
     assert authorities.capacity.snapshot() == before
 
 
-@pytest.mark.parametrize("revocation", ["cancel", "handoff"])
+@pytest.mark.parametrize("revocation", ["cancel", "handoff", "project"])
 def test_snapshot_publication_holds_authority_after_final_check(
     configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, revocation: str
 ) -> None:
@@ -421,7 +421,7 @@ def test_snapshot_publication_holds_authority_after_final_check(
             def revoke() -> dict[str, Any]:
                 return service.cancel(execution["id"], principal="owner", command_key="cancel")
 
-        else:
+        elif revocation == "handoff":
             assert handoff is not None
 
             def revoke() -> dict[str, Any]:
@@ -434,6 +434,22 @@ def test_snapshot_publication_holds_authority_after_final_check(
                         "decision": "approve",
                     },
                     command_key="decide-handoff",
+                    principal="owner",
+                )
+        else:
+
+            def revoke() -> dict[str, Any]:
+                current = registry.get(project["id"])
+                return registry.update(
+                    project["id"],
+                    {
+                        "name": current["name"],
+                        "base_ref": current["repository"]["base_ref"],
+                        "target_branch": current["target_branch"],
+                        "allowed_target_branches": current["allowed_target_branches"],
+                    },
+                    expected_revision=current["revision"],
+                    command_key="project-update-during-freeze",
                     principal="owner",
                 )
         revocation_finished = Event()
@@ -452,6 +468,83 @@ def test_snapshot_publication_holds_authority_after_final_check(
         frozen.result(timeout=5)
         revoked.result(timeout=5)
     with sqlite3.connect(database) as db:
+        assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 1
+
+
+def test_freeze_command_reservation_prevents_cross_execution_publication(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The durable command identity is claimed before the first CAS publish."""
+    registry = configured["registry"]
+    project = registry.get(configured["id"])
+    root = Path(project["repository"]["root"])
+    (root / "src").mkdir(exist_ok=True)
+    (root / "tests").mkdir(exist_ok=True)
+    (root / "src" / "reservation.txt").write_bytes(b"source")
+    (root / "tests" / "reservation.txt").write_bytes(b"test")
+    subprocess.run(
+        ["git", "-C", str(root), "add", "src/reservation.txt", "tests/reservation.txt"],
+        check=True,
+    )
+    subprocess.run(
+        [
+            "git", "-C", str(root), "-c", "user.name=x", "-c", "user.email=x@y.z",
+            "commit", "-m", "reservation",
+        ],
+        check=True,
+    )
+    registry.update(
+        project["id"],
+        {
+            "name": project["name"],
+            "base_ref": project["repository"]["base_ref"],
+            "target_branch": project["target_branch"],
+            "allowed_target_branches": project["allowed_target_branches"],
+        },
+        expected_revision=project["revision"],
+        command_key="reservation-base",
+        principal="owner",
+    )
+    configured.update(registry.get(project["id"]))
+    configured["registry"] = registry
+    service, run, intent, _ = planning_case(tmp_path, configured)
+    second_intent = service.planner.planning_intent(
+        run["id"], term=1, command_key="intent-two", principal="lead"
+    )
+    first = service.begin(run["id"], intent["id"], principal="owner", command_key="begin-one")
+    second = service.begin(
+        run["id"], second_intent["id"], principal="owner", command_key="begin-two"
+    )
+    store = PlanningRepositorySnapshotStore(tmp_path / "snapshots.sqlite")
+    service.snapshots = store
+    entered, release = Event(), Event()
+    publish = store._publish
+
+    def slow_publish(sha: str, content: bytes) -> None:
+        entered.set()
+        assert release.wait(timeout=5)
+        publish(sha, content)
+
+    monkeypatch.setattr(store, "_publish", slow_publish)
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        first_freeze = workers.submit(
+            service.freeze_repository_snapshot,
+            first["id"],
+            principal="owner",
+            command_key="same-freeze-key",
+        )
+        assert entered.wait(timeout=5)
+        conflict = workers.submit(
+            service.freeze_repository_snapshot,
+            second["id"],
+            principal="owner",
+            command_key="same-freeze-key",
+        )
+        with pytest.raises(RunError, match="^IDEMPOTENCY_CONFLICT$"):
+            conflict.result(timeout=2)
+        release.set()
+        first_freeze.result(timeout=5)
+    with sqlite3.connect(store.database) as db:
         assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 1
 
 
@@ -560,10 +653,26 @@ def test_committed_snapshot_survives_commander_handoff_and_source_change(
     execution = service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
 
     # In the lost-receipt case, the real producer committed before its public
-    # command receipt was saved.  The saved case exercises command-ledger
-    # replay after a legitimate Run Commander transition.
+    # command receipt was saved.  This crosses the public command reservation
+    # and actual snapshot publication boundary, then loses only the reply.
+    # The saved case exercises command-ledger replay after a legitimate Run
+    # Commander transition.
     if receipt == "lost":
-        committed = store.freeze(execution["binding"], run, registry.get(project["id"]))
+        published: list[dict[str, Any]] = []
+        original_freeze = store.freeze
+
+        def lose_reply(*args: Any, **kwargs: Any) -> dict[str, Any]:
+            value = original_freeze(*args, **kwargs)
+            published.append(value)
+            raise RunError("simulated reply loss")
+
+        store.freeze = lose_reply  # type: ignore[method-assign]
+        with pytest.raises(RunError, match="^simulated reply loss$"):
+            service.freeze_repository_snapshot(
+                execution["id"], principal="owner", command_key="freeze"
+            )
+        assert len(published) == 1
+        committed = published[0]
     else:
         committed = service.freeze_repository_snapshot(
             execution["id"], principal="owner", command_key="freeze"
