@@ -457,6 +457,125 @@ def test_concurrent_submitters_create_at_most_one_plan(configured: dict, tmp_pat
     assert recovered["submission"] == plans[0]
 
 
+def test_delayed_capture_cannot_rollback_a_submitted_plan(
+    configured: dict, tmp_path: Path
+) -> None:
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authorities)
+    authorities.activate()
+    assert service.reconcile(execution["id"], principal="owner")["state"] == "awaiting_output"
+    captured = Event()
+    release = Event()
+    original_output = authorities.read_output
+
+    def delayed_output(*args: Any) -> object:
+        evidence = original_output(*args)
+        captured.set()
+        assert release.wait(5), "delayed capture did not resume"
+        return evidence
+
+    authorities.read_output = delayed_output  # type: ignore[method-assign]
+    with ThreadPoolExecutor(max_workers=1) as workers:
+        delayed = workers.submit(
+            service.submit, execution["id"], principal="owner", command_key="submit-delayed"
+        )
+        assert captured.wait(5), "delayed capture did not read output"
+        authorities.read_output = original_output  # type: ignore[method-assign]
+        submitted = service.submit(
+            execution["id"], principal="owner", command_key="submit-first"
+        )
+        assert submitted["state"] == "submitted"
+        release.set()
+        late = delayed.result(timeout=5)
+
+    assert late["state"] == "submitted"
+    assert service.get(execution["id"], principal="owner")["submission_request"][
+        "expected_plan_revision"
+    ] == 0
+    recovered = service.submit(execution["id"], principal="owner", command_key="submit-recovery")
+    assert recovered["state"] == "submitted"
+    assert recovered["submission"] == submitted["submission"]
+
+
+def test_delayed_capture_cannot_take_an_active_claim(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authorities)
+    authorities.activate()
+    assert service.reconcile(execution["id"], principal="owner")["state"] == "awaiting_output"
+    captured = Event()
+    release_capture = Event()
+    claim_entered = Event()
+    release_claim = Event()
+    original_output = authorities.read_output
+
+    def delayed_output(*args: Any) -> object:
+        evidence = original_output(*args)
+        captured.set()
+        assert release_capture.wait(5), "delayed capture did not resume"
+        return evidence
+
+    authorities.read_output = delayed_output  # type: ignore[method-assign]
+    claimer = PlanningExecution(
+        service.database,
+        service.planner,
+        admissions=authorities,
+        outputs=authorities,
+        capacity=authorities.capacity,
+        allow_fixture_authorities=True,
+    )
+    original_recover = claimer._recover_or_submit
+
+    def pause_active_claim(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        claim_entered.set()
+        assert release_claim.wait(5), "active claim did not resume"
+        return original_recover(*args, **kwargs)
+
+    monkeypatch.setattr(claimer, "_recover_or_submit", pause_active_claim)
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        delayed = workers.submit(
+            service.submit, execution["id"], principal="owner", command_key="submit-delayed"
+        )
+        assert captured.wait(5), "delayed capture did not read output"
+        authorities.read_output = original_output  # type: ignore[method-assign]
+        active = workers.submit(
+            claimer.submit, execution["id"], principal="owner", command_key="submit-active"
+        )
+        assert claim_entered.wait(5), "active submit did not claim"
+        release_capture.set()
+        late = delayed.result(timeout=5)
+        assert late["state"] == "submission_unknown"
+        assert service.get(execution["id"], principal="owner")["state"] == "submit_claimed"
+        release_claim.set()
+        submitted = active.result(timeout=5)
+
+    assert submitted["state"] == "submitted"
+    assert service.planner.get(run["id"], principal="owner")["plans"] == [
+        submitted["submission"]
+    ]
+
+
+def test_matching_run_receipt_repairs_a_stale_submission_state(
+    configured: dict, tmp_path: Path
+) -> None:
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authorities)
+    authorities.activate()
+    submitted = service.submit(execution["id"], principal="owner", command_key="submit")
+    with service._transaction() as db:
+        stale = service._load(db, execution["id"])
+        stale["state"] = "submit_claimed"
+        stale["reason_codes"] = []
+        service._save(db, stale)
+
+    recovered = PlanningExecution(service.database, service.planner).submit(
+        execution["id"], principal="owner", command_key="submit-recovery"
+    )
+    assert recovered["state"] == "submitted"
+    assert recovered["submission"] == submitted["submission"]
+
+
 def test_receipt_only_recovery_cannot_stop_a_claiming_submitter(
     configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

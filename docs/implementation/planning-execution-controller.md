@@ -29,7 +29,8 @@ request/key；已 claim 且 receipt 缺失不会再次提交。receipt-only 恢�
 后续 `get` 读出的 claim 仍表示未核清，且不给恢复者提交权。取消在 claim 前落为 `cancelled`；claim 后
 只记录取消请求并返回 unknown，避免把已经或可能已经提交的计划误报为取消。Run 提交前的 guard 先读取
 取消、在不持控制器锁时读取并校验当前 output source，随后再次读取取消；因此 source read 中或之前完成的
-取消不会落 Plan。
+取消不会落 Plan。迟到的 admission 或 output capture 只返回已经推进的状态，不能回退状态、替换固定
+request/key 或重新取得 claim。
 
 复核反例保存在 `.cache/standards-92934b5/` 和 `.cache/reviewer-high-110/`，原件不改写。
 旧 Standards 的两个注入都发生在新加入的 `submit_claimed` 之后：`SystemExit` 后没有 Run receipt

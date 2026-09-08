@@ -656,6 +656,11 @@ class PlanningExecution:
             self._owner_run(current["run_id"], principal)
 
             def capture() -> dict[str, Any]:
+                # Output reads happen outside the controller transaction.  A
+                # slower submit with a different command key must not restore
+                # this earlier stage after another caller advanced it.
+                if current["state"] != "awaiting_output":
+                    return current
                 if current["cancel_requested"]:
                     return current
                 if current["output"] not in (None, sealed):
@@ -830,4 +835,10 @@ class PlanningExecution:
                 self._save(db, current)
             elif current["submission"] != submission:
                 return self._blocked_locked(db, current, "PLANNING_SUBMISSION_EVIDENCE_CHANGED")
+            elif current["state"] != "submitted" or current["reason_codes"]:
+                # A receipt proves the recorded submission even if a prior
+                # interrupted controller write left the state behind it.
+                current["state"] = "submitted"
+                current["reason_codes"] = []
+                self._save(db, current)
             return current
