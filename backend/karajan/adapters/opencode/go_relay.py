@@ -31,7 +31,12 @@ from uuid import uuid4
 import httpx
 from pydantic import ValidationError
 
-from .go_journal import GoCallJournal, GoJournalError, GoQualificationLimits
+from .go_journal import (
+    GoBusinessRequestLimits,
+    GoCallJournal,
+    GoJournalError,
+    GoQualificationLimits,
+)
 
 if TYPE_CHECKING:
     from .go_context import GoRequestAccounting
@@ -367,6 +372,84 @@ class GoRelayContext:
 
 
 @dataclass(frozen=True)
+class GoPlanningRelayContext:
+    """Controller-built planning wire limits; native requests cannot construct it."""
+
+    accounting: GoRequestAccounting = field(repr=False)
+    source_sha256: str
+    planning_binding_sha256: str
+    admission_sha256: str
+    input_sha256: str
+    approved_input_tokens: int
+    reserved_output_tokens: int
+    operating_context_tokens: int
+    fixed_margin: int
+    ratio_margin_basis_points: int
+
+    def limits(self) -> dict[str, Any]:
+        return GoBusinessRequestLimits.model_validate(
+            {
+                "source_sha256": self.source_sha256,
+                "approved_input_tokens": self.approved_input_tokens,
+                "reserved_output_tokens": self.reserved_output_tokens,
+                "operating_context_tokens": self.operating_context_tokens,
+                "fixed_margin": self.fixed_margin,
+                "ratio_margin_basis_points": self.ratio_margin_basis_points,
+            }
+        ).model_dump()
+
+    def measure(self, payload: dict[str, Any]) -> dict[str, Any]:
+        from karajan.routing.compiler import digest
+
+        if self.limits()["source_sha256"] != digest(self.accounting.source()):
+            from .go_context import GoContextError
+
+            raise GoContextError("CONTEXT_SOURCE_CHANGED")
+        limits = self.limits()
+        del limits["source_sha256"]
+        return self.accounting.measure(payload, **limits)
+
+
+@dataclass(frozen=True)
+class GoReviewerRelayContext:
+    """Controller-built Reviewer wire limits, separate from qualification probes."""
+
+    accounting: GoRequestAccounting = field(repr=False)
+    source_sha256: str
+    review_binding_sha256: str
+    reviewer_input_sha256: str
+    candidate_checks_sha256: str
+    approved_input_tokens: int
+    reserved_output_tokens: int
+    operating_context_tokens: int
+    fixed_margin: int
+    ratio_margin_basis_points: int
+
+    def limits(self) -> dict[str, Any]:
+        return GoBusinessRequestLimits.model_validate(
+            {
+                "source_sha256": self.source_sha256,
+                "approved_input_tokens": self.approved_input_tokens,
+                "reserved_output_tokens": self.reserved_output_tokens,
+                "operating_context_tokens": self.operating_context_tokens,
+                "fixed_margin": self.fixed_margin,
+                "ratio_margin_basis_points": self.ratio_margin_basis_points,
+            }
+        ).model_dump()
+
+    def measure(self, payload: dict[str, Any]) -> dict[str, Any]:
+        from karajan.routing.compiler import digest
+
+        if self.limits()["source_sha256"] != digest(self.accounting.source()):
+            from .go_context import GoContextError
+
+            raise GoContextError("CONTEXT_SOURCE_CHANGED")
+        limits = self.limits()
+        del limits["source_sha256"]
+        return self.accounting.measure(payload, **limits)
+
+
+@dataclass(frozen=True)
 class GoQualificationContext:
     """Fixed controller probe accounting, distinct from approved Task authority.
 
@@ -493,6 +576,8 @@ class GoRelay:
         context: GoRelayContext
         | GoQualificationContext
         | GoReviewerQualificationContext
+        | GoPlanningRelayContext
+        | GoReviewerRelayContext
         | None = None,
         send_guard: Callable[[], AbstractContextManager[None]] | None = None,
     ) -> None:
@@ -798,11 +883,20 @@ class GoRelay:
                 not task_grant
                 and binding.get("schema_version") == "karajan.go-reviewer-qualification-grant.v1"
             )
+            planning_native = binding.get("schema_version") == "karajan.go-planning-native-grant.v1"
+            reviewer_native = binding.get("schema_version") == "karajan.go-reviewer-native-grant.v1"
+            business_native = planning_native or reviewer_native
             if task_grant and self._context is None:
                 raise _Rejected("TASK_CONTEXT_ACCOUNTING_REQUIRED", 403)
             if (qualification_v2 or reviewer_qualification) and self._context is None:
                 raise _Rejected("QUALIFICATION_CONTEXT_ACCOUNTING_REQUIRED", 403)
-            if "schema_version" in binding and not (qualification_v2 or reviewer_qualification):
+            if business_native and self._send_guard is None:
+                raise _Rejected("TASK_SEND_GUARD_REJECTED", 403)
+            if business_native and self._context is None:
+                raise _Rejected("TASK_CONTEXT_ACCOUNTING_REQUIRED", 403)
+            if "schema_version" in binding and not (
+                qualification_v2 or reviewer_qualification or business_native
+            ):
                 raise _Rejected("GO_JOURNAL_INPUT_INVALID", 403)
             if self._context is not None:
                 from .go_context import GoContextError
@@ -823,6 +917,47 @@ class GoRelay:
                         or self._context.limits() != binding.get("context")
                     ):
                         raise _Rejected("QUALIFICATION_CONTEXT_BINDING_MISMATCH", 403)
+                elif isinstance(self._context, GoPlanningRelayContext):
+                    if (
+                        not planning_native
+                        or self._context.limits() != binding.get("context")
+                        or any(
+                            getattr(self._context, key) != binding.get(key)
+                            for key in (
+                                "planning_binding_sha256",
+                                "admission_sha256",
+                                "input_sha256",
+                            )
+                        )
+                    ):
+                        raise _Rejected("TASK_CONTEXT_POLICY_MISMATCH", 403)
+                    if "tools" in payload or any(
+                        message.get("role") == "tool" or message.get("tool_calls")
+                        for message in payload["messages"]
+                    ):
+                        raise _Rejected("UNAPPROVED_TOOL", 403)
+                elif isinstance(self._context, GoReviewerRelayContext):
+                    if (
+                        not reviewer_native
+                        or self._context.limits() != binding.get("context")
+                        or any(
+                            getattr(self._context, key) != binding.get(key)
+                            for key in (
+                                "review_binding_sha256",
+                                "reviewer_input_sha256",
+                                "candidate_checks_sha256",
+                            )
+                        )
+                    ):
+                        raise _Rejected("TASK_CONTEXT_POLICY_MISMATCH", 403)
+                    names = [tool["function"]["name"] for tool in payload.get("tools", [])]
+                    names.extend(
+                        call["function"]["name"]
+                        for message in payload["messages"]
+                        for call in (message.get("tool_calls") or [])
+                    )
+                    if any(name != "read" for name in names):
+                        raise _Rejected("UNAPPROVED_TOOL", 403)
                 elif not (
                     isinstance(self._context, GoRelayContext)
                     and task_grant
