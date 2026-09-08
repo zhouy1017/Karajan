@@ -90,18 +90,16 @@ class PersistentCommanderQualificationReader:
         self.control_directory = control_directory
         self._source_settings: Any | None = None
         self._credentials: CredentialSourceStore | None = None
-        # Construction opens its own existing Project transactions, so it must
-        # occur before commander_facts_guard owns the Project connection. An
-        # absent/invalid deployment source is a no-fact condition, not a
-        # factory promotion or a second credential ledger.
+        # CredentialSourceStore performs its own Project transactions, so build
+        # the existing-only handle before commander_facts_guard owns one. The
+        # descriptor is still re-read below before every facts read/effect;
+        # cached material is never a substitute for that current check.
         try:
-            from karajan.orchestration.go_task_runtime import _read_bootstrap
+            from karajan.orchestration.go_commander_qualification import (
+                read_commander_qualification_settings,
+            )
 
-            settings, _ = _read_bootstrap(self.control_directory)
-            if (
-                settings.state_directory / "projects.sqlite"
-            ).resolve() != self.planner.projects.database.resolve():
-                raise RunError("COMMANDER_SOURCE_STATE_MISMATCH")
+            settings, _ = read_commander_qualification_settings(self.control_directory)
             self._credentials = CredentialSourceStore(
                 self.planner.projects,
                 sources={
@@ -113,7 +111,6 @@ class PersistentCommanderQualificationReader:
             )
             self._source_settings = settings
         except (CredentialSourceError, OSError, RunError, ValueError):
-            self._source_settings = None
             self._credentials = None
 
     def _current_source(
@@ -126,32 +123,58 @@ class PersistentCommanderQualificationReader:
         seal before yielding a generation. A missing future Commander suite or
         unsupported platform remains unavailable instead of becoming a pass.
         """
-        from karajan.adapters.opencode.go_context import GoRequestAccounting
-        from karajan.orchestration.go_task_runtime import (
-            _read_bootstrap,
-            deployment_source,
+        from karajan.orchestration.go_commander_qualification import (
+            read_commander_qualification_settings,
         )
+        from karajan.projects.go_commander_suite import FixedGoCommanderSuite
 
-        settings = self._source_settings
+        settings, descriptor_sha256 = read_commander_qualification_settings(self.control_directory)
+        cached = self._source_settings
         credentials = self._credentials
-        if settings is None or credentials is None:
+        if cached is None or credentials is None:
             raise RunError("COMMANDER_SOURCE_UNAVAILABLE")
-        current_settings, bootstrap_sha = _read_bootstrap(self.control_directory)
-        if current_settings.document() != settings.document():
+        if settings.document() != cached.document():
             raise RunError("COMMANDER_SOURCE_CHANGED")
+        from karajan.orchestration.go_commander_qualification import (
+            validate_commander_qualification_settings,
+        )
+        legacy_history_only = settings.journal_path is None or settings.work_root is None
+        if not legacy_history_only:
+            validate_commander_qualification_settings(
+                self.planner.projects,
+                settings,
+                repositories=(Path(current["repository"]["root"]).absolute(),),
+            )
         profile = current["registration"]["profile"]
         generation = credentials.current_locked(
             db, project_id, profile["auth_ref"], principal=principal
         )
-        runtime = deployment_source(settings, GoRequestAccounting(settings.tokenizer_directory))
-        return {
-            "schema_version": "karajan.commander-qualification-source.v1",
-            "bootstrap_sha256": bootstrap_sha,
-            "credential_generation": generation["generation"],
-            "credential_source": generation["source"],
-            "profile_sha256": digest(profile),
-            "runtime": runtime,
-        }
+        if legacy_history_only:
+            # This keeps old v2 material seals observable for record/history
+            # recovery, but deliberately makes its source unequal to every
+            # production start: it has no Journal/work-root authority.
+            source = FixedGoCommanderSuite(
+                settings.runtime,
+                settings.tokenizer_directory,
+                descriptor_sha256,
+                descriptor_path=self.control_directory / "commander-qualification-source.v2.json",
+                project_database=self.planner.projects.database,
+            ).source(current, generation)
+            source["legacy_history_only"] = True
+            return source
+        assert settings.journal_path is not None
+        assert settings.work_root is not None
+        from karajan.adapters.opencode.go_journal import GoCallJournal
+
+        return FixedGoCommanderSuite(
+            settings.runtime,
+            settings.tokenizer_directory,
+            descriptor_sha256,
+            journal=GoCallJournal(settings.journal_path, existing_only=True),
+            work_root=settings.work_root,
+            descriptor_path=self.control_directory / "commander-qualification-source.v2.json",
+            project_database=self.planner.projects.database,
+        ).source(current, generation)
 
     @staticmethod
     def _registration(run: dict[str, Any], binding: dict[str, Any]) -> dict[str, Any] | None:
@@ -968,8 +991,7 @@ class PlanningAdmissionAuthority:
             estimate.get("schema_version") != "karajan.planning-estimate.v1"
             or not isinstance(estimate.get("digest"), str)
             or estimate["digest"] != digest(sealed)
-            or estimate.get("configuration_sha256")
-            != held_run["configuration_snapshot"]["digest"]
+            or estimate.get("configuration_sha256") != held_run["configuration_snapshot"]["digest"]
             or not isinstance(estimate.get("demand"), dict)
             or not estimate["demand"]
             or any(type(value) is not str for value in estimate["demand"].values())

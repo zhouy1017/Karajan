@@ -44,6 +44,8 @@ def main(directory: Path, runtime: Path, upstream: Path, control_fd: int) -> Non
         Path(__file__).with_name("_opencode_projection.py").read_bytes()
     )
     (root / "control/projection.json").write_text(json.dumps(projection))
+    if (directory / "no-tools").is_file():
+        (root / "control/no-tools").touch()
     mount("--bind", str(root), str(root))
     for source in READ_ONLY_ROOTS:
         if Path(source).is_dir():

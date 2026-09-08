@@ -130,6 +130,20 @@ class _ReviewerQualificationGrant(_GrantBinding):
     context: GoQualificationLimits
 
 
+class _CommanderQualificationGrant(_GrantBinding):
+    """One bounded, no-tools Commander probe scene.
+
+    This deliberately shares the original Journal tables with every other Go
+    grant.  The schema is separate so a Commander probe can never be replayed
+    as a Worker or Reviewer qualification.
+    """
+
+    schema_version: Literal["karajan.go-commander-qualification-grant.v1"]
+    probe_spec_digest: _Digest
+    scenario: Literal["legal_plan", "denied_tool"]
+    context: GoQualificationLimits
+
+
 class _PlanningSubject(Contract):
     kind: Literal["planning_execution"]
     project_id: Identifier
@@ -263,6 +277,8 @@ def _binding(value: object) -> dict[str, Any]:
         return _validated(_ReviewerNativeGrantBinding, value)
     if schema_version == "karajan.go-reviewer-qualification-grant.v1":
         return _validated(_ReviewerQualificationGrant, value)
+    if schema_version == "karajan.go-commander-qualification-grant.v1":
+        return _validated(_CommanderQualificationGrant, value)
     if schema_version == "karajan.go-qualification-grant.v2":
         return _validated(_QualificationGrantV2, value)
     if schema_version is not None or "schema_version" in value:
@@ -448,6 +464,7 @@ class GoCallJournal:
             if value.get("schema_version") in {
                 "karajan.go-qualification-grant.v2",
                 "karajan.go-reviewer-qualification-grant.v1",
+                "karajan.go-commander-qualification-grant.v1",
                 "karajan.go-planning-native-grant.v1",
                 "karajan.go-reviewer-native-grant.v1",
             }:

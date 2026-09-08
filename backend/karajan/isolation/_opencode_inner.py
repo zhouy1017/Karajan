@@ -125,7 +125,7 @@ def send(control: socket.socket, value: dict[str, Any]) -> None:
 
 
 def configuration(
-    capability: str, projection: list[dict[str, Any]] | None = None
+    capability: str, projection: list[dict[str, Any]] | None = None, *, no_tools: bool = False
 ) -> dict[str, Any]:
     rows: list[dict[str, Any]] = (
         projection_files(projection)
@@ -137,6 +137,8 @@ def configuration(
         "read": {"*": "deny", **{"workspace/" + r["path"]: "allow" for r in rows}},
         "edit": {"*": "deny", **{"workspace/" + r["path"]: "allow" for r in rows if r["writable"]}},
     }
+    if no_tools:
+        permissions = {"*": "deny", "read": {"*": "deny"}, "edit": {"*": "deny"}}
     return {
         "model": "opencode-go/glm-5.3-flash",
         "small_model": "opencode-go/glm-5.3-flash",
@@ -300,7 +302,9 @@ def main(control_fd: int) -> None:
         "HOME": str(home),
         "OPENCODE_CONFIG_CONTENT": json.dumps(
             configuration(
-                startup["capability"], json.loads(Path("/control/projection.json").read_text())
+                startup["capability"],
+                json.loads(Path("/control/projection.json").read_text()),
+                no_tools=Path("/control/no-tools").is_file(),
             )
         ),
         "OPENCODE_SERVER_PASSWORD": password,
