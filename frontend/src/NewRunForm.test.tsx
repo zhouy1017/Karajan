@@ -464,7 +464,14 @@ it("saves the users requirement against the displayed project snapshot and reuse
 it("loads one registered v2 policy while capability qualification is pending", async () => {
   const writes: RequestInit[] = [];
   vi.stubGlobal("fetch", async (path: string, options?: RequestInit) => {
-    if (path.endsWith("/configuration")) return configured(2, false);
+    if (path.endsWith("/configuration")) {
+      const response = configured(2, false);
+      const body = await response.json();
+      body.configuration.rulebook.rules = [
+        { id: "lead-planning", quality_escalation_groups: [] },
+      ];
+      return Response.json(body);
+    }
     if (path.endsWith("/planning-preparation-readiness"))
       return Response.json({
         schema_version: "karajan.planning-preparation-readiness.v1",
@@ -527,6 +534,9 @@ it("loads one registered v2 policy while capability qualification is pending", a
     id: "planning-policy",
     revision: 2,
     digest: "q".repeat(64),
+  });
+  expect(body.authorization.stage_permissions).toEqual({
+    "lead-planning": { normal: true, quality_indices: [] },
   });
 });
 

@@ -47,6 +47,10 @@ type Configuration = {
   rulebook: {
     profile_groups: { commander_qualified: { id: string; revision: number }[] };
     resource_policy: { run_budget_ref: string };
+    rules?: {
+      id: string;
+      quality_escalation_groups?: unknown[];
+    }[];
   };
   resources: {
     budgets: {
@@ -84,6 +88,25 @@ function policyForRun(
     (item) => item.id === configuration.rulebook.resource_policy.run_budget_ref,
   );
   if (!budget) throw new Error("EXECUTION_POLICY_BUDGET_MISSING");
+  const stagePermissions = configuration.rulebook.rules
+    ? Object.fromEntries(
+        configuration.rulebook.rules.map((rule) => [
+          rule.id,
+          {
+            normal: true,
+            quality_indices: Array.from(
+              { length: rule.quality_escalation_groups?.length ?? 0 },
+              (_, index) => index,
+            ),
+          },
+        ]),
+      )
+    : {
+        normal: {
+          normal: true,
+          quality_indices: validationChecks.map((_, index) => index),
+        },
+      };
   return {
     id: policy.id,
     revision: policy.revision,
@@ -93,12 +116,7 @@ function policyForRun(
       currency_limits: budget.currency_limits as Record<string, string>,
       max_attempt_duration_seconds: budget.max_duration_seconds,
       max_quality_repair_rounds: 0,
-      stage_permissions: {
-        normal: {
-          normal: true,
-          quality_indices: validationChecks.map((_, index) => index),
-        },
-      },
+      stage_permissions: stagePermissions,
       checks: validationChecks,
     },
   };
