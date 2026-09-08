@@ -67,8 +67,11 @@ def _prepared_runtime() -> Path:
     configured = os.environ.get("KARAJAN_OPENCODE_LINUX_BINARY") or os.environ.get(
         "KARAJAN_GO_RUNTIME"
     )
-    runtime = Path(configured) if configured else None
-    if runtime is None or not runtime.is_file():
+    runtime = Path(configured) if configured else (
+        Path(__file__).resolve().parents[2]
+        / "runtimes/opencode/node_modules/opencode-linux-x64/bin/opencode"
+    )
+    if not runtime.is_file():
         if os.environ.get("KARAJAN_REQUIRE_OPENCODE_ISOLATION") == "1":
             pytest.fail("Prepared fixed Linux OpenCode artifact is required")
         pytest.skip("Prepared Linux OpenCode artifact is not available")
@@ -78,6 +81,7 @@ def _prepared_runtime() -> Path:
 def _prepared_tokenizer() -> Path:
     configured = os.environ.get("KARAJAN_GO_TOKENIZER_DIRECTORY")
     tokenizer = Path(configured) if configured else Path(".cache/go-context-artifacts")
+    tokenizer = tokenizer.resolve()
     if not tokenizer.is_dir():
         if os.environ.get("KARAJAN_REQUIRE_GO_TOKENIZER") == "1":
             pytest.fail("Prepared Go tokenizer artifacts are required")
