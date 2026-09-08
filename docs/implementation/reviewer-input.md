@@ -33,6 +33,16 @@ environment, check revision, effective `passed` status, and an available log.
 The compiler does not require the overall gate to pass because a missing
 Reviewer result keeps that gate pending.
 
+The public package is `karajan.reviewer-input.v2`. Alongside the Run
+requirement, it carries the exact approved worker and direct dependent Reviewer
+task IDs, revisions, paths, and acceptance criteria, plus the approved plan
+summary and plan/approval identity digests. The compiler compares the frozen
+workspace source binding to the current approved plan and operation approval,
+then requires exactly one Reviewer task whose sole dependency is the worker.
+This prevents an operation, caller, or stale v1 package from supplying altered
+task acceptance or scope. v1 bytes have a different schema and content digest,
+so they cannot be evidence for a v2 consumer.
+
 The returned immutable `ReviewerInput` contains canonical UTF-8 JSON bytes,
 their SHA-256 and size, the candidate ID/revision, the exact Check Evidence IDs,
 and the file allowlist. The bytes carry the approved requirement, candidate
