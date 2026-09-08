@@ -282,17 +282,44 @@ def test_ledger_uses_wal_and_compiler_does_not_hold_its_writer(tmp_path, binding
     assert observed == ["wal"]
 
 
-@pytest.mark.parametrize("boundary", ["host", "control", "claim"])
-def test_expiry_after_real_sqlite_writer_wait_blocks_the_actual_effect(
+@pytest.mark.parametrize("boundary", ["new_intent", "host", "control", "claim"])
+def test_reservation_only_expiry_after_real_sqlite_writer_wait_blocks_the_actual_effect(
     tmp_path, binding_case, boundary
 ):
     service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
-    service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+    if boundary != "new_intent":
+        service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+    admission_id = service.admissions.get(
+        run_id, reviewer_id, principal="owner"
+    )["capacity_receipt"]["admission_id"]
+    reservation = next(
+        row
+        for row in service.admissions.routing.capacity.snapshot()["reservations"]
+        if row["id"] == admission_id
+    )
     reached = threading.Event()
     release = threading.Event()
     outcome: list[BaseException] = []
 
-    if boundary == "host":
+    if boundary == "new_intent":
+        original_db = service._db
+
+        @contextmanager
+        def signal_writer(*, write=True):
+            if write:
+                reached.set()
+            with original_db(write=write) as db:
+                yield db
+
+        service._db = signal_writer
+
+        def action():
+            return service.prepare(
+                run_id, reviewer_id, principal="owner", command_key="reservation-new-intent"
+            )
+
+        database = service.database
+    elif boundary == "host":
         target, original = service.host, service.host.prepare
 
         def call(*args, **kwargs):
@@ -355,7 +382,10 @@ def test_expiry_after_real_sqlite_writer_wait_blocks_the_actual_effect(
         holder = sqlite3.connect(database, isolation_level=None, timeout=5)
         holder.execute("BEGIN IMMEDIATE")
         release.set()
-    service.admissions.routing.capacity.clock = lambda: time.time() + 10_000
+    # Cross only the held reservation deadline. Qualification, estimate, quota
+    # observation/reset and Run windows remain valid, so another temporal fence
+    # cannot mask a missing retained reservation authority.
+    service.admissions.routing.capacity.clock = lambda: reservation["expires_at"] + 0.001
     assert holder is not None
     # The real Host control transaction is now blocked behind this writer.
     time.sleep(0.05)
@@ -364,7 +394,135 @@ def test_expiry_after_real_sqlite_writer_wait_blocks_the_actual_effect(
     thread.join(10)
     assert not thread.is_alive()
     assert outcome and isinstance(outcome[0], RunError)
+    assert "REVIEWER_CAPACITY_REVALIDATION_FAILED" in str(outcome[0])
     current = service.read(run_id, reviewer_id, principal="owner")
+    if boundary == "new_intent":
+        assert current is None
+        return
+    assert current is not None and current["effect_claim"] is None
+    if boundary == "host":
+        with pytest.raises(KeyError):
+            service.host.inspect(current["planned_attempt_id"])
+    if boundary == "control":
+        with sqlite3.connect(service.host.database) as db:
+            assert db.execute("SELECT COUNT(*) FROM controls").fetchone()[0] == 0
+
+
+@pytest.mark.parametrize("boundary", ["new_intent", "host", "control", "claim"])
+def test_actual_credential_material_change_after_real_writer_wait_blocks_each_effect(
+    tmp_path, binding_case, boundary
+):
+    """The held qualification reader, not a frozen generation double, seals bytes."""
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    if boundary != "new_intent":
+        service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+    reached = threading.Event()
+    release = threading.Event()
+    outcome: list[BaseException] = []
+
+    if boundary == "new_intent":
+        original_db = service._db
+
+        @contextmanager
+        def signal_writer(*, write=True):
+            if write:
+                reached.set()
+            with original_db(write=write) as db:
+                yield db
+
+        service._db = signal_writer
+
+        def action():
+            return service.prepare(
+                run_id, reviewer_id, principal="owner", command_key="credential-new-intent"
+            )
+
+        database = service.database
+    elif boundary == "host":
+        original = service.host.prepare
+
+        def call(*args, **kwargs):
+            reached.set()
+            return original(*args, **kwargs)
+
+        service.host.prepare = call
+
+        def action():
+            return service.freeze_launch(run_id, reviewer_id, principal="owner")
+
+        database = service.host.database
+    elif boundary == "control":
+        original = service.host.initialize_control_once
+
+        def call(*args, **kwargs):
+            reached.set()
+            assert release.wait(5)
+            return original(*args, **kwargs)
+
+        service.host.initialize_control_once = call
+
+        def action():
+            return service.freeze_launch(run_id, reviewer_id, principal="owner")
+
+        database = service.host.database
+    else:
+        service.freeze_launch(run_id, reviewer_id, principal="owner")
+        from karajan.execution._platform import process_identity
+
+        identity = process_identity(os.getpid())
+        assert identity is not None
+
+        @contextmanager
+        def current_runner(*args, **kwargs):
+            reached.set()
+            yield identity
+
+        service.host.wait_for_runner_registration = lambda *args, **kwargs: identity
+        service.host.current_runner_guard = current_runner
+
+        def action():
+            return service.claim_registered_observer(
+                run_id, reviewer_id, principal="owner", timeout_seconds=0.01
+            )
+
+        database = service.database
+
+    holder = None
+    if boundary != "control":
+        holder = sqlite3.connect(database, isolation_level=None, timeout=5)
+        holder.execute("BEGIN IMMEDIATE")
+
+    def invoke():
+        try:
+            action()
+        except BaseException as error:
+            outcome.append(error)
+
+    thread = threading.Thread(target=invoke)
+    thread.start()
+    assert reached.wait(5)
+    if boundary == "control":
+        holder = sqlite3.connect(database, isolation_level=None, timeout=5)
+        holder.execute("BEGIN IMMEDIATE")
+        release.set()
+    credentials = binding_case[1].original.credentials
+    credential_path = next(iter(credentials._sources.values())).path
+    # This is the configured reader's actual temporary file. Keep its source
+    # identity/path and every SQLite generation unchanged; replace bytes only.
+    credential_path.write_text("replacement-material-not-a-provider-key", encoding="ascii")
+    assert holder is not None
+    time.sleep(0.05)
+    holder.commit()
+    holder.close()
+    thread.join(10)
+    assert not thread.is_alive()
+    assert outcome and isinstance(outcome[0], RunError)
+    assert "REVIEWER_QUALIFICATION_SOURCE_CHANGED" in str(outcome[0])
+
+    current = service.read(run_id, reviewer_id, principal="owner")
+    if boundary == "new_intent":
+        assert current is None
+        return
     assert current is not None and current["effect_claim"] is None
     if boundary == "host":
         with pytest.raises(KeyError):

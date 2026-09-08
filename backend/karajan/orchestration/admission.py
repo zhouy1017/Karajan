@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from karajan.capacity import CapacityError
+from karajan.capacity.store import CapacityEffectCapability
 from karajan.routing.compiler import RoutingError, digest
 from karajan.runs import RunError
 from karajan.runs.planning import encoded, identifier
@@ -24,9 +25,14 @@ class ReviewerFinalEffectCapability:
     """Ephemeral producer-owned validator for one held Reviewer effect guard."""
 
     _check: Callable[[], None]
+    _capacity_check: CapacityEffectCapability
 
     def assert_current(self) -> None:
         self._check()
+        try:
+            self._capacity_check.assert_current()
+        except CapacityError:
+            raise RunError("REVIEWER_CAPACITY_REVALIDATION_FAILED") from None
 
 
 class ApprovedTaskAdmission:
@@ -762,6 +768,13 @@ class ApprovedTaskAdmission:
                             raise RunError("REVIEWER_CAPACITY_BOUNDARY_INVALID")
 
                         def final_check() -> None:
+                            # The held Project reader repeats the actual
+                            # qualification/credential material check before
+                            # any final scalar clocks are sampled.
+                            source_recheck = getattr(current, "recheck_source", None)
+                            if not callable(source_recheck):
+                                raise RunError("REVIEWER_QUALIFICATION_SOURCE_CHANGED")
+                            source_recheck()
                             capacity_now = self.routing.capacity.clock()
                             try:
                                 capacity_quota_fence.assert_current(as_of=capacity_now)
@@ -786,8 +799,13 @@ class ApprovedTaskAdmission:
                         # use it only at their own final writer boundary; it is not
                         # a serializable receipt and cannot be reconstructed from
                         # the yielded controller facts.
+                        capacity_effect_capability = capacity.get(
+                            "capacity_final_effect_capability"
+                        )
+                        if not isinstance(capacity_effect_capability, CapacityEffectCapability):
+                            raise RunError("REVIEWER_CAPACITY_BOUNDARY_INVALID")
                         final_effect_check = ReviewerFinalEffectCapability(
-                            check_reviewer_final_effect_boundary()
+                            check_reviewer_final_effect_boundary(), capacity_effect_capability
                         )
                         yield {
                             "operation": operation,

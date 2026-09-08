@@ -158,3 +158,47 @@ unchanged, CI globals remain unchanged, and no production source is modified.
 This follow-up is limited to the bootstrap fixture and this evidence record;
 the broader candidate checks and any CI dispatch must use the resulting commit
 instead of being attributed to the prior `f70bb0e` candidate.
+
+## P1 final-effect repair (2026-09-08)
+
+The fresh independent Standards and Spec reports for candidate
+`f02f378ca9370c989884761d36fa2bc729c07991` both left the candidate blocked.
+They found two P1 omissions in the producer path. Both are direct failures of
+the original AC3: “每次 Host 准备/observer effect claim 前重进当前 admission
+guard、重编译完整 input 并比较；取消、批准/资格/禁用/source/generation/窗口/CAS/Checks/input变化阻止新效果，原 unknown 占账不清零。”
+Old passing tests and the Commander-attested f02 seven-module results are
+historical only; they do not authorize this candidate.
+
+- **Reservation-only expiry:** `CapacityStore.pre_effect_guard` now yields a
+  non-serializable `CapacityEffectCapability` which retains the exact held
+  reservation `expires_at` and Capacity's completed temporal fence. The
+  Reviewer capability invokes that owned authority at the new-intent, Host
+  prepare, Host control, and observer-claim writers; it does not reconstruct
+  fields, reopen Capacity, or acquire a control writer.
+- **Current credential material:** the final Reviewer callback reuses the
+  held Project source recheck before any final scalar-clock observations. That
+  is the same qualification `_facts` / configured credential reader that
+  validates the sealed material, not a persisted generation or caller fact.
+  It remains inside the existing operation → Run → Project → Capacity lock
+  ordering and is never serialized.
+
+The regression holds each real receiving SQLite writer. The expiry case moves
+only to `reservation.expires_at + 0.001`; qualification, estimate, quota
+freshness/reset, and Run windows remain valid. The credential case replaces
+only bytes in the configured temporary key file under its original path and
+source identity while the writer waits. It observes
+`REVIEWER_CAPACITY_REVALIDATION_FAILED` or
+`REVIEWER_QUALIFICATION_SOURCE_CHANGED`, respectively. New intent has no
+ledger row; Host prepare has no Host row; control has no control row; and
+claim has no effect claim (earlier applicable Host identity remains historical).
+No provider, native Review, HTTP, Relay, Journal, Evidence, or external
+credential is used.
+
+| Command | Result and limits |
+| --- | --- |
+| Fresh independent `reviewer143-standards-static3-final.md` and `reviewer143-spec-static3-final.md` against f02 | **Red (static):** two independent P1 findings: the final capability omitted retained reservation expiry, and it did not rerun external credential material after the writer wait. This establishes the pre-repair failure identity, but is not behavioural/CI evidence. |
+| Windows main `.venv`, literal `.cache/go-context-artifacts`, override unset, required tokenizer/isolation/offline flags, `python -m pytest tests/runs/test_reviewer_execution_intent.py::test_reservation_only_expiry_after_real_sqlite_writer_wait_blocks_the_actual_effect tests/runs/test_reviewer_execution_intent.py::test_actual_credential_material_change_after_real_writer_wait_blocks_each_effect -q --basetemp <fresh-private>` | **C passed:** `8 passed in 21.44s`. This is the real writer-wait green regression for new intent, Host, control, and claim. |
+| Windows main `.venv`, same literal tokenizer/flags and `PYTHONPATH=backend;tests;tests/projects;tests/runs;tests/candidates`, seven affected modules with a fresh private base temp | **C passed:** `162 passed, 5 skipped in 229.34s`. Skips: Linux-only factory/direct-child P evidence and unavailable Windows directory-symlink privilege. |
+| WSL Ubuntu `/tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python`, override unset, literal `.cache/go-context-artifacts`, `KARAJAN_REQUIRE_GO_TOKENIZER=1`, `KARAJAN_REQUIRE_OPENCODE_ISOLATION=1`, `HF_HUB_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1`, colon-separated `PYTHONPATH`, same seven modules and fresh `/tmp/karajan-reviewer143-final-linux-*` base temp | **P passed:** `167 passed in 137.80s`. The standard npm runtime remained the existing Linux ELF v1.18.29; no provider/native Review operation was requested. |
+| Windows main `.venv`: `python -m ruff check .`; `python -m mypy backend/karajan --platform win32` | `All checks passed!`; `Success: no issues found in 154 source files`. |
+| WSL candidate venv: `python -m mypy backend/karajan --platform linux` | `Success: no issues found in 154 source files`. |
