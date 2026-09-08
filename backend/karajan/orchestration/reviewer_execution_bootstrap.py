@@ -142,7 +142,7 @@ def open_reviewer_execution_intents(control_directory: Path) -> ReviewerExecutio
     )
     from .routing import ApprovedRunRouting
 
-    reviewer, reviewer_digest = open_existing_reviewer_execution_bootstrap(control_directory)
+    reviewer, _ = open_existing_reviewer_execution_bootstrap(control_directory)
     task, task_digest = _read_bootstrap(control_directory)
     if (
         task.control_directory != reviewer.control_directory
@@ -184,6 +184,14 @@ def open_reviewer_execution_intents(control_directory: Path) -> ReviewerExecutio
 
     def current_source() -> ReviewerExecutionSource:
         """Bind the fixed deployment and this exact non-native child entry."""
+        # Unlike the Go descriptor, this descriptor was previously captured by
+        # the enclosing factory call.  Reopen it at every effect guard too: a
+        # valid replacement must not silently inherit this facade's identity.
+        current_reviewer, current_reviewer_digest = open_existing_reviewer_execution_bootstrap(
+            control_directory
+        )
+        if current_reviewer != reviewer:
+            raise RunError("REVIEWER_EXECUTION_BOOTSTRAP_CHANGED")
         accounting = GoRequestAccounting(task.tokenizer_directory)
         # deployment_source performs the fixed bootstrap/platform/interpreter
         # checks.  Hashing this source file prevents a changed child from
@@ -198,7 +206,7 @@ def open_reviewer_execution_intents(control_directory: Path) -> ReviewerExecutio
         envelope = {
             "schema_version": "karajan.reviewer-execution-runner-source.v1",
             "deployment": deployment,
-            "reviewer_bootstrap_sha256": reviewer_digest,
+            "reviewer_bootstrap_sha256": current_reviewer_digest,
             "task_bootstrap_sha256": task_digest,
             "entry_path": str(entry),
             "entry_sha256": hashlib.sha256(entry.read_bytes()).hexdigest(),

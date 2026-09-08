@@ -2,46 +2,43 @@
 
 Candidate base: `b1bd5e9e58eba9dd6d5d4e3d63b815edadd265d2`.
 
-`open_reviewer_execution_intents(control_directory)` is the production-only
-composition point.  It accepts no request identity, profile, source, process
-arguments, or paths beyond the fixed private control directory.  It reopens
-the two provisioned descriptors and existing Registry, Planner, Capacity,
-Candidate, Host, routing, admission, qualification, and Reviewer-binding
-stores.  It does not provision a database or start a Host.
+This slice owns only the Reviewer execution bootstrap, binding, intent ledger,
+and fixed runner. It does not invoke native Review, a provider, HTTP, Journal,
+Evidence, parser, or delivery.
 
-The fixed `reviewer_execution_runner.py` is deliberately content-free: its
-only action is to make the observer claim from the Host's direct child
-identity.  It has no native, provider, HTTP, Journal, Evidence, parsing, or
-delivery path.  Current source is recomputed at every prepare/claim guard;
-changed deployment or child bytes reject the old intent.  `read` remains a
-detached recovery operation, including after cancellation or source changes.
+## Evidence terminology
 
-## Original AC evidence (2026-09-08)
+- **C**: a product-behaviour test passed. It is not a static-source claim.
+- **P**: that test ran locally in WSL/Linux against the stated executable/store
+  boundary. A test-only frozen qualification or deployment port remains just a
+  fixture and never qualifies a profile or proves service behaviour.
+- **S**: real service evidence. None was collected for this slice.
 
-| Original acceptance condition | Evidence | Result |
+## Original acceptance-condition matrix (2026-09-08)
+
+| Original acceptance condition | Behavioural evidence and result | Remaining gap |
 | --- | --- | --- |
-| Real lineage/CAS/Checks/Capacity create one complete intent; forged or incomplete material creates none | `tests/runs/test_reviewer_execution_intent.py` together with existing `test_reviewer_binding.py` coverage | C (the focused suite collects with the repository's fixture paths) |
-| Replay, concurrency, reopen and tamper preserve/reject exact identity | intent ledger implementation and focused intent tests; collection blocked | P |
-| Re-enter current admission/compiler before prepare and claim; changed input/source blocks effects | `ReviewerExecutionIntents._current_guard`; source recomputation added in this candidate | C |
-| Durable Host prepare/control and read-only inspection; no facade start | `test_reviewer_execution_intent.py`; no `Host.start` call in facade | C |
-| Only registered direct Host child gets first claim; replay/lost reply gets no second right | `RunnerHost.current_runner_guard` is used by fixed child claim; direct-child integration needs Linux fixture collection | P |
-| Cancellation remains permanent and delivery stays false/not_run | `test_reviewer_execution_intent.py` cancellation test | P |
-| Public state avoids sensitive contents; lint/type checks; no native/HTTP/model/Journal grant | static source review; commands below | C |
+| Real lineage/CAS/Checks/Capacity produce one complete intent; bad material has no new intent/effect | **C passed**: `test_prepare_is_durable_and_freezes_compiler_identity` uses the existing approved Reviewer/Worker/Candidate/Checks fixture path and verifies the v2 input, immutable identity, and unchanged Capacity snapshot. Existing Reviewer-binding negatives remain in the affected suite. | No S/native/provider evidence. |
+| Exact replay, concurrent use, reopen, and tamper retain/reject the same identity | **C/P passed subset**: `test_existing_factory_reopens_identity_and_rechecks_own_descriptor` reopens a seeded identity through the production existing-only factory, reads the original identity, and byte-compares the execution DB before/after. | It is not an actual simultaneous two-facade race test; descriptor/tamper coverage is limited to this factory boundary. |
+| Every prepare/claim re-enters current admission/compiler and source guard; changed current facts block effects | **C passed**: the new factory regression replaces its own valid Reviewer descriptor after facade construction and the next `freeze_launch` rejects `REVIEWER_EXECUTION_BOOTSTRAP_CHANGED`; historical `read` still returns the old intent. `ReviewerExecutionIntents` current-input tests cover the existing compiler/admission path. | Full sealed deployment source could not run: available WSL OpenCode files did not match the pinned runtime SHA. The test uses a clearly-labelled test-only deployment envelope while retaining real existing stores and the pinned tokenizer. |
+| Host prepare/control and read-only inspection are durable; no facade start/new session on recovery | **C passed**: `test_fixed_host_prepare_is_replayable_without_starting_native` verifies same prepared/start identity; `test_prepare_rejects_second_key_and_never_prepares_host` verifies no Host record before prepare. | No native execution claim. |
+| A registered direct Host child alone gains the first effect claim; lost reply/reopen never gets a second right | **P passed**: Linux direct-child test runs both normal reply and `lost-reply`: the actual registered child commits the claim then exits before writing a response; a fresh existing-only facade returns `claim_allowed=False`. The parent never supplies a child PID or runner guard. | No two-independent-child concurrent claim test: one Host attempt has one direct child, and this bounded fixture does not establish a separate multi-attempt concurrency protocol. |
+| Cancellation permanently blocks future claim while history stays inspectable; delivery remains false/not_run | **C passed**: cancellation test blocks Host prepare; direct-child recovery test cancels after reopen and blocks a later claim. Prepared intent asserts `delivery={eligible:false,state:not_run}`. | No remote stop, settlement, or provider assertion. |
+| Public state is non-sensitive; quality checks and no native/HTTP/model/Journal grant side effects | **C passed (bounded)**: fixture outputs contain only IDs/digests; factory construction has no model call and the runner only claims an existing Host identity. | No S evidence and no broad claim about unrelated modules or provider/Journal delivery. |
 
-`C` means code/structural evidence in this candidate. `P` means local test
-coverage exists but the requested full focused collection was not runnable in
-this checkout.  No native/provider or real qualification claim is made.
+## Commands and observed results
 
-## Raw command results
+All WSL commands used `/tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python`,
+`PYTHONPATH=backend:tests:tests/projects:tests/runs:tests/candidates`, and a
+fresh `/tmp/karajan-dg01-*` base temp. The factory test used
+`KARAJAN_GO_TOKENIZER_DIRECTORY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-context-artifacts`.
 
 | Command | Result |
 | --- | --- |
-| `C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m pytest tests/runs/test_reviewer_execution_bootstrap.py -q --basetemp .../.cache/dg01-bootstrap-2` | `3 passed in 0.23s` |
-| `PYTHONPATH='backend;tests;tests/projects;tests/runs;tests/candidates'; C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m pytest tests/runs/test_reviewer_execution_bootstrap.py tests/runs/test_reviewer_execution_intent.py -q --basetemp .../.cache/dg01-reviewer-focused` | `8 passed in 12.13s` |
+| `... python -m pytest tests/runs/test_reviewer_execution_bootstrap.py -q --basetemp /tmp/karajan-dg01-bootstrap-143` | `4 passed in 6.34s` |
+| `... python -m pytest tests/runs/test_reviewer_execution_intent.py::test_existing_store_direct_child_claim_is_one_shot_and_cancelled_recovery_stays_blocked -q --basetemp /tmp/karajan-dg01-lost-143b` | `2 passed in 9.45s` (normal reply and committed-lost-reply) |
+| `... python -m pytest tests/runs/test_reviewer_execution_bootstrap.py tests/runs/test_reviewer_execution_intent.py -q --basetemp /tmp/karajan-dg01-reviewer-focused-143` | `11 passed in 17.56s` |
 | `C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m ruff check .` | `All checks passed!` |
 | `C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m mypy backend` | `Success: no issues found in 154 source files` |
-| `wsl -d Ubuntu -- bash -lc 'cd /mnt/c/.../dg01-reviewer-20260908 && /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest tests/runs/test_reviewer_execution_bootstrap.py -q --basetemp /tmp/karajan-dg01-bootstrap-20260908'` | `3 passed in 1.26s` |
 
-The fixture module is at `tests/projects/test_projected_qualification_store.py`.
-The focused runs suite requires its repository test paths in `PYTHONPATH`; this
-is a collection configuration requirement, not a missing dependency or blocker.
+An attempted broader affected Reviewer/admission/Host pytest invocation exceeded the interactive 30-second command window before a final summary, so it is deliberately not counted as passed evidence.

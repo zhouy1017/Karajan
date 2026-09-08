@@ -95,7 +95,8 @@ def _service(directory: Path) -> ReviewerExecutionIntents:
 
 
 def main() -> int:
-    run_id, reviewer_id, principal = sys.argv[1:]
+    run_id, reviewer_id, principal, *mode = sys.argv[1:]
+    lost_reply = mode == ["lost-reply"]
     directory = Path.cwd()
     result = {"pid": os.getpid()}
     try:
@@ -104,6 +105,10 @@ def main() -> int:
         )["claim_allowed"]
     except Exception as error:  # output is test-local and content-free
         result["error"] = type(error).__name__ + ":" + str(error)
+    if lost_reply:
+        # The commit has completed; emulate loss between it and the child's
+        # controller reply without fabricating a runner identity in the parent.
+        os._exit(0)
     (directory / "reviewer-execution-test-child-result.json").write_text(json.dumps(result))
     return 0 if result.get("claim_allowed") else 1
 
