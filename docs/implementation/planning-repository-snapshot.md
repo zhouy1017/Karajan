@@ -58,10 +58,13 @@ closed. Blob sizes are queried before their bodies, and the reader checks the
 regular CAS file's `st_size` against its manifest before a bounded
 `manifest_size + 1` read. The registered root must be a non-aliased directory.
 On POSIX, a publisher fsyncs both the temporary blob and its artifact directory
-after linking/unlinking and before SQLite records references. Windows has no
-equivalent directory-fsync implementation in this boundary, so publication
-fails closed there; Windows reparse behavior remains unsupported evidence, not
-a portability claim.
+after linking/unlinking and before SQLite records references. On Windows, it
+flushes the temporary blob, publishes it with same-directory `MoveFileExW` and
+`MOVEFILE_WRITE_THROUGH` without replacement, then flushes the published blob
+before SQLite records references. This is a platform-specific Windows commit
+protocol; it does not claim that an injected I/O failure or the API contract
+constitutes an observed physical power-loss recovery test. Windows reparse
+behavior remains unsupported evidence, not a portability claim.
 
 The CAS protocol permits only a competing publisher's brief two-link interval:
 it waits for that temporary name to disappear, then requires a regular,
@@ -107,11 +110,20 @@ documentation-only follow-up.
 | Wrong identities, changed Run term/configuration/authorization, tampered execution binding or binding digest, manifest/blob corruption, and missing ledgers fail closed without repair. | Existing binding/ledger corruption cases plus recomputed-self-hash metadata matrix (`repository_identity_sha256`, `base_sha`, `read_paths_sha256`) in `test_base_tree_snapshot_is_immutable_and_directory_paths_are_expanded`. | Linux local C/P passed |
 | Traversal, symlink/reparse, unapproved or empty paths, registered-root aliases/corrupt base, and fixed file/byte limits reject completely without clipping. | Direct traversal, unmatched approval, corrupt Git base, unchanged original bytes/mode and zero-manifest tests; Linux symlink and root-alias tests; sparse oversized replacement checks `st_size` before bounded consumption. | Traversal/unapproved/corrupt-base/limits/Linux symlink C/P passed; Windows reparse unsupported/not_run |
 | Freeze/read/replay have no Capacity/native/Host/Journal/model/Plan/qualification effects. | The protected-factory test snapshots actual Run plans and Capacity reservations, an actual temporary `GoCallJournal` call ledger, and the copied `ProfileQualificationStore` record ledger before/after freeze, read, saved replay and failures. The fixture intentionally supplies no Host or provider adapter: zero Journal rows is a receiving-boundary result only, while physical native/model/provider absence remains not_run. | Local ledger C/P passed; Host/native/model/provider physical P/S not_run |
-| #110/#111 binding, begin/replay, submitted receipt recovery, historical handoff/source recovery and concurrency regressions stay intact; checks pass. | Linux command below, 2026-09-08, after the blockers: `84 passed in 19.04s`. `test_snapshot_publication_holds_authority_after_final_check` retains the short FINAL PUBLICATION interval: cancellation/handoff wait only through the final manifest commit. | Linux P passed |
+| #110/#111 binding, begin/replay, submitted receipt recovery, historical handoff/source recovery and concurrency regressions stay intact; checks pass. | Linux command below, 2026-09-08, after the platform repair: `86 passed in 20.58s`, including durable-publication failure and persistent-alias regressions. `test_snapshot_publication_holds_authority_after_final_check` retains the short FINAL PUBLICATION interval: cancellation/handoff wait only through the final manifest commit. | Linux P passed; Windows snapshot/execution subset P passed (below) |
 
 The initial Windows invocation could not enumerate its inherited
 `C:/Users/Chooo/AppData/Local/Temp/pytest-of-Chooo` (`PermissionError` before
-tests); it is recorded as an environment failure, not product evidence. The
-reproducible candidate command above uses the required fresh Linux `/tmp`
-basetemp. Full native/provider qualification remains **not_run**; this leaf
-does not claim S evidence or transport authority for an historical snapshot.
+tests); it is recorded as an environment failure, not product evidence. At
+predecessor `36a9764444a2820c1a7614c9ac25a94fff2d0259`, a fresh Windows
+snapshot basetemp had `5 failed, 2 skipped in 1.96s`: each positive producer
+case reached the intentional unsupported `_sync_artifacts` branch and raised
+`PLANNING_REPOSITORY_SNAPSHOT_CHANGED`. On 2026-09-08, this candidate's fresh
+Windows basetemp ran the same three modules with `73 passed, 13 skipped in
+28.45s`; the snapshot module itself was `6 passed, 3 skipped in 2.78s`. Its
+skips are the two pre-existing test-account symlink permissions and the
+POSIX-only hard-link overlap test; generic concurrent Store freezing passed
+on Windows. This is local Windows P evidence for the durable no-replace
+publication protocol, not physical power-loss evidence. Full native/provider
+qualification remains **not_run**; this leaf does not claim S evidence or
+transport authority for an historical snapshot.

@@ -21,6 +21,9 @@ _NAME = "planning-repository-snapshots.sqlite"
 _ARTIFACTS = "planning-repository-snapshot-blobs"
 _MAX_FILES = 2_000
 _MAX_BYTES = 8_000_000
+_MOVEFILE_WRITE_THROUGH = 0x8
+_ERROR_FILE_EXISTS = 80
+_ERROR_ALREADY_EXISTS = 183
 
 
 def snapshot_database(control_directory: Path) -> Path:
@@ -202,21 +205,42 @@ class PlanningRepositorySnapshotStore:
             raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE")
         return r.stdout
 
-    def _sync_artifacts(self) -> None:
+    def _sync_artifacts(self, target: Path | None = None) -> None:
         """Durably record a blob directory entry before a SQLite reference.
 
-        POSIX is the supported private-artifact durability boundary: fsyncing a
-        regular file alone does not make its name durable.  Windows does not
-        expose an equivalent directory handle through ``os.open`` here, so it
-        fails closed rather than acknowledging an unverifiable publication.
+        POSIX requires a directory fsync after a name change.  Windows uses a
+        same-directory ``MoveFileExW(..., MOVEFILE_WRITE_THROUGH)`` commit;
+        there is no directory fsync substitute in this boundary.  The blob has
+        already been flushed before that rename, and is flushed once more here
+        before its SQLite reference is committed.
         """
-        if os.name != "posix":
-            raise OSError("directory fsync unsupported")
-        descriptor = os.open(self.artifacts, os.O_RDONLY)
+        if os.name == "nt":
+            if target is None:
+                raise OSError("Windows artifact target required")
+            descriptor = os.open(target, os.O_RDWR)
+        elif os.name == "posix":
+            descriptor = os.open(self.artifacts, os.O_RDONLY)
+        else:
+            raise OSError("artifact durability unsupported")
         try:
             os.fsync(descriptor)
         finally:
             os.close(descriptor)
+
+    @staticmethod
+    def _move_file_write_through(source: str, target: Path) -> None:
+        """Atomically publish a new Windows artifact without replacing one."""
+        import ctypes
+
+        move_file = ctypes.WinDLL("kernel32", use_last_error=True).MoveFileExW
+        move_file.argtypes = [ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_uint32]
+        move_file.restype = ctypes.c_int
+        if move_file(source, str(target), _MOVEFILE_WRITE_THROUGH):
+            return
+        error = ctypes.get_last_error()
+        if error in {_ERROR_FILE_EXISTS, _ERROR_ALREADY_EXISTS}:
+            raise FileExistsError(error, "artifact already exists", str(target))
+        raise ctypes.WinError(error)
 
     def _published_content(self, target: Path, content: bytes) -> bool:
         """Accept only our short-lived link(2) overlap, never a durable alias."""
@@ -241,9 +265,9 @@ class PlanningRepositorySnapshotStore:
             try:
                 if not self._published_content(target, content):
                     raise ValueError()
-                self._sync_artifacts()
+                self._sync_artifacts(target)
                 return
-            except OSError:
+            except (OSError, ValueError):
                 raise RunError("PLANNING_REPOSITORY_SNAPSHOT_CHANGED") from None
         try:
             fd, name = tempfile.mkstemp(prefix=".snapshot-", dir=self.artifacts)
@@ -252,15 +276,26 @@ class PlanningRepositorySnapshotStore:
                 f.flush()
                 os.fsync(f.fileno())
             os.chmod(name, 0o600)
-            try:
-                os.link(name, target)
-            except FileExistsError:
-                pass
-            finally:
-                os.unlink(name)
+            if os.name == "nt":
+                try:
+                    self._move_file_write_through(name, target)
+                except FileExistsError:
+                    pass
+                finally:
+                    try:
+                        os.unlink(name)
+                    except FileNotFoundError:
+                        pass
+            else:
+                try:
+                    os.link(name, target)
+                except FileExistsError:
+                    pass
+                finally:
+                    os.unlink(name)
             if not self._published_content(target, content):
                 raise ValueError()
-            self._sync_artifacts()
+            self._sync_artifacts(target)
         except (OSError, ValueError):
             raise RunError("PLANNING_REPOSITORY_SNAPSHOT_CHANGED") from None
 

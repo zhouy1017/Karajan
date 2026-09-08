@@ -1,4 +1,5 @@
 import json
+import os
 import sqlite3
 import stat
 import subprocess
@@ -336,6 +337,8 @@ def test_concurrent_publish_waits_only_for_its_temporary_link(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
     """A second publisher sees linkcount two, then recovers the first bytes."""
+    if os.name == "nt":
+        pytest.skip("Windows uses a no-replace write-through rename, not link overlap")
     content = b"original bytes"
     sha = __import__("hashlib").sha256(content).hexdigest()
     database = tmp_path / "snapshots.sqlite"
@@ -373,3 +376,64 @@ def test_concurrent_publish_waits_only_for_its_temporary_link(
     target = database.parent / "planning-repository-snapshot-blobs" / sha
     assert target.read_bytes() == content
     assert target.stat().st_nlink == 1
+
+
+def test_publish_rejects_persistent_alias_as_a_stable_snapshot_failure(tmp_path: Path):
+    content = b"original bytes"
+    sha = __import__("hashlib").sha256(content).hexdigest()
+    store = PlanningRepositorySnapshotStore(tmp_path / "snapshots.sqlite")
+    store._publish(sha, content)
+    target = store.artifacts / sha
+    os.link(target, store.artifacts / "persistent-alias")
+    with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_CHANGED$"):
+        store._publish(sha, content)
+
+
+def test_freeze_sync_failure_leaves_zero_snapshot_references(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    root = tmp_path / "repo"
+    root.mkdir()
+    _git(root, "init")
+    (root / "input.txt").write_bytes(b"original bytes")
+    _git(root, "add", ".")
+    _git(root, "-c", "user.name=x", "-c", "user.email=x@y.z", "commit", "-m", "base")
+    binding = {
+        "execution_id": "execution",
+        "run_id": "run",
+        "intent_id": "intent",
+        "requirement_sha256": "a" * 64,
+        "authorization_ceiling_sha256": "c" * 64,
+    }
+    run = {
+        "project_id": "project",
+        "configuration_snapshot": {"project_revision": 1},
+        "authorization_ceiling": {"read_paths": ["input.txt"]},
+    }
+    project = {
+        "id": "project",
+        "revision": 1,
+        "repository": {
+            "root": str(root.resolve()),
+            "identity_sha256": "b" * 64,
+            "base_sha": _git(root, "rev-parse", "HEAD"),
+        },
+    }
+    store = PlanningRepositorySnapshotStore(tmp_path / "snapshots.sqlite")
+    original_fsync = planning_snapshot.os.fsync
+    calls = 0
+
+    def fail_artifact_sync(descriptor: int) -> None:
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise OSError("injected artifact sync failure")
+        original_fsync(descriptor)
+
+    monkeypatch.setattr(planning_snapshot.os, "fsync", fail_artifact_sync)
+    with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_CHANGED$"):
+        store.freeze(binding, run, project)
+    assert calls == 2
+    with sqlite3.connect(store.database) as db:
+        assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 0
+        assert db.execute("SELECT count(*) FROM files").fetchone()[0] == 0
