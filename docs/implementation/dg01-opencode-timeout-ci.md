@@ -1,76 +1,141 @@
 # DG01 OpenCode timeout fixture repair
 
-Scope: GitHub #151. This is an offline fixture repair only. It runs the pinned
-OpenCode 1.18.29 server with two loopback Python peers; it neither reads provider
-credentials nor makes a provider, subscription, or cash call.
+Scope: GitHub #151. This is an offline fixture repair: the pinned OpenCode
+1.18.29 server talks only to two loopback Python peers. It neither reads a
+provider credential nor performs a provider, subscription, or cash call.
 
-The implementation fix is `1ddc1a58e08f2ac359042c3228b534efa0c02c95`
-(`fix: make OpenCode timeout fixture wait for native error`).
+## Preserved current-candidate failure
 
-## Fixed failure and cause
-
-Baseline `bdd6830a80110a04e70ed000ce3ec92dc654d9b9` failed the post-merge Windows
-[CI 34219059454](https://github.com/zhouy1017/Karajan/actions/runs/34219059454)
-at `test_header_timeout_is_reported_as_error_without_inventing_a_retry`:
-`report.status` was `completed`, not `runtime_error`. That remains a failure on
-that baseline; earlier candidate and Linux CI passes are not evidence for it.
-
-The fixture called `sleep(1.5)` and then closed the provider connection. That
-made the claimed header timeout depend on a race between the native timeout and a
-synthetic EOF. The broker retained that EOF as `RemoteDisconnected`, and a slower
-or differently scheduled native timeout could therefore observe a completion path
-instead of the intended timeout.
-
-`timeout_once` now holds the first provider request before sending any headers.
-The hold is released only by local cleanup after `_observe` has received the
-actual native `session.error`; a five-second safety deadline bounds a broken
-observation rather than manufacturing an early disconnect. The report preserves
-`provider_header_wait`, `native_terminal`, `provider_release`, the provider wait
-duration, all actual receipts, and the later broker transport error. It does not
-synthesize a report, suppress a receipt, or add a request. The regression asserts
-the native error message, one receipt/request, empty final text, zero retry events,
-and the `after_native_error_cleanup` lifecycle.
-
-## Red and green evidence
-
-The regression was added at the actual `OpenCodeProbe.run("timeout_once")` call
-site before the lifecycle repair. Against the original sleep/disconnect behavior:
+The first repair candidate was `0e53567cd7d1930fd0166eae945299134dba9800`.
+It was **not** fully validated. Commander reproduced the original Windows
+failure on that exact commit in a clean review worktree with:
 
 ```text
-C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m pytest tests/adapters/opencode/test_opencode_probe.py -k header_timeout -q --basetemp .cache/dg01-timeout-red-regression-001
-1 failed in 5.10s
-provider_release: elapsed_disconnect
+C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m pytest tests/adapters/opencode/test_opencode_probe.py -q --basetemp .cache/root151-final-windows-001
+1 failed, 12 passed in 54.34s
 ```
 
-After the repair, the same command passed. The recorded Windows event was
-`session.error` with `The operation timed out.`, with one provider request, one
-broker receipt, no retry event, empty final text, and a 0.563-second header hold.
-Five additional fresh Windows repetitions passed (4.12–4.78 seconds each).
-
-The Linux verification used the actual ELF selected by CI's locked runtime layout,
-not the Windows executable:
+`test_header_timeout_is_reported_as_error_without_inventing_a_retry` observed
+`report.status == "completed"`, not `"runtime_error"`. Its preserved,
+read-only report has three provider requests and three broker receipts, a
+nonempty final response, no `session.error`, and this lifecycle:
 
 ```text
-/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode
-SHA256 ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650
-version 1.18.29
+provider_header_wait=started
+native_terminal=not_observed
+provider_release=safety_deadline
 ```
 
-Three fresh Linux timeout runs produced `runtime_error`, one receipt/request, zero
-retries, and header holds of 0.608, 0.646, and 0.649 seconds. The same actual
-runtime also completed the normal tool and 429 paths, observed the real disconnect
-retry and bounded cancel behavior, retained admission/cleanup negatives, and
-rejected model, permission, and endpoint configuration tampering.
+The discriminating native status event was a real retry: `attempt: 1`,
+`Provider response headers timed out after 500ms`. The first receipt later
+recorded `RemoteDisconnected`; the two retry-path calls completed the tool
+loop. This failure remains evidence against `0e53567`; old isolated green
+runs, static reviews, and the baseline's Linux CI do not replace it.
 
-Windows focused probe/management tests passed in three groups: 5 core, 6
-admission/config/retry/disconnect, and 2 timeout/cancel; management tests added 2
-more. Ruff passed for the changed adapter/test files. Strict `mypy backend/karajan`
-passed for both `--platform win32` and `--platform linux` (150 source files).
+## Diagnosis and repair
 
-## Limits
+The pinned 1.18.29 source installs two independent abort paths around the same
+fetch: `headerTimeout` produces `ProviderHeaderTimeoutError`, while `timeout`
+uses `AbortSignal.timeout`. The runtime's `SessionRetry.policy` retries timeout
+messages, including the header-specific error. The previous fixture assigned
+both deadlines to 500 ms. Which native timer won was therefore a scheduler
+race:
 
-This proves only the local fake-provider timing contract. `live_qualified` and
-`profile_enabled` remain false, and no cancellation result claims remote stop.
-The previous Windows CI failure belongs to the baseline and has not been erased by
-a remote rerun. Final candidate CI, independent review, integration into `dev`,
-and Issue state changes remain outside this repair.
+- with `timeout=501` and `headerTimeout=500`, the real header timer won; the
+  fixture recorded the native retry and three real receipts, then completed;
+- with `timeout=499` and `headerTimeout=500`, the request deadline won; the
+  real terminal event was `session.error: The operation timed out.`
+
+The repair makes that precedence intentional rather than timing-dependent:
+`timeout_once` retains an explicit 500 ms header deadline but sets its terminal
+request deadline to 400 ms while the provider is withholding headers. This is
+a real native request timeout during the header wait, not a fabricated event or
+a synthetic disconnect. The regression requires exactly one request and
+receipt, empty final text, one native `session.error`, and zero actual retry
+status events.
+
+The investigation also exposed a Linux-only configuration-isolation defect.
+The server environment filter admitted inherited proxy variables
+case-insensitively, then replaced only uppercase proxy names. A poisoned
+lowercase `http_proxy` or `https_proxy` remained effective on Linux and drove
+the normal local tool loop to its real six-call admission limit. The server now
+sets both casings to fixed local values and both `NO_PROXY` casings to loopback.
+No proxy, configuration, or credential is forwarded to an external endpoint.
+
+The timeout fixture's lifecycle wording is now also exact: a release during
+cleanup without a native terminal is `cleanup_without_native_terminal`; only an
+unreleased five-second wait is `safety_deadline`.
+
+## Local evidence for this candidate
+
+The one-variable 501 ms probe was intentionally red-capable and failed with
+the original symptom:
+
+```text
+C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m pytest tests/adapters/opencode/test_opencode_probe.py -k header_timeout -q --basetemp .cache/root151-header-first-501
+1 failed, 12 deselected in 6.50s
+```
+
+After the repair, five fresh focused Windows repetitions passed in 3.83--4.42
+seconds. A representative report had `runtime_error`, one request/receipt,
+empty final text, a 0.468-second header hold,
+`native_terminal=session.error`,
+`provider_release=after_native_error_cleanup`, and zero retry events.
+
+The final complete owned suites used fresh bases:
+
+```text
+# Windows, pinned official executable
+C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m pytest tests/adapters/opencode/test_opencode_probe.py tests/adapters/opencode/test_management.py -q --basetemp .cache/root151-final-windows-fixed-002
+15 passed in 50.70s
+
+# Linux, separate temporary copy with the ELF named only inside that copy
+PYTHONPATH=backend:tests:tests/projects:tests/runs:tests/candidates \
+  /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest \
+  tests/adapters/opencode/test_opencode_probe.py tests/adapters/opencode/test_management.py -q \
+  --basetemp .cache/root151-final-linux-fixed-003
+15 passed in 101.47s
+```
+
+The Linux executable was
+`/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-linux-runtime/package/bin/opencode`,
+version `1.18.29`, SHA-256
+`ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650`.
+It was copied into a temporary Linux test layout; the Windows executable was
+not replaced or run through WSL.
+
+Static gates on this candidate also passed:
+
+```text
+C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m ruff check .
+All checks passed!
+
+C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m mypy backend/karajan --platform win32
+Success: no issues found in 150 source files
+
+C:/Users/Chooo/Playground/Karajan/.venv/Scripts/python.exe -m mypy backend/karajan --platform linux
+Success: no issues found in 150 source files
+```
+
+## Acceptance mapping and limits
+
+1. The original current-candidate red is preserved above; the 501 ms
+   one-variable invocation is a repeatable red-capable loop for the native
+   header-timeout/retry path.
+2. `timeout_once` now deterministically reaches a native terminal timeout
+   while headers are withheld, without a synthetic EOF or retry completion.
+   The distinct native header-timeout behavior and its retry policy are
+   documented rather than mislabeled as terminal.
+3. Every actual receipt remains unique and is persisted with its original
+   attempt/fence data. Cleanup is bounded to the owned server, loopback peers,
+   and their threads; `live_qualified` and `profile_enabled` remain false.
+4. Normal tool, 429 retry, disconnect retry, cancellation, configuration
+   tampering, admission/cleanup negatives, and both proxy-poison cases ran in
+   the final Windows and Linux owned suites. Full Ruff and both platform mypy
+   gates passed.
+5. This local candidate has not been independently reviewed after this repair,
+   pushed, submitted for PR, merged into `dev`, or used to update/close #151.
+   Fresh independent Standards and Spec reviews, required CI, merge/readback,
+   and issue-state evidence remain root-owned work. Local fake-provider
+   evidence does not qualify real authentication, billing, OS egress
+   containment, or remote cancellation state.

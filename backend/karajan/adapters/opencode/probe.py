@@ -83,7 +83,10 @@ class OpenCodeProbe:
         )
         if scenario == "timeout_once":
             server.config["provider"]["fixture"]["options"].update(
-                {"timeout": 500, "headerTimeout": 500}
+                # OpenCode retries its native HeaderTimeoutError.  Keep the explicit
+                # header deadline, but make the terminal request deadline win while
+                # the peer is still withholding headers.
+                {"timeout": 400, "headerTimeout": 500}
             )
             server.environment["OPENCODE_CONFIG_CONTENT"] = json.dumps(server.config)
         actual_config = json.loads(json.dumps(server.config))

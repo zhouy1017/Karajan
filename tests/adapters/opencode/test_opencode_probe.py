@@ -177,6 +177,11 @@ def test_header_timeout_is_reported_as_error_without_inventing_a_retry(tmp_path:
     errors = [event for event in report.events if event["type"] == "session.error"]
     assert len(errors) == 1
     assert errors[0]["properties"]["error"]["data"]["message"] == "The operation timed out."
+    assert not any(
+        event.get("type") == "session.status"
+        and event.get("properties", {}).get("status", {}).get("type") == "retry"
+        for event in report.events
+    )
 
 
 def test_abort_records_bounded_post_cancel_observation_without_claiming_remote_stop(

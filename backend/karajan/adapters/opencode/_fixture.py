@@ -96,12 +96,14 @@ class LocalTransport:
                     started = time.monotonic()
                     released = transport.timeout_header_release.wait(timeout=5)
                     observation["header_wait_seconds"] = time.monotonic() - started
-                    transport.timeout_lifecycle["provider_release"] = (
-                        "after_native_error_cleanup"
-                        if released
-                        and transport.timeout_lifecycle.get("native_terminal") == "session.error"
-                        else "safety_deadline"
-                    )
+                    if released:
+                        transport.timeout_lifecycle["provider_release"] = (
+                            "after_native_error_cleanup"
+                            if transport.timeout_lifecycle.get("native_terminal") == "session.error"
+                            else "cleanup_without_native_terminal"
+                        )
+                    else:
+                        transport.timeout_lifecycle["provider_release"] = "safety_deadline"
                     observation["response_status"] = None
                     self.close_connection = True
                     return
