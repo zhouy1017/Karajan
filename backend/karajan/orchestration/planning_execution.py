@@ -446,6 +446,8 @@ class PlanningExecution:
         if evidence["state"] == "unknown":
             with self._transaction() as db:
                 current = self._load(db, execution_id)
+                if current["state"] not in {"awaiting_admission", "admission_unknown"}:
+                    return current
                 if current["cancel_requested"]:
                     return current
                 if not self._monotonic_admission(current["admission"], evidence):
@@ -525,6 +527,8 @@ class PlanningExecution:
             return self._blocked(execution_id, principal, "PLANNING_OUTPUT_SOURCE_BINDING_MISMATCH")
         with self._transaction() as db:
             current = self._load(db, execution_id)
+            if current["state"] not in {"awaiting_admission", "admission_unknown"}:
+                return current
             if current["cancel_requested"]:
                 return current
             if not self._monotonic_admission(current["admission"], evidence):
@@ -564,12 +568,16 @@ class PlanningExecution:
         for value in (execution_id, principal, command_key):
             identifier(value)
         execution = self.reconcile(execution_id, principal=principal)
+        claimed_here = False
         if execution["state"] == "awaiting_output":
             execution = self._capture_output(execution, principal, command_key)
         if execution["state"] == "output_captured":
-            execution = self._claim_submission(execution_id, principal, command_key)
+            execution, claimed_here = self._claim_submission(execution_id, principal, command_key)
+            # Only this invocation has just checked the live output authority.
+            # A persisted claim belongs to a previous, possibly interrupted
+            # invocation and may only be recovered through its Run receipt.
         if execution["state"] in {"submit_claimed", "submission_unknown"}:
-            return self._recover_or_submit(execution_id, principal)
+            return self._recover_or_submit(execution_id, principal, claimed_here=claimed_here)
         return execution
 
     def _capture_output(
@@ -648,6 +656,11 @@ class PlanningExecution:
             self._owner_run(current["run_id"], principal)
 
             def capture() -> dict[str, Any]:
+                # Output reads happen outside the controller transaction.  A
+                # slower submit with a different command key must not restore
+                # this earlier stage after another caller advanced it.
+                if current["state"] != "awaiting_output":
+                    return current
                 if current["cancel_requested"]:
                     return current
                 if current["output"] not in (None, sealed):
@@ -666,41 +679,50 @@ class PlanningExecution:
 
     def _claim_submission(
         self, execution_id: str, principal: str, command_key: str
-    ) -> dict[str, Any]:
+    ) -> tuple[dict[str, Any], bool]:
         execution = self.get(execution_id, principal=principal)
         if self.outputs is None:
-            return self._blocked(execution_id, principal, "PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE")
+            return (
+                self._blocked(execution_id, principal, "PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE"),
+                False,
+            )
         try:
             source = PlanningOutputSource.model_validate(
                 self.outputs.read_source(execution["binding"])
             ).model_dump()
         except (ValidationError, TypeError, ValueError):
-            return self._blocked(execution_id, principal, "PLANNING_OUTPUT_SOURCE_INVALID")
+            return self._blocked(execution_id, principal, "PLANNING_OUTPUT_SOURCE_INVALID"), False
         if not self._authority_allowed(self.outputs, source["authority_kind"]):
-            return self._blocked(
-                execution_id,
-                principal,
-                "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN"
-                if source["authority_kind"] == "fixture"
-                else "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE",
+            return (
+                self._blocked(
+                    execution_id,
+                    principal,
+                    "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN"
+                    if source["authority_kind"] == "fixture"
+                    else "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE",
+                ),
+                False,
             )
         if source["binding_sha256"] != execution["binding_sha256"] or source[
             "source_sha256"
         ] != execution.get("output_source_sha256"):
-            return self._blocked(execution_id, principal, "PLANNING_OUTPUT_SOURCE_CHANGED")
+            return self._blocked(execution_id, principal, "PLANNING_OUTPUT_SOURCE_CHANGED"), False
         with self._transaction() as db:
             current = self._load(db, execution_id)
             self._owner_run(current["run_id"], principal)
             if current["cancel_requested"]:
-                return current
+                return current, False
             if current["state"] == "output_captured":
                 current["state"] = "submit_claimed"
                 current["submission_started"] = False
                 current["reason_codes"] = []
                 self._save(db, current)
-            return current
+                return current, True
+            return current, False
 
-    def _recover_or_submit(self, execution_id: str, principal: str) -> dict[str, Any]:
+    def _recover_or_submit(
+        self, execution_id: str, principal: str, *, claimed_here: bool
+    ) -> dict[str, Any]:
         with self._transaction() as db:
             current = self._load(db, execution_id)
             self._owner_run(current["run_id"], principal)
@@ -727,6 +749,16 @@ class PlanningExecution:
                 return current
             if current["cancel_requested"]:
                 return current
+            if not claimed_here:
+                # Receipt-only recovery cannot tell a crashed claimant from a
+                # live one that has not entered the Run store yet.  Report its
+                # uncertainty without changing the durable claim, so it cannot
+                # stop the claimant that holds the one first-submit right.
+                return {
+                    **current,
+                    "state": "submission_unknown",
+                    "reason_codes": ["PLANNING_EXECUTION_SUBMISSION_UNKNOWN"],
+                }
             if current.get("submission_started"):
                 current["state"] = "submission_unknown"
                 current["reason_codes"] = ["PLANNING_EXECUTION_SUBMISSION_UNKNOWN"]
@@ -763,6 +795,32 @@ class PlanningExecution:
             self._owner_run(current["run_id"], principal)
             if current["cancel_requested"]:
                 raise RunError("PLANNING_EXECUTION_CANCELLED")
+        if self.outputs is None:
+            raise RunError("PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE")
+        try:
+            source = PlanningOutputSource.model_validate(
+                self.outputs.read_source(current["binding"])
+            ).model_dump()
+        except (ValidationError, TypeError, ValueError):
+            raise RunError("PLANNING_OUTPUT_SOURCE_INVALID") from None
+        if not self._authority_allowed(self.outputs, source["authority_kind"]):
+            raise RunError(
+                "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN"
+                if source["authority_kind"] == "fixture"
+                else "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE"
+            )
+        if source["binding_sha256"] != current["binding_sha256"] or source[
+            "source_sha256"
+        ] != current.get("output_source_sha256"):
+            raise RunError("PLANNING_OUTPUT_SOURCE_CHANGED")
+        # The authority read is deliberately outside the controller lock.  A
+        # cancellation may therefore arrive while it is in progress, so make
+        # the final decision from a fresh durable observation.
+        with self._transaction() as db:
+            current = self._load(db, execution_id)
+            self._owner_run(current["run_id"], principal)
+            if current["cancel_requested"]:
+                raise RunError("PLANNING_EXECUTION_CANCELLED")
 
     def _record_submission(
         self, execution_id: str, principal: str, submission: dict[str, Any]
@@ -777,4 +835,10 @@ class PlanningExecution:
                 self._save(db, current)
             elif current["submission"] != submission:
                 return self._blocked_locked(db, current, "PLANNING_SUBMISSION_EVIDENCE_CHANGED")
+            elif current["state"] != "submitted" or current["reason_codes"]:
+                # A receipt proves the recorded submission even if a prior
+                # interrupted controller write left the state behind it.
+                current["state"] = "submitted"
+                current["reason_codes"] = []
+                self._save(db, current)
             return current

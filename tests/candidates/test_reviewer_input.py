@@ -209,7 +209,39 @@ def _trusted_admission(
             },
         },
     }
-    plan = {"plan": {"authorization": {"checks": ["check-1"]}}}
+    approval = {
+        "plan_revision": 1,
+        "term": 1,
+        "plan_digest": "c" * 64,
+        "authorization_digest": "d" * 64,
+        "configuration_digest": "e" * 64,
+        "routing_digest": "f" * 64,
+    }
+    plan = {
+        **approval,
+        "plan": {
+            "summary": "Implement and independently review",
+            "authorization": {"checks": ["check-1"]},
+            "tasks": [
+                {
+                    "id": "task-1",
+                    "revision": 1,
+                    "role": "worker",
+                    "paths": ["app.py"],
+                    "acceptance": ["worker acceptance"],
+                    "depends_on": [],
+                },
+                {
+                    "id": "review-1",
+                    "revision": 1,
+                    "role": "reviewer",
+                    "paths": ["app.py"],
+                    "acceptance": ["reviewer acceptance"],
+                    "depends_on": ["task-1"],
+                },
+            ],
+        },
+    }
     operation: dict[str, Any] = {
         "id": "operation-1",
         "run_id": "run-1",
@@ -220,10 +252,12 @@ def _trusted_admission(
             "read_paths": ["app.py"],
             "source_binding": {
                 "requirement": source_requirement,
+                "approval": approval,
                 "execution_policy": execution_policy,
                 "plan": plan,
             },
         },
+        "assessment": {"sources": {"approval": approval}},
     }
     planner = SimpleNamespace(get=lambda run_id, *, principal: run)
     admissions = SimpleNamespace(routing=SimpleNamespace(planner=planner))
@@ -232,7 +266,11 @@ def _trusted_admission(
         "read_operation",
         staticmethod(lambda *_args, **_kwargs: operation),
     )
-    monkeypatch.setattr(compiler, "_approved_task", lambda *_args: ({}, {}))
+    monkeypatch.setattr(
+        compiler,
+        "_approved_task",
+        lambda *_args: (plan, plan["plan"]["tasks"][0]),
+    )
     monkeypatch.setattr(
         compiler,
         "current_subject",
@@ -259,6 +297,10 @@ def test_public_compiler_reads_current_trusted_records(
         final_check_evidence_ids=[case["evidence"]["id"]],
     )
     assert json.loads(result.content)["requirement"] == run_requirement
+    assert json.loads(result.content)["approved"]["worker"]["acceptance"] == ["worker acceptance"]
+    assert json.loads(result.content)["approved"]["reviewer"]["acceptance"] == [
+        "reviewer acceptance"
+    ]
 
 
 def test_public_compiler_rejects_stale_operation_requirement(
@@ -457,6 +499,9 @@ def test_public_compiler_rejects_persisted_subject_revision_drift(
         admissions._save(db, operation)
     compiler = importlib.import_module("karajan.orchestration.reviewer_input")
     monkeypatch.setattr(compiler, "_approved_task", lambda *_args: ({}, {}))
+    # This legacy persistence test isolates current_subject replay; the public
+    # approval context has dedicated real-Run coverage below.
+    monkeypatch.setattr(compiler, "_approved_context", lambda *_args: {})
 
     result = compile_reviewer_input(
         admissions,
@@ -494,7 +539,7 @@ def test_compiles_verified_cas_and_does_not_require_overall_review_gate(
     assert result.content_sha256 == hashlib.sha256(result.content).hexdigest()
     assert result.size == len(result.content)
     assert result.allowed_files == ("app.py",)
-    assert document["schema_version"] == "karajan.reviewer-input.v1"
+    assert document["schema_version"] == "karajan.reviewer-input.v2"
     assert document["candidate"] == _identity(case["candidate"])
     assert document["files"] == [
         {"path": "app.py", "mode": "100644", "content": "print('candidate')\n"}

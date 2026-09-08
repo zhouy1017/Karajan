@@ -97,9 +97,10 @@ def compile_reviewer_input(
             or operation.get("state") not in {"reserved", "execution_pending", "executing"}
         ):
             raise RunError("REVIEWER_INPUT_OPERATION_INVALID")
-        _approved_task(run, operation, principal)
+        plan, worker = _approved_task(run, operation, principal)
         workspace = operation.get("workspace", {})
         source = workspace.get("source_binding", {})
+        approved = _approved_context(run, operation, source, plan, worker)
         if source.get("requirement") != run.get("requirement"):
             raise RunError("REVIEWER_INPUT_APPROVAL_CHANGED")
         try:
@@ -123,6 +124,7 @@ def compile_reviewer_input(
             final_check_evidence_ids,
             current=current,
             read_paths=workspace["read_paths"],
+            approved=approved,
         )
     except RunError:
         raise
@@ -148,6 +150,7 @@ def _compile(
     *,
     current: Mapping[str, str] | None = None,
     read_paths: Collection[str] | None = None,
+    approved: Mapping[str, Any] | None = None,
 ) -> ReviewerInput:
     if not isinstance(subject, Mapping) or set(subject) != _SUBJECT_FIELDS:
         raise RunError("REVIEWER_INPUT_SUBJECT_INVALID")
@@ -186,9 +189,10 @@ def _compile(
     checks = _final_checks(candidates, candidate, evidence_ids, current=current)
     files, diff = _materialize_content(candidates, candidate, read_paths=read_paths)
     payload = {
-        "schema_version": "karajan.reviewer-input.v1",
+        "schema_version": "karajan.reviewer-input.v2",
         "candidate": actual_identity,
         "requirement": approved_requirement,
+        **({"approved": approved} if approved is not None else {}),
         "diff": diff,
         "files": files,
         "checks": checks,
@@ -210,6 +214,81 @@ def _compile(
         candidate_revision=actual_identity["revision"],
         check_evidence_ids=tuple(row["evidence_id"] for row in checks),
     )
+
+
+def _approved_context(
+    run: Mapping[str, Any],
+    operation: Mapping[str, Any],
+    source: object,
+    plan: Mapping[str, Any],
+    worker: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Extract the only task semantics a Reviewer may receive from an approval."""
+    try:
+        if not isinstance(source, Mapping) or source["plan"] != plan:
+            raise RunError("REVIEWER_INPUT_APPROVAL_CHANGED")
+        approval = operation["assessment"]["sources"]["approval"]
+        if source["approval"] != approval:
+            raise RunError("REVIEWER_INPUT_APPROVAL_CHANGED")
+        if source["requirement"] != run["requirement"]:
+            raise RunError("REVIEWER_INPUT_APPROVAL_CHANGED")
+        reviewers = [
+            task
+            for task in plan["plan"]["tasks"]
+            if task["role"] == "reviewer" and worker["id"] in task["depends_on"]
+        ]
+        if len(reviewers) != 1 or reviewers[0]["depends_on"] != [worker["id"]]:
+            raise RunError("UNIQUE_APPROVED_REVIEWER_DEPENDENCY_REQUIRED")
+        reviewer = reviewers[0]
+        return {
+            "plan": {
+                key: plan[key]
+                for key in (
+                    "plan_revision",
+                    "term",
+                    "plan_digest",
+                    "authorization_digest",
+                    "configuration_digest",
+                    "routing_digest",
+                )
+            }
+            | {"summary": plan["plan"]["summary"]},
+            "approval": {
+                key: approval[key]
+                for key in (
+                    "plan_revision",
+                    "term",
+                    "plan_digest",
+                    "authorization_digest",
+                    "configuration_digest",
+                    "routing_digest",
+                )
+            },
+            "worker": _task_context(worker),
+            "reviewer": _task_context(reviewer),
+        }
+    except RunError:
+        raise
+    except (KeyError, TypeError):
+        raise RunError("REVIEWER_INPUT_APPROVAL_CHANGED") from None
+
+
+def _task_context(task: Mapping[str, Any]) -> dict[str, Any]:
+    try:
+        context = {
+            key: task[key] for key in ("id", "revision", "role", "paths", "acceptance")
+        }
+        if (
+            not isinstance(context["id"], str)
+            or type(context["revision"]) is not int
+            or not isinstance(context["role"], str)
+            or not isinstance(context["paths"], list)
+            or not isinstance(context["acceptance"], list)
+        ):
+            raise RunError("REVIEWER_INPUT_APPROVAL_CHANGED")
+        return context
+    except KeyError:
+        raise RunError("REVIEWER_INPUT_APPROVAL_CHANGED") from None
 
 
 def _subject_identity(value: object) -> dict[str, Any]:

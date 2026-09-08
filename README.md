@@ -6,11 +6,12 @@
 
 - [PRD v1](docs/prd/karajan-v1.md)：用户故事、功能需求、可观察验收和首版边界；[GitHub 父任务 #1](https://github.com/zhouy1017/Karajan/issues/1)。
 - [M0–M4 路线图](docs/planning/roadmap.md)：M0 探针顺序、阶段出口与后续拆票时机。
+- [开发到交付的阶段 Goals](docs/planning/delivery-goals/README.md)：简短启动 prompt、原验收归属、依赖和出口；[2026-09-08 复审](docs/planning/review-20260908.md) 记录问题与修复证据。
 - [GitHub Issues](https://github.com/zhouy1017/Karajan/issues)：任务状态与依赖关系；[跟踪约定](docs/agents/issue-tracker.md)。
 
 PRD、8 个 M0 Issues、20 个 M1–M4 实现任务和独立 CI 任务已发布。M0 契约、执行恢复、预算和运行探针已分批实现，本地项目工作台已可登记仓库与预览、保存配置；真实账户资格尚未通过。后续任务见 [完整任务清单](docs/planning/v1-backlog.md) 与 [需求覆盖审计](docs/implementation/requirement-coverage.md)；GitHub 实际编号见 [发布记录](docs/planning/v1/github-publication.json)。
 
-用户已于 2026-09-06 授权固定 OpenCode Go 通道的实际测试，额度由 provider 限制；[Go 实测 PR #48](https://github.com/zhouy1017/Karajan/pull/48) 保存工具执行与权限拒绝证据。其他通道的现金调用仍暂停。离线与真实证据逐项区分，诊断成功不自动启用执行配置。开发验证方式见 [测试与合并质量门](docs/implementation/testing-gates.md)。
+Go、ChatGPT/Codex 官方订阅和 Claude 官方订阅均已获真实测试授权，具体范围见 [2026-09-08 交接](docs/planning/commander-handoff-20260908.md)。现金 API、订阅外余额与现金后备仍暂停；授权不代表产品来源资格已通过。[Go 实测 PR #48](https://github.com/zhouy1017/Karajan/pull/48) 保存早期工具执行与权限拒绝证据。离线与真实证据逐项区分，诊断成功不自动启用执行配置。开发验证方式见 [测试与合并质量门](docs/implementation/testing-gates.md)。
 
 ## 本地工作台
 
@@ -51,7 +52,7 @@ PRD、8 个 M0 Issues、20 个 M1–M4 实现任务和独立 CI 任务已发布�
 - 订阅与 API 执行、隔离、跨 Agent 上下文、候选验证和 PR 交付。
 - Web/执行器接口、配置示例、技术组合、实施阶段和验收矩阵。
 
-状态：2026-09-05 已完成审阅并由用户确定为 v1 设计基线，现已进入 M0 接口探针实现。设计确认不代表真实账户/执行器资格通过。审阅结果见 [决定记录](docs/architecture/06-review-and-decisions.md)，术语见 [CONTEXT.md](CONTEXT.md)。
+状态：2026-09-05 已由用户确定为 v1 设计基线；实现已推进到 Planning／Reviewer 业务接线及其余 M1–M4 范围。设计确认不代表真实账户/执行器资格通过，当前状态从 [GitHub Issues](https://github.com/zhouy1017/Karajan/issues) 与 [覆盖审计](docs/implementation/requirement-coverage.md) 读回。设计决定见 [决定记录](docs/architecture/06-review-and-decisions.md)，术语见 [CONTEXT.md](CONTEXT.md)。
 
 ## 报告
 

@@ -2,8 +2,10 @@
 
 import hashlib
 import json
+from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from pathlib import Path
+from threading import Event
 from typing import Any
 
 import pytest
@@ -382,17 +384,268 @@ def test_exact_run_receipt_recovers_lost_reply_without_resubmission(
     monkeypatch.setattr(service.planner, "_submit_planning_execution_plan", lose_reply)
     with pytest.raises(RuntimeError, match="reply lost"):
         service.submit(execution["id"], principal="owner", command_key="submit")
-    recovered = PlanningExecution(
-        service.database,
-        service.planner,
-        admissions=authorities,
-        outputs=authorities,
-        allow_fixture_authorities=True,
-    ).submit(execution["id"], principal="owner", command_key="submit")
+    recovered = PlanningExecution(service.database, service.planner).submit(
+        execution["id"], principal="owner", command_key="submit"
+    )
     assert recovered["state"] == "submitted"
     assert service.planner.get(run["id"], principal="owner")["plans"] == [
         recovered["submission"]
     ]
+
+
+def test_reopened_unstarted_claim_without_receipt_never_submits(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A crash after the SQLite claim is uncertain, never a fresh submission."""
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authorities)
+    authorities.activate()
+
+    def crash_after_claim(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        raise SystemExit("claim persisted before submit")
+
+    monkeypatch.setattr(service, "_recover_or_submit", crash_after_claim)
+    with pytest.raises(SystemExit, match="claim persisted"):
+        service.submit(execution["id"], principal="owner", command_key="submit")
+    claimed = service.get(execution["id"], principal="owner")
+    assert claimed["state"] == "submit_claimed"
+    assert claimed["submission_started"] is False
+    assert service.planner.get(run["id"], principal="owner")["plans"] == []
+
+    # A new controller has no live authorities to re-authorize the persisted
+    # claim. It may read its exact Run receipt, but cannot make a new Plan.
+    reopened = PlanningExecution(service.database, service.planner)
+    recovered = reopened.submit(execution["id"], principal="owner", command_key="submit")
+    assert recovered["state"] == "submission_unknown"
+    assert recovered["reason_codes"] == ["PLANNING_EXECUTION_SUBMISSION_UNKNOWN"]
+    assert service.planner.get(run["id"], principal="owner")["plans"] == []
+
+
+def test_concurrent_submitters_create_at_most_one_plan(configured: dict, tmp_path: Path) -> None:
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authorities)
+    authorities.activate()
+    reopened = PlanningExecution(
+        service.database,
+        service.planner,
+        admissions=authorities,
+        outputs=authorities,
+        capacity=authorities.capacity,
+        allow_fixture_authorities=True,
+    )
+
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        submissions = list(
+            workers.map(
+                lambda subject: subject.submit(
+                    execution["id"], principal="owner", command_key="submit"
+                ),
+                (service, reopened),
+            )
+        )
+
+    assert all(
+        submission["state"] in {"submission_unknown", "submitted"}
+        for submission in submissions
+    ), [submission["state"] for submission in submissions]
+    plans = service.planner.get(run["id"], principal="owner")["plans"]
+    assert len(plans) == 1
+    recovered = PlanningExecution(service.database, service.planner).submit(
+        execution["id"], principal="owner", command_key="submit"
+    )
+    assert recovered["state"] == "submitted"
+    assert recovered["submission"] == plans[0]
+
+
+def test_delayed_capture_cannot_rollback_a_submitted_plan(
+    configured: dict, tmp_path: Path
+) -> None:
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authorities)
+    authorities.activate()
+    assert service.reconcile(execution["id"], principal="owner")["state"] == "awaiting_output"
+    captured = Event()
+    release = Event()
+    original_output = authorities.read_output
+
+    def delayed_output(*args: Any) -> object:
+        evidence = original_output(*args)
+        captured.set()
+        assert release.wait(5), "delayed capture did not resume"
+        return evidence
+
+    authorities.read_output = delayed_output  # type: ignore[method-assign]
+    with ThreadPoolExecutor(max_workers=1) as workers:
+        delayed = workers.submit(
+            service.submit, execution["id"], principal="owner", command_key="submit-delayed"
+        )
+        assert captured.wait(5), "delayed capture did not read output"
+        authorities.read_output = original_output  # type: ignore[method-assign]
+        submitted = service.submit(
+            execution["id"], principal="owner", command_key="submit-first"
+        )
+        assert submitted["state"] == "submitted"
+        release.set()
+        late = delayed.result(timeout=5)
+
+    assert late["state"] == "submitted"
+    assert service.get(execution["id"], principal="owner")["submission_request"][
+        "expected_plan_revision"
+    ] == 0
+    recovered = service.submit(execution["id"], principal="owner", command_key="submit-recovery")
+    assert recovered["state"] == "submitted"
+    assert recovered["submission"] == submitted["submission"]
+
+
+def test_delayed_capture_cannot_take_an_active_claim(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authorities)
+    authorities.activate()
+    assert service.reconcile(execution["id"], principal="owner")["state"] == "awaiting_output"
+    captured = Event()
+    release_capture = Event()
+    claim_entered = Event()
+    release_claim = Event()
+    original_output = authorities.read_output
+
+    def delayed_output(*args: Any) -> object:
+        evidence = original_output(*args)
+        captured.set()
+        assert release_capture.wait(5), "delayed capture did not resume"
+        return evidence
+
+    authorities.read_output = delayed_output  # type: ignore[method-assign]
+    claimer = PlanningExecution(
+        service.database,
+        service.planner,
+        admissions=authorities,
+        outputs=authorities,
+        capacity=authorities.capacity,
+        allow_fixture_authorities=True,
+    )
+    original_recover = claimer._recover_or_submit
+
+    def pause_active_claim(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        claim_entered.set()
+        assert release_claim.wait(5), "active claim did not resume"
+        return original_recover(*args, **kwargs)
+
+    monkeypatch.setattr(claimer, "_recover_or_submit", pause_active_claim)
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        delayed = workers.submit(
+            service.submit, execution["id"], principal="owner", command_key="submit-delayed"
+        )
+        assert captured.wait(5), "delayed capture did not read output"
+        authorities.read_output = original_output  # type: ignore[method-assign]
+        active = workers.submit(
+            claimer.submit, execution["id"], principal="owner", command_key="submit-active"
+        )
+        assert claim_entered.wait(5), "active submit did not claim"
+        release_capture.set()
+        late = delayed.result(timeout=5)
+        assert late["state"] == "submission_unknown"
+        assert service.get(execution["id"], principal="owner")["state"] == "submit_claimed"
+        release_claim.set()
+        submitted = active.result(timeout=5)
+
+    assert submitted["state"] == "submitted"
+    assert service.planner.get(run["id"], principal="owner")["plans"] == [
+        submitted["submission"]
+    ]
+
+
+def test_matching_run_receipt_repairs_a_stale_submission_state(
+    configured: dict, tmp_path: Path
+) -> None:
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authorities)
+    authorities.activate()
+    submitted = service.submit(execution["id"], principal="owner", command_key="submit")
+    with service._transaction() as db:
+        stale = service._load(db, execution["id"])
+        stale["state"] = "submit_claimed"
+        stale["reason_codes"] = []
+        service._save(db, stale)
+
+    recovered = PlanningExecution(service.database, service.planner).submit(
+        execution["id"], principal="owner", command_key="submit-recovery"
+    )
+    assert recovered["state"] == "submitted"
+    assert recovered["submission"] == submitted["submission"]
+
+
+def test_receipt_only_recovery_cannot_stop_a_claiming_submitter(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authorities)
+    authorities.activate()
+    entered = Event()
+    release = Event()
+    original = service._recover_or_submit
+
+    def pause_after_claim(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        entered.set()
+        assert release.wait(5), "first submit did not resume"
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(service, "_recover_or_submit", pause_after_claim)
+    receipt_only = PlanningExecution(service.database, service.planner)
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        first = workers.submit(
+            service.submit, execution["id"], principal="owner", command_key="submit"
+        )
+        assert entered.wait(5), "first submit did not persist its claim"
+        recovered = workers.submit(
+            receipt_only.submit, execution["id"], principal="owner", command_key="submit"
+        ).result(timeout=5)
+        assert recovered["state"] == "submission_unknown"
+        assert service.get(execution["id"], principal="owner")["state"] == "submit_claimed"
+        release.set()
+        submitted = first.result(timeout=5)
+
+    assert submitted["state"] == "submitted"
+    assert service.planner.get(run["id"], principal="owner")["plans"] == [
+        submitted["submission"]
+    ]
+
+
+@pytest.mark.parametrize(
+    ("change", "reason"),
+    [
+        ("changed", "PLANNING_OUTPUT_SOURCE_CHANGED"),
+        ("unavailable", "PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE"),
+        ("forbidden", "PLANNING_FIXTURE_AUTHORITY_FORBIDDEN"),
+    ],
+)
+def test_output_authority_change_at_run_submission_guard_prevents_plan(
+    configured: dict,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    change: str,
+    reason: str,
+) -> None:
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authorities)
+    authorities.activate()
+    original = service.planner._submit_planning_execution_plan
+
+    def change_source(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        if change == "changed":
+            authorities.output_source = "c" * 64
+        elif change == "unavailable":
+            service.outputs = None
+        else:
+            service.allow_fixture_authorities = False
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(service.planner, "_submit_planning_execution_plan", change_source)
+    rejected = service.submit(execution["id"], principal="owner", command_key="submit")
+    assert rejected["submission"] is None
+    assert rejected["reason_codes"] == [reason]
+    assert service.planner.get(run["id"], principal="owner")["plans"] == []
 
 
 def test_cancellation_observed_before_run_submit_prevents_plan(
@@ -411,6 +664,32 @@ def test_cancellation_observed_before_run_submit_prevents_plan(
     monkeypatch.setattr(service.planner, "_submit_planning_execution_plan", cancel_at_boundary)
     result = service.submit(execution["id"], principal="owner", command_key="submit")
     assert result["submission"] is None
+    assert service.planner.get(run["id"], principal="owner")["plans"] == []
+
+
+def test_cancellation_during_submission_guard_source_read_prevents_plan(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authorities)
+    authorities.activate()
+    original_submit = service.planner._submit_planning_execution_plan
+    original_source = authorities.read_source
+
+    def cancel_during_source_read(binding: dict[str, Any]) -> object:
+        cancelled = service.cancel(execution["id"], principal="owner", command_key="cancel")
+        assert cancelled["cancel_requested"]
+        return original_source(binding)
+
+    def submit_with_guard_cancellation(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        authorities.read_source = cancel_during_source_read  # type: ignore[method-assign]
+        return original_submit(*args, **kwargs)
+
+    monkeypatch.setattr(
+        service.planner, "_submit_planning_execution_plan", submit_with_guard_cancellation
+    )
+    rejected = service.submit(execution["id"], principal="owner", command_key="submit")
+    assert rejected["submission"] is None
     assert service.planner.get(run["id"], principal="owner")["plans"] == []
 
 
