@@ -13,6 +13,7 @@ from karajan.adapters.opencode.go_context import GoRequestAccounting
 from karajan.adapters.opencode.go_journal import GoCallJournal, GoJournalError
 from karajan.adapters.opencode.go_relay import (
     GoPlanningRelayContext,
+    GoQualificationContext,
     GoRelay,
     GoRelayAuthorization,
     GoReviewerRelayContext,
@@ -92,6 +93,26 @@ def _reviewer(source: str = "c" * 64) -> dict[str, object]:
         "context": _context(source),
         "tool_policy": "read",
     }
+
+
+def _qualification(source: str) -> dict[str, object]:
+    return {
+        **_common(),
+        "schema_version": "karajan.go-qualification-grant.v2",
+        "qualification_id": "qualification",
+        "probe_spec_digest": "d" * 64,
+        "scenario": "edit",
+        "context": _context(source),
+    }
+
+
+def _qualification_context(accounting, binding):
+    return GoQualificationContext(
+        accounting=accounting,
+        probe_spec_digest=binding["probe_spec_digest"],
+        scenario=binding["scenario"],
+        **binding["context"],
+    )
 
 
 _BUSINESS_CONTEXTS = [
@@ -301,6 +322,143 @@ def test_business_relay_rejects_invalid_authority_before_journal_or_upstream(
     assert upstream == []
 
 
+@pytest.mark.parametrize("factory, context_type", _BUSINESS_CONTEXTS)
+@pytest.mark.parametrize("direction", ["qualification_grant", "qualification_context"])
+def test_business_and_qualification_authority_cannot_mix_through_relay(
+    tmp_path, accounting, factory, context_type, direction
+):
+    """Both durable, valid authority types reject the other's real relay context."""
+    source = digest(accounting.source())
+    business = factory(source)
+    qualification = _qualification(source)
+    journal = GoCallJournal(tmp_path / "journal.sqlite", clock=lambda: 1000.0)
+    binding = qualification if direction == "qualification_grant" else business
+    grant = journal.create_grant(binding, grant_id="target")
+    unrelated = journal.create_grant(factory(source), grant_id="unrelated")
+    before = journal.snapshot("unrelated")
+    context = (
+        _business_context(accounting, business, context_type)
+        if direction == "qualification_grant"
+        else _qualification_context(accounting, qualification)
+    )
+    upstream = []
+    relay = _business_relay(
+        journal, grant, binding, context, _allowed, upstream, lambda _: _metered_answer()
+    )
+    relay.start()
+    try:
+        assert post(relay).status_code == 403
+    finally:
+        relay.close()
+    assert journal.snapshot("target")["calls"] == []
+    assert upstream == []
+    assert journal.snapshot("unrelated") == before
+    assert journal.authenticate_grant(
+        "unrelated", capability=unrelated["capability"], binding=before["binding"]
+    )["state"] == "active"
+
+
+@pytest.mark.parametrize("factory, context_type", _BUSINESS_CONTEXTS)
+def test_legacy_planning_grant_cannot_send_with_business_context(
+    tmp_path, accounting, factory, context_type
+):
+    source = digest(accounting.source())
+    binding = _planning(source)
+    binding = {
+        key: value for key, value in binding.items() if key not in {"context", "tool_policy"}
+    }
+    binding["schema_version"] = "karajan.go-planning-grant.v1"
+    journal = GoCallJournal(tmp_path / "journal.sqlite", clock=lambda: 1000.0)
+    grant = journal.create_grant(binding, grant_id="legacy")
+    unrelated_binding = factory(source)
+    unrelated = journal.create_grant(unrelated_binding, grant_id="unrelated")
+    before = journal.snapshot("unrelated")
+    upstream = []
+    relay = _business_relay(
+        journal,
+        grant,
+        binding,
+        _business_context(accounting, factory(source), context_type),
+        _allowed,
+        upstream,
+        lambda _: _metered_answer(),
+    )
+    relay.start()
+    try:
+        assert post(relay).status_code == 403
+    finally:
+        relay.close()
+    assert journal.snapshot("legacy")["calls"] == []
+    assert upstream == []
+    assert journal.snapshot("unrelated") == before
+    assert journal.authenticate_grant(
+        "unrelated", capability=unrelated["capability"], binding=unrelated_binding
+    )["state"] == "active"
+
+
+@pytest.mark.parametrize("factory, context_type", _BUSINESS_CONTEXTS)
+@pytest.mark.parametrize(
+    "fault",
+    [
+        "binding_digest",
+        "input_digest",
+        "third_digest",
+        "context_limit",
+        "false_matching_source",
+    ],
+)
+def test_business_authority_seals_limits_and_actual_source_reject_before_send(
+    tmp_path, accounting, factory, context_type, fault
+):
+    source = digest(accounting.source())
+    binding = factory("0" * 64 if fault == "false_matching_source" else source)
+    journal = GoCallJournal(tmp_path / "journal.sqlite", clock=lambda: 1000.0)
+    grant = journal.create_grant(binding, grant_id="target")
+    unrelated_binding = factory(source)
+    unrelated = journal.create_grant(unrelated_binding, grant_id="unrelated")
+    before = journal.snapshot("unrelated")
+    changed = dict(binding)
+    if fault == "binding_digest":
+        key = (
+            "planning_binding_sha256"
+            if context_type is GoPlanningRelayContext
+            else "review_binding_sha256"
+        )
+        changed[key] = "1" * 64
+    elif fault == "input_digest":
+        key = (
+            "admission_sha256"
+            if context_type is GoPlanningRelayContext
+            else "reviewer_input_sha256"
+        )
+        changed[key] = "1" * 64
+    elif fault == "third_digest":
+        key = (
+            "input_sha256"
+            if context_type is GoPlanningRelayContext
+            else "candidate_checks_sha256"
+        )
+        changed[key] = "1" * 64
+    elif fault == "context_limit":
+        changed["context"] = {**binding["context"], "approved_input_tokens": 3999}
+    context = _business_context(accounting, changed, context_type)
+    upstream = []
+    relay = _business_relay(
+        journal, grant, binding, context, _allowed, upstream, lambda _: _metered_answer()
+    )
+    relay.start()
+    try:
+        assert post(relay).status_code in {403, 422}
+    finally:
+        relay.close()
+    assert journal.snapshot("target")["calls"] == []
+    assert upstream == []
+    assert journal.snapshot("unrelated") == before
+    assert journal.authenticate_grant(
+        "unrelated", capability=unrelated["capability"], binding=unrelated_binding
+    )["state"] == "active"
+
+
 @pytest.mark.parametrize("factory", [_planning, _reviewer])
 @pytest.mark.parametrize("restriction", ["cap", "expiry", "revoke"])
 def test_business_grant_limits_preserve_history_and_never_reauthorize_replay(
@@ -378,7 +536,7 @@ def test_business_grant_concurrent_distinct_calls_stop_at_original_cap(
     assert journal.snapshot("grant")["request_count"] == 2
 
 
-def _tool_event(name: str) -> bytes:
+def _tool_event(name: str, usage: dict[str, int] | None = None) -> bytes:
     return stream(
         event(
             choices=[
@@ -388,7 +546,7 @@ def _tool_event(name: str) -> bytes:
                     "finish_reason": "tool_calls",
                 }
             ],
-            usage={"prompt_tokens": 20, "completion_tokens": 2},
+            usage=usage or {"prompt_tokens": 20, "completion_tokens": 2},
         )
     )
 
@@ -539,6 +697,39 @@ def test_business_reviewer_rejects_nonread_tool_identities_with_correct_send_bou
     else:
         assert saved["calls"] == []
         assert upstream == []
+
+
+@pytest.mark.parametrize("factory, context_type", _BUSINESS_CONTEXTS)
+def test_forbidden_returned_tool_persists_valid_observed_usage_despite_protocol_failure(
+    tmp_path, accounting, factory, context_type
+):
+    binding = factory(digest(accounting.source()))
+    journal = GoCallJournal(tmp_path / "journal.sqlite", clock=lambda: 1000.0)
+    grant = journal.create_grant(binding, grant_id="grant")
+    forbidden = "read" if context_type is GoPlanningRelayContext else "edit"
+    observed = {"prompt_tokens": 5000, "completion_tokens": 4097}
+    upstream = []
+    relay = _business_relay(
+        journal,
+        grant,
+        binding,
+        _business_context(accounting, binding, context_type),
+        _allowed,
+        upstream,
+        lambda _: answer(_tool_event(forbidden, observed)),
+    )
+    relay.start()
+    try:
+        assert post(relay).status_code == 502
+    finally:
+        relay.close()
+    reopened = GoCallJournal(journal.path, clock=lambda: 1001.0).snapshot("grant")
+    call = reopened["calls"][0]
+    assert len(upstream) == reopened["request_count"] == 1
+    assert reopened["state"] == "revoked"
+    assert call["outcome"]["usage"] == observed
+    assert call["outcome"]["protocol_passed"] is False
+    assert call["outcome"]["reason_codes"] == ["UNAPPROVED_TOOL"]
 
 
 @pytest.mark.parametrize(

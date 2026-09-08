@@ -162,9 +162,7 @@ def _text_channels(
             _text_channels(item, channels, (*path, index))
 
 
-def _stream_facts(
-    raw: bytes, secret: str, *, allowed_tools: frozenset[str] = _TOOLS
-) -> dict[str, Any]:
+def _stream_facts(raw: bytes, secret: str) -> dict[str, Any]:
     """Accept the single-choice Chat Completions stream used by this diagnostic."""
     if secret.encode() in raw:
         raise _Rejected("UPSTREAM_CREDENTIAL_ECHO")
@@ -283,8 +281,6 @@ def _stream_facts(
             continue
         if _contains_secret(nested, secret):
             raise _Rejected("UPSTREAM_CREDENTIAL_ECHO")
-    if any(name not in allowed_tools for name in names.values()):
-        raise _Rejected("UNAPPROVED_TOOL")
     if (finish == "tool_calls") != bool(names):
         raise _Rejected("INCOMPLETE_TOOL_CALL")
     return {
@@ -1064,19 +1060,19 @@ class GoRelay:
                         raise _Rejected("UPSTREAM_RESPONSE_TOO_LARGE")
                     content.extend(chunk)
                 receipt["upstream_response_complete"] = True
-                receipt.update(
-                    _stream_facts(
-                        bytes(content),
-                        self._secret,
-                        allowed_tools=(
-                            frozenset()
-                            if planning_native
-                            else frozenset({"read"})
-                            if reviewer_qualification or reviewer_native
-                            else _TOOLS
-                        ),
-                    )
+                receipt.update(_stream_facts(bytes(content), self._secret))
+                allowed_tools = (
+                    frozenset()
+                    if planning_native
+                    else frozenset({"read"})
+                    if reviewer_qualification or reviewer_native
+                    else _TOOLS
                 )
+                if any(name not in allowed_tools for name in receipt["tool_names"]):
+                    # Stream observations are valid independently of the tool
+                    # policy verdict. Persist their usage below, but never mark
+                    # this response as protocol-passed.
+                    raise _Rejected("UNAPPROVED_TOOL")
                 if "request_context" in receipt:
                     measured = receipt["request_context"]
                     prompt = receipt["usage"].get("prompt_tokens")
