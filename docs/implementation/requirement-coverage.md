@@ -1,8 +1,12 @@
 # Karajan v1 需求与完成证据审计
 
+2026-09-08 增量：[复审与修复](../planning/review-20260908.md) 记录 Planning 恢复、Reviewer 输入的原 AC 缺口；[阶段 Goals](../planning/delivery-goals/README.md) 为剩余责任票提供执行入口。下文各项历史 passed 仅证明原候选已覆盖子集，不能覆盖本次反例或自动升级为当前全范围通过。
+
 更新至：2026-09-06。规范输入：[PRD v1](../prd/karajan-v1.md)、[架构验收 A01–A26](../architecture/05-build-and-validation.md)、[已确认决定 D01–D09](../architecture/06-review-and-decisions.md)。执行安排：[全量候选任务](../planning/v1-backlog.md)；既有 M0：[路线图](../planning/roadmap.md)。
 
 本文件追踪全项目完成证据。用户已授权推进整个 PRD，但授权、设计确定、源码存在和能力通过是不同事实。完整验收尚未完成；下文另列已经通过的窄切片，保留其适用范围。标注 `not_run` 的完整要求不能由这些切片自动升级。
+
+2026-09-08 增量核对：PR #119/#126/#130/#131/#132 已全部合入 `dev@7263b87479ba4c710b1efae056b8141f6b8af7b6`，其 [实际合并提交 CI](https://github.com/zhouy1017/Karajan/actions/runs/34177101538) 的前端、Linux、Windows 和 quality-gate 均成功；最终树与已审查候选 `e2332bd57c2850c5aa4283add5d8abf6bc7f3433` 相同。已完成切片包括 Planning 控制/准入/bootstrap/Journal、Reviewer 输入与准入，以及对应 CI/竞态修复；逐项原 AC 与证据见 [#93](https://github.com/zhouy1017/Karajan/issues/93)、[#95](https://github.com/zhouy1017/Karajan/issues/95) 及其已关闭子票。父票仍开放，#112/#116 执行接线、#107/#113/#117 真实资格或整链、#14 产品交付仍须验收。本段只补这些窄范围与开发 G 事实，不把下表未全面复核的 FR/A 行升级，也不将开发 PR 合并计为产品交付。下一步见 [Commander 交接](../planning/commander-handoff-20260908.md)。
 
 2026-09-06 的[固定 Go 隔离链路](m2-opencode-go-isolated.md) 已将单文件 OS 投影、原生 read/edit、单一 UDS 推理出口与持久发送许可组合。最终真实 Go 的修改/拒绝读取分别为 3/2 次 HTTP 200，本地停止已确认，未知远端状态保留；Linux 137 项相关回归和发布目录中的 38 项独立回归通过，14 项隔离作者测试另含 8 个子测试。五项 namespace、以及 relay/journal/observer/CLI 的已发现问题均保留修复前后证据。它为 FR07–FR10/A02/A05–A07/A12–A14 提供固定场景子集证据，完整 M2-05、账户窗口与任意 Task 执行仍未完成。[实测与审查记录](../../examples/opencode-go-isolated/README.md)
 
@@ -152,13 +156,13 @@ M0 关联仅表示可复用原语探针。以下完整用例仍全部 not_run；
 
 | 来源 | 必须填入并实际验证的身份/事实 | 责任票 | 当前状态 |
 |---|---|---|---|
-| ChatGPT 订阅 | 官方账户/订阅形态、固定 Codex runtime/model、原生参数、角色、工具/权限/停止、可见额度、额外现金路径处理 | M2-02；可引用同版本 M0 证据 | 未配置事实未补齐；真实资格 not_run |
-| Claude 订阅 | 官方订阅身份、固定 CLI/model、实际 OS/WSL2、Bash/文件/MCP/hooks 各启用路径、计费优先级与可见消费 | M2-03 | 未配置事实未补齐；真实资格 not_run |
+| ChatGPT 订阅 | 官方账户/订阅形态、固定 Codex runtime/model、原生参数、角色、工具/权限/停止、可见额度、额外现金路径处理 | M2-02；可引用同版本 M0 证据 | 2026-09-08 已授权官方订阅真实测试调用；当前登录/Profile/runtime/隔离/限额事实待核对，真实资格仍 not_run |
+| Claude 订阅 | 官方订阅身份、固定 CLI/model、实际 OS/WSL2、Bash/文件/MCP/hooks 各启用路径、计费优先级与可见消费 | M2-03 | 2026-09-08 已授权官方订阅真实测试调用；当前登录/Profile/runtime/隔离/限额事实待核对，真实资格仍 not_run |
 | DeepSeek 官方 API | 官方 endpoint/model、认证引用、价格/全部收费上界、所有请求经 broker、原币预算、重试/未知和角色工具循环 | M2-04 | 未配置事实未补齐；真实资格 not_run |
 | OpenCode Go | 实际订阅通道/档位/model、服务窗口与计量单位、共享账户、允许现金路径、runner/协议和实际限制 | M2-05 | 固定官方 Go 的持久 Profile scope 入口与一次真实公共验证 passed；默认 runtime_tools guard 仍拒绝，Task 权限/Collector、窗口、计费单位和完整资格未补齐，不启用通用执行 |
 | 指定第三方 API | 用户指定厂商/endpoint/model、可接受数据去向、身份/家族证据、价格/收费上界、协议差异和真实工具资格 | M2-06 | 厂商等具体输入待定；真实资格 not_run |
 
-认证成功、纯文本回答、工具能用、独立 Review 可用、bounded_calls 及隔离是不同能力。M0 的“一订阅＋一 API”只填入对应两行的已覆盖变体；其余三行不会自动完成。秘密仍在受限存储，审计只记录引用与脱敏证据。
+认证成功、纯文本回答、工具能用、独立 Review 可用、bounded_calls 及隔离是不同能力。2026-09-08 新增的 ChatGPT/Codex、Claude 订阅真实测试授权与 Go 既有授权分别生效；现金 API 暂停不用于阻塞这些订阅的原有界测试，订阅外现金通道仍暂停。本轮仅更新授权与安排，没有新增产品来源实测证据。M0 的“一订阅＋一 API”只填入对应两行的已覆盖变体；其余三行不会自动完成。秘密仍在受限存储，审计只记录引用与脱敏证据。
 
 ## 7. 其余 PRD 目标、故事与非功能要求
 

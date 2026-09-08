@@ -6,24 +6,19 @@
 
 截至 2026-09-05，[PR #31](https://github.com/zhouy1017/Karajan/pull/31) 已完成真实失败与恢复演练。提交 `3187f65` 的两套 Python 检查及汇总检查均失败，GitHub 返回 `mergeable_state=blocked`；移除临时用例后的 `e8f7142` 在 [PR 运行](https://github.com/zhouy1017/Karajan/actions/runs/33963017034) 和 [push 运行](https://github.com/zhouy1017/Karajan/actions/runs/33963015622) 均通过。
 
-主分支的 `main-quality-gate` ruleset（ID `22331721`）已启用，要求 PR、当前基准上的 `quality-gate`（绑定 GitHub Actions，integration ID `15368`），禁止强推和删除，绕过名单为空。配置与失败历史保存于 [门禁证据](ci-gate-evidence.json)。这份记录对应上述具体提交；以后的变更仍须取得其自身的成功检查。
+2026-09-08 读回的 `development-quality-gate` ruleset（ID `22331721`）处于 active，覆盖默认分支、`dev` 和 `main`，要求 PR、最新基准上的 `quality-gate`（绑定 GitHub Actions，integration ID `15368`），禁止强推和删除，绕过名单为空。日常集成目标是 `dev`。旧名称与失败演练保存在 [历史门禁证据](ci-gate-evidence.json)；本次配置快照见 [仓库复审](../planning/review-20260908.md)。每个新候选仍须取得自己的检查。
 
-每个 pull request、向 `main` 或 `codex/**` 的 push，以及 merge queue 的 `merge_group: checks_requested` 都运行检查。不设置文件路径过滤，不因文档变更或前端尚未建立而跳过整个质量门。merge queue 事件独立于 pull request 与 push，必须单独订阅才能为合并组报告检查结果。[GitHub 事件说明](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#merge_group)
+每个 pull request、向 `dev`、`main` 或 `codex/**` 的 push，以及 merge queue 的 `merge_group: checks_requested` 都运行检查。不设置文件路径过滤，不因文档变更或前端尚未建立而跳过整个质量门。merge queue 事件独立于 pull request 与 push，必须单独订阅才能为合并组报告检查结果。[GitHub 事件说明](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#merge_group)
 
 同一事件类型和 PR/分支只保留最新一次运行；较旧运行可以被取消。不同 PR、push 与合并组不会因为相同分支名共用并发组。被取消的运行不算通过，合并需要当前提交对应的成功检查。
 
 ## CI 失败的修复分工
 
-按用户当前指令，CI 失败由协调者优先交给本地 `gpt-5.3-codex-spark` 修复，不再在 PR 中
-`@copilot`。此前已发出的 Copilot 评论保留为历史记录。修复任务应给出
-失败提交、运行/job 链接、关键错误、期望行为及需要重跑的检查，并使用独立工作目录；
-协调者继续推进独立开发，避免同时修改被派发的文件。修复不得通过删除必需检查、忽略
-退出码或放宽验收条件消除红灯。收到修复后仍独立核对差异、本地回归及新提交的实际 CI；
-模型完成回复不等于修复已验收。合并继续由用户决定，此分工不改变本地开发中的调试责任。
+当前角色和模型分工以 [2026-09-08 Commander 执行约定](../planning/commander-handoff-20260908.md#执行指令) 为准：边界明确的修复交 Luna，生命周期、共享状态、隔离及复杂 CI 交 Terra，Standards／Spec 分别由独立 GPT-6 high reviewer 核对。Commander 提供固定失败 SHA、job/日志、反例、独占文件及复验入口，负责调度和机械集成。此前 Spark/Copilot 分工是历史，不作为新的派发要求。
 
-若 Spark 额度耗尽，使用用户已授权的备用模型 `gpt-5.6-luna`，推理强度为 `medium`
-（用户所述的 `mid`），无需再次确认。若两种模型均不可用，保存失败复现与交接材料，
-如实说明修复受阻且问题尚未修复。任何模型都不得放宽检查；协调者继续推进不依赖该修复的工作。
+修复不得通过删除必需检查、忽略退出码或放宽验收条件消除红灯。修复后的当前候选重新取得受影响回归、独立审查及必需 CI；模型回复不能代替证据。模型不可用时如实保存复现并改派适合且已获准的 worker，继续其他独立工作。
+
+开发 PR 是否可合入 `dev` 按当前会话授权及 [Issue 流程](../agents/issue-tracker.md) 执行；这里不另设逐票批准要求，也不自行授予合并权限。Karajan 产品生成的 PR 继续由产品用户决定合并。远端 ruleset 的 approving review count 当前为 0，双轴独立审查由 Commander 逐候选核验报告；不能把平台 CI 绿灯解释为审查已完成。
 
 ## Python 必需检查
 
@@ -33,7 +28,7 @@ Go Task 计量切片在两个 Python job 中增加固定 tokenizer 准备步骤�
 
 `examples/go-task-startup` 增加 41 项独立启动前复查用例，使用真实临时存储，覆盖固定原 Profile、授权来源变化、历史激活与最新容量边界。测试不启动模型，也不能替代受信 runner 的真实进程启动验收。[范围与锁顺序](m3-task-startup-guards.md) 单列，新增步骤仍由原 `quality-gate` 汇总。
 
-`python-quality` 在 `ubuntu-24.04` 和 `windows-2022` 上分别运行，均使用 Python 3.12。矩阵关闭 fail-fast，让一个系统失败时另一个仍能完成诊断；两者都必须成功。批准 Task 执行切片将每个矩阵任务的运行上限调整为 40 分钟：前置 [PR #91 的 Windows 运行](https://github.com/zhouy1017/Karajan/actions/runs/34036056124/job/101494213978) 已用 28 分 56 秒，本片新增既有库、生命周期、Collector 和三种实际子进程场景。扩大运行时间不改变断言、必需检查或成功条件。
+`python-quality` 在 `ubuntu-24.04` 和 `windows-2022` 上分别运行，均使用 Python 3.12。矩阵关闭 fail-fast，让一个系统失败时另一个仍能完成诊断；两者都必须成功。当前 workflow 上限为 Linux 40 分钟、Windows 60 分钟。此前两端 40 分钟的调整及 [PR #91 Windows 运行](https://github.com/zhouy1017/Karajan/actions/runs/34036056124/job/101494213978) 属于历史；运行上限以当前 workflow 为准，扩大时间不改变断言、必需检查或成功条件。
 
 在仓库根目录依次执行：
 
@@ -83,7 +78,7 @@ Python 两个系统的 job 同时安装固定 `opencode-ai@1.18.29`，以实际�
 
 workflow 权限限定为 `contents: read`；checkout 不持久保存 Git 凭据；不引用模型账号、订阅登录文件、provider key 或交付凭据，不上传这些材料。使用普通 `pull_request`，不借 `pull_request_target` 在高权限上下文运行 PR 代码。依赖安装需要网络，但测试只应使用本地夹具、假 provider、临时目录及临时进程。
 
-CI 绿色只表示这些离线契约和本地行为检查通过。它不能证明官方订阅身份、真实模型/参数接受情况、收费上界完整性、远端取消，或用户机器上的 WSL2/容器隔离已合格。Linux/Windows hosted runner 测试也不能替代目标部署的资格记录。用户已授权固定 OpenCode Go 通道的真实测试，其实测单独保存；其他通道的现金调用仍暂停，未执行资格保持 `not_run`。[资格记录与验收范围](../architecture/05-build-and-validation.md)
+CI 绿色只表示这些离线契约和本地行为检查通过。它不能证明官方订阅身份、真实模型/参数接受情况、收费上界完整性、远端取消，或用户机器上的 WSL2/容器隔离已合格。Linux/Windows hosted runner 测试也不能替代目标部署的资格记录。Go、ChatGPT/Codex 官方订阅、Claude 官方订阅的真实测试授权见 [当前授权与边界](../planning/commander-handoff-20260908.md#执行指令)；现金 API、订阅外余额与现金后备仍暂停。实测单独保存，未执行资格保持 `not_run`。[资格记录与验收范围](../architecture/05-build-and-validation.md)
 
 固定 Go 已有独立于公共 PR CI 的[受控持久资格入口](m3-go-profile-qualification.md)，并于 2026-09-06 完成一次真实公共入口验证：两场景共 5 次 HTTP 200，同命令重放相等且无新增请求，默认任务 guard 仍返回 `TASK_PERMISSION_SCOPE_NOT_QUALIFIED`。实测绑定具体源码、Profile/runtime revision、目标环境、官方认证引用及固定范围，记录见[实测证据](../../examples/go-profile-qualification/README.md)。这是固定 scope 的观察，不授予任意 Task 权限或可信 Collector 能力，也不替代本次新提交的 CI。
 

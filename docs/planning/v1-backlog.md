@@ -1,8 +1,14 @@
 # Karajan v1 全量实施任务
 
+按阶段执行入口：[DG00–DG07 Goals](delivery-goals/README.md)，逐阶段绑定本清单既有责任票。可执行叶子仍在 GitHub 按实际接口与依赖拆分。
+
 日期：2026-09-05。依据：[PRD v1](../prd/karajan-v1.md)、[已确认架构](../architecture/README.md)、[验收矩阵](../architecture/05-build-and-validation.md)和[需求覆盖审计](../implementation/requirement-coverage.md)。
 
 用户已将目标扩展为整个 PRD 的设计、拆票、实现与 GitHub gate。M1–M4 共 20 个任务已发布为 GitHub Issues #11–#30；原生父子关系和 37 条依赖边已逐项读回核对，实际链接见[发布记录](v1/github-publication.json)。任务发布不代表功能已实现或验收通过；实施证据由覆盖清单独立记录。
+
+2026-09-08 执行修订：[新 Commander 交接 prompt](commander-handoff-20260908.md) 给出合并后可开展的 Planning / Reviewer 并行任务和后续交付顺序。原阶段范围、验收及依赖仍有效；将任务发布时的状态与 GitHub 当前状态分开读取。
+
+同日授权追加：ChatGPT/Codex 官方订阅和 Claude 官方订阅均已获用户授权用于真实测试调用，Go 订阅既有授权继续；现金 API/额外余额/现金后备仍暂停。#18/#19 可从当前批次并行安排订阅预检、所需实现与有界资格测试，最终产品验收仍绑定 #13 当前接口。授权与已配置、已执行、已通过分别记录；不重复请求已授予的测试权限，也不从开发会话推导产品角色资格。
 
 ## 1. 执行与完成规则
 
