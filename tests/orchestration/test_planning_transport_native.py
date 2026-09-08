@@ -16,9 +16,31 @@ from karajan.runs import RunError
 pytestmark = pytest.mark.skipif(sys.platform != "linux", reason="Linux namespaces required")
 
 
+def _prepared_runtime() -> Path:
+    configured = os.environ.get("KARAJAN_OPENCODE_LINUX_BINARY") or os.environ.get(
+        "KARAJAN_GO_RUNTIME"
+    )
+    runtime = Path(configured) if configured else None
+    if runtime is None or not runtime.is_file():
+        if os.environ.get("KARAJAN_REQUIRE_OPENCODE_ISOLATION") == "1":
+            pytest.fail("Prepared fixed Linux OpenCode artifact is required")
+        pytest.skip("Prepared Linux OpenCode artifact is not available")
+    return runtime
+
+
+def _prepared_tokenizer() -> Path:
+    configured = os.environ.get("KARAJAN_GO_TOKENIZER_DIRECTORY")
+    tokenizer = Path(configured) if configured else Path(".cache/go-context-artifacts")
+    if not tokenizer.is_dir():
+        if os.environ.get("KARAJAN_REQUIRE_GO_TOKENIZER") == "1":
+            pytest.fail("Prepared Go tokenizer artifacts are required")
+        pytest.skip("Prepared Go tokenizer artifacts are not available")
+    return tokenizer
+
+
 def test_native_fixture_relay_journal_returns_only_final_assistant_content(tmp_path: Path) -> None:
-    runtime = Path(os.environ["KARAJAN_GO_RUNTIME"])
-    accounting = GoRequestAccounting(Path(os.environ["KARAJAN_GO_TOKENIZER_DIRECTORY"]))
+    runtime = _prepared_runtime()
+    accounting = GoRequestAccounting(_prepared_tokenizer())
     request = {
         "model": "glm-5.3-flash",
         "stream": True,

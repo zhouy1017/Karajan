@@ -2,14 +2,33 @@
 
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "examples" / "business-planning-demo" / "run_live.py"
+
+
+def _runtime(fallback: Path) -> Path:
+    configured = os.environ.get("KARAJAN_OPENCODE_LINUX_BINARY") or os.environ.get(
+        "KARAJAN_GO_RUNTIME"
+    )
+    return Path(configured) if configured else fallback
+
+
+def _tokenizer() -> Path:
+    configured = os.environ.get("KARAJAN_GO_TOKENIZER_DIRECTORY")
+    tokenizer = Path(configured) if configured else ROOT / ".cache" / "go-context-artifacts"
+    if not tokenizer.is_dir():
+        if os.environ.get("KARAJAN_REQUIRE_GO_TOKENIZER") == "1":
+            pytest.fail("Prepared Go tokenizer artifacts are required")
+        pytest.skip("Prepared Go tokenizer artifacts are not available")
+    return tokenizer
 
 
 def _module():
@@ -24,9 +43,10 @@ def test_demo_requires_explicit_live_and_does_not_read_credential(tmp_path: Path
     credential = tmp_path / "would-be-secret.key"
     credential.write_text("this must not be opened\n", encoding="ascii")
     state = tmp_path / "new-demo-state"
-    runtime = tmp_path / "runtime"
-    runtime.write_bytes(b"dummy runtime")
-    tokenizer = ROOT.parents[1] / ".cache" / "go-context-artifacts"
+    runtime = _runtime(tmp_path / "runtime")
+    if runtime == tmp_path / "runtime":
+        runtime.write_bytes(b"dummy runtime")
+    tokenizer = _tokenizer()
     result = subprocess.run(
         [
             sys.executable,
@@ -53,9 +73,10 @@ def test_demo_requires_explicit_live_and_does_not_read_credential(tmp_path: Path
 
 def test_live_setup_reaches_qualification_boundary_without_provider(tmp_path: Path) -> None:
     module = _module()
-    runtime = tmp_path / "runtime"
-    runtime.write_bytes(b"dummy runtime")
-    tokenizer = ROOT.parents[1] / ".cache" / "go-context-artifacts"
+    runtime = _runtime(tmp_path / "runtime")
+    if runtime == tmp_path / "runtime":
+        runtime.write_bytes(b"dummy runtime")
+    tokenizer = _tokenizer()
     credential = tmp_path / "credential.key"
     credential.write_text("dummy-credential-material-1234", encoding="ascii")
     state = tmp_path / "live-state"
