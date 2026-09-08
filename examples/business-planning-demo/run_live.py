@@ -157,6 +157,7 @@ def _live(values: dict[str, Path], *, qualifier: Any | None = None) -> dict[str,
         qualify_commander_planning,
         write_commander_qualification_settings,
     )
+    from karajan.orchestration.planning_bootstrap import provision_planning_bootstrap
     from karajan.projects import ProjectRegistry
     from karajan.projects.credential_sources import CredentialSourceStore, LocalKeyFile
 
@@ -186,6 +187,9 @@ def _live(values: dict[str, Path], *, qualifier: Any | None = None) -> dict[str,
 
     private = root / "credential-private"
     control = (root / "control").absolute()
+    planning_control = (root / "planning-control").absolute()
+    planning_state = (root / "planning-state").absolute()
+    provision_planning_bootstrap(planning_control, planning_state, (repository,))
     journal_path = root / "commander-journal.sqlite"
     work_root = root / "commander-work"
     for directory in (control, work_root):
@@ -227,6 +231,8 @@ def _live(values: dict[str, Path], *, qualifier: Any | None = None) -> dict[str,
         "project_id": project["id"],
         "repository": str(repository),
         "control_directory": str(control),
+        "planning_control_directory": str(planning_control),
+        "planning_state_directory": str(planning_state),
         "journal": str(journal_path),
         "work_root": str(work_root),
         "secret_ref": AUTH_REF,
