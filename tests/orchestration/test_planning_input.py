@@ -3,9 +3,18 @@
 import hashlib
 import json
 import os
+import sys
 from pathlib import Path
 
 import pytest
+
+# Reuse the established runs fixtures when this module is collected by its
+# direct path; the full suite already exposes this directory as a test module
+# root.
+_RUNS_TEST_ROOT = str(Path(__file__).parents[1] / "runs")
+if _RUNS_TEST_ROOT not in sys.path:
+    sys.path.insert(0, _RUNS_TEST_ROOT)
+
 from karajan.adapters.opencode.go_context import GoRequestAccounting
 from karajan.orchestration.planning_execution import PlanningExecution
 from karajan.orchestration.planning_input import _compile, compile_planning_input
