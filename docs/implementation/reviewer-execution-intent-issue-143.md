@@ -60,6 +60,41 @@ or a real credential.
 
 ## Independent-review repairs on this candidate
 
+### Final second-review repair (2026-09-08)
+
+The final static Standards report recorded two P1 violations (the retained
+Capacity quota fence was dropped after yielding to Host/claim writers, and the
+factory allowed a Host root beneath an actual registered repository) and one
+nonblocking duplicated-containment-walk smell. The final Spec report recorded
+one P1 (the same dropped quota fence) and two P2s (lost Host-prepare reply had
+no historical read-only recovery, and a first intent could use a stale
+deployment source). The P3 duplication was intentionally not expanded into a
+cross-module refactor.
+
+- `reviewer_reserved_effect_guard` now yields an ephemeral,
+  non-serializable final-effect callback captured by the actual held
+  Admission/Capacity producer. Reviewer intent consumers call it only after
+  their deployment-source read and after each real private-ledger, Host
+  preparation, Host-control, or observer-claim writer wait. It retains quota
+  freshness/reset, reservation, Reviewer qualification/estimate, and Run
+  cumulative-deadline checks without reopening controller writers.
+- Existing-only factory opening rejects a Host directory under an actual
+  `ProjectRegistry` repository root, including resolved aliases and an existing
+  Host SQLite hard link where applicable, before `RunnerHost` can open it.
+- `RunnerHost.inspect_original_preparation` is a read-only correlation port.
+  A null Reviewer `host_prepared_id` can inspect only a persisted matching
+  start key and complete original Host manifest (including Attempt/fence);
+  it does not save a receipt or enable control, start, session, or observer
+  claim.
+- First intent insertion now rechecks the current deployment source after its
+  real ledger writer wait. The new regressions cover all three quota-wait
+  writers, a source read crossing the Run deadline, stale first intent source,
+  Host-in-repository rejection, and loss after Host commit before ledger save.
+
+Candidate implementation source commit:
+`b275567d22a09473112373163ad7832f8e8795be`. No native Review, provider,
+credential, HTTP, Relay, Journal grant, or real-service evidence is claimed.
+
 - Standards P1 repository-layout blocker: the ledger is checked against the
   actual existing `ProjectRegistry` roots before any SQLite open/write;
   direct, parent-symlink, and hardlink paths are covered where the platform
@@ -79,5 +114,19 @@ or a real credential.
   the read-only Candidate gate separately from zero native/Journal/Evidence
   writes and unchanged configured Journal storage. Relay is not composed here,
   so no Relay claim is made.
+
+## Final repair commands and observed results (2026-09-08)
+
+| Command | Result and scope |
+| --- | --- |
+| WSL2 Ubuntu, CI-default npm runtime (override unset), `file` and `opencode --version` | Actual binary was Linux ELF x86-64 and reported `1.18.29`; the pinned tokenizer directory existed. This is runtime-fixture evidence, not Profile qualification. |
+| `env -u KARAJAN_OPENCODE_LINUX_BINARY KARAJAN_REQUIRE_OPENCODE_ISOLATION=1 KARAJAN_REQUIRE_GO_TOKENIZER=1 KARAJAN_GO_TOKENIZER_DIRECTORY=/mnt/c/Users/Chooo/Playground/Karajan/.cache/go-context-artifacts PYTHONPATH=backend:tests:tests/projects:tests/runs:tests/candidates /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest tests/runs/test_reviewer_execution_bootstrap.py tests/runs/test_reviewer_execution_intent.py tests/runs/test_reviewer_binding.py tests/runs/test_reviewer_input_approved.py tests/runs/test_admission_guard.py tests/runs/test_task_admission.py tests/execution/test_runnerhost.py -q --basetemp /tmp/karajan-dg01-reviewer-final-capability-*` | **P passed:** `162 passed in 124.49s`. Fresh private Linux base temp; no override and no Windows executable substituted. |
+| Windows main `.venv`, same seven modules with `PYTHONPATH=backend;tests;tests/projects;tests/runs;tests/candidates` and fresh private base temp | **C passed:** `157 passed, 5 skipped in 196.47s`. The skips were one Linux-only factory test, three Linux direct-child tests, and an unavailable Windows directory-symlink privilege; they are not counted as Linux evidence. |
+| Windows main `.venv`: `python -m ruff check .`; `python -m mypy backend/karajan` | `All checks passed!`; `Success: no issues found in 154 source files`. |
+| WSL candidate venv: `python -m ruff check .`; `python -m mypy backend/karajan` | `All checks passed!`; `Success: no issues found in 154 source files`. |
+
+These commands were run for this final repair only. Earlier full-suite and CI
+results above remain historical records and are not attributed to this source
+candidate.
 
 The affected command ran in a local captured process because it exceeds the interactive 30-second yield; its exit code and final pytest summary above were observed before recording this result.
