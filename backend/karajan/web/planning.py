@@ -244,7 +244,18 @@ class PlanningWorkbench:
 
     def execute(self, run_id: str, *, principal: str, command_key: str) -> dict[str, Any]:
         """Recover one original identity, then advance only its fixed transport."""
-        started = self.start(run_id, principal=principal, command_key=command_key)
+        run = self.planner.get(run_id, principal=principal)
+        with self._transaction() as db:
+            row = db.execute(
+                "SELECT * FROM planning_start_commands WHERE run_id=? AND principal=? "
+                "ORDER BY created_at DESC LIMIT 1",
+                (run_id, principal),
+            ).fetchone()
+        started = (
+            self.start(run_id, principal=principal, command_key=command_key)
+            if row is None
+            else self._project(run, dict(row))
+        )
         planning = started["planning"]
         if planning is None or planning["execution"] is None or self.transport is None:
             return started
