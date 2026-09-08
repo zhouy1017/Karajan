@@ -527,6 +527,7 @@ def test_business_guard_lifecycle_faults_do_not_refund_or_repeat_send(
     grant = journal.create_grant(binding, grant_id="grant")
     context = _business_context(accounting, binding, context_type)
     upstream = []
+    guard_enters = 0
 
     @contextmanager
     def exiting():
@@ -534,6 +535,8 @@ def test_business_guard_lifecycle_faults_do_not_refund_or_repeat_send(
         raise RuntimeError("private guard failure")
 
     def guard():
+        nonlocal guard_enters
+        guard_enters += 1
         if phase == "enter":
             raise RuntimeError("private guard failure")
         return exiting()
@@ -544,14 +547,75 @@ def test_business_guard_lifecycle_faults_do_not_refund_or_repeat_send(
     relay.start()
     try:
         assert post(relay).status_code == 403
-        assert post(relay).status_code == 503 if phase == "exit" else 403
+        assert post(relay).status_code == (503 if phase == "exit" else 403)
     finally:
         relay.close()
     saved = journal.snapshot("grant")
     assert len(upstream) == saved["request_count"] == (1 if phase == "exit" else 0)
+    assert guard_enters == (1 if phase == "exit" else 2)
     if phase == "exit":
         assert saved["state"] == "revoked"
         assert saved["calls"][0]["state"] == "send_unknown"
+    else:
+        assert saved["state"] == "active"
+        assert saved["calls"] == []
+
+
+@pytest.mark.parametrize("factory, context_type", _BUSINESS_CONTEXTS)
+def test_business_lost_begin_reply_keeps_one_unknown_slot_without_replay_or_refund(
+    tmp_path, accounting, factory, context_type, monkeypatch
+):
+    """A committed begin whose return is lost is not a permission to resend.
+
+    The second HTTP request is a newly requested relay call, not recovery of
+    the failed call.  The relay has closed/revoked after the uncertain begin,
+    so it receives 503 before it can allocate the grant's unused second slot.
+    """
+    source = digest(accounting.source())
+    binding = factory(source)
+    journal = GoCallJournal(tmp_path / "journal.sqlite", clock=lambda: 1000.0)
+    grant = journal.create_grant(binding, grant_id="grant")
+    context = _business_context(accounting, binding, context_type)
+    upstream = []
+    original = journal.begin_call
+
+    def commit_then_lose(*args, **kwargs):
+        original(*args, **kwargs)
+        raise OSError("synthetic lost begin reply")
+
+    monkeypatch.setattr(journal, "begin_call", commit_then_lose)
+    relay = _business_relay(
+        journal, grant, binding, context, _allowed, upstream, lambda _: _metered_answer()
+    )
+    relay.start()
+    try:
+        assert post(relay).status_code == 502
+        # This is a distinct relay request.  It must not replay the unknown call
+        # or spend the still-unused second cap slot after the relay closes.
+        assert post(relay).status_code == 503
+    finally:
+        relay.close()
+
+    reopened = GoCallJournal(journal.path, clock=lambda: 1001.0)
+    saved = reopened.snapshot("grant")
+    assert len(upstream) == 0
+    assert saved["state"] == "revoked"
+    assert saved["request_count"] == 1
+    call = saved["calls"][0]
+    assert call["state"] == "send_unknown"
+    assert call["outcome"]["state"] == "send_unknown"
+    assert call["outcome"]["protocol_passed"] is False
+    assert (
+        reopened.begin_call(
+            "grant",
+            call["call_id"],
+            capability=grant["capability"],
+            binding=binding,
+            request_context=_measurement(accounting, binding),
+        )["send_allowed"]
+        is False
+    )
+    assert reopened.snapshot("grant")["request_count"] == 1
 
 
 @pytest.mark.parametrize("factory, context_type", _BUSINESS_CONTEXTS)
