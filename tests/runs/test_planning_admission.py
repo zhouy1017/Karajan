@@ -1502,6 +1502,19 @@ def _output_source_control(
     credentials.register(
         run["project_id"], auth_ref, principal="owner", command_key="source-register"
     )
+    # npm's installed package may expose the Linux binary through a hardlink
+    # alias to opencode-ai/bin/opencode.  Production qualification rejects
+    # aliased runtime paths, so stage a private standalone copy for this
+    # fixture while proving its bytes and metadata remain identical.
+    runtime_info = runtime.stat()
+    staged_runtime = credential_private / "opencode"
+    shutil.copy2(runtime, staged_runtime)
+    staged_info = staged_runtime.stat()
+    assert staged_info.st_nlink == 1
+    assert staged_info.st_size == runtime_info.st_size
+    assert staged_info.st_mode == runtime_info.st_mode
+    assert staged_runtime.read_bytes() == runtime.read_bytes()
+    runtime = staged_runtime
     control = _protected_factory_control(tmp_path, authority)
     journal_path = credential_private / "journal.sqlite"
     GoCallJournal(journal_path)
