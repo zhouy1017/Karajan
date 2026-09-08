@@ -10,9 +10,11 @@ import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
+from threading import Thread
 from typing import Any
 
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict
 
 from karajan.orchestration.planning_execution import PlanningExecution
@@ -60,6 +62,13 @@ class PlanningWorkbench:
             db.execute(
                 "CREATE INDEX IF NOT EXISTS planning_start_commands_run "
                 "ON planning_start_commands(run_id, created_at DESC)"
+            )
+            db.execute(
+                "CREATE TABLE IF NOT EXISTS planning_execute_commands ("
+                "principal TEXT NOT NULL, key TEXT NOT NULL, run_id TEXT NOT NULL, "
+                "command_id TEXT NOT NULL, execution_id TEXT, binding_sha256 TEXT, "
+                "state TEXT NOT NULL, created_at REAL NOT NULL, "
+                "PRIMARY KEY(principal, key))"
             )
 
     @contextmanager
@@ -146,6 +155,64 @@ class PlanningWorkbench:
                 ),
             )
         return updated
+
+    def _claim_execute(
+        self, run_id: str, *, principal: str, command_key: str
+    ) -> dict[str, Any]:
+        record = {
+            "principal": principal,
+            "key": command_key,
+            "run_id": run_id,
+            "command_id": self._child_key("planning-execute", run_id, command_key),
+            "execution_id": None,
+            "binding_sha256": None,
+            "state": "accepted",
+            "created_at": self.planner.clock(),
+        }
+        with self._transaction() as db:
+            row = db.execute(
+                "SELECT * FROM planning_execute_commands WHERE principal=? AND key=?",
+                (principal, command_key),
+            ).fetchone()
+            if row is None:
+                db.execute(
+                    "INSERT INTO planning_execute_commands VALUES "
+                    "(:principal,:key,:run_id,:command_id,:execution_id,:binding_sha256,"
+                    ":state,:created_at)",
+                    record,
+                )
+                return record
+            existing = dict(row)
+            if existing["run_id"] != run_id:
+                raise RunError("IDEMPOTENCY_CONFLICT")
+            return existing
+
+    def _bind_execute(
+        self, record: dict[str, Any], execution: dict[str, Any]
+    ) -> dict[str, Any]:
+        expected = (execution["id"], execution["binding_sha256"])
+        with self._transaction() as db:
+            row = db.execute(
+                "SELECT execution_id,binding_sha256 FROM planning_execute_commands "
+                "WHERE principal=? AND key=?",
+                (record["principal"], record["key"]),
+            ).fetchone()
+            if row is None:
+                raise RunError("PLANNING_EXECUTE_COMMAND_UNAVAILABLE")
+            existing = tuple(row)
+            if existing not in {(None, None), expected}:
+                raise RunError("IDEMPOTENCY_CONFLICT")
+            if existing == (None, None):
+                db.execute(
+                    "UPDATE planning_execute_commands SET execution_id=?, binding_sha256=? "
+                    "WHERE principal=? AND key=?",
+                    (*expected, record["principal"], record["key"]),
+                )
+        return {**record, "execution_id": expected[0], "binding_sha256": expected[1]}
+
+    @staticmethod
+    def _command_view(record: dict[str, Any]) -> dict[str, str]:
+        return {"id": record["command_id"], "state": record["state"]}
 
     @staticmethod
     def _intent_view(intent: dict[str, Any]) -> dict[str, Any]:
@@ -261,8 +328,11 @@ class PlanningWorkbench:
         return self._project(self.planner.get(run_id, principal=principal), record)
 
     def execute(self, run_id: str, *, principal: str, command_key: str) -> dict[str, Any]:
-        """Recover one original identity, then advance only its fixed transport."""
+        """Persist and acknowledge the command before the native transport runs."""
+        for value in (run_id, principal, command_key):
+            identifier(value)
         run = self.planner.get(run_id, principal=principal)
+        command = self._claim_execute(run_id, principal=principal, command_key=command_key)
         with self._transaction() as db:
             row = db.execute(
                 "SELECT * FROM planning_start_commands WHERE run_id=? AND principal=? "
@@ -276,11 +346,25 @@ class PlanningWorkbench:
         )
         planning = started["planning"]
         if planning is None or planning["execution"] is None or self.transport is None:
-            return started
-        self.transport.execute(
-            planning["execution"]["id"], principal=principal, command_key=command_key
-        )
-        return self.read(run_id, principal=principal)
+            return {**started, "command": self._command_view(command)}
+        execution = self.execution.get(planning["execution"]["id"], principal=principal)
+        command = self._bind_execute(command, execution)
+
+        def advance() -> None:
+            try:
+                # Retrying this durable command may overlap a prior process,
+                # but PlanningTransport's pre-effect receipt and dispatch
+                # claim ensure it cannot create another native session/send.
+                self.transport.execute(
+                    execution["id"], principal=principal, command_key=command_key
+                )
+            except Exception:
+                # The execution ledger is the recovery authority.  Its saved
+                # unknown state remains visible from the snapshot endpoint.
+                pass
+
+        Thread(target=advance, daemon=True).start()
+        return {**self.read(run_id, principal=principal), "command": self._command_view(command)}
 
 
 def register_planning_routes(app: FastAPI, workbench: PlanningWorkbench) -> None:
@@ -296,6 +380,9 @@ def register_planning_routes(app: FastAPI, workbench: PlanningWorkbench) -> None
     @app.post("/v1/runs/{run_id}/planning-execute")
     def execute_planning(
         run_id: str, request: Request, data: PlanningExecuteInput
-    ) -> dict[str, Any]:
+    ) -> JSONResponse:
         del data
-        return workbench.execute(run_id, principal="owner", command_key=command_key(request))
+        return JSONResponse(
+            workbench.execute(run_id, principal="owner", command_key=command_key(request)),
+            status_code=202,
+        )

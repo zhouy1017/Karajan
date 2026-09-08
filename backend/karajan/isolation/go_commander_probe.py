@@ -8,6 +8,7 @@ never be promoted by the producer or the current-facts reader.
 
 import hashlib
 import json
+import stat
 import time
 from collections.abc import Callable
 from contextlib import AbstractContextManager
@@ -36,6 +37,7 @@ _ANCHOR = b"commander-inline-only\n"
 _PROJECTION = [
     {"path": "inline-only", "sha256": hashlib.sha256(_ANCHOR).hexdigest(), "writable": False}
 ]
+_NATIVE_LOG_BYTES = probe_spec()["evidence_limits"]["native_log_bytes"]
 
 
 def _context(accounting: GoRequestAccounting, spec: dict[str, Any]) -> dict[str, Any]:
@@ -135,6 +137,28 @@ def _final(messages: list[dict[str, Any]], session: str, prompt: str) -> dict[st
     if tools:
         raise ValueError("COMMANDER_NATIVE_TOOL_OBSERVED")
     return final
+
+
+def _native_log_evidence(directory: Path, cleanup: dict[str, Any]) -> dict[str, Any]:
+    """Read the stopped controller-owned namespace log within its evidence cap."""
+    if cleanup.get("local_stop") != "confirmed":
+        raise ValueError("NATIVE_LOG_EVIDENCE_UNAVAILABLE")
+    path = directory / "native" / "namespace.log"
+    try:
+        info = path.lstat()
+        if not stat.S_ISREG(info.st_mode) or stat.S_ISLNK(info.st_mode) or info.st_nlink != 1:
+            raise OSError
+        size = info.st_size
+        if size > _NATIVE_LOG_BYTES:
+            raise ValueError("COMMANDER_NATIVE_LOG_LIMIT_EXCEEDED")
+        content = path.read_bytes()
+        if len(content) != size or len(content) > _NATIVE_LOG_BYTES:
+            raise ValueError("COMMANDER_NATIVE_LOG_LIMIT_EXCEEDED")
+    except ValueError:
+        raise
+    except OSError:
+        raise ValueError("NATIVE_LOG_EVIDENCE_UNAVAILABLE") from None
+    return {"bytes": len(content), "sha256": hashlib.sha256(content).hexdigest()}
 
 
 def observe_go_commander_probe(
@@ -302,6 +326,12 @@ def observe_go_commander_probe(
             )
         except Exception:
             reasons.append("NATIVE_STOP_UNKNOWN")
+        try:
+            record["native_log"] = _native_log_evidence(
+                directory, record.get("native_cleanup", {})
+            )
+        except ValueError as error:
+            reasons.append(str(error))
         try:
             record["relay_cleanup"] = relay.close()
             if record["relay_cleanup"]["status"] == "closed":

@@ -266,17 +266,20 @@ def test_authenticated_v2_planning_executes_one_native_fixture_send_and_persists
             json={},
             headers={**headers, "Idempotency-Key": "execute"},
         )
-        assert executed.status_code == 200, executed.json()
+        assert executed.status_code == 202, executed.json()
+        assert executed.json()["command"]["state"] == "accepted"
         assert executed.json()["run"]["plans"], (
             executed.json(),
             execution.get(binding["execution_id"], principal="owner"),
         )
         assert executed.json()["run"]["plans"][0]["plan"] == plan
-        assert client.post(
+        retried = client.post(
             f"/v1/runs/{run['id']}/planning-execute",
             json={},
             headers={**headers, "Idempotency-Key": "execute"},
-        ).status_code == 200
+        )
+        assert retried.status_code == 202
+        assert retried.json()["command"]["id"] == executed.json()["command"]["id"]
         assert len(calls) == 1
         run_id = run["id"]
     assert (repository / "original.txt").read_bytes() == original
@@ -440,7 +443,8 @@ def test_unobserved_capacity_persists_commander_qualification_block_without_send
             headers={**headers, "Idempotency-Key": "execute"},
         )
 
-    assert result.status_code == 200
+    assert result.status_code == 202
+    assert result.json()["command"]["state"] == "accepted"
     planning = result.json()["planning"]
     assert planning["execution"] == {
         "id": planning["execution"]["id"],

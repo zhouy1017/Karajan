@@ -159,6 +159,12 @@ class PlanningOutputStore:
                         "content_sha256",
                     ],
                     "planning_output_claims": ["execution_id", "binding_sha256", "state"],
+                    "planning_execute_commands": [
+                        "principal",
+                        "command_key",
+                        "execution_id",
+                        "binding_sha256",
+                    ],
                 },
             )
         with self._transaction() as db:
@@ -178,6 +184,12 @@ class PlanningOutputStore:
                     "CREATE TABLE IF NOT EXISTS planning_output_claims ("
                     "execution_id TEXT PRIMARY KEY, binding_sha256 TEXT NOT NULL, "
                     "state TEXT NOT NULL)"
+                )
+                db.execute(
+                    "CREATE TABLE IF NOT EXISTS planning_execute_commands ("
+                    "principal TEXT NOT NULL, command_key TEXT NOT NULL, "
+                    "execution_id TEXT NOT NULL, binding_sha256 TEXT NOT NULL, "
+                    "PRIMARY KEY(principal, command_key))"
                 )
 
     @contextmanager
@@ -287,6 +299,33 @@ class PlanningOutputStore:
                 raise RunError("PLANNING_OUTPUT_EVIDENCE_CHANGED")
             return str(row[1])
 
+    def claim_execute_command(
+        self, binding: dict[str, Any], *, principal: str, command_key: str
+    ) -> None:
+        """Bind the browser command before any producer or Run-store effect.
+
+        The output claim prevents a second send for one execution.  This
+        separate receipt prevents one idempotency key from being used to start
+        a different execution before that execution reaches the output claim.
+        """
+        identifier(principal)
+        identifier(command_key)
+        execution_id, binding_sha256 = self._binding(binding)
+        with self._transaction() as db:
+            row = db.execute(
+                "SELECT execution_id,binding_sha256 FROM planning_execute_commands "
+                "WHERE principal=? AND command_key=?",
+                (principal, command_key),
+            ).fetchone()
+            expected = (execution_id, binding_sha256)
+            if row is None:
+                db.execute(
+                    "INSERT INTO planning_execute_commands VALUES (?,?,?,?)",
+                    (principal, command_key, *expected),
+                )
+            elif tuple(row) != expected:
+                raise RunError("IDEMPOTENCY_CONFLICT")
+
     def read_source(self, binding: dict[str, Any]) -> dict[str, Any]:
         execution_id, binding_sha256 = self._binding(binding)
         with sqlite3.connect(self.database) as db:
@@ -368,6 +407,11 @@ class PlanningTransport:
         for value in (execution_id, principal, command_key):
             identifier(value)
         current = self.execution.get(execution_id, principal=principal)
+        # Persist the user command's exact subject/resource binding before an
+        # output source is armed, a dispatch is claimed, or a producer can send.
+        self.outputs.claim_execute_command(
+            current["binding"], principal=principal, command_key=command_key
+        )
         if current["state"] == "awaiting_output":
             # Another process either owns the one dispatch attempt or has
             # already published its immutable output.  Only the latter may be

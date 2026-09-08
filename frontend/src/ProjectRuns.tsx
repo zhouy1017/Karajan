@@ -92,6 +92,9 @@ type PlanningRead = {
   run: Run;
   planning: PlanningStatus | null;
 };
+type PlanningExecuteReceipt = PlanningRead & {
+  command?: { id: string; state: string };
+};
 
 function planningBlockedMessage(reasonCode?: string) {
   switch (reasonCode) {
@@ -276,6 +279,51 @@ function RunWorkbench({
     }
   }
 
+  function followPlanningCommand(
+    id: string,
+    generation: number,
+    commandStorageKey: string,
+  ) {
+    let attempts = 0;
+    const poll = async () => {
+      const session = lifetime.current;
+      if (!session.active || reading.current !== generation) return;
+      try {
+        const response = await fetch(
+          `/v1/runs/${encodeURIComponent(id)}/planning`,
+        );
+        if (!response.ok) throw new Error("规划状态读取失败。");
+        const result = (await response.json()) as PlanningRead;
+        if (
+          !session.active ||
+          reading.current !== generation ||
+          result.run?.id !== id
+        )
+          return;
+        const refreshed = { ...result.run, planning: result.planning };
+        setSelected(refreshed);
+        setPlanningReadError(false);
+        if (
+          refreshed.plans.length ||
+          result.planning?.availability.state !== "awaiting"
+        ) {
+          sessionStorage.removeItem(commandStorageKey);
+          command.current = null;
+          setNotice("");
+          return;
+        }
+      } catch {
+        if (!session.active || reading.current !== generation) return;
+        setPlanningReadError(true);
+        setNotice("生成计划请求已保存，正在重试读取实际状态…");
+      }
+      attempts += 1;
+      if (attempts < 300 && session.active && reading.current === generation)
+        window.setTimeout(() => void poll(), 1000);
+    };
+    window.setTimeout(() => void poll(), 500);
+  }
+
   async function startPlanning() {
     if (!selected || sending.current) return;
     sending.current = true;
@@ -355,9 +403,15 @@ function RunWorkbench({
       });
       if (!session.active || reading.current !== generation) return;
       if (!response.ok) throw new Error("生成计划未被接受，请重试。");
+      const receipt = (await response.json()) as PlanningExecuteReceipt;
       const refreshed = await openRun(id);
-      sessionStorage.removeItem(commandStorageKey);
-      command.current = null;
+      const followGeneration = reading.current;
+      if (response.status === 202 && receipt.command?.id) {
+        followPlanningCommand(id, followGeneration, commandStorageKey);
+      } else {
+        sessionStorage.removeItem(commandStorageKey);
+        command.current = null;
+      }
       if (session.active)
         setNotice(
           refreshed ? "" : "生成计划请求已提交，请重新打开需求读取状态。",

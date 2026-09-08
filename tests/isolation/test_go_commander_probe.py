@@ -12,6 +12,7 @@ from karajan.adapters.opencode.go_journal import GoCallJournal
 from karajan.adapters.opencode.go_relay import GoRelayAuthorization
 from karajan.isolation.go_commander_probe import (
     _context,
+    _native_log_evidence,
     commander_runtime_source,
     observe_go_commander_probe,
 )
@@ -49,6 +50,22 @@ def _response(plan):
         headers={"content-type": "text/event-stream"},
         content=(body + "data: [DONE]\n\n").encode(),
     )
+
+
+def test_native_log_evidence_requires_confirmed_stop_and_stays_bounded(tmp_path) -> None:
+    log = tmp_path / "native" / "namespace.log"
+    log.parent.mkdir()
+    log.write_bytes(b"native output")
+
+    assert _native_log_evidence(tmp_path, {"local_stop": "confirmed"}) == {
+        "bytes": len(b"native output"),
+        "sha256": "331bf5c0f2b33f05b6fbf0d49ac6ef7ed564359c74c6efb18759fe9b8e06b3a3",
+    }
+    with pytest.raises(ValueError, match="^NATIVE_LOG_EVIDENCE_UNAVAILABLE$"):
+        _native_log_evidence(tmp_path, {"local_stop": "unknown"})
+    log.write_bytes(b"x" * (1_048_576 + 1))
+    with pytest.raises(ValueError, match="^COMMANDER_NATIVE_LOG_LIMIT_EXCEEDED$"):
+        _native_log_evidence(tmp_path, {"local_stop": "confirmed"})
 
 
 @pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux native required")
@@ -103,5 +120,7 @@ def test_commander_native_probe_uses_original_journal_and_empty_tools(
     assert result["parsed_plan"] == spec["cases"][scenario]["expected_plan"]
     assert result["journal"]["state"] == "revoked"
     assert result["native_cleanup"]["local_stop"] == "confirmed"
+    assert result["native_log"]["bytes"] >= 0
+    assert len(result["native_log"]["sha256"]) == 64
     assert result["provider_remote_stop"] == "unknown"
     assert len(received) == len(result["journal"]["calls"])
