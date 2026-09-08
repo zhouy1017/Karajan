@@ -1,6 +1,8 @@
 # Karajan v1 需求与完成证据审计
 
-2026-09-08 增量：[复审与修复](../planning/review-20260908.md) 记录 Planning 恢复、Reviewer 输入的原 AC 缺口；[阶段 Goals](../planning/delivery-goals/README.md) 为剩余责任票提供执行入口。下文各项历史 passed 仅证明原候选已覆盖子集，不能覆盖本次反例或自动升级为当前全范围通过。
+当前开发顺序以 [当前业务顺序](../planning/business-first.md) 和 [#153 业务简报](../planning/business-first-issue.md) 为准；先验证工作台到真实 Planning 的首个演示，再验证同一需求的 Candidate、checks、独立 Reviewer 和 PR。本文只记录原需求覆盖与证据，不产生新的执行顺序。
+
+2026-09-08 增量：[复审与修复](../planning/review-20260908.md) 记录 Planning 恢复、Reviewer 输入的原 AC 缺口；[阶段 Goals 历史映射](../planning/delivery-goals/README.md) 保留责任票范围。当前执行入口是 [当前业务顺序](../planning/business-first.md)。下文各项历史 passed 仅证明原候选已覆盖子集，不能覆盖本次反例或自动升级为当前全范围通过。
 
 更新至：2026-09-06。规范输入：[PRD v1](../prd/karajan-v1.md)、[架构验收 A01–A26](../architecture/05-build-and-validation.md)、[已确认决定 D01–D09](../architecture/06-review-and-decisions.md)。执行安排：[全量候选任务](../planning/v1-backlog.md)；既有 M0：[路线图](../planning/roadmap.md)。
 

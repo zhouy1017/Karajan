@@ -1,5 +1,7 @@
 # 测试与合并质量门
 
+当前测试顺序与模型入口见 [当前业务顺序](../planning/business-first.md)：先测首个业务演示及其必要边界，再测同一 Candidate 的 checks、独立 Review 与同一 PR；只在已有具体失败或复杂度明确升级时提高模型档位。质量门、独立审查和授权仍按本文及 [Issue 流程](../agents/issue-tracker.md) 执行。
+
 仓库的自动检查入口是 [CI workflow](../../.github/workflows/ci.yml)，稳定汇总检查名为 `quality-gate`。它证明当前提交通过了仓库内已经实现的检查；它不代表全部 PRD 已完成，也不代表任何真实模型服务取得接入资格。
 
 ## 自动运行范围
@@ -14,7 +16,7 @@
 
 ## CI 失败的修复分工
 
-当前角色和模型分工以 [2026-09-08 Commander 执行约定](../planning/commander-handoff-20260908.md#执行指令) 为准：边界明确的修复交 Luna，生命周期、共享状态、隔离及复杂 CI 交 Terra，Standards／Spec 分别由独立 GPT-6 high reviewer 核对。Commander 提供固定失败 SHA、job/日志、反例、独占文件及复验入口，负责调度和机械集成。此前 Spark/Copilot 分工是历史，不作为新的派发要求。
+当前角色和模型分工以 [当前业务顺序](../planning/business-first.md) 为准：边界明确的修复交 Luna，生命周期、共享状态、隔离及复杂 CI 交 Terra，Standards／Spec 由独立 Astra reviewer 核对。Commander 提供固定失败 SHA、job/日志、反例、独占文件及复验入口，负责调度和机械集成。
 
 修复不得通过删除必需检查、忽略退出码或放宽验收条件消除红灯。修复后的当前候选重新取得受影响回归、独立审查及必需 CI；模型回复不能代替证据。模型不可用时如实保存复现并改派适合且已获准的 worker，继续其他独立工作。
 
