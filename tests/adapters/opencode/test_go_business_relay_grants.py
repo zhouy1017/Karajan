@@ -193,3 +193,70 @@ def test_business_grant_uses_relay_journal_and_actual_accounting(
 @contextmanager
 def _allowed():
     yield
+
+
+@pytest.mark.parametrize(
+    "factory, context_type",
+    [(_planning, GoPlanningRelayContext), (_reviewer, GoReviewerRelayContext)],
+)
+@pytest.mark.parametrize("fault", ["guard", "context", "cross", "source", "tools"])
+def test_business_relay_rejects_invalid_authority_before_journal_or_upstream(
+    tmp_path, accounting, factory, context_type, fault
+):
+    source = digest(accounting.source())
+    binding = factory(source)
+    journal = GoCallJournal(tmp_path / "journal.sqlite", clock=lambda: 1000.0)
+    grant = journal.create_grant(binding, grant_id="grant")
+    fields = {
+        key: binding[key]
+        for key in (
+            ("planning_binding_sha256", "admission_sha256", "input_sha256")
+            if context_type is GoPlanningRelayContext
+            else ("review_binding_sha256", "reviewer_input_sha256", "candidate_checks_sha256")
+        )
+    }
+    context = context_type(accounting=accounting, **binding["context"], **fields)
+    if fault == "cross":
+        other = _reviewer(source) if context_type is GoPlanningRelayContext else _planning(source)
+        other_fields = {
+            key: other[key]
+            for key in (
+                ("review_binding_sha256", "reviewer_input_sha256", "candidate_checks_sha256")
+                if context_type is GoPlanningRelayContext
+                else ("planning_binding_sha256", "admission_sha256", "input_sha256")
+            )
+        }
+        other_type = (
+            GoReviewerRelayContext
+            if context_type is GoPlanningRelayContext
+            else GoPlanningRelayContext
+        )
+        context = other_type(accounting=accounting, **other["context"], **other_fields)
+    elif fault == "source":
+        changed = {**binding["context"], "source_sha256": "0" * 64}
+        context = context_type(
+            accounting=accounting, **changed, **fields
+        )
+    upstream = []
+    relay = GoRelay(
+        SECRET,
+        CANARY,
+        context=None if fault == "context" else context,
+        authorization=GoRelayAuthorization(journal, "grant", binding, grant["capability"]),
+        send_guard=None if fault == "guard" else (lambda: _allowed()),
+        client_factory=lambda: httpx.Client(
+            transport=httpx.MockTransport(upstream.append), trust_env=False
+        ),
+    )
+    relay.start()
+    try:
+        request = payload()
+        if fault == "tools":
+            request["tools"] = [
+                {"type": "function", "function": {"name": "edit", "parameters": {}}}
+            ]
+        assert post(relay, request).status_code in {403, 422}
+    finally:
+        relay.close()
+    assert journal.snapshot("grant")["request_count"] == 0
+    assert upstream == []
