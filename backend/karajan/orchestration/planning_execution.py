@@ -429,21 +429,32 @@ class PlanningExecution:
         if not callable(freeze) or not callable(read):
             raise RunError("PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE")
 
-        def current_authority() -> tuple[dict[str, Any], dict[str, Any]]:
-            # This is intentionally re-read after the slow Git preparation.
-            # Never authorize first publication from the stale pre-prepare row.
+        @contextmanager
+        def current_authority() -> Iterator[tuple[dict[str, Any], dict[str, Any]]]:
+            """Hold Execution then Run authority through manifest publication.
+
+            Every operation that needs both locks takes Execution before Run
+            (notably cancellation's owner check).  Git/CAS preparation occurs
+            before this guard; only the reference commit is serialized here.
+            """
             with self._transaction() as db:
                 current = self._load(db, execution_id)
-                self._owner_run(current["run_id"], principal)
                 if current["cancel_requested"]:
                     raise RunError("PLANNING_EXECUTION_CANCELLED")
-            if self._snapshot_binding(current, principal) != binding:
-                raise RunError("PLANNING_EXECUTION_BINDING_STALE")
-            run = self._owner_run(current["run_id"], principal)
-            intent = self._intent(run, current["intent_id"])
-            if self._binding(run, intent, execution_id) != binding:
-                raise RunError("PLANNING_EXECUTION_BINDING_STALE")
-            return current, run
+                stored = current.get("binding")
+                if (
+                    not isinstance(stored, dict)
+                    or current.get("binding_sha256") != digest(stored)
+                    or stored != binding
+                ):
+                    raise RunError("PLANNING_EXECUTION_BINDING_STALE")
+                with self.planner._transaction() as runs:
+                    run = self.planner._get(runs, current["run_id"])
+                    self.planner._owner(run, principal)
+                    intent = self._intent(run, current["intent_id"])
+                    if self._binding(run, intent, execution_id) != binding:
+                        raise RunError("PLANNING_EXECUTION_BINDING_STALE")
+                    yield current, run
 
         def freeze_current() -> dict[str, Any]:
             try:
@@ -451,9 +462,17 @@ class PlanningExecution:
             except RunError as error:
                 if str(error) != "PLANNING_REPOSITORY_SNAPSHOT_NOT_FOUND":
                     raise
-            _, run = current_authority()
-            project = self.planner.projects.get(run["project_id"])
-            return cast(dict[str, Any], freeze(binding, run, project, guard=current_authority))
+            # This pre-prepare read rejects an already revoked identity without
+            # holding writers during Git. The same guard is acquired again and
+            # retained by the store for the final reference publication.
+            with current_authority() as (_, run):
+                prepared_run = run
+            # Registry access precedes slow Git preparation and is deliberately
+            # outside the held Execution/Run writer chain.
+            project = self.planner.projects.get(prepared_run["project_id"])
+            return cast(
+                dict[str, Any], freeze(binding, prepared_run, project, guard=current_authority)
+            )
 
         # Command receipt lookup is short; preparation and Git never run under
         # the execution writer.  A saved success is still read/verified.

@@ -183,7 +183,9 @@ def test_limits_and_malformed_persisted_manifest_reject_without_partial_snapshot
     root = tmp_path / "repo"
     root.mkdir()
     _git(root, "init")
-    (root / "input.txt").write_bytes(b"too large")
+    (root / "input").mkdir()
+    (root / "input" / "one.txt").write_bytes(b"one")
+    (root / "input" / "two.txt").write_bytes(b"two")
     _git(root, "add", ".")
     _git(root, "-c", "user.name=x", "-c", "user.email=x@y.z", "commit", "-m", "base")
     binding = {
@@ -196,7 +198,7 @@ def test_limits_and_malformed_persisted_manifest_reject_without_partial_snapshot
     run = {
         "project_id": "project",
         "configuration_snapshot": {"project_revision": 1},
-        "authorization_ceiling": {"read_paths": ["input.txt"]},
+        "authorization_ceiling": {"read_paths": ["input"]},
     }
     project = {
         "id": "project",
@@ -208,8 +210,16 @@ def test_limits_and_malformed_persisted_manifest_reject_without_partial_snapshot
         },
     }
     database = tmp_path / "snapshots.sqlite"
-    monkeypatch.setattr(planning_snapshot, "_MAX_BYTES", 1)
+    monkeypatch.setattr(planning_snapshot, "_MAX_FILES", 1)
     store = PlanningRepositorySnapshotStore(database)
+    with pytest.raises(RunError, match="^PLANNING_SNAPSHOT_LIMIT_EXCEEDED$"):
+        store.freeze(binding, run, project)
+    with sqlite3.connect(database) as db:
+        assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 0
+        assert db.execute("SELECT count(*) FROM files").fetchone()[0] == 0
+
+    monkeypatch.setattr(planning_snapshot, "_MAX_FILES", 2)
+    monkeypatch.setattr(planning_snapshot, "_MAX_BYTES", 1)
     with pytest.raises(RunError, match="^PLANNING_SNAPSHOT_LIMIT_EXCEEDED$"):
         store.freeze(binding, run, project)
     with sqlite3.connect(database) as db:

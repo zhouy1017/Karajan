@@ -1336,16 +1336,30 @@ def test_factory_freezes_registered_base_bytes_and_reopens(
         ledger.parent / "planning-repository-snapshot-blobs" / frozen["files"][0]["sha256"]
     )
     artifact.write_bytes(b"tampered")
+    # A saved public command receipt is not authority to skip immutable-store
+    # verification: replay must fail just like an explicit reader call.
+    with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_CHANGED$"):
+        reopened.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="freeze"
+        )
     with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_CHANGED$"):
         reopened.read_repository_snapshot(execution["id"], principal="owner")
     with sqlite3.connect(ledger) as db:
         assert artifact.read_bytes() == b"tampered"
         db.execute("UPDATE snapshots SET data=?", ("{}",))
     with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_CHANGED$"):
+        reopened.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="freeze"
+        )
+    with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_CHANGED$"):
         reopened.read_repository_snapshot(execution["id"], principal="owner")
     assert service.capacity.snapshot() == before
 
     ledger.unlink()
+    with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE$"):
+        reopened.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="freeze"
+        )
     with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE$"):
         PlanningExecution.from_trusted_factory(control)
     assert not ledger.exists()

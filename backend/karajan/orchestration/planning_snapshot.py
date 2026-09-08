@@ -7,6 +7,7 @@ import sqlite3
 import stat
 import subprocess
 import tempfile
+from contextlib import nullcontext
 from pathlib import Path
 from typing import Any
 
@@ -297,24 +298,29 @@ class PlanningRepositorySnapshotStore:
         result["snapshot_sha256"] = digest(result)
         for _, _, c in rows:
             self._publish(hashlib.sha256(c).hexdigest(), c)
-        # A controller guard is deliberately after slow preparation and immediately
-        # before the manifest reference commit.  Orphan CAS bytes are inert.
+        # A controller guard is deliberately after slow preparation and held
+        # through the brief manifest/reference commit. Orphan CAS bytes are inert.
         if guard is not None:
             if not callable(guard):
                 raise RunError("PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE")
-            guard()
-        with self._connect() as db:
-            db.execute("BEGIN IMMEDIATE")
-            old = db.execute("SELECT 1 FROM snapshots WHERE binding_sha256=?", (key,)).fetchone()
-            if old:
+        held = nullcontext() if guard is None else guard()
+        if not hasattr(held, "__enter__") or not hasattr(held, "__exit__"):
+            raise RunError("PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE")
+        with held:
+            with self._connect() as db:
+                db.execute("BEGIN IMMEDIATE")
+                old = db.execute(
+                    "SELECT 1 FROM snapshots WHERE binding_sha256=?", (key,)
+                ).fetchone()
+                if old:
+                    db.commit()
+                    return {k: v for k, v in self.read(binding).items() if k != "content"}
+                db.execute("INSERT INTO snapshots VALUES (?,?)", (key, encoded(result)))
+                db.executemany(
+                    "INSERT INTO files VALUES (?,?,?)",
+                    [(key, p, hashlib.sha256(c).hexdigest()) for p, _, c in rows],
+                )
                 db.commit()
-                return {k: v for k, v in self.read(binding).items() if k != "content"}
-            db.execute("INSERT INTO snapshots VALUES (?,?)", (key, encoded(result)))
-            db.executemany(
-                "INSERT INTO files VALUES (?,?,?)",
-                [(key, p, hashlib.sha256(c).hexdigest()) for p, _, c in rows],
-            )
-            db.commit()
         return result
 
     def read(self, binding: dict[str, Any]) -> dict[str, Any]:

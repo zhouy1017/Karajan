@@ -336,6 +336,125 @@ def test_cancelled_execution_cannot_create_a_first_repository_snapshot(
     assert authorities.capacity.snapshot() == before
 
 
+@pytest.mark.parametrize("revocation", ["cancel", "handoff"])
+def test_snapshot_publication_holds_authority_after_final_check(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, revocation: str
+) -> None:
+    """A revocation cannot commit in the final authority-to-manifest interval."""
+    registry = configured["registry"]
+    project = registry.get(configured["id"])
+    root = Path(project["repository"]["root"])
+    (root / "src").mkdir(exist_ok=True)
+    (root / "tests").mkdir(exist_ok=True)
+    (root / "src" / "race.txt").write_bytes(b"snapshot race\n")
+    (root / "tests" / "race.txt").write_bytes(b"snapshot race\n")
+    subprocess.run(
+        ["git", "-C", str(root), "add", "src/race.txt", "tests/race.txt"], check=True
+    )
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "-c",
+            "user.name=x",
+            "-c",
+            "user.email=x@y.z",
+            "commit",
+            "-m",
+            "race",
+        ],
+        check=True,
+    )
+    registry.update(
+        project["id"],
+        {
+            "name": project["name"],
+            "base_ref": project["repository"]["base_ref"],
+            "target_branch": project["target_branch"],
+            "allowed_target_branches": project["allowed_target_branches"],
+        },
+        expected_revision=project["revision"],
+        command_key="registered-race-base",
+        principal="owner",
+    )
+    configured.update(registry.get(project["id"]))
+    configured["registry"] = registry
+    service, run, intent, _ = planning_case(tmp_path, configured)
+    database = tmp_path / "snapshots.sqlite"
+    store = PlanningRepositorySnapshotStore(database)
+    service.snapshots = store
+    execution = service.begin(run["id"], intent["id"], principal="owner", command_key="begin")
+    reached = Event()
+    release = Event()
+    original_connect = store._connect
+    connections = 0
+    handoff = (
+        service.planner.propose_handoff(
+            run["id"], handoff_request(0), command_key="handoff", principal="owner"
+        )
+        if revocation == "handoff"
+        else None
+    )
+
+    def pause_before_publication() -> sqlite3.Connection:
+        nonlocal connections
+        connections += 1
+        # The first connection is the missing-snapshot read. The second is
+        # the manifest writer, immediately after the candidate's final check.
+        if connections == 2:
+            reached.set()
+            assert release.wait(timeout=5)
+        return original_connect()
+
+    monkeypatch.setattr(store, "_connect", pause_before_publication)
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        frozen = workers.submit(
+            service.freeze_repository_snapshot,
+            execution["id"],
+            principal="owner",
+            command_key="freeze",
+        )
+        assert reached.wait(timeout=5)
+        if revocation == "cancel":
+
+            def revoke() -> dict[str, Any]:
+                return service.cancel(execution["id"], principal="owner", command_key="cancel")
+
+        else:
+            assert handoff is not None
+
+            def revoke() -> dict[str, Any]:
+                return service.planner.decide_handoff(
+                    run["id"],
+                    {
+                        "handoff_id": handoff["id"],
+                        "handoff_digest": handoff["digest"],
+                        "term": 1,
+                        "decision": "approve",
+                    },
+                    command_key="decide-handoff",
+                    principal="owner",
+                )
+        revocation_finished = Event()
+
+        def revoke_and_record() -> dict[str, Any]:
+            result = revoke()
+            revocation_finished.set()
+            return result
+
+        revoked = workers.submit(revoke_and_record)
+        # bcc releases authority before the paused manifest transaction, so
+        # this real cancellation/handoff completes here. A held guard must
+        # instead make it wait until publication has finished.
+        assert not revocation_finished.wait(timeout=0.3)
+        release.set()
+        frozen.result(timeout=5)
+        revoked.result(timeout=5)
+    with sqlite3.connect(database) as db:
+        assert db.execute("SELECT count(*) FROM snapshots").fetchone()[0] == 1
+
+
 @pytest.mark.parametrize("field", ["term", "configuration", "authorization"])
 def test_changed_trusted_run_record_rejects_unfrozen_execution_without_snapshot(
     configured: dict, tmp_path: Path, field: str
