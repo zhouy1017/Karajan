@@ -202,3 +202,68 @@ credential is used.
 | WSL Ubuntu `/tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python`, override unset, literal `.cache/go-context-artifacts`, `KARAJAN_REQUIRE_GO_TOKENIZER=1`, `KARAJAN_REQUIRE_OPENCODE_ISOLATION=1`, `HF_HUB_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1`, colon-separated `PYTHONPATH`, same seven modules and fresh `/tmp/karajan-reviewer143-final-linux-*` base temp | **P passed:** `167 passed in 137.80s`. The standard npm runtime remained the existing Linux ELF v1.18.29; no provider/native Review operation was requested. |
 | Windows main `.venv`: `python -m ruff check .`; `python -m mypy backend/karajan --platform win32` | `All checks passed!`; `Success: no issues found in 154 source files`. |
 | WSL candidate venv: `python -m mypy backend/karajan --platform linux` | `Success: no issues found in 154 source files`. |
+
+## Commander retained-capability follow-up (2026-09-08)
+
+This is a narrow follow-up to the original #143 **C/P: resources and
+withdrawal** acceptance condition: each actual Reviewer effect boundary must
+re-enter current approval/qualification/source/generation/window/Capacity
+guard, while a cancelled, disabled, expired, or changed source must have no
+next effect. It neither expands the slice to native Review/HTTP/Relay nor
+changes the original S/not-run limits.
+
+### Clock-floor diagnosis
+
+The exported `CapacityEffectCapability` captures its private temporal fence
+before Capacity executes `before_effect_yield`'s final scalar callback. That
+class alone would not retain a later callback observation. The required real
+Reviewer receiver, however, does not accept the proposed rollback: its
+`ReviewerFinalEffectCapability.assert_current()` first invokes the retained
+Reviewer scalar check, and `capacity_quota_fence.assert_current(as_of=...)`
+rejects `as_of < floor` in `karajan.routing.quotas.QuotaTemporalFence`.
+
+A local temporary probe against `ab09f36` used the real `CapacityStore`
+guard, mutable fixture clock, retained Reviewer capability, and an actual Host
+SQLite `BEGIN IMMEDIATE` writer wait. The final callback advanced Capacity from
+1000 to 1002; while the Host writer waited, the clock was rolled back only to
+1001.5. Reservation expiry, quota freshness/reset, qualification, estimate,
+and Run windows remained valid. The receiving callback rejected with
+`REVIEWER_CAPACITY_REVALIDATION_FAILED` before `RunnerHost.prepare` wrote.
+The retained quota fence's observed floor was 1002. This is an existing
+behavioural rejection, so this follow-up makes no speculative Capacity-store
+floor change. The original direct Capacity regression tests still cover
+callback-preparation and evaluation clock regression in
+`tests/capacity/test_pre_effect_guard.py`.
+
+### Callback-phase repair
+
+`CapacityStore.pre_effect_guard` documents the successful post-`prepared_at`
+callback as O(1), with no JSON/database scan. Before this follow-up,
+`check_reviewer_final_effect_boundary` deferred `current.recheck_source()`
+into that scalar callback; the real qualification source can reread configured
+credential material. The repair makes `recheck_source()` the explicit
+preparation phase and returns a scalar-only closure. The retained typed
+Reviewer capability stores that preparation callable and repeats it after each
+actual new-intent, Host, control, or observer-claim writer wait, before the
+same scalar Reviewer/Capacity checks. Thus material revalidation remains
+post-wait and Capacity's callback contract is restored without reopening a
+controller writer or changing lock order.
+
+| Command | Result |
+| --- | --- |
+| Isolated local `ab09f36` checkout plus the new phase regression, Windows main `.venv` and the same flags: `python -m pytest tests/runs/test_reviewer_execution_intent.py::test_reviewer_material_recheck_prepares_before_capacity_scalar_callback -q -p no:cacheprovider --basetemp C:/Users/Chooo/AppData/Local/Temp/karajan-reviewer143-material-phase-red-ab09f36` | **Red:** `1 failed in 4.36s`; the callback preparation saw source-read counts `(3, 3)` and `(7, 7)`, proving no material reread before the deferred scalar closure on `ab09f36`. |
+| Current source, Windows main `.venv`, literal `.cache/go-context-artifacts`, override unset, required tokenizer/isolation/offline flags: `python -m pytest tests/capacity/test_pre_effect_guard.py tests/runs/test_reviewer_execution_intent.py::test_reviewer_material_recheck_prepares_before_capacity_scalar_callback tests/runs/test_reviewer_execution_intent.py::test_reservation_only_expiry_after_real_sqlite_writer_wait_blocks_the_actual_effect tests/runs/test_reviewer_execution_intent.py::test_actual_credential_material_change_after_real_writer_wait_blocks_each_effect -q -p no:cacheprovider --basetemp C:/Users/Chooo/AppData/Local/Temp/karajan-reviewer143-focused-final-3ba0e9` | **C passed:** `35 passed in 21.56s`. The phase regression is green, and the eight parameterized real-writer checks retain reservation-only expiry and actual credential-material rejection for new intent, Host, control, and claim. |
+
+The previous f02 record remains deliberately limited: its independent reports
+were **static red** findings. Although an old-backend/current-tests behavioral
+attempt had been planned in commentary, this author did not run it; no
+behavioural red result is claimed retroactively here.
+
+Final verification of this follow-up source completed with the CI-relative
+tokenizer value, runtime override unset, and required isolation/tokenizer and
+offline flags: Windows main `.venv` ran the seven affected modules with
+**163 passed, 5 skipped in 244.76s**; WSL2's shared candidate venv ran the
+same modules with **168 passed in 137.70s**. The Windows skips are the
+Linux-only factory/direct-child cases and unavailable directory-symlink
+privilege. Ruff passed on both OSes; mypy passed on `backend/karajan` with
+`--platform win32` and `--platform linux` (154 source files each).

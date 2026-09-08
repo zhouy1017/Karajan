@@ -408,6 +408,46 @@ def test_reservation_only_expiry_after_real_sqlite_writer_wait_blocks_the_actual
             assert db.execute("SELECT COUNT(*) FROM controls").fetchone()[0] == 0
 
 
+def test_reviewer_material_recheck_prepares_before_capacity_scalar_callback(
+    tmp_path, binding_case, monkeypatch
+):
+    """Credential material I/O completes before Capacity's deferred O(1) check."""
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+    qualification = binding_case[1]
+    source_reads = 0
+    original_facts = qualification._facts
+
+    def count_source_reads(*args, **kwargs):
+        nonlocal source_reads
+        source_reads += 1
+        return original_facts(*args, **kwargs)
+
+    qualification._facts = count_source_reads
+    capacity = service.admissions.routing.capacity
+    original_guard = capacity.pre_effect_guard
+    preparation_reads: list[tuple[int, int]] = []
+
+    @contextmanager
+    def inspect_final_callback(*args, **kwargs):
+        callback = kwargs["before_effect_yield"]
+
+        def prepare_scalar_check():
+            before = source_reads
+            result = callback()
+            preparation_reads.append((before, source_reads))
+            return result
+
+        with original_guard(
+            *args, **{**kwargs, "before_effect_yield": prepare_scalar_check}
+        ) as held:
+            yield held
+
+    monkeypatch.setattr(capacity, "pre_effect_guard", inspect_final_callback)
+    service.freeze_launch(run_id, reviewer_id, principal="owner")
+    assert preparation_reads and preparation_reads[0][1] > preparation_reads[0][0]
+
+
 @pytest.mark.parametrize("boundary", ["new_intent", "host", "control", "claim"])
 def test_actual_credential_material_change_after_real_writer_wait_blocks_each_effect(
     tmp_path, binding_case, boundary
