@@ -300,6 +300,40 @@ def _stream_facts(
     }
 
 
+def _request_tool_names(payload: dict[str, Any]) -> list[str]:
+    """Return declared and historical tool identities without widening policy.
+
+    Accounting subsequently validates the full OpenAI-compatible shape. This
+    early parser ensures a malformed business declaration is safely rejected
+    before it can become an internal relay error.
+    """
+    names: list[str] = []
+    tools = payload.get("tools", [])
+    if not isinstance(tools, list):
+        raise _Rejected("UNAPPROVED_TOOL", 403)
+    for tool in tools:
+        if not isinstance(tool, dict) or not isinstance(tool.get("function"), dict):
+            raise _Rejected("UNAPPROVED_TOOL", 403)
+        name = tool["function"].get("name")
+        if not isinstance(name, str):
+            raise _Rejected("UNAPPROVED_TOOL", 403)
+        names.append(name)
+    for message in payload["messages"]:
+        calls = message.get("tool_calls")
+        if calls is None:
+            continue
+        if not isinstance(calls, list):
+            raise _Rejected("UNAPPROVED_TOOL", 403)
+        for call in calls:
+            if not isinstance(call, dict) or not isinstance(call.get("function"), dict):
+                raise _Rejected("UNAPPROVED_TOOL", 403)
+            name = call["function"].get("name")
+            if not isinstance(name, str):
+                raise _Rejected("UNAPPROVED_TOOL", 403)
+            names.append(name)
+    return names
+
+
 def _client() -> httpx.Client:
     return httpx.Client(timeout=90, trust_env=False, follow_redirects=False)
 
@@ -950,12 +984,7 @@ class GoRelay:
                         )
                     ):
                         raise _Rejected("TASK_CONTEXT_POLICY_MISMATCH", 403)
-                    names = [tool["function"]["name"] for tool in payload.get("tools", [])]
-                    names.extend(
-                        call["function"]["name"]
-                        for message in payload["messages"]
-                        for call in (message.get("tool_calls") or [])
-                    )
+                    names = _request_tool_names(payload)
                     if any(name != "read" for name in names):
                         raise _Rejected("UNAPPROVED_TOOL", 403)
                 elif not (
@@ -973,12 +1002,7 @@ class GoRelay:
                     # Accounting has validated the complete request shape. Only
                     # structural tool identities are authority-relevant here;
                     # quoted code or prose mentioning "edit" remains review data.
-                    names = [tool["function"]["name"] for tool in payload.get("tools", [])]
-                    names.extend(
-                        call["function"]["name"]
-                        for message in payload["messages"]
-                        for call in (message.get("tool_calls") or [])
-                    )
+                    names = _request_tool_names(payload)
                     if any(name != "read" for name in names):
                         raise _Rejected("UNAPPROVED_TOOL", 403)
             with ExitStack() as responses:
@@ -1056,7 +1080,13 @@ class GoRelay:
                     _stream_facts(
                         bytes(content),
                         self._secret,
-                        allowed_tools=frozenset({"read"}) if reviewer_qualification else _TOOLS,
+                        allowed_tools=(
+                            frozenset()
+                            if planning_native
+                            else frozenset({"read"})
+                            if reviewer_qualification or reviewer_native
+                            else _TOOLS
+                        ),
                     )
                 )
                 if "request_context" in receipt:
