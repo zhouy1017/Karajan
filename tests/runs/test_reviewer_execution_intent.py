@@ -2,7 +2,9 @@
 
 import json
 import os
+import sqlite3
 import sys
+import threading
 import time
 from copy import deepcopy
 from pathlib import Path
@@ -127,6 +129,96 @@ def test_prepare_rejects_second_key_and_never_prepares_host(tmp_path, binding_ca
         service.prepare(run_id, reviewer_id, principal="owner", command_key="other")
     with pytest.raises(KeyError):
         service.host.inspect(intent["planned_attempt_id"])
+
+
+def test_concurrent_independent_facades_replay_one_prepared_identity(tmp_path, binding_case):
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    other = ReviewerExecutionIntents(
+        service.database, service.admissions, service.candidates, source=service.source,
+        host=service.host, launch_compiler=service.launch_compiler,
+    )
+    barrier = threading.Barrier(2)
+    original = service._compiled
+
+    def synchronized(*args):
+        result = original(*args)
+        barrier.wait(timeout=5)
+        return result
+
+    service._compiled = synchronized
+    other._compiled = synchronized
+    results: list[dict[str, object]] = []
+
+    def prepare(facade):
+        results.append(facade.prepare(run_id, reviewer_id, principal="owner", command_key="same"))
+
+    threads = [threading.Thread(target=prepare, args=(facade,)) for facade in (service, other)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=10)
+        assert not thread.is_alive()
+    assert len(results) == 2
+    assert {result["execution_id"] for result in results} == {results[0]["execution_id"]}
+    with pytest.raises(RunError, match="REVIEWER_EXECUTION_ALREADY_PREPARED"):
+        service.prepare(run_id, reviewer_id, principal="owner", command_key="different")
+
+
+def test_ledger_uses_wal_and_compiler_does_not_hold_its_writer(tmp_path, binding_case):
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    observed = []
+
+    def compiler(value):
+        db = sqlite3.connect(service.database, timeout=0.1, isolation_level=None)
+        try:
+            db.execute("BEGIN IMMEDIATE")
+            observed.append(db.execute("PRAGMA journal_mode").fetchone()[0])
+            db.commit()
+        finally:
+            db.close()
+        return ReviewerLaunchSpec(ProcessSpec(("fixture",), tmp_path), "3" * 64)
+
+    service.launch_compiler = compiler
+    service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+    service.freeze_launch(run_id, reviewer_id, principal="owner")
+    assert observed == ["wal"]
+
+
+def test_tampered_persisted_intent_is_rejected_without_a_host_effect(tmp_path, binding_case):
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    intent = service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+    db = sqlite3.connect(service.database)
+    try:
+        stored = json.loads(
+            db.execute(
+                "SELECT intent FROM reviewer_executions WHERE execution_id=?",
+                (intent["execution_id"],),
+            ).fetchone()[0]
+        )
+        stored["candidate"]["tree_sha"] = "f" * 64
+        db.execute(
+            "UPDATE reviewer_executions SET intent=? WHERE execution_id=?",
+            (json.dumps(stored, sort_keys=True), intent["execution_id"]),
+        )
+        db.commit()
+    finally:
+        db.close()
+    with pytest.raises(RunError, match="REVIEWER_EXECUTION_BINDING_INVALID"):
+        service.freeze_launch(run_id, reviewer_id, principal="owner")
+    with pytest.raises(KeyError):
+        service.host.inspect(intent["planned_attempt_id"])
+
+
+def test_current_qualification_change_blocks_next_host_prepare(tmp_path, binding_case):
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+    binding_case[1].generation = 2
+    with pytest.raises(RunError):
+        service.freeze_launch(run_id, reviewer_id, principal="owner")
+    with pytest.raises(KeyError):
+        current = service.read(run_id, reviewer_id, principal="owner")
+        assert current is not None
+        service.host.inspect(current["planned_attempt_id"])
 
 
 def test_fixed_host_prepare_is_replayable_without_starting_native(tmp_path, binding_case):
@@ -271,7 +363,17 @@ def test_existing_store_direct_child_claim_is_one_shot_and_cancelled_recovery_st
         reopened.claim_registered_observer(run_id, reviewer_id, principal="owner")["claim_allowed"]
         is False
     )
-    assert reopened.host.start(prepared["start_key"], activation).state in {"running", "finished"}
+    before_replay = reopened.host.inspect(prepared["planned_attempt_id"])
+    replayed = reopened.host.start(prepared["start_key"], activation)
+    # A lost controller reply may observe the original child already exited.
+    # Its terminal state is canonical; replay identifies the original launch
+    # and never accepts a second supervisor/process identity.
+    assert replayed == reopened.host.inspect(prepared["planned_attempt_id"])
+    assert replayed.prepared_id == prepared["start_key"]
+    assert replayed.attempt_id == prepared["planned_attempt_id"]
+    assert replayed.launch_phase == before_replay.launch_phase == "acknowledged"
+    assert replayed.supervisor == before_replay.supervisor
+    assert replayed.processes == before_replay.processes
     assert reopened.cancel(run_id, reviewer_id, principal="owner")["cancel_requested"] is True
     with pytest.raises(RunError, match="REVIEWER_EXECUTION_CANCELLED"):
         reopened.claim_registered_observer(run_id, reviewer_id, principal="owner")

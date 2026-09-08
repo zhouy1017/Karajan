@@ -109,7 +109,7 @@ class ReviewerExecutionIntents:
             raise RunError("REVIEWER_EXECUTION_LEDGER_UNAVAILABLE") from None
 
     @contextmanager
-    def _db(self) -> Iterator[sqlite3.Connection]:
+    def _db(self, *, write: bool = True) -> Iterator[sqlite3.Connection]:
         if self.existing_only:
             self._validate_existing_ledger()
             self._require_existing_schema()
@@ -123,7 +123,13 @@ class ReviewerExecutionIntents:
         try:
             db.execute("PRAGMA foreign_keys=ON")
             db.execute("PRAGMA synchronous=FULL")
-            db.execute("BEGIN IMMEDIATE")
+            # This private ledger is a local SQLite store: enable WAL once on
+            # every writable open, and do not acquire its sole writer for a
+            # read.  In particular, compiler/Host work must never sit inside
+            # this transaction.
+            if write:
+                db.execute("PRAGMA journal_mode=WAL")
+            db.execute("BEGIN IMMEDIATE" if write else "BEGIN")
             yield db
             db.commit()
         except BaseException:
@@ -191,7 +197,7 @@ class ReviewerExecutionIntents:
     def prepare(
         self, run_id: str, reviewer_operation_id: str, *, principal: str, command_key: str
     ) -> dict[str, Any]:
-        with self._db() as db:
+        with self._db(write=False) as db:
             prior = db.execute(
                 "SELECT intent FROM reviewer_executions WHERE principal=? AND command_key=?",
                 (principal, command_key),
@@ -206,10 +212,15 @@ class ReviewerExecutionIntents:
                 return existing
             if existing is not None:
                 raise RunError("REVIEWER_EXECUTION_ALREADY_PREPARED")
-        binding, _ = self._compiled(run_id, reviewer_operation_id, principal)
-        with self._db() as db:
-            if self._load(db, run_id, reviewer_operation_id, principal) is not None:
-                raise RunError("REVIEWER_EXECUTION_ALREADY_PREPARED")
+        binding, compiled = self._compiled(run_id, reviewer_operation_id, principal)
+        # Re-enter the real admission authority at the sole new-ledger effect.
+        # Compilation uses independent controller stores, so its earlier guard
+        # cannot authorize a stale insert.
+        with self.admissions.reviewer_reserved_effect_guard(
+            run_id, reviewer_operation_id, principal=principal
+        ) as held:
+            if compiler_binding(held, compiled, project_id=binding["project_id"]) != binding:
+                raise RunError("REVIEWER_EXECUTION_INPUT_CHANGED")
             intent = (
                 binding
                 | asdict(self.source)
@@ -229,26 +240,41 @@ class ReviewerExecutionIntents:
             )
             intent["binding_digest"] = digest(intent)
             intent["intent_digest"] = digest(intent)
-            db.execute(
-                "INSERT INTO reviewer_executions VALUES (?,?,?,?,?,?,?)",
-                (
-                    intent["execution_id"],
-                    run_id,
-                    reviewer_operation_id,
-                    principal,
-                    command_key,
-                    json.dumps(intent, sort_keys=True),
-                    "prepared",
-                ),
-            )
-            return deepcopy(intent)
+            try:
+                with self._db() as db:
+                    db.execute(
+                        "INSERT INTO reviewer_executions VALUES (?,?,?,?,?,?,?)",
+                        (
+                            intent["execution_id"], run_id, reviewer_operation_id, principal,
+                            command_key, json.dumps(intent, sort_keys=True), "prepared",
+                        ),
+                    )
+                    return deepcopy(intent)
+            except sqlite3.IntegrityError:
+                # A concurrent exact replay wins by observing its canonical
+                # record; a different key remains a conflict, never a second
+                # compilation-derived identity.
+                with self._db(write=False) as db:
+                    existing = self._load(db, run_id, reviewer_operation_id, principal)
+                    prior = db.execute(
+                        "SELECT intent FROM reviewer_executions "
+                        "WHERE principal=? AND command_key=?",
+                        (principal, command_key),
+                    ).fetchone()
+                    if (
+                        existing is not None
+                        and prior is not None
+                        and json.loads(prior["intent"]) == existing
+                    ):
+                        return deepcopy(existing)
+                raise RunError("REVIEWER_EXECUTION_ALREADY_PREPARED") from None
 
     def cancel(
         self, run_id: str, reviewer_operation_id: str, *, principal: str
     ) -> dict[str, Any] | None:
         """Persist cancellation; it never infers Host/native/remote completion."""
         self.admissions.cancel(run_id, reviewer_operation_id, principal=principal)
-        with self._db() as db:
+        with self._db(write=False) as db:
             value = self._load(db, run_id, reviewer_operation_id, principal)
             if value is None:
                 return None
@@ -260,7 +286,7 @@ class ReviewerExecutionIntents:
     def read(
         self, run_id: str, reviewer_operation_id: str, *, principal: str
     ) -> dict[str, Any] | None:
-        with self._db() as db:
+        with self._db(write=False) as db:
             return deepcopy(self._load(db, run_id, reviewer_operation_id, principal))
 
     def _save(self, db: sqlite3.Connection, value: dict[str, Any]) -> None:
@@ -296,49 +322,48 @@ class ReviewerExecutionIntents:
     def freeze_launch(
         self, run_id: str, reviewer_operation_id: str, *, principal: str
     ) -> dict[str, Any]:
-        with self._db() as db:
-            value = self._load(db, run_id, reviewer_operation_id, principal)
-            if value is None:
-                raise RunError("REVIEWER_EXECUTION_NOT_PREPARED")
-            if value["cancel_requested"]:
-                raise RunError("REVIEWER_EXECUTION_CANCELLED")
-            with self._current_guard(value):
-                if value.get("launch") is None:
-                    compiled_launch = self.launch_compiler(deepcopy(value))
-                    launch = launch_document(
-                        value,
-                        compiled_launch.process_spec,
-                        compiled_launch.bootstrap_digest,
-                    )
-                else:
-                    launch = value["launch"]
-                snapshot = self.host.prepare(
-                    host_manifest(value),
-                    value["start_key"],
-                    ProcessSpec(
-                        tuple(launch["process_spec"]["argv"]),
-                        Path(launch["process_spec"]["cwd"]),
-                        float(launch["process_spec"]["timeout_seconds"]),
-                    ),
+        value = self.read(run_id, reviewer_operation_id, principal=principal)
+        if value is None:
+            raise RunError("REVIEWER_EXECUTION_NOT_PREPARED")
+        if value["cancel_requested"]:
+            raise RunError("REVIEWER_EXECUTION_CANCELLED")
+        with self._current_guard(value):
+            if value.get("launch") is None:
+                compiled_launch = self.launch_compiler(deepcopy(value))
+                launch = launch_document(
+                    value, compiled_launch.process_spec, compiled_launch.bootstrap_digest
                 )
-                control = self.host.initialize_control_once(
-                    value["planned_attempt_id"],
-                    prepared_id=value["start_key"],
-                    fence=value["fence"],
-                    authorization_ref=value["authorization_ref"],
-                )
-            if not control["dispatch_enabled"]:
-                raise RunError("REVIEWER_EXECUTION_CONTROL_REVOKED")
-            value.update(
-                launch=launch, host_prepared_id=snapshot.prepared_id, phase="host_prepared"
+            else:
+                launch = value["launch"]
+            snapshot = self.host.prepare(
+                host_manifest(value),
+                value["start_key"],
+                ProcessSpec(
+                    tuple(launch["process_spec"]["argv"]),
+                    Path(launch["process_spec"]["cwd"]),
+                    float(launch["process_spec"]["timeout_seconds"]),
+                ),
             )
-            self._save(db, value)
-            return deepcopy(value)
+            control = self.host.initialize_control_once(
+                value["planned_attempt_id"], prepared_id=value["start_key"], fence=value["fence"],
+                authorization_ref=value["authorization_ref"],
+            )
+        if not control["dispatch_enabled"]:
+            raise RunError("REVIEWER_EXECUTION_CONTROL_REVOKED")
+        with self._db() as db:
+            current = self._load(db, run_id, reviewer_operation_id, principal)
+            if current is None or current["execution_id"] != value["execution_id"]:
+                raise RunError("REVIEWER_EXECUTION_BINDING_INVALID")
+            current.update(launch=launch, host_prepared_id=snapshot.prepared_id)
+            if not current["cancel_requested"]:
+                current["phase"] = "host_prepared"
+            self._save(db, current)
+            return deepcopy(current)
 
     def inspect_host(
         self, run_id: str, reviewer_operation_id: str, *, principal: str
     ) -> dict[str, Any]:
-        with self._db() as db:
+        with self._db(write=False) as db:
             value = self._load(db, run_id, reviewer_operation_id, principal)
             if value is None or value["host_prepared_id"] is None:
                 raise RunError("REVIEWER_EXECUTION_HOST_PREPARE_REQUIRED")
@@ -348,15 +373,20 @@ class ReviewerExecutionIntents:
                 or snapshot.attempt_id != value["planned_attempt_id"]
             ):
                 raise RunError("REVIEWER_EXECUTION_HOST_BINDING_MISMATCH")
-            value["host_observation"] = {
+            observation = {
                 "prepared_id": snapshot.prepared_id,
                 "attempt_id": snapshot.attempt_id,
                 "state": snapshot.state,
                 "launch_phase": snapshot.launch_phase,
                 "remote_stop": snapshot.remote_stop,
             }
-            self._save(db, value)
-            return deepcopy(value)
+        with self._db() as db:
+            current = self._load(db, run_id, reviewer_operation_id, principal)
+            if current is None or current["execution_id"] != value["execution_id"]:
+                raise RunError("REVIEWER_EXECUTION_BINDING_INVALID")
+            current["host_observation"] = observation
+            self._save(db, current)
+            return deepcopy(current)
 
     def claim_registered_observer(
         self,
@@ -366,31 +396,41 @@ class ReviewerExecutionIntents:
         principal: str,
         timeout_seconds: float = 5.0,
     ) -> dict[str, Any]:
-        with self._db() as db:
-            value = self._load(db, run_id, reviewer_operation_id, principal)
-            if value is None or value["host_prepared_id"] is None:
-                raise RunError("REVIEWER_EXECUTION_HOST_PREPARE_REQUIRED")
-            if value["cancel_requested"]:
-                raise RunError("REVIEWER_EXECUTION_CANCELLED")
-            if value["effect_claim"] is not None:
-                return deepcopy(value | {"claim_allowed": False})
-            # Waiting for a child never holds business locks.  It is not an
-            # effect; the guard is acquired again immediately before claim.
-            runner = self.host.wait_for_runner_registration(
-                value["planned_attempt_id"], timeout_seconds=timeout_seconds
-            )
-            with self._current_guard(value):
-                with self.host.current_runner_guard(
-                    value["planned_attempt_id"],
-                    fence=value["fence"],
-                    authorization_ref=value["authorization_ref"],
-                ) as current:
-                    if current != runner:
-                        raise RunError("REVIEWER_EXECUTION_RUNNER_CHANGED")
-                    value["effect_claim"] = {
-                        "intent_digest": value["intent_digest"],
+        value = self.read(run_id, reviewer_operation_id, principal=principal)
+        if value is None or value["host_prepared_id"] is None:
+            raise RunError("REVIEWER_EXECUTION_HOST_PREPARE_REQUIRED")
+        if value["cancel_requested"]:
+            raise RunError("REVIEWER_EXECUTION_CANCELLED")
+        if value["effect_claim"] is not None:
+            return deepcopy(value | {"claim_allowed": False})
+        # Waiting for a child never holds a ledger/business writer.  The
+        # current guards are acquired again at the one-shot ledger mutation.
+        runner = self.host.wait_for_runner_registration(
+            value["planned_attempt_id"], timeout_seconds=timeout_seconds
+        )
+        with self._current_guard(value):
+            with self.host.current_runner_guard(
+                value["planned_attempt_id"],
+                fence=value["fence"],
+                authorization_ref=value["authorization_ref"],
+            ) as current:
+                if current != runner:
+                    raise RunError("REVIEWER_EXECUTION_RUNNER_CHANGED")
+                with self._db() as db:
+                    current_value = self._load(db, run_id, reviewer_operation_id, principal)
+                    if (
+                        current_value is None
+                        or current_value["execution_id"] != value["execution_id"]
+                    ):
+                        raise RunError("REVIEWER_EXECUTION_BINDING_INVALID")
+                    if current_value["cancel_requested"]:
+                        raise RunError("REVIEWER_EXECUTION_CANCELLED")
+                    if current_value["effect_claim"] is not None:
+                        return deepcopy(current_value | {"claim_allowed": False})
+                    current_value["effect_claim"] = {
+                        "intent_digest": current_value["intent_digest"],
                         "runner": {"pid": runner.pid, "birth": runner.birth},
                     }
-                    value["phase"] = "observer_claimed"
-                    self._save(db, value)
-            return deepcopy(value | {"claim_allowed": True})
+                    current_value["phase"] = "observer_claimed"
+                    self._save(db, current_value)
+                    return deepcopy(current_value | {"claim_allowed": True})
