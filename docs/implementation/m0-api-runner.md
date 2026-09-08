@@ -18,7 +18,7 @@ Linux 将 `opencode.exe` 改为 `opencode`。先依据 [runtime pin](../../runti
 uv run --frozen --extra dev python examples/api-runner/run_suite.py --directory .local/api-runner-suite
 ```
 
-CLI 退出码 0 表示完成本地执行或取消观察；1 表示输入/配置拒绝；2 表示执行器报错、观察超时或清理失败。`timeout_once`、`admission_limit` 和 `cleanup_fault` 刻意产生 2，配置篡改刻意产生 1。任何退出码都不表示真实 Profile 合格；输出中的 `live_qualified`、`profile_enabled` 固定为 false，`qualification_decision` 固定为 rejected。
+CLI 退出码 0 表示完成本地执行或取消观察；1 表示输入/配置拒绝；2 表示执行器报错、观察超时或清理失败。`timeout_once`、`admission_limit` 和 `cleanup_fault` 刻意产生 2；`header_timeout_once` 是原生 header timeout 后实际 session retry 并完成的 0；配置篡改刻意产生 1。任何退出码都不表示真实 Profile 合格；输出中的 `live_qualified`、`profile_enabled` 固定为 false，`qualification_decision` 固定为 rejected。
 
 ## 实际通路与身份
 
@@ -41,7 +41,8 @@ Broker 绑定 Attempt、fence、Profile 摘要和一次性合成能力，逐次�
 | `tool_loop` | 两次模型 HTTP 请求，真实 read 工具结果进入第二次请求；收到 server SSE 文本增量与工具事件 |
 | `rate_limit_once` | provider 第一次返回 429；真实会话重试后完成工具循环，共三次独立准入 |
 | `disconnect_once` | provider 首次在响应头前断线；真实重试后完成，共三次独立准入 |
-| `timeout_once` | provider 首次请求保持在响应头之前，直到观察到原生 `session.error` 后的本地清理才释放；执行器 500 ms 超时报 `UnknownError: The operation timed out.`；本场景观察到一次接收，没有重试，报告 runtime_error |
+| `timeout_once` | provider 首次请求保持在响应头之前，`timeout=400ms` 先于 `headerTimeout=500ms` 触发；观察到原生 `session.error` 后本地清理才释放。它是通用请求 deadline 的 `UnknownError: The operation timed out.`，一次接收、无 retry、报告 runtime_error，不应称为 header timeout |
+| `header_timeout_once` | provider 首次请求同样保持在响应头之前，但 `headerTimeout=500ms` 显著先于 `timeout=2000ms`。收到原生 `session.status/retry` 的 `Provider response headers timed out after 500ms` 后才释放；真实 session retry 完成工具循环，三次独立接收（首个晚到 broker receipt 为 `RemoteDisconnected`），报告 completed |
 | `cancel_stream` | provider 保持流；管理 abort 回执为 true，随后至少 0.5 秒内没有新增模型请求；保存取消时间与观察窗口 |
 | `admission_limit` | 第一次请求可读工具，第二次模型请求被 broker 403 拒绝，provider 只收到一次 |
 | `cleanup_fault` | 实际工具循环后，在 server 清理完成处注入异常；仍关闭本地 HTTP peers、保存全部轨迹并报告 unknown |

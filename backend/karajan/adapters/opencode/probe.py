@@ -18,6 +18,7 @@ SCENARIOS = frozenset(
         "rate_limit_once",
         "disconnect_once",
         "timeout_once",
+        "header_timeout_once",
         "cancel_stream",
         "admission_limit",
         "cleanup_fault",
@@ -83,10 +84,16 @@ class OpenCodeProbe:
         )
         if scenario == "timeout_once":
             server.config["provider"]["fixture"]["options"].update(
-                # OpenCode retries its native HeaderTimeoutError.  Keep the explicit
-                # header deadline, but make the terminal request deadline win while
-                # the peer is still withholding headers.
+                # This is deliberately the terminal *request* deadline case.  Its
+                # distinct header-timeout/retry counterpart is below.
                 {"timeout": 400, "headerTimeout": 500}
+            )
+            server.environment["OPENCODE_CONFIG_CONTENT"] = json.dumps(server.config)
+        elif scenario == "header_timeout_once":
+            # Keep a material gap: the native header deadline must beat the general
+            # request deadline without depending on adjacent scheduler ticks.
+            server.config["provider"]["fixture"]["options"].update(
+                {"timeout": 2000, "headerTimeout": 500}
             )
             server.environment["OPENCODE_CONFIG_CONTENT"] = json.dumps(server.config)
         actual_config = json.loads(json.dumps(server.config))
@@ -208,6 +215,9 @@ class OpenCodeProbe:
         while time.monotonic() < until:
             if cancellation:
                 break
+            if scenario == "header_timeout_once" and self._has_native_retry(server.events):
+                transport.timeout_lifecycle["native_retry"] = "session.status"
+                transport.timeout_header_release.set()
             messages = server.request("GET", f"/session/{session_id}/message")
             for message in messages:
                 if message["info"]["role"] == "assistant" and message["info"].get("time", {}).get(
@@ -248,3 +258,11 @@ class OpenCodeProbe:
             ),
         )
         return report
+
+    @staticmethod
+    def _has_native_retry(events: list[dict[str, Any]]) -> bool:
+        return any(
+            event.get("type") == "session.status"
+            and event.get("properties", {}).get("status", {}).get("type") == "retry"
+            for event in events
+        )

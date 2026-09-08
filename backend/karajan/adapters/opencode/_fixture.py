@@ -91,7 +91,7 @@ class LocalTransport:
                     self.connection.shutdown(socket.SHUT_RDWR)
                     self.close_connection = True
                     return
-                if fault == "timeout_once":
+                if fault in {"timeout_once", "header_timeout_once"}:
                     transport.timeout_lifecycle["provider_header_wait"] = "started"
                     started = time.monotonic()
                     released = transport.timeout_header_release.wait(timeout=5)
@@ -99,7 +99,12 @@ class LocalTransport:
                     if released:
                         transport.timeout_lifecycle["provider_release"] = (
                             "after_native_error_cleanup"
-                            if transport.timeout_lifecycle.get("native_terminal") == "session.error"
+                            if fault == "timeout_once"
+                            and transport.timeout_lifecycle.get("native_terminal")
+                            == "session.error"
+                            else "after_native_retry"
+                            if fault == "header_timeout_once"
+                            and transport.timeout_lifecycle.get("native_retry") == "session.status"
                             else "cleanup_without_native_terminal"
                         )
                     else:
