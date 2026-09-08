@@ -477,6 +477,7 @@ class PlanningExecution:
         # Command receipt lookup is short; preparation and Git never run under
         # the execution writer.  A saved success is still read/verified.
         payload = ["freeze_repository_snapshot", execution_id]
+        replay: dict[str, Any] | None = None
         with self._transaction() as db:
             prior = db.execute(
                 "SELECT payload,result FROM commands WHERE principal=? AND key=?",
@@ -485,8 +486,13 @@ class PlanningExecution:
             if prior is not None:
                 if prior["payload"] != encoded(payload):
                     raise RunError("IDEMPOTENCY_CONFLICT")
-                read(binding)
-                return dict(json.loads(prior["result"]))
+                replay = dict(json.loads(prior["result"]))
+        # Historical artifact verification deliberately happens after the
+        # controller writer is gone: cancellation and other Run writers can
+        # progress while a large, but bounded, snapshot is checked.
+        if replay is not None:
+            read(binding)
+            return replay
         result = freeze_current()
         with self._transaction() as db:
             # A concurrent first freezer may have recorded the same command.

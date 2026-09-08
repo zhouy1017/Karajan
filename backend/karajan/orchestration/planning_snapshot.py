@@ -7,6 +7,7 @@ import sqlite3
 import stat
 import subprocess
 import tempfile
+import time
 from contextlib import nullcontext
 from pathlib import Path
 from typing import Any
@@ -61,7 +62,7 @@ class PlanningRepositorySnapshotStore:
             require_schema(
                 database,
                 {
-                    "snapshots": ["binding_sha256", "data"],
+                    "snapshots": ["binding_sha256", "data", "source_sha256"],
                     "files": ["binding_sha256", "path", "sha256"],
                 },
             )
@@ -75,8 +76,12 @@ class PlanningRepositorySnapshotStore:
             db.execute("PRAGMA foreign_keys=ON")
             db.execute(
                 "CREATE TABLE IF NOT EXISTS snapshots "
-                "(binding_sha256 TEXT PRIMARY KEY, data TEXT NOT NULL)"
+                "(binding_sha256 TEXT PRIMARY KEY, data TEXT NOT NULL, "
+                "source_sha256 TEXT)"
             )
+            columns = {row[1] for row in db.execute("PRAGMA table_info(snapshots)")}
+            if "source_sha256" not in columns:
+                db.execute("ALTER TABLE snapshots ADD COLUMN source_sha256 TEXT")
             db.execute(
                 "CREATE TABLE IF NOT EXISTS files (binding_sha256 TEXT NOT NULL "
                 "REFERENCES snapshots(binding_sha256) ON DELETE CASCADE, "
@@ -116,7 +121,11 @@ class PlanningRepositorySnapshotStore:
 
     @staticmethod
     def _allowed(path: str, paths: list[str]) -> bool:
-        return any(path == x or path.startswith(x + "/") for x in paths)
+        return any(PlanningRepositorySnapshotStore._within(path, x) for x in paths)
+
+    @staticmethod
+    def _within(path: str, parent: str) -> bool:
+        return path == parent or path.startswith(parent + "/")
 
     @staticmethod
     def _paths(value: object) -> list[str]:
@@ -139,6 +148,13 @@ class PlanningRepositorySnapshotStore:
     def _sha256(x: object) -> bool:
         try:
             return isinstance(x, str) and len(x) == 64 and int(x, 16) is not None
+        except ValueError:
+            return False
+
+    @staticmethod
+    def _git_oid(x: object) -> bool:
+        try:
+            return isinstance(x, str) and len(x) in {40, 64} and int(x, 16) is not None
         except ValueError:
             return False
 
@@ -186,17 +202,46 @@ class PlanningRepositorySnapshotStore:
             raise RunError("PLANNING_SNAPSHOT_BASE_UNAVAILABLE")
         return r.stdout
 
+    def _sync_artifacts(self) -> None:
+        """Durably record a blob directory entry before a SQLite reference.
+
+        POSIX is the supported private-artifact durability boundary: fsyncing a
+        regular file alone does not make its name durable.  Windows does not
+        expose an equivalent directory handle through ``os.open`` here, so it
+        fails closed rather than acknowledging an unverifiable publication.
+        """
+        if os.name != "posix":
+            raise OSError("directory fsync unsupported")
+        descriptor = os.open(self.artifacts, os.O_RDONLY)
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+
+    def _published_content(self, target: Path, content: bytes) -> bool:
+        """Accept only our short-lived link(2) overlap, never a durable alias."""
+        for _ in range(100):
+            info = target.lstat()
+            if stat.S_ISREG(info.st_mode) and not stat.S_ISLNK(info.st_mode):
+                if info.st_nlink == 1:
+                    with target.open("rb") as stream:
+                        return stream.read(len(content) + 1) == content
+                # A competing publisher owns a temporary link until it unlinks
+                # it.  Do not mistake that exact protocol interval for an
+                # attacker-created alias, but never accept it as final state.
+                if info.st_nlink == 2:
+                    time.sleep(0.005)
+                    continue
+            raise ValueError()
+        raise ValueError()
+
     def _publish(self, sha: str, content: bytes) -> None:
         target = self.artifacts / sha
         if target.exists():
             try:
-                if (
-                    target.is_symlink()
-                    or not target.is_file()
-                    or target.stat().st_nlink != 1
-                    or target.read_bytes() != content
-                ):
+                if not self._published_content(target, content):
                     raise ValueError()
+                self._sync_artifacts()
                 return
             except OSError:
                 raise RunError("PLANNING_REPOSITORY_SNAPSHOT_CHANGED") from None
@@ -213,8 +258,9 @@ class PlanningRepositorySnapshotStore:
                 pass
             finally:
                 os.unlink(name)
-            if target.read_bytes() != content:
+            if not self._published_content(target, content):
                 raise ValueError()
+            self._sync_artifacts()
         except (OSError, ValueError):
             raise RunError("PLANNING_REPOSITORY_SNAPSHOT_CHANGED") from None
 
@@ -234,6 +280,8 @@ class PlanningRepositorySnapshotStore:
         repo = project.get("repository")
         if not isinstance(repo, dict) or not all(
             isinstance(repo.get(k), str) for k in ("root", "identity_sha256", "base_sha")
+        ) or not (
+            self._sha256(repo.get("identity_sha256")) and self._git_oid(repo.get("base_sha"))
         ):
             raise RunError("PLANNING_REPOSITORY_SOURCE_INVALID")
         root = Path(repo["root"])
@@ -260,7 +308,7 @@ class PlanningRepositorySnapshotStore:
             if kind != "blob" or mode not in {"100644", "100755"}:
                 raise RunError("PLANNING_SNAPSHOT_ENTRY_UNSUPPORTED")
             for x in matched:
-                matched[x] = matched[x] or path == x or path.startswith(x + "/")
+                matched[x] = matched[x] or self._within(path, x)
             size = int(
                 self._git(root, "cat-file", "-s", repo["base_sha"] + ":" + path).decode("ascii")
             )
@@ -295,6 +343,12 @@ class PlanningRepositorySnapshotStore:
             "files": files,
             "total_bytes": total,
         }
+        source_sha256 = digest(
+            {
+                k: result[k]
+                for k in ("repository_identity_sha256", "base_sha", "read_paths_sha256")
+            }
+        )
         result["snapshot_sha256"] = digest(result)
         for _, _, c in rows:
             self._publish(hashlib.sha256(c).hexdigest(), c)
@@ -306,6 +360,7 @@ class PlanningRepositorySnapshotStore:
         held = nullcontext() if guard is None else guard()
         if not hasattr(held, "__enter__") or not hasattr(held, "__exit__"):
             raise RunError("PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE")
+        previous = False
         with held:
             with self._connect() as db:
                 db.execute("BEGIN IMMEDIATE")
@@ -314,13 +369,19 @@ class PlanningRepositorySnapshotStore:
                 ).fetchone()
                 if old:
                     db.commit()
-                    return {k: v for k, v in self.read(binding).items() if k != "content"}
-                db.execute("INSERT INTO snapshots VALUES (?,?)", (key, encoded(result)))
-                db.executemany(
-                    "INSERT INTO files VALUES (?,?,?)",
-                    [(key, p, hashlib.sha256(c).hexdigest()) for p, _, c in rows],
-                )
-                db.commit()
+                    previous = True
+                else:
+                    db.execute(
+                        "INSERT INTO snapshots VALUES (?,?,?)",
+                        (key, encoded(result), source_sha256),
+                    )
+                    db.executemany(
+                        "INSERT INTO files VALUES (?,?,?)",
+                        [(key, p, hashlib.sha256(c).hexdigest()) for p, _, c in rows],
+                    )
+                    db.commit()
+        if previous:
+            return {k: v for k, v in self.read(binding).items() if k != "content"}
         return result
 
     def read(self, binding: dict[str, Any]) -> dict[str, Any]:
@@ -328,7 +389,7 @@ class PlanningRepositorySnapshotStore:
         try:
             with self._connect() as db:
                 row = db.execute(
-                    "SELECT data FROM snapshots WHERE binding_sha256=?", (key,)
+                    "SELECT data,source_sha256 FROM snapshots WHERE binding_sha256=?", (key,)
                 ).fetchone()
                 refs = db.execute(
                     "SELECT path,sha256 FROM files WHERE binding_sha256=? ORDER BY path", (key,)
@@ -361,6 +422,16 @@ class PlanningRepositorySnapshotStore:
                 or set(result) != required
                 or result["schema_version"] != "karajan.planning-repository-snapshot.v1"
                 or result["binding_sha256"] != key
+                or not self._sha256(result["repository_identity_sha256"])
+                or not self._git_oid(result["base_sha"])
+                or not self._sha256(result["read_paths_sha256"])
+                or row[1]
+                != digest(
+                    {
+                        k: result[k]
+                        for k in ("repository_identity_sha256", "base_sha", "read_paths_sha256")
+                    }
+                )
                 or any(
                     result[k] != binding.get(k)
                     for k in (
@@ -409,7 +480,10 @@ class PlanningRepositorySnapshotStore:
                     or info.st_nlink != 1
                 ):
                     raise ValueError()
-                value = target.read_bytes()
+                if info.st_size != x["size"]:
+                    raise ValueError()
+                with target.open("rb") as stream:
+                    value = stream.read(x["size"] + 1)
                 if len(value) != x["size"] or hashlib.sha256(value).hexdigest() != x["sha256"]:
                     raise ValueError()
                 content[p] = value

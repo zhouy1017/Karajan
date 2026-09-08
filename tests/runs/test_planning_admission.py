@@ -12,12 +12,13 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
-from threading import Barrier
+from threading import Barrier, Event
 from typing import Any
 
 import karajan.capacity.store as capacity_store
 import karajan.orchestration.planning_admission as planning_admission
 import pytest
+from karajan.adapters.opencode.go_journal import GoCallJournal
 from karajan.capacity import CapacityStore
 from karajan.orchestration.go_task_runtime import (
     GoTaskCredentialSource,
@@ -1249,7 +1250,7 @@ def test_persistent_factory_requires_provisioned_snapshot_ledger(
 
 @pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
 def test_factory_freezes_registered_base_bytes_and_reopens(
-    configured: dict, tmp_path: Path
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     registry = configured["registry"]
     project = registry.get(configured["id"])
@@ -1294,11 +1295,35 @@ def test_factory_freezes_registered_base_bytes_and_reopens(
     configured.update(registry.get(project["id"]))
     configured["registry"] = registry
     _, authority, run, execution = _case(tmp_path, configured)
+    # Provision the applicable Qualification ledger before the protected
+    # factory copies its owned SQLite state into the fixture boundary.
+    ProfileQualificationStore(authority.planner.projects)
     control = _protected_factory_control(tmp_path, authority)
     provision_planning_repository_snapshots(control)
     service = PlanningExecution.from_trusted_factory(control)
     assert service.capacity is not None
     before = service.capacity.snapshot()
+    # These are the actual local receiving ledgers applicable to a planning
+    # snapshot, deliberately constructed empty.  Snapshot failure/read/replay
+    # must not create a Journal call, qualification record, Run plan, or
+    # Capacity reservation.  No Host is started and no provider adapter is
+    # supplied in this fixture, so the zero Journal rows are bounded evidence
+    # for this local receiving boundary, not a claim about a physical provider.
+    journal = GoCallJournal(tmp_path / "snapshot-journal.sqlite")
+    _qualification = ProfileQualificationStore(service.planner.projects)
+
+    def effect_counts() -> tuple[int, int, int, int]:
+        with sqlite3.connect(journal.path) as db:
+            calls = db.execute("SELECT count(*) FROM go_calls").fetchone()[0]
+        with sqlite3.connect(service.planner.projects.database) as db:
+            qualified = db.execute(
+                "SELECT count(*) FROM profile_qualification_records"
+            ).fetchone()[0]
+        current = service.planner.get(run["id"], principal="owner")
+        reservations = service.capacity.snapshot()["reservations"]
+        return calls, qualified, len(current["plans"]), len(reservations)
+
+    effects_before = effect_counts()
     frozen = service.freeze_repository_snapshot(
         execution["id"], principal="owner", command_key="freeze"
     )
@@ -1329,7 +1354,41 @@ def test_factory_freezes_registered_base_bytes_and_reopens(
         ]
         == b"registered base bytes\n"
     )
+    # A saved freeze-command replay verifies immutable bytes outside the
+    # Execution/Run writers.  Cancellation therefore completes while this
+    # deliberately slow historical reader is paused, and the original bytes
+    # remain available after cancellation.
+    assert isinstance(reopened.snapshots, PlanningRepositorySnapshotStore)
+    entered = Event()
+    release = Event()
+    original_read = reopened.snapshots.read
+
+    def slow_read(binding: dict[str, Any]) -> dict[str, Any]:
+        entered.set()
+        assert release.wait(timeout=5)
+        return original_read(binding)
+
+    monkeypatch.setattr(reopened.snapshots, "read", slow_read)
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        replay = workers.submit(
+            reopened.freeze_repository_snapshot,
+            execution["id"],
+            principal="owner",
+            command_key="freeze",
+        )
+        assert entered.wait(timeout=5)
+        cancelled = workers.submit(
+            service.cancel, execution["id"], principal="owner", command_key="cancel"
+        )
+        assert cancelled.result(timeout=2)["cancel_requested"]
+        release.set()
+        assert replay.result(timeout=5) == frozen
+    assert original_read(execution["binding"])["content"] == {
+        "src/planning-input.txt": b"registered base bytes\n",
+        "tests/planning-input-test.txt": b"registered test base bytes\n",
+    }
     assert service.capacity.snapshot() == before
+    assert effect_counts() == effects_before
 
     ledger = snapshot_database(control)
     artifact = Path(
@@ -1354,6 +1413,7 @@ def test_factory_freezes_registered_base_bytes_and_reopens(
     with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_CHANGED$"):
         reopened.read_repository_snapshot(execution["id"], principal="owner")
     assert service.capacity.snapshot() == before
+    assert effect_counts() == effects_before
 
     ledger.unlink()
     with pytest.raises(RunError, match="^PLANNING_REPOSITORY_SNAPSHOT_UNAVAILABLE$"):
