@@ -4,8 +4,10 @@ The double is deliberately local to this test.  Its fixture provenance is
 persisted and it cannot be read as an official Commander planning fact.
 """
 
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from copy import deepcopy
+from threading import Event
 
 import pytest
 from karajan.projects.go_commander_suite import FixedGoCommanderSuite
@@ -204,6 +206,39 @@ def test_same_key_unknown_never_reobserves_after_lost_record_reply(commander_cas
     with pytest.raises(QualificationError, match="QUALIFICATION_IN_PROGRESS_OR_UNKNOWN"):
         qualify(case)
     assert case["suite"].effects == effects
+
+
+def test_public_revoke_withdraws_pending_commander_before_its_next_effect(commander_case):
+    case = commander_case
+    entered, release = Event(), Event()
+
+    class WaitingSuite(COnlyFixedCommanderSuiteDouble):
+        def observe(self, start, credential, *, current_guard):
+            assert credential.generation == start["auth_generation"]
+            with current_guard():
+                self.effects.append("legal_plan")
+            entered.set()
+            assert release.wait(timeout=5)
+            with current_guard():
+                self.effects.append("denied_tool")
+            return {"status": "passed", "reason_codes": [], "scenarios": []}
+
+    suite = WaitingSuite()
+    case["store"].commander_suite = suite
+    with ThreadPoolExecutor(max_workers=1) as workers:
+        pending = workers.submit(qualify, case, "revoke-pending")
+        assert entered.wait(timeout=3)
+        start = case["store"].get_command_start(
+            case["project_id"], "revoke-pending", principal="owner"
+        )
+        revoked = case["store"].revoke(
+            case["project_id"], start["id"], principal="owner", reason="withdraw"
+        )
+        assert revoked["reason"] == "withdraw"
+        release.set()
+        result = pending.result(timeout=5)
+    assert result["status"] == "failed"
+    assert suite.effects == ["legal_plan"]
 
 
 def test_production_suite_is_unavailable_not_a_success_stub(commander_case, tmp_path):

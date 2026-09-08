@@ -403,7 +403,18 @@ def test_production_native_send_releases_guard_for_cancelled_wait(
     assert admitted["phase"] == "admitted"
     accounting = GoRequestAccounting(Path(tokenizer))
     journal = GoCallJournal(tmp_path / "production-journal.sqlite")
-    entered, release = Event(), Event()
+    entered, release, stopped = Event(), Event(), Event()
+
+    from karajan.isolation.opencode_runtime import IsolatedOpenCode
+
+    original_close = IsolatedOpenCode.close
+
+    def observed_close(native: IsolatedOpenCode) -> dict[str, Any]:
+        result = original_close(native)
+        stopped.set()
+        return result
+
+    monkeypatch.setattr(IsolatedOpenCode, "close", observed_close)
 
     class DelayedResponse(httpx.SyncByteStream):
         def __iter__(self) -> Any:
@@ -436,10 +447,9 @@ def test_production_native_send_releases_guard_for_cancelled_wait(
         _LocalPlanningCredentials(),
         "b" * 64,
     )
-    # This is only the local native-wait bound. It does not alter the admitted
-    # Capacity request or the Run budget; the test needs a bounded producer
-    # teardown after proving cancellation was not blocked by the send guard.
-    native_admission = {**admitted, "estimate": {**admitted["estimate"], "duration_seconds": 15}}
+    # The production producer consumes the narrow durable receipt, including
+    # its controller-derived bound; callers cannot supply a new estimate.
+    native_admission = authority.read_admission(execution["binding"])
     with ThreadPoolExecutor(max_workers=1) as workers:
         pending = workers.submit(
             producer.produce,
@@ -454,6 +464,9 @@ def test_production_native_send_releases_guard_for_cancelled_wait(
         cancelled = service.cancel(execution["id"], principal="owner", command_key="cancel-wait")
         assert time.monotonic() - cancelled_at < 2
         assert cancelled["state"] == "cancelled"
+        assert stopped.wait(timeout=2)
+        assert cancelled["native_cleanup"]["local_stop"] == "confirmed"
+        assert cancelled["provider_remote_stop"] == "unknown"
         release.set()
         with pytest.raises(RunError) as failed:
             pending.result(timeout=30)
@@ -513,12 +526,12 @@ def test_production_native_output_requires_durable_completion_and_cleanup(
         _LocalPlanningCredentials(),
         "b" * 64,
     )
-    native_admission = {**admitted, "estimate": {**admitted["estimate"], "duration_seconds": 90}}
+    native_admission = authority.read_admission(execution["binding"])
 
     expected = (
         "PLANNING_NATIVE_COMPLETION_UNKNOWN"
         if failure == "journal"
-        else "PLANNING_NATIVE_CLEANUP_UNKNOWN"
+        else "PLANNING_NATIVE_LOG_EVIDENCE_UNAVAILABLE"
     )
     with pytest.raises(RunError, match=rf"^{expected}$"):
         producer.produce(
@@ -2191,14 +2204,13 @@ def test_effect_guard_reobserves_material_sealed_commander_source_before_body(
             "INSERT INTO profile_qualification_records VALUES (?,?,?)",
             (record["id"], json.dumps(record), digest(record)),
         )
-    authority.qualifications = reader
-    denied = authority.advance(execution["id"], "owner", "synthetic-boundary-advance")
-    assert denied["phase"] == "denied"
-    assert authority.capacity.snapshot()["reservations"] == []
+    admitted = authority.advance(execution["id"], "owner", "synthetic-boundary-advance")
+    assert admitted["phase"] == "admitted"
     key.write_text("synthetic-boundary-key-changed\n", encoding="utf-8")
-    with projects._transaction() as db:
-        with pytest.raises(CredentialSourceError, match="^CREDENTIAL_MATERIAL_CHANGED$"):
-            reader._current_source(db, run["project_id"], {"registration": profile_record}, "owner")
+    authority.qualifications = reader
+    with pytest.raises(RunError, match="^COMMANDER_QUALIFICATION_CHANGED$"):
+        with authority.effect_guard(execution["id"], "owner", "changed-credential-effect"):
+            pytest.fail("changed credentials entered a planning transport effect")
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")

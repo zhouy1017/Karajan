@@ -182,9 +182,11 @@ class PlanningWorkbench:
             ).fetchone()
             if row is None:
                 db.execute(
-                    "INSERT INTO planning_execute_commands VALUES "
-                    "(:principal,:key,:run_id,:command_id,:execution_id,:binding_sha256,"
-                    ":state,:reason_code,:created_at)",
+                "INSERT INTO planning_execute_commands ("
+                "principal,key,run_id,command_id,execution_id,binding_sha256,state,reason_code,"
+                "created_at) VALUES ("
+                ":principal,:key,:run_id,:command_id,:execution_id,:binding_sha256,:state,"
+                ":reason_code,:created_at)",
                     record,
                 )
                 return record
@@ -222,13 +224,14 @@ class PlanningWorkbench:
         *,
         state: str,
         reason_code: str | None = None,
-    ) -> None:
+    ) -> bool:
         with self._transaction() as db:
-            db.execute(
+            updated = db.execute(
                 "UPDATE planning_execute_commands SET state=?, reason_code=? "
-                "WHERE principal=? AND key=? AND command_id=?",
+                "WHERE principal=? AND key=? AND command_id=? AND state='accepted'",
                 (state, reason_code, record["principal"], record["key"], record["command_id"]),
             )
+        return updated.rowcount == 1
 
     def _execute_command_for_run(self, run_id: str, principal: str) -> dict[str, Any] | None:
         with self._transaction() as db:
@@ -260,13 +263,18 @@ class PlanningWorkbench:
 
     @staticmethod
     def _execution_view(execution: dict[str, Any]) -> dict[str, Any]:
-        return {
+        view: dict[str, Any] = {
             "id": execution["id"],
             "binding_sha256": execution["binding_sha256"],
             "state": execution["state"],
             "cancel_requested": execution["cancel_requested"],
             "reason_codes": execution["reason_codes"],
         }
+        if isinstance(execution.get("native_cleanup"), dict):
+            view["native_cleanup"] = execution["native_cleanup"]
+        if execution.get("provider_remote_stop") in {"confirmed", "unknown"}:
+            view["provider_remote_stop"] = execution["provider_remote_stop"]
+        return view
 
     def _availability(
         self, run: dict[str, Any], execution: dict[str, Any] | None
@@ -323,6 +331,10 @@ class PlanningWorkbench:
         }
 
     def read(self, run_id: str, *, principal: str) -> dict[str, Any]:
+        # Read a command first: a completed command is written only after the
+        # Run store commits its Plan, so the following fresh Run read cannot
+        # report a terminal receipt alongside an older plan snapshot.
+        command = self._execute_command_for_run(run_id, principal)
         run = self.planner.get(run_id, principal=principal)
         with self._transaction() as db:
             row = db.execute(
@@ -331,7 +343,6 @@ class PlanningWorkbench:
                 (run_id, principal),
             ).fetchone()
         result = self._project(run, None if row is None else dict(row))
-        command = self._execute_command_for_run(run_id, principal)
         return result if command is None else {**result, "command": self._command_view(command)}
 
     def start(self, run_id: str, *, principal: str, command_key: str) -> dict[str, Any]:

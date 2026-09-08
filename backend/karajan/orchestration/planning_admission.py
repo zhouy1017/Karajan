@@ -1572,6 +1572,10 @@ class PlanningAdmissionAuthority:
             record = self._load(db, binding["execution_id"])
         if record is None or record["binding_sha256"] != digest(binding):
             raise ValueError("PLANNING_ADMISSION_NOT_FOUND")
+        estimate = record.get("estimate")
+        duration_seconds = (
+            estimate.get("duration_seconds") if isinstance(estimate, dict) else None
+        )
         return {
             "schema_version": "karajan.planning-admission-evidence.v1",
             "binding_sha256": record["binding_sha256"],
@@ -1588,6 +1592,7 @@ class PlanningAdmissionAuthority:
             "capacity_activation_request": record["capacity_activation_request"] or {},
             "capacity_activation_command_key": record["capacity_activation_command_key"],
             "capacity_activation_receipt": record["capacity_activation_receipt"],
+            "duration_seconds": duration_seconds,
             "state": "admitted"
             if record["phase"] == "admitted"
             else "unknown"

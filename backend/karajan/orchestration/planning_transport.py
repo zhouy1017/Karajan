@@ -539,10 +539,17 @@ class PlanningTransport:
             raise RunError("PLANNING_ESTIMATE_SOURCE_UNAVAILABLE")
         ceiling = run["authorization_ceiling"]
         budget = next(
-            item
-            for item in run["configuration_snapshot"]["configuration"]["budgets"]
-            if item["id"] == binding["budget_ref"]
+            (
+                item
+                for item in run["configuration_snapshot"]["configuration"]["resources"][
+                    "budgets"
+                ]
+                if item["id"] == binding["budget_ref"]
+            ),
+            None,
         )
+        if not isinstance(budget, dict):
+            raise RunError("PLANNING_ESTIMATE_SOURCE_UNAVAILABLE")
         limit = min(
             300,
             ceiling["max_attempt_duration_seconds"],
@@ -911,10 +918,7 @@ class ProductionGoPlanningProducer:
             raise RunError("PLANNING_INPUT_POLICY_UNSUPPORTED")
         if self.accounting.source() != model_input.accounting_source:
             raise RunError("PLANNING_ACCOUNTING_SOURCE_CHANGED")
-        estimate = admission.get("estimate")
-        duration_seconds = (
-            estimate.get("duration_seconds") if isinstance(estimate, dict) else None
-        )
+        duration_seconds = admission.get("duration_seconds")
         if type(duration_seconds) is not int or duration_seconds < 1:
             raise RunError("PLANNING_ADMISSION_EVIDENCE_INVALID")
         authentication, credential = self._authentication(binding)
@@ -981,6 +985,7 @@ class ProductionGoPlanningProducer:
             )
             socket_root = _relay_socket_root()
             native = None
+            unregister_native_stop: Callable[[], None] | None = None
             content: bytes | None = None
             relay_result: dict[str, Any] | None = None
             native_cleanup: dict[str, Any] | None = None
@@ -1005,6 +1010,9 @@ class ProductionGoPlanningProducer:
                     no_tools=True,
                 )
                 (native.workspace / projection_path).write_bytes(_artifact_bytes(model_input))
+                unregister_native_stop = self.execution.register_native_stopper(
+                    binding["execution_id"], native.close
+                )
                 # Starting the isolated native process is an effect, but its
                 # model wait must not retain the execution/Run/Capacity locks:
                 # Relay re-enters the send guard on another thread.
@@ -1014,18 +1022,28 @@ class ProductionGoPlanningProducer:
                     "planning-native-start:" + binding["execution_id"],
                 ):
                     native.start()
-                content = FixtureGoPlanningProducer._native_output(
-                    native,
-                    model_input,
-                    timeout_seconds=duration_seconds,
-                    completion_guard=lambda: admissions.effect_guard(
-                        binding["execution_id"],
-                        binding["owner"],
-                        "planning-native-complete:" + binding["execution_id"],
-                    ),
-                    start_native=False,
-                )
+                try:
+                    content = FixtureGoPlanningProducer._native_output(
+                        native,
+                        model_input,
+                        timeout_seconds=duration_seconds,
+                        completion_guard=lambda: admissions.effect_guard(
+                            binding["execution_id"],
+                            binding["owner"],
+                            "planning-native-complete:" + binding["execution_id"],
+                        ),
+                        start_native=False,
+                    )
+                except ValueError:
+                    current = self.execution.get(
+                        binding["execution_id"], principal=binding["owner"]
+                    )
+                    if current["cancel_requested"]:
+                        raise RunError("PLANNING_EXECUTION_CANCELLED") from None
+                    raise RunError("PLANNING_NATIVE_RUNTIME_FAILED") from None
             finally:
+                if unregister_native_stop is not None:
+                    unregister_native_stop()
                 if native is not None:
                     try:
                         native_cleanup = native.close()

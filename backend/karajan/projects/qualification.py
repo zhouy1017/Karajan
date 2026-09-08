@@ -1286,14 +1286,7 @@ class ProfileQualificationStore:
                 raise QualificationError("QUALIFICATION_IN_PROGRESS_OR_UNKNOWN")
             if row["project_id"] != project_id:
                 raise QualificationError("QUALIFICATION_PROJECT_MISMATCH")
-            binding = self._checked_start(db, row)
-            if (
-                _source_scope(binding)[1] != READONLY_GO_SUITE
-                or db.execute(
-                    "SELECT 1 FROM profile_qualification_records WHERE id=?", (observation_id,)
-                ).fetchone()
-            ):
-                self._record(db, observation_id)
+            self._checked_start(db, row)
             revocation = {
                 "id": observation_id,
                 "principal": principal,
@@ -1304,6 +1297,10 @@ class ProfileQualificationStore:
                 "INSERT OR IGNORE INTO profile_qualification_revocations VALUES (?,?)",
                 (observation_id, encoded(revocation)),
             )
+            if db.execute(
+                "SELECT 1 FROM profile_qualification_records WHERE id=?", (observation_id,)
+            ).fetchone():
+                self._record(db, observation_id)
             return dict(
                 json.loads(
                     db.execute(

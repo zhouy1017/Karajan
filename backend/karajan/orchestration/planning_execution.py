@@ -14,6 +14,7 @@ from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
+from threading import Lock
 from typing import Any, Literal, Protocol, cast
 
 from pydantic import Field, ValidationError
@@ -39,6 +40,9 @@ class PlanningAdmissionEvidence(Contract):
     capacity_activation_request: dict[str, Any]
     capacity_activation_command_key: str
     capacity_activation_receipt: dict[str, Any] | None
+    # Denied and interrupted receipts have no estimate.  A production producer
+    # requires this value only after the durable receipt is admitted.
+    duration_seconds: int | None = Field(default=None, ge=1, le=300)
     state: Literal["admitted", "denied", "unknown"]
     reason_codes: list[str] = Field(default_factory=list, max_length=8)
 
@@ -127,6 +131,8 @@ class PlanningExecution:
         self._trusted_factory_authority = _trusted_factory_authority
         self.existing_only = existing_only
         self.clock = planner.clock if clock is None else clock
+        self._native_stop_lock = Lock()
+        self._native_stoppers: dict[str, Callable[[], dict[str, Any]]] = {}
         if not existing_only:
             self.database.parent.mkdir(parents=True, exist_ok=True)
         if self.database == planner.database.resolve():
@@ -748,7 +754,50 @@ class PlanningExecution:
                     self._save(db, execution)
                 return execution
 
-            return self._command(db, principal, command_key, ["cancel", execution_id], cancel)
+            cancelled = self._command(db, principal, command_key, ["cancel", execution_id], cancel)
+        return self._stop_owned_native(execution_id, principal, cancelled)
+
+    def register_native_stopper(
+        self, execution_id: str, stopper: Callable[[], dict[str, Any]]
+    ) -> Callable[[], None]:
+        """Expose only this process's owned native stop operation to cancel."""
+        identifier(execution_id)
+        with self._native_stop_lock:
+            if execution_id in self._native_stoppers:
+                raise RunError("PLANNING_NATIVE_STOPPER_ALREADY_REGISTERED")
+            self._native_stoppers[execution_id] = stopper
+
+        def unregister() -> None:
+            with self._native_stop_lock:
+                if self._native_stoppers.get(execution_id) is stopper:
+                    self._native_stoppers.pop(execution_id, None)
+
+        return unregister
+
+    def _stop_owned_native(
+        self, execution_id: str, principal: str, execution: dict[str, Any]
+    ) -> dict[str, Any]:
+        with self._native_stop_lock:
+            stopper = self._native_stoppers.get(execution_id)
+        if stopper is None:
+            cleanup = {"local_stop": "unknown"}
+        else:
+            try:
+                cleanup = stopper()
+                if not isinstance(cleanup, dict):
+                    raise ValueError
+            except Exception:
+                cleanup = {"local_stop": "unknown"}
+        with self._transaction() as db:
+            current = self._load(db, execution_id)
+            self._owner_run(current["run_id"], principal)
+            current["native_cleanup"] = cleanup
+            # Native cancellation has no provider cancel protocol. Its remote
+            # outcome remains deliberately unknown even when the local PID is
+            # confirmed stopped.
+            current["provider_remote_stop"] = "unknown"
+            self._save(db, current)
+            return current
 
     def reconcile(self, execution_id: str, *, principal: str) -> dict[str, Any]:
         """Read only the original authority receipt; never acquire a new admission."""

@@ -90,6 +90,7 @@ class FixtureAuthorities:
             "capacity_activation_receipt": self.capacity.command_receipt(
                 "activate", self.activation_request, command_key=self.activation_key
             ),
+            "duration_seconds": 60,
             "state": "admitted",
         }
 
