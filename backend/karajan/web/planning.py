@@ -379,7 +379,8 @@ class PlanningWorkbench:
             else self._project(run, dict(row))
         )
         planning = started["planning"]
-        if planning is None or planning["execution"] is None or self.transport is None:
+        transport = self.transport
+        if planning is None or planning["execution"] is None or transport is None:
             return {**started, "command": self._command_view(command)}
         execution = self.execution.get(planning["execution"]["id"], principal=principal)
         command = self._bind_execute(command, execution)
@@ -389,7 +390,7 @@ class PlanningWorkbench:
                 # Retrying this durable command may overlap a prior process,
                 # but PlanningTransport's pre-effect receipt and dispatch
                 # claim ensure it cannot create another native session/send.
-                outcome = self.transport.execute(
+                outcome = transport.execute(
                     execution["id"], principal=principal, command_key=command_key
                 )
                 outcome_state = outcome.get("state")
