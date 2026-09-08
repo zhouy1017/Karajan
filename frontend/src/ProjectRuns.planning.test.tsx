@@ -49,6 +49,14 @@ const blockedPlanning = {
   },
 };
 
+const awaitingPlanning = {
+  ...blockedPlanning,
+  planning: {
+    ...blockedPlanning.planning,
+    availability: { state: "awaiting" },
+  },
+};
+
 function renderRuns() {
   render(<ProjectRuns project={project} csrf="csrf-fixture" />);
 }
@@ -252,4 +260,155 @@ it("ignores a late planning read after the project selection changes", async () 
     expect(screen.getAllByText("第二个需求").length).toBeGreaterThan(1),
   );
   expect(screen.queryByText("增加问候语")).toBeNull();
+});
+
+it("submits execution only after preparation and keeps the persisted plan approval", async () => {
+  const writes: RequestInit[] = [];
+  let executed = false;
+  const generatedRun = {
+    ...run,
+    state: "awaiting_approval",
+    configuration_snapshot: {
+      configuration: {
+        resources: {
+          budgets: [
+            {
+              id: "planning",
+              currency_limits: { USD: "0" },
+              max_total_attempts: 3,
+              max_duration_seconds: 120,
+            },
+          ],
+        },
+      },
+    },
+    plans: [
+      {
+        term: 1,
+        plan_revision: 1,
+        plan_digest: "a".repeat(64),
+        authorization_digest: "b".repeat(64),
+        configuration_digest: "c".repeat(64),
+        plan: {
+          summary: "生成的持久计划",
+          authorization: {
+            profile_refs: [{ id: "worker", revision: 1 }],
+            read_paths: ["."],
+            write_paths: ["src"],
+            checks: ["unit-tests"],
+            budget_ref: "planning",
+            delivery: "pull_request",
+            target_branch: "main",
+          },
+          tasks: [],
+        },
+      },
+    ],
+  };
+  vi.stubGlobal("fetch", async (path: string, options?: RequestInit) => {
+    if (path.startsWith("/v1/runs?")) return Response.json({ items: [run] });
+    if (path === "/v1/runs/run-1")
+      return Response.json(executed ? generatedRun : run);
+    if (path === "/v1/runs/run-1/planning")
+      return Response.json(awaitingPlanning);
+    if (path === "/v1/runs/run-1/planning-execute") {
+      writes.push(options!);
+      executed = true;
+      return Response.json({ ...awaitingPlanning, run: generatedRun });
+    }
+    throw new Error(`Unexpected request: ${path}`);
+  });
+
+  renderRuns();
+  await userEvent.click(
+    await screen.findByRole("button", { name: "增加问候语" }),
+  );
+  expect(await screen.findByRole("button", { name: "生成计划" })).toBeTruthy();
+  await userEvent.click(screen.getByRole("button", { name: "生成计划" }));
+  await screen.findByText("生成的持久计划");
+  expect(writes).toHaveLength(1);
+  expect(writes[0].method).toBe("POST");
+  expect(writes[0].body).toBe("{}");
+  expect(new Headers(writes[0].headers).get("X-CSRF-Token")).toBe(
+    "csrf-fixture",
+  );
+  expect(new Headers(writes[0].headers).get("Idempotency-Key")).toBeTruthy();
+  expect(screen.getByRole("button", { name: "确认这份计划" })).toBeTruthy();
+});
+
+it("shows an execution block without offering a second execution", async () => {
+  let execute = false;
+  vi.stubGlobal("fetch", async (path: string) => {
+    if (path.startsWith("/v1/runs?")) return Response.json({ items: [run] });
+    if (path === "/v1/runs/run-1") return Response.json(run);
+    if (path === "/v1/runs/run-1/planning")
+      return Response.json(
+        execute
+          ? {
+              ...blockedPlanning,
+              planning: {
+                ...blockedPlanning.planning,
+                availability: {
+                  state: "blocked",
+                  reason_code: "PLANNING_EXECUTION_CANCELLED",
+                },
+              },
+            }
+          : awaitingPlanning,
+      );
+    if (path === "/v1/runs/run-1/planning-execute") {
+      execute = true;
+      return Response.json(blockedPlanning);
+    }
+    throw new Error(`Unexpected request: ${path}`);
+  });
+
+  renderRuns();
+  await userEvent.click(
+    await screen.findByRole("button", { name: "增加问候语" }),
+  );
+  await userEvent.click(
+    await screen.findByRole("button", { name: "生成计划" }),
+  );
+  expect(await screen.findByText("规划已取消。")).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "生成计划" })).toBeNull();
+});
+
+it("reuses an unknown execution key after the workbench is remounted", async () => {
+  const writes: RequestInit[] = [];
+  let attempts = 0;
+  vi.stubGlobal("fetch", async (path: string, options?: RequestInit) => {
+    if (path.startsWith("/v1/runs?")) return Response.json({ items: [run] });
+    if (path === "/v1/runs/run-1") return Response.json(run);
+    if (path === "/v1/runs/run-1/planning")
+      return Response.json(awaitingPlanning);
+    if (path === "/v1/runs/run-1/planning-execute") {
+      writes.push(options!);
+      attempts += 1;
+      if (attempts === 1) throw new TypeError("network lost");
+      return Response.json(awaitingPlanning);
+    }
+    throw new Error(`Unexpected request: ${path}`);
+  });
+
+  const view = render(<ProjectRuns project={project} csrf="csrf-fixture" />);
+  await userEvent.click(
+    await screen.findByRole("button", { name: "增加问候语" }),
+  );
+  await userEvent.click(
+    await screen.findByRole("button", { name: "生成计划" }),
+  );
+  await screen.findByText("network lost");
+  view.unmount();
+  renderRuns();
+  await userEvent.click(
+    await screen.findByRole("button", { name: "增加问候语" }),
+  );
+  await userEvent.click(
+    await screen.findByRole("button", { name: "生成计划" }),
+  );
+  await waitFor(() => expect(writes).toHaveLength(2));
+  expect(new Headers(writes[1].headers).get("Idempotency-Key")).toBe(
+    new Headers(writes[0].headers).get("Idempotency-Key"),
+  );
 });

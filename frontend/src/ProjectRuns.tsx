@@ -299,6 +299,56 @@ function RunWorkbench({
     }
   }
 
+  async function executePlanning() {
+    if (!selected || sending.current) return;
+    const id = selected.id;
+    sending.current = true;
+    const session = lifetime.current;
+    const generation = reading.current;
+    setBusy(true);
+    setError("");
+    setNotice("生成计划请求已提交，正在读取实际状态…");
+    const endpoint = `/v1/runs/${encodeURIComponent(id)}/planning-execute`;
+    const identity = endpoint + "{}";
+    const commandStorageKey = `karajan:planning-execute-command:${id}`;
+    if (command.current?.identity !== identity) {
+      const storedKey = sessionStorage.getItem(commandStorageKey);
+      command.current = {
+        identity,
+        key: storedKey ?? crypto.randomUUID(),
+      };
+      sessionStorage.setItem(commandStorageKey, command.current.key);
+    }
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        body: "{}",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrf,
+          "Idempotency-Key": command.current.key,
+        },
+      });
+      if (!session.active || reading.current !== generation) return;
+      if (!response.ok) throw new Error("生成计划未被接受，请重试。");
+      const refreshed = await openRun(id);
+      command.current = null;
+      sessionStorage.removeItem(commandStorageKey);
+      if (session.active)
+        setNotice(
+          refreshed ? "" : "生成计划请求已提交，请重新打开需求读取状态。",
+        );
+    } catch (cause) {
+      if (session.active)
+        setError(
+          cause instanceof Error ? cause.message : "生成计划结果未知，请重试。",
+        );
+    } finally {
+      sending.current = false;
+      if (session.active) setBusy(false);
+    }
+  }
+
   async function approvePlan(plan: Plan) {
     if (!selected) return;
     const versionTwo = selected.schema_version === "karajan.run-planning.v2";
@@ -605,6 +655,16 @@ function RunWorkbench({
                   <p className="field-help">
                     当前服务暂不能继续执行，需求和规划状态已保留。
                   </p>
+                </>
+              ) : planning.availability.state === "awaiting" ? (
+                <>
+                  <p role="status">规划已准备，可以生成计划。</p>
+                  <button
+                    disabled={busy}
+                    onClick={() => void executePlanning()}
+                  >
+                    生成计划
+                  </button>
                 </>
               ) : (
                 <p role="status">正在准备规划，请稍候读取实际状态。</p>
