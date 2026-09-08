@@ -159,6 +159,52 @@ This follow-up is limited to the bootstrap fixture and this evidence record;
 the broader candidate checks and any CI dispatch must use the resulting commit
 instead of being attributed to the prior `f70bb0e` candidate.
 
+## CI-default hardlinked runtime fixture repair (2026-09-08)
+
+PR CI34230588520 (`f02f378ca9370c989884761d36fa2bc729c07991`) exposed a third,
+separate fixture failure on Linux: the existing factory reached the pinned
+runtime at
+`runtimes/opencode/node_modules/opencode-linux-x64/bin/opencode`, then
+production `_plain()` rejected it with `TASK_DEPLOYMENT_PATH_INVALID` at the
+`st_nlink != 1` check. The CI trace does not report the runtime inode or link
+count, so this record does not claim that CI observed a particular `st_nlink`.
+The runtime was present and the tokenizer had already been made absolute.
+
+The local reproduction used the pinned v1.18.29 ELF
+(`ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650`) and an
+exact temporary hardlink on the same filesystem. `stat` reported the package
+path and alias as the same inode, `nlink=2`, mode `777`, size `184666240`, and
+the same digest. This models the legitimate npm postinstall shape without
+removing or unlinking any shared runtime asset.
+
+The fixture now treats the package path as input only. It copies the fixed
+binary into `tmp_path/private-deployment/opencode`, preserves and verifies the
+source mode and size, verifies equal streaming SHA-256 digests, verifies the
+new target is a regular standalone file with `nlink=1`, and verifies the
+source inode/link metadata is unchanged. The existing-only production factory
+then receives that private staged path through the real Go-task descriptor;
+production private-path and hardlink checks remain unchanged. The controlled
+override is used only to inject the isolated hardlink input for the diagnostic
+run, not as a factory bypass or test boolean.
+
+| Command | Result and limits |
+| --- | --- |
+| Current pre-repair candidate `afa7f5b7c496778fcb670df1552dff6fda18e365`, controlled `KARAJAN_OPENCODE_LINUX_BINARY` pointing to the temporary `nlink=2` alias, relative `.cache/go-context-artifacts` tokenizer, required isolation/tokenizer and offline flags; one factory test | **Red (behavioral):** `1 failed in 5.6s` with `TASK_DEPLOYMENT_PATH_INVALID` from production `go_task_runtime._plain`. This is the current-candidate fixture failure, not historical CI success. |
+| Repaired candidate, override unset, relative `.cache/go-context-artifacts` tokenizer, same required flags and a fresh WSL `/tmp` basetemp; one factory test | **P passed:** `1 passed in 9.58s`. |
+| Repaired candidate, same flags with the controlled `nlink=2` alias as input and a fresh WSL `/tmp` basetemp; one factory test | **P passed:** `1 passed in 10.21s`. The helper staged a standalone copy; the aliased input remained denied if passed directly to production. |
+| Repaired candidate, override unset and relative tokenizer; full `tests/runs/test_reviewer_execution_bootstrap.py` module with fresh `/tmp/karajan-dg01-reviewer-bootstrap-final-20260908` basetemp | **P passed:** `4 passed in 10.25s`. |
+| Repaired candidate, same flags; `tests/runs/test_reviewer_execution_bootstrap.py tests/runs/test_reviewer_execution_intent.py` with fresh `/tmp/karajan-dg01-reviewer-bootstrap-intent-final2-20260908` basetemp | **P passed:** `39 passed in 50.26s`. |
+| Windows main `.venv`, same relative tokenizer/isolation/offline configuration; full bootstrap module with fresh private basetemp | **C passed:** `3 passed, 1 skipped in 1.00s`; the Linux-only factory test was skipped by its platform marker. |
+| Windows main `.venv`: `python -m ruff check .`; `python -m mypy backend` | **Passed:** Ruff clean; mypy `Success: no issues found in 154 source files`. |
+| WSL candidate venv: `python -m mypy backend` | **Passed:** `Success: no issues found in 154 source files`. |
+
+No production file, shared runtime directory, CI workflow, provider, account,
+credential, Journal, native Review, or HTTP operation was changed or invoked.
+The Commander-reported Windows/Linux Capacity, reserved execution guard, and
+Go intent independent-module results remain shared-source evidence and are not
+relabelled as proof of this fixture repair. The earlier f02, 3cb, and 43eb
+failures and their static-review attribution remain preserved above.
+
 ## P1 final-effect repair (2026-09-08)
 
 The fresh independent Standards and Spec reports for candidate

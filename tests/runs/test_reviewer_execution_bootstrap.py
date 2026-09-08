@@ -1,6 +1,8 @@
+import hashlib
 import json
 import os
 import shutil
+import stat
 import sys
 from pathlib import Path
 
@@ -47,6 +49,41 @@ def linux_runtime_artifact() -> Path:
     return runtime
 
 
+def _provision_private_linux_runtime(source: Path, tmp_path: Path) -> Path:
+    """Copy the installed package artifact into a private, standalone inode."""
+    source_info = source.stat()
+    assert stat.S_ISREG(source_info.st_mode)
+    source_identity = (source_info.st_dev, source_info.st_ino, source_info.st_nlink)
+    deployment_root = tmp_path / "private-deployment"
+    deployment_root.mkdir(mode=0o700)
+    target = deployment_root / "opencode"
+    shutil.copyfile(source, target)
+    os.chmod(target, stat.S_IMODE(source_info.st_mode))
+
+    target_info = target.stat()
+    assert stat.S_ISREG(target_info.st_mode)
+    assert target_info.st_nlink == 1
+    assert stat.S_IMODE(target_info.st_mode) == stat.S_IMODE(source_info.st_mode)
+    assert target_info.st_size == source_info.st_size
+
+    def digest(path: Path) -> str:
+        value = hashlib.sha256()
+        with path.open("rb") as stream:
+            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                value.update(chunk)
+        return value.hexdigest()
+
+    assert digest(target) == digest(source)
+    current_source_info = source.stat()
+    current_source_identity = (
+        current_source_info.st_dev,
+        current_source_info.st_ino,
+        current_source_info.st_nlink,
+    )
+    assert current_source_identity == source_identity
+    return target
+
+
 def settings(tmp_path: Path) -> ReviewerExecutionSettings:
     for name in ("control", "state", "candidate", "host"):
         (tmp_path / name).mkdir()
@@ -86,8 +123,9 @@ def test_tampered_descriptor_is_rejected(tmp_path):
 def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
     tmp_path, binding_case, monkeypatch
 ):
-    """The production factory reads the pinned runtime and existing descriptors."""
-    runtime = linux_runtime_artifact()
+    """The factory receives a private copy of the installed pinned runtime."""
+    installed_runtime = linux_runtime_artifact()
+    runtime = _provision_private_linux_runtime(installed_runtime, tmp_path)
     tokenizer = Path(os.environ["KARAJAN_GO_TOKENIZER_DIRECTORY"]).resolve()
     assert runtime.is_file() and tokenizer.is_dir()
     intents, (run_id, _), candidates, _, _ = _passed_reviewer_subject(binding_case)
@@ -158,8 +196,8 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
         launch_compiler=lambda _: ReviewerLaunchSpec(ProcessSpec(("fixture",), tmp_path), "3" * 64),
     )
 
-    # Production opens actual existing descriptors/stores and hashes the pinned
-    # runtime/tokenizer source. This does not qualify or call a model.
+    # Production opens actual existing descriptors/stores and hashes the fixed,
+    # standalone runtime/tokenizer source. This does not qualify or call a model.
     first = open_reviewer_execution_intents(control)
     from karajan.adapters.opencode.go_journal import GoCallJournal
 
