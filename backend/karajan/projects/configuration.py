@@ -238,6 +238,22 @@ def profile_requirements(document: dict[str, Any]) -> list[dict[str, str]]:
     return issues
 
 
+def allows_v2_planning_preparation(document: object) -> bool:
+    """Permit v2 requirement persistence while only Commander evidence is pending.
+
+    This does not make the configuration dispatchable or qualify a Profile.  It
+    merely distinguishes an otherwise valid owner configuration awaiting the
+    fixed Commander observation from malformed or incomplete drafts.
+    """
+    if not isinstance(document, dict):
+        return False
+    issues = validate_configuration(document)
+    return bool(issues) and all(
+        isinstance(issue, dict) and issue.get("code") == "CAPABILITY_NOT_PASSED"
+        for issue in issues
+    )
+
+
 def validate_configuration(document: dict[str, Any]) -> list[dict[str, str]]:
     if contains_credential(document):
         return [{"code": "CREDENTIAL_VALUE_FORBIDDEN", "path": "configuration"}]

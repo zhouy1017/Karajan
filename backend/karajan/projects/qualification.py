@@ -69,6 +69,51 @@ class _CommanderFacts(dict[str, Any]):
         return self._refresh()
 
 
+def _observed_commander_capability_evidence(
+    start: dict[str, Any], observation_id: str
+) -> list[dict[str, Any]] | None:
+    """Derive the two Commander capabilities from this exact fixed-suite source.
+
+    Registered configuration declarations are inputs awaiting qualification; they
+    cannot be copied into a passed observation because they may describe other
+    roles or stale fixture results.
+    """
+    from .go_commander_suite import SCENARIOS
+
+    required = ("design_reasoning", "structured_plan_output")
+    try:
+        source = start["source"]
+        spec = source["probe_spec"]
+        if source["qualification_scope"] != "commander_planning.v1":
+            return None
+        if tuple(spec["scenarios"]) != SCENARIOS:
+            return None
+        for scenario in SCENARIOS:
+            capabilities = spec["cases"][scenario]["input"]["constraints"][
+                "required_capabilities"
+            ]
+            if tuple(capabilities) != required:
+                return None
+        profile = start["profile_binding"]["registration"]["profile"]
+        runtime_version = profile["binding"]["runtime_version"]
+        profile_digest = start["profile_digest"]
+    except (KeyError, TypeError):
+        return None
+    if not isinstance(runtime_version, str) or not isinstance(profile_digest, str):
+        return None
+    return [
+        {
+            "capability": capability,
+            "status": "passed",
+            "profile_digest": profile_digest,
+            "runtime_version": runtime_version,
+            "evidence_ref": observation_id,
+            "provenance": "imported_observation",
+        }
+        for capability in required
+    ]
+
+
 def _safe_root(path: Path) -> Path:
     path = path.absolute()
     for candidate in (path, *path.parents):
@@ -396,6 +441,21 @@ class ProfileQualificationStore:
                 for item in observation.get("scenarios", [])
             )
         )
+        observed_capability_evidence = (
+            _observed_commander_capability_evidence(start, observation_id)
+            if complete_official
+            else None
+        )
+        if complete_official and observed_capability_evidence is None:
+            complete_official = False
+            observation = {
+                **observation,
+                "reason_codes": list(
+                    dict.fromkeys(
+                        [*observation.get("reason_codes", []), "COMMANDER_PROBE_SOURCE_INVALID"]
+                    )
+                ),
+            }
         record: dict[str, Any] = {
             "schema_version": "karajan.profile-qualification.v1",
             "id": observation_id,
@@ -446,7 +506,7 @@ class ProfileQualificationStore:
                         "observed_at": record["observed_at"],
                         "valid_until": record["valid_until"],
                     },
-                    "capability_evidence": registration["capability_evidence"],
+                    "capability_evidence": observed_capability_evidence,
                     "source_generation_sha256": digest(start["source"]),
                 }
             db.execute(

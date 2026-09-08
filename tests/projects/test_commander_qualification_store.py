@@ -68,6 +68,48 @@ class COnlyFixedCommanderSuiteDouble:
         return {"status": "passed", "reason_codes": [], "scenarios": [], "provenance": "c_fixed"}
 
 
+class OfficialCommanderSuiteDouble(COnlyFixedCommanderSuiteDouble):
+    """Controlled completed official observation for fact-projection coverage."""
+
+    def source(self, bound, authentication):
+        source = super().source(bound, authentication)
+        source["observation_origin"] = "official_go"
+        source["probe_spec"] = {
+            "scenarios": ["legal_plan", "denied_tool"],
+            "cases": {
+                scenario: {
+                    "input": {
+                        "constraints": {
+                            "required_capabilities": [
+                                "design_reasoning",
+                                "structured_plan_output",
+                            ]
+                        }
+                    }
+                }
+                for scenario in ("legal_plan", "denied_tool")
+            },
+        }
+        return source
+
+    def observe(self, start, credential, *, current_guard):
+        for scene in start["scenarios"]:
+            with current_guard():
+                self.effects.append(scene["scenario"])
+        return {
+            "status": "passed",
+            "reason_codes": [],
+            "scenarios": [
+                {
+                    "scenario": scenario,
+                    "status": "passed",
+                    "observation_origin": "official_go",
+                }
+                for scenario in ("legal_plan", "denied_tool")
+            ],
+        }
+
+
 @pytest.fixture
 def commander_case(projected):
     projects = projected["projects"]
@@ -187,3 +229,40 @@ def test_production_suite_is_unavailable_not_a_success_stub(commander_case, tmp_
     assert record["status"] == "failed"
     assert record["reason_codes"] == ["COMMANDER_NATIVE_PROBE_UNAVAILABLE"]
     assert "commander_facts" not in record
+
+
+def test_official_commander_facts_only_project_suite_observed_capabilities(commander_case):
+    case = commander_case
+    suite = OfficialCommanderSuiteDouble()
+    store = ProfileQualificationStore(
+        case["projects"],
+        clock=lambda: case["clock"][0],
+        credentials=case["credentials"],
+        commander_suite=suite,
+    )
+    record = store.qualify_commander_planning(
+        case["project_id"],
+        {"id": "commander", "revision": 1},
+        principal="owner",
+        command_key="official-commander-evidence",
+        validity_seconds=60,
+    )
+    assert record["status"] == "passed"
+    assert record["provenance"] == "official"
+    facts = record["commander_facts"]
+    evidence = facts["capability_evidence"]
+    assert [row["capability"] for row in evidence] == [
+        "design_reasoning",
+        "structured_plan_output",
+    ]
+    assert all(row["status"] == "passed" for row in evidence)
+    assert all(
+        row["profile_digest"] == facts["profile_facts"]["profile_digest"] for row in evidence
+    )
+    assert all(row["runtime_version"] == "1.18.29" for row in evidence)
+    assert all(row["evidence_ref"] == record["id"] for row in evidence)
+    assert all(row["provenance"] == "imported_observation" for row in evidence)
+    assert {row["capability"] for row in evidence}.isdisjoint(
+        {row["capability"] for row in case["commander"]["capability_evidence"]}
+        - {"design_reasoning", "structured_plan_output"}
+    )

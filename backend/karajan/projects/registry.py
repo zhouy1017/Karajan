@@ -16,7 +16,12 @@ from pydantic import TypeAdapter, ValidationError
 
 from karajan.storage import open_database, require_schema
 
-from .configuration import VALIDATOR_REVISION, validate_configuration, validator_identity
+from .configuration import (
+    VALIDATOR_REVISION,
+    allows_v2_planning_preparation,
+    validate_configuration,
+    validator_identity,
+)
 from .models import Identifier, ProjectCreate, ProjectUpdate, TaskPreview
 from .publication import (
     PublicationError,
@@ -701,6 +706,62 @@ class ProjectRegistry:
                 "configuration": configuration,
             }
 
+    def _planning_preparation_readiness_locked(
+        self, db: sqlite3.Connection, project_id: str, snapshot: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Return a read-only v2 persistence decision for the current configuration."""
+        configuration = snapshot["configuration"]
+        document = None
+        if configuration["preview_id"] is not None:
+            stored = db.execute(
+                "SELECT configuration FROM previews WHERE id=? AND project_id=?",
+                (configuration["preview_id"], project_id),
+            ).fetchone()
+            if stored is not None and stored["configuration"] is not None:
+                document = json.loads(stored["configuration"])
+        issues = validate_configuration(document) if isinstance(document, dict) else []
+        reason_codes = sorted(
+            {issue["code"] for issue in issues if isinstance(issue, dict) and "code" in issue}
+        )
+        qualification_pending = (
+            configuration["status"] == "draft" and allows_v2_planning_preparation(document)
+        )
+        return {
+            "schema_version": "karajan.planning-preparation-readiness.v1",
+            "project_id": project_id,
+            "configuration_revision": configuration["revision"],
+            "configuration_digest": configuration["digest"],
+            "configuration_status": configuration["status"],
+            "v2_preparation_allowed": configuration["status"] == "offline_valid"
+            or qualification_pending,
+            # Registry does not own a current qualification reader.  Configuration
+            # validity must never be projected as a passed or absent qualification.
+            "qualification_state": "unknown",
+            "qualification_pending": True if qualification_pending else None,
+            "reason_codes": reason_codes
+            if reason_codes
+            else (
+                []
+                if configuration["status"] == "offline_valid"
+                else ["CONFIGURATION_NOT_READY"]
+            ),
+            "activation_allowed": False,
+        }
+
+    def planning_preparation_readiness(
+        self, project_id: str, *, principal: str
+    ) -> dict[str, Any]:
+        """Read whether an owner may persist a v2 Run before qualification passes."""
+        project_id = identifier(project_id)
+        with self._transaction() as db:
+            self._require_owner(db, project_id, principal)
+            row = db.execute("SELECT snapshot FROM projects WHERE id=?", (project_id,)).fetchone()
+            if row is None:
+                raise ProjectError("PROJECT_NOT_FOUND")
+            return self._planning_preparation_readiness_locked(
+                db, project_id, json.loads(row["snapshot"])
+            )
+
     def register_execution_policy(
         self, project_id: str, request: dict[str, Any], *, command_key: str, principal: str
     ) -> dict[str, Any]:
@@ -720,7 +781,15 @@ class ProjectRegistry:
             self._require_owner(db, project_id, principal)
             row = db.execute("SELECT snapshot FROM projects WHERE id=?", (project_id,)).fetchone()
             snapshot = json.loads(row["snapshot"])
-            if snapshot["configuration"]["status"] != "offline_valid":
+            readiness = self._planning_preparation_readiness_locked(db, project_id, snapshot)
+            is_v2 = (
+                isinstance(request, dict)
+                and request.get("schema_version") == "karajan.execution-policy.v2"
+            )
+            if not (
+                snapshot["configuration"]["status"] == "offline_valid"
+                or (is_v2 and readiness["qualification_pending"])
+            ):
                 raise ProjectError("CONFIGURATION_NOT_READY")
             stored = db.execute(
                 "SELECT configuration FROM previews WHERE id=? AND project_id=?",

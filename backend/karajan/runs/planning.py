@@ -161,7 +161,16 @@ class RunPlanner:
         ):
             raise RunError("PROJECT_SNAPSHOT_CHANGED")
         if project["configuration"]["status"] != "offline_valid":
-            raise RunError("CONFIGURATION_NOT_READY")
+            from karajan.projects import ProjectError
+
+            try:
+                readiness = self.projects.planning_preparation_readiness(
+                    request["project_id"], principal=principal
+                )
+            except ProjectError:
+                raise RunError("CONFIGURATION_NOT_READY") from None
+            if not (version_two and readiness["qualification_pending"]):
+                raise RunError("CONFIGURATION_NOT_READY")
         execution_policy = None
         if version_two:
             from karajan.projects import ProjectError
