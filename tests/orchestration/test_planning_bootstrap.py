@@ -124,6 +124,10 @@ def test_reads_existing_private_deployment_and_rechecks_digest(deployment) -> No
 def test_provisioning_creates_empty_normal_routing_dependencies(tmp_path: Path) -> None:
     """A protected normal app may reopen its routing readers without evidence."""
     from karajan.capacity import CapacityStore
+    from karajan.orchestration.planning_snapshot import (
+        PlanningRepositorySnapshotStore,
+        snapshot_database,
+    )
     from karajan.orchestration.routing import ApprovedRunRouting
     from karajan.projects.qualification import ProfileQualificationStore
     from karajan.runs import RunPlanner
@@ -140,8 +144,14 @@ def test_provisioning_creates_empty_normal_routing_dependencies(tmp_path: Path) 
     capacity = CapacityStore(settings.capacity_database, existing_only=True)
 
     routing = ApprovedRunRouting(planner, ProfileQualificationStore(projects), capacity)
+    snapshots = PlanningRepositorySnapshotStore(
+        snapshot_database(settings.control_directory),
+        existing_only=True,
+        private_root=settings.state_directory,
+    )
 
     assert routing.estimates.planner is planner
+    assert snapshots.database == snapshot_database(settings.control_directory)
 
 
 @pytest.mark.parametrize(

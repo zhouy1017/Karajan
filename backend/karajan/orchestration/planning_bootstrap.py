@@ -347,6 +347,11 @@ def provision_planning_bootstrap(
             os.fsync(stream.fileno())
         _private(descriptor)
         read_planning_bootstrap(control)
+        from karajan.orchestration.planning_snapshot import (
+            provision_planning_repository_snapshots,
+        )
+
+        provision_planning_repository_snapshots(control)
         return settings
     except (OSError, RunError, ValueError):
         raise _invalid() from None
