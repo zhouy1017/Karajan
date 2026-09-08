@@ -309,7 +309,7 @@ class ReviewerExecutionIntents:
                     # The private-ledger writer may have waited after the
                     # Admission guard was entered.  Re-read deployment source
                     # before taking the producer's final scalar time sample.
-                    self._assert_current_effect_boundary(held)
+                    self._assert_current_effect_boundary(held, binding["reviewer_input"])
                     intent = (
                         binding
                         | asdict(self.source)
@@ -385,7 +385,9 @@ class ReviewerExecutionIntents:
             (json.dumps(value, sort_keys=True), value["phase"], value["execution_id"]),
         )
 
-    def _assert_current_effect_boundary(self, held: dict[str, Any]) -> None:
+    def _assert_current_effect_boundary(
+        self, held: dict[str, Any], expected_input: dict[str, Any]
+    ) -> None:
         """Use the held producer's complete temporal fence at a real write.
 
         Deployment-source reads can block, so they must complete before the
@@ -398,7 +400,7 @@ class ReviewerExecutionIntents:
         capability = held.get("final_effect_capability")
         if not isinstance(capability, ReviewerFinalEffectCapability):
             raise RunError("REVIEWER_EXECUTION_BOUNDARY_INVALID")
-        capability.assert_current()
+        capability.assert_current(expected_input)
 
     @contextmanager
     def _current_guard(self, value: dict[str, Any]) -> Iterator[Callable[[], None]]:
@@ -422,7 +424,7 @@ class ReviewerExecutionIntents:
             value["run_id"], value["reviewer_operation_id"], principal=value["principal"]
         ) as held:
             def assert_temporal_current() -> None:
-                self._assert_current_effect_boundary(held)
+                self._assert_current_effect_boundary(held, value["reviewer_input"])
 
             yield assert_temporal_current
 

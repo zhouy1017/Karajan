@@ -63,6 +63,17 @@ def _service(tmp_path: Path, binding_case, *, conservative_observation_age: floa
     )
 
 
+def _record_new_passed_check(service, worker):
+    """Record a later successful evidence row for one already-passed Check."""
+    check = worker["validation"]["checks"]["runs"][0]
+    original = check["evidence"]
+    request = deepcopy(check["evidence_request"])
+    request["evidence_key"] += ":new"
+    request["observation_ref"] += ":new"
+    replacement = service.candidates.record_check(request, log=b"replacement check passed\n")
+    return original["id"], replacement["id"]
+
+
 @pytest.mark.parametrize("contents", [b"", b"not a sqlite ledger"])
 def test_existing_only_rejects_empty_or_malformed_ledger_without_repair(
     tmp_path, binding_case, contents
@@ -399,6 +410,140 @@ def test_missing_check_log_after_receiving_writer_wait_blocks_prepare_and_claim(
         assert service.read(run_id, reviewer_id, principal="owner") is None
     else:
         assert service.read(run_id, reviewer_id, principal="owner")["effect_claim"] is None
+
+
+@pytest.mark.parametrize("boundary", ["prepare", "host", "control", "claim"])
+def test_later_passed_check_after_receiver_writer_wait_blocks_full_input_identity(
+    tmp_path, binding_case, boundary
+):
+    """A later Check result cannot replace the frozen complete Reviewer input."""
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    reviewer = service.admissions.get(run_id, reviewer_id, principal="owner")
+    worker = service.admissions.get(
+        run_id, reviewer["depends_on_operation_id"], principal="owner"
+    )
+    check = worker["validation"]["checks"]["runs"][0]
+    candidate = check["candidate"]
+    reached, release, outcome = threading.Event(), threading.Event(), []
+
+    if boundary == "prepare":
+        original_db = service._db
+
+        @contextmanager
+        def writer(*, write=True):
+            if write:
+                reached.set()
+            with original_db(write=write) as db:
+                yield db
+
+        service._db = writer
+
+        def action():
+            return service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+
+        database = service.database
+    elif boundary == "host":
+        intent = service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+        original_prepare = service.host.prepare
+
+        def prepare(*args, **kwargs):
+            reached.set()
+            return original_prepare(*args, **kwargs)
+
+        service.host.prepare = prepare
+
+        def action():
+            return service.freeze_launch(run_id, reviewer_id, principal="owner")
+
+        database = service.host.database
+    elif boundary == "control":
+        intent = service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+        original_control = service.host.initialize_control_once
+
+        def control(*args, **kwargs):
+            reached.set()
+            assert release.wait(5)
+            return original_control(*args, **kwargs)
+
+        service.host.initialize_control_once = control
+
+        def action():
+            return service.freeze_launch(run_id, reviewer_id, principal="owner")
+
+        database = service.host.database
+    else:
+        intent = service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+        service.freeze_launch(run_id, reviewer_id, principal="owner")
+        from karajan.execution._platform import process_identity
+
+        identity = process_identity(os.getpid())
+        assert identity is not None
+
+        @contextmanager
+        def current_runner(*args, **kwargs):
+            reached.set()
+            yield identity
+
+        def wait_for_runner(*args, **kwargs):
+            return identity
+
+        service.host.wait_for_runner_registration = wait_for_runner
+        service.host.current_runner_guard = current_runner
+
+        def action():
+            return service.claim_registered_observer(
+                run_id, reviewer_id, principal="owner", timeout_seconds=0.01
+            )
+
+        database = service.database
+
+    holder = None
+    if boundary != "control":
+        holder = sqlite3.connect(database, isolation_level=None, timeout=5)
+        holder.execute("BEGIN IMMEDIATE")
+
+    def invoke():
+        try:
+            action()
+        except BaseException as error:
+            outcome.append(error)
+
+    thread = threading.Thread(target=invoke)
+    thread.start()
+    assert reached.wait(5)
+    if boundary == "control":
+        holder = sqlite3.connect(database, isolation_level=None, timeout=5)
+        holder.execute("BEGIN IMMEDIATE")
+        release.set()
+    original_id, replacement_id = _record_new_passed_check(service, worker)
+    gate = service.candidates.gate(
+        candidate["id"],
+        current={
+            key: candidate[key]
+            for key in ("repository_identity", "base_sha", "input_sha256", "policy_sha256")
+        },
+    )
+    assert {
+        row["id"]: row["effective_status"]
+        for row in gate["evidence"]
+        if row["id"] in {original_id, replacement_id}
+    } == {original_id: "passed", replacement_id: "passed"}
+    assert holder is not None
+    holder.commit()
+    holder.close()
+    thread.join(10)
+    assert not thread.is_alive()
+    assert outcome and isinstance(outcome[0], RunError)
+    if boundary == "prepare":
+        assert service.read(run_id, reviewer_id, principal="owner") is None
+    elif boundary == "control":
+        with sqlite3.connect(service.host.database) as db:
+            assert db.execute("SELECT COUNT(*) FROM controls").fetchone()[0] == 0
+    elif boundary == "claim":
+        assert service.read(run_id, reviewer_id, principal="owner")["effect_claim"] is None
+    else:
+        with pytest.raises(KeyError):
+            service.host.inspect(intent["planned_attempt_id"])
 
 
 @pytest.mark.parametrize("boundary", ["new_intent", "host", "control", "claim"])

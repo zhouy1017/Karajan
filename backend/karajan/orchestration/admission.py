@@ -26,8 +26,12 @@ class ReviewerFinalEffectCapability:
 
     _prepare: Callable[[], Callable[[], None]]
     _capacity_check: CapacityEffectCapability
+    _prepare_input: Callable[[object], None]
 
-    def assert_current(self) -> None:
+    def assert_current(self, expected_input: object) -> None:
+        # The receiver invokes this only after acquiring its writer. Complete
+        # Candidate/Check reads happen before the retained scalar fences.
+        self._prepare_input(expected_input)
         self._prepare()()
         try:
             self._capacity_check.assert_current()
@@ -796,6 +800,34 @@ class ApprovedTaskAdmission:
 
                         return final_check
 
+                    def check_reviewer_current_input(expected_input: object) -> None:
+                        """Rebuild the full pinned input from held producer records."""
+                        from .reviewer_input import compile_reviewer_input_from_records
+
+                        try:
+                            evidence_ids = [
+                                row["evidence"]["id"]
+                                for row in worker_operation["validation"]["checks"]["runs"]
+                            ]
+                        except (KeyError, TypeError):
+                            raise RunError("REVIEWER_INPUT_CHECKS_INCOMPLETE") from None
+                        compiled = compile_reviewer_input_from_records(
+                            bindings.candidates,
+                            run=run,
+                            operation=worker_operation,
+                            principal=principal,
+                            final_check_evidence_ids=evidence_ids,
+                        )
+                        current_input = {
+                            "schema_version": "karajan.reviewer-input.v2",
+                            "sha256": compiled.content_sha256,
+                            "size": compiled.size,
+                            "allowed_files": list(compiled.allowed_files),
+                            "check_evidence_ids": list(compiled.check_evidence_ids),
+                        }
+                        if expected_input != current_input:
+                            raise RunError("REVIEWER_EXECUTION_INPUT_CHANGED")
+
                     with self.routing.capacity.pre_effect_guard(
                         capacity_receipt["admission_id"],
                         expected_request=request,
@@ -814,7 +846,9 @@ class ApprovedTaskAdmission:
                         if not isinstance(capacity_effect_capability, CapacityEffectCapability):
                             raise RunError("REVIEWER_CAPACITY_BOUNDARY_INVALID")
                         final_effect_check = ReviewerFinalEffectCapability(
-                            check_reviewer_final_effect_boundary, capacity_effect_capability
+                            check_reviewer_final_effect_boundary,
+                            capacity_effect_capability,
+                            check_reviewer_current_input,
                         )
                         yield {
                             "operation": operation,

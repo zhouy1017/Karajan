@@ -91,9 +91,46 @@ def compile_reviewer_input(
         operation = GoExecutionIntents.read_operation(
             admissions, run_id, operation_id, principal=principal
         )
+        return compile_reviewer_input_from_records(
+            candidates,
+            run=run,
+            operation=operation,
+            principal=principal,
+            final_check_evidence_ids=final_check_evidence_ids,
+        )
+    except RunError:
+        raise
+    except CandidateError as error:
+        raise RunError(error.code) from None
+    except (
+        AttributeError,
+        KeyError,
+        TypeError,
+        ValueError,
+        ValidationError,
+        OSError,
+        RecursionError,
+    ):
+        raise RunError("REVIEWER_INPUT_INVALID") from None
+
+
+def compile_reviewer_input_from_records(
+    candidates: CandidateStore,
+    *,
+    run: dict[str, Any],
+    operation: dict[str, Any],
+    principal: str,
+    final_check_evidence_ids: Collection[str],
+) -> ReviewerInput:
+    """Compile from producer-held controller records without reopening their DBs.
+
+    The admission effect guard already holds these exact Run and Worker records.
+    A receiving writer can therefore recompile the full Candidate CAS and Check
+    input without inverting the established controller lock order.
+    """
+    try:
         if (
-            operation.get("run_id") != run_id
-            or operation.get("id") != operation_id
+            operation.get("run_id") != run.get("id")
             or operation.get("state") not in {"reserved", "execution_pending", "executing"}
         ):
             raise RunError("REVIEWER_INPUT_OPERATION_INVALID")
