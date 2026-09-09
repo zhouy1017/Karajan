@@ -218,6 +218,29 @@ def test_owner_approves_only_the_exact_trusted_plan_and_retries_the_same_command
     approved = client.get(f"/v1/runs/{run['id']}").json()
     assert approved["active_plan_revision"] == 1
     assert approved["dispatch_enabled"] is False
+    hub = client.get(f"/v1/conversations/{run['conversation_id']}/hub").json()
+    assert hub["tasks"] == [
+        {
+            "id": "greeting",
+            "run_id": run["id"],
+            "plan_revision": 1,
+            "revision": 1,
+            "role": "worker",
+            "state": "ready",
+            "readiness": "ready",
+            "depends_on": [],
+            "checks": [],
+        }
+    ]
+    assert hub["attempts"][0]["id"] == intent["id"]
+    assert hub["blockers"] == []
+    selected = client.put(
+        f"/v1/conversations/{run['conversation_id']}/draft",
+        json={"content": "follow this task", "selected_task_id": "greeting"},
+        headers={**headers, "Idempotency-Key": "select-real-task", "If-Match": '"1"'},
+    )
+    assert selected.status_code == 200
+    assert selected.json()["selected_task_id"] == "greeting"
 
 
 def test_commander_handoff_waits_for_an_owner_decision_and_rejects_stale_confirmation(

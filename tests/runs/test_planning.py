@@ -5,12 +5,14 @@ import os
 import subprocess
 import sys
 import time
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
 from karajan.projects import ProjectRegistry
 from karajan.runs import RunError, RunPlanner
+from karajan.runs.planning import digest
 
 
 @pytest.fixture
@@ -131,6 +133,53 @@ def test_repeated_concurrent_create_is_one_command_and_changed_payload_is_reject
     changed = {**request, "requirement": {"goal": "different", "acceptance": ["new"]}}
     with pytest.raises(RunError, match="IDEMPOTENCY_CONFLICT"):
         planner.create(changed, command_key="same", principal="owner")
+
+
+def test_run_creation_binds_only_a_real_project_conversation_in_the_same_ledger(
+    tmp_path: Path, project: tuple[ProjectRegistry, dict, Path]
+) -> None:
+    registry, configured, _ = project
+    planner = RunPlanner(tmp_path / "runs.sqlite", registry)
+    request = create_request(configured)
+
+    # Even the predictable legacy identifier is not accepted when the browser
+    # explicitly supplied it.  Only an omitted field can take that migration
+    # compatibility path.
+    explicit_legacy = str(
+        uuid.uuid5(uuid.UUID("e9e9a0cf-f970-5b45-9aa0-0a1ea3374b4b"), configured["id"])
+    )
+    with pytest.raises(RunError, match="CONVERSATION_NOT_FOUND"):
+        planner.create(
+            {**request, "conversation_id": explicit_legacy},
+            command_key="explicit-legacy",
+            principal="owner",
+        )
+
+    # The legacy wire command retains its original receipt digest, so an
+    # existing client replays identically after the conversation migration.
+    legacy = planner.create(request, command_key="legacy", principal="owner")
+    with planner._transaction() as db:
+        receipt = db.execute(
+            "SELECT digest FROM run_commands WHERE principal='owner' AND key='legacy'"
+        ).fetchone()
+        binding = db.execute(
+            "SELECT conversation_id, project_id FROM conversation_run_bindings WHERE run_id=?",
+            (legacy["id"],),
+        ).fetchone()
+    assert receipt["digest"] == digest(["create", request])
+    assert binding["conversation_id"] == legacy["conversation_id"]
+    assert binding["project_id"] == configured["id"]
+    assert (
+        RunPlanner(tmp_path / "runs.sqlite", registry).create(
+            request, command_key="legacy", principal="owner"
+        )
+        == legacy
+    )
+
+    missing = {**request, "conversation_id": "missing-conversation"}
+    with pytest.raises(RunError, match="CONVERSATION_NOT_FOUND"):
+        planner.create(missing, command_key="missing-conversation", principal="owner")
+    assert [item["id"] for item in planner.list(principal="owner")] == [legacy["id"]]
 
 
 class ScriptedAdmissionReader:

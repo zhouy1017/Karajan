@@ -17,6 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
 from karajan.capacity import CapacityStore
+from karajan.conversations import ConversationStore
 from karajan.orchestration.admission import ApprovedTaskAdmission
 from karajan.orchestration.planning_execution import PlanningExecution
 from karajan.orchestration.planning_transport import PlanningTransport
@@ -28,6 +29,7 @@ from karajan.runs import RunPlanner
 from .admission import register_admission_routes
 from .approved_routing import register_approved_routing_routes
 from .body_limit import BodyLimitMiddleware
+from .conversations import register_conversation_routes
 from .planning import PlanningWorkbench, register_planning_routes
 from .projects import register_project_routes
 from .resources import register_resource_routes
@@ -175,7 +177,9 @@ def create_app(
         if controller_execution is not None and controller_execution.capacity is not None
         else CapacityStore(state_directory / "capacity.sqlite")
     )
-    register_run_routes(app, planner)
+    conversations = ConversationStore(projects, planner)
+    register_run_routes(app, planner, conversations)
+    register_conversation_routes(app, conversations)
     execution = controller_execution or PlanningExecution(
         state_directory / "planning-execution.sqlite", planner
     )
