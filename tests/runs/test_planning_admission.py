@@ -1834,6 +1834,72 @@ def test_production_transport_rejects_unsupported_estimate_unit_before_any_effec
     assert service.planner.get(run["id"], principal="owner")["plans"] == []
 
 
+@pytest.mark.skipif(sys.platform != "linux", reason="native planning requires Linux namespaces")
+def test_production_transport_rejects_conflicting_command_before_new_execution_effects(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A command bound to A cannot freeze or estimate awaiting execution B."""
+    control, service, run, first = _persistent_production_transport_case(tmp_path, configured)
+
+    def unexpected_produce(*args: object, **kwargs: object) -> bytes:
+        del args, kwargs
+        raise AssertionError("a conflicting command must not start native production")
+
+    monkeypatch.setattr(ProductionGoPlanningProducer, "produce", unexpected_produce)
+    transport = PlanningTransport.from_trusted_factory(control)
+    second_intent = transport.execution.planner.planning_intent(
+        run["id"], term=1, command_key="conflicting-intent", principal="lead"
+    )
+    second = transport.execution.begin(
+        run["id"], second_intent["id"], principal="owner", command_key="conflicting-begin"
+    )
+    assert second["state"] == "awaiting_admission"
+    transport.outputs.claim_execute_command(
+        first["binding"], principal="owner", command_key="conflicting-execute"
+    )
+    state = tmp_path / "protected-state"
+    output_database = state / "planning-output.sqlite"
+    snapshot_database_path = state / "planning-repository-snapshots.sqlite"
+    assert isinstance(transport.execution.admissions, PlanningAdmissionAuthority)
+    with pytest.raises(RunError, match="^IDEMPOTENCY_CONFLICT$"):
+        transport.execute(
+            second["id"], principal="owner", command_key="conflicting-execute"
+        )
+
+    with sqlite3.connect(snapshot_database_path) as db:
+        assert {
+            table: db.execute("SELECT COUNT(*) FROM " + table).fetchone()[0]
+            for table in ("snapshots", "files")
+        } == {"snapshots": 0, "files": 0}
+    with sqlite3.connect(transport.execution.admissions.database) as db:
+        assert db.execute("SELECT COUNT(*) FROM planning_estimates").fetchone()[0] == 0
+    with sqlite3.connect(output_database) as db:
+        assert {
+            table: db.execute("SELECT COUNT(*) FROM " + table).fetchone()[0]
+            for table in (
+                "planning_execute_commands",
+                "planning_output_sources",
+                "planning_output_claims",
+                "planning_outputs",
+            )
+        } == {
+            "planning_execute_commands": 1,
+            "planning_output_sources": 0,
+            "planning_output_claims": 0,
+            "planning_outputs": 0,
+        }
+    with sqlite3.connect(transport.execution.capacity.path) as db:
+        assert (
+            db.execute(
+                "SELECT COUNT(*) FROM commands WHERE key LIKE 'planning-activate:%'"
+            ).fetchone()[0]
+            == 0
+        )
+    assert transport.execution.capacity.snapshot()["reservations"] == []
+    assert transport.execution.get(second["id"], principal="owner")["state"] == "awaiting_admission"
+    assert service.planner.get(run["id"], principal="owner")["plans"] == []
+
+
 def test_persistent_factory_missing_descriptor_rejects_without_creating_stores(
     tmp_path: Path,
 ) -> None:

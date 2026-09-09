@@ -20,7 +20,7 @@ import time
 from collections.abc import Callable, Iterator
 from contextlib import AbstractContextManager, contextmanager
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 from uuid import uuid4
 
 import httpx
@@ -443,23 +443,10 @@ class PlanningTransport:
         current = self.execution.get(execution_id, principal=principal)
         model_input: PlanningModelInput | None = None
         if current["state"] == "awaiting_admission":
-            # Validate the controller-owned resource vector before recording
-            # any output command or arming a source.  Unsupported native units
-            # must be a zero-effect rejection, not a durable send claim.
-            self.execution.freeze_repository_snapshot(
-                execution_id, principal=principal, command_key="planning-snapshot:" + execution_id
-            )
-            model_input = compile_planning_input(
-                self.execution,
-                self.accounting,
-                execution_id=execution_id,
-                principal=principal,
-            )
-            try:
-                self._register_controller_estimate(current, model_input, principal=principal)
-            except RunError as error:
-                if str(error) != "PLANNING_ESTIMATE_SOURCE_UNAVAILABLE":
-                    raise
+            # A non-request estimate has no trusted conversion.  This lookup
+            # is deliberately read-only: command identity must be durable
+            # before snapshot, estimate, or any other stateful operation.
+            self._preflight_controller_estimate_unit(current, principal=principal)
         # Persist the user command's exact subject/resource binding before an
         # output source is armed, a dispatch is claimed, or a producer can send.
         self.outputs.claim_execute_command(
@@ -487,6 +474,14 @@ class PlanningTransport:
                     execution_id=execution_id,
                     principal=principal,
                 )
+                if current["state"] == "awaiting_admission":
+                    try:
+                        self._register_controller_estimate(
+                            current, model_input, principal=principal
+                        )
+                    except RunError as error:
+                        if str(error) != "PLANNING_ESTIMATE_SOURCE_UNAVAILABLE":
+                            raise
             # This records a read-only output identity.  ``admit`` verifies it
             # before it can transition to awaiting_output; it does not send.
             self.outputs.arm(current["binding"], self.producer.source(current["binding"]))
@@ -507,20 +502,43 @@ class PlanningTransport:
                     return self.execution.get(execution_id, principal=principal)
         return self.execution.submit(execution_id, principal=principal, command_key=command_key)
 
-    def _register_controller_estimate(
-        self, execution: dict[str, Any], model_input: PlanningModelInput, *, principal: str
+    def _preflight_controller_estimate_unit(
+        self, execution: dict[str, Any], *, principal: str
     ) -> None:
-        """Derive the one finite estimate from frozen input and live capacity.
+        """Reject only an unconvertible live unit before binding the command."""
+        try:
+            source = self._controller_estimate_source(execution, principal=principal)
+        except RunError as error:
+            # Preserve the existing source-unavailable path: it records the
+            # command first, then lets admission supply its existing blocker.
+            if str(error) == "PLANNING_ESTIMATE_SOURCE_UNAVAILABLE":
+                return
+            raise
+        if source is None:
+            return
+        _, _, _, pools, _, selected, _ = source
+        if any(selected[pool].get("unit") != "requests" for pool in pools):
+            raise RunError("PLANNING_ESTIMATE_UNIT_UNSUPPORTED")
 
-        This is controller-only bookkeeping.  The browser cannot nominate a
-        pool, amount, duration, policy revision, or budget; a missing current
-        capacity observation fails admission rather than widening the request.
-        """
+    def _controller_estimate_source(
+        self, execution: dict[str, Any], *, principal: str
+    ) -> tuple[
+        Any,
+        dict[str, Any],
+        dict[str, Any],
+        list[str],
+        dict[str, Any],
+        dict[str, dict[str, Any]],
+        dict[str, Any],
+    ] | None:
+        """Read the fixed profile pools and current capacity windows without effects."""
         authority = self.execution.admissions
         if authority is None or getattr(authority, "authority_kind", None) != "production":
-            return
+            return None
         admissions: Any = authority
         binding = execution["binding"]
+        if not isinstance(binding, dict):
+            raise RunError("PLANNING_ESTIMATE_SOURCE_UNAVAILABLE")
         run = self.execution.planner.get(binding["run_id"], principal=principal)
         profiles = run["configuration_snapshot"]["configuration"]["resources"]["profiles"]
         registration = next(
@@ -548,12 +566,38 @@ class PlanningTransport:
         )
         if not isinstance(account, dict) or type(account.get("policy_revision")) is not int:
             raise RunError("PLANNING_ESTIMATE_SOURCE_UNAVAILABLE")
-        selected = {row.get("id"): row for row in account.get("pools", []) if isinstance(row, dict)}
-        if any(not isinstance(pool, str) or pool not in selected for pool in pools):
+        pool_ids = [pool for pool in pools if isinstance(pool, str)]
+        if len(pool_ids) != len(pools):
             raise RunError("PLANNING_ESTIMATE_SOURCE_UNAVAILABLE")
-        windows = {pool: selected[pool].get("window_id") for pool in pools}
-        if any(not isinstance(window, str) for window in windows.values()):
+        selected = {
+            row_id: cast(dict[str, Any], row)
+            for row in account.get("pools", [])
+            if isinstance(row, dict) and isinstance(row_id := row.get("id"), str)
+        }
+        if any(pool not in selected for pool in pool_ids):
             raise RunError("PLANNING_ESTIMATE_SOURCE_UNAVAILABLE")
+        windows: dict[str, Any] = {}
+        for pool in pool_ids:
+            window = selected[pool].get("window_id")
+            if not isinstance(window, str):
+                raise RunError("PLANNING_ESTIMATE_SOURCE_UNAVAILABLE")
+            windows[pool] = window
+        return admissions, binding, run, pool_ids, cast(dict[str, Any], account), selected, windows
+
+    def _register_controller_estimate(
+        self, execution: dict[str, Any], model_input: PlanningModelInput, *, principal: str
+    ) -> None:
+        """Derive the one finite estimate from frozen input and live capacity.
+
+        This is controller-only bookkeeping.  The browser cannot nominate a
+        pool, amount, duration, policy revision, or budget; a missing current
+        capacity observation fails admission rather than widening the request.
+        """
+        del model_input
+        source = self._controller_estimate_source(execution, principal=principal)
+        if source is None:
+            return
+        admissions, binding, run, pools, account, selected, windows = source
         # A planning invocation has one countable request.  There is no trusted
         # conversion from its frozen input to a percentage or token quantity, so
         # refuse those pools rather than under-reserving an arbitrary "1".
