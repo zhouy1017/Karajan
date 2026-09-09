@@ -113,8 +113,12 @@ async function describeError(
   );
 }
 
-function stableKey(prefix: string, value: string): string {
-  return `${prefix}:${value}`.slice(0, 200);
+/** The web boundary admits only this compact, URL/header-safe command key. */
+export function stableKey(prefix: string, value: string): string {
+  const key = `${prefix}-${value}`;
+  if (!/^[a-zA-Z0-9_-]{1,128}$/.test(key))
+    throw new Error("COMMAND_KEY_INVALID");
+  return key;
 }
 
 function contextKey(context: DraftContext): string {
@@ -176,6 +180,23 @@ function observedTimestamp(value: Record<string, unknown>): number {
   return observed < 10_000_000_000 ? observed * 1000 : observed;
 }
 
+function selectionFromSnapshot(data: Snapshot): DraftSelection {
+  const restoredId = data.draft?.selected_task_id ?? null;
+  if (!restoredId) return null;
+  if (
+    data.attempts.some(
+      (attempt) => attempt.id === restoredId && attempt.kind === "planning",
+    )
+  )
+    return { kind: "attempt", id: restoredId };
+  if (
+    data.tasks.some((task) => task.id === restoredId) ||
+    data.task_drafts.some((task) => task.id === restoredId)
+  )
+    return { kind: "task", id: restoredId };
+  return null;
+}
+
 export function CommanderWorkbench({
   projects,
   csrf,
@@ -221,6 +242,12 @@ export function CommanderWorkbench({
   // Only an explicit project/conversation change advances this generation.
   const navigation = useRef(0);
   const projectRef = useRef(projectId);
+  // App receives its projects after the workbench has mounted.  Record whether
+  // the initial identity was actually present, rather than treating the
+  // display-only projects[0] fallback as a selected project.
+  const projectWasAvailable = useRef(
+    projects.some((item) => item.id === projectId),
+  );
   const conversationRef = useRef(conversationId);
   const draftRef = useRef(draft);
   const selectionRef = useRef<Selection>(selection);
@@ -322,6 +349,47 @@ export function CommanderWorkbench({
   }, []);
 
   useEffect(() => {
+    if (!projects.length) return;
+    const isKnownProject = (id: string) =>
+      projects.some((item) => item.id === id);
+    const storedProjectId = sessionStorage.getItem("karajan:commander-project");
+    const currentProjectId = projectRef.current;
+    const nextProjectId = isKnownProject(currentProjectId)
+      ? currentProjectId
+      : storedProjectId && isKnownProject(storedProjectId)
+        ? storedProjectId
+        : projects[0].id;
+    const needsActivation = !projectWasAvailable.current;
+    projectWasAvailable.current = true;
+
+    // No real project was active while the list was empty (or a persisted
+    // project has disappeared).  Activate a verified project before any
+    // option load or create action can use its display fallback.  The saved
+    // conversation is intentionally reselected only after this project's
+    // own list arrives below; a stale project can never point at another
+    // project's conversation.
+    if (!needsActivation && nextProjectId === currentProjectId) return;
+    ++navigation.current;
+    recovery.current?.cancel();
+    streamRef.current?.close();
+    streamRef.current = null;
+    streamContext.current = null;
+    projectRef.current = nextProjectId;
+    conversationRef.current = "";
+    setProjectId(nextProjectId);
+    setConversationId("");
+    setSnapshot(null);
+    setOptions([]);
+    setDraft("");
+    setDraftDirty(false);
+    setSelection(null);
+    setFeedbackByAttempt({});
+    setConnection("unknown");
+    setError("");
+    sessionStorage.setItem("karajan:commander-project", nextProjectId);
+  }, [projects]);
+
+  useEffect(() => {
     projects.forEach((item) => void loadConversations(item.id));
   }, [projects, loadConversations]);
 
@@ -348,15 +416,6 @@ export function CommanderWorkbench({
     if (!active(context)) return;
     setSnapshot(data);
     eventSeqRef.current = data.snapshot_event_seq ?? 0;
-    const restoredId = data.draft?.selected_task_id ?? null;
-    const selectionFromServer: DraftSelection = restoredId
-      ? data.attempts.some((attempt) => attempt.id === restoredId)
-        ? { kind: "attempt", id: restoredId }
-        : data.tasks.some((task) => task.id === restoredId) ||
-            data.task_drafts.some((task) => task.id === restoredId)
-          ? { kind: "task", id: restoredId }
-          : null
-      : null;
     presentDraft(
       draftLedger.current.open(
         {
@@ -366,7 +425,7 @@ export function CommanderWorkbench({
         {
           content: data.draft?.content ?? "",
           revision: data.draft?.revision ?? 0,
-          selection: selectionFromServer,
+          selection: selectionFromSnapshot(data),
         },
       ),
     );
@@ -477,12 +536,32 @@ export function CommanderWorkbench({
     )
       return;
     let disposed = false;
+    let reconnectTimer: ReturnType<typeof window.setTimeout> | undefined;
+    let reconnectFailures = 0;
     const close = () => {
       streamRef.current?.close();
       streamRef.current = null;
     };
+    const clearReconnect = () => {
+      if (reconnectTimer === undefined) return;
+      window.clearTimeout(reconnectTimer);
+      reconnectTimer = undefined;
+    };
+    const reconnect = () => {
+      if (disposed || !active(context) || reconnectTimer !== undefined) return;
+      // The released endpoint is a finite event snapshot, not a persistent
+      // push feed.  An EOF/error therefore polls only this stream with a
+      // bounded backoff; it must not re-open the whole snapshot subscription.
+      const delay = Math.min(1_000 * 2 ** reconnectFailures, 8_000);
+      reconnectFailures += 1;
+      reconnectTimer = window.setTimeout(() => {
+        reconnectTimer = undefined;
+        connect();
+      }, delay);
+    };
     const recover = () => {
       if (disposed || !active(context)) return;
+      clearReconnect();
       close();
       setConnection("disconnected");
       recovery.current?.recover(context);
@@ -515,18 +594,28 @@ export function CommanderWorkbench({
         recover();
         return;
       }
+      // A valid, non-duplicate fact proves this finite feed was useful. Only
+      // facts—not merely an EventSource open—reset the EOF backoff.
+      reconnectFailures = 0;
       const state = feedbackState(eventName, value);
-      if (state) {
-        const attemptId = eventAttemptId(value);
-        if (attemptId)
-          setFeedbackByAttempt((old) => ({
+      const attemptId = eventAttemptId(value);
+      const observed = observedTimestamp(value);
+      // Observation freshness and state truth are separate facts. A progress
+      // event can refresh feedback without implying running or terminal state.
+      if (attemptId && (state || observed > 0))
+        setFeedbackByAttempt((old) => {
+          const prior = old[attemptId] ?? {
+            state: "unknown" as const,
+            observed: 0,
+          };
+          return {
             ...old,
             [attemptId]: {
-              state,
-              observed: observedTimestamp(value),
+              state: state ?? prior.state,
+              observed: observed > 0 ? observed : prior.observed,
             },
-          }));
-      }
+          };
+        });
       if (value.freshness === "stale")
         setSnapshot((old) => old && { ...old, freshness: "stale" });
       // Any named state transition is only a notification.  The snapshot is
@@ -589,13 +678,17 @@ export function CommanderWorkbench({
       );
       stream.onerror = () => {
         stream.close();
-        if (disposed || !active(context)) return;
-        recover();
+        if (disposed || !active(context) || streamRef.current !== stream)
+          return;
+        streamRef.current = null;
+        setConnection("disconnected");
+        reconnect();
       };
     }
     connect();
     return () => {
       disposed = true;
+      clearReconnect();
       close();
     };
   }, [active, conversationId, projectId, subscriptionVersion]);
@@ -612,7 +705,6 @@ export function CommanderWorkbench({
       const previous =
         draftQueues.current.get(queueKey) ?? Promise.resolve(true);
       const operation = previous.then(async () => {
-        let reconciledConflict = false;
         while (true) {
           const command = draftLedger.current.prepareSave(context);
           if (!command) return true;
@@ -645,7 +737,6 @@ export function CommanderWorkbench({
               conversationRef.current === command.context.conversationId
             ) {
               presentDraft(next);
-              if (reconciledConflict) setError("");
             }
             // A later edit was made while this command was in flight. Send it
             // with the newly acknowledged revision in the same explicit save.
@@ -657,44 +748,51 @@ export function CommanderWorkbench({
               cause instanceof Error ? cause.message : "草稿保存失败，请重试。";
             if (
               cause instanceof ApiError &&
-              cause.reasonCode === "DRAFT_REVISION_CONFLICT"
+              (cause.reasonCode === "DRAFT_REVISION_CONFLICT" ||
+                cause.reasonCode === "TASK_REFERENCE_NOT_FOUND")
             ) {
-              const next = draftLedger.current.reconcileConflict(
-                command,
-                cause.currentRevision,
-              );
+              const conflict = cause.reasonCode === "DRAFT_REVISION_CONFLICT";
+              const next = conflict
+                ? draftLedger.current.reconcileConflict(
+                    command,
+                    cause.currentRevision,
+                  )
+                : draftLedger.current.rejectDefinitive(
+                    command,
+                    "TASK_REFERENCE_NOT_FOUND",
+                    cause.currentRevision,
+                  );
               const recoveryContext: RecoveryContext = {
                 navigation: navigation.current,
                 projectId: command.context.projectId,
                 conversationId: command.context.conversationId,
               };
-              const current =
-                projectRef.current === command.context.projectId &&
-                conversationRef.current === command.context.conversationId;
+              const current = active(recoveryContext);
               if (current) {
                 presentDraft(next);
-                setError("草稿版本冲突，正在读取服务器当前草稿后重试。");
+                setError(
+                  conflict
+                    ? "草稿版本冲突，正在读取服务器当前草稿。请确认后再次保存。"
+                    : "所选 Task 已失效，正在读取服务器当前草稿。请更正后再次保存。",
+                );
               }
-              if (!current || reconciledConflict) return false;
-              reconciledConflict = true;
               try {
                 const snapshot = await snapshotReader.current(
                   recoveryContext,
                   new AbortController().signal,
                 );
-                if (
-                  recoveryContext.navigation === navigation.current &&
-                  projectRef.current === recoveryContext.projectId &&
-                  conversationRef.current === recoveryContext.conversationId
-                )
+                // Reconcile the originating ledger even after navigation. The
+                // active gate is presentation-only, never persistence.
+                draftLedger.current.open(command.context, {
+                  content: snapshot.draft?.content ?? "",
+                  revision: snapshot.draft?.revision ?? 0,
+                  selection: selectionFromSnapshot(snapshot),
+                });
+                if (active(recoveryContext))
                   snapshotApplier.current(recoveryContext, snapshot);
-                continue;
+                return false;
               } catch (reconcileCause) {
-                if (
-                  recoveryContext.navigation === navigation.current &&
-                  projectRef.current === recoveryContext.projectId &&
-                  conversationRef.current === recoveryContext.conversationId
-                )
+                if (active(recoveryContext))
                   setError(
                     reconcileCause instanceof Error
                       ? reconcileCause.message
@@ -722,7 +820,7 @@ export function CommanderWorkbench({
       });
       return operation;
     },
-    [csrf, presentDraft],
+    [active, csrf, presentDraft],
   );
 
   const pendingDraftNotice = useCallback((context: DraftContext) => {
@@ -812,20 +910,21 @@ export function CommanderWorkbench({
         throw new Error("CROSS_PROJECT_REFERENCE");
       commandRegistry.current.complete(command);
       if (task) {
-        if (active(origin)) {
-          presentDraft(
-            draftLedger.current.clearSubmitted(
-              {
-                projectId: origin.projectId,
-                conversationId: targetConversation,
-              },
-              submitted?.editVersion ?? -1,
-            ),
-          );
-          void saveDraft({
+        const cleared = draftLedger.current.clearSubmitted(
+          {
             projectId: origin.projectId,
             conversationId: targetConversation,
-          });
+          },
+          submitted?.editVersion ?? -1,
+        );
+        // Task success changes the originating durable draft even when the
+        // user has moved to another conversation. Only rendering is gated.
+        void saveDraft({
+          projectId: origin.projectId,
+          conversationId: targetConversation,
+        });
+        if (active(origin)) {
+          presentDraft(cleared);
           recovery.current?.recover(origin);
         }
       } else {
@@ -897,14 +996,15 @@ export function CommanderWorkbench({
       )
         throw new Error("消息响应身份不匹配，请重试。");
       commandRegistry.current.complete(command);
+      const cleared = draftLedger.current.clearSubmitted(
+        { projectId: pid, conversationId: cid },
+        submitted?.editVersion ?? -1,
+      );
+      // A completed message owns its original ledger. Navigation only gates
+      // React presentation; it cannot leave the origin draft uncleared.
+      void saveDraft({ projectId: pid, conversationId: cid });
       if (active(context)) {
-        presentDraft(
-          draftLedger.current.clearSubmitted(
-            { projectId: pid, conversationId: cid },
-            submitted?.editVersion ?? -1,
-          ),
-        );
-        void saveDraft({ projectId: pid, conversationId: cid });
+        presentDraft(cleared);
         recovery.current?.recover(context);
       }
     } catch (cause) {
@@ -1054,6 +1154,7 @@ export function CommanderWorkbench({
         ...(snapshot?.tasks ?? []),
         ...(snapshot?.task_drafts ?? []).map((item) => ({
           id: item.id,
+          requirement: item.requirement,
           role: "需求草稿",
           state: item.state,
         })),
@@ -1334,8 +1435,15 @@ export function CommanderWorkbench({
                       if (
                         event.currentTarget.dataset.draftContext ===
                         contextKey(visibleDraftContext)
-                      )
+                      ) {
+                        const next = event.relatedTarget;
+                        if (
+                          next instanceof HTMLElement &&
+                          next.closest(".composer-actions")
+                        )
+                          return;
                         void saveDraft(visibleDraftContext);
+                      }
                     }}
                     placeholder="告诉 Commander 你想完成什么…"
                     rows={4}
@@ -1377,14 +1485,15 @@ export function CommanderWorkbench({
                   </div>
                   {candidateSelections(snapshot).map((candidate) => (
                     <button
-                      className={`task-row ${selection?.kind === "candidate" && selection.id === candidate.id && selection.version === candidate.version ? "selected" : ""}`}
-                      key={`${candidate.id}:${candidate.version ?? "unknown"}`}
+                      className={`task-row ${selection?.kind === "candidate" && selection.id === candidate.id && selection.version === candidate.version && selection.head === candidate.head ? "selected" : ""}`}
+                      key={`${candidate.id}:${candidate.version ?? "unknown"}:${candidate.head ?? "unknown"}`}
                       onClick={() => {
                         presentDraft(
                           draftLedger.current.selectCandidate(
                             visibleDraftContext,
                             candidate.id,
                             candidate.version,
+                            candidate.head,
                           ),
                         );
                         setError(
@@ -1429,8 +1538,9 @@ export function CommanderWorkbench({
                             {task.state ?? "状态未知"}
                           </span>
                           <span>
-                            <strong>{task.id}</strong>
+                            <strong>{task.requirement ?? task.id}</strong>
                             <small>
+                              {task.requirement ? `${task.id} · ` : ""}
                               {task.role ?? "任务"}
                               {task.depends_on?.length
                                 ? ` · 依赖 ${task.depends_on.join("、")}`
@@ -1454,17 +1564,23 @@ export function CommanderWorkbench({
                           className={`agent-row ${selection?.kind === "attempt" && agent.id === selection.id ? "selected" : ""}`}
                           key={agent.id}
                           onClick={() => {
-                            presentDraft(
-                              draftLedger.current.edit(
-                                {
-                                  projectId: projectRef.current,
-                                  conversationId: conversationRef.current,
-                                },
-                                draftRef.current,
-                                { kind: "attempt", id: agent.id },
-                              ),
-                            );
-                            void saveDraft();
+                            const context = {
+                              projectId: projectRef.current,
+                              conversationId: conversationRef.current,
+                            };
+                            const next =
+                              agent.kind === "planning"
+                                ? draftLedger.current.edit(
+                                    context,
+                                    draftRef.current,
+                                    { kind: "attempt", id: agent.id },
+                                  )
+                                : draftLedger.current.selectLocalSelection(
+                                    context,
+                                    { kind: "attempt", id: agent.id },
+                                  );
+                            presentDraft(next);
+                            if (agent.kind === "planning") void saveDraft();
                           }}
                         >
                           <strong>{agent.id}</strong>

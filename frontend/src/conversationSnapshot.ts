@@ -38,6 +38,7 @@ export type TaskDraftFact = {
 
 export type TaskFact = {
   id: string;
+  requirement?: string;
   run_id?: string;
   current_attempt_id?: string;
   attempt_id?: string;

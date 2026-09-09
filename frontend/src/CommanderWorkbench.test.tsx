@@ -1,7 +1,9 @@
 import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, expect, it, vi } from "vitest";
-import { CommanderWorkbench } from "./CommanderWorkbench";
+import { CommanderWorkbench, stableKey } from "./CommanderWorkbench";
+
+const backendCommandKey = /^[a-zA-Z0-9_-]{1,128}$/;
 
 const project = {
   id: "project-one",
@@ -41,6 +43,7 @@ afterEach(() => {
   cleanup();
   sessionStorage.clear();
   EventSourceFixture.instances = [];
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
@@ -60,6 +63,13 @@ function installFetch(
     "fetch",
     async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
+      if (init?.method && init.method !== "GET") {
+        const key = new Headers(init.headers).get("Idempotency-Key");
+        if (!key || !backendCommandKey.test(key))
+          throw new Error(
+            `Invalid backend command key for ${init.method} ${url}`,
+          );
+      }
       const match = Object.entries(overrides).find(
         ([path]) => url === path || url.startsWith(path),
       );
@@ -72,6 +82,21 @@ function installFetch(
     },
   );
 }
+
+it("encodes every Commander write identity as a distinct backend-valid command key", () => {
+  const identity = "01234567-89ab-4cde-8fab-0123456789ab";
+  const keys = [
+    "conversation",
+    "task-draft",
+    "draft",
+    "message",
+    "settings",
+  ].map((kind) => stableKey(kind, identity));
+
+  expect(keys).toHaveLength(5);
+  expect(new Set(keys)).toHaveLength(5);
+  for (const key of keys) expect(key).toMatch(backendCommandKey);
+});
 
 it("loads only configured Commander choices and sends a non executing string task draft", async () => {
   const taskRequest = vi.fn();
@@ -309,7 +334,7 @@ it("recovers from an SSE gap at the snapshot watermark and refreshes named event
   );
   const recovered = EventSourceFixture.instances.at(-1)!;
   await act(async () => recovered.emit("message_created", { sequence: 21 }));
-  await vi.waitFor(() => expect(snapshots).toBeGreaterThanOrEqual(3));
+  await vi.waitFor(() => expect(snapshots).toBeGreaterThanOrEqual(2));
   await vi.waitFor(() =>
     expect(EventSourceFixture.instances.at(-1)!.url).toContain("after_seq=30"),
   );
@@ -702,7 +727,7 @@ it("recovers a failed gap snapshot before accepting a later state event", async 
   expect(EventSourceFixture.instances.at(-1)!.url).toContain("after_seq=40");
 });
 
-it("re-snapshots state events and exposes a disconnected current Attempt honestly", async () => {
+it("keeps an Attempt state honest across a finite feed, then re-snapshots a named state event", async () => {
   let snapshots = 0;
   let completed = false;
   // A fixed future observation stays non-stale without manufacturing a UI
@@ -759,10 +784,13 @@ it("re-snapshots state events and exposes a disconnected current Attempt honestl
   await act(async () => source.onopen?.());
   expect(screen.getByRole("status").textContent).toContain("模型运行中");
   await act(async () => source.onerror?.());
-  await vi.waitFor(() => expect(snapshots).toBeGreaterThanOrEqual(2));
+  expect(snapshots).toBe(1);
   expect(screen.getByRole("status").textContent).toContain(
     "反馈中断，等待核对",
   );
+  await act(async () => {
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 1_100));
+  });
   completed = true;
   const current = EventSourceFixture.instances.at(-1)!;
   await act(async () =>
@@ -772,13 +800,78 @@ it("re-snapshots state events and exposes a disconnected current Attempt honestl
       state: "completed",
     }),
   );
-  await vi.waitFor(() => expect(snapshots).toBeGreaterThanOrEqual(3));
+  await vi.waitFor(() => expect(snapshots).toBeGreaterThanOrEqual(2));
   expect(
     screen.getByRole("button", { name: /attempt-a/ }).textContent,
   ).toContain("completed");
 });
 
-it("retires a definitive draft conflict, reconciles, and saves the local edit with a new key", async () => {
+it("backs off finite event feeds without snapshot polling and cancels an old reconnect after navigation", async () => {
+  let firstProjectSnapshots = 0;
+  installFetch({
+    "/v1/projects/project-one/commander-options": () =>
+      Response.json({ items: [] }),
+    "/v1/projects/project-two/commander-options": () =>
+      Response.json({ items: [] }),
+    "/v1/projects/project-one/conversations": () =>
+      Response.json({ items: [conversation] }),
+    "/v1/projects/project-two/conversations": () =>
+      Response.json({ items: [conversationTwo] }),
+    "/v1/conversations/conversation-one/snapshot": () => {
+      firstProjectSnapshots += 1;
+      return Response.json(snapshotFor(conversation));
+    },
+    "/v1/conversations/conversation-two/snapshot": () =>
+      Response.json(snapshotFor(conversationTwo)),
+  });
+  render(<CommanderWorkbench projects={[project, projectTwo]} csrf="csrf" />);
+  await screen.findByRole("heading", { name: "Commander" });
+  vi.useFakeTimers();
+  const finite = () => EventSourceFixture.instances.at(-1)!;
+
+  await act(async () => finite().onerror?.());
+  expect(screen.getByRole("status").textContent).not.toContain("模型运行中");
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(999);
+  });
+  expect(EventSourceFixture.instances).toHaveLength(1);
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(1);
+  });
+  expect(EventSourceFixture.instances).toHaveLength(2);
+
+  await act(async () => finite().onerror?.());
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(2_000);
+  });
+  expect(EventSourceFixture.instances).toHaveLength(3);
+
+  await act(async () => finite().onerror?.());
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(4_000);
+  });
+  expect(EventSourceFixture.instances).toHaveLength(4);
+  expect(firstProjectSnapshots).toBe(1);
+
+  await act(async () => finite().onerror?.());
+  await act(async () => {
+    screen.getByRole("button", { name: "›项目二" }).click();
+    await Promise.resolve();
+  });
+  expect(sessionStorage.getItem("karajan:commander-project")).toBe(
+    projectTwo.id,
+  );
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(10_000);
+  });
+  const firstProjectStreams = EventSourceFixture.instances.filter((item) =>
+    item.url.includes("conversation-one/events"),
+  );
+  expect(firstProjectStreams).toHaveLength(4);
+  expect(firstProjectSnapshots).toBe(1);
+});
+
+it("retires a definitive draft conflict, reconciles, and waits for an explicit successor save", async () => {
   const commands: { key: string; revision: string; body: unknown }[] = [];
   let snapshots = 0;
   installFetch({
@@ -823,8 +916,12 @@ it("retires a definitive draft conflict, reconciles, and saves the local edit wi
   await userEvent.type(input, "local X");
   await userEvent.click(screen.getByRole("button", { name: "保存草稿" }));
 
-  await vi.waitFor(() => expect(commands).toHaveLength(2));
+  await vi.waitFor(() => expect(commands).toHaveLength(1));
   expect(snapshots).toBeGreaterThanOrEqual(2);
+  expect((input as HTMLTextAreaElement).value).toBe("local X");
+
+  await userEvent.click(screen.getByRole("button", { name: "保存草稿" }));
+  await vi.waitFor(() => expect(commands).toHaveLength(2));
   expect(commands.map((command) => command.revision)).toEqual(['"1"', '"2"']);
   expect(commands.map((command) => command.body)).toEqual([
     {
@@ -839,7 +936,47 @@ it("retires a definitive draft conflict, reconciles, and saves the local edit wi
     },
   ]);
   expect(commands[0].key).not.toBe(commands[1].key);
-  expect((input as HTMLTextAreaElement).value).toBe("local X");
+});
+
+it("keeps an execution Attempt local and only sends its corrected Task identity", async () => {
+  const draftBodies: { selected_task_id: string | null }[] = [];
+  installFetch({
+    "/v1/projects/project-one/commander-options": () =>
+      Response.json({ items: [] }),
+    "/v1/projects/project-one/conversations": () =>
+      Response.json({ items: [conversation] }),
+    "/v1/conversations/conversation-one/snapshot": () =>
+      Response.json(
+        snapshotFor(conversation, {
+          draft: { content: "server text", revision: 2 },
+          tasks: [{ id: "task-a", role: "Task A" }],
+          attempts: [
+            {
+              id: "execution-attempt-a",
+              task_id: "task-a",
+              kind: "execution",
+              state: "running",
+            },
+          ],
+        }),
+      ),
+    "/v1/conversations/conversation-one/draft": (_input, init) => {
+      draftBodies.push(
+        JSON.parse(String(init?.body)) as { selected_task_id: string | null },
+      );
+      return Response.json({ revision: 3 });
+    },
+  });
+  render(<CommanderWorkbench projects={[project]} csrf="csrf" />);
+
+  await userEvent.click(
+    await screen.findByRole("button", { name: /execution-attempt-a/ }),
+  );
+  expect(draftBodies).toEqual([]);
+
+  await userEvent.click(screen.getByRole("button", { name: /task-a/ }));
+  await vi.waitFor(() => expect(draftBodies).toHaveLength(1));
+  expect(draftBodies[0].selected_task_id).toBe("task-a");
 });
 
 it("persists the post-send clear and restores a later local Y after refresh", async () => {
@@ -949,6 +1086,65 @@ it("accepts consecutive feedback sequences once without a false snapshot recover
   expect(EventSourceFixture.instances).toHaveLength(1);
 });
 
+it("updates progress observation time without inventing an Attempt state", async () => {
+  let snapshots = 0;
+  installFetch({
+    "/v1/projects/project-one/commander-options": () =>
+      Response.json({ items: [] }),
+    "/v1/projects/project-one/conversations": () =>
+      Response.json({ items: [conversation] }),
+    "/v1/conversations/conversation-one/snapshot": () => {
+      snapshots += 1;
+      return Response.json(
+        snapshotFor(conversation, {
+          attempts: [
+            {
+              id: "attempt-a",
+              kind: "planning",
+              state: "unknown",
+            },
+          ],
+          snapshot_event_seq: 10,
+        }),
+      );
+    },
+    "/v1/conversations/conversation-one/draft": () =>
+      Response.json({ revision: 1 }),
+  });
+  render(<CommanderWorkbench projects={[project]} csrf="csrf" />);
+  await userEvent.click(
+    await screen.findByRole("button", { name: /attempt-a/ }),
+  );
+  const source = EventSourceFixture.instances.at(-1)!;
+  await act(async () => source.onopen?.());
+  await act(async () =>
+    source.emit("progress", {
+      sequence: 11,
+      attempt_id: "attempt-a",
+      observed_at: 1_790_000_000,
+    }),
+  );
+
+  const status = screen.getByRole("status");
+  expect(status.textContent).toContain("状态未知，等待核对");
+  expect(status.querySelector("time")?.dateTime).toBe(
+    new Date(1_790_000_000_000).toISOString(),
+  );
+  expect(snapshots).toBe(1);
+
+  await act(async () =>
+    source.emit("progress", {
+      sequence: 11,
+      attempt_id: "attempt-a",
+      observed_at: 1_790_000_001,
+    }),
+  );
+  expect(status.querySelector("time")?.dateTime).toBe(
+    new Date(1_790_000_000_000).toISOString(),
+  );
+  expect(snapshots).toBe(1);
+});
+
 it("retains a local-only candidate selection through recovery and excludes sibling and old-version checks", async () => {
   let snapshots = 0;
   installFetch({
@@ -1029,4 +1225,279 @@ it("retains a local-only candidate selection through recovery and excludes sibli
   expect(screen.queryByText(/old candidate/)).toBeNull();
   expect(screen.queryByText(/sibling B/)).toBeNull();
   expect(screen.getByRole("alert").textContent).toContain("仅保存在本地");
+});
+
+it("activates a project that arrives after the workbench, then loads options and creates its first conversation", async () => {
+  const createRequests: Array<{ url: string; body: unknown }> = [];
+  installFetch({
+    "/v1/projects/project-one/commander-options": () =>
+      Response.json({
+        items: [
+          {
+            profile_ref: "commander",
+            source_ref: "opencode-go-channel",
+          },
+        ],
+      }),
+    "/v1/projects/project-one/conversations": (input, init) => {
+      if (init?.method === "POST") {
+        createRequests.push({
+          url: String(input),
+          body: JSON.parse(String(init.body)),
+        });
+        return Response.json({
+          id: "conversation-created",
+          project_id: project.id,
+        });
+      }
+      return Response.json({ items: [] });
+    },
+    "/v1/conversations/conversation-created/snapshot": () =>
+      Response.json(
+        snapshotFor({
+          ...conversation,
+          id: "conversation-created",
+          title: "Created conversation",
+        }),
+      ),
+  });
+  const view = render(<CommanderWorkbench projects={[]} csrf="csrf" />);
+
+  view.rerender(<CommanderWorkbench projects={[project]} csrf="csrf" />);
+  await screen.findByRole("option", { name: "commander" });
+  expect(screen.getByText(/项目一 \/ COMMANDER HUB/)).toBeTruthy();
+  expect(sessionStorage.getItem("karajan:commander-project")).toBe(project.id);
+
+  await userEvent.click(
+    screen.getByRole("button", { name: "与 Commander 开始" }),
+  );
+  await vi.waitFor(() => expect(createRequests).toHaveLength(1));
+  expect(createRequests[0]).toEqual({
+    url: "/v1/projects/project-one/conversations",
+    body: {
+      title: "新的 Commander 会话",
+      commander_profile_ref: null,
+      commander_source_ref: null,
+    },
+  });
+});
+
+it("rejects a stale saved project before it can open another project's saved conversation", async () => {
+  const snapshots: string[] = [];
+  sessionStorage.setItem("karajan:commander-project", "removed-project");
+  sessionStorage.setItem(
+    "karajan:commander-conversation:removed-project",
+    "removed-conversation",
+  );
+  sessionStorage.setItem(
+    `karajan:commander-conversation:${projectTwo.id}`,
+    conversationTwo.id,
+  );
+  sessionStorage.setItem(
+    `karajan:commander-draft:${project.id}:${conversation.id}`,
+    JSON.stringify({
+      content: "local first-project draft",
+      selection: null,
+      dirty: true,
+      editVersion: 1,
+      selectionVersion: 0,
+      selectionDirty: false,
+      acknowledgedRevision: 0,
+    }),
+  );
+  installFetch({
+    "/v1/projects/project-one/conversations": () =>
+      Response.json({ items: [conversation] }),
+    "/v1/projects/project-two/conversations": () =>
+      Response.json({ items: [conversationTwo] }),
+    "/v1/conversations/conversation-one/snapshot": () => {
+      snapshots.push("one");
+      return Response.json(
+        snapshotFor(conversation, {
+          draft: { content: "server first-project draft", revision: 2 },
+        }),
+      );
+    },
+    "/v1/conversations/conversation-two/snapshot": () => {
+      snapshots.push("two");
+      return Response.json(snapshotFor(conversationTwo));
+    },
+  });
+  const view = render(<CommanderWorkbench projects={[]} csrf="csrf" />);
+
+  view.rerender(
+    <CommanderWorkbench projects={[project, projectTwo]} csrf="csrf" />,
+  );
+  await screen.findByRole("heading", { name: "Commander" });
+  const input = screen.getByRole("textbox", { name: "消息草稿" });
+  await vi.waitFor(() =>
+    expect((input as HTMLTextAreaElement).value).toBe(
+      "local first-project draft",
+    ),
+  );
+  expect(sessionStorage.getItem("karajan:commander-project")).toBe(project.id);
+  expect(snapshots).toEqual(["one"]);
+});
+
+it("restores a delayed valid saved project and preserves its local draft without opening a sibling conversation", async () => {
+  const snapshots: string[] = [];
+  sessionStorage.setItem("karajan:commander-project", projectTwo.id);
+  sessionStorage.setItem(
+    `karajan:commander-conversation:${projectTwo.id}`,
+    conversationTwo.id,
+  );
+  sessionStorage.setItem(
+    `karajan:commander-draft:${projectTwo.id}:${conversationTwo.id}`,
+    JSON.stringify({
+      content: "local delayed-project draft",
+      selection: null,
+      dirty: true,
+      editVersion: 1,
+      selectionVersion: 0,
+      selectionDirty: false,
+      acknowledgedRevision: 1,
+    }),
+  );
+  installFetch({
+    "/v1/projects/project-one/conversations": () =>
+      Response.json({ items: [conversation] }),
+    "/v1/projects/project-two/conversations": () =>
+      Response.json({ items: [conversationTwo] }),
+    "/v1/conversations/conversation-one/snapshot": () => {
+      snapshots.push("one");
+      return Response.json(snapshotFor(conversation));
+    },
+    "/v1/conversations/conversation-two/snapshot": () => {
+      snapshots.push("two");
+      return Response.json(
+        snapshotFor(conversationTwo, {
+          draft: { content: "server delayed-project draft", revision: 2 },
+        }),
+      );
+    },
+  });
+  const view = render(<CommanderWorkbench projects={[]} csrf="csrf" />);
+
+  view.rerender(
+    <CommanderWorkbench projects={[project, projectTwo]} csrf="csrf" />,
+  );
+  await screen.findByRole("heading", { name: "Commander two" });
+  const input = screen.getByRole("textbox", { name: "消息草稿" });
+  await vi.waitFor(() =>
+    expect((input as HTMLTextAreaElement).value).toBe(
+      "local delayed-project draft",
+    ),
+  );
+  expect(sessionStorage.getItem("karajan:commander-project")).toBe(
+    projectTwo.id,
+  );
+  expect(snapshots).toEqual(["two"]);
+});
+
+async function assertOriginatingClearSurvivesNavigation(
+  kind: "message" | "task",
+  preservesNewerText: boolean,
+) {
+  const conversationB = {
+    ...conversation,
+    id: "conversation-b",
+    title: "Conversation B",
+  };
+  const result = deferred<Response>();
+  let serverDraft = "X";
+  let serverRevision = 1;
+  let taskCreated = false;
+  let snapshots = 0;
+  installFetch({
+    "/v1/projects/project-one/commander-options": () =>
+      Response.json({ items: [] }),
+    "/v1/projects/project-one/conversations": () =>
+      Response.json({ items: [conversation, conversationB] }),
+    "/v1/conversations/conversation-one/snapshot": () => {
+      snapshots += 1;
+      return Response.json(
+        snapshotFor(conversation, {
+          draft: { content: serverDraft, revision: serverRevision },
+          task_drafts: taskCreated
+            ? [{ id: "task-created", requirement: "X", state: "draft" }]
+            : [],
+        }),
+      );
+    },
+    "/v1/conversations/conversation-b/snapshot": () =>
+      Response.json(snapshotFor(conversationB)),
+    "/v1/conversations/conversation-one/draft": (_input, init) => {
+      serverDraft = (JSON.parse(String(init?.body)) as { content: string })
+        .content;
+      serverRevision += 1;
+      return Response.json({ revision: serverRevision });
+    },
+    "/v1/conversations/conversation-one/messages": () => result.promise,
+    "/v1/conversations/conversation-one/task-drafts": () => result.promise,
+  });
+  sessionStorage.setItem("karajan:commander-project", project.id);
+  sessionStorage.setItem(
+    `karajan:commander-conversation:${project.id}`,
+    conversation.id,
+  );
+  render(<CommanderWorkbench projects={[project]} csrf="csrf" />);
+  const input = await screen.findByRole("textbox", { name: "消息草稿" });
+  expect(snapshots).toBeGreaterThan(0);
+  await vi.waitFor(() =>
+    expect((input as HTMLTextAreaElement).value).toBe("X"),
+  );
+  await userEvent.click(
+    screen.getByRole("button", {
+      name: kind === "message" ? "发送给 Commander" : "＋ 新任务草稿",
+    }),
+  );
+  if (preservesNewerText) await userEvent.type(input, "Y");
+
+  await userEvent.click(screen.getByRole("button", { name: "›项目一" }));
+  await userEvent.click(
+    await screen.findByRole("button", { name: /Conversation B/ }),
+  );
+  await screen.findByRole("textbox", { name: "消息草稿" });
+  taskCreated = kind === "task";
+  await act(async () =>
+    result.resolve(
+      Response.json(
+        kind === "message"
+          ? { id: "message-created", conversation_id: conversation.id }
+          : {
+              id: "task-created",
+              requirement: "X",
+              state: "draft",
+              conversation_id: conversation.id,
+            },
+      ),
+    ),
+  );
+  await vi.waitFor(() =>
+    expect(serverDraft).toBe(preservesNewerText ? "XY" : ""),
+  );
+
+  await userEvent.click(screen.getByRole("button", { name: /^◌ Commander$/ }));
+  await screen.findByRole("heading", { name: "Commander" });
+  const restored = screen.getByRole("textbox", { name: "消息草稿" });
+  expect((restored as HTMLTextAreaElement).value).toBe(
+    preservesNewerText ? "XY" : "",
+  );
+  if (kind === "task") expect(screen.getByText("X")).toBeTruthy();
+}
+
+it("clears the originating message draft after A to B to A navigation", async () => {
+  await assertOriginatingClearSurvivesNavigation("message", false);
+});
+
+it("keeps newer message text after A to B to A navigation", async () => {
+  await assertOriginatingClearSurvivesNavigation("message", true);
+});
+
+it("clears the originating task draft after A to B to A navigation and shows its saved goal", async () => {
+  await assertOriginatingClearSurvivesNavigation("task", false);
+});
+
+it("keeps newer task-composer text after A to B to A navigation", async () => {
+  await assertOriginatingClearSurvivesNavigation("task", true);
 });

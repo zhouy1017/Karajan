@@ -8,14 +8,21 @@ export type DraftSelection = {
   kind: "task" | "attempt" | "candidate";
   id: string;
   version?: number;
+  head?: string;
 } | null;
 export type DraftState = {
   content: string;
   selection: DraftSelection;
+  /** True only for unacknowledged content. */
   dirty: boolean;
+  /** Monotonic version of content edits. */
   editVersion: number;
+  /** Monotonic version of selection changes. */
+  selectionVersion: number;
+  /** A supported selection still needs a server acknowledgement. */
+  selectionDirty: boolean;
   acknowledgedRevision: number;
-  /** Candidate IDs are not accepted by the current backend draft endpoint. */
+  /** Candidate and execution-Attempt IDs are not accepted by the endpoint. */
   selectionLocalOnly?: boolean;
   error?: string;
 };
@@ -25,6 +32,7 @@ export type DraftCommand = {
   selection: DraftSelection;
   baseRevision: number;
   editVersion: number;
+  selectionVersion: number;
   id: string;
   body: {
     content: string;
@@ -37,11 +45,30 @@ export type DraftStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
 type StoredDraft = Omit<DraftState, "acknowledgedRevision"> & {
   acknowledgedRevision?: number;
+  selectionVersion?: number;
+  selectionDirty?: boolean;
   pending?: DraftCommand;
 };
 
 function key(context: DraftContext): string {
   return `karajan:commander-draft:${context.projectId}:${context.conversationId}`;
+}
+
+function sameSelection(left: DraftSelection, right: DraftSelection): boolean {
+  return (
+    left?.kind === right?.kind &&
+    left?.id === right?.id &&
+    left?.version === right?.version &&
+    left?.head === right?.head
+  );
+}
+
+function requiresSave(state: DraftState): boolean {
+  return state.dirty || state.selectionDirty;
+}
+
+function requiresPersistence(state: DraftState): boolean {
+  return requiresSave(state) || state.selectionLocalOnly === true;
 }
 
 export class ConversationDraftLedger {
@@ -57,7 +84,8 @@ export class ConversationDraftLedger {
     context: DraftContext,
     server: { content: string; revision: number; selection: DraftSelection },
   ): DraftState {
-    const current = this.states.get(key(context));
+    const stateKey = key(context);
+    const current = this.states.get(stateKey);
     const stored = this.readStored(context);
     const storedState = stored
       ? {
@@ -65,55 +93,76 @@ export class ConversationDraftLedger {
           selection: stored.selection,
           dirty: stored.dirty,
           editVersion: stored.editVersion,
+          selectionVersion: stored.selectionVersion ?? 0,
+          selectionDirty: stored.selectionDirty ?? false,
           acknowledgedRevision: stored.acknowledgedRevision ?? 0,
           selectionLocalOnly: stored.selectionLocalOnly,
           error: stored.error,
         }
       : undefined;
-    const pending =
-      current?.dirty || current?.selectionLocalOnly
-        ? current
-        : storedState?.dirty || storedState?.selectionLocalOnly
-          ? storedState
-          : undefined;
-    // A snapshot older than an acknowledgement is not authority to restore an
-    // older draft or erase its selection. Once it reaches that revision, its
-    // explicit values become authoritative again.
-    const preserveAcknowledgedState =
-      !pending && current && current.acknowledgedRevision > server.revision;
-    const state: DraftState = pending
-      ? {
-          ...pending,
-          acknowledgedRevision: Math.max(
-            pending.acknowledgedRevision,
-            server.revision,
-          ),
-        }
-      : preserveAcknowledgedState
-        ? {
-            content: current.content,
-            selection: current.selection,
-            dirty: false,
-            editVersion: current.editVersion,
-            acknowledgedRevision: current.acknowledgedRevision,
-          }
-        : {
-            content: server.content,
-            selection: server.selection,
-            dirty: false,
-            editVersion: current?.editVersion ?? stored?.editVersion ?? 0,
-            acknowledgedRevision: server.revision,
-          };
-    this.states.set(key(context), state);
+    const contentSource = current?.dirty
+      ? current
+      : storedState?.dirty
+        ? storedState
+        : undefined;
+    const localSelectionSource = current?.selectionLocalOnly
+      ? current
+      : storedState?.selectionLocalOnly
+        ? storedState
+        : undefined;
+    const selectionSource = current?.selectionDirty
+      ? current
+      : storedState?.selectionDirty
+        ? storedState
+        : undefined;
+    const snapshotIsOlder =
+      !contentSource &&
+      !selectionSource &&
+      current !== undefined &&
+      current.acknowledgedRevision > server.revision;
+    const selectionOwner = localSelectionSource ?? selectionSource;
+    const state: DraftState = {
+      content: contentSource
+        ? contentSource.content
+        : snapshotIsOlder
+          ? current.content
+          : server.content,
+      selection: selectionOwner
+        ? selectionOwner.selection
+        : snapshotIsOlder
+          ? current.selection
+          : server.selection,
+      dirty: contentSource?.dirty ?? false,
+      editVersion:
+        contentSource?.editVersion ??
+        current?.editVersion ??
+        storedState?.editVersion ??
+        0,
+      selectionVersion:
+        selectionOwner?.selectionVersion ??
+        current?.selectionVersion ??
+        storedState?.selectionVersion ??
+        0,
+      selectionDirty: selectionSource?.selectionDirty ?? false,
+      selectionLocalOnly: localSelectionSource ? true : undefined,
+      acknowledgedRevision: Math.max(
+        current?.acknowledgedRevision ?? 0,
+        storedState?.acknowledgedRevision ?? 0,
+        server.revision,
+      ),
+      error: contentSource?.error ?? selectionOwner?.error,
+    };
+    this.states.set(stateKey, state);
     const pendingCommand =
-      this.pending.get(key(context)) ??
+      this.pending.get(stateKey) ??
       (this.validCommand(stored?.pending, context)
         ? stored?.pending
         : undefined);
-    if ((state.dirty || state.selectionLocalOnly) && pendingCommand)
-      this.pending.set(key(context), pendingCommand);
-    else if (!state.dirty) this.pending.delete(key(context));
-    if (state.dirty || state.selectionLocalOnly) this.persist(context, state);
+    if (requiresSave(state) && pendingCommand)
+      this.pending.set(stateKey, pendingCommand);
+    else if (!requiresSave(state)) this.pending.delete(stateKey);
+    if (requiresPersistence(state)) this.persist(context, state);
+    else this.storage.removeItem(stateKey);
     return state;
   }
 
@@ -131,15 +180,29 @@ export class ConversationDraftLedger {
       selection: null,
       dirty: false,
       editVersion: 0,
+      selectionVersion: 0,
+      selectionDirty: false,
       acknowledgedRevision: 0,
     };
+    const contentChanged = content !== prior.content;
+    const selectionChanged = !sameSelection(selection, prior.selection);
+    // Typing while a local-only selection is active must not teach that
+    // identity to the server. Choosing another identity does.
+    const selectionLocalOnly =
+      prior.selectionLocalOnly && !selectionChanged ? true : undefined;
     const next: DraftState = {
       ...prior,
       content,
       selection,
-      dirty: true,
-      editVersion: prior.editVersion + 1,
-      selectionLocalOnly: selection?.kind === "candidate",
+      dirty: prior.dirty || contentChanged,
+      editVersion: contentChanged ? prior.editVersion + 1 : prior.editVersion,
+      selectionVersion: selectionChanged
+        ? prior.selectionVersion + 1
+        : prior.selectionVersion,
+      selectionDirty: selectionLocalOnly
+        ? false
+        : prior.selectionDirty || selectionChanged,
+      selectionLocalOnly,
       error: undefined,
     };
     this.states.set(key(context), next);
@@ -147,24 +210,29 @@ export class ConversationDraftLedger {
     return next;
   }
 
-  /** Keep an unsupported Candidate selection locally without issuing a bad API write. */
-  selectCandidate(
+  /** Keep an unsupported selection locally without issuing a bad API write. */
+  selectLocalSelection(
     context: DraftContext,
-    id: string,
-    version?: number,
+    selection: Exclude<DraftSelection, null>,
   ): DraftState {
     const prior = this.states.get(key(context)) ?? {
       content: "",
       selection: null,
       dirty: false,
       editVersion: 0,
+      selectionVersion: 0,
+      selectionDirty: false,
       acknowledgedRevision: 0,
     };
+    const selectionChanged = !sameSelection(selection, prior.selection);
     const next: DraftState = {
       ...prior,
-      selection: { kind: "candidate", id, version },
+      selection,
       selectionLocalOnly: true,
-      editVersion: prior.editVersion + 1,
+      selectionVersion: selectionChanged
+        ? prior.selectionVersion + 1
+        : prior.selectionVersion,
+      selectionDirty: false,
       error: undefined,
     };
     this.states.set(key(context), next);
@@ -172,9 +240,24 @@ export class ConversationDraftLedger {
     return next;
   }
 
+  /** Candidate IDs are not accepted by the current backend draft endpoint. */
+  selectCandidate(
+    context: DraftContext,
+    id: string,
+    version?: number,
+    head?: string,
+  ): DraftState {
+    return this.selectLocalSelection(context, {
+      kind: "candidate",
+      id,
+      version,
+      head,
+    });
+  }
+
   prepareSave(context: DraftContext): DraftCommand | undefined {
     const state = this.states.get(key(context));
-    if (!state?.dirty) return undefined;
+    if (!state || !requiresSave(state)) return undefined;
     const existing = this.pending.get(key(context));
     // An unresolved command must be retried before a later edit can use its
     // successor revision.  The caller may then prepare the newer edit.
@@ -185,6 +268,7 @@ export class ConversationDraftLedger {
       selection: state.selection,
       baseRevision: state.acknowledgedRevision,
       editVersion: state.editVersion,
+      selectionVersion: state.selectionVersion,
       id: this.newId(),
       body: {
         content: state.content,
@@ -203,36 +287,41 @@ export class ConversationDraftLedger {
     command: DraftCommand,
     revision: number,
   ): DraftState | undefined {
-    const state = this.states.get(key(command.context));
+    const stateKey = key(command.context);
+    const state = this.states.get(stateKey);
     if (!state) return state;
-    if (this.pending.get(key(command.context))?.id === command.id)
-      this.pending.delete(key(command.context));
+    if (this.pending.get(stateKey)?.id === command.id)
+      this.pending.delete(stateKey);
+    const contentAcknowledged = state.editVersion === command.editVersion;
+    const selectionAcknowledged =
+      !state.selectionLocalOnly &&
+      state.selectionVersion === command.selectionVersion;
     const next: DraftState = {
       ...state,
       acknowledgedRevision: revision,
-      ...(state.editVersion === command.editVersion
-        ? { dirty: false, error: undefined }
-        : {}),
+      dirty: contentAcknowledged ? false : state.dirty,
+      selectionDirty: selectionAcknowledged ? false : state.selectionDirty,
+      error:
+        contentAcknowledged || selectionAcknowledged ? undefined : state.error,
     };
-    this.states.set(key(command.context), next);
-    if (next.dirty || next.selectionLocalOnly)
-      this.persist(command.context, next);
-    else this.storage.removeItem(key(command.context));
+    this.states.set(stateKey, next);
+    if (requiresPersistence(next)) this.persist(command.context, next);
+    else this.storage.removeItem(stateKey);
     return next;
   }
 
   rejectSave(command: DraftCommand, error: string): DraftState | undefined {
     const state = this.states.get(key(command.context));
     if (!state) return undefined;
-    // Keep the exact unresolved command for a retry, but never replace a later
-    // edit or its persisted metadata with the failed command's payload.
+    // Keep the exact unresolved command for a retry, but never replace a
+    // later edit or its persisted metadata with the failed command's payload.
     const next: DraftState =
-      state.editVersion === command.editVersion
-        ? { ...state, dirty: true, error }
+      state.editVersion === command.editVersion ||
+      state.selectionVersion === command.selectionVersion
+        ? { ...state, error }
         : state;
     this.states.set(key(command.context), next);
-    if (next.dirty || next.selectionLocalOnly)
-      this.persist(command.context, next);
+    if (requiresPersistence(next)) this.persist(command.context, next);
     return next;
   }
 
@@ -247,13 +336,47 @@ export class ConversationDraftLedger {
       this.pending.delete(key(command.context));
     const next: DraftState = {
       ...state,
-      dirty: true,
       acknowledgedRevision:
-        typeof revision === "number" ? revision : state.acknowledgedRevision,
+        typeof revision === "number"
+          ? Math.max(state.acknowledgedRevision, revision)
+          : state.acknowledgedRevision,
       error: "DRAFT_REVISION_CONFLICT",
     };
     this.states.set(key(command.context), next);
     this.persist(command.context, next);
+    return next;
+  }
+
+  /** Retire a known bad selection so a corrected successor gets a new key. */
+  rejectDefinitive(
+    command: DraftCommand,
+    error: string,
+    revision?: number,
+  ): DraftState | undefined {
+    const stateKey = key(command.context);
+    const state = this.states.get(stateKey);
+    if (!state) return undefined;
+    if (this.pending.get(stateKey)?.id === command.id)
+      this.pending.delete(stateKey);
+    const rejectedSelection =
+      !state.selectionLocalOnly &&
+      state.selectionVersion === command.selectionVersion;
+    const next: DraftState = {
+      ...state,
+      selection: rejectedSelection ? null : state.selection,
+      selectionDirty: rejectedSelection ? false : state.selectionDirty,
+      selectionLocalOnly: rejectedSelection
+        ? undefined
+        : state.selectionLocalOnly,
+      acknowledgedRevision:
+        typeof revision === "number"
+          ? Math.max(state.acknowledgedRevision, revision)
+          : state.acknowledgedRevision,
+      error,
+    };
+    this.states.set(stateKey, next);
+    if (requiresPersistence(next)) this.persist(command.context, next);
+    else this.storage.removeItem(stateKey);
     return next;
   }
 
@@ -262,6 +385,8 @@ export class ConversationDraftLedger {
     editVersion: number,
   ): DraftState | undefined {
     const state = this.states.get(key(context));
+    // Selection changes do not protect submitted text. Only a newer content
+    // edit is allowed to keep it after a successful message/task command.
     if (!state || state.editVersion !== editVersion) return state;
     const next: DraftState = {
       ...state,
@@ -285,7 +410,9 @@ export class ConversationDraftLedger {
       if (
         typeof value.content !== "string" ||
         typeof value.editVersion !== "number" ||
-        (value.dirty !== true && value.selectionLocalOnly !== true)
+        (value.dirty !== true &&
+          value.selectionDirty !== true &&
+          value.selectionLocalOnly !== true)
       )
         return undefined;
       return value;
@@ -302,6 +429,8 @@ export class ConversationDraftLedger {
         selection: state.selection,
         dirty: state.dirty,
         editVersion: state.editVersion,
+        selectionVersion: state.selectionVersion,
+        selectionDirty: state.selectionDirty,
         acknowledgedRevision: state.acknowledgedRevision,
         selectionLocalOnly: state.selectionLocalOnly,
         error: state.error,
@@ -322,6 +451,7 @@ export class ConversationDraftLedger {
       typeof command.content === "string" &&
       typeof command.baseRevision === "number" &&
       typeof command.editVersion === "number" &&
+      typeof command.selectionVersion === "number" &&
       typeof command.id === "string" &&
       command.body?.content === command.content &&
       (typeof command.body.selected_task_id === "string" ||

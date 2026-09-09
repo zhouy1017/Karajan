@@ -120,6 +120,113 @@ it("keeps a selected child directional and candidate evidence version-exact", ()
   ]);
 });
 
+it("excludes a same-Task retry and old candidate head when the authoritative Attempt and candidate are supplied", () => {
+  const current = adaptSnapshot({
+    conversation: { id: "conversation-a", project_id: "project-a" },
+    messages: [],
+    draft: { content: "", revision: 1 },
+    task_drafts: [],
+    runs: ["run-a"],
+    run_summaries: [],
+    tasks: [{ id: "task-a", current_attempt_id: "attempt-current" }],
+    attempts: [
+      { id: "attempt-current", task_id: "task-a", state: "running" },
+      { id: "attempt-retry", task_id: "task-a", state: "completed" },
+    ],
+    agents: [],
+    blockers: [],
+    candidate: {
+      id: "candidate-a",
+      version: 2,
+      head: "head-current",
+    },
+    snapshot_event_seq: 9,
+  });
+
+  expect(
+    relatedEvidence(
+      current,
+      {
+        items: [
+          {
+            task_id: "task-a",
+            attempt_id: "attempt-current",
+            candidate_id: "candidate-a",
+            candidate_version: 2,
+            candidate_head: "head-current",
+            result: "current",
+          },
+          {
+            task_id: "task-a",
+            attempt_id: "attempt-retry",
+            candidate_id: "candidate-a",
+            candidate_version: 2,
+            candidate_head: "head-current",
+            result: "same Task retry",
+          },
+          {
+            task_id: "task-a",
+            attempt_id: "attempt-current",
+            candidate_id: "candidate-a",
+            candidate_version: 1,
+            candidate_head: "head-old",
+            result: "old candidate",
+          },
+        ],
+      },
+      { kind: "task", id: "task-a" },
+    ),
+  ).toEqual({
+    items: [
+      {
+        task_id: "task-a",
+        attempt_id: "attempt-current",
+        candidate_id: "candidate-a",
+        candidate_version: 2,
+        candidate_head: "head-current",
+        result: "current",
+      },
+    ],
+  });
+
+  expect(
+    relatedEvidence(
+      current,
+      {
+        items: [
+          {
+            candidate_id: "candidate-a",
+            candidate_version: 2,
+            candidate_head: "head-current",
+            result: "current candidate",
+          },
+          {
+            candidate_id: "candidate-a",
+            candidate_version: 2,
+            candidate_head: "head-old",
+            result: "same version, old head",
+          },
+        ],
+      },
+      {
+        kind: "candidate",
+        id: "candidate-a",
+        version: 2,
+        head: "head-current",
+      },
+    ),
+  ).toEqual({
+    items: [
+      {
+        candidate_id: "candidate-a",
+        candidate_version: 2,
+        candidate_head: "head-current",
+        result: "current candidate",
+      },
+    ],
+  });
+});
+
 it("rebuilds known Attempt truth from snapshots without inventing a time", () => {
   expect(feedbackFromSnapshot(snapshot)).toEqual({
     "attempt-a": { state: "running", observed: 0 },

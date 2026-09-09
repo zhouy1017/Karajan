@@ -57,9 +57,14 @@ function versionOf(item: RecordValue): number | undefined {
     : undefined;
 }
 
+function headOf(item: RecordValue): string | undefined {
+  const value = item.candidate_head ?? item.head ?? item.head_sha;
+  return typeof value === "string" ? value : undefined;
+}
+
 export function candidateSelections(
   snapshot: CommanderSnapshot | null,
-): { kind: "candidate"; id: string; version?: number }[] {
+): { kind: "candidate"; id: string; version?: number; head?: string }[] {
   return candidateRecords(snapshot).flatMap((candidate) =>
     typeof candidate.id === "string"
       ? [
@@ -67,6 +72,7 @@ export function candidateSelections(
             kind: "candidate" as const,
             id: candidate.id,
             version: versionOf(candidate),
+            head: headOf(candidate),
           },
         ]
       : [],
@@ -114,13 +120,36 @@ export function feedbackFromSnapshot(
 type SelectionFacts = {
   taskIds: Set<string>;
   attemptIds: Set<string>;
+  knownAttemptIds: Set<string>;
+  candidate?: { id: string; version?: number; head?: string };
 };
+
+function authoritativeCandidate(
+  snapshot: CommanderSnapshot | null,
+): { id: string; version?: number; head?: string } | undefined {
+  const root = record(snapshot?.candidate);
+  const records = candidateRecords(snapshot);
+  const selected =
+    root && !Array.isArray(root.items) && typeof root.id === "string"
+      ? root
+      : (records.find(
+          (item) => item.current === true || item.is_current === true,
+        ) ?? (records.length === 1 ? records[0] : undefined));
+  return selected && typeof selected.id === "string"
+    ? { id: selected.id, version: versionOf(selected), head: headOf(selected) }
+    : undefined;
+}
 
 function selectionFacts(
   snapshot: CommanderSnapshot | null,
   selection: DraftSelection,
 ): SelectionFacts {
-  const facts: SelectionFacts = { taskIds: new Set(), attemptIds: new Set() };
+  const facts: SelectionFacts = {
+    taskIds: new Set(),
+    attemptIds: new Set(),
+    knownAttemptIds: new Set(snapshot?.attempts.map((attempt) => attempt.id)),
+    candidate: authoritativeCandidate(snapshot),
+  };
   if (!selection || selection.kind === "candidate") return facts;
   if (selection.kind === "task") {
     facts.taskIds.add(selection.id);
@@ -134,29 +163,76 @@ function selectionFacts(
   return facts;
 }
 
+function explicitAttemptIds(
+  item: RecordValue,
+  facts: SelectionFacts,
+): string[] {
+  const values = typeof item.attempt_id === "string" ? [item.attempt_id] : [];
+  if (typeof item.id === "string" && facts.knownAttemptIds.has(item.id))
+    values.push(item.id);
+  return values;
+}
+
+function explicitTaskIds(item: RecordValue): string[] {
+  return [item.task_id, item.source_task_id].filter(
+    (value): value is string => typeof value === "string",
+  );
+}
+
+function matchesCandidate(
+  item: RecordValue,
+  selection: DraftSelection,
+  candidate: SelectionFacts["candidate"],
+): boolean {
+  const itemCandidateId =
+    typeof item.candidate_id === "string"
+      ? item.candidate_id
+      : selection?.kind === "candidate" && typeof item.id === "string"
+        ? item.id
+        : undefined;
+  const expected =
+    selection?.kind === "candidate"
+      ? { id: selection.id, version: selection.version, head: selection.head }
+      : candidate;
+  if (!expected) return selection?.kind !== "candidate";
+  if (selection?.kind === "candidate" && itemCandidateId === undefined)
+    return false;
+  if (itemCandidateId !== undefined && itemCandidateId !== expected.id)
+    return false;
+  const hasVersion =
+    typeof item.candidate_version === "number" ||
+    (itemCandidateId !== undefined && typeof item.version === "number");
+  if (hasVersion && versionOf(item) !== expected.version) return false;
+  const hasHead =
+    typeof item.candidate_head === "string" ||
+    (itemCandidateId !== undefined &&
+      (typeof item.head === "string" || typeof item.head_sha === "string"));
+  if (hasHead && headOf(item) !== expected.head) return false;
+  return true;
+}
+
 function directMatch(
   item: RecordValue,
   selection: DraftSelection,
   facts: SelectionFacts,
 ): boolean {
   if (!selection) return false;
-  if (selection.kind === "candidate") {
-    const candidateId = item.candidate_id ?? item.id;
-    if (candidateId !== selection.id) return false;
-    // Candidate/version evidence is intentionally exact: a versionless
-    // selection does not claim a historical version belongs to it.
-    return versionOf(item) === selection.version;
+  if (!matchesCandidate(item, selection, facts.candidate)) return false;
+  if (selection.kind === "candidate") return true;
+  const attemptIds = explicitAttemptIds(item, facts);
+  const taskIds = explicitTaskIds(item);
+  const hasMatchingTask = taskIds.some((id) => facts.taskIds.has(id));
+  if (taskIds.length && !hasMatchingTask) return false;
+  if (attemptIds.length) {
+    // An explicit child identity is more specific than the parent Task. A
+    // Task without a definitive current Attempt cannot import a retry.
+    return (
+      facts.attemptIds.size > 0 &&
+      attemptIds.some((id) => facts.attemptIds.has(id))
+    );
   }
-  if (
-    (typeof item.attempt_id === "string" &&
-      facts.attemptIds.has(item.attempt_id)) ||
-    (typeof item.id === "string" && facts.attemptIds.has(item.id))
-  )
-    return true;
   return (
-    (typeof item.task_id === "string" && facts.taskIds.has(item.task_id)) ||
-    (typeof item.source_task_id === "string" &&
-      facts.taskIds.has(item.source_task_id)) ||
+    hasMatchingTask ||
     (typeof item.id === "string" && facts.taskIds.has(item.id))
   );
 }

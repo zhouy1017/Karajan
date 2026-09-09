@@ -169,7 +169,7 @@ it("stores an acknowledged submitted clear as a successor draft command", () => 
   });
 });
 
-it("persists unsupported candidate selection locally through a recovered snapshot", () => {
+it("adopts newer server text while preserving a clean local-only candidate selection", () => {
   const persisted = storage();
   const first = new ConversationDraftLedger(persisted, () => "save-x");
   first.open(context, { content: "", revision: 3, selection: null });
@@ -183,9 +183,93 @@ it("persists unsupported candidate selection locally through a recovered snapsho
       selection: { kind: "task", id: "task-from-server" },
     }),
   ).toMatchObject({
-    content: "",
+    content: "server draft",
     selection: { kind: "candidate", id: "candidate-a", version: 2 },
+    dirty: false,
+    acknowledgedRevision: 4,
     selectionLocalOnly: true,
   });
   expect(refreshed.prepareSave(context)).toBeUndefined();
+});
+
+it("keeps an unsupported execution Attempt local, then saves a corrected Task selection at the server revision", () => {
+  let id = 0;
+  const ledger = new ConversationDraftLedger(storage(), () => `save-${++id}`);
+  ledger.open(context, { content: "old", revision: 1, selection: null });
+  ledger.selectLocalSelection(context, { kind: "attempt", id: "execution-a" });
+
+  expect(
+    ledger.open(context, {
+      content: "new server draft",
+      revision: 2,
+      selection: null,
+    }),
+  ).toMatchObject({
+    content: "new server draft",
+    selection: { kind: "attempt", id: "execution-a" },
+    dirty: false,
+    selectionLocalOnly: true,
+    acknowledgedRevision: 2,
+  });
+  expect(ledger.prepareSave(context)).toBeUndefined();
+
+  ledger.edit(context, "new server draft", { kind: "task", id: "task-a" });
+  expect(ledger.prepareSave(context)).toMatchObject({
+    id: "save-1",
+    baseRevision: 2,
+    body: {
+      content: "new server draft",
+      selected_task_id: "task-a",
+      base_plan_revision: null,
+    },
+  });
+});
+
+it("does not turn clean content dirty when an independently dirty Task selection has an unknown outcome", () => {
+  const ledger = new ConversationDraftLedger(storage(), () => "save-x");
+  ledger.open(context, { content: "old server", revision: 1, selection: null });
+  ledger.edit(context, "old server", { kind: "task", id: "task-a" });
+  const command = ledger.prepareSave(context)!;
+
+  ledger.rejectSave(command, "RESPONSE_BODY_LOST");
+  expect(
+    ledger.open(context, {
+      content: "new server",
+      revision: 2,
+      selection: null,
+    }),
+  ).toMatchObject({
+    content: "new server",
+    selection: { kind: "task", id: "task-a" },
+    dirty: false,
+    selectionDirty: true,
+  });
+  expect(ledger.prepareSave(context)).toEqual(command);
+});
+
+it("retires a definitive missing Task reference and lets the reconciled content use a successor identity", () => {
+  let id = 0;
+  const ledger = new ConversationDraftLedger(storage(), () => `save-${++id}`);
+  ledger.open(context, { content: "server", revision: 1, selection: null });
+  ledger.edit(context, "local edit", { kind: "task", id: "removed-task" });
+  const rejected = ledger.prepareSave(context)!;
+
+  ledger.rejectDefinitive(rejected, "TASK_REFERENCE_NOT_FOUND", 2);
+  ledger.open(context, {
+    content: "authoritative server",
+    revision: 2,
+    selection: null,
+  });
+  const successor = ledger.prepareSave(context)!;
+
+  expect(successor).toMatchObject({
+    id: "save-2",
+    baseRevision: 2,
+    body: {
+      content: "local edit",
+      selected_task_id: null,
+      base_plan_revision: null,
+    },
+  });
+  expect(successor.id).not.toBe(rejected.id);
 });
