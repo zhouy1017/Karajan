@@ -18,7 +18,7 @@
 3. `GET /v1/runs?project_id=` 继续返回所有项目 Run；新增 `conversation_id` 过滤和显式 `GET /v1/conversations/{id}/runs`。旧 `POST /v1/runs` 可以继续接受兼容请求，但必须由服务端解析 `conversation_id`，缺失时使用项目的 legacy/default conversation，并返回迁移后的身份。
 4. 新 UI 只把 Conversation/Hub 作为控制入口；旧 ProjectRuns 作为详情/兼容读视图。两者读取同一个快照聚合和事件游标，不各自维护运行状态。缺失 conversation 只对历史迁移/兼容创建走 deterministic default；已声明但无效的引用一律阻塞。
 
-迁移要求保持幂等、可回滚和可审计：重复迁移不改变 Run ID 或候选 digest；跨项目 conversation/run 绑定返回稳定 `CROSS_PROJECT_REFERENCE`；旧数据缺 conversation 时显示恢复阻塞而不是猜测归属。
+迁移要求保持幂等、可回滚和可审计：重复迁移不改变 Run ID 或候选 digest；跨项目 conversation/run 绑定返回稳定 `CROSS_PROJECT_REFERENCE`；迁移后仍缺 conversation 或项目身份无效的数据，显示恢复阻塞而不是猜测归属。
 
 ## 2. 持久对象与版本字段
 

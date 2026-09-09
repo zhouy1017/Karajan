@@ -1,8 +1,8 @@
 # Karajan PRD v1：多来源 Agent 从需求到 PR
 
-版本：1.2。依据：2026-09-05 已确认的设计基线 D01–D09，以及 2026-09-09 Commander 工作台设计基准。状态：产品范围与行为已确定，进入实现；工作台设计仍须逐项验收，不能将设计描述当作已实现能力。
+版本：1.3（工作台 r5）。依据：2026-09-05 已确认的设计基线 D01–D09，以及 2026-09-09 Commander 工作台设计基准。状态：产品范围与行为已确定，进入实现；工作台设计仍须逐项验收，不能将设计描述当作已实现能力。
 
-本次修订新增 [Commander 工作台设计](commander-workbench.md) 作为 UI/交互规范：仓库/会话导航、持久主 Commander 对话、Tasks/Agents 并行看板和 Diff/checks/review/logs/dependencies 详情。历史 PRD-AC01–06、FR 和 Axx 保持有效；新增 UX-AC 只补充可观察入口与原 FR 映射。
+本次修订新增 [Commander 工作台设计](commander-workbench.md) 作为 UI/交互规范：项目分组侧栏、持久 Commander Hub、实时任务缩略卡片和最终汇报；Tasks/Agents 与 Diff/checks/review/logs/dependencies 提供详情。历史 PRD-AC01–06、FR 和 Axx 保持有效；新增 UX-AC 只补充可观察入口与原 FR 映射。
 
 ## Problem Statement｜用户问题
 
@@ -122,11 +122,13 @@ Worker 产出确定版本的候选，平台集成、验证，再交给独立 Rev
 | UX-AC09 过期动作 | 计划变更/恢复后提交旧版本批准或重派 | 拒绝动作并说明当前版本/状态；旧候选和证据保留为历史 | FR04、FR05、FR15、FR18 |
 | UX-AC10 未知恢复 | 断线/重启时有 running、unknown 或待核对远端结果 | 先显示核对状态；不以 idle/超时算成功，不重复启动、消费或 PR | FR15、FR17、FR18、FR19 |
 
+r5 新增 UX-AC11–14 的完整验收统一维护在 [工作台验收表](commander-workbench.md#可检验的-ux-验收)：Hub 闭环映射 FR03/04/05/13/17/19/20，实时反馈映射 FR15/17/18，快捷新建映射 FR01/03/04/05/17，多项目切换映射 FR01/03/05/17/18。后端身份、迁移与事件契约见 [后端设计](../architecture/07-commander-workbench-backend-contract.md)。UI 已确认，以上产品行为仍须实施和验收。
+
 ## 核心用户流程
 
 1. 打开项目和会话，选择已配置的高级 Commander 模型/来源；首次才建立必要默认/认证，之后复用已授权集合，未配置项明确显示。
 2. 在持久 Commander 对话提交需求，与主 Commander 澄清；按预算征求顾问意见。
-3. 在任务看板接受完整默认分工，或按需编辑并确认具体计划、验收、角色、显式模型/来源、依赖、费用范围和 PR 权限。
+3. 在 Commander Hub 接受完整默认分工，或按需编辑并确认具体计划、验收、角色、显式模型/来源、依赖、费用范围和 PR 权限。
 4. 批准同一版本后，按依赖并行实现、组合候选、运行检查和独立 Review；范围内有界修复与 Worker/Reviewer 换源自动进行。
 5. 需要新范围、预算、权限或主 Commander 交接时显示具体方案；已有独立任务可继续，运行中的 Attempt 不热切换模型。
 6. 得到证据对应的 PR，在详情面板分别查看 diff、checks、review、logs、dependencies 和远端 CI，自行合并。
@@ -179,7 +181,7 @@ M0 是接口资格验证，不要求先造完整 Web/DAG 平台。假环境通�
 
 ## 历史 M0–M4 范围与完成定义
 
-下表保留原阶段范围和验收责任，不作为当前排期。2026-09-09 起按 [P1–P4 业务顺序](../planning/business-first.md) 实施工作台首演，UX-AC01–10 覆盖入口、显式分工和并行交付；原 M1/M2 等 Issue 的未完成验收继续保留。
+下表保留原阶段范围和验收责任，不作为当前排期。2026-09-09 起按 [P1–P4 业务顺序](../planning/business-first.md) 实施工作台首演，UX-AC01–14 覆盖入口、显式分工、Hub 闭环、实时反馈、快捷新建、多项目与并行交付；原 M1/M2 等 Issue 的未完成验收继续保留。
 
 | 阶段 | 当前规划粒度 | 阶段出口 |
 |---|---|---|
