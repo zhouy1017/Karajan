@@ -165,7 +165,8 @@ def create_app(
         if controller_execution is not None
         else ProjectRegistry(state_directory / "projects.sqlite", allowed_roots)
     )
-    register_project_routes(app, projects)
+    qualifications = ProfileQualificationStore(projects)
+    register_project_routes(app, projects, qualifications)
     register_simulation_routes(app, projects)
     planner = (
         controller_execution.planner
@@ -177,7 +178,7 @@ def create_app(
         if controller_execution is not None and controller_execution.capacity is not None
         else CapacityStore(state_directory / "capacity.sqlite")
     )
-    conversations = ConversationStore(projects, planner)
+    conversations = ConversationStore(projects, planner, planning_execution=controller_execution)
     register_run_routes(app, planner, conversations)
     register_conversation_routes(app, conversations)
     execution = controller_execution or PlanningExecution(
@@ -193,7 +194,7 @@ def create_app(
     )
     register_planning_routes(app, planning)
     register_resource_routes(app, capacity)
-    routing = ApprovedRunRouting(planner, ProfileQualificationStore(projects), capacity)
+    routing = ApprovedRunRouting(planner, qualifications, capacity)
     register_approved_routing_routes(app, routing)
     register_admission_routes(
         app, ApprovedTaskAdmission(state_directory / "task-admissions.sqlite", routing)

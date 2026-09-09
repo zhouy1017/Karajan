@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict
 
 from karajan.projects import ProjectError, ProjectRegistry
+from karajan.projects.qualification import ProfileQualificationStore
 
 
 def command_key(request: Request) -> str:
@@ -30,7 +31,9 @@ class ApplyInput(BaseModel):
     preview_id: str
 
 
-def register_project_routes(app: FastAPI, registry: ProjectRegistry) -> None:
+def register_project_routes(
+    app: FastAPI, registry: ProjectRegistry, qualifications: ProfileQualificationStore
+) -> None:
     @app.exception_handler(ProjectError)
     async def project_error(request: Request, error: ProjectError) -> JSONResponse:
         status = 409 if "CONFLICT" in error.code else 404 if "NOT_FOUND" in error.code else 422
@@ -61,6 +64,10 @@ def register_project_routes(app: FastAPI, registry: ProjectRegistry) -> None:
     @app.get("/v1/projects/{project_id}/planning-preparation-readiness")
     def get_planning_preparation_readiness(project_id: str) -> dict[str, Any]:
         return registry.planning_preparation_readiness(project_id, principal="owner")
+
+    @app.get("/v1/projects/{project_id}/qualifications")
+    def list_qualifications(project_id: str) -> dict[str, Any]:
+        return {"items": qualifications.list_status(project_id, principal="owner")}
 
     @app.get(
         "/v1/projects/{project_id}/execution-policies/{policy_id}/revisions/{revision}"

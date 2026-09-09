@@ -7,6 +7,7 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
+from karajan.conversations import ConversationStore
 from karajan.projects import ProjectRegistry
 from karajan.runs import RunPlanner
 from karajan.web import create_app
@@ -128,6 +129,72 @@ def test_http_creates_and_recovers_a_requirement_without_authorizing_execution(
     assert (
         client.post(f"/v1/runs/{run['id']}/handoffs", json={}, headers=headers).status_code == 404
     )
+
+
+def test_hub_uses_the_persisted_execution_ledger_for_attempt_recovery(
+    tmp_path: Path, run_client: tuple[TestClient, dict[str, str], dict[str, Any]]
+) -> None:
+    """Hub state is ledger truth, not a planning-intent-derived agent claim."""
+    client, headers, payload = run_client
+    run = client.post("/v1/runs", json=payload, headers=headers).json()
+    planner = RunPlanner(
+        tmp_path / "state" / "runs.sqlite",
+        ProjectRegistry(tmp_path / "state" / "projects.sqlite", [tmp_path / "repositories"]),
+    )
+    intent = planner.planning_intent(
+        run["id"], term=1, command_key="execution-intent", principal="commander-1"
+    )
+
+    class Ledger:
+        def _list_for_trusted_hub_run(self, trusted_run: dict[str, Any]) -> list[dict[str, Any]]:
+            assert trusted_run["id"] == run["id"]
+            return [
+                {
+                    "id": "execution_1",
+                    "run_id": run["id"],
+                    "intent_id": intent["id"],
+                    "state": "blocked",
+                    "binding": {
+                        "execution_id": "execution_1",
+                        "run_id": run["id"],
+                        "intent_id": intent["id"],
+                        "attempt_id": "planning:execution_1",
+                        "term": 1,
+                        "principal": "commander-1",
+                        "profile": {"id": "fixture-profile", "revision": 1},
+                    },
+                    "admission": {"state": "denied"},
+                    "reason_codes": ["JSON_INVALID"],
+                    "cancel_requested": False,
+                }
+            ]
+
+    hub = ConversationStore(planner.projects, planner, planning_execution=Ledger()).snapshot(
+        run["conversation_id"]
+    )
+
+    assert hub["attempts"] == [
+        {
+            "id": "planning:execution_1",
+            "run_id": run["id"],
+            "kind": "planning",
+            "state": "blocked",
+            "term": 1,
+            "principal": "commander-1",
+            "profile": {"id": "fixture-profile", "revision": 1},
+            "intent_id": intent["id"],
+            "execution_id": "execution_1",
+            "admission_state": "denied",
+            "reason_codes": ["JSON_INVALID"],
+            "next_action": "none",
+        }
+    ]
+    assert {
+        "run_id": run["id"],
+        "attempt_id": "planning:execution_1",
+        "execution_id": "execution_1",
+        "reason_code": "JSON_INVALID",
+    } in hub["blockers"]
 
 
 def test_owner_approves_only_the_exact_trusted_plan_and_retries_the_same_command(

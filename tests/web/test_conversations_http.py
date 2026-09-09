@@ -79,6 +79,7 @@ def test_conversation_persists_draft_messages_and_nonexecution_task_drafts(
     client_and_projects: tuple[TestClient, dict[str, str], dict[str, Any], dict[str, Any]],
 ) -> None:
     client, headers, project, _ = client_and_projects
+    assert client.get(f"/v1/projects/{project['id']}/qualifications").json() == {"items": []}
     path = f"/v1/projects/{project['id']}/conversations"
     created = client.post(
         path, json={"title": "Commander"}, headers={**headers, "Idempotency-Key": "conversation"}

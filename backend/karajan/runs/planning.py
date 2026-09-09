@@ -372,7 +372,9 @@ class RunPlanner:
                     self.clock(),
                 ),
             )
-            conversation["last_event_seq"] = int(cursor.lastrowid)
+            if cursor.lastrowid is None:
+                raise RunError("CONVERSATION_EVENT_NOT_PERSISTED")
+            conversation["last_event_seq"] = cursor.lastrowid
             db.execute(
                 "UPDATE commander_conversations SET snapshot=? WHERE id=?",
                 (encoded(conversation), conversation_id),
@@ -486,7 +488,9 @@ class RunPlanner:
         ).fetchone()
         if conversation is not None:
             item = json.loads(conversation["snapshot"])
-            item["last_event_seq"] = int(cursor.lastrowid)
+            if cursor.lastrowid is None:
+                raise RunError("CONVERSATION_EVENT_NOT_PERSISTED")
+            item["last_event_seq"] = cursor.lastrowid
             db.execute(
                 "UPDATE commander_conversations SET snapshot=? WHERE id=?",
                 (encoded(item), row["conversation_id"]),

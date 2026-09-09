@@ -6,15 +6,16 @@ the browser's control-context data.  It never calls planning or execution code.
 
 from __future__ import annotations
 
+import builtins
 import hashlib
 import json
 import re
 import sqlite3
 import time
 import uuid
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
-from typing import Any
+from typing import Any, cast
 
 from karajan.projects import ProjectError, ProjectRegistry
 from karajan.runs import RunPlanner
@@ -46,11 +47,18 @@ class ConversationStore:
 
     _legacy_namespace = uuid.UUID("e9e9a0cf-f970-5b45-9aa0-0a1ea3374b4b")
 
-    def __init__(self, projects: ProjectRegistry, planner: RunPlanner) -> None:
+    def __init__(
+        self,
+        projects: ProjectRegistry,
+        planner: RunPlanner,
+        *,
+        planning_execution: object | None = None,
+    ) -> None:
         # The conversation projection shares the Run ledger.  In particular,
         # conversation_run_bindings has real foreign keys to both aggregates,
         # so a Run command can establish identity in its own transaction.
         self.database, self.projects, self.planner = planner.database, projects, planner
+        self.planning_execution = planning_execution
         if planner.existing_only:
             require_schema(
                 self.database,
@@ -81,14 +89,14 @@ class ConversationStore:
             self.migrate_legacy_runs()
 
     @contextmanager
-    def _transaction(self) -> Iterator[sqlite3.Connection]:
+    def _transaction(self, *, write: bool = False) -> Iterator[sqlite3.Connection]:
         db = open_database(
             self.database, existing_only=self.planner.existing_only, isolation_level=None
         )
         db.row_factory = sqlite3.Row
         try:
             db.execute("PRAGMA foreign_keys=ON")
-            db.execute("BEGIN" if self.planner.existing_only else "BEGIN IMMEDIATE")
+            db.execute("BEGIN IMMEDIATE" if write or not self.planner.existing_only else "BEGIN")
             yield db
             db.commit()
         except BaseException:
@@ -103,7 +111,7 @@ class ConversationStore:
         except ProjectError:
             raise ConversationError("PROJECT_NOT_FOUND") from None
 
-    def commander_options(self, project_id: str) -> list[dict[str, Any]]:
+    def commander_options(self, project_id: str) -> builtins.list[dict[str, Any]]:
         self._project(project_id)
         configuration = self.projects.get_configuration(project_id)["configuration"]
         approved = {
@@ -151,10 +159,17 @@ class ConversationStore:
                 time.time(),
             ),
         )
-        return int(cursor.lastrowid)
+        if cursor.lastrowid is None:
+            raise ConversationError("CONVERSATION_EVENT_NOT_PERSISTED")
+        return cursor.lastrowid
 
     def _command(
-        self, db: sqlite3.Connection, principal: str, key: str, request: object, apply: Any
+        self,
+        db: sqlite3.Connection,
+        principal: str,
+        key: str,
+        request: object,
+        apply: Callable[[], dict[str, Any]],
     ) -> dict[str, Any]:
         identity = _digest(request)
         previous = db.execute(
@@ -165,7 +180,7 @@ class ConversationStore:
                 raise ConversationError("IDEMPOTENCY_KEY_REUSED")
             if previous["error"]:
                 raise ConversationError(previous["error"])
-            return json.loads(previous["result"])
+            return cast(dict[str, Any], json.loads(previous["result"]))
         try:
             result = apply()
         except ConversationError as error:
@@ -186,7 +201,7 @@ class ConversationStore:
         ).fetchone()
         if row is None:
             raise ConversationError("CONVERSATION_NOT_FOUND")
-        return json.loads(row["snapshot"])
+        return cast(dict[str, Any], json.loads(row["snapshot"]))
 
     def _save_conversation(self, db: sqlite3.Connection, item: dict[str, Any]) -> None:
         db.execute(
@@ -196,7 +211,7 @@ class ConversationStore:
     def migrate_legacy_runs(self) -> None:
         """Bind historical runs in their existing order without changing Run IDs."""
         runs = self.planner.list(principal="owner")
-        with self._transaction() as db:
+        with self._transaction(write=True) as db:
             for run in runs:
                 bound = db.execute(
                     "SELECT 1 FROM conversation_run_bindings WHERE run_id=?", (run["id"],)
@@ -250,11 +265,7 @@ class ConversationStore:
                     (run["id"], conversation_id, project_id),
                 )
 
-    def _write_permitted(self) -> None:
-        if self.planner.existing_only:
-            raise ConversationError("EXISTING_STORE_READ_ONLY")
-
-    def list(self, project_id: str) -> list[dict[str, Any]]:
+    def list(self, project_id: str) -> builtins.list[dict[str, Any]]:
         self._project(project_id)
         with self._transaction() as db:
             return [
@@ -269,7 +280,6 @@ class ConversationStore:
     def create(
         self, project_id: str, request: dict[str, Any], *, principal: str, key: str
     ) -> dict[str, Any]:
-        self._write_permitted()
         self._project(project_id)
         title = request.get("title", "New Commander conversation")
         if not isinstance(title, str) or not title.strip() or len(title) > 200:
@@ -282,7 +292,7 @@ class ConversationStore:
         )
         if set(request) - {"title", "commander_profile_ref", "commander_source_ref"}:
             raise ConversationError("INPUT_INVALID")
-        with self._transaction() as db:
+        with self._transaction(write=True) as db:
 
             def apply() -> dict[str, Any]:
                 item = {
@@ -322,8 +332,7 @@ class ConversationStore:
             return self._command(db, principal, key, ["create", project_id, request], apply)
 
     def bind_run(self, project_id: str, run_id: str, conversation_id: str | None) -> str:
-        self._write_permitted()
-        with self._transaction() as db:
+        with self._transaction(write=True) as db:
             if conversation_id is None:
                 conversation_id = str(uuid.uuid5(self._legacy_namespace, project_id))
                 if (
@@ -398,6 +407,90 @@ class ConversationStore:
                 raise ConversationError("RUN_CONVERSATION_UNBOUND")
             return str(row["conversation_id"])
 
+    @staticmethod
+    def _execution_next_action(execution: dict[str, Any]) -> str:
+        """Name only an operation already supported by the persisted state."""
+        if execution.get("cancel_requested"):
+            return "none"
+        state = execution.get("state")
+        return {
+            "awaiting_admission": "admit",
+            "admission_unknown": "reconcile_admission",
+            "awaiting_output": "submit_planning_output",
+            "output_captured": "submit_planning_output",
+            "submit_claimed": "reconcile_submission",
+            "submission_unknown": "reconcile_submission",
+        }.get(state if isinstance(state, str) else "", "none")
+
+    def _execution_attempts(
+        self, run: dict[str, Any]
+    ) -> tuple[builtins.list[dict[str, Any]], builtins.list[dict[str, Any]], set[str]]:
+        """Project actual controller ledger state onto the Hub without effects."""
+        reader = self.planning_execution
+        read = None if reader is None else getattr(reader, "_list_for_trusted_hub_run", None)
+        if not callable(read):
+            return [], [], set()
+        records = read(run)
+        if not isinstance(records, list):
+            raise ConversationError("PLANNING_EXECUTION_LEDGER_INVALID")
+        attempts: builtins.list[dict[str, Any]] = []
+        blockers: builtins.list[dict[str, Any]] = []
+        covered_intents: set[str] = set()
+        for execution in records:
+            if not isinstance(execution, dict):
+                raise ConversationError("PLANNING_EXECUTION_LEDGER_INVALID")
+            binding = execution.get("binding")
+            intent_id = execution.get("intent_id")
+            if (
+                not isinstance(binding, dict)
+                or not isinstance(intent_id, str)
+                or binding.get("run_id") != run["id"]
+                or binding.get("intent_id") != intent_id
+                or not all(
+                    isinstance(binding.get(field), str)
+                    for field in ("attempt_id", "principal", "execution_id")
+                )
+                or not isinstance(binding.get("term"), int)
+                or not isinstance(binding.get("profile"), dict)
+                or not isinstance(execution.get("state"), str)
+            ):
+                raise ConversationError("PLANNING_EXECUTION_LEDGER_INVALID")
+            covered_intents.add(intent_id)
+            reason_codes = execution.get("reason_codes", [])
+            if not isinstance(reason_codes, list) or not all(
+                isinstance(code, str) for code in reason_codes
+            ):
+                raise ConversationError("PLANNING_EXECUTION_LEDGER_INVALID")
+            admission = execution.get("admission")
+            attempts.append(
+                {
+                    "id": binding["attempt_id"],
+                    "run_id": run["id"],
+                    "kind": "planning",
+                    "state": execution["state"],
+                    "term": binding["term"],
+                    "principal": binding["principal"],
+                    "profile": binding["profile"],
+                    "intent_id": intent_id,
+                    "execution_id": binding["execution_id"],
+                    "admission_state": admission.get("state")
+                    if isinstance(admission, dict)
+                    else None,
+                    "reason_codes": reason_codes,
+                    "next_action": self._execution_next_action(execution),
+                }
+            )
+            blockers.extend(
+                {
+                    "run_id": run["id"],
+                    "attempt_id": binding["attempt_id"],
+                    "execution_id": binding["execution_id"],
+                    "reason_code": reason,
+                }
+                for reason in reason_codes
+            )
+        return attempts, blockers, covered_intents
+
     def snapshot(self, conversation_id: str) -> dict[str, Any]:
         with self._transaction() as db:
             item = self._conversation(db, conversation_id)
@@ -429,10 +522,10 @@ class ConversationStore:
                 )
             ]
             run_summaries = []
-            tasks: list[dict[str, Any]] = []
-            attempts: list[dict[str, Any]] = []
-            blockers: list[dict[str, Any]] = []
-            agents: list[dict[str, Any]] = []
+            tasks: builtins.list[dict[str, Any]] = []
+            attempts: builtins.list[dict[str, Any]] = []
+            blockers: builtins.list[dict[str, Any]] = []
+            agents: builtins.list[dict[str, Any]] = []
             for run_id in runs:
                 row = db.execute("SELECT snapshot FROM runs WHERE id=?", (run_id,)).fetchone()
                 if row is None:
@@ -476,6 +569,9 @@ class ConversationStore:
                     }
                     for participant in run["participants"]
                 )
+                execution_attempts, execution_blockers, covered_intents = self._execution_attempts(
+                    run
+                )
                 attempts.extend(
                     {
                         "id": intent["id"],
@@ -487,7 +583,10 @@ class ConversationStore:
                         "profile": intent["profile"],
                     }
                     for intent in run["planning_intents"]
+                    if intent["id"] not in covered_intents
                 )
+                attempts.extend(execution_attempts)
+                blockers.extend(execution_blockers)
                 if plan is None:
                     blockers.append({"run_id": run["id"], "reason_code": "PLAN_NOT_AVAILABLE"})
                     continue
@@ -542,7 +641,6 @@ class ConversationStore:
         key: str,
         revision: int,
     ) -> dict[str, Any]:
-        self._write_permitted()
         if set(request) - {"title", "commander_profile_ref", "commander_source_ref"} or not request:
             raise ConversationError("INPUT_INVALID")
         for field in ("commander_profile_ref", "commander_source_ref"):
@@ -554,7 +652,7 @@ class ConversationStore:
             or len(request["title"]) > 200
         ):
             raise ConversationError("INPUT_INVALID")
-        with self._transaction() as db:
+        with self._transaction(write=True) as db:
             item = self._conversation(db, conversation_id)
             self._validate_selection(
                 item["project_id"],
@@ -585,13 +683,12 @@ class ConversationStore:
     def message(
         self, conversation_id: str, request: dict[str, Any], *, principal: str, key: str
     ) -> dict[str, Any]:
-        self._write_permitted()
         if set(request) != {"client_message_id", "content"}:
             raise ConversationError("INPUT_INVALID")
         client_id, content = _identifier(request["client_message_id"]), request["content"]
         if not isinstance(content, str) or not content.strip() or len(content) > 20_000:
             raise ConversationError("INPUT_INVALID")
-        with self._transaction() as db:
+        with self._transaction(write=True) as db:
             item = self._conversation(db, conversation_id)
 
             def apply() -> dict[str, Any]:
@@ -601,7 +698,7 @@ class ConversationStore:
                     (conversation_id, client_id),
                 ).fetchone()
                 if existing is not None:
-                    return json.loads(existing["snapshot"])
+                    return cast(dict[str, Any], json.loads(existing["snapshot"]))
                 message = {
                     "id": str(uuid.uuid4()),
                     "conversation_id": conversation_id,
@@ -632,7 +729,6 @@ class ConversationStore:
         key: str,
         revision: int,
     ) -> dict[str, Any]:
-        self._write_permitted()
         if set(request) - {"content", "selected_task_id", "base_plan_revision"} or not isinstance(
             request.get("content"), str
         ):
@@ -652,7 +748,7 @@ class ConversationStore:
             )
         ):
             raise ConversationError("INPUT_INVALID")
-        with self._transaction() as db:
+        with self._transaction(write=True) as db:
             item = self._conversation(db, conversation_id)
 
             def apply() -> dict[str, Any]:
@@ -721,7 +817,6 @@ class ConversationStore:
     def task_draft(
         self, conversation_id: str, request: dict[str, Any], *, principal: str, key: str
     ) -> dict[str, Any]:
-        self._write_permitted()
         if (
             set(request) != {"requirement"}
             or not isinstance(request["requirement"], str)
@@ -729,7 +824,7 @@ class ConversationStore:
             or len(request["requirement"]) > 20_000
         ):
             raise ConversationError("INPUT_INVALID")
-        with self._transaction() as db:
+        with self._transaction(write=True) as db:
             item = self._conversation(db, conversation_id)
 
             def apply() -> dict[str, Any]:
@@ -755,7 +850,7 @@ class ConversationStore:
                 db, principal, key, ["task_draft", conversation_id, request], apply
             )
 
-    def events(self, conversation_id: str, after_seq: int) -> list[dict[str, Any]]:
+    def events(self, conversation_id: str, after_seq: int) -> builtins.list[dict[str, Any]]:
         with self._transaction() as db:
             item = self._conversation(db, conversation_id)
             known_cursor = (

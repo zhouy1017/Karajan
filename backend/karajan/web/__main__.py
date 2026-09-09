@@ -9,6 +9,7 @@ from pathlib import Path
 
 import uvicorn
 
+from karajan.orchestration.planning_bootstrap import migrate_commander_conversations
 from karajan.runs import RunError
 
 from .app import create_app
@@ -57,6 +58,12 @@ def main() -> int:
         if not 1 <= arguments.port <= 65535:
             raise ValueError("PORT_INVALID")
         state = _prepare_state(arguments.state_directory)
+        if arguments.planning_control_directory is not None:
+            # The trusted production factory below is deliberately strict and
+            # read-only.  Run this explicit, normal bootstrap before it so a
+            # historical planning deployment can receive the owned Commander
+            # projection migration without weakening that reader boundary.
+            migrate_commander_conversations(arguments.planning_control_directory)
         token = secrets.token_urlsafe(32)
         code_file = state / f"bootstrap-{secrets.token_hex(6)}.txt"
         descriptor = os.open(code_file, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)

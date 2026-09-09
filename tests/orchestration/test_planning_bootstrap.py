@@ -11,6 +11,7 @@ import pytest
 from karajan.orchestration.planning_bootstrap import (
     PLANNING_ADMISSION_BOOTSTRAP,
     assert_planning_bootstrap_current,
+    migrate_commander_conversations,
     provision_planning_bootstrap,
     read_planning_bootstrap,
 )
@@ -152,6 +153,74 @@ def test_provisioning_creates_empty_normal_routing_dependencies(tmp_path: Path) 
 
     assert routing.estimates.planner is planner
     assert snapshots.database == snapshot_database(settings.control_directory)
+
+
+def test_explicit_conversation_migration_upgrades_historical_runs_without_reader_writes(
+    tmp_path: Path,
+) -> None:
+    """Only normal bootstrap may add the #159 Run conversation projection."""
+    from karajan.conversations import ConversationStore
+    from karajan.runs import RunPlanner
+    from karajan.storage import ExistingStoreError
+
+    roots = tmp_path / "repositories"
+    roots.mkdir()
+    settings = provision_planning_bootstrap(tmp_path / "control", tmp_path / "state", (roots,))
+    historic = {
+        "id": "legacy_run",
+        "owner": "owner",
+        "project_id": "legacy_project",
+    }
+    with sqlite3.connect(settings.state_directory / "runs.sqlite") as database:
+        database.execute("PRAGMA foreign_keys=OFF")
+        for table in (
+            "conversation_events",
+            "conversation_commands",
+            "conversation_task_drafts",
+            "conversation_drafts",
+            "conversation_messages",
+            "conversation_run_bindings",
+            "commander_conversations",
+        ):
+            database.execute(f"DROP TABLE {table}")
+        database.execute("INSERT INTO runs VALUES (?, ?)", (historic["id"], json.dumps(historic)))
+
+    projects = ProjectRegistry(
+        settings.projects_database, settings.allowed_roots, existing_only=True
+    )
+    planner = RunPlanner(settings.state_directory / "runs.sqlite", projects, existing_only=True)
+    with pytest.raises(ExistingStoreError, match="^EXISTING_STORE_SCHEMA_UNSUPPORTED$"):
+        ConversationStore(projects, planner)
+    with sqlite3.connect(settings.state_directory / "runs.sqlite") as database:
+        assert database.execute(
+            "SELECT snapshot FROM runs WHERE id=?", (historic["id"],)
+        ).fetchone()[0] == json.dumps(historic)
+
+    migrate_commander_conversations(settings.control_directory)
+
+    readonly_projects = ProjectRegistry(
+        settings.projects_database, settings.allowed_roots, existing_only=True
+    )
+    readonly_planner = RunPlanner(
+        settings.state_directory / "runs.sqlite", readonly_projects, existing_only=True
+    )
+    conversations = ConversationStore(readonly_projects, readonly_planner)
+    conversation_id = conversations.bound_conversation(historic["id"], historic["project_id"])
+    message = conversations.message(
+        conversation_id,
+        {"client_message_id": "migration_check", "content": "recover this conversation"},
+        principal="owner",
+        key="migration_message",
+    )
+    draft = conversations.draft(
+        conversation_id,
+        {"content": "saved after strict reopen"},
+        principal="owner",
+        key="migration_draft",
+        revision=1,
+    )
+    assert message["content"] == "recover this conversation"
+    assert draft["content"] == "saved after strict reopen"
 
 
 @pytest.mark.parametrize(
