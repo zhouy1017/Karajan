@@ -139,6 +139,10 @@ def test_revisions_csrf_cross_project_and_sse_recovery(
         json={"conversation_id": second["id"]},
         headers={**headers, "Idempotency-Key": "wrong"},
     ).status_code in {409, 422}
+    assert client.get(
+        "/v1/runs",
+        params={"project_id": project_one["id"], "conversation_id": second["id"]},
+    ).status_code == 409
     assert (
         client.put(
             f"/v1/conversations/{first['id']}/draft",
@@ -166,3 +170,77 @@ def test_revisions_csrf_cross_project_and_sse_recovery(
     )
     gap = client.get(f"/v1/conversations/{first['id']}/events", params={"after_seq": 999})
     assert "event: event_gap" in gap.text and "snapshot_required" in gap.text
+
+
+def test_rejected_draft_receipt_is_durable_and_replays_its_revision(
+    client_and_projects: tuple[TestClient, dict[str, str], dict[str, Any], dict[str, Any]],
+) -> None:
+    client, headers, project, _ = client_and_projects
+    conversation = client.post(
+        f"/v1/projects/{project['id']}/conversations",
+        json={"title": "receipt"},
+        headers={**headers, "Idempotency-Key": "conversation"},
+    ).json()
+    path = f"/v1/conversations/{conversation['id']}/draft"
+    assert client.put(
+        path,
+        json={"content": "accepted"},
+        headers={**headers, "Idempotency-Key": "accepted", "If-Match": '"1"'},
+    ).status_code == 200
+    rejected_headers = {**headers, "Idempotency-Key": "rejected", "If-Match": '"1"'}
+    first = client.put(path, json={"content": "first"}, headers=rejected_headers)
+    assert first.status_code == 409 and first.json()["current_revision"] == 2
+    assert (
+        client.get(f"/v1/conversations/{conversation['id']}/hub").json()["draft"]["content"]
+        == "accepted"
+    )
+    replay = client.put(path, json={"content": "first"}, headers=rejected_headers)
+    assert replay.status_code == 409 and replay.json()["current_revision"] == 2
+    reused = client.put(path, json={"content": "changed"}, headers=rejected_headers)
+    assert reused.status_code == 409 and reused.json()["reason_code"] == "IDEMPOTENCY_KEY_REUSED"
+
+
+def test_sse_route_uses_the_single_batch_watermark(
+    client_and_projects: tuple[TestClient, dict[str, str], dict[str, Any], dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from karajan.conversations import ConversationStore
+
+    client, headers, project, _ = client_and_projects
+    conversation = client.post(
+        f"/v1/projects/{project['id']}/conversations",
+        json={"title": "events"},
+        headers={**headers, "Idempotency-Key": "events"},
+    ).json()
+    monkeypatch.setattr(
+        ConversationStore,
+        "snapshot",
+        lambda *args: (_ for _ in ()).throw(AssertionError("separate snapshot read")),
+    )
+    events = client.get(f"/v1/conversations/{conversation['id']}/events")
+    assert events.status_code == 200
+    assert events.headers["X-Snapshot-Watermark"] == "1"
+
+
+def test_conversation_create_replays_before_mutable_selection_validation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from karajan.conversations import ConversationStore
+    from karajan.projects import ProjectRegistry
+    from karajan.runs import RunPlanner
+
+    registry = ProjectRegistry(tmp_path / "projects.sqlite", [tmp_path])
+    # The test only needs a stable project identity; selection is deliberately
+    # supplied by the registry-facing options seam.
+    monkeypatch.setattr(registry, "get", lambda project_id: {"id": project_id})
+    store = ConversationStore(registry, RunPlanner(tmp_path / "runs.sqlite", registry))
+    allowed = [{"profile_ref": "profile", "source_ref": "source"}]
+    monkeypatch.setattr(store, "commander_options", lambda project_id: allowed)
+    request = {
+        "title": "selected",
+        "commander_profile_ref": "profile",
+        "commander_source_ref": "source",
+    }
+    first = store.create("project", request, principal="owner", key="selection")
+    allowed.clear()
+    assert store.create("project", request, principal="owner", key="selection") == first

@@ -87,7 +87,7 @@ def register_conversation_routes(app: FastAPI, store: ConversationStore) -> None
 
     @app.get("/v1/conversations/{conversation_id}/events")
     def get_events(conversation_id: str, after_seq: int = 0) -> StreamingResponse:
-        events = store.events(conversation_id, after_seq)
+        events, watermark = store.events_snapshot(conversation_id, after_seq)
 
         def body() -> Iterator[str]:
             for event in events:
@@ -100,7 +100,7 @@ def register_conversation_routes(app: FastAPI, store: ConversationStore) -> None
             body(),
             media_type="text/event-stream",
             headers={
-                "X-Snapshot-Watermark": str(store.snapshot(conversation_id)["snapshot_event_seq"]),
+                "X-Snapshot-Watermark": str(watermark),
                 "X-Accel-Buffering": "no",
             },
         )

@@ -178,14 +178,18 @@ def create_app(
         if controller_execution is not None and controller_execution.capacity is not None
         else CapacityStore(state_directory / "capacity.sqlite")
     )
-    conversations = ConversationStore(projects, planner, planning_execution=controller_execution)
-    register_run_routes(app, planner, conversations)
-    register_conversation_routes(app, conversations)
     execution = controller_execution or PlanningExecution(
         state_directory / "planning-execution.sqlite", planner
     )
     if execution.planner is not planner:
         raise ValueError("Planning execution must use this application's Run planner")
+    # Hub consumes the same controller ledger used by PlanningWorkbench; it
+    # must not derive an alternate execution state from Run intents.
+    conversations = ConversationStore(projects, planner, planning_execution=execution)
+    app.state.planning_execution = execution
+    app.state.conversations = conversations
+    register_run_routes(app, planner, conversations)
+    register_conversation_routes(app, conversations)
     planning_transport = planning_transport or production_transport
     if planning_transport is not None and planning_transport.execution is not execution:
         raise ValueError("Planning transport must use this application's execution controller")

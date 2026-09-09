@@ -17,6 +17,11 @@ from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from typing import Any, cast
 
+from karajan.conversation_projection import (
+    ConversationProjectionError,
+    ensure_legacy_conversation,
+    legacy_conversation_id,
+)
 from karajan.projects import ProjectError, ProjectRegistry
 from karajan.runs import RunPlanner
 from karajan.storage import open_database, require_schema
@@ -45,8 +50,6 @@ def _identifier(value: object) -> str:
 class ConversationStore:
     """A small SQLite projection with idempotent commands and replayable events."""
 
-    _legacy_namespace = uuid.UUID("e9e9a0cf-f970-5b45-9aa0-0a1ea3374b4b")
-
     def __init__(
         self,
         projects: ProjectRegistry,
@@ -65,6 +68,7 @@ class ConversationStore:
                 {
                     "commander_conversations": ["id", "project_id", "snapshot"],
                     "conversation_run_bindings": ["run_id", "conversation_id", "project_id"],
+                    "conversation_migration_blockers": ["run_id", "project_id", "reason_code"],
                     "conversation_messages": [
                         "id",
                         "conversation_id",
@@ -163,6 +167,23 @@ class ConversationStore:
             raise ConversationError("CONVERSATION_EVENT_NOT_PERSISTED")
         return cursor.lastrowid
 
+    @staticmethod
+    def _stored_error(error: ConversationError) -> str:
+        return _encoded({"code": error.code, "revision": error.revision})
+
+    @staticmethod
+    def _replayed_error(value: str) -> ConversationError:
+        try:
+            parsed = json.loads(value)
+        except json.JSONDecodeError:
+            return ConversationError(value)
+        if not isinstance(parsed, dict) or not isinstance(parsed.get("code"), str):
+            return ConversationError(value)
+        revision = parsed.get("revision")
+        return ConversationError(
+            parsed["code"], revision=revision if isinstance(revision, int) else None
+        )
+
     def _command(
         self,
         db: sqlite3.Connection,
@@ -170,7 +191,7 @@ class ConversationStore:
         key: str,
         request: object,
         apply: Callable[[], dict[str, Any]],
-    ) -> dict[str, Any]:
+    ) -> tuple[dict[str, Any], ConversationError | None]:
         identity = _digest(request)
         previous = db.execute(
             "SELECT * FROM conversation_commands WHERE principal=? AND key=?", (principal, key)
@@ -179,21 +200,28 @@ class ConversationStore:
             if previous["digest"] != identity:
                 raise ConversationError("IDEMPOTENCY_KEY_REUSED")
             if previous["error"]:
-                raise ConversationError(previous["error"])
-            return cast(dict[str, Any], json.loads(previous["result"]))
+                raise self._replayed_error(str(previous["error"]))
+            return cast(dict[str, Any], json.loads(previous["result"])), None
+        db.execute("SAVEPOINT conversation_mutation")
+        error: ConversationError | None = None
         try:
             result = apply()
-        except ConversationError as error:
+        except ConversationError as rejected:
+            db.execute("ROLLBACK TO conversation_mutation")
+            error = rejected
+        finally:
+            db.execute("RELEASE conversation_mutation")
+        if error is not None:
             db.execute(
                 "INSERT INTO conversation_commands VALUES (?, ?, ?, NULL, ?)",
-                (principal, key, identity, error.code),
+                (principal, key, identity, self._stored_error(error)),
             )
-            raise
-        db.execute(
-            "INSERT INTO conversation_commands VALUES (?, ?, ?, ?, NULL)",
-            (principal, key, identity, _encoded(result)),
-        )
-        return result
+        else:
+            db.execute(
+                "INSERT INTO conversation_commands VALUES (?, ?, ?, ?, NULL)",
+                (principal, key, identity, _encoded(result)),
+            )
+        return result if error is None else {}, error
 
     def _conversation(self, db: sqlite3.Connection, conversation_id: str) -> dict[str, Any]:
         row = db.execute(
@@ -209,61 +237,56 @@ class ConversationStore:
         )
 
     def migrate_legacy_runs(self) -> None:
-        """Bind historical runs in their existing order without changing Run IDs."""
+        """Bind valid historical runs, retaining invalid declared references as blockers."""
         runs = self.planner.list(principal="owner")
         with self._transaction(write=True) as db:
             for run in runs:
-                bound = db.execute(
-                    "SELECT 1 FROM conversation_run_bindings WHERE run_id=?", (run["id"],)
-                ).fetchone()
-                if bound is not None:
+                run_id, project_id = run["id"], run.get("project_id")
+                if not isinstance(run_id, str) or not isinstance(project_id, str):
                     continue
-                project_id = run["project_id"]
-                conversation_id = run.get("conversation_id") or str(
-                    uuid.uuid5(self._legacy_namespace, project_id)
-                )
-                row = db.execute(
-                    "SELECT 1 FROM commander_conversations WHERE id=?", (conversation_id,)
-                ).fetchone()
-                if row is None:
-                    item = {
-                        "id": conversation_id,
-                        "project_id": project_id,
-                        "title": "Legacy Commander conversation",
-                        "state": "active",
-                        "commander_profile_ref": None,
-                        "commander_source_ref": None,
-                        "revision": 1,
-                        "last_event_seq": 0,
-                        "legacy": True,
-                    }
+                if db.execute(
+                    "SELECT 1 FROM conversation_migration_blockers WHERE run_id=?", (run_id,)
+                ).fetchone() is not None:
+                    continue
+                try:
+                    self._project(project_id)
+                    bound = db.execute(
+                        "SELECT conversation_id, project_id FROM conversation_run_bindings "
+                        "WHERE run_id=?",
+                        (run_id,),
+                    ).fetchone()
+                    if bound is not None:
+                        if bound["project_id"] != project_id:
+                            raise ConversationError("CROSS_PROJECT_REFERENCE")
+                        conversation = self._conversation(db, str(bound["conversation_id"]))
+                        if conversation["project_id"] != project_id:
+                            raise ConversationError("CROSS_PROJECT_REFERENCE")
+                        continue
+                    if "conversation_id" in run:
+                        conversation_id = run["conversation_id"]
+                        if not isinstance(conversation_id, str):
+                            raise ConversationError("CONVERSATION_REFERENCE_INVALID")
+                        _identifier(conversation_id)
+                        conversation = self._conversation(db, conversation_id)
+                        if conversation["project_id"] != project_id:
+                            raise ConversationError("CROSS_PROJECT_REFERENCE")
+                    else:
+                        conversation = ensure_legacy_conversation(db, project_id)
+                        conversation_id = conversation["id"]
                     db.execute(
-                        "INSERT INTO commander_conversations VALUES (?, ?, ?)",
-                        (conversation_id, project_id, _encoded(item)),
+                        "INSERT INTO conversation_run_bindings VALUES (?, ?, ?)",
+                        (run_id, conversation_id, project_id),
+                    )
+                except (ConversationError, ConversationProjectionError) as rejected:
+                    code = (
+                        rejected.code
+                        if isinstance(rejected, ConversationError)
+                        else str(rejected)
                     )
                     db.execute(
-                        "INSERT OR IGNORE INTO conversation_drafts VALUES (?, ?)",
-                        (
-                            conversation_id,
-                            _encoded(
-                                {
-                                    "conversation_id": conversation_id,
-                                    "project_id": project_id,
-                                    "draft_id": str(uuid.uuid4()),
-                                    "content": "",
-                                    "selected_task_id": None,
-                                    "base_plan_revision": None,
-                                    "revision": 1,
-                                }
-                            ),
-                        ),
+                        "INSERT OR IGNORE INTO conversation_migration_blockers VALUES (?, ?, ?)",
+                        (run_id, project_id, code),
                     )
-                    item["last_event_seq"] = self._event(db, item, "conversation_created")
-                    self._save_conversation(db, item)
-                db.execute(
-                    "INSERT INTO conversation_run_bindings VALUES (?, ?, ?)",
-                    (run["id"], conversation_id, project_id),
-                )
 
     def list(self, project_id: str) -> builtins.list[dict[str, Any]]:
         self._project(project_id)
@@ -287,14 +310,19 @@ class ConversationStore:
         for field in ("commander_profile_ref", "commander_source_ref"):
             if request.get(field) is not None:
                 _identifier(request[field])
-        self._validate_selection(
-            project_id, request.get("commander_profile_ref"), request.get("commander_source_ref")
-        )
         if set(request) - {"title", "commander_profile_ref", "commander_source_ref"}:
             raise ConversationError("INPUT_INVALID")
         with self._transaction(write=True) as db:
 
             def apply() -> dict[str, Any]:
+                # Configuration is mutable.  Keep this check inside the
+                # idempotent mutation so an already accepted command replays
+                # after a later profile/configuration change.
+                self._validate_selection(
+                    project_id,
+                    request.get("commander_profile_ref"),
+                    request.get("commander_source_ref"),
+                )
                 item = {
                     "id": str(uuid.uuid4()),
                     "project_id": project_id,
@@ -329,35 +357,21 @@ class ConversationStore:
                 self._save_conversation(db, item)
                 return item
 
-            return self._command(db, principal, key, ["create", project_id, request], apply)
+            result, error = self._command(
+                db, principal, key, ["create", project_id, request], apply
+            )
+        if error is not None:
+            raise error
+        return result
 
     def bind_run(self, project_id: str, run_id: str, conversation_id: str | None) -> str:
         with self._transaction(write=True) as db:
             if conversation_id is None:
-                conversation_id = str(uuid.uuid5(self._legacy_namespace, project_id))
-                if (
-                    db.execute(
-                        "SELECT 1 FROM commander_conversations WHERE id=?", (conversation_id,)
-                    ).fetchone()
-                    is None
-                ):
-                    item = {
-                        "id": conversation_id,
-                        "project_id": project_id,
-                        "title": "Legacy Commander conversation",
-                        "state": "active",
-                        "commander_profile_ref": None,
-                        "commander_source_ref": None,
-                        "revision": 1,
-                        "last_event_seq": 0,
-                        "legacy": True,
-                    }
-                    db.execute(
-                        "INSERT INTO commander_conversations VALUES (?, ?, ?)",
-                        (item["id"], project_id, _encoded(item)),
-                    )
-                    item["last_event_seq"] = self._event(db, item, "conversation_created")
-                    self._save_conversation(db, item)
+                conversation_id = legacy_conversation_id(project_id)
+                try:
+                    ensure_legacy_conversation(db, project_id)
+                except ConversationProjectionError as rejected:
+                    raise ConversationError(str(rejected)) from None
             item = self._conversation(db, conversation_id)
             if item["project_id"] != project_id:
                 raise ConversationError("CROSS_PROJECT_REFERENCE")
@@ -384,6 +398,11 @@ class ConversationStore:
             if item["project_id"] != project_id:
                 raise ConversationError("CROSS_PROJECT_REFERENCE")
 
+    def conversation_project(self, conversation_id: str) -> str:
+        """Resolve the durable Project identity; never trust a nested URL hint."""
+        with self._transaction() as db:
+            return str(self._conversation(db, conversation_id)["project_id"])
+
     def run_conversation(self, run_id: str, project_id: str) -> str:
         with self._transaction() as db:
             row = db.execute(
@@ -406,6 +425,29 @@ class ConversationStore:
             if row is None or row["project_id"] != project_id:
                 raise ConversationError("RUN_CONVERSATION_UNBOUND")
             return str(row["conversation_id"])
+
+    def run_binding(self, run_id: str, project_id: str) -> dict[str, str | None]:
+        """Return a durable binding or its migration blocker for compatibility reads."""
+        with self._transaction() as db:
+            row = db.execute(
+                "SELECT conversation_id, project_id FROM conversation_run_bindings WHERE run_id=?",
+                (run_id,),
+            ).fetchone()
+            if row is not None:
+                if row["project_id"] != project_id:
+                    raise ConversationError("CROSS_PROJECT_REFERENCE")
+                item = self._conversation(db, str(row["conversation_id"]))
+                if item["project_id"] != project_id:
+                    raise ConversationError("CROSS_PROJECT_REFERENCE")
+                return {"conversation_id": str(row["conversation_id"]), "recovery_blocker": None}
+            blocker = db.execute(
+                "SELECT project_id, reason_code FROM conversation_migration_blockers "
+                "WHERE run_id=?",
+                (run_id,),
+            ).fetchone()
+            if blocker is not None and blocker["project_id"] == project_id:
+                return {"conversation_id": None, "recovery_blocker": str(blocker["reason_code"])}
+            raise ConversationError("RUN_CONVERSATION_UNBOUND")
 
     @staticmethod
     def _execution_next_action(execution: dict[str, Any]) -> str:
@@ -654,13 +696,12 @@ class ConversationStore:
             raise ConversationError("INPUT_INVALID")
         with self._transaction(write=True) as db:
             item = self._conversation(db, conversation_id)
-            self._validate_selection(
-                item["project_id"],
-                request.get("commander_profile_ref", item["commander_profile_ref"]),
-                request.get("commander_source_ref", item["commander_source_ref"]),
-            )
-
             def apply() -> dict[str, Any]:
+                self._validate_selection(
+                    item["project_id"],
+                    request.get("commander_profile_ref", item["commander_profile_ref"]),
+                    request.get("commander_source_ref", item["commander_source_ref"]),
+                )
                 if item["revision"] != revision:
                     raise ConversationError(
                         "CONVERSATION_REVISION_CONFLICT", revision=item["revision"]
@@ -676,9 +717,12 @@ class ConversationStore:
                 self._save_conversation(db, item)
                 return item
 
-            return self._command(
+            result, error = self._command(
                 db, principal, key, ["settings", conversation_id, revision, request], apply
             )
+        if error is not None:
+            raise error
+        return result
 
     def message(
         self, conversation_id: str, request: dict[str, Any], *, principal: str, key: str
@@ -718,7 +762,12 @@ class ConversationStore:
                 self._save_conversation(db, item)
                 return message
 
-            return self._command(db, principal, key, ["message", conversation_id, request], apply)
+            result, error = self._command(
+                db, principal, key, ["message", conversation_id, request], apply
+            )
+        if error is not None:
+            raise error
+        return result
 
     def draft(
         self,
@@ -784,9 +833,12 @@ class ConversationStore:
                 self._save_conversation(db, item)
                 return value
 
-            return self._command(
+            result, error = self._command(
                 db, principal, key, ["draft", conversation_id, revision, request], apply
             )
+        if error is not None:
+            raise error
+        return result
 
     def _selected_object_exists(
         self, db: sqlite3.Connection, conversation_id: str, selected_id: str
@@ -846,30 +898,37 @@ class ConversationStore:
                 self._save_conversation(db, item)
                 return value
 
-            return self._command(
+            result, error = self._command(
                 db, principal, key, ["task_draft", conversation_id, request], apply
             )
+        if error is not None:
+            raise error
+        return result
 
-    def events(self, conversation_id: str, after_seq: int) -> builtins.list[dict[str, Any]]:
+    def events_snapshot(
+        self, conversation_id: str, after_seq: int
+    ) -> tuple[builtins.list[dict[str, Any]], int]:
+        """Read an SSE batch and its resume watermark from one SQLite snapshot."""
         with self._transaction() as db:
             item = self._conversation(db, conversation_id)
+            watermark = item["last_event_seq"]
             known_cursor = (
                 after_seq == 0
-                or after_seq == item["last_event_seq"]
+                or after_seq == watermark
                 or db.execute(
                     "SELECT 1 FROM conversation_events WHERE conversation_id=? AND sequence=?",
                     (conversation_id, after_seq),
                 ).fetchone()
                 is not None
             )
-            if after_seq < 0 or after_seq > item["last_event_seq"] or not known_cursor:
+            if after_seq < 0 or after_seq > watermark or not known_cursor:
                 return [
                     {
                         "event_type": "event_gap",
                         "snapshot_required": True,
-                        "snapshot_event_seq": item["last_event_seq"],
+                        "snapshot_event_seq": watermark,
                     }
-                ]
+                ], watermark
             return [
                 {
                     "sequence": row["sequence"],
@@ -885,4 +944,8 @@ class ConversationStore:
                     "AND sequence>? ORDER BY sequence",
                     (conversation_id, after_seq),
                 )
-            ]
+            ], watermark
+
+    def events(self, conversation_id: str, after_seq: int) -> builtins.list[dict[str, Any]]:
+        """Compatibility helper; HTTP callers must use :meth:`events_snapshot`."""
+        return self.events_snapshot(conversation_id, after_seq)[0]

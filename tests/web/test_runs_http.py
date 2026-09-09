@@ -120,6 +120,10 @@ def test_http_creates_and_recovers_a_requirement_without_authorizing_execution(
     assert client.post("/v1/runs", json=payload, headers=headers).json() == run
     listed = client.get("/v1/runs", params={"project_id": payload["project_id"]})
     assert [item["id"] for item in listed.json()["items"]] == [run["id"]]
+    filtered = client.get("/v1/runs", params={"conversation_id": run["conversation_id"]})
+    assert [item["id"] for item in filtered.json()["items"]] == [run["id"]]
+    scoped = client.get(f"/v1/conversations/{run['conversation_id']}/runs")
+    assert [item["id"] for item in scoped.json()["items"]] == [run["id"]]
     assert client.get(f"/v1/runs/{run['id']}").json() == run
     assert client.post(f"/v1/runs/{run['id']}/plans", json={}, headers=headers).status_code == 404
     assert (
@@ -127,8 +131,19 @@ def test_http_creates_and_recovers_a_requirement_without_authorizing_execution(
         == 404
     )
     assert (
-        client.post(f"/v1/runs/{run['id']}/handoffs", json={}, headers=headers).status_code == 404
+        client.post(f"/v1/runs/{run['id']}/handoffs", json={}, headers=headers).status_code
+        == 404
     )
+
+
+def test_default_app_shares_its_execution_ledger_with_hub(tmp_path: Path) -> None:
+    app = create_app(
+        tmp_path / "state",
+        origin="http://127.0.0.1:8765",
+        bootstrap_token="bootstrap",
+        allowed_roots=[tmp_path],
+    )
+    assert app.state.conversations.planning_execution is app.state.planning_execution
 
 
 def test_hub_uses_the_persisted_execution_ledger_for_attempt_recovery(

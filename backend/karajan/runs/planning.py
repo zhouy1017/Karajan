@@ -14,6 +14,11 @@ from typing import Any
 from pydantic import TypeAdapter, ValidationError
 
 from karajan.contracts.probe import Contract, Identifier
+from karajan.conversation_projection import (
+    ConversationProjectionError,
+    ensure_legacy_conversation,
+    legacy_conversation_id,
+)
 from karajan.projects import ProjectRegistry
 from karajan.storage import open_database, require_schema
 
@@ -130,6 +135,9 @@ class RunPlanner:
                   run_id TEXT PRIMARY KEY REFERENCES runs(id),
                   conversation_id TEXT NOT NULL REFERENCES commander_conversations(id),
                   project_id TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS conversation_migration_blockers (
+                  run_id TEXT PRIMARY KEY REFERENCES runs(id), project_id TEXT NOT NULL,
+                  reason_code TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS conversation_messages (
                   id TEXT PRIMARY KEY, conversation_id TEXT NOT NULL
                     REFERENCES commander_conversations(id),
@@ -178,8 +186,22 @@ class RunPlanner:
         if not isinstance(request, dict):
             raise RunError("RUN_INPUT_INVALID")
         request = dict(request)
-        conversation_id = request.pop("conversation_id", None)
-        if conversation_id is not None:
+        conversation_supplied = "conversation_id" in request
+        conversation_id = request.pop("conversation_id") if conversation_supplied else None
+        # A supplied identity is included in the command digest even when it
+        # is malformed.  It must not alias the omitted-field legacy command.
+        identity = digest(["create", request]) if not conversation_supplied else digest(
+            ["create", request, conversation_id]
+        )
+        with self._transaction() as db:
+            previous = self._replay(db, principal, command_key, identity)
+            if previous is not None:
+                return self._enrich_conversation_identity(db, previous)
+        if conversation_supplied:
+            if conversation_id is None:
+                raise RunError("RUN_INPUT_INVALID")
+            if not isinstance(conversation_id, str):
+                raise RunError("RUN_INPUT_INVALID")
             identifier(conversation_id)
         version_two = (
             isinstance(request, dict) and request.get("schema_version") == "karajan.create-run.v2"
@@ -190,26 +212,18 @@ class RunPlanner:
             )
         except ValidationError:
             raise RunError("RUN_INPUT_INVALID") from None
-        # Keep the exact legacy command digest for the legacy DTO.  Old
-        # receipts must replay after this migration; an explicit new identity
-        # is included only for the new, opt-in conversation field.
-        identity = (
-            digest(["create", request])
-            if conversation_id is None
-            else digest(["create", request, conversation_id])
-        )
-        with self._transaction() as db:
-            previous = self._replay(db, principal, command_key, identity)
-            if previous is not None:
-                return previous
         project = self.projects.get(request["project_id"])
-        legacy_conversation = conversation_id is None
+        legacy_conversation = not conversation_supplied
         if legacy_conversation:
             # The deterministic compatibility identity does not create a
             # Conversation by itself; the web/domain migration persists it.
-            conversation_id = str(
-                uuid.uuid5(uuid.UUID("e9e9a0cf-f970-5b45-9aa0-0a1ea3374b4b"), project["id"])
-            )
+            resolved_conversation_id = legacy_conversation_id(project["id"])
+        else:
+            # Explicit null and non-string values were rejected before DTO
+            # validation; this gives the transaction boundary a stable type.
+            if not isinstance(conversation_id, str):
+                raise RunError("RUN_INPUT_INVALID")
+            resolved_conversation_id = conversation_id
         exported = self.projects.get_configuration(request["project_id"])
         if (
             project["revision"] != request["project_revision"]
@@ -268,7 +282,7 @@ class RunPlanner:
             "revision": 1,
             "owner": principal,
             "project_id": project["id"],
-            "conversation_id": conversation_id,
+            "conversation_id": resolved_conversation_id,
             "requirement": request["requirement"],
             "state": "planning",
             "dispatch_enabled": False,
@@ -298,7 +312,11 @@ class RunPlanner:
         def insert(db: sqlite3.Connection) -> dict[str, Any]:
             db.execute("INSERT INTO runs VALUES (?, ?)", (snapshot["id"], encoded(snapshot)))
             self._bind_conversation(
-                db, snapshot["id"], project["id"], conversation_id, allow_legacy=legacy_conversation
+                db,
+                snapshot["id"],
+                project["id"],
+                resolved_conversation_id,
+                allow_legacy=legacy_conversation,
             )
             return snapshot
 
@@ -324,61 +342,13 @@ class RunPlanner:
             "SELECT snapshot FROM commander_conversations WHERE id=?", (conversation_id,)
         ).fetchone()
         if row is None:
-            legacy = str(uuid.uuid5(uuid.UUID("e9e9a0cf-f970-5b45-9aa0-0a1ea3374b4b"), project_id))
+            legacy = legacy_conversation_id(project_id)
             if not allow_legacy or conversation_id != legacy:
                 raise RunError("CONVERSATION_NOT_FOUND")
-            conversation = {
-                "id": conversation_id,
-                "project_id": project_id,
-                "title": "Legacy Commander conversation",
-                "state": "active",
-                "commander_profile_ref": None,
-                "commander_source_ref": None,
-                "revision": 1,
-                "last_event_seq": 0,
-                "legacy": True,
-            }
-            db.execute(
-                "INSERT INTO commander_conversations VALUES (?, ?, ?)",
-                (conversation_id, project_id, encoded(conversation)),
-            )
-            db.execute(
-                "INSERT INTO conversation_drafts VALUES (?, ?)",
-                (
-                    conversation_id,
-                    encoded(
-                        {
-                            "conversation_id": conversation_id,
-                            "project_id": project_id,
-                            "draft_id": str(uuid.uuid4()),
-                            "content": "",
-                            "selected_task_id": None,
-                            "base_plan_revision": None,
-                            "revision": 1,
-                        }
-                    ),
-                ),
-            )
-            cursor = db.execute(
-                "INSERT INTO conversation_events("
-                "project_id, conversation_id, event_type, object_revision, payload, at) "
-                "VALUES (?, ?, ?, ?, ?, ?)",
-                (
-                    project_id,
-                    conversation_id,
-                    "conversation_created",
-                    1,
-                    encoded({"id": conversation_id, "revision": 1}),
-                    self.clock(),
-                ),
-            )
-            if cursor.lastrowid is None:
-                raise RunError("CONVERSATION_EVENT_NOT_PERSISTED")
-            conversation["last_event_seq"] = cursor.lastrowid
-            db.execute(
-                "UPDATE commander_conversations SET snapshot=? WHERE id=?",
-                (encoded(conversation), conversation_id),
-            )
+            try:
+                ensure_legacy_conversation(db, project_id, clock=self.clock)
+            except ConversationProjectionError as rejected:
+                raise RunError(str(rejected)) from None
         else:
             conversation = json.loads(row["snapshot"])
             if conversation.get("project_id") != project_id:
@@ -388,6 +358,24 @@ class RunPlanner:
             "VALUES (?, ?, ?)",
             (run_id, conversation_id, project_id),
         )
+
+    @staticmethod
+    def _enrich_conversation_identity(
+        db: sqlite3.Connection, result: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Return migrated identity for an old receipt without changing it."""
+        run_id = result.get("id")
+        if not isinstance(run_id, str):
+            return result
+        binding = db.execute(
+            "SELECT conversation_id, project_id FROM conversation_run_bindings WHERE run_id=?",
+            (run_id,),
+        ).fetchone()
+        if binding is None or binding["project_id"] != result.get("project_id"):
+            return result
+        if result.get("conversation_id") == binding["conversation_id"]:
+            return result
+        return {**result, "conversation_id": binding["conversation_id"]}
 
     def _replay(
         self, db: sqlite3.Connection, principal: str, key: str, identity: str

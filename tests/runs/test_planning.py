@@ -179,7 +179,50 @@ def test_run_creation_binds_only_a_real_project_conversation_in_the_same_ledger(
     missing = {**request, "conversation_id": "missing-conversation"}
     with pytest.raises(RunError, match="CONVERSATION_NOT_FOUND"):
         planner.create(missing, command_key="missing-conversation", principal="owner")
+    with pytest.raises(RunError, match="RUN_INPUT_INVALID"):
+        planner.create(
+            {**request, "conversation_id": None},
+            command_key="explicit-null",
+            principal="owner",
+        )
     assert [item["id"] for item in planner.list(principal="owner")] == [legacy["id"]]
+
+
+def test_historical_create_replay_enriches_identity_without_rewriting_its_receipt(
+    tmp_path: Path, project: tuple[ProjectRegistry, dict, Path]
+) -> None:
+    registry, configured, _ = project
+    planner = RunPlanner(tmp_path / "runs.sqlite", registry)
+    request = create_request(configured)
+    created = planner.create(request, command_key="legacy-receipt", principal="owner")
+    with planner._transaction() as db:
+        original = json.loads(
+            db.execute(
+                "SELECT result FROM run_commands WHERE principal=? AND key=?",
+                ("owner", "legacy-receipt"),
+            ).fetchone()["result"]
+        )
+        original.pop("conversation_id")
+        db.execute(
+            "UPDATE run_commands SET result=? WHERE principal=? AND key=?",
+            (
+                json.dumps(original, sort_keys=True, separators=(",", ":")),
+                "owner",
+                "legacy-receipt",
+            ),
+        )
+
+    replay = planner.create(request, command_key="legacy-receipt", principal="owner")
+
+    assert replay["conversation_id"] == created["conversation_id"]
+    with planner._transaction() as db:
+        stored = json.loads(
+            db.execute(
+                "SELECT result FROM run_commands WHERE principal=? AND key=?",
+                ("owner", "legacy-receipt"),
+            ).fetchone()["result"]
+        )
+    assert "conversation_id" not in stored
 
 
 class ScriptedAdmissionReader:

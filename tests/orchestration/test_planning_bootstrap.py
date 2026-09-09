@@ -156,21 +156,30 @@ def test_provisioning_creates_empty_normal_routing_dependencies(tmp_path: Path) 
 
 
 def test_explicit_conversation_migration_upgrades_historical_runs_without_reader_writes(
-    tmp_path: Path,
+    deployment: tuple[Path, dict[str, str]],
 ) -> None:
     """Only normal bootstrap may add the #159 Run conversation projection."""
     from karajan.conversations import ConversationStore
     from karajan.runs import RunPlanner
     from karajan.storage import ExistingStoreError
 
-    roots = tmp_path / "repositories"
-    roots.mkdir()
-    settings = provision_planning_bootstrap(tmp_path / "control", tmp_path / "state", (roots,))
+    control, _ = deployment
+    _write(control, _document(deployment))
+    settings, _ = read_planning_bootstrap(control)
+    projects = ProjectRegistry(
+        settings.projects_database, settings.allowed_roots, existing_only=True
+    )
     historic = {
         "id": "legacy_run",
         "owner": "owner",
-        "project_id": "legacy_project",
+        "project_id": projects.list()[0]["id"],
     }
+    # Simulate the exact pre-#159 ledger: initialize the ordinary Run schema,
+    # then remove only the new conversation projection.
+    RunPlanner(
+        settings.state_directory / "runs.sqlite",
+        ProjectRegistry(settings.projects_database, settings.allowed_roots),
+    )
     with sqlite3.connect(settings.state_directory / "runs.sqlite") as database:
         database.execute("PRAGMA foreign_keys=OFF")
         for table in (
@@ -180,6 +189,7 @@ def test_explicit_conversation_migration_upgrades_historical_runs_without_reader
             "conversation_drafts",
             "conversation_messages",
             "conversation_run_bindings",
+            "conversation_migration_blockers",
             "commander_conversations",
         ):
             database.execute(f"DROP TABLE {table}")
@@ -221,6 +231,42 @@ def test_explicit_conversation_migration_upgrades_historical_runs_without_reader
     )
     assert message["content"] == "recover this conversation"
     assert draft["content"] == "saved after strict reopen"
+
+
+def test_explicit_invalid_historical_conversation_is_a_recovery_blocker(
+    deployment: tuple[Path, dict[str, str]],
+) -> None:
+    """Migration must not turn an explicit bad reference into a legacy identity."""
+    from karajan.conversations import ConversationStore
+    from karajan.runs import RunPlanner
+
+    control, _ = deployment
+    _write(control, _document(deployment))
+    settings, _ = read_planning_bootstrap(control)
+    projects = ProjectRegistry(settings.projects_database, settings.allowed_roots)
+    project_id = projects.list()[0]["id"]
+    planner = RunPlanner(settings.state_directory / "runs.sqlite", projects)
+    historic = {
+        "id": "invalid_explicit",
+        "owner": "owner",
+        "project_id": project_id,
+        "conversation_id": "does-not-exist",
+    }
+    with planner._transaction() as db:
+        db.execute("INSERT INTO runs VALUES (?, ?)", (historic["id"], json.dumps(historic)))
+    conversations = ConversationStore(projects, planner)
+
+    assert conversations.run_binding(historic["id"], project_id) == {
+        "conversation_id": None,
+        "recovery_blocker": "CONVERSATION_NOT_FOUND",
+    }
+    with sqlite3.connect(settings.state_directory / "runs.sqlite") as database:
+        assert database.execute(
+            "SELECT COUNT(*) FROM commander_conversations WHERE id='does-not-exist'"
+        ).fetchone()[0] == 0
+        assert database.execute(
+            "SELECT COUNT(*) FROM conversation_run_bindings WHERE run_id=?", (historic["id"],)
+        ).fetchone()[0] == 0
 
 
 @pytest.mark.parametrize(
