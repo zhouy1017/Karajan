@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
+    "demo": "vite --host 127.0.0.1",
     "typecheck": "tsc --noEmit",
     "format:check": "prettier --check src index.html vite.config.ts tsconfig.json package.json",
     "test": "vitest run",
