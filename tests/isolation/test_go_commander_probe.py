@@ -10,6 +10,7 @@ import pytest
 from karajan.adapters.opencode.go_context import GoRequestAccounting
 from karajan.adapters.opencode.go_journal import GoCallJournal
 from karajan.adapters.opencode.go_relay import GoRelayAuthorization
+from karajan.isolation import go_commander_probe as commander_probe
 from karajan.isolation.go_commander_probe import (
     _context,
     _native_log_evidence,
@@ -117,6 +118,7 @@ def test_commander_native_probe_uses_original_journal_and_empty_tools(
     assert result["status"] == "passed", result["reason_codes"]
     assert result["observation_origin"] == "http_fixture"
     assert result["native_final"]["finish"] == "stop"
+    assert "text" not in result["native_final"]
     assert result["parsed_plan"] == spec["cases"][scenario]["expected_plan"]
     assert result["journal"]["state"] == "revoked"
     assert result["native_cleanup"]["local_stop"] == "confirmed"
@@ -124,3 +126,90 @@ def test_commander_native_probe_uses_original_journal_and_empty_tools(
     assert len(result["native_log"]["sha256"]) == 64
     assert result["provider_remote_stop"] == "unknown"
     assert len(received) == len(result["journal"]["calls"])
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux native required")
+@pytest.mark.parametrize(
+    ("finish", "parts", "reason_code", "expected_text_part_count", "expected_shape"),
+    [
+        ("length", [None], "NATIVE_FINAL_INCOMPLETE", 0, "malformed"),
+        (
+            "stop",
+            [
+                {"type": "text", "text": "FAKE_PART_SECRET_ONE"},
+                {"type": "text", "text": None},
+            ],
+            "NATIVE_FINAL_TEXT_AMBIGUOUS",
+            2,
+            "malformed",
+        ),
+    ],
+)
+def test_commander_native_probe_persists_rejected_final_shape_diagnostic(
+    tmp_path,
+    accounting,
+    monkeypatch,
+    finish,
+    parts,
+    reason_code,
+    expected_text_part_count,
+    expected_shape,
+):
+    runtime = runtime_artifact()
+    source = commander_runtime_source(runtime, accounting)
+    spec = source["probe_spec"]
+    journal = GoCallJournal(tmp_path / "calls.sqlite")
+    binding = {
+        "schema_version": "karajan.go-commander-qualification-grant.v1",
+        "qualification_id": "commander-qualification",
+        "attempt_id": "commander-attempt:legal_plan",
+        "fence": 1,
+        "profile_digest": "a" * 64,
+        "runtime_digest": digest(source),
+        "channel": "opencode-go",
+        "model": "glm-5.3-flash",
+        "auth_generation": "fixture-generation",
+        "expires_at": time.time() + 300,
+        "max_requests": 6,
+        "probe_spec_digest": source["probe_spec_digest"],
+        "scenario": "legal_plan",
+        "context": _context(accounting, spec),
+    }
+    grant = journal.create_grant(binding, grant_id="commander-grant:shape")
+    authorization = GoRelayAuthorization(journal, grant["grant_id"], binding, grant["capability"])
+
+    original_select_final = commander_probe.select_final
+
+    def reject_shape(messages, session_id, prompt):
+        assistants = [
+            message for message in messages if message.get("info", {}).get("role") == "assistant"
+        ]
+        assistant = assistants[-1]
+        assistant["info"]["finish"] = finish
+        assistant["parts"] = parts
+        return original_select_final(messages, session_id, prompt)
+
+    monkeypatch.setattr(commander_probe, "select_final", reject_shape)
+    result = observe_go_commander_probe(
+        runtime,
+        tmp_path / "observation",
+        SECRET,
+        authorization,
+        scenario="legal_plan",
+        accounting=accounting,
+        current_guard=nullcontext,
+        client_factory=lambda: httpx.Client(
+            transport=httpx.MockTransport(
+                lambda request: _response(spec["cases"]["legal_plan"]["expected_plan"])
+            )
+        ),
+    )
+
+    assert result["status"] == "failed"
+    assert result["reason_codes"] == [reason_code]
+    diagnostic = result["planning_output_diagnostic"]
+    assert diagnostic["category"] == "selection"
+    assert diagnostic["finish"] == finish
+    assert diagnostic["text_part_count"] == expected_text_part_count
+    assert diagnostic["text_part_shape"] == expected_shape
+    assert "FAKE_" not in json.dumps(result, sort_keys=True)

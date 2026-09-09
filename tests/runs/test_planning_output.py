@@ -1,3 +1,4 @@
+import hashlib
 import json
 from typing import Any
 
@@ -8,6 +9,8 @@ from karajan.runs.planning_output import (
     MAX_OUTPUT_BYTES,
     PlanningOutputError,
     parse_planning_output,
+    planning_output_diagnostic,
+    planning_output_selection_diagnostic,
 )
 from karajan.runs.routing_authorization import PlanV2
 
@@ -183,6 +186,7 @@ def test_v1_rejects_v2_only_fields() -> None:
 
 def test_rejects_bad_encoding_surrogates_subclasses_and_versions() -> None:
     rejected(b"\xff", "PLANNING_OUTPUT_INPUT_INVALID")
+    rejected(b"\xef\xbb\xbf{}", "PLANNING_OUTPUT_JSON_INVALID")
     rejected('{"summary":"\\ud800"}', "PLANNING_OUTPUT_INPUT_INVALID")
 
     class CustomText(str):
@@ -201,3 +205,90 @@ def test_enforces_byte_and_json_depth_limits_without_truncating() -> None:
     rejected(b" " * (MAX_OUTPUT_BYTES + 1), "PLANNING_OUTPUT_LIMIT_EXCEEDED")
     deeply_nested = "{" * (MAX_DEPTH + 1) + "}" * (MAX_DEPTH + 1)
     rejected(deeply_nested, "PLANNING_OUTPUT_LIMIT_EXCEEDED")
+
+
+@pytest.mark.parametrize(
+    ("content", "reason_code", "category"),
+    [
+        ('{"summary":"x",}', "PLANNING_OUTPUT_JSON_INVALID", "json_syntax"),
+        ('{"summary":"x","summary":"y"}', "PLANNING_OUTPUT_JSON_INVALID", "duplicate_key"),
+        ('{"summary":"x","n":NaN}', "PLANNING_OUTPUT_JSON_INVALID", "non_finite_number"),
+        ('{"summary":"x","unknown":1}', "PLANNING_OUTPUT_SCHEMA_INVALID", "schema"),
+    ],
+)
+def test_diagnostic_is_bounded_and_keeps_parser_reason_separate(
+    content: str, reason_code: str, category: str
+) -> None:
+    diagnostic = planning_output_diagnostic(
+        content,
+        reason_code=reason_code,
+        finish="stop",
+        text_part_count=1,
+    )
+
+    assert diagnostic == {
+        "schema_version": "karajan.planning-output-diagnostic.v1",
+        "category": category,
+        "byte_length": len(content.encode()),
+            "sha256": hashlib.sha256(content.encode()).hexdigest(),
+        "finish": "stop",
+        "text_part_count": 1,
+        "text_part_shape": "one_text",
+        "decoder_line": 1 if category == "json_syntax" else None,
+        "decoder_column": 16 if category == "json_syntax" else None,
+    }
+    assert "summary" not in json.dumps(diagnostic)
+
+
+def test_diagnostic_never_serializes_malicious_failure_text() -> None:
+    secret = "FAKE_SECRET_SHOULD_NOT_APPEAR"
+    content = '{"summary":"' + secret + '" trailing'
+
+    diagnostic = planning_output_diagnostic(
+        content,
+        reason_code="PLANNING_OUTPUT_JSON_INVALID",
+        finish="stop",
+        text_part_count=1,
+    )
+
+    serialized = json.dumps(diagnostic, sort_keys=True)
+    assert secret not in serialized
+    assert content not in serialized
+
+
+def test_bom_diagnostic_uses_the_strict_utf8_parser_pipeline() -> None:
+    diagnostic = planning_output_diagnostic(
+        b"\xef\xbb\xbf{}",
+        reason_code="PLANNING_OUTPUT_JSON_INVALID",
+        finish="stop",
+        text_part_count=1,
+    )
+
+    assert diagnostic["category"] == "json_syntax"
+    assert diagnostic["decoder_line"] == 1
+    assert diagnostic["decoder_column"] == 1
+
+
+def test_selection_diagnostic_is_bounded_for_multiple_text_parts() -> None:
+    diagnostic = planning_output_selection_diagnostic(
+        ["FAKE_SECRET_ONE", "FAKE_SECRET_TWO"], finish="length"
+    )
+
+    serialized = json.dumps(diagnostic, sort_keys=True)
+    assert diagnostic["category"] == "selection"
+    assert diagnostic["finish"] == "length"
+    assert diagnostic["text_part_shape"] == "multiple"
+    assert "FAKE_SECRET" not in serialized
+
+
+def test_success_diagnostic_is_observational_only() -> None:
+    content = wire()
+    diagnostic = planning_output_diagnostic(
+        content,
+        reason_code="SUCCESS",
+        finish="stop",
+        text_part_count=1,
+    )
+
+    assert diagnostic["category"] == "success"
+    assert parse_planning_output(content, version="v1").model_dump() == document()
