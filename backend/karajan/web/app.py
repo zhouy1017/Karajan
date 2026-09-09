@@ -24,6 +24,7 @@ from karajan.orchestration.planning_transport import PlanningTransport
 from karajan.orchestration.routing import ApprovedRunRouting
 from karajan.projects import ProjectRegistry
 from karajan.projects.qualification import ProfileQualificationStore
+from karajan.proposals import ProposalStore
 from karajan.runs import RunPlanner
 
 from .admission import register_admission_routes
@@ -32,6 +33,7 @@ from .body_limit import BodyLimitMiddleware
 from .conversations import register_conversation_routes
 from .planning import PlanningWorkbench, register_planning_routes
 from .projects import register_project_routes
+from .proposals import register_proposal_routes
 from .resources import register_resource_routes
 from .runs import register_run_routes
 from .simulation import register_simulation_routes
@@ -186,10 +188,13 @@ def create_app(
     # Hub consumes the same controller ledger used by PlanningWorkbench; it
     # must not derive an alternate execution state from Run intents.
     conversations = ConversationStore(projects, planner, planning_execution=execution)
+    proposals = ProposalStore(planner, conversations, qualifications)
     app.state.planning_execution = execution
     app.state.conversations = conversations
-    register_run_routes(app, planner, conversations)
+    app.state.proposals = proposals
+    register_run_routes(app, planner, conversations, proposals)
     register_conversation_routes(app, conversations)
+    register_proposal_routes(app, proposals)
     planning_transport = planning_transport or production_transport
     if planning_transport is not None and planning_transport.execution is not execution:
         raise ValueError("Planning transport must use this application's execution controller")

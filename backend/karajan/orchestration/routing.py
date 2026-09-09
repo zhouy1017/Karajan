@@ -765,6 +765,54 @@ class ApprovedRunRouting:
         classification["authors"] = lineage["authors"] if reviewer else []
         selection = select_rule(classification, fixed["rulebook"], execution["risk_policy"])
         auth = plan["plan"]["authorization"]
+        requirements = plan["routing_binding"]["task_requirements"].get(task_id)
+        expected_requirements = {
+            key: task[key]
+            for key in (
+                "revision",
+                "role",
+                "purpose",
+                "readiness",
+                "complexity",
+                "risk",
+                "paths",
+                "domains",
+                "required_capabilities",
+                "tools",
+                "context_tokens",
+                "duration_seconds",
+            )
+        }
+        for key in ("profile_ref", "source_ref", "checks"):
+            if task.get(key) is not None:
+                expected_requirements[key] = task[key]
+        if requirements != expected_requirements:
+            raise RunError("APPROVED_REQUIREMENTS_MISMATCH")
+        explicit_profile, explicit_source = task.get("profile_ref"), task.get("source_ref")
+        if (explicit_profile is None) != (explicit_source is None):
+            raise RunError("TASK_SOURCE_BINDING_MISMATCH")
+        if explicit_profile is not None:
+            registration = next(
+                (
+                    row
+                    for row in fixed["resources"]["profiles"]
+                    if {"id": row["id"], "revision": row["revision"]} == explicit_profile
+                ),
+                None,
+            )
+            profile = registration.get("profile") if isinstance(registration, dict) else None
+            if (
+                not isinstance(profile, dict)
+                or profile["binding"]["channel_id"] != explicit_source
+                or explicit_profile not in auth["profile_refs"]
+                or explicit_source not in auth["channel_ids"]
+                or reserved_profile is not None
+                and reserved_profile != explicit_profile
+            ):
+                raise RunError("TASK_SOURCE_BINDING_MISMATCH")
+            # The evaluator therefore cannot choose an eligible alternative:
+            # the owner selection is a route input, not proposal display data.
+            reserved_profile = explicit_profile
         grant = plan["routing_binding"]["stage_grants"].get(
             selection["rule_id"], {"normal": {}, "quality": []}
         )

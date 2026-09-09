@@ -595,6 +595,7 @@ class ConversationStore:
             attempts: builtins.list[dict[str, Any]] = []
             blockers: builtins.list[dict[str, Any]] = []
             agents: builtins.list[dict[str, Any]] = []
+            proposals: builtins.list[dict[str, Any]] = []
             for run_id in runs:
                 binding = self._binding_status(db, run_id, item["project_id"])
                 if binding["recovery_blocker"] is not None:
@@ -622,6 +623,12 @@ class ConversationStore:
                 if run.get("project_id") != item["project_id"]:
                     blockers.append({"run_id": run_id, "reason_code": "CROSS_PROJECT_REFERENCE"})
                     continue
+                for proposal in run.get("owner_proposals", []):
+                    if (
+                        isinstance(proposal, dict)
+                        and proposal.get("conversation_id") == conversation_id
+                    ):
+                        proposals.append(proposal)
                 active = next(
                     (
                         plan
@@ -705,6 +712,17 @@ class ConversationStore:
                                 "reason_code": "TASK_NOT_READY",
                             }
                         )
+            proposal_revisions: set[int] = set()
+            for proposal in proposals:
+                revision = proposal.get("proposal_revision") if isinstance(proposal, dict) else None
+                if type(revision) is not int or revision < 1 or revision in proposal_revisions:
+                    raise ConversationError("PROPOSAL_REVISION_AMBIGUOUS")
+                proposal_revisions.add(revision)
+            current_proposal = (
+                max(proposals, key=lambda proposal: proposal["proposal_revision"])
+                if proposals
+                else None
+            )
             return {
                 "conversation": item,
                 "messages": messages,
@@ -715,6 +733,8 @@ class ConversationStore:
                 "tasks": tasks,
                 "attempts": attempts,
                 "agents": agents,
+                "proposals": proposals,
+                "current_proposal": current_proposal,
                 "blockers": blockers,
                 "snapshot_event_seq": item["last_event_seq"],
             }

@@ -110,6 +110,19 @@ def validate_plan(plan: dict[str, Any], ceiling: dict[str, Any]) -> None:
             raise ValueError("PLAN_SCOPE_EXCEEDED")
         if not all(covered(path, roots) for path in task["paths"]):
             raise ValueError("PLAN_SCOPE_EXCEEDED")
+        profile, source = task.get("profile_ref"), task.get("source_ref")
+        if (profile is None) != (source is None):
+            raise ValueError("PROFILE_SOURCE_BINDING_REQUIRED")
+        if profile is not None and profile not in plan["authorization"]["profile_refs"]:
+            raise ValueError("PLAN_SCOPE_EXCEEDED")
+        checks = task.get("checks")
+        if checks is not None:
+            if len(set(checks)) != len(checks) or not set(plan["authorization"]["checks"]) <= set(
+                checks
+            ):
+                raise ValueError("REQUIRED_CHECKS_REMOVED")
+            if not set(checks) <= set(plan["authorization"]["checks"]):
+                raise ValueError("PLAN_SCOPE_EXCEEDED")
     visited: set[str] = set()
     while len(visited) < len(tasks):
         available = {key for key, task in tasks.items() if set(task["depends_on"]) <= visited}
