@@ -774,11 +774,10 @@ def test_transport_dispatch_claimant_produces_when_other_caller_pauses_after_adm
     ]
 
 
-@pytest.mark.parametrize("failure", ["runtime_placeholder", "capacity_error"])
-def test_transport_repeats_admission_unknown_by_original_receipt_only(
-    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str
+def test_transport_keeps_admission_unknown_without_activation_receipt(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Unknown recovery neither recompiles nor retries an original Capacity effect."""
+    """Absent original receipts remain unknown and never acquire a replacement."""
     _, authority, run, execution = _case(tmp_path, configured)
     outputs = PlanningOutputStore(tmp_path / "unknown-output.sqlite", authority_kind="fixture")
     controller = PlanningExecution(
@@ -809,26 +808,13 @@ def test_transport_repeats_admission_unknown_by_original_receipt_only(
             raise AssertionError("unknown receipt recovery must not compile input")
 
     transport = PlanningTransport(controller, NoAccounting(), NoProducer(), outputs)  # type: ignore[arg-type]
-    original_activate = authority.capacity.activate
+    def lose_capacity_reply(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        del args, kwargs
+        raise CapacityError("activation receipt unavailable")
 
-    if failure == "runtime_placeholder":
-
-        def lose_runtime_reply(*args: Any, **kwargs: Any) -> dict[str, Any]:
-            original_activate(*args, **kwargs)
-            raise RuntimeError("activation reply lost")
-
-        monkeypatch.setattr(authority.capacity, "activate", lose_runtime_reply)
-        with pytest.raises(RuntimeError, match="activation reply lost"):
-            authority.advance(execution["id"], "owner", "original-admit")
-    else:
-
-        def lose_capacity_reply(*args: Any, **kwargs: Any) -> dict[str, Any]:
-            del args, kwargs
-            raise CapacityError("activation receipt unavailable")
-
-        monkeypatch.setattr(authority.capacity, "activate", lose_capacity_reply)
-        record = authority.advance(execution["id"], "owner", "original-admit")
-        assert record["phase"] == "capacity_activate_unknown"
+    monkeypatch.setattr(authority.capacity, "activate", lose_capacity_reply)
+    record = authority.advance(execution["id"], "owner", "original-admit")
+    assert record["phase"] == "capacity_activate_unknown"
 
     # Record the ledger's original unknown receipt on the execution first;
     # the Transport calls below are the regression subject, not a synthetic
@@ -853,12 +839,124 @@ def test_transport_repeats_admission_unknown_by_original_receipt_only(
                 "planning_outputs",
             )
         } == {
-            "planning_execute_commands": 0,
+            # The caller's fixed identity is allowed; no output authority is
+            # armed or dispatched while the original receipt is absent.
+            "planning_execute_commands": 1,
             "planning_output_sources": 0,
             "planning_output_claims": 0,
             "planning_outputs": 0,
         }
     assert controller.planner.get(run["id"], principal="owner")["plans"] == []
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="native planning requires Linux namespaces")
+@pytest.mark.parametrize("reply_error", [RuntimeError, CapacityError])
+def test_production_transport_recovers_unknown_from_committed_activation_receipt(
+    configured: dict,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    reply_error: type[Exception],
+) -> None:
+    """The fixed admission command recovers only its already committed receipt."""
+    control, _, run, execution = _persistent_production_transport_case(tmp_path, configured)
+    transport = PlanningTransport.from_trusted_factory(control)
+    persisted = transport.execution.planner.get(run["id"], principal="owner")
+    plan = submit_request(persisted, persisted["planning_intents"][0])["plan"]
+    for task in plan["tasks"]:
+        task["paths"] = ["original.txt"]
+    sends: list[dict[str, Any]] = []
+
+    def produce_once(*args: Any, **kwargs: Any) -> bytes:
+        sends.append({"binding": kwargs["binding"], "admission": kwargs["admission"]})
+        return json.dumps(plan, separators=(",", ":")).encode()
+
+    monkeypatch.setattr(ProductionGoPlanningProducer, "produce", produce_once)
+    assert isinstance(transport.execution.admissions, PlanningAdmissionAuthority)
+    authority = transport.execution.admissions
+    original_advance = authority.advance
+    advance_keys: list[str] = []
+    original_recover = authority.recover_original_receipt
+    recovery_keys: list[str] = []
+
+    def record_advance(execution_id: str, principal: str, command_key: str) -> dict[str, Any]:
+        advance_keys.append(command_key)
+        return original_advance(execution_id, principal, command_key)
+
+    def record_recovery(execution_id: str, principal: str, command_key: str) -> dict[str, Any]:
+        recovery_keys.append(command_key)
+        return original_recover(execution_id, principal, command_key)
+
+    monkeypatch.setattr(authority, "advance", record_advance)
+    monkeypatch.setattr(authority, "recover_original_receipt", record_recovery)
+    original_activate = transport.execution.capacity.activate
+    activations: list[dict[str, Any]] = []
+
+    def commit_then_lose_reply(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        receipt = original_activate(*args, **kwargs)
+        activations.append(receipt)
+        raise reply_error("activation reply lost")
+
+    monkeypatch.setattr(transport.execution.capacity, "activate", commit_then_lose_reply)
+    initial = transport.execute(execution["id"], principal="owner", command_key="execute")
+    assert initial["state"] == "admission_unknown"
+    unknown = transport.execution.get(execution["id"], principal="owner")
+    assert unknown["state"] == "admission_unknown"
+    assert len(activations) == 1
+    capacity_before = transport.execution.capacity.snapshot()
+    assert len(capacity_before["reservations"]) == 1
+    original_binding = deepcopy(unknown["binding"])
+    original_admission = deepcopy(unknown["admission"])
+    original_source = transport.outputs.read_source(original_binding)
+
+    def activation_must_not_repeat(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        del args, kwargs
+        raise AssertionError("receipt recovery must not activate Capacity again")
+
+    monkeypatch.setattr(transport.execution.capacity, "activate", activation_must_not_repeat)
+    recovered = transport.execute(execution["id"], principal="owner", command_key="execute")
+
+    assert recovered["state"] == "submitted", recovered["reason_codes"]
+    assert advance_keys == ["planning-admit:" + execution["id"]]
+    assert recovery_keys == ["planning-admit:" + execution["id"]]
+    assert len(sends) == 1
+    restored = transport.execution.get(execution["id"], principal="owner")
+    assert restored["binding"] == original_binding
+    assert restored["output_source_sha256"] == original_source["source_sha256"]
+    assert transport.outputs.read_source(restored["binding"]) == original_source
+    assert restored["admission"]["capacity_request"] == original_admission["capacity_request"]
+    assert (
+        restored["admission"]["capacity_command_key"]
+        == original_admission["capacity_command_key"]
+    )
+    assert (
+        restored["admission"]["capacity_activation_command_key"]
+        == original_admission["capacity_activation_command_key"]
+    )
+    assert (
+        restored["admission"]["capacity_receipt"]["admission_id"]
+        == activations[0]["admission_id"]
+    )
+    assert transport.execution.capacity.snapshot() == capacity_before
+    assert transport.execution.planner.get(run["id"], principal="owner")["plans"] == [
+        recovered["submission"]
+    ]
+    with sqlite3.connect(transport.execution.admissions.database) as db:
+        assert db.execute("SELECT COUNT(*) FROM planning_estimates").fetchone()[0] == 1
+    with sqlite3.connect(tmp_path / "protected-state" / "planning-output.sqlite") as db:
+        assert {
+            table: db.execute("SELECT COUNT(*) FROM " + table).fetchone()[0]
+            for table in (
+                "planning_execute_commands",
+                "planning_output_sources",
+                "planning_output_claims",
+                "planning_outputs",
+            )
+        } == {
+            "planning_execute_commands": 1,
+            "planning_output_sources": 1,
+            "planning_output_claims": 1,
+            "planning_outputs": 1,
+        }
 
 
 @pytest.mark.skipif(sys.platform != "linux", reason="native planning requires Linux namespaces")
@@ -2159,6 +2257,83 @@ def test_production_transport_rejects_conflicting_command_before_new_execution_e
     assert transport.execution.capacity.snapshot()["reservations"] == []
     assert transport.execution.get(second["id"], principal="owner")["state"] == "awaiting_admission"
     assert service.planner.get(run["id"], principal="owner")["plans"] == []
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="native planning requires Linux namespaces")
+def test_transport_rejects_conflicting_key_before_unknown_receipt_reconcile(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A key bound to A cannot even reconcile receipt-proven unknown execution B."""
+    control, _, run, first = _persistent_production_transport_case(tmp_path, configured)
+    transport = PlanningTransport.from_trusted_factory(control)
+    second_intent = transport.execution.planner.planning_intent(
+        run["id"], term=1, command_key="unknown-conflict-intent", principal="lead"
+    )
+    second = transport.execution.begin(
+        run["id"], second_intent["id"], principal="owner", command_key="unknown-conflict-begin"
+    )
+    assert isinstance(transport.execution.admissions, PlanningAdmissionAuthority)
+    authority = transport.execution.admissions
+    original_activate = transport.execution.capacity.activate
+
+    def commit_then_lose_capacity_reply(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        original_activate(*args, **kwargs)
+        raise CapacityError("activation reply lost")
+
+    monkeypatch.setattr(transport.execution.capacity, "activate", commit_then_lose_capacity_reply)
+    unknown = transport.execute(second["id"], principal="owner", command_key="unknown-execute")
+    assert unknown["state"] == "admission_unknown"
+    # The Capacity write committed, but the controller is still genuinely
+    # unknown.  Let the admission owner update only its original receipt while
+    # leaving B's execution record stale for the command-conflict boundary.
+    monkeypatch.setattr(transport.execution.capacity, "activate", original_activate)
+    assert authority.recover_original_receipt(
+        second["id"], "owner", "planning-admit:" + second["id"]
+    )["phase"] == "admitted"
+    assert transport.execution.get(second["id"], principal="owner")["state"] == "admission_unknown"
+    transport.outputs.claim_execute_command(
+        first["binding"], principal="owner", command_key="unknown-conflicting-execute"
+    )
+    state = tmp_path / "protected-state"
+    output_database = state / "planning-output.sqlite"
+    snapshot_database_path = state / "planning-repository-snapshots.sqlite"
+    before_execution = transport.execution.get(second["id"], principal="owner")
+    before_run = transport.execution.planner.get(run["id"], principal="owner")
+    before_capacity = transport.execution.capacity.snapshot()
+    with sqlite3.connect(output_database) as db:
+        before_outputs = {
+            table: db.execute("SELECT COUNT(*) FROM " + table).fetchone()[0]
+            for table in (
+                "planning_execute_commands",
+                "planning_output_sources",
+                "planning_output_claims",
+                "planning_outputs",
+            )
+        }
+    with sqlite3.connect(snapshot_database_path) as db:
+        before_snapshots = {
+            table: db.execute("SELECT COUNT(*) FROM " + table).fetchone()[0]
+            for table in ("snapshots", "files")
+        }
+
+    with pytest.raises(RunError, match="^IDEMPOTENCY_CONFLICT$"):
+        transport.execute(
+            second["id"], principal="owner", command_key="unknown-conflicting-execute"
+        )
+
+    assert transport.execution.get(second["id"], principal="owner") == before_execution
+    assert transport.execution.planner.get(run["id"], principal="owner") == before_run
+    assert transport.execution.capacity.snapshot() == before_capacity
+    with sqlite3.connect(output_database) as db:
+        assert {
+            table: db.execute("SELECT COUNT(*) FROM " + table).fetchone()[0]
+            for table in before_outputs
+        } == before_outputs
+    with sqlite3.connect(snapshot_database_path) as db:
+        assert {
+            table: db.execute("SELECT COUNT(*) FROM " + table).fetchone()[0]
+            for table in before_snapshots
+        } == before_snapshots
 
 
 def test_persistent_factory_missing_descriptor_rejects_without_creating_stores(

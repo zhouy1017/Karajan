@@ -1233,6 +1233,41 @@ class PlanningAdmissionAuthority:
             self._save(db, current)
             return current
 
+    def _recover_original_capacity_receipts(self, record: dict[str, Any]) -> dict[str, Any]:
+        """Advance an interrupted record only from its already fixed Capacity receipts."""
+        if record["phase"] == "capacity_admit_unknown":
+            request = record["capacity_request"]
+            assert isinstance(request, dict)
+            receipt = self.capacity.command_receipt(
+                "admit", request, command_key=record["capacity_command_key"]
+            )
+            if receipt is None:
+                return record
+            with self._transaction() as db:
+                current = self._load(db, record["execution_id"]) or record
+                self._capacity_admit_transition(current, receipt)
+                self._save(db, current)
+                record = current
+        if record["phase"] in {"unknown", "capacity_activate_unknown"}:
+            request = record.get("capacity_activation_request")
+            if not isinstance(request, dict):
+                return record
+            receipt = self.capacity.command_receipt(
+                "activate", request, command_key=record["capacity_activation_command_key"]
+            )
+            if receipt is None:
+                return record
+            with self._transaction() as db:
+                current = self._load(db, record["execution_id"]) or record
+                current["capacity_activation_receipt"] = receipt
+                current["phase"] = (
+                    "admitted" if receipt.get("decision") == "capacity_revalidated" else "denied"
+                )
+                current["reason_codes"] = receipt.get("reason_codes", [])
+                self._save(db, current)
+                return current
+        return record
+
     def advance(self, execution_id: str, principal: str, command_key: str) -> dict[str, Any]:
         """Fence cancellation through every planning admission mutation."""
         for value in (execution_id, principal, command_key):
@@ -1240,6 +1275,35 @@ class PlanningAdmissionAuthority:
         self._assert_bootstrap_current()
         with self._execution_guard(execution_id, principal) as binding:
             return self._advance_locked(execution_id, principal, command_key, binding)
+
+    def recover_original_receipt(
+        self, execution_id: str, principal: str, command_key: str
+    ) -> dict[str, Any]:
+        """Reconcile only the original admission command's durable Capacity receipts.
+
+        This narrow recovery port neither claims a command nor calls Capacity
+        effects.  It can update the result of the already bound admission key
+        when Capacity committed but its reply was lost.
+        """
+        for value in (execution_id, principal, command_key):
+            identifier(value)
+        self._assert_bootstrap_current()
+        with self._execution_guard(execution_id, principal) as binding:
+            payload = encoded([execution_id, digest(binding)])
+            with self._transaction() as db:
+                command = db.execute(
+                    "SELECT payload FROM commands WHERE principal=? AND key=?",
+                    (principal, command_key),
+                ).fetchone()
+                record = self._load(db, execution_id)
+            if command is None or command["payload"] != payload:
+                raise RunError("PLANNING_ADMISSION_RECEIPT_RECOVERY_UNAVAILABLE")
+            if record is None or record["binding_sha256"] != digest(binding):
+                raise RunError("PLANNING_ADMISSION_RECEIPT_RECOVERY_UNAVAILABLE")
+            if command_key != record["capacity_command_key"]:
+                raise RunError("PLANNING_ADMISSION_RECEIPT_RECOVERY_UNAVAILABLE")
+            recovered = self._recover_original_capacity_receipts(record)
+            return self._finish_command(recovered, principal, command_key, payload)
 
     def _advance_locked(
         self, execution_id: str, principal: str, command_key: str, binding: dict[str, Any]
@@ -1253,58 +1317,14 @@ class PlanningAdmissionAuthority:
         record = self._prepare(execution_id, binding, principal)
         if record["phase"] in {"admitted", "denied"}:
             return self._finish_command(record, principal, command_key, payload)
-        if record["phase"] == "unknown":
-            request = record.get("capacity_activation_request")
-            if not isinstance(request, dict):
-                return self._finish_command(record, principal, command_key, payload)
-            receipt = self.capacity.command_receipt(
-                "activate", request, command_key=record["capacity_activation_command_key"]
+        if record["phase"] in {
+            "unknown",
+            "capacity_admit_unknown",
+            "capacity_activate_unknown",
+        }:
+            return self._finish_command(
+                self._recover_original_capacity_receipts(record), principal, command_key, payload
             )
-            if receipt is None:
-                return self._finish_command(record, principal, command_key, payload)
-            with self._transaction() as db:
-                current = self._load(db, execution_id) or record
-                current["capacity_activation_receipt"] = receipt
-                current["phase"] = (
-                    "admitted" if receipt.get("decision") == "capacity_revalidated" else "denied"
-                )
-                current["reason_codes"] = receipt.get("reason_codes", [])
-                self._save(db, current)
-                record = current
-            return self._finish_command(record, principal, command_key, payload)
-        if record["phase"] == "capacity_admit_unknown":
-            request = record["capacity_request"]
-            assert isinstance(request, dict)
-            receipt = self.capacity.command_receipt(
-                "admit", request, command_key=record["capacity_command_key"]
-            )
-            if receipt is None:
-                return self._finish_command(record, principal, command_key, payload)
-            with self._transaction() as db:
-                current = self._load(db, execution_id) or record
-                self._capacity_admit_transition(current, receipt)
-                self._save(db, current)
-                record = current
-            if record["phase"] == "denied":
-                return self._finish_command(record, principal, command_key, payload)
-        if record["phase"] == "capacity_activate_unknown":
-            request = record["capacity_activation_request"]
-            assert isinstance(request, dict)
-            receipt = self.capacity.command_receipt(
-                "activate", request, command_key=record["capacity_activation_command_key"]
-            )
-            if receipt is None:
-                return self._finish_command(record, principal, command_key, payload)
-            with self._transaction() as db:
-                current = self._load(db, execution_id) or record
-                current["capacity_activation_receipt"] = receipt
-                current["phase"] = (
-                    "admitted" if receipt.get("decision") == "capacity_revalidated" else "denied"
-                )
-                current["reason_codes"] = receipt.get("reason_codes", [])
-                self._save(db, current)
-                record = current
-            return self._finish_command(record, principal, command_key, payload)
         # A pre-Plan execution may only draw planning authority from the full,
         # owner-frozen v2 policy.  Legacy Runs do not carry the authorization
         # fields needed by the ordinary evaluator; guessing them would expand

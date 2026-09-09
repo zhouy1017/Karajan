@@ -705,9 +705,14 @@ class PlanningExecution:
         """
         for value in (execution_id, principal, command_key):
             identifier(value)
-        self.get(execution_id, principal=principal)
+        current = self.get(execution_id, principal=principal)
         authority = self.admissions
         advance = None if authority is None else getattr(authority, "advance", None)
+        recover = (
+            None
+            if authority is None
+            else getattr(authority, "recover_original_receipt", None)
+        )
         fixture_allowed = (
             getattr(authority, "authority_kind", None) == "fixture"
             and self.allow_fixture_authorities
@@ -718,11 +723,21 @@ class PlanningExecution:
             return self._blocked(
                 execution_id, principal, "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE"
             )
-        try:
-            advance(execution_id, principal, command_key)
-        except (RunError, ValueError):
-            # The immutable authority record is the only result consumers see.
-            pass
+        if current["state"] == "admission_unknown" and callable(recover):
+            try:
+                # Only the admission owner can re-open its original fixed
+                # command.  Its recovery port reads existing Capacity receipts
+                # and cannot create an admission or activation.
+                recover(execution_id, principal, command_key)
+            except (RunError, ValueError):
+                pass
+        else:
+            try:
+                advance(execution_id, principal, command_key)
+            except (RunError, RuntimeError, ValueError):
+                # A lost authority reply remains unknown until its immutable
+                # receipt can be recovered under the same command identity.
+                pass
         if self.outputs is None:
             # #112 owns the output transport. Admission remains observable via
             # its sealed receipt without treating missing output as a denial.

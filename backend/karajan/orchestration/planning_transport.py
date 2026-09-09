@@ -442,15 +442,6 @@ class PlanningTransport:
             identifier(value)
         current = self.execution.get(execution_id, principal=principal)
         model_input: PlanningModelInput | None = None
-        if current["state"] == "admission_unknown":
-            # Unknown admission is receipt-only recovery.  Do not compile,
-            # register, activate, or dispatch until the original persisted
-            # receipt itself proves an admitted transition.
-            current = self.execution.reconcile(execution_id, principal=principal)
-            if current["state"] == "admission_unknown":
-                return current
-            if current["state"] != "awaiting_output":
-                return current
         if current["state"] == "awaiting_admission":
             # A non-request estimate has no trusted conversion.  This lookup
             # is deliberately read-only: command identity must be durable
@@ -461,6 +452,18 @@ class PlanningTransport:
         self.outputs.claim_execute_command(
             current["binding"], principal=principal, command_key=command_key
         )
+        if current["state"] == "admission_unknown":
+            # The command binding above must win before even receipt recovery
+            # can revise this execution.  ``admit`` delegates only to the
+            # authority's original-command receipt port for this state; it
+            # neither compiles nor creates Capacity effects.
+            current = self.execution.admit(
+                execution_id, principal=principal, command_key="planning-admit:" + execution_id
+            )
+            if current["state"] == "admission_unknown":
+                return current
+            if current["state"] != "awaiting_output":
+                return current
         if current["state"] == "awaiting_output":
             pending = self._dispatch_or_recover_output(
                 current, principal=principal, model_input=model_input
