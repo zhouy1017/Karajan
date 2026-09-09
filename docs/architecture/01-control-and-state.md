@@ -6,7 +6,7 @@
 
 | 状态 | 唯一拥有者 | 其他部分的角色 |
 |---|---|---|
-| Requirement、Plan、用户确认、授权 | Karajan Planning / Policy | Commander 提案，Web 发命令 |
+| Requirement、Plan、用户确认、授权 | 版本化 Planning / Policy 记录 | Commander 主导拆解、判断与验收建议；Web 发命令 |
 | Run、Task、有效 Attempt、任务依赖 | Karajan Coordination | 执行器事件作为观测输入 |
 | 进程树、供应商会话、调用返回 | Execution 及具体执行器 | 协调器核对并更新业务记录 |
 | Profile、Rulebook、本地预算/预留 | Karajan Policy / Capacity | 执行器只能使用已准入配置 |

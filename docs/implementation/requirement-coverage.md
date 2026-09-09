@@ -1,6 +1,6 @@
 # Karajan v1 需求与完成证据审计
 
-当前开发顺序以 [当前业务顺序](../planning/business-first.md) 和 [#153 业务简报](../planning/business-first-issue.md) 为准；先验证工作台到真实 Planning 的首个演示，再验证同一需求的 Candidate、checks、独立 Reviewer 和 PR。本文只记录原需求覆盖与证据，不产生新的执行顺序。
+当前开发顺序以 [当前业务顺序](../planning/business-first.md) 的 P1–P4 为准；新 [工作台设计](../prd/commander-workbench.md) 的 UX-AC01–10 全部待取得对应 C/U/P/S/G 证据。旧 Planning/表单证据只证明原切片，不证明新工作台、持久 Commander 对话或真实并行首演。本文只记录原需求覆盖与证据，不产生新的执行顺序。
 
 2026-09-08 增量：[复审与修复](../planning/review-20260908.md) 记录 Planning 恢复、Reviewer 输入的原 AC 缺口；[阶段 Goals 历史映射](../planning/delivery-goals/README.md) 保留责任票范围。当前执行入口是 [当前业务顺序](../planning/business-first.md)。下文各项历史 passed 仅证明原候选已覆盖子集，不能覆盖本次反例或自动升级为当前全范围通过。
 

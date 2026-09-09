@@ -1,13 +1,14 @@
 # Karajan
 
-面向个人的多来源 Agent 代码交付平台：Commander 理解需求，用户确认计划，平台按 Rulebook 和服务配额组织实现、测试、审查并交付 PR。
+面向个人的多来源 Agent 代码交付平台：一个持久主 Commander 理解需求并提出可编辑分工，用户确认计划，可信协调器按 Rulebook 和服务配额组织实现、测试、审查并交付 PR。
 
-当前开发入口是 [当前业务顺序](docs/planning/business-first.md)，第一演示围绕工作台小需求→真实只读 Planning→精确批准；其后才推进 Candidate、checks、独立 Reviewer、同一 PR及更大范围。该入口也规定 Luna/Terra/Astra 的模型分工和最短验证链。原 PRD 与 Issue 流程继续有效。
+2026-09-09 的 [Commander 工作台设计](docs/prd/commander-workbench.md) 固定首演 UI：仓库/会话导航、持久 Commander 对话、Tasks/Agents 并行看板，以及 Diff/checks/review/logs/dependencies 详情。首演工作模式是批准同一版本后两个无依赖 Worker 并行、组合候选、独立 Reviewer 和 PR；设计基准不等于实现或来源资格已通过。当前执行顺序仍以 [当前业务顺序](docs/planning/business-first.md) 和 Issue 流程为准。
 
 ## 产品需求与实施规划
 
 - [PRD v1](docs/prd/karajan-v1.md)：用户故事、功能需求、可观察验收和首版边界；[GitHub 父任务 #1](https://github.com/zhouy1017/Karajan/issues/1)。
-- [M0–M4 路线图](docs/planning/roadmap.md)：M0 探针顺序、阶段出口与后续拆票时机。
+- [Commander 工作台设计](docs/prd/commander-workbench.md)：2026-09-09 UI/交互基准、状态行为和 UX-AC→FR 映射；当前为设计规格，未宣称已实现。
+- [M0–M4 历史范围映射](docs/planning/roadmap.md)：保留原阶段出口与验收责任；当前排期见业务顺序。
 - [历史阶段范围映射](docs/planning/delivery-goals/README.md)：保留原验收归属和出口；[2026-09-08 复审](docs/planning/review-20260908.md) 记录问题与修复证据。当前领取顺序使用上方业务入口。
 - [GitHub Issues](https://github.com/zhouy1017/Karajan/issues)：任务状态与依赖关系；[跟踪约定](docs/agents/issue-tracker.md)。
 

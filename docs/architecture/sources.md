@@ -1,10 +1,10 @@
 # 来源、推断与未决事实
 
-核对日期：2026-09-05。依据为用户已确认目标、本地调研和官方当前文档。本轮没有读取账户凭据、调用模型或运行底座/隔离验收。
+原核对日期：2026-09-05；2026-09-09 仅补充 Commander Workbench 工作方式的来源。依据为用户已确认目标、本地调研和官方当前文档。本轮没有读取账户凭据、调用模型或运行底座/隔离验收。
 
 ## 用户与本地材料
 
-- 已确认：个人单机、需求到 PR、先确认计划、自行合并、Web、允许复用底座、首个需求 2–3 子任务。
+- 已确认：个人单机、需求到 PR、先确认计划、自行合并、Web、允许复用底座、首个需求 2–3 子任务；入口为开仓库后选择主 Commander 的持续会话，Commander 主导拆解/判断/升级/验收，协调器只做机械调度和硬约束。
 - 核心要求：ChatGPT/Claude 订阅、DeepSeek 官方 API、Go 订阅及第三方 API 同项目协作；高级 Commander、较低成本 Worker/Reviewer；矩阵与配额协调。
 - [原报告](../../outputs/toil-like-heavy-framework-report.md)记录 Bernstein `3.19.1 / 3596346879c3ea26505273248eaa240aa7342c69`。本轮未取得固定提交材料，也未执行 qualification。
 - [原产品草案](../../outputs/karajan-design-blueprint.md)与[原路由草案](../../outputs/karajan-routing-and-quota-design.md)保留访谈过程，当前规范为本目录。
@@ -19,13 +19,15 @@
 
 ## Bernstein
 
+2026-09-09 实际参考了 [Screens](https://bernstein.readthedocs.io/en/latest/gui/screens/) 的 Tasks、Agents 和详情抽屉信息架构；Karajan 借用其可观察工作台表面，不继承其任务状态或调度所有权。Toil 式工作方式参考 [toil-offloading skill](https://github.com/zhouy1017/toil/blob/main/src/toil/_assets/skills/toil-offloading/SKILL.md)；本项目中的 Commander 角色与受控协调器边界仍是本规格决定。
+
 当前普通 plugin hooks 为通知机制，异常记录后丢弃，示例质量插件本身不硬阻断。另有 lifecycle hooks，但未获得所有 Attempt/模型请求必经的完整证明。[Plugin SDK](https://bernstein.readthedocs.io/en/latest/integrations/plugin-sdk/)、[Lifecycle](https://bernstein.readthedocs.io/en/latest/contributing/hooks/)
 
 Per-step routing 存在初选绑定与非 Claude adapter 的参数支持差异；内部 continuation 和委托型 adapter 的可见性另有边界，不能推断严格 Profile 始终不变。[Per-step routing](https://bernstein.readthedocs.io/en/latest/workflows/per-step-routing/)、[Hardening](https://bernstein.readthedocs.io/en/latest/concepts/orchestrator-hardening/)、[Delegation adapters](https://bernstein.readthedocs.io/en/latest/adapters/ADAPTER_GUIDE/)
 
 持久化和 REST 查询存在，但调用方 Attempt 幂等启动、未知进程核对、所有交付入口受控性仍待版本验收。[Persistence](https://bernstein.readthedocs.io/en/latest/architecture/state-persistence/)、[REST](https://bernstein.readthedocs.io/en/latest/reference/openapi-reference/)、[Issue-to-PR](https://bernstein.readthedocs.io/en/latest/orchestration/issue-to-pr/)
 
-**设计推断：**Karajan 拥有唯一业务协调器，Bernstein 满足受控执行契约后采用。未声称无法适配，也未把当前文档事实归于报告 pin。详见 [采用门](05-build-and-validation.md#3-bernstein-采用门)。
+**设计推断：**Bernstein 可在通过受控执行契约后复用为 UI、会话或 runtime 底座；它不构成第二个模型主控，也不拥有独立任务图、路由或交付权。未声称无法适配，也未把当前文档事实归于报告 pin。详见 [采用门](05-build-and-validation.md#3-bernstein-采用门)。
 
 ## 模型来源
 
