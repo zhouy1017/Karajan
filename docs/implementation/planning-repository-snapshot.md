@@ -54,11 +54,14 @@ keys protect the manifest/reference ledger.
 Approved entries may be an exact file or a directory prefix. Absolute,
 relative-alias, traversal, backslash, symlink, submodule, unsupported mode,
 empty/unmatched approval, and more than 2,000 files or 8,000,000 bytes fail
-closed. Blob sizes are queried before their bodies, and the reader checks the
-regular CAS file's `st_size` against its manifest before a bounded
-`manifest_size + 1` read. The registered root must be a non-aliased directory.
-On POSIX, a publisher fsyncs both the temporary blob and its artifact directory
-after linking/unlinking and before SQLite records references. On Windows, it
+closed. Git object bodies are read through a bounded `cat-file` subprocess;
+the reader verifies the requested object ID against its type, size, and bytes.
+The CAS reader checks each regular file's `st_size` against its manifest before
+a bounded `manifest_size + 1` read. The registered root must be a non-aliased
+directory. On Linux, a publisher flushes its temporary blob, installs its CAS
+name atomically with `renameat2(RENAME_NOREPLACE)`, and fsyncs the artifact
+directory before SQLite records references. A POSIX platform without that
+primitive is rejected; there is no link/unlink fallback. On Windows, it
 flushes the temporary blob, publishes it with same-directory `MoveFileExW` and
 `MOVEFILE_WRITE_THROUGH` without replacement, then flushes the published blob
 before SQLite records references. This is a platform-specific Windows commit
@@ -66,10 +69,11 @@ protocol; it does not claim that an injected I/O failure or the API contract
 constitutes an observed physical power-loss recovery test. Windows reparse
 behavior remains unsupported evidence, not a portability claim.
 
-The CAS protocol permits only a competing publisher's brief two-link interval:
-it waits for that temporary name to disappear, then requires a regular,
-single-link file with exactly the original bytes. A persistent second hardlink
-is still rejected. The manifest's repository identity, Git base object ID, and
+The current CAS protocol requires a regular, single-link file with exactly the
+original bytes, including when another publisher already installed the target.
+It does not accept a temporary two-link interval. Earlier linking/unlinking
+repair records below remain historical evidence of those earlier candidates.
+The manifest's repository identity, Git base object ID, and
 approved-path digest must have their expected types and match the independently
 sealed source digest in SQLite; recomputing the manifest's self-digest cannot
 rebind them. A second independently stored manifest digest seals the complete
