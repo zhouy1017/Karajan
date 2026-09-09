@@ -23,6 +23,7 @@ type ActivityStatus =
   | "stale";
 type ConversationSnapshot = {
   id: string;
+  projectId: string;
   title: string;
   messages: { from: "user" | "commander"; text: string }[];
   draft: string;
@@ -33,7 +34,33 @@ type ConversationSnapshot = {
   model: string;
   source: string;
   pendingTask?: { title: string; summary: string };
+  feedbackMode: FeedbackMode;
+  feedbackAt: number;
+  commanderActivityStatus: ActivityStatus;
 };
+
+type Project = { id: string; name: string; path: string; branch: string };
+
+const projects: Project[] = [
+  {
+    id: "karajan",
+    name: "Karajan",
+    path: "zhouy1017 / Karajan",
+    branch: "feature/csv-export",
+  },
+  {
+    id: "docs-studio",
+    name: "Docs Studio",
+    path: "zhouy1017 / docs-studio",
+    branch: "main",
+  },
+  {
+    id: "api-playground",
+    name: "API Playground",
+    path: "local / api-playground",
+    branch: "experiment",
+  },
+];
 
 type Task = {
   id: string;
@@ -119,6 +146,8 @@ const iconPaths: Record<string, string> = {
   play: "m9 6 9 6-9 6z",
   pause: "M8 6v12M16 6v12",
   reset: "M4 10a8 8 0 1 1 2 7M4 10V5m0 5h5",
+  folder:
+    "M3.5 6.5h6l2 2h9v9.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2V8.5a2 2 0 0 1 2-2z",
 };
 
 function Icon({ name, size = 16 }: { name: string; size?: number }) {
@@ -331,6 +360,7 @@ function TopBar({
   setResourceOpen,
   feedbackMode,
   onFeedback,
+  project,
 }: {
   variant: Variant;
   scene: Scene;
@@ -340,6 +370,7 @@ function TopBar({
   setResourceOpen: (open: boolean) => void;
   feedbackMode: FeedbackMode;
   onFeedback: (mode: FeedbackMode) => void;
+  project: Project;
 }) {
   return (
     <header className="prototype-topbar">
@@ -348,9 +379,9 @@ function TopBar({
           <span className="repo-mark">
             <Icon name="repo" size={14} />
           </span>
-          <strong>Karajan</strong>
+          <strong>{project.name}</strong>
           <span className="slash">/</span>
-          <span>feature/csv-export</span>
+          <span>{project.branch}</span>
         </div>
         <span className="prototype-badge">交互原型 · 样例数据</span>
       </div>
@@ -420,7 +451,12 @@ function Sidebar({
   selectedTask,
   tasks,
   onTask,
-  sessionTitle,
+  activeProjectId,
+  activeConversationId,
+  conversations,
+  onProject,
+  onConversation,
+  onNewConversation,
   onNewTask,
 }: {
   scene: Scene;
@@ -428,24 +464,102 @@ function Sidebar({
   selectedTask: Task;
   tasks: Task[];
   onTask: (task: Task) => void;
-  sessionTitle: string;
+  activeProjectId: string;
+  activeConversationId: string;
+  conversations: ConversationSnapshot[];
+  onProject: (id: string) => void;
+  onConversation: (id: string) => void;
+  onNewConversation: (projectId?: string) => void;
   onNewTask: () => void;
 }) {
+  const [expandedProjects, setExpandedProjects] = useState<
+    Record<string, boolean>
+  >({ karajan: true });
   return (
     <aside className="workbench-sidebar">
       <div className="sidebar-title">
         <span className="brand-symbol">K</span>
         <div>
-          <strong>工作台</strong>
+          <strong>Karajan</strong>
           <small>Commander</small>
         </div>
       </div>
-      <div className="sidebar-session">
-        <small>当前会话</small>
-        <strong>{sessionTitle}</strong>
-        <span>
-          <span className="online-dot" /> 高级 Commander
-        </span>
+      <div className="sidebar-quick-actions">
+        <button onClick={() => onNewConversation()}>＋ 新对话</button>
+        <button onClick={() => onScene("open")}>打开项目</button>
+      </div>
+      <div className="sidebar-projects">
+        <small className="sidebar-label">项目</small>
+        {projects.map((project) => {
+          const projectConversations = conversations.filter(
+            (item) => item.projectId === project.id,
+          );
+          const active = project.id === activeProjectId;
+          return (
+            <div
+              className={`project-tree ${active ? "selected" : ""}`}
+              key={project.id}
+            >
+              <div
+                className="project-tree-row"
+                title={`${project.path} · ${project.branch}`}
+              >
+                <button
+                  className="project-toggle"
+                  aria-label={`${expandedProjects[project.id] ? "折叠" : "展开"}${project.name}`}
+                  aria-expanded={Boolean(expandedProjects[project.id])}
+                  onClick={() =>
+                    setExpandedProjects((current) => ({
+                      ...current,
+                      [project.id]: !current[project.id],
+                    }))
+                  }
+                >
+                  {expandedProjects[project.id] ? "⌄" : "›"}
+                </button>
+                <Icon name="folder" size={14} />
+                <button
+                  className="project-name"
+                  onClick={() => {
+                    setExpandedProjects((current) => ({
+                      ...current,
+                      [project.id]: true,
+                    }));
+                    onProject(project.id);
+                  }}
+                >
+                  <span>{project.name}</span>
+                </button>
+                <small>{projectConversations.length}</small>
+              </div>
+              {expandedProjects[project.id] && (
+                <div className="project-conversations">
+                  {projectConversations.length ? (
+                    projectConversations.map((conversation) => (
+                      <button
+                        key={conversation.id}
+                        className={`project-conversation ${conversation.id === activeConversationId ? "selected" : ""}`}
+                        title={conversation.title}
+                        onClick={() => onConversation(conversation.id)}
+                      >
+                        <Icon name="chat" size={13} />
+                        <span>{conversation.title}</span>
+                      </button>
+                    ))
+                  ) : (
+                    <span className="project-empty">还没有会话</span>
+                  )}
+                  <button
+                    className="project-new-conversation"
+                    onClick={() => onNewConversation(project.id)}
+                  >
+                    ＋ 在此项目新建会话
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
       <div className="sidebar-group">
         <small className="sidebar-label">工作流</small>
@@ -474,36 +588,6 @@ function Sidebar({
             </button>
           ))}
       </div>
-      <div className="sidebar-group task-nav">
-        <div className="sidebar-task-label">
-          <small className="sidebar-label">任务</small>
-          <button
-            className="sidebar-new-task"
-            onClick={onNewTask}
-            aria-label="新任务"
-          >
-            ＋
-          </button>
-        </div>
-        {tasks.length > 0 ? (
-          tasks.map((task) => (
-            <button
-              key={task.id}
-              onClick={() => onTask(task)}
-              className={
-                selectedTask.id === task.id
-                  ? "task-nav-item selected"
-                  : "task-nav-item"
-              }
-            >
-              <span className="task-dot" />
-              <span>{task.title}</span>
-            </button>
-          ))
-        ) : (
-          <span className="sidebar-empty-tasks">暂无任务建议</span>
-        )}
-      </div>
       <div className="sidebar-footer">
         <span className="online-dot" /> 本地演示
       </div>
@@ -519,6 +603,7 @@ function TaskDetail({
   activityStatus,
   feedbackAt,
   now,
+  project,
 }: {
   task: Task;
   detailTab: DetailTab;
@@ -527,6 +612,7 @@ function TaskDetail({
   activityStatus?: ActivityStatus;
   feedbackAt?: number;
   now?: number;
+  project?: Project;
 }) {
   return (
     <aside className={`detail-panel detail-${variant}`}>
@@ -534,6 +620,14 @@ function TaskDetail({
         <div>
           <span className="eyebrow">任务详情</span>
           <h2>{task.title}</h2>
+          {project && (
+            <small
+              className="task-project-context"
+              title={`${project.path} · ${project.branch}`}
+            >
+              {project.name} · {project.branch}
+            </small>
+          )}
         </div>
         <div className="detail-status-stack">
           <StatusPill state={task.state} />
@@ -824,12 +918,16 @@ function OpenScene({
   setModel,
   source,
   setSource,
+  project,
+  onProject,
 }: {
   onStart: () => void;
   model: string;
   setModel: (value: string) => void;
   source: string;
   setSource: (value: string) => void;
+  project: Project;
+  onProject: (id: string) => void;
 }) {
   return (
     <div className="scene-content open-scene">
@@ -854,18 +952,16 @@ function OpenScene({
             </button>
           </div>
           <div className="repo-list">
-            <RepoCard
-              name="Karajan"
-              path="zhouy1017 / Karajan"
-              branch="feature/csv-export"
-              active
-            />
-            <RepoCard name="Sundial" path="zhouy1017 / Sundial" branch="main" />
-            <RepoCard
-              name="Ledger UI"
-              path="zhouy1017 / ledger-ui"
-              branch="release / 2.4"
-            />
+            {projects.map((item) => (
+              <RepoCard
+                key={item.id}
+                name={item.name}
+                path={item.path}
+                branch={item.branch}
+                active={item.id === project.id}
+                onClick={() => onProject(item.id)}
+              />
+            ))}
           </div>
           <button className="open-example" onClick={onStart}>
             <span>＋</span> 打开示例仓库 <Icon name="arrow" size={15} />
@@ -917,14 +1013,20 @@ function RepoCard({
   path,
   branch,
   active = false,
+  onClick,
 }: {
   name: string;
   path: string;
   branch: string;
   active?: boolean;
+  onClick: () => void;
 }) {
   return (
-    <div className={`repo-card ${active ? "active" : ""}`}>
+    <button
+      className={`repo-card ${active ? "active" : ""}`}
+      onClick={onClick}
+      title={`${path} · ${branch}`}
+    >
       <div className="repo-card-top">
         <span className="repo-card-icon">
           <Icon name="repo" size={17} />
@@ -936,7 +1038,7 @@ function RepoCard({
       <span className="branch-line">
         <Icon name="branch" size={12} /> {branch}
       </span>
-    </div>
+    </button>
   );
 }
 
@@ -950,6 +1052,7 @@ function CommanderScene({
   setModel,
   source,
   setSource,
+  project,
 }: {
   messages: { from: "user" | "commander"; text: string }[];
   draft: string;
@@ -960,6 +1063,7 @@ function CommanderScene({
   setModel: (value: string) => void;
   source: string;
   setSource: (value: string) => void;
+  project: Project;
 }) {
   return (
     <div className="scene-content commander-scene">
@@ -990,8 +1094,8 @@ function CommanderScene({
               <Icon name="repo" size={16} />
             </span>
             <div>
-              <strong>Karajan</strong>
-              <small>feature/csv-export</small>
+              <strong>{project.name}</strong>
+              <small>{project.branch}</small>
             </div>
           </div>
           <div className="context-lines">
@@ -1062,6 +1166,7 @@ function HubScene({
   onNewConversation,
   onNewTask,
   pendingTask,
+  projectId,
 }: {
   stage: HubStage;
   tasks: Task[];
@@ -1085,9 +1190,10 @@ function HubScene({
   conversations: ConversationSnapshot[];
   activeConversationId: string;
   onSwitchConversation: (id: string) => void;
-  onNewConversation: () => void;
+  onNewConversation: (projectId?: string) => void;
   onNewTask: () => void;
   pendingTask: { title: string; summary: string } | null;
+  projectId: string;
 }) {
   const updateTask = (
     id: string,
@@ -1120,88 +1226,112 @@ function HubScene({
           </span>
         </div>
       </div>
-      <div className="hub-layout">
-        <section className="hub-conversation">
-          <div className="hub-panel-label">
-            <span>持续对话</span>
-            <small>
-              {model} · {source}
-            </small>
-          </div>
-          <CommanderPanel
-            messages={messages}
-            draft={draft}
-            setDraft={setDraft}
-            onSend={onSend}
-            onContinue={onContinue}
-            model={model}
-            source={source}
-            activityStatus={
-              feedbackMode === "failed"
-                ? "error"
-                : feedbackMode === "interrupted"
-                  ? "disconnected"
-                  : commanderActivityStatus === "waiting_feedback" &&
-                      now - feedbackAt > 30000
-                    ? "stale"
-                    : commanderActivityStatus
-            }
-            feedbackAt={feedbackAt}
-            now={now}
-            conversations={conversations}
-            activeConversationId={activeConversationId}
-            onSwitchConversation={onSwitchConversation}
-            onNewConversation={onNewConversation}
-          />
-        </section>
-        <aside className="hub-workspace">
-          <div className="hub-panel-label">
-            <span>
-              {stage === "proposal"
-                ? "建议分工"
-                : stage === "running"
-                  ? "运行摘要"
-                  : "结果汇总"}
-            </span>
-            <button
-              className="text-button"
-              onClick={() =>
-                onOpenDetails(
-                  stage === "proposal"
-                    ? "plan"
-                    : stage === "running"
-                      ? "run"
-                      : "review",
-                )
+      {activeConversationId ? (
+        <div className="hub-layout">
+          <section className="hub-conversation">
+            <div className="hub-panel-label">
+              <span>持续对话</span>
+              <small>
+                {model} · {source}
+              </small>
+            </div>
+            <CommanderPanel
+              messages={messages}
+              draft={draft}
+              setDraft={setDraft}
+              onSend={onSend}
+              onContinue={onContinue}
+              model={model}
+              source={source}
+              activityStatus={
+                feedbackMode === "failed"
+                  ? "error"
+                  : feedbackMode === "interrupted"
+                    ? "disconnected"
+                    : commanderActivityStatus === "waiting_feedback" &&
+                        now - feedbackAt > 30000
+                      ? "stale"
+                      : commanderActivityStatus
               }
-            >
-              展开详情 <Icon name="arrow" size={12} />
-            </button>
-          </div>
-          {pendingTask ? (
-            <PendingTaskCard task={pendingTask} />
-          ) : tasks.length === 0 ? (
-            <EmptyTaskCard />
-          ) : stage === "proposal" ? (
-            <HubPlanCard
-              tasks={tasks}
-              onUpdate={updateTask}
-              onConfirm={onConfirm}
-            />
-          ) : stage === "running" ? (
-            <HubRunCards
-              tasks={tasks}
-              onSimulate={onSimulate}
-              onOpenDetails={(taskId) => onOpenDetails("run", taskId)}
-              feedbackMode={feedbackMode}
               feedbackAt={feedbackAt}
               now={now}
+              conversations={conversations.filter(
+                (conversation) => conversation.projectId === projectId,
+              )}
+              activeConversationId={activeConversationId}
+              onSwitchConversation={onSwitchConversation}
+              onNewConversation={onNewConversation}
             />
-          ) : (
-            <HubCompleteCard onOpenDetails={() => onOpenDetails("review")} />
-          )}
-        </aside>
-      </div>
+          </section>
+          <aside className="hub-workspace">
+            <div className="hub-panel-label">
+              <span>
+                {stage === "proposal"
+                  ? "建议分工"
+                  : stage === "running"
+                    ? "运行摘要"
+                    : "结果汇总"}
+              </span>
+              <button
+                className="text-button"
+                onClick={() =>
+                  onOpenDetails(
+                    stage === "proposal"
+                      ? "plan"
+                      : stage === "running"
+                        ? "run"
+                        : "review",
+                  )
+                }
+              >
+                展开详情 <Icon name="arrow" size={12} />
+              </button>
+            </div>
+            {pendingTask ? (
+              <PendingTaskCard task={pendingTask} />
+            ) : tasks.length === 0 ? (
+              <EmptyTaskCard />
+            ) : stage === "proposal" ? (
+              <HubPlanCard
+                tasks={tasks}
+                onUpdate={updateTask}
+                onConfirm={onConfirm}
+              />
+            ) : stage === "running" ? (
+              <HubRunCards
+                tasks={tasks}
+                onSimulate={onSimulate}
+                onOpenDetails={(taskId) => onOpenDetails("run", taskId)}
+                feedbackMode={feedbackMode}
+                feedbackAt={feedbackAt}
+                now={now}
+              />
+            ) : (
+              <HubCompleteCard onOpenDetails={() => onOpenDetails("review")} />
+            )}
+          </aside>
+        </div>
+      ) : (
+        <section className="hub-empty-project">
+          <span className="repo-card-icon">
+            <Icon name="folder" size={18} />
+          </span>
+          <span className="eyebrow">
+            {projects.find((project) => project.id === projectId)?.name ??
+              "当前项目"}
+          </span>
+          <h2>这个项目还没有 Commander 会话</h2>
+          <p>先新建对话或任务，再开始输入需求和约束。</p>
+          <div>
+            <button className="primary" onClick={() => onNewConversation()}>
+              ＋ 在此项目新建会话
+            </button>
+            <button className="secondary" onClick={onNewTask}>
+              ＋ 在此项目新建任务
+            </button>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
@@ -1474,6 +1604,7 @@ function NewTaskDialog({
   setSummary,
   onClose,
   onCreate,
+  projectName,
 }: {
   title: string;
   summary: string;
@@ -1481,6 +1612,7 @@ function NewTaskDialog({
   setSummary: (value: string) => void;
   onClose: () => void;
   onCreate: () => void;
+  projectName: string;
 }) {
   return (
     <div
@@ -1500,6 +1632,7 @@ function NewTaskDialog({
           <div>
             <span className="eyebrow">COMMANDER HUB</span>
             <h2 id="new-task-title">创建一个新任务</h2>
+            <small className="new-task-project">归属项目：{projectName}</small>
           </div>
           <button className="preview-close" onClick={onClose} aria-label="关闭">
             ×
@@ -1797,6 +1930,7 @@ function RunScene({
   feedbackMode,
   feedbackAt,
   now,
+  project,
 }: {
   tasks: Task[];
   selectedTask: Task;
@@ -1813,6 +1947,7 @@ function RunScene({
   feedbackMode: FeedbackMode;
   feedbackAt: number;
   now: number;
+  project: Project;
 }) {
   const workers = tasks.filter((task) => task.role !== "Reviewer");
   const reviewer = tasks.find((task) => task.role === "Reviewer") ?? tasks[2];
@@ -1963,6 +2098,7 @@ function RunScene({
               )}
               feedbackAt={feedbackAt}
               now={now}
+              project={project}
             />
           </aside>
         ) : (
@@ -1979,6 +2115,7 @@ function RunScene({
             )}
             feedbackAt={feedbackAt}
             now={now}
+            project={project}
           />
         )}
       </div>
@@ -2489,6 +2626,7 @@ function PrototypeSwitcher({
 export function CommanderPrototype() {
   const query = useMemo(readQuery, []);
   const queryTasks = tasksForStage(query.stage);
+  const initialFeedbackAt = Date.now();
   const [variant, setVariantState] = useState<Variant>(query.variant);
   const [scene, setSceneState] = useState<Scene>(query.scene);
   const [stage, setStage] = useState<HubStage>(query.stage);
@@ -2500,6 +2638,7 @@ export function CommanderPrototype() {
     () => [
       {
         id: "primary",
+        projectId: "karajan",
         title: "为订单增加 CSV 导出",
         messages: messagesForStage(query.stage),
         draft: "",
@@ -2509,10 +2648,43 @@ export function CommanderPrototype() {
         paused: false,
         model: "Astra",
         source: "Codex",
+        feedbackMode: "normal",
+        feedbackAt: initialFeedbackAt,
+        commanderActivityStatus: "idle",
+      },
+      {
+        id: "docs-planning",
+        projectId: "docs-studio",
+        title: "规划文档发布流程",
+        messages: [
+          {
+            from: "user",
+            text: "请先规划文档发布流程，暂时不要创建任何任务。",
+          },
+          {
+            from: "commander",
+            text: "已记录为待规划会话。我会先澄清发布目标、审阅责任和验收方式。",
+          },
+        ],
+        draft: "",
+        stage: "proposal",
+        tasks: [],
+        selectedTaskId: "",
+        paused: false,
+        model: "Sol",
+        source: "ChatGPT",
+        feedbackMode: "normal",
+        feedbackAt: initialFeedbackAt,
+        commanderActivityStatus: "idle",
       },
     ],
   );
   const [activeConversationId, setActiveConversationId] = useState("primary");
+  const activeConversationRef = useRef(activeConversationId);
+  const [activeProjectId, setActiveProjectId] = useState("karajan");
+  const [lastConversationByProject, setLastConversationByProject] = useState<
+    Record<string, string>
+  >({ karajan: "primary", "docs-studio": "docs-planning" });
   const [pendingTask, setPendingTask] = useState<{
     title: string;
     summary: string;
@@ -2534,6 +2706,10 @@ export function CommanderPrototype() {
     useState<ActivityStatus>("idle");
 
   useEffect(() => {
+    activeConversationRef.current = activeConversationId;
+  }, [activeConversationId]);
+
+  useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, []);
@@ -2550,7 +2726,7 @@ export function CommanderPrototype() {
     nextPending = pendingTask,
   ) =>
     conversations.map((conversation) =>
-      conversation.id === activeConversationId
+      conversation.id === activeConversationId && activeConversationId
         ? {
             ...conversation,
             messages: nextMessages,
@@ -2562,16 +2738,22 @@ export function CommanderPrototype() {
             model,
             source,
             pendingTask: nextPending ?? undefined,
+            feedbackMode,
+            feedbackAt,
+            commanderActivityStatus,
           }
         : conversation,
     );
-  const switchConversation = (id: string) => {
-    if (id === activeConversationId) return;
-    const updated = saveActiveConversation();
-    const target = updated.find((conversation) => conversation.id === id);
-    if (!target) return;
-    setConversations(updated);
-    setActiveConversationId(id);
+  const restoreConversation = (
+    target: ConversationSnapshot,
+    nextProjectId = target.projectId,
+  ) => {
+    setActiveProjectId(nextProjectId);
+    setLastConversationByProject((current) => ({
+      ...current,
+      [nextProjectId]: target.id,
+    }));
+    setActiveConversationId(target.id);
     setMessages(target.messages);
     setDraft(target.draft);
     setPendingTask(target.pendingTask ?? null);
@@ -2584,13 +2766,54 @@ export function CommanderPrototype() {
     setPaused(target.paused);
     setModel(target.model);
     setSource(target.source);
+    setFeedbackMode(target.feedbackMode);
+    setFeedbackAt(target.feedbackAt);
+    setCommanderActivityStatus(target.commanderActivityStatus);
     updateUrl(variant, "hub", target.stage);
   };
-  const createConversation = () => {
+  const switchConversation = (id: string) => {
+    if (id === activeConversationId) return;
+    const updated = saveActiveConversation();
+    const target = updated.find((conversation) => conversation.id === id);
+    if (!target) return;
+    setConversations(updated);
+    restoreConversation(target);
+    setSceneState("hub");
+  };
+  const switchProject = (id: string) => {
+    const updated = saveActiveConversation();
+    setConversations(updated);
+    const targetId = lastConversationByProject[id];
+    const target =
+      updated.find((item) => item.id === targetId) ??
+      updated.find((item) => item.projectId === id);
+    if (target) {
+      restoreConversation(target, id);
+    } else {
+      setActiveProjectId(id);
+      setActiveConversationId("");
+      setMessages([]);
+      setDraft("");
+      setPendingTask(null);
+      setStage("proposal");
+      setTasks([]);
+      setSelectedTask(initialTasks[0]);
+      setPaused(false);
+      setModel("Astra");
+      setSource("Codex");
+      setFeedbackMode("normal");
+      setFeedbackAt(Date.now());
+      setCommanderActivityStatus("idle");
+      updateUrl(variant, "hub", "proposal");
+    }
+    setSceneState("hub");
+  };
+  const createConversation = (targetProjectId = activeProjectId) => {
     const updated = saveActiveConversation();
     const id = `conversation-${Date.now()}`;
     const next = {
       id,
+      projectId: targetProjectId,
       title: "新对话",
       messages: [],
       draft: "",
@@ -2600,9 +2823,17 @@ export function CommanderPrototype() {
       paused: false,
       model: "Astra",
       source: "Codex",
+      feedbackMode: "normal" as FeedbackMode,
+      feedbackAt: Date.now(),
+      commanderActivityStatus: "idle" as ActivityStatus,
     };
     setConversations([...updated, next]);
+    setActiveProjectId(targetProjectId);
     setActiveConversationId(id);
+    setLastConversationByProject((current) => ({
+      ...current,
+      [targetProjectId]: id,
+    }));
     setMessages([]);
     setDraft("");
     setPendingTask(null);
@@ -2634,6 +2865,7 @@ export function CommanderPrototype() {
     ];
     const next = {
       id,
+      projectId: activeProjectId,
       title: task.title,
       messages: nextMessages,
       draft: "",
@@ -2644,9 +2876,16 @@ export function CommanderPrototype() {
       model: "Astra",
       source: "Codex",
       pendingTask: task,
+      feedbackMode: "normal" as FeedbackMode,
+      feedbackAt: Date.now(),
+      commanderActivityStatus: "idle" as ActivityStatus,
     };
     setConversations([...updated, next]);
     setActiveConversationId(id);
+    setLastConversationByProject((current) => ({
+      ...current,
+      [activeProjectId]: id,
+    }));
     setMessages(nextMessages);
     setDraft("");
     setPendingTask(task);
@@ -2691,6 +2930,7 @@ export function CommanderPrototype() {
     setConversations([
       {
         id: "primary",
+        projectId: "karajan",
         title: "为订单增加 CSV 导出",
         messages: messagesForStage("proposal"),
         draft: "",
@@ -2700,9 +2940,42 @@ export function CommanderPrototype() {
         paused: false,
         model: "Astra",
         source: "Codex",
+        feedbackMode: "normal",
+        feedbackAt: Date.now(),
+        commanderActivityStatus: "idle",
+      },
+      {
+        id: "docs-planning",
+        projectId: "docs-studio",
+        title: "规划文档发布流程",
+        messages: [
+          {
+            from: "user",
+            text: "请先规划文档发布流程，暂时不要创建任何任务。",
+          },
+          {
+            from: "commander",
+            text: "已记录为待规划会话。我会先澄清发布目标、审阅责任和验收方式。",
+          },
+        ],
+        draft: "",
+        stage: "proposal",
+        tasks: [],
+        selectedTaskId: "",
+        paused: false,
+        model: "Sol",
+        source: "ChatGPT",
+        feedbackMode: "normal",
+        feedbackAt: Date.now(),
+        commanderActivityStatus: "idle",
       },
     ]);
     setActiveConversationId("primary");
+    setActiveProjectId("karajan");
+    setLastConversationByProject({
+      karajan: "primary",
+      "docs-studio": "docs-planning",
+    });
     setPendingTask(null);
     setNewTaskOpen(false);
     setDraft("");
@@ -2715,6 +2988,7 @@ export function CommanderPrototype() {
   };
   const sendMessage = () => {
     if (!draft.trim()) return;
+    const sourceConversationId = activeConversationId;
     setMessages((current) => [
       ...current,
       { from: "user", text: draft.trim() },
@@ -2725,7 +2999,10 @@ export function CommanderPrototype() {
     ]);
     setDraft("");
     setCommanderActivityStatus("responding");
-    window.setTimeout(() => setCommanderActivityStatus("idle"), 900);
+    window.setTimeout(() => {
+      if (activeConversationRef.current === sourceConversationId)
+        setCommanderActivityStatus("idle");
+    }, 900);
   };
   const startRun = () => {
     if (stage !== "proposal") return;
@@ -2821,6 +3098,10 @@ export function CommanderPrototype() {
         setModel={setModel}
         source={source}
         setSource={setSource}
+        project={
+          projects.find((item) => item.id === activeProjectId) ?? projects[0]
+        }
+        onProject={switchProject}
       />
     );
   else if (scene === "hub")
@@ -2857,11 +3138,13 @@ export function CommanderPrototype() {
         now={now}
         commanderActivityStatus={commanderActivityStatus}
         conversations={conversations}
+
         activeConversationId={activeConversationId}
         onSwitchConversation={switchConversation}
         onNewConversation={createConversation}
         onNewTask={openNewTask}
         pendingTask={pendingTask}
+        projectId={activeProjectId}
         model={model}
         setModel={setModel}
         source={source}
@@ -2880,6 +3163,9 @@ export function CommanderPrototype() {
         setModel={setModel}
         source={source}
         setSource={setSource}
+        project={
+          projects.find((item) => item.id === activeProjectId) ?? projects[0]
+        }
       />
     );
   else if (scene === "plan")
@@ -2928,6 +3214,9 @@ export function CommanderPrototype() {
           feedbackMode={feedbackMode}
           feedbackAt={feedbackAt}
           now={now}
+          project={
+            projects.find((item) => item.id === activeProjectId) ?? projects[0]
+          }
         />
       );
   else
@@ -2960,24 +3249,26 @@ export function CommanderPrototype() {
         setResourceOpen={setResourceOpen}
         feedbackMode={feedbackMode}
         onFeedback={simulateFeedback}
+        project={
+          projects.find((item) => item.id === activeProjectId) ?? projects[0]
+        }
       />
-      {variant === "A" && (
-        <Sidebar
-          scene={scene}
-          onScene={setScene}
-          selectedTask={selectedTask}
-          tasks={tasks}
-          onTask={setSelectedTask}
-          sessionTitle={
-            conversations.find(
-              (conversation) => conversation.id === activeConversationId,
-            )?.title ?? "Commander 会话"
-          }
-          onNewTask={openNewTask}
-        />
-      )}
+      <Sidebar
+        scene={scene}
+        onScene={setScene}
+        selectedTask={selectedTask}
+        tasks={tasks}
+        onTask={setSelectedTask}
+        activeProjectId={activeProjectId}
+        activeConversationId={activeConversationId}
+        conversations={conversations}
+        onProject={switchProject}
+        onConversation={switchConversation}
+        onNewConversation={createConversation}
+        onNewTask={openNewTask}
+      />
       <main className="prototype-main">{content}</main>
-      {scene !== "open" && scene !== "hub" && variant === "A" && (
+      {scene !== "open" && scene !== "hub" && (
         <div className="commander-peek">
           <span className="commander-avatar">✦</span>
           <span>
@@ -3000,6 +3291,10 @@ export function CommanderPrototype() {
           setSummary={setNewTaskSummary}
           onClose={() => setNewTaskOpen(false)}
           onCreate={createTaskConversation}
+          projectName={
+            projects.find((project) => project.id === activeProjectId)?.name ??
+            "当前项目"
+          }
         />
       )}
       <PrototypeSwitcher variant={variant} setVariant={setVariant} />

@@ -259,26 +259,112 @@
   font-size: 10px;
   margin-top: 2px;
 }
-.sidebar-session {
-  margin: 20px 8px 23px;
-}
-.sidebar-session small,
 .sidebar-label {
   color: #799b90;
   font-size: 10px;
   letter-spacing: 0.08em;
 }
-.sidebar-session strong {
-  display: block;
-  color: #ecf5f0;
-  line-height: 1.45;
-  margin: 6px 0 7px;
-  font-size: 12px;
-  font-weight: 600;
+.sidebar-quick-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 15px 7px 18px;
 }
-.sidebar-session span:last-child {
+.sidebar-quick-actions button,
+.project-new-conversation {
+  color: #c3dfd2;
+  background: #254d45;
+  border: 1px solid rgba(190, 223, 209, 0.18);
+  border-radius: 5px;
+  padding: 7px 6px;
   font-size: 10px;
-  color: #9bb7ad;
+  white-space: nowrap;
+}
+.sidebar-quick-actions button:hover,
+.project-new-conversation:hover {
+  color: #fff;
+  background: #315e54;
+}
+.sidebar-projects {
+  margin-bottom: 18px;
+  overflow-y: auto;
+  max-height: 38vh;
+}
+.project-tree {
+  margin: 2px 0;
+}
+.project-tree-row,
+.project-conversation {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  text-align: left;
+  color: #adc5ba;
+  border-radius: 5px;
+}
+.project-tree-row {
+  padding: 8px 9px;
+  font-size: 11px;
+}
+.project-toggle {
+  width: 8px;
+  color: #84a99c;
+  font-size: 13px;
+  line-height: 1;
+  text-align: center;
+  padding: 0;
+}
+.project-name {
+  min-width: 0;
+  flex: 1;
+  color: inherit !important;
+  text-align: left;
+  padding: 0;
+}
+.project-tree-row span,
+.project-conversation span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.project-tree-row small {
+  margin-left: auto;
+  color: #78998e;
+  font-size: 9px;
+}
+.project-tree-row:hover,
+.project-tree.selected > .project-tree-row {
+  color: #fff;
+  background: #28534b;
+}
+.project-conversations {
+  margin: 2px 0 8px 14px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(195, 225, 211, 0.18);
+}
+.project-conversation {
+  padding: 6px 7px;
+  font-size: 10px;
+}
+.project-conversation:hover,
+.project-conversation.selected {
+  color: #fff;
+  background: #28534b;
+}
+.project-empty {
+  display: block;
+  padding: 6px 7px;
+  color: #78998e;
+  font-size: 10px;
+}
+.project-new-conversation {
+  width: 100%;
+  margin-top: 4px;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .online-dot {
   display: inline-block;
@@ -541,6 +627,21 @@
 .repo-card > strong {
   display: block;
   font-size: 14px;
+}
+.repo-card {
+  text-align: left;
+  color: var(--ink);
+}
+.task-project-context {
+  display: block;
+  margin-top: 5px;
+  color: #769086;
+  font-size: 10px;
+  font-weight: 500;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .repo-card > small {
   display: block;
@@ -2144,6 +2245,37 @@
 .hub-conversation .commander-panel {
   box-shadow: var(--shadow);
 }
+.hub-empty-project {
+  min-height: 300px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  gap: 9px;
+  padding: 32px;
+  background: #fff;
+  border: 1px dashed #c9dbd2;
+  border-radius: 8px;
+}
+.hub-empty-project .repo-card-icon {
+  width: 34px;
+  height: 34px;
+}
+.hub-empty-project h2 {
+  margin: 0;
+  font-size: 17px;
+}
+.hub-empty-project p {
+  max-width: 310px;
+  font-size: 11px;
+}
+.hub-empty-project > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 5px;
+}
 .hub-workspace {
   background: #f8faf8;
   border: 1px solid var(--line);
@@ -2645,6 +2777,12 @@
   font-size: 17px;
   margin-top: 5px;
 }
+.new-task-project {
+  display: block;
+  color: #6d867b;
+  font-size: 10px;
+  margin-top: 5px;
+}
 .new-task-dialog-body {
   padding: 16px 18px;
 }
@@ -2722,7 +2860,7 @@
 
 /* Variant B has a different information hierarchy: board first, Commander drawer. */
 .variant-b .prototype-main {
-  margin-left: 0;
+  margin-left: 206px;
 }
 .variant-b .scene-content {
   max-width: 1360px;
@@ -2780,7 +2918,7 @@
 
 /* Variant C moves from task rows to three role work surfaces with a bottom dialogue band. */
 .variant-c .prototype-main {
-  margin-left: 0;
+  margin-left: 206px;
 }
 .variant-c .scene-content {
   max-width: 1380px;
@@ -2901,20 +3039,25 @@
     overflow-x: auto;
   }
   .sidebar-title,
-  .sidebar-session,
-  .sidebar-group:not(.task-nav),
+  .sidebar-group,
   .sidebar-footer {
     display: none;
   }
-  .task-nav {
-    margin: 0;
+  .sidebar-quick-actions {
     display: flex;
-    gap: 4px;
+    margin: 0 7px 0 0;
   }
-  .task-nav .sidebar-label {
+  .sidebar-projects {
+    display: flex;
+    margin: 0;
+    max-height: none;
+    overflow: visible;
+  }
+  .sidebar-projects .sidebar-label,
+  .project-conversations {
     display: none;
   }
-  .task-nav-item {
+  .project-tree-row {
     white-space: nowrap;
     width: auto;
   }
