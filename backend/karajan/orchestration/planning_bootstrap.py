@@ -263,6 +263,32 @@ def assert_planning_bootstrap_current(
     return settings
 
 
+def migrate_commander_conversations(control_directory: Path) -> None:
+    """Explicitly upgrade the trusted Run ledger's Commander projection.
+
+    This is a normal bootstrap action, not part of any existing-only factory.
+    It creates only the local Conversation projection tables introduced after
+    older planning deployments and deterministically binds their historical
+    Runs.  It neither reads qualification material nor creates a planning,
+    admission, capacity, or provider effect.
+    """
+    from karajan.conversations import ConversationStore
+    from karajan.projects import ProjectRegistry
+    from karajan.runs import RunPlanner
+
+    settings, bootstrap_sha256 = read_planning_bootstrap(control_directory)
+    # These are deliberately normal constructors: RunPlanner owns the schema
+    # upgrade and ConversationStore owns the one-time legacy binding.  The
+    # trusted runtime factory remains existing-only and cannot provision this
+    # state as a side effect of a read.
+    projects = ProjectRegistry(settings.projects_database, settings.allowed_roots)
+    planner = RunPlanner(settings.state_directory / "runs.sqlite", projects)
+    ConversationStore(projects, planner)
+    # Do not retain a migration result if the controller descriptor was
+    # replaced during the bootstrap window.
+    assert_planning_bootstrap_current(control_directory, bootstrap_sha256)
+
+
 def provision_planning_bootstrap(
     control_directory: Path, state_directory: Path, allowed_roots: tuple[Path, ...]
 ) -> PlanningBootstrapSettings:

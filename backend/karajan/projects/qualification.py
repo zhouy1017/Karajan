@@ -1230,6 +1230,43 @@ class ProfileQualificationStore:
             ).fetchone()
             return {"record": record, "revocation": json.loads(row["record"]) if row else None}
 
+    def list_status(self, project_id: str, *, principal: str) -> list[dict[str, Any]]:
+        """Read safe, durable qualification status for one owned Project only."""
+        with self._owned(project_id, principal) as db:
+            rows = db.execute(
+                "SELECT r.record, r.digest, v.id AS revocation_id "
+                "FROM profile_qualification_records r "
+                "JOIN profile_qualification_starts s ON s.id=r.id "
+                "LEFT JOIN profile_qualification_revocations v ON v.id=r.id "
+                "WHERE s.project_id=? ORDER BY s.rowid DESC",
+                (project_id,),
+            ).fetchall()
+        result: list[dict[str, Any]] = []
+        try:
+            for row in rows:
+                record = json.loads(row["record"])
+                if record.get("project_id") != project_id or digest(record) != row["digest"]:
+                    raise ValueError()
+                result.append(
+                    {
+                        key: record[key]
+                        for key in (
+                            "id",
+                            "project_id",
+                            "status",
+                            "qualification_scope",
+                            "suite_ref",
+                            "observed_at",
+                            "valid_until",
+                            "reason_codes",
+                        )
+                    }
+                    | {"revoked": row["revocation_id"] is not None}
+                )
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+            raise QualificationError("QUALIFICATION_RECORD_CHANGED") from None
+        return result
+
     def get_start(self, project_id: str, observation_id: str, *, principal: str) -> dict[str, Any]:
         """Read the durable intent even when execution has no completed receipt."""
         identifier(observation_id)

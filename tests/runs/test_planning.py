@@ -5,12 +5,15 @@ import os
 import subprocess
 import sys
 import time
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
 from karajan.projects import ProjectRegistry
 from karajan.runs import RunError, RunPlanner
+from karajan.runs.models import CreateRun
+from karajan.runs.planning import digest
 
 
 @pytest.fixture
@@ -131,6 +134,125 @@ def test_repeated_concurrent_create_is_one_command_and_changed_payload_is_reject
     changed = {**request, "requirement": {"goal": "different", "acceptance": ["new"]}}
     with pytest.raises(RunError, match="IDEMPOTENCY_CONFLICT"):
         planner.create(changed, command_key="same", principal="owner")
+
+
+def test_run_creation_binds_only_a_real_project_conversation_in_the_same_ledger(
+    tmp_path: Path, project: tuple[ProjectRegistry, dict, Path]
+) -> None:
+    registry, configured, _ = project
+    planner = RunPlanner(tmp_path / "runs.sqlite", registry)
+    request = create_request(configured)
+
+    # Even the predictable legacy identifier is not accepted when the browser
+    # explicitly supplied it.  Only an omitted field can take that migration
+    # compatibility path.
+    explicit_legacy = str(
+        uuid.uuid5(uuid.UUID("e9e9a0cf-f970-5b45-9aa0-0a1ea3374b4b"), configured["id"])
+    )
+    with pytest.raises(RunError, match="CONVERSATION_NOT_FOUND"):
+        planner.create(
+            {**request, "conversation_id": explicit_legacy},
+            command_key="explicit-legacy",
+            principal="owner",
+        )
+
+    # The legacy wire command retains its original receipt digest, so an
+    # existing client replays identically after the conversation migration.
+    legacy = planner.create(request, command_key="legacy", principal="owner")
+    with planner._transaction() as db:
+        receipt = db.execute(
+            "SELECT digest FROM run_commands WHERE principal='owner' AND key='legacy'"
+        ).fetchone()
+        binding = db.execute(
+            "SELECT conversation_id, project_id FROM conversation_run_bindings WHERE run_id=?",
+            (legacy["id"],),
+        ).fetchone()
+    assert receipt["digest"] == digest(["create", request])
+    assert binding["conversation_id"] == legacy["conversation_id"]
+    assert binding["project_id"] == configured["id"]
+    assert (
+        RunPlanner(tmp_path / "runs.sqlite", registry).create(
+            request, command_key="legacy", principal="owner"
+        )
+        == legacy
+    )
+
+    missing = {**request, "conversation_id": "missing-conversation"}
+    with pytest.raises(RunError, match="CONVERSATION_NOT_FOUND"):
+        planner.create(missing, command_key="missing-conversation", principal="owner")
+    with pytest.raises(RunError, match="RUN_INPUT_INVALID"):
+        planner.create(
+            {**request, "conversation_id": None},
+            command_key="explicit-null",
+            principal="owner",
+        )
+    assert [item["id"] for item in planner.list(principal="owner")] == [legacy["id"]]
+
+
+def test_historical_create_replay_enriches_identity_without_rewriting_its_receipt(
+    tmp_path: Path, project: tuple[ProjectRegistry, dict, Path]
+) -> None:
+    registry, configured, _ = project
+    planner = RunPlanner(tmp_path / "runs.sqlite", registry)
+    request = create_request(configured)
+    created = planner.create(request, command_key="legacy-receipt", principal="owner")
+    with planner._transaction() as db:
+        original = json.loads(
+            db.execute(
+                "SELECT result FROM run_commands WHERE principal=? AND key=?",
+                ("owner", "legacy-receipt"),
+            ).fetchone()["result"]
+        )
+        original.pop("conversation_id")
+        db.execute(
+            "UPDATE run_commands SET result=? WHERE principal=? AND key=?",
+            (
+                json.dumps(original, sort_keys=True, separators=(",", ":")),
+                "owner",
+                "legacy-receipt",
+            ),
+        )
+
+    replay = planner.create(request, command_key="legacy-receipt", principal="owner")
+
+    assert replay["conversation_id"] == created["conversation_id"]
+    with planner._transaction() as db:
+        stored = json.loads(
+            db.execute(
+                "SELECT result FROM run_commands WHERE principal=? AND key=?",
+                ("owner", "legacy-receipt"),
+            ).fetchone()["result"]
+        )
+    assert "conversation_id" not in stored
+
+
+def test_baseline_normalized_create_receipt_replays_without_rewriting_its_digest(
+    tmp_path: Path, project: tuple[ProjectRegistry, dict, Path]
+) -> None:
+    """Seed the released-baseline receipt; do not create it through this version."""
+    registry, configured, _ = project
+    planner = RunPlanner(tmp_path / "runs.sqlite", registry)
+    raw_request = create_request(configured)
+    baseline_request = CreateRun.model_validate(raw_request).model_dump()
+    baseline_result = {"id": "baseline-receipt", "project_id": configured["id"], "revision": 1}
+    baseline_digest = digest(["create", baseline_request])
+    with planner._transaction() as db:
+        db.execute(
+            "INSERT INTO run_commands VALUES (?, ?, ?, ?, NULL)",
+            ("owner", "baseline-normalized", baseline_digest, json.dumps(baseline_result)),
+        )
+
+    assert (
+        planner.create(raw_request, command_key="baseline-normalized", principal="owner")
+        == baseline_result
+    )
+    with planner._transaction() as db:
+        stored = db.execute(
+            "SELECT digest, result FROM run_commands WHERE principal=? AND key=?",
+            ("owner", "baseline-normalized"),
+        ).fetchone()
+    assert stored["digest"] == baseline_digest
+    assert json.loads(stored["result"]) == baseline_result
 
 
 class ScriptedAdmissionReader:
