@@ -80,7 +80,11 @@ def _compile(
     snapshot: dict[str, Any],
     accounting: GoRequestAccounting,
 ) -> PlanningModelInput:
-    if execution.get("state") != "awaiting_admission":
+    # A claimant that won dispatch after another process completed admission
+    # still needs the same immutable snapshot to perform its one send.  An
+    # unknown admission is intentionally excluded: only receipt reconciliation
+    # may move that state forward.
+    if execution.get("state") not in {"awaiting_admission", "awaiting_output"}:
         raise RunError("PLANNING_INPUT_NOT_CURRENT")
     if run.get("schema_version") != "karajan.run-planning.v2":
         raise RunError("PLANNING_INPUT_POLICY_UNSUPPORTED")

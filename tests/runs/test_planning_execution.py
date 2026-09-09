@@ -8,9 +8,10 @@ import subprocess
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
-from threading import Event
+from threading import Event, get_ident
 from typing import Any
 
 import pytest
@@ -1711,6 +1712,61 @@ def test_cancellation_after_submission_guard_serializes_after_run_commit(
     assert submitted["state"] == "submitted"
     assert cancelled["cancel_requested"] is False
     assert cancelled["state"] == "submitted"
+    assert service.planner.get(run["id"], principal="owner")["plans"] == [submitted["submission"]]
+
+
+def test_submission_fence_orders_execution_before_run_against_snapshot(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A held snapshot Execution lock cannot deadlock a concurrent Plan submit."""
+    service, run, intent, authorities, _, execution = snapshot_case(configured, tmp_path)
+    content = json.dumps(proposal(run, intent)["plan"], separators=(",", ":")).encode()
+    authorities.prepare(execution["binding"], content)
+    authorities.activate()
+    assert service.reconcile(execution["id"], principal="owner")["state"] == "awaiting_output"
+
+    original_transaction = service._transaction
+    snapshot_thread: list[int] = []
+    snapshot_execution_held = Event()
+    release_snapshot_run = Event()
+    snapshot_transaction_count = 0
+
+    @contextmanager
+    def delayed_snapshot_transaction():
+        nonlocal snapshot_transaction_count
+        with original_transaction() as db:
+            if snapshot_thread and get_ident() == snapshot_thread[0]:
+                snapshot_transaction_count += 1
+                # freeze performs its public read, reserves its command, then
+                # enters current_authority (Execution before Run).
+                if snapshot_transaction_count == 3:
+                    snapshot_execution_held.set()
+                    assert release_snapshot_run.wait(5), "snapshot did not resume"
+            yield db
+
+    monkeypatch.setattr(service, "_transaction", delayed_snapshot_transaction)
+
+    def freeze() -> dict[str, Any]:
+        snapshot_thread.append(get_ident())
+        return service.freeze_repository_snapshot(
+            execution["id"], principal="owner", command_key="freeze-concurrent"
+        )
+
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        snapshot = workers.submit(freeze)
+        assert snapshot_execution_held.wait(5), "snapshot did not hold Execution first"
+        submission = workers.submit(
+            service.submit, execution["id"], principal="owner", command_key="submit"
+        )
+        release_snapshot_run.set()
+        # Submission may commit after snapshot's preparation but before its
+        # final authority guard. That guard must reject stale intent state,
+        # rather than participating in a Run -> Execution cycle.
+        with pytest.raises(RunError, match="^PLANNING_EXECUTION_BINDING_STALE$"):
+            snapshot.result(timeout=5)
+        submitted = submission.result(timeout=5)
+
+    assert submitted["state"] == "submitted"
     assert service.planner.get(run["id"], principal="owner")["plans"] == [submitted["submission"]]
 
 

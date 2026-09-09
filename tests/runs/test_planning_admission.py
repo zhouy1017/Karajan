@@ -25,7 +25,7 @@ import pytest
 from karajan.adapters.opencode.go_context import GoRequestAccounting
 from karajan.adapters.opencode.go_journal import GoCallJournal
 from karajan.adapters.opencode.go_relay import GoRelay
-from karajan.capacity import CapacityStore
+from karajan.capacity import CapacityError, CapacityStore
 from karajan.orchestration.go_commander_qualification import (
     CommanderCredentialSource,
     CommanderQualificationSettings,
@@ -598,6 +598,267 @@ def test_production_transport_consumes_registered_budget_and_publishes_one_plan(
     assert admitted["duration_seconds"] == 25
     persisted = transport.execution.planner.get(run["id"], principal="owner")
     assert persisted["plans"] and persisted["plans"][0]["plan"] == plan
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="private deployment modes require Linux")
+def test_production_submission_rechecks_public_credential_revoke_before_plan_insert(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A public revoke that wins after source read leaves no Plan behind."""
+    control, _, run, execution = _persistent_production_transport_case(tmp_path, configured)
+    transport = PlanningTransport.from_trusted_factory(control)
+    persisted = transport.execution.planner.get(run["id"], principal="owner")
+    intent = persisted["planning_intents"][0]
+    plan = submit_request(persisted, intent)["plan"]
+    for task in plan["tasks"]:
+        task["paths"] = ["original.txt"]
+    monkeypatch.setattr(
+        ProductionGoPlanningProducer,
+        "produce",
+        lambda *args, **kwargs: json.dumps(plan, separators=(",", ":")).encode(),
+    )
+
+    assert isinstance(transport.producer, ProductionGoPlanningProducer)
+    credentials = transport.producer.credentials
+    profile = persisted["configuration_snapshot"]["configuration"]["resources"]["profiles"][0]
+    auth_ref = profile["profile"]["auth_ref"]
+    generation = credentials.current(run["project_id"], auth_ref, principal="owner")["generation"]
+    source_read, release = Event(), Event()
+    original_read_source = transport.outputs.read_source
+
+    def delayed_final_source(binding: dict[str, Any]) -> dict[str, Any]:
+        source = original_read_source(binding)
+        if (
+            transport.execution.get(execution["id"], principal="owner")["state"]
+            == "submit_claimed"
+        ):
+            source_read.set()
+            assert release.wait(30), "submission source read did not resume"
+        return source
+
+    monkeypatch.setattr(transport.outputs, "read_source", delayed_final_source)
+
+    def execute() -> dict[str, Any]:
+        try:
+            return transport.execute(execution["id"], principal="owner", command_key="execute")
+        finally:
+            release.set()
+
+    with ThreadPoolExecutor(max_workers=1) as workers:
+        pending = workers.submit(execute)
+        assert source_read.wait(30), "transport did not reach its final source read"
+        revoked = credentials.revoke(
+            run["project_id"],
+            auth_ref,
+            generation,
+            principal="owner",
+            command_key="revoke-before-plan",
+        )
+        assert revoked["revoked"] is True
+        release.set()
+        result = pending.result(timeout=30)
+
+    assert result["state"] == "blocked"
+    assert result["reason_codes"] == ["PLANNING_OUTPUT_SOURCE_CHANGED"]
+    assert transport.execution.planner.get(run["id"], principal="owner")["plans"] == []
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="private deployment modes require Linux")
+def test_production_submission_holds_public_credential_authority_through_plan_commit(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A revoke arriving after the source guard waits for the retained Plan fact."""
+    control, _, run, execution = _persistent_production_transport_case(tmp_path, configured)
+    transport = PlanningTransport.from_trusted_factory(control)
+    persisted = transport.execution.planner.get(run["id"], principal="owner")
+    intent = persisted["planning_intents"][0]
+    plan = submit_request(persisted, intent)["plan"]
+    for task in plan["tasks"]:
+        task["paths"] = ["original.txt"]
+    monkeypatch.setattr(
+        ProductionGoPlanningProducer,
+        "produce",
+        lambda *args, **kwargs: json.dumps(plan, separators=(",", ":")).encode(),
+    )
+
+    assert isinstance(transport.producer, ProductionGoPlanningProducer)
+    credentials = transport.producer.credentials
+    profile = persisted["configuration_snapshot"]["configuration"]["resources"]["profiles"][0]
+    auth_ref = profile["profile"]["auth_ref"]
+    generation = credentials.current(run["project_id"], auth_ref, principal="owner")["generation"]
+    original_save = transport.execution.planner._save
+    revocations: list[Any] = []
+    workers = ThreadPoolExecutor(max_workers=1)
+
+    def save_after_source_guard(db: sqlite3.Connection, value: dict[str, Any]) -> None:
+        if value["plans"] and not revocations:
+            revocations.append(
+                workers.submit(
+                    credentials.revoke,
+                    run["project_id"],
+                    auth_ref,
+                    generation,
+                    principal="owner",
+                    command_key="revoke-after-plan-linearization",
+                )
+            )
+            assert not revocations[0].done(), "revoke crossed the held Project source guard"
+        original_save(db, value)
+
+    monkeypatch.setattr(transport.execution.planner, "_save", save_after_source_guard)
+    try:
+        result = transport.execute(execution["id"], principal="owner", command_key="execute")
+        assert revocations, result
+        revoked = revocations[0].result(timeout=5)
+    finally:
+        workers.shutdown(wait=True)
+
+    assert result["state"] == "submitted"
+    assert revoked["revoked"] is True
+    assert transport.execution.planner.get(run["id"], principal="owner")["plans"] == [
+        result["submission"]
+    ]
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="private deployment modes require Linux")
+def test_transport_dispatch_claimant_produces_when_other_caller_pauses_after_admission(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The caller that wins a real dispatch claim cannot return without producing."""
+    control, _, run, execution = _persistent_production_transport_case(tmp_path, configured)
+    first = PlanningTransport.from_trusted_factory(control)
+    second = PlanningTransport.from_trusted_factory(control)
+    persisted = first.execution.planner.get(run["id"], principal="owner")
+    plan = submit_request(persisted, persisted["planning_intents"][0])["plan"]
+    for task in plan["tasks"]:
+        task["paths"] = ["original.txt"]
+    sends: list[dict[str, Any]] = []
+
+    def produce_once(*args: Any, **kwargs: Any) -> bytes:
+        sends.append({"binding": kwargs["binding"], "admission": kwargs["admission"]})
+        return json.dumps(plan, separators=(",", ":")).encode()
+
+    monkeypatch.setattr(ProductionGoPlanningProducer, "produce", produce_once)
+    admitted, release = Event(), Event()
+    original_admit = PlanningExecution.admit
+
+    def pause_first_after_admission(
+        controller: PlanningExecution, *args: Any, **kwargs: Any
+    ) -> dict[str, Any]:
+        result = original_admit(controller, *args, **kwargs)
+        if controller is first.execution and result["state"] == "awaiting_output":
+            admitted.set()
+            assert release.wait(30), "first transport did not resume after admission"
+        return result
+
+    monkeypatch.setattr(PlanningExecution, "admit", pause_first_after_admission)
+
+    def execute_first() -> dict[str, Any]:
+        try:
+            return first.execute(execution["id"], principal="owner", command_key="execute")
+        finally:
+            release.set()
+
+    with ThreadPoolExecutor(max_workers=1) as workers:
+        pending = workers.submit(execute_first)
+        assert admitted.wait(30), "first transport did not reach awaiting_output"
+        claimed = second.execute(execution["id"], principal="owner", command_key="execute")
+        release.set()
+        replay = pending.result(timeout=30)
+
+    assert claimed["state"] == "submitted"
+    assert replay["state"] == "submitted"
+    assert len(sends) == 1
+    assert first.execution.planner.get(run["id"], principal="owner")["plans"] == [
+        claimed["submission"]
+    ]
+
+
+@pytest.mark.parametrize("failure", ["runtime_placeholder", "capacity_error"])
+def test_transport_repeats_admission_unknown_by_original_receipt_only(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str
+) -> None:
+    """Unknown recovery neither recompiles nor retries an original Capacity effect."""
+    _, authority, run, execution = _case(tmp_path, configured)
+    outputs = PlanningOutputStore(tmp_path / "unknown-output.sqlite", authority_kind="fixture")
+    controller = PlanningExecution(
+        authority.execution_database,
+        authority.planner,
+        admissions=authority,
+        outputs=outputs,
+        capacity=authority.capacity,
+        allow_fixture_authorities=True,
+    )
+    calls: list[str] = []
+
+    class NoProducer:
+        authority_kind = "fixture"
+
+        def source(self, binding: dict[str, Any]) -> dict[str, Any]:
+            del binding
+            calls.append("source")
+            raise AssertionError("unknown receipt recovery must not arm output")
+
+        def produce(self, *args: Any, **kwargs: Any) -> bytes:
+            del args, kwargs
+            calls.append("produce")
+            raise AssertionError("unknown receipt recovery must not produce")
+
+    class NoAccounting:
+        def source(self) -> dict[str, Any]:
+            raise AssertionError("unknown receipt recovery must not compile input")
+
+    transport = PlanningTransport(controller, NoAccounting(), NoProducer(), outputs)  # type: ignore[arg-type]
+    original_activate = authority.capacity.activate
+
+    if failure == "runtime_placeholder":
+
+        def lose_runtime_reply(*args: Any, **kwargs: Any) -> dict[str, Any]:
+            original_activate(*args, **kwargs)
+            raise RuntimeError("activation reply lost")
+
+        monkeypatch.setattr(authority.capacity, "activate", lose_runtime_reply)
+        with pytest.raises(RuntimeError, match="activation reply lost"):
+            authority.advance(execution["id"], "owner", "original-admit")
+    else:
+
+        def lose_capacity_reply(*args: Any, **kwargs: Any) -> dict[str, Any]:
+            del args, kwargs
+            raise CapacityError("activation receipt unavailable")
+
+        monkeypatch.setattr(authority.capacity, "activate", lose_capacity_reply)
+        record = authority.advance(execution["id"], "owner", "original-admit")
+        assert record["phase"] == "capacity_activate_unknown"
+
+    # Record the ledger's original unknown receipt on the execution first;
+    # the Transport calls below are the regression subject, not a synthetic
+    # state injection.
+    assert controller.reconcile(execution["id"], principal="owner")["state"] == "admission_unknown"
+    before_capacity = authority.capacity.snapshot()
+    first = transport.execute(execution["id"], principal="owner", command_key="execute")
+    repeated = transport.execute(execution["id"], principal="owner", command_key="execute")
+
+    assert first["state"] == repeated["state"] == "admission_unknown"
+    assert first["reason_codes"] == repeated["reason_codes"] == ["PLANNING_ADMISSION_UNKNOWN"]
+    assert controller.get(execution["id"], principal="owner")["state"] == "admission_unknown"
+    assert authority.capacity.snapshot() == before_capacity
+    assert calls == []
+    with sqlite3.connect(outputs.database) as db:
+        assert {
+            table: db.execute("SELECT COUNT(*) FROM " + table).fetchone()[0]
+            for table in (
+                "planning_execute_commands",
+                "planning_output_sources",
+                "planning_output_claims",
+                "planning_outputs",
+            )
+        } == {
+            "planning_execute_commands": 0,
+            "planning_output_sources": 0,
+            "planning_output_claims": 0,
+            "planning_outputs": 0,
+        }
+    assert controller.planner.get(run["id"], principal="owner")["plans"] == []
 
 
 @pytest.mark.skipif(sys.platform != "linux", reason="native planning requires Linux namespaces")

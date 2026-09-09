@@ -312,15 +312,15 @@ class RunPlanner:
         identifier(run_id)
         if principal is not None:
             identifier(principal)
-        db = sqlite3.connect(self.database.resolve().as_uri() + "?mode=ro", uri=True, timeout=10)
-        db.row_factory = sqlite3.Row
-        try:
+        # Public Run reads participate in the same writer guard as admission.
+        # A controller that already holds Run authority uses ``_get`` on that
+        # connection instead; bypassing this transaction lets a public reader
+        # observe a half-consumed admission.
+        with self._transaction() as db:
             run = self._get(db, run_id)
             if principal is not None and run["owner"] != principal:
                 raise RunError("RUN_NOT_FOUND")
             return run
-        finally:
-            db.close()
 
     @contextmanager
     def activation_guard(self, run_id: str) -> Iterator[dict[str, Any]]:
@@ -461,7 +461,7 @@ class RunPlanner:
         *,
         command_key: str,
         principal: str,
-        _submission_guard: Callable[[], Callable[[], None]] | None = None,
+        _submission_guard: Callable[[dict[str, Any]], Callable[[], None]] | None = None,
     ) -> dict[str, Any]:
         version_two = (
             isinstance(request, dict) and request.get("schema_version") == "karajan.submit-plan.v2"
@@ -497,7 +497,7 @@ class RunPlanner:
             # so cancellation cannot commit between the final observation and Plan
             # insertion.
             if _submission_guard is not None:
-                release_submission_guard = _submission_guard()
+                release_submission_guard = _submission_guard(run)
             try:
                 validate_plan(request["plan"], run["authorization_ceiling"])
                 impact = plan_impact(request["plan"], run)
@@ -587,7 +587,7 @@ class RunPlanner:
         binding_sha256: str,
         principal: str,
         command_key: str,
-        submission_guard: Callable[[], Callable[[], None]] | None = None,
+        submission_fence: Callable[[], Any] | None = None,
     ) -> dict[str, Any]:
         """Internal controller port; no HTTP route accepts this material.
 
@@ -626,13 +626,24 @@ class RunPlanner:
                 raise RunError("PLANNING_EXECUTION_RECEIPT_CONFLICT")
         if request.get("term") != receipt["term"] or request.get("intent_id") != intent_id:
             raise RunError("PLANNING_EXECUTION_SUBMISSION_BINDING_MISMATCH")
-        return self.submit_plan(
-            run_id,
-            {key: value for key, value in request.items() if key != "run_id"},
-            principal=receipt["principal"],
-            command_key=command_key,
-            _submission_guard=submission_guard,
-        )
+        arguments = {
+            "principal": receipt["principal"],
+            "command_key": command_key,
+        }
+        payload = {key: value for key, value in request.items() if key != "run_id"}
+        if submission_fence is None:
+            return self.submit_plan(run_id, payload, **arguments)
+        # The controller obtains its Execution fence before this method opens
+        # the Run transaction.  The yielded callback is deliberately invoked
+        # only after Run is held, so its Project source authority completes the
+        # one Execution -> Run -> Project ordering through commit.
+        with submission_fence() as submission_guard:
+            return self.submit_plan(
+                run_id,
+                payload,
+                _submission_guard=submission_guard,
+                **arguments,
+            )
 
     def approve_plan(
         self, run_id: str, request: dict[str, Any], *, command_key: str, principal: str

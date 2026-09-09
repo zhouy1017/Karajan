@@ -1196,7 +1196,7 @@ class PlanningExecution:
                 binding_sha256=current["binding_sha256"],
                 principal=principal,
                 command_key=key,
-                submission_guard=lambda: self._submission_allowed(execution_id, principal),
+                submission_fence=lambda: self._submission_fence(execution_id, principal),
             )
         except RunError as error:
             return self._blocked(execution_id, principal, error.code)
@@ -1210,16 +1210,13 @@ class PlanningExecution:
             raise
         return self._record_submission(execution_id, principal, submission)
 
-    def _submission_allowed(self, execution_id: str, principal: str) -> Callable[[], None]:
-        with self._transaction() as db:
-            current = self._load(db, execution_id)
-            if current["cancel_requested"]:
-                raise RunError("PLANNING_EXECUTION_CANCELLED")
+    def _submission_source(self, execution: dict[str, Any]) -> None:
+        """Read the sealed output source before taking the submission fence."""
         if self.outputs is None:
             raise RunError("PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE")
         try:
             source = PlanningOutputSource.model_validate(
-                self.outputs.read_source(current["binding"])
+                self.outputs.read_source(execution["binding"])
             ).model_dump()
         except (ValidationError, TypeError, ValueError):
             raise RunError("PLANNING_OUTPUT_SOURCE_INVALID") from None
@@ -1229,27 +1226,75 @@ class PlanningExecution:
                 if source["authority_kind"] == "fixture"
                 else "PLANNING_PRODUCTION_AUTHORITY_UNAVAILABLE"
             )
-        if source["binding_sha256"] != current["binding_sha256"] or source[
+        if source["binding_sha256"] != execution["binding_sha256"] or source[
             "source_sha256"
-        ] != current.get("output_source_sha256"):
+        ] != execution.get("output_source_sha256"):
             raise RunError("PLANNING_OUTPUT_SOURCE_CHANGED")
-        # The authority read is deliberately outside the controller lock.  Once
-        # it is valid, retain an execution write transaction until the enclosing
-        # Run transaction has committed.  This gives cancellation and Plan
-        # insertion one durable linearization point instead of a gap between a
-        # last read and the Run write.
+
+    @contextmanager
+    def _submission_fence(
+        self, execution_id: str, principal: str
+    ) -> Iterator[Callable[[dict[str, Any]], Callable[[], None]]]:
+        """Hold Execution before Run, then acquire source authority under Run.
+
+        The initial source observation has no held controller writer, so a
+        cancellation or source revocation may win before the fence.  Once the
+        Execution writer is held, ``submit_plan`` acquires Run and calls the
+        yielded callback for the final Project current-source guard.  That
+        guard remains live until both Plan and its command receipt commit.
+        """
+        execution = self.get(execution_id, principal=principal)
+        self._submission_source(execution)
         transaction = self._transaction()
         db = transaction.__enter__()
         try:
             current = self._load(db, execution_id)
+            self._owner_run(current["run_id"], principal)
             if current["cancel_requested"]:
                 raise RunError("PLANNING_EXECUTION_CANCELLED")
+
+            def source_guard(run: dict[str, Any]) -> Callable[[], None]:
+                return self._submission_source_guard(current, run)
+
+            yield source_guard
         except BaseException as error:
             transaction.__exit__(type(error), error, error.__traceback__)
             raise
+        else:
+            transaction.__exit__(None, None, None)
+
+    def _submission_source_guard(
+        self, execution: dict[str, Any], run: dict[str, Any]
+    ) -> Callable[[], None]:
+        """Keep the production credential/qualification authority through Plan commit."""
+        authority = self.admissions
+        if getattr(authority, "authority_kind", None) != "production":
+            return lambda: None
+        reader = None if authority is None else getattr(authority, "qualifications", None)
+        current_guard = None if reader is None else getattr(reader, "current_guard_locked", None)
+        if not callable(current_guard):
+            raise RunError("PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE")
+        from .planning_admission import (
+            COMMANDER_QUALIFICATION_READER_VERSION,
+            COMMANDER_QUALIFICATION_SCOPE,
+        )
+
+        guard = current_guard(
+            execution["binding"],
+            run,
+            scope=COMMANDER_QUALIFICATION_SCOPE,
+            reader_version=COMMANDER_QUALIFICATION_READER_VERSION,
+        )
+        try:
+            current = guard.__enter__()
+        except (RunError, ValueError, OSError, sqlite3.Error):
+            raise RunError("PLANNING_OUTPUT_SOURCE_UNAVAILABLE") from None
+        if current is None:
+            guard.__exit__(None, None, None)
+            raise RunError("PLANNING_OUTPUT_SOURCE_CHANGED")
 
         def release() -> None:
-            transaction.__exit__(None, None, None)
+            guard.__exit__(None, None, None)
 
         return release
 
