@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from karajan.execution import LaunchDenied, ProcessSpec, RunnerHost
+from karajan.execution import ProcessSpec, RunnerHost
 from karajan.orchestration.go_task_runtime import GoTaskSettings, write_go_task_bootstrap
 from karajan.orchestration.reviewer_execution_bootstrap import (
     ReviewerExecutionSettings,
@@ -229,14 +229,19 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
         launch_compiler=lambda _: ReviewerLaunchSpec(ProcessSpec(("fixture",), tmp_path), "3" * 64),
     )
     original = seeded.prepare(run_id, reviewer["id"], principal="owner", command_key="prepare")
-    seeded.freeze_launch(run_id, reviewer["id"], principal="owner")
-    with pytest.raises(LaunchDenied):
-        seeded.claim_registered_observer(
-            run_id, reviewer["id"], principal="owner", timeout_seconds=0.01
-        )
+    host_prepare = seeded.host.prepare
+
+    def lose_host_reply(*args, **kwargs):
+        host_prepare(*args, **kwargs)
+        raise ConnectionError("lost Host preparation reply")
+
+    seeded.host.prepare = lose_host_reply
+    with pytest.raises(ConnectionError, match="lost Host preparation reply"):
+        seeded.freeze_launch(run_id, reviewer["id"], principal="owner")
     historical = seeded.read(run_id, reviewer["id"], principal="owner")
     assert historical is not None
-    before = database.read_bytes()
+    assert historical["host_prepared_id"] is None
+    before, host_before = database.read_bytes(), seeded.host.database.read_bytes()
     reopened = open_reviewer_execution_intents(control)
     assert reopened.read(run_id, reviewer["id"], principal="owner") == historical
     assert database.read_bytes() == before
@@ -260,7 +265,11 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
         cold = open_reviewer_execution_intents(control)
         assert isinstance(cold, ReviewerExecutionHistory)
         assert cold.read(run_id, reviewer["id"], principal="owner") == historical
+        observed = cold.inspect_host(run_id, reviewer["id"], principal="owner")
+        assert observed["host_prepared_id"] is None
+        assert observed["host_observation"]["prepared_id"] == original["start_key"]
         assert database.read_bytes() == before
+        assert seeded.host.database.read_bytes() == host_before
         assert not hasattr(cold, "freeze_launch")
         task_descriptor.write_text(
             json.dumps(original_task, sort_keys=True, separators=(",", ":")) + "\n"

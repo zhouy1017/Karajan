@@ -10,7 +10,7 @@ from karajan.resources.broker import money, units
 from .compiler import RoutingError, digest, reference
 
 
-@dataclass(frozen=True)
+@dataclass
 class QuotaTemporalFence:
     """O(1) time-only tail check for one successful shared quota report."""
 
@@ -25,6 +25,7 @@ class QuotaTemporalFence:
             self.exclusive_until is not None and as_of >= self.exclusive_until
         ):
             raise RoutingError("QUOTA_TIME_FENCE_EXPIRED")
+        self.floor = max(self.floor, as_of)
 
 
 def capture_quota_temporal_fence(report: dict[str, Any]) -> QuotaTemporalFence:

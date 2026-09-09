@@ -64,7 +64,7 @@ class _CapacityTemporalFence:
         )
 
 
-@dataclass(frozen=True)
+@dataclass
 class CapacityEffectCapability:
     """Ephemeral full Capacity fence for one held pre-effect transaction.
 
@@ -85,6 +85,7 @@ class CapacityEffectCapability:
             raise CapacityError("RESERVATION_EXPIRED")
         if not self._temporal_fence.current(now):
             raise CapacityError("CAPACITY_EFFECT_FENCE_EXPIRED")
+        self._temporal_fence = self._temporal_fence.through(now)
 
 
 class _UnactivatedCancellation(AdmissionRef):
@@ -1002,9 +1003,6 @@ class CapacityStore:
                 )
                 raise CapacityError(temporal[0])
             temporal_fence = temporal_fence.through(prepared_at)
-            capacity_effect_capability = CapacityEffectCapability(
-                self._now, item["expires_at"], temporal_fence
-            )
             # No JSON parsing, database scanning, or temporal iteration may
             # follow this point on a successful effect path.  Controller's
             # optional closure is itself constrained to O(1) checks.
@@ -1023,6 +1021,10 @@ class CapacityStore:
                     evaluated_at=temporal_fence.floor,
                 )
                 raise CapacityError(temporal[0])
+            temporal_fence = temporal_fence.through(now)
+            capacity_effect_capability = CapacityEffectCapability(
+                self._now, item["expires_at"], temporal_fence
+            )
             yield {
                 "decision": "capacity_revalidated",
                 "reason_codes": [],

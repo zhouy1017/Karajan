@@ -137,6 +137,20 @@ class CandidateStore:
             if connection is not None:
                 connection.close()
 
+    @contextmanager
+    def check_publication_guard(self) -> Iterator[None]:
+        """Hold Candidate metadata stable through one receiving effect.
+
+        This is a producer-owned SQLite writer reservation, not a caller-supplied
+        check list.  A Reviewer receiver takes it only after Capacity's effect
+        guard, so the established order is controller -> Capacity -> Candidate.
+        ``record_check`` can wait, but cannot publish a newer complete Check set
+        between the receiver's final material reads/comparison and its effect.
+        """
+        with self._connection() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            yield
+
     def _git(
         self, args: list[str], data: bytes | None = None, *, repository: Path | None = None
     ) -> bytes:

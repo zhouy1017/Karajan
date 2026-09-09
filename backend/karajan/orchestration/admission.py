@@ -30,9 +30,11 @@ class ReviewerFinalEffectCapability:
 
     def assert_current(self, expected_input: object) -> None:
         # The receiver invokes this only after acquiring its writer. Complete
-        # Candidate/Check reads happen before the retained scalar fences.
-        self._prepare_input(expected_input)
+        # material reads precede its final full Candidate/Check comparison; the
+        # producer-owned Candidate publication guard remains held through the
+        # receiving effect and then the retained scalar fences.
         self._prepare()()
+        self._prepare_input(expected_input)
         try:
             self._capacity_check.assert_current()
         except CapacityError:
@@ -845,17 +847,22 @@ class ApprovedTaskAdmission:
                         )
                         if not isinstance(capacity_effect_capability, CapacityEffectCapability):
                             raise RunError("REVIEWER_CAPACITY_BOUNDARY_INVALID")
-                        final_effect_check = ReviewerFinalEffectCapability(
-                            check_reviewer_final_effect_boundary,
-                            capacity_effect_capability,
-                            check_reviewer_current_input,
-                        )
-                        yield {
-                            "operation": operation,
-                            "revalidation": current,
-                            "capacity": capacity,
-                            "final_effect_capability": final_effect_check,
-                        }
+                        # Candidate publication is ordered after Capacity and
+                        # retained until the receiving ledger/Host write. It
+                        # owns no controller locks, so record_check has no
+                        # reverse edge and can only serialize after this effect.
+                        with bindings.candidates.check_publication_guard():
+                            final_effect_check = ReviewerFinalEffectCapability(
+                                check_reviewer_final_effect_boundary,
+                                capacity_effect_capability,
+                                check_reviewer_current_input,
+                            )
+                            yield {
+                                "operation": operation,
+                                "revalidation": current,
+                                "capacity": capacity,
+                                "final_effect_capability": final_effect_check,
+                            }
 
 
 def _request(assessment: dict[str, Any]) -> dict[str, Any] | None:

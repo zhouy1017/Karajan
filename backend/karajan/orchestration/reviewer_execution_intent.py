@@ -96,8 +96,9 @@ def _reject_repository_ledger(database: Path, projects: object) -> None:
 class ReviewerExecutionHistory:
     """Read only a fixed existing ledger; it deliberately cannot produce effects."""
 
-    def __init__(self, database: Path) -> None:
+    def __init__(self, database: Path, *, host: RunnerHost | None = None) -> None:
         self.database = Path(database)
+        self.host = host
         _validate_existing_ledger(self.database)
         _require_existing_schema(self.database)
 
@@ -129,6 +130,41 @@ class ReviewerExecutionHistory:
             return deepcopy(value)
         finally:
             db.close()
+
+    def inspect_host(
+        self, run_id: str, reviewer_operation_id: str, *, principal: str
+    ) -> dict[str, Any]:
+        """Correlate only an already-persisted original Host preparation.
+
+        Historical mode cannot prepare, initialize control, register/claim a
+        runner, or write either ledger.  It uses the immutable original intent
+        identity and RunnerHost's existing-only inspection port exclusively.
+        """
+        value = self.read(run_id, reviewer_operation_id, principal=principal)
+        if value is None or self.host is None:
+            raise RunError("REVIEWER_EXECUTION_HOST_PREPARE_REQUIRED")
+        try:
+            snapshot = self.host.inspect_original_preparation(
+                host_manifest(value), value["start_key"]
+            )
+        except KeyError:
+            raise RunError("REVIEWER_EXECUTION_HOST_PREPARE_REQUIRED") from None
+        except (LaunchDenied, ValueError):
+            raise RunError("REVIEWER_EXECUTION_HOST_BINDING_MISMATCH") from None
+        if value.get("host_prepared_id") not in {None, snapshot.prepared_id}:
+            raise RunError("REVIEWER_EXECUTION_HOST_BINDING_MISMATCH")
+        return deepcopy(
+            value
+            | {
+                "host_observation": {
+                    "prepared_id": snapshot.prepared_id,
+                    "attempt_id": snapshot.attempt_id,
+                    "state": snapshot.state,
+                    "launch_phase": snapshot.launch_phase,
+                    "remote_stop": snapshot.remote_stop,
+                }
+            }
+        )
 
 
 @dataclass(frozen=True)
@@ -309,7 +345,6 @@ class ReviewerExecutionIntents:
                     # The private-ledger writer may have waited after the
                     # Admission guard was entered.  Re-read deployment source
                     # before taking the producer's final scalar time sample.
-                    self._assert_current_effect_boundary(held, binding["reviewer_input"])
                     intent = (
                         binding
                         | asdict(self.source)
@@ -329,11 +364,15 @@ class ReviewerExecutionIntents:
                     )
                     intent["binding_digest"] = digest(intent)
                     intent["intent_digest"] = digest(intent)
+                    serialized = json.dumps(intent, sort_keys=True)
+                    # All UUID/digest/JSON work is complete before this final
+                    # scalar authority check and the immediately following SQL.
+                    self._assert_current_effect_boundary(held, binding["reviewer_input"])
                     db.execute(
                         "INSERT INTO reviewer_executions VALUES (?,?,?,?,?,?,?)",
                         (
                             intent["execution_id"], run_id, reviewer_operation_id, principal,
-                            command_key, json.dumps(intent, sort_keys=True), "prepared",
+                            command_key, serialized, "prepared",
                         ),
                     )
                     return deepcopy(intent)
@@ -378,11 +417,23 @@ class ReviewerExecutionIntents:
         with self._db(write=False) as db:
             return deepcopy(self._load(db, run_id, reviewer_operation_id, principal))
 
-    def _save(self, db: sqlite3.Connection, value: dict[str, Any]) -> None:
+    @staticmethod
+    def _serialized_save(value: dict[str, Any]) -> tuple[str, str, str]:
         value["intent_digest"] = digest({k: v for k, v in value.items() if k != "intent_digest"})
+        return json.dumps(value, sort_keys=True), value["phase"], value["execution_id"]
+
+    @staticmethod
+    def _save(
+        db: sqlite3.Connection,
+        value: dict[str, Any],
+        serialized: tuple[str, str, str] | None = None,
+    ) -> None:
+        payload = serialized
+        if payload is None:
+            payload = ReviewerExecutionIntents._serialized_save(value)
         db.execute(
             "UPDATE reviewer_executions SET intent=?,state=? WHERE execution_id=?",
-            (json.dumps(value, sort_keys=True), value["phase"], value["execution_id"]),
+            payload,
         )
 
     def _assert_current_effect_boundary(
@@ -547,11 +598,14 @@ class ReviewerExecutionIntents:
                         raise RunError("REVIEWER_EXECUTION_CANCELLED")
                     if current_value["effect_claim"] is not None:
                         return deepcopy(current_value | {"claim_allowed": False})
-                    assert_temporal_current()
                     current_value["effect_claim"] = {
                         "intent_digest": current_value["intent_digest"],
                         "runner": {"pid": runner.pid, "birth": runner.birth},
                     }
                     current_value["phase"] = "observer_claimed"
-                    self._save(db, current_value)
+                    serialized = self._serialized_save(current_value)
+                    # The complete persisted claim payload exists before the
+                    # final scalar authority check and adjacent UPDATE.
+                    assert_temporal_current()
+                    self._save(db, current_value, serialized)
                     return deepcopy(current_value | {"claim_allowed": True})

@@ -10,7 +10,10 @@ from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
 
+import karajan.orchestration.reviewer_execution_intent as reviewer_execution_intent
+import karajan.orchestration.reviewer_input as reviewer_input
 import pytest
+from karajan.capacity.store import CapacityEffectCapability
 from karajan.execution import Activation, LaunchDenied, ProcessSpec, RunnerHost
 from karajan.orchestration.reviewer_execution_intent import (
     ReviewerExecutionIntents,
@@ -72,6 +75,93 @@ def _record_new_passed_check(service, worker):
     request["observation_ref"] += ":new"
     replacement = service.candidates.record_check(request, log=b"replacement check passed\n")
     return original["id"], replacement["id"]
+
+
+@pytest.mark.parametrize("boundary", ["prepare", "claim"])
+def test_payload_preparation_precedes_the_final_expiry_check(
+    tmp_path, binding_case, monkeypatch, boundary
+):
+    """A UUID/JSON payload step cannot cross an already-final deadline."""
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    if boundary == "claim":
+        service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+        service.freeze_launch(run_id, reviewer_id, principal="owner")
+        from karajan.execution._platform import process_identity
+
+        identity = process_identity(os.getpid())
+        assert identity is not None
+
+        @contextmanager
+        def current_runner(*args, **kwargs):
+            yield identity
+
+        service.host.wait_for_runner_registration = lambda *args, **kwargs: identity
+        service.host.current_runner_guard = current_runner
+
+    admission_id = service.admissions.get(
+        run_id, reviewer_id, principal="owner"
+    )["capacity_receipt"]["admission_id"]
+    reservation = next(
+        row
+        for row in service.admissions.routing.capacity.snapshot()["reservations"]
+        if row["id"] == admission_id
+    )
+    now = [1000.0]
+    service.admissions.routing.capacity.clock = lambda: now[0]
+    armed = [False]
+
+    if boundary == "prepare":
+        original_db = service._db
+
+        @contextmanager
+        def writer(*, write=True):
+            with original_db(write=write) as db:
+                if write:
+                    armed[0] = True
+                yield db
+
+        service._db = writer
+        original_uuid4 = reviewer_execution_intent.uuid.uuid4
+
+        def expire_while_building_payload():
+            value = original_uuid4()
+            if armed[0]:
+                now[0] = reservation["expires_at"] + 0.001
+            return value
+
+        monkeypatch.setattr(reviewer_execution_intent.uuid, "uuid4", expire_while_building_payload)
+        def action():
+            return service.prepare(
+                run_id, reviewer_id, principal="owner", command_key="payload-expiry"
+            )
+    else:
+        original_dumps = reviewer_execution_intent.json.dumps
+
+        def expire_while_serializing(*args, **kwargs):
+            result = original_dumps(*args, **kwargs)
+            import inspect
+
+            if any(
+                frame.filename.endswith("reviewer_execution_intent.py")
+                and frame.function in {"_save", "_serialized_save"}
+                for frame in inspect.stack()
+            ):
+                now[0] = reservation["expires_at"] + 0.001
+            return result
+
+        monkeypatch.setattr(reviewer_execution_intent.json, "dumps", expire_while_serializing)
+        def action():
+            return service.claim_registered_observer(
+                run_id, reviewer_id, principal="owner", timeout_seconds=0.01
+            )
+
+    with pytest.raises(RunError, match="REVIEWER_CAPACITY_REVALIDATION_FAILED"):
+        action()
+    current = service.read(run_id, reviewer_id, principal="owner")
+    if boundary == "prepare":
+        assert current is None
+    else:
+        assert current is not None and current["effect_claim"] is None
 
 
 @pytest.mark.parametrize("contents", [b"", b"not a sqlite ledger"])
@@ -412,138 +502,129 @@ def test_missing_check_log_after_receiving_writer_wait_blocks_prepare_and_claim(
         assert service.read(run_id, reviewer_id, principal="owner")["effect_claim"] is None
 
 
-@pytest.mark.parametrize("boundary", ["prepare", "host", "control", "claim"])
-def test_later_passed_check_after_receiver_writer_wait_blocks_full_input_identity(
-    tmp_path, binding_case, boundary
+def test_later_passed_check_before_receiver_guard_blocks_full_input_identity(
+    tmp_path, binding_case
 ):
-    """A later Check result cannot replace the frozen complete Reviewer input."""
+    """A Check committed before the receiver guard cannot replace its input."""
     service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
     reviewer = service.admissions.get(run_id, reviewer_id, principal="owner")
     worker = service.admissions.get(
         run_id, reviewer["depends_on_operation_id"], principal="owner"
     )
-    check = worker["validation"]["checks"]["runs"][0]
-    candidate = check["candidate"]
-    reached, release, outcome = threading.Event(), threading.Event(), []
+    initial_guard_done, allow_final_guard, outcome = threading.Event(), threading.Event(), []
+    original_guard = service.admissions.reviewer_reserved_effect_guard
+    guard_calls = 0
 
-    if boundary == "prepare":
-        original_db = service._db
+    @contextmanager
+    def guard(*args, **kwargs):
+        nonlocal guard_calls
+        guard_calls += 1
+        with original_guard(*args, **kwargs) as held:
+            yield held
+        if guard_calls == 1:
+            initial_guard_done.set()
+            assert allow_final_guard.wait(5)
 
-        @contextmanager
-        def writer(*, write=True):
-            if write:
-                reached.set()
-            with original_db(write=write) as db:
-                yield db
-
-        service._db = writer
-
-        def action():
-            return service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
-
-        database = service.database
-    elif boundary == "host":
-        intent = service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
-        original_prepare = service.host.prepare
-
-        def prepare(*args, **kwargs):
-            reached.set()
-            return original_prepare(*args, **kwargs)
-
-        service.host.prepare = prepare
-
-        def action():
-            return service.freeze_launch(run_id, reviewer_id, principal="owner")
-
-        database = service.host.database
-    elif boundary == "control":
-        intent = service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
-        original_control = service.host.initialize_control_once
-
-        def control(*args, **kwargs):
-            reached.set()
-            assert release.wait(5)
-            return original_control(*args, **kwargs)
-
-        service.host.initialize_control_once = control
-
-        def action():
-            return service.freeze_launch(run_id, reviewer_id, principal="owner")
-
-        database = service.host.database
-    else:
-        intent = service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
-        service.freeze_launch(run_id, reviewer_id, principal="owner")
-        from karajan.execution._platform import process_identity
-
-        identity = process_identity(os.getpid())
-        assert identity is not None
-
-        @contextmanager
-        def current_runner(*args, **kwargs):
-            reached.set()
-            yield identity
-
-        def wait_for_runner(*args, **kwargs):
-            return identity
-
-        service.host.wait_for_runner_registration = wait_for_runner
-        service.host.current_runner_guard = current_runner
-
-        def action():
-            return service.claim_registered_observer(
-                run_id, reviewer_id, principal="owner", timeout_seconds=0.01
-            )
-
-        database = service.database
-
-    holder = None
-    if boundary != "control":
-        holder = sqlite3.connect(database, isolation_level=None, timeout=5)
-        holder.execute("BEGIN IMMEDIATE")
+    service.admissions.reviewer_reserved_effect_guard = guard
 
     def invoke():
         try:
-            action()
+            service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
         except BaseException as error:
             outcome.append(error)
 
     thread = threading.Thread(target=invoke)
     thread.start()
-    assert reached.wait(5)
-    if boundary == "control":
-        holder = sqlite3.connect(database, isolation_level=None, timeout=5)
-        holder.execute("BEGIN IMMEDIATE")
-        release.set()
-    original_id, replacement_id = _record_new_passed_check(service, worker)
-    gate = service.candidates.gate(
-        candidate["id"],
-        current={
-            key: candidate[key]
-            for key in ("repository_identity", "base_sha", "input_sha256", "policy_sha256")
-        },
-    )
-    assert {
-        row["id"]: row["effective_status"]
-        for row in gate["evidence"]
-        if row["id"] in {original_id, replacement_id}
-    } == {original_id: "passed", replacement_id: "passed"}
-    assert holder is not None
-    holder.commit()
-    holder.close()
+    assert initial_guard_done.wait(5)
+    _record_new_passed_check(service, worker)
+    allow_final_guard.set()
     thread.join(10)
     assert not thread.is_alive()
     assert outcome and isinstance(outcome[0], RunError)
-    if boundary == "prepare":
-        assert service.read(run_id, reviewer_id, principal="owner") is None
-    elif boundary == "control":
-        with sqlite3.connect(service.host.database) as db:
-            assert db.execute("SELECT COUNT(*) FROM controls").fetchone()[0] == 0
-    elif boundary == "claim":
-        assert service.read(run_id, reviewer_id, principal="owner")["effect_claim"] is None
-    else:
-        with pytest.raises(KeyError):
-            service.host.inspect(intent["planned_attempt_id"])
+    assert service.read(run_id, reviewer_id, principal="owner") is None
+
+
+def test_new_check_publication_waits_for_complete_input_comparison_and_prepare_commit(
+    tmp_path, binding_case, monkeypatch
+):
+    """The Candidate producer lock covers later material I/O and the ledger effect."""
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    reviewer = service.admissions.get(run_id, reviewer_id, principal="owner")
+    worker = service.admissions.get(
+        run_id, reviewer["depends_on_operation_id"], principal="owner"
+    )
+    full_input_compiled, later_material, release_scalar = (
+        threading.Event(),
+        threading.Event(),
+        threading.Event(),
+    )
+    publish_started, publish_done, prepare_done, scalar_reached = (
+        threading.Event(),
+        threading.Event(),
+        threading.Event(),
+        threading.Event(),
+    )
+    compiled_calls = 0
+    original_compile = reviewer_input.compile_reviewer_input_from_records
+    original_facts = binding_case[1]._facts
+
+    def compiled(*args, **kwargs):
+        nonlocal compiled_calls
+        value = original_compile(*args, **kwargs)
+        compiled_calls += 1
+        if compiled_calls == 2:
+            assert later_material.is_set()
+            full_input_compiled.set()
+        return value
+
+    def material(*args, **kwargs):
+        if not later_material.is_set():
+            later_material.set()
+        return original_facts(*args, **kwargs)
+
+    original_scalar = CapacityEffectCapability.assert_current
+
+    def pause_after_full_input(self):
+        value = original_scalar(self)
+        if full_input_compiled.is_set():
+            scalar_reached.set()
+            assert release_scalar.wait(5)
+        return value
+
+    monkeypatch.setattr(reviewer_input, "compile_reviewer_input_from_records", compiled)
+    monkeypatch.setattr(CapacityEffectCapability, "assert_current", pause_after_full_input)
+    binding_case[1]._facts = material
+    errors: list[BaseException] = []
+
+    def prepare():
+        try:
+            service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+        except BaseException as error:
+            errors.append(error)
+        finally:
+            prepare_done.set()
+
+    def publish():
+        assert full_input_compiled.wait(5)
+        publish_started.set()
+        _record_new_passed_check(service, worker)
+        publish_done.set()
+
+    prepare_thread = threading.Thread(target=prepare)
+    prepare_thread.start()
+    assert scalar_reached.wait(5)
+    publisher = threading.Thread(target=publish)
+    publisher.start()
+    assert publish_started.wait(5)
+    try:
+        assert not publish_done.wait(0.2)
+    finally:
+        release_scalar.set()
+    prepare_thread.join(10)
+    publisher.join(10)
+    assert not prepare_thread.is_alive() and not publisher.is_alive()
+    assert not errors
+    assert prepare_done.is_set() and publish_done.is_set()
 
 
 @pytest.mark.parametrize("boundary", ["new_intent", "host", "control", "claim"])

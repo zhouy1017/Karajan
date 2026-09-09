@@ -68,6 +68,11 @@ def test_quota_temporal_fence_reuses_selected_unknown_mode_after_full_evaluation
     with pytest.raises(RoutingError, match="QUOTA_TIME_REGRESSED"):
         fence.assert_current(as_of=999.0)
 
+    retained = capture_quota_temporal_fence(report)
+    retained.assert_current(as_of=1002.0)
+    with pytest.raises(RoutingError, match="QUOTA_TIME_REGRESSED"):
+        retained.assert_current(as_of=1001.0)
+
     reset_capacity = copy.deepcopy(capacity)
     reset_capacity["pools"][0]["reset_at"] = 1005.0
     reset_report = evaluate_reserved_profile(

@@ -31,7 +31,7 @@ from .go_reviewer_scope import resolve_go_reviewer_execution
 from .go_scope import resolve_go_execution
 
 
-@dataclass(frozen=True)
+@dataclass
 class ReviewerTemporalFence:
     """Retained Reviewer source windows for an O(1) final boundary check."""
 
@@ -48,6 +48,7 @@ class ReviewerTemporalFence:
             raise RunError("REVIEWER_QUALIFICATION_EXPIRED")
         if not self.estimate_created_at <= as_of < self.estimate_valid_until:
             raise RunError("REVIEWER_ESTIMATE_EXPIRED")
+        self.floor = max(self.floor, as_of)
 
 
 class _ReviewerRevalidation(dict[str, Any]):

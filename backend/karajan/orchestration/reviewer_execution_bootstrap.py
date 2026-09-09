@@ -246,7 +246,13 @@ def open_reviewer_execution_intents(
     if _host_in_registered_repository(reviewer.host_directory, projects):
         raise RunError("REVIEWER_EXECUTION_HOST_IN_REPOSITORY")
     if not _current_assets_present(task):
-        return ReviewerExecutionHistory(reviewer.execution_database)
+        # Historical recovery still has the fixed existing Host store.  Do not
+        # compose current qualification/runtime assets merely to inspect an
+        # original Host preparation that may have committed before its reply.
+        return ReviewerExecutionHistory(
+            reviewer.execution_database,
+            host=RunnerHost(reviewer.host_directory, existing_only=True),
+        )
     planner = RunPlanner(reviewer.state_directory / "runs.sqlite", projects, existing_only=True)
     capacity = CapacityStore(reviewer.state_directory / "capacity.sqlite", existing_only=True)
     qualification = GoQualificationSettings(

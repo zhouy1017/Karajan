@@ -222,6 +222,30 @@ def test_pre_effect_rejects_a_clock_that_regresses_after_callback_preparation(le
     assert store.snapshot() == before
 
 
+def test_capacity_effect_capability_retains_the_latest_successful_clock(ledger):
+    """1000 -> 1002 -> 1001 must fail at the real receiving effect."""
+    store, clock = ledger
+    value = bound_request(store)
+    admission_id = store.admit(value, command_key="reserve")["admission_id"]
+    store.activate(admission_id, command_key="activate")
+
+    def prepare_final_check():
+        def final_check() -> None:
+            clock[0] = 1002.0
+
+        return final_check
+
+    with store.pre_effect_guard(
+        admission_id,
+        expected_request=value,
+        before_effect_yield=prepare_final_check,
+    ) as current:
+        capability = current["capacity_final_effect_capability"]
+        clock[0] = 1001.0
+        with pytest.raises(CapacityError, match="^CAPACITY_CLOCK_REGRESSED$"):
+            capability.assert_current()
+
+
 def test_pre_effect_rechecks_expiry_after_capacity_reads_without_a_final_callback(
     ledger, monkeypatch
 ):
