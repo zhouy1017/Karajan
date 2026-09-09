@@ -588,6 +588,32 @@ class PlanningExecution:
         self._owner_run(execution["run_id"], principal)
         return execution
 
+    def _list_for_trusted_hub_run(self, run: dict[str, Any]) -> list[dict[str, Any]]:
+        """Read a Hub-verified Run's execution ledger without reconciling it.
+
+        Hub recovery needs the controller's actual execution and admission
+        records, but a dashboard refresh must never acquire an admission or
+        invoke a provider. The Conversation projection has already verified
+        the supplied Run's owner and project while holding the Run ledger, so
+        this private helper must not re-enter that ledger and deadlock it.
+        """
+        run_id, principal = run.get("id"), run.get("owner")
+        if not isinstance(run_id, str) or not isinstance(principal, str):
+            raise RunError("PLANNING_EXECUTION_LEDGER_INVALID")
+        for value in (run_id, principal):
+            identifier(value)
+        with self._transaction() as db:
+            rows = db.execute(
+                "SELECT data FROM executions WHERE run_id=? ORDER BY rowid", (run_id,)
+            ).fetchall()
+        try:
+            executions = [dict(json.loads(row["data"])) for row in rows]
+        except (TypeError, ValueError):
+            raise RunError("PLANNING_EXECUTION_LEDGER_INVALID") from None
+        if any(item.get("run_id") != run_id for item in executions):
+            raise RunError("PLANNING_EXECUTION_LEDGER_INVALID")
+        return executions
+
     def freeze_repository_snapshot(
         self, execution_id: str, *, principal: str, command_key: str
     ) -> dict[str, Any]:

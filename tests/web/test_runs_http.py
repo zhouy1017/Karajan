@@ -7,6 +7,7 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
+from karajan.conversations import ConversationStore
 from karajan.projects import ProjectRegistry
 from karajan.runs import RunPlanner
 from karajan.web import create_app
@@ -119,6 +120,10 @@ def test_http_creates_and_recovers_a_requirement_without_authorizing_execution(
     assert client.post("/v1/runs", json=payload, headers=headers).json() == run
     listed = client.get("/v1/runs", params={"project_id": payload["project_id"]})
     assert [item["id"] for item in listed.json()["items"]] == [run["id"]]
+    filtered = client.get("/v1/runs", params={"conversation_id": run["conversation_id"]})
+    assert [item["id"] for item in filtered.json()["items"]] == [run["id"]]
+    scoped = client.get(f"/v1/conversations/{run['conversation_id']}/runs")
+    assert [item["id"] for item in scoped.json()["items"]] == [run["id"]]
     assert client.get(f"/v1/runs/{run['id']}").json() == run
     assert client.post(f"/v1/runs/{run['id']}/plans", json={}, headers=headers).status_code == 404
     assert (
@@ -126,8 +131,212 @@ def test_http_creates_and_recovers_a_requirement_without_authorizing_execution(
         == 404
     )
     assert (
-        client.post(f"/v1/runs/{run['id']}/handoffs", json={}, headers=headers).status_code == 404
+        client.post(f"/v1/runs/{run['id']}/handoffs", json={}, headers=headers).status_code
+        == 404
     )
+
+
+def test_default_app_shares_its_execution_ledger_with_hub(tmp_path: Path) -> None:
+    app = create_app(
+        tmp_path / "state",
+        origin="http://127.0.0.1:8765",
+        bootstrap_token="bootstrap",
+        allowed_roots=[tmp_path],
+    )
+    assert app.state.conversations.planning_execution is app.state.planning_execution
+
+
+def test_historical_recovery_blockers_do_not_hide_healthy_run_reads(
+    run_client: tuple[TestClient, dict[str, str], dict[str, Any]]
+) -> None:
+    client, headers, payload = run_client
+    healthy = client.post("/v1/runs", json=payload, headers=headers).json()
+    message = client.post(
+        f"/v1/conversations/{healthy['conversation_id']}/messages",
+        json={"client_message_id": "healthy-message", "content": "keep this"},
+        headers={**headers, "Idempotency-Key": "healthy-message"},
+    ).json()
+    draft = client.put(
+        f"/v1/conversations/{healthy['conversation_id']}/draft",
+        json={"content": "keep this draft"},
+        headers={**headers, "Idempotency-Key": "healthy-draft", "If-Match": '"1"'},
+    ).json()
+    app = client.app
+    planner = app.state.planning_execution.planner
+    with planner._transaction() as db:
+        db.execute(
+            "INSERT INTO runs VALUES (?, ?)",
+            (
+                "bound_missing_project",
+                json.dumps(
+                    {
+                        "id": "bound_missing_project",
+                        "owner": "owner",
+                        "project_id": "missing-project",
+                    }
+                ),
+            ),
+        )
+        db.execute(
+            "INSERT INTO conversation_run_bindings VALUES (?, ?, ?)",
+            ("bound_missing_project", healthy["conversation_id"], "missing-project"),
+        )
+        db.execute(
+            "INSERT INTO runs VALUES (?, ?)",
+            (
+                "null_project",
+                json.dumps({"id": "null_project", "owner": "owner", "project_id": None}),
+            ),
+        )
+        db.execute(
+            "INSERT INTO runs VALUES (?, ?)",
+            ("absent_project", json.dumps({"id": "absent_project", "owner": "owner"})),
+        )
+        db.execute(
+            "INSERT INTO runs VALUES (?, ?)",
+            (
+                "malformed_project",
+                json.dumps({"id": "malformed_project", "owner": "owner", "project_id": ""}),
+            ),
+        )
+    app.state.conversations.migrate_legacy_runs()
+
+    response = client.get("/v1/runs")
+    assert response.status_code == 200
+    items = {item["id"]: item for item in response.json()["items"]}
+    assert items[healthy["id"]]["conversation_id"] == healthy["conversation_id"]
+    assert items["bound_missing_project"] == {
+        "id": "bound_missing_project",
+        "owner": "owner",
+        "project_id": "missing-project",
+        "conversation_id": None,
+        "conversation_recovery_blocker": "PROJECT_NOT_FOUND",
+    }
+    for run_id in ("null_project", "absent_project", "malformed_project"):
+        assert items[run_id]["conversation_id"] is None
+        assert items[run_id]["conversation_recovery_blocker"] == "PROJECT_ID_INVALID"
+    project_runs = client.get("/v1/runs", params={"project_id": payload["project_id"]})
+    assert [item["id"] for item in project_runs.json()["items"]] == [healthy["id"]]
+    filtered = client.get(
+        "/v1/runs",
+        params={
+            "project_id": payload["project_id"],
+            "conversation_id": healthy["conversation_id"],
+        },
+    )
+    assert [item["id"] for item in filtered.json()["items"]] == [healthy["id"]]
+    conversation_runs = client.get(f"/v1/conversations/{healthy['conversation_id']}/runs")
+    assert [item["id"] for item in conversation_runs.json()["items"]] == [healthy["id"]]
+    for path in ("hub", "snapshot"):
+        snapshot = client.get(f"/v1/conversations/{healthy['conversation_id']}/{path}")
+        assert snapshot.status_code == 200
+        body = snapshot.json()
+        assert [item["id"] for item in body["run_summaries"]] == [healthy["id"]]
+        assert body["messages"] == [message]
+        assert body["draft"] == draft
+        assert {"run_id": "bound_missing_project", "reason_code": "PROJECT_NOT_FOUND"} in body[
+            "blockers"
+        ]
+
+
+def test_migration_repairs_only_the_absent_legacy_draft(
+    run_client: tuple[TestClient, dict[str, str], dict[str, Any]]
+) -> None:
+    client, headers, payload = run_client
+    run = client.post("/v1/runs", json=payload, headers=headers).json()
+    app = client.app
+    planner = app.state.planning_execution.planner
+    with planner._transaction() as db:
+        db.execute(
+            "DELETE FROM conversation_drafts WHERE conversation_id=?", (run["conversation_id"],)
+        )
+
+    app.state.conversations.migrate_legacy_runs()
+    with planner._transaction() as db:
+        repaired = json.loads(
+            db.execute(
+                "SELECT snapshot FROM conversation_drafts WHERE conversation_id=?",
+                (run["conversation_id"],),
+            ).fetchone()["snapshot"]
+        )
+    assert repaired["revision"] == 1
+    reopened = ConversationStore(planner.projects, RunPlanner(planner.database, planner.projects))
+    saved = reopened.draft(
+        run["conversation_id"],
+        {"content": "repaired"},
+        principal="owner",
+        key="repair-draft",
+        revision=1,
+    )
+    assert saved["revision"] == 2 and saved["content"] == "repaired"
+    reopened.migrate_legacy_runs()
+    assert reopened.snapshot(run["conversation_id"])["draft"] == saved
+
+
+def test_hub_uses_the_persisted_execution_ledger_for_attempt_recovery(
+    tmp_path: Path, run_client: tuple[TestClient, dict[str, str], dict[str, Any]]
+) -> None:
+    """Hub state is ledger truth, not a planning-intent-derived agent claim."""
+    client, headers, payload = run_client
+    run = client.post("/v1/runs", json=payload, headers=headers).json()
+    planner = RunPlanner(
+        tmp_path / "state" / "runs.sqlite",
+        ProjectRegistry(tmp_path / "state" / "projects.sqlite", [tmp_path / "repositories"]),
+    )
+    intent = planner.planning_intent(
+        run["id"], term=1, command_key="execution-intent", principal="commander-1"
+    )
+
+    class Ledger:
+        def _list_for_trusted_hub_run(self, trusted_run: dict[str, Any]) -> list[dict[str, Any]]:
+            assert trusted_run["id"] == run["id"]
+            return [
+                {
+                    "id": "execution_1",
+                    "run_id": run["id"],
+                    "intent_id": intent["id"],
+                    "state": "blocked",
+                    "binding": {
+                        "execution_id": "execution_1",
+                        "run_id": run["id"],
+                        "intent_id": intent["id"],
+                        "attempt_id": "planning:execution_1",
+                        "term": 1,
+                        "principal": "commander-1",
+                        "profile": {"id": "fixture-profile", "revision": 1},
+                    },
+                    "admission": {"state": "denied"},
+                    "reason_codes": ["JSON_INVALID"],
+                    "cancel_requested": False,
+                }
+            ]
+
+    hub = ConversationStore(planner.projects, planner, planning_execution=Ledger()).snapshot(
+        run["conversation_id"]
+    )
+
+    assert hub["attempts"] == [
+        {
+            "id": "planning:execution_1",
+            "run_id": run["id"],
+            "kind": "planning",
+            "state": "blocked",
+            "term": 1,
+            "principal": "commander-1",
+            "profile": {"id": "fixture-profile", "revision": 1},
+            "intent_id": intent["id"],
+            "execution_id": "execution_1",
+            "admission_state": "denied",
+            "reason_codes": ["JSON_INVALID"],
+            "next_action": "none",
+        }
+    ]
+    assert {
+        "run_id": run["id"],
+        "attempt_id": "planning:execution_1",
+        "execution_id": "execution_1",
+        "reason_code": "JSON_INVALID",
+    } in hub["blockers"]
 
 
 def test_owner_approves_only_the_exact_trusted_plan_and_retries_the_same_command(
@@ -218,6 +427,29 @@ def test_owner_approves_only_the_exact_trusted_plan_and_retries_the_same_command
     approved = client.get(f"/v1/runs/{run['id']}").json()
     assert approved["active_plan_revision"] == 1
     assert approved["dispatch_enabled"] is False
+    hub = client.get(f"/v1/conversations/{run['conversation_id']}/hub").json()
+    assert hub["tasks"] == [
+        {
+            "id": "greeting",
+            "run_id": run["id"],
+            "plan_revision": 1,
+            "revision": 1,
+            "role": "worker",
+            "state": "ready",
+            "readiness": "ready",
+            "depends_on": [],
+            "checks": [],
+        }
+    ]
+    assert hub["attempts"][0]["id"] == intent["id"]
+    assert hub["blockers"] == []
+    selected = client.put(
+        f"/v1/conversations/{run['conversation_id']}/draft",
+        json={"content": "follow this task", "selected_task_id": "greeting"},
+        headers={**headers, "Idempotency-Key": "select-real-task", "If-Match": '"1"'},
+    )
+    assert selected.status_code == 200
+    assert selected.json()["selected_task_id"] == "greeting"
 
 
 def test_commander_handoff_waits_for_an_owner_decision_and_rejects_stale_confirmation(
