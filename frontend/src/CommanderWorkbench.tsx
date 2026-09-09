@@ -17,7 +17,13 @@ import {
   currentAttemptId,
   feedbackFromSnapshot,
   relatedEvidence,
-} from "./conversationFacts";
+} from "./snapshotFacts";
+import {
+  adaptSnapshot,
+  type AttemptFact,
+  type CommanderSnapshot,
+  type TaskFact,
+} from "./conversationSnapshot";
 import { SnapshotRecovery, type RecoveryContext } from "./snapshotRecovery";
 
 type Project = {
@@ -36,68 +42,9 @@ type Conversation = {
   commander_source_ref?: string | null;
   draft_revision?: number;
 };
-type Snapshot = {
-  conversation?: Conversation;
-  messages?: { id: string; role: string; content?: string; text?: string }[];
-  draft?: {
-    content: string;
-    revision?: number;
-    selected_task_id?: string | null;
-  };
-  task_drafts?: { id: string; requirement?: string; state?: string }[];
-  runs?: {
-    id: string;
-    status?: string;
-    requirement?: string | { goal?: string };
-    tasks?: WorkTask[];
-    attempts?: { id: string; status?: string; task_id?: string }[];
-  }[];
-  run_summaries?: {
-    id: string;
-    state?: string;
-    snapshot_event_seq?: number;
-    tasks?: WorkTask[];
-    attempts?: { id: string; status?: string; task_id?: string }[];
-  }[];
-  proposed_plan?: {
-    summary?: string;
-    proposal_revision?: number;
-    status?: string;
-    tasks?: {
-      id: string;
-      title?: string;
-      role?: string;
-      model?: string;
-      source?: string;
-      dependencies?: string[];
-      status?: string;
-    }[];
-  };
-  candidate?: unknown;
-  checks?: unknown;
-  review?: unknown;
-  logs?: unknown;
-  dependencies?: unknown;
-  snapshot_event_seq?: number;
-  freshness?: string;
-};
-type WorkTask = {
-  id: string;
-  title?: string;
-  role?: string;
-  model?: string;
-  source?: string;
-  dependencies?: string[];
-  status?: string;
-  attempt_id?: string;
-};
-
-type Attempt = {
-  id: string;
-  status?: string;
-  task_id?: string;
-  run_id?: string;
-};
+type Snapshot = CommanderSnapshot;
+type WorkTask = TaskFact;
+type Attempt = AttemptFact;
 type Selection = DraftSelection;
 type FeedbackByAttempt = Record<
   string,
@@ -136,6 +83,16 @@ async function read<T>(url: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly reasonCode?: string,
+    readonly currentRevision?: number,
+  ) {
+    super(message);
+  }
+}
+
 async function describeError(
   response: Response,
   fallback: string,
@@ -147,7 +104,13 @@ async function describeError(
     typeof body.current_revision === "number"
       ? ` 当前版本：${body.current_revision}。`
       : "";
-  return new Error(`${fallback}${reason}${revision}`);
+  return new ApiError(
+    `${fallback}${reason}${revision}`,
+    typeof body.reason_code === "string" ? body.reason_code : undefined,
+    typeof body.current_revision === "number"
+      ? body.current_revision
+      : undefined,
+  );
 }
 
 function stableKey(prefix: string, value: string): string {
@@ -187,12 +150,6 @@ function feedbackState(
     eventName === "cancelled"
   )
     return eventName;
-  if (
-    eventName === "progress" ||
-    eventName === "feedback" ||
-    eventName === "model_feedback"
-  )
-    return "running";
   return null;
 }
 
@@ -377,9 +334,11 @@ export function CommanderWorkbench({
   );
 
   snapshotReader.current = async (context, signal) => {
-    const data = await read<Snapshot>(
-      `/v1/conversations/${encodeURIComponent(context.conversationId)}/snapshot`,
-      { signal },
+    const data = adaptSnapshot(
+      await read<unknown>(
+        `/v1/conversations/${encodeURIComponent(context.conversationId)}/snapshot`,
+        { signal },
+      ),
     );
     if (data.conversation?.project_id !== context.projectId)
       throw new Error("CROSS_PROJECT_REFERENCE");
@@ -391,13 +350,12 @@ export function CommanderWorkbench({
     eventSeqRef.current = data.snapshot_event_seq ?? 0;
     const restoredId = data.draft?.selected_task_id ?? null;
     const selectionFromServer: DraftSelection = restoredId
-      ? [...(data.runs ?? []), ...(data.run_summaries ?? [])].some((run) =>
-          (run.attempts ?? []).some((attempt) => attempt.id === restoredId),
-        )
+      ? data.attempts.some((attempt) => attempt.id === restoredId)
         ? { kind: "attempt", id: restoredId }
-        : candidateSelections(data).some((item) => item.id === restoredId)
-          ? { kind: "candidate", id: restoredId }
-          : { kind: "task", id: restoredId }
+        : data.tasks.some((task) => task.id === restoredId) ||
+            data.task_drafts.some((task) => task.id === restoredId)
+          ? { kind: "task", id: restoredId }
+          : null
       : null;
     presentDraft(
       draftLedger.current.open(
@@ -581,8 +539,12 @@ export function CommanderWorkbench({
         recover();
         return;
       }
-      if (sequence != null)
+      if (sequence != null) {
+        // The ref is the SSE authority.  Advancing React state alone would
+        // accept N+1 yet falsely treat N+2 as a gap.
+        eventSeqRef.current = sequence;
         setSnapshot((old) => old && { ...old, snapshot_event_seq: sequence });
+      }
     };
     function connect() {
       if (disposed || !active(context)) return;
@@ -646,10 +608,11 @@ export function CommanderWorkbench({
       },
     ): Promise<boolean> => {
       if (!context.conversationId) return Promise.resolve(false);
+      const queueKey = contextKey(context);
       const previous =
-        draftQueues.current.get(context.conversationId) ??
-        Promise.resolve(true);
+        draftQueues.current.get(queueKey) ?? Promise.resolve(true);
       const operation = previous.then(async () => {
+        let reconciledConflict = false;
         while (true) {
           const command = draftLedger.current.prepareSave(context);
           if (!command) return true;
@@ -680,8 +643,10 @@ export function CommanderWorkbench({
             if (
               projectRef.current === command.context.projectId &&
               conversationRef.current === command.context.conversationId
-            )
+            ) {
               presentDraft(next);
+              if (reconciledConflict) setError("");
+            }
             // A later edit was made while this command was in flight. Send it
             // with the newly acknowledged revision in the same explicit save.
             if (next?.dirty && next.editVersion !== command.editVersion)
@@ -690,6 +655,54 @@ export function CommanderWorkbench({
           } catch (cause) {
             const message =
               cause instanceof Error ? cause.message : "草稿保存失败，请重试。";
+            if (
+              cause instanceof ApiError &&
+              cause.reasonCode === "DRAFT_REVISION_CONFLICT"
+            ) {
+              const next = draftLedger.current.reconcileConflict(
+                command,
+                cause.currentRevision,
+              );
+              const recoveryContext: RecoveryContext = {
+                navigation: navigation.current,
+                projectId: command.context.projectId,
+                conversationId: command.context.conversationId,
+              };
+              const current =
+                projectRef.current === command.context.projectId &&
+                conversationRef.current === command.context.conversationId;
+              if (current) {
+                presentDraft(next);
+                setError("草稿版本冲突，正在读取服务器当前草稿后重试。");
+              }
+              if (!current || reconciledConflict) return false;
+              reconciledConflict = true;
+              try {
+                const snapshot = await snapshotReader.current(
+                  recoveryContext,
+                  new AbortController().signal,
+                );
+                if (
+                  recoveryContext.navigation === navigation.current &&
+                  projectRef.current === recoveryContext.projectId &&
+                  conversationRef.current === recoveryContext.conversationId
+                )
+                  snapshotApplier.current(recoveryContext, snapshot);
+                continue;
+              } catch (reconcileCause) {
+                if (
+                  recoveryContext.navigation === navigation.current &&
+                  projectRef.current === recoveryContext.projectId &&
+                  conversationRef.current === recoveryContext.conversationId
+                )
+                  setError(
+                    reconcileCause instanceof Error
+                      ? reconcileCause.message
+                      : "无法读取冲突后的服务器草稿，请重试。",
+                  );
+                return false;
+              }
+            }
             const next = draftLedger.current.rejectSave(command, message);
             if (
               projectRef.current === command.context.projectId &&
@@ -702,10 +715,10 @@ export function CommanderWorkbench({
           }
         }
       });
-      draftQueues.current.set(context.conversationId, operation);
+      draftQueues.current.set(queueKey, operation);
       void operation.finally(() => {
-        if (draftQueues.current.get(context.conversationId) === operation)
-          draftQueues.current.delete(context.conversationId);
+        if (draftQueues.current.get(queueKey) === operation)
+          draftQueues.current.delete(queueKey);
       });
       return operation;
     },
@@ -809,6 +822,10 @@ export function CommanderWorkbench({
               submitted?.editVersion ?? -1,
             ),
           );
+          void saveDraft({
+            projectId: origin.projectId,
+            conversationId: targetConversation,
+          });
           recovery.current?.recover(origin);
         }
       } else {
@@ -887,6 +904,7 @@ export function CommanderWorkbench({
             submitted?.editVersion ?? -1,
           ),
         );
+        void saveDraft({ projectId: pid, conversationId: cid });
         recovery.current?.recover(context);
       }
     } catch (cause) {
@@ -1033,14 +1051,11 @@ export function CommanderWorkbench({
   const tasks = useMemo<WorkTask[]>(
     () =>
       [
-        ...(snapshot?.proposed_plan?.tasks ?? []),
-        ...(snapshot?.runs?.flatMap((run) => run.tasks ?? []) ?? []),
-        ...(snapshot?.run_summaries?.flatMap((run) => run.tasks ?? []) ?? []),
+        ...(snapshot?.tasks ?? []),
         ...(snapshot?.task_drafts ?? []).map((item) => ({
           id: item.id,
-          title: item.requirement,
           role: "需求草稿",
-          status: item.state ?? "draft",
+          state: item.state,
         })),
       ].filter(
         (item, index, all) =>
@@ -1048,27 +1063,17 @@ export function CommanderWorkbench({
       ),
     [snapshot],
   );
-  const agents = useMemo<Attempt[]>(
-    () =>
-      [...(snapshot?.runs ?? []), ...(snapshot?.run_summaries ?? [])].flatMap(
-        (run) =>
-          (run.attempts ?? []).map((attempt) => ({
-            ...attempt,
-            run_id: run.id,
-          })),
-      ),
-    [snapshot],
-  );
+  const agents = useMemo<Attempt[]>(() => snapshot?.attempts ?? [], [snapshot]);
   const selectedOption = options.find(
     (item) => item.profile_ref === profile && item.source_ref === source,
   );
   const selectedAttemptId = currentAttemptId(snapshot, selection);
   const selectedFeedback = selectedAttemptId
     ? (feedbackByAttempt[selectedAttemptId] ?? {
-        state: "idle" as const,
+        state: "unknown" as const,
         observed: 0,
       })
-    : { state: "idle" as const, observed: 0 };
+    : { state: "unknown" as const, observed: 0 };
   const conversationFact =
     tab === "Diff"
       ? snapshot?.candidate
@@ -1360,19 +1365,37 @@ export function CommanderWorkbench({
                   <div className="summary-card">
                     <p className="eyebrow">当前计划</p>
                     <h3>
-                      {snapshot?.proposed_plan?.summary ?? "尚未形成计划"}
+                      {snapshot?.run_summaries.length
+                        ? "已关联运行"
+                        : "尚未形成计划"}
                     </h3>
                     <span>
-                      {snapshot?.proposed_plan
-                        ? `版本 ${snapshot.proposed_plan.proposal_revision ?? "—"} · ${snapshot.proposed_plan.status ?? "待确认"}`
+                      {snapshot?.run_summaries.length
+                        ? `运行 ${snapshot.run_summaries.length} 个 · 来自当前快照`
                         : "需求会先保存，计划由 Commander 提出"}
                     </span>
                   </div>
                   {candidateSelections(snapshot).map((candidate) => (
                     <button
-                      className={`task-row ${selection?.kind === "candidate" && selection.id === candidate.id ? "selected" : ""}`}
-                      key={candidate.id}
-                      onClick={() => setSelection(candidate)}
+                      className={`task-row ${selection?.kind === "candidate" && selection.id === candidate.id && selection.version === candidate.version ? "selected" : ""}`}
+                      key={`${candidate.id}:${candidate.version ?? "unknown"}`}
+                      onClick={() => {
+                        presentDraft(
+                          draftLedger.current.selectCandidate(
+                            visibleDraftContext,
+                            candidate.id,
+                            candidate.version,
+                          ),
+                        );
+                        setError(
+                          "候选选择仅保存在本地；当前服务器草稿不支持候选引用。",
+                        );
+                        recovery.current?.recover({
+                          navigation: navigation.current,
+                          projectId: projectRef.current,
+                          conversationId: conversationRef.current,
+                        });
+                      }}
                     >
                       <span className="task-status">候选</span>
                       <span>
@@ -1403,14 +1426,14 @@ export function CommanderWorkbench({
                           }}
                         >
                           <span className="task-status">
-                            {task.status ?? "待确认"}
+                            {task.state ?? "状态未知"}
                           </span>
                           <span>
-                            <strong>{task.title ?? task.id}</strong>
+                            <strong>{task.id}</strong>
                             <small>
                               {task.role ?? "任务"}
-                              {task.dependencies?.length
-                                ? ` · 依赖 ${task.dependencies.join("、")}`
+                              {task.depends_on?.length
+                                ? ` · 依赖 ${task.depends_on.join("、")}`
                                 : ""}
                             </small>
                           </span>
@@ -1445,7 +1468,7 @@ export function CommanderWorkbench({
                           }}
                         >
                           <strong>{agent.id}</strong>
-                          <span>{agent.status ?? "待确认"}</span>
+                          <span>{agent.state ?? "状态未知"}</span>
                         </button>
                       ))
                     ) : (

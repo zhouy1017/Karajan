@@ -7,6 +7,7 @@ export type DraftContext = { projectId: string; conversationId: string };
 export type DraftSelection = {
   kind: "task" | "attempt" | "candidate";
   id: string;
+  version?: number;
 } | null;
 export type DraftState = {
   content: string;
@@ -14,6 +15,8 @@ export type DraftState = {
   dirty: boolean;
   editVersion: number;
   acknowledgedRevision: number;
+  /** Candidate IDs are not accepted by the current backend draft endpoint. */
+  selectionLocalOnly?: boolean;
   error?: string;
 };
 export type DraftCommand = {
@@ -63,36 +66,54 @@ export class ConversationDraftLedger {
           dirty: stored.dirty,
           editVersion: stored.editVersion,
           acknowledgedRevision: stored.acknowledgedRevision ?? 0,
+          selectionLocalOnly: stored.selectionLocalOnly,
           error: stored.error,
         }
       : undefined;
-    const pending = current?.dirty
-      ? current
-      : storedState?.dirty
-        ? storedState
-        : undefined;
+    const pending =
+      current?.dirty || current?.selectionLocalOnly
+        ? current
+        : storedState?.dirty || storedState?.selectionLocalOnly
+          ? storedState
+          : undefined;
+    // A snapshot older than an acknowledgement is not authority to restore an
+    // older draft or erase its selection. Once it reaches that revision, its
+    // explicit values become authoritative again.
+    const preserveAcknowledgedState =
+      !pending && current && current.acknowledgedRevision > server.revision;
     const state: DraftState = pending
       ? {
           ...pending,
-          acknowledgedRevision: server.revision,
+          acknowledgedRevision: Math.max(
+            pending.acknowledgedRevision,
+            server.revision,
+          ),
         }
-      : {
-          content: server.content,
-          selection: server.selection,
-          dirty: false,
-          editVersion: current?.editVersion ?? stored?.editVersion ?? 0,
-          acknowledgedRevision: server.revision,
-        };
+      : preserveAcknowledgedState
+        ? {
+            content: current.content,
+            selection: current.selection,
+            dirty: false,
+            editVersion: current.editVersion,
+            acknowledgedRevision: current.acknowledgedRevision,
+          }
+        : {
+            content: server.content,
+            selection: server.selection,
+            dirty: false,
+            editVersion: current?.editVersion ?? stored?.editVersion ?? 0,
+            acknowledgedRevision: server.revision,
+          };
     this.states.set(key(context), state);
     const pendingCommand =
       this.pending.get(key(context)) ??
       (this.validCommand(stored?.pending, context)
         ? stored?.pending
         : undefined);
-    if (state.dirty && pendingCommand)
+    if ((state.dirty || state.selectionLocalOnly) && pendingCommand)
       this.pending.set(key(context), pendingCommand);
     else if (!state.dirty) this.pending.delete(key(context));
-    if (state.dirty) this.persist(context, state);
+    if (state.dirty || state.selectionLocalOnly) this.persist(context, state);
     return state;
   }
 
@@ -118,6 +139,32 @@ export class ConversationDraftLedger {
       selection,
       dirty: true,
       editVersion: prior.editVersion + 1,
+      selectionLocalOnly: selection?.kind === "candidate",
+      error: undefined,
+    };
+    this.states.set(key(context), next);
+    this.persist(context, next);
+    return next;
+  }
+
+  /** Keep an unsupported Candidate selection locally without issuing a bad API write. */
+  selectCandidate(
+    context: DraftContext,
+    id: string,
+    version?: number,
+  ): DraftState {
+    const prior = this.states.get(key(context)) ?? {
+      content: "",
+      selection: null,
+      dirty: false,
+      editVersion: 0,
+      acknowledgedRevision: 0,
+    };
+    const next: DraftState = {
+      ...prior,
+      selection: { kind: "candidate", id, version },
+      selectionLocalOnly: true,
+      editVersion: prior.editVersion + 1,
       error: undefined,
     };
     this.states.set(key(context), next);
@@ -141,7 +188,9 @@ export class ConversationDraftLedger {
       id: this.newId(),
       body: {
         content: state.content,
-        selected_task_id: state.selection?.id ?? null,
+        selected_task_id: state.selectionLocalOnly
+          ? null
+          : (state.selection?.id ?? null),
         base_plan_revision: null,
       },
     };
@@ -166,7 +215,8 @@ export class ConversationDraftLedger {
         : {}),
     };
     this.states.set(key(command.context), next);
-    if (next.dirty) this.persist(command.context, next);
+    if (next.dirty || next.selectionLocalOnly)
+      this.persist(command.context, next);
     else this.storage.removeItem(key(command.context));
     return next;
   }
@@ -181,7 +231,29 @@ export class ConversationDraftLedger {
         ? { ...state, dirty: true, error }
         : state;
     this.states.set(key(command.context), next);
-    if (next.dirty) this.persist(command.context, next);
+    if (next.dirty || next.selectionLocalOnly)
+      this.persist(command.context, next);
+    return next;
+  }
+
+  /** A durable revision conflict is not an uncertain delivery: retire its key. */
+  reconcileConflict(
+    command: DraftCommand,
+    revision: number | undefined,
+  ): DraftState | undefined {
+    const state = this.states.get(key(command.context));
+    if (!state) return undefined;
+    if (this.pending.get(key(command.context))?.id === command.id)
+      this.pending.delete(key(command.context));
+    const next: DraftState = {
+      ...state,
+      dirty: true,
+      acknowledgedRevision:
+        typeof revision === "number" ? revision : state.acknowledgedRevision,
+      error: "DRAFT_REVISION_CONFLICT",
+    };
+    this.states.set(key(command.context), next);
+    this.persist(command.context, next);
     return next;
   }
 
@@ -194,13 +266,14 @@ export class ConversationDraftLedger {
     const next: DraftState = {
       ...state,
       content: "",
-      selection: null,
-      dirty: false,
+      // The server's message/task write does not mutate its draft resource.
+      // Make an explicit successor draft command instead of claiming it cleared.
+      dirty: true,
+      editVersion: state.editVersion + 1,
       error: undefined,
     };
     this.states.set(key(context), next);
-    this.pending.delete(key(context));
-    this.storage.removeItem(key(context));
+    this.persist(context, next);
     return next;
   }
 
@@ -212,7 +285,7 @@ export class ConversationDraftLedger {
       if (
         typeof value.content !== "string" ||
         typeof value.editVersion !== "number" ||
-        value.dirty !== true
+        (value.dirty !== true && value.selectionLocalOnly !== true)
       )
         return undefined;
       return value;
@@ -227,9 +300,10 @@ export class ConversationDraftLedger {
       JSON.stringify({
         content: state.content,
         selection: state.selection,
-        dirty: true,
+        dirty: state.dirty,
         editVersion: state.editVersion,
         acknowledgedRevision: state.acknowledgedRevision,
+        selectionLocalOnly: state.selectionLocalOnly,
         error: state.error,
         pending: this.pending.get(key(context)),
       }),

@@ -94,6 +94,25 @@ it("retries a failed save after refresh with its original identity and revision"
   expect(refreshed.prepareSave(context)).toEqual(command);
 });
 
+it("retires a definitive revision conflict and prepares a successor at the reconciled revision", () => {
+  let id = 0;
+  const ledger = new ConversationDraftLedger(storage(), () => `save-${++id}`);
+  ledger.open(context, { content: "server", revision: 1, selection: null });
+  ledger.edit(context, "local X", { kind: "task", id: "task-a" });
+  const rejected = ledger.prepareSave(context)!;
+
+  ledger.reconcileConflict(rejected, 2);
+  const successor = ledger.prepareSave(context)!;
+
+  expect(successor).toMatchObject({
+    id: "save-2",
+    content: "local X",
+    baseRevision: 2,
+    body: { content: "local X", selected_task_id: "task-a" },
+  });
+  expect(successor.id).not.toBe(rejected.id);
+});
+
 it("uses a new key and acknowledged revision for an A to B to A save sequence", () => {
   let id = 0;
   const ledger = new ConversationDraftLedger(storage(), () => `save-${++id}`);
@@ -129,4 +148,44 @@ it("clears only the exact submitted edit version", () => {
     content: "send X and later Y",
     dirty: true,
   });
+});
+
+it("stores an acknowledged submitted clear as a successor draft command", () => {
+  let id = 0;
+  const ledger = new ConversationDraftLedger(storage(), () => `save-${++id}`);
+  ledger.open(context, { content: "", revision: 0, selection: null });
+  const submitted = ledger.edit(context, "send X", null);
+  const saved = ledger.prepareSave(context)!;
+  ledger.acknowledgeSave(saved, 1);
+
+  const clear = ledger.clearSubmitted(context, submitted.editVersion)!;
+  const clearCommand = ledger.prepareSave(context)!;
+
+  expect(clear).toMatchObject({ content: "", dirty: true });
+  expect(clearCommand).toMatchObject({
+    id: "save-2",
+    baseRevision: 1,
+    body: { content: "" },
+  });
+});
+
+it("persists unsupported candidate selection locally through a recovered snapshot", () => {
+  const persisted = storage();
+  const first = new ConversationDraftLedger(persisted, () => "save-x");
+  first.open(context, { content: "", revision: 3, selection: null });
+  first.selectCandidate(context, "candidate-a", 2);
+
+  const refreshed = new ConversationDraftLedger(persisted, () => "save-y");
+  expect(
+    refreshed.open(context, {
+      content: "server draft",
+      revision: 4,
+      selection: { kind: "task", id: "task-from-server" },
+    }),
+  ).toMatchObject({
+    content: "",
+    selection: { kind: "candidate", id: "candidate-a", version: 2 },
+    selectionLocalOnly: true,
+  });
+  expect(refreshed.prepareSave(context)).toBeUndefined();
 });

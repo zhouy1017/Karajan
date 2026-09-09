@@ -13,7 +13,7 @@ type StableModelState =
 
 export type ConnectionStatus = "connected" | "disconnected" | "unknown";
 
-export type ModelFeedbackState = StableModelState;
+export type ModelFeedbackState = StableModelState | "unknown";
 
 export type ModelFeedbackProps = {
   /** 模型当前明确状态（终态含已完成/失败/已取消）。 */
@@ -35,6 +35,7 @@ const iconByState: Record<ModelFeedbackState, string> = {
   completed: "✅",
   failed: "❌",
   cancelled: "⏹️",
+  unknown: "？",
 };
 
 const labelByState: Record<ModelFeedbackState, string> = {
@@ -46,6 +47,7 @@ const labelByState: Record<ModelFeedbackState, string> = {
   completed: "已完成",
   failed: "已失败",
   cancelled: "已取消",
+  unknown: "状态未知",
 };
 
 const terminalStates: Set<ModelFeedbackState> = new Set([
@@ -70,6 +72,13 @@ function describeStatus(props: {
   icon: string;
   label: string;
 } {
+  if (props.state === "unknown") {
+    return {
+      state: "unknown",
+      icon: iconByState.unknown,
+      label: "状态未知，等待核对",
+    };
+  }
   if (
     !terminalStates.has(props.state) &&
     (props.stale || props.disconnected || !props.observed)

@@ -90,6 +90,11 @@ it("loads only configured Commander choices and sends a non executing string tas
       draft: { content: "", revision: 0 },
       task_drafts: [],
       runs: [],
+      run_summaries: [],
+      tasks: [],
+      attempts: [],
+      agents: [],
+      blockers: [],
       snapshot_event_seq: 0,
     }),
     "/v1/conversations/conversation-one/task-drafts": () => {
@@ -120,6 +125,11 @@ it("keeps a failed draft save visible and reports the server error", async () =>
       draft: { content: "", revision: 0 },
       task_drafts: [],
       runs: [],
+      run_summaries: [],
+      tasks: [],
+      attempts: [],
+      agents: [],
+      blockers: [],
       snapshot_event_seq: 0,
     }),
     "/v1/conversations/conversation-one/draft": () => {
@@ -165,6 +175,11 @@ function snapshotFor(
     draft: { content: "", revision: 0 },
     task_drafts: [],
     runs: [],
+    run_summaries: [],
+    tasks: [],
+    attempts: [],
+    agents: [],
+    blockers: [],
     snapshot_event_seq: 4,
     ...extra,
   };
@@ -300,7 +315,7 @@ it("recovers from an SSE gap at the snapshot watermark and refreshes named event
   );
 });
 
-it("persists Task and Attempt selection and scopes detail facts to the selected identity", async () => {
+it("renders flat backend Tasks and Planning Attempts, then scopes details to the selected identity", async () => {
   const saves: unknown[] = [];
   installFetch({
     "/v1/projects/project-one/commander-options": Response.json({ items: [] }),
@@ -309,12 +324,33 @@ it("persists Task and Attempt selection and scopes detail facts to the selected 
     }),
     "/v1/conversations/conversation-one/snapshot": Response.json(
       snapshotFor(conversation, {
-        proposed_plan: { tasks: [{ id: "task-a", title: "Task A" }] },
+        runs: ["run-a"],
         run_summaries: [
           {
             id: "run-a",
-            tasks: [{ id: "task-a", title: "Task A" }],
-            attempts: [{ id: "attempt-a", task_id: "task-a" }],
+            project_id: project.id,
+            conversation_id: conversation.id,
+            state: "running",
+          },
+        ],
+        tasks: [
+          {
+            id: "task-a",
+            run_id: "run-a",
+            role: "Task A",
+            state: "ready",
+            readiness: "ready",
+            depends_on: [],
+            checks: [],
+          },
+        ],
+        attempts: [
+          {
+            id: "attempt-a",
+            run_id: "run-a",
+            kind: "planning",
+            state: "running",
+            principal: "commander",
           },
         ],
         checks: {
@@ -340,7 +376,7 @@ it("persists Task and Attempt selection and scopes detail facts to the selected 
     },
   });
   render(<CommanderWorkbench projects={[project]} csrf="csrf" />);
-  await userEvent.click(await screen.findByRole("button", { name: /Task A/ }));
+  await userEvent.click(await screen.findByRole("button", { name: /task-a/ }));
   await userEvent.click(screen.getByRole("button", { name: "Checks" }));
   await vi.waitFor(() =>
     expect(
@@ -669,7 +705,9 @@ it("recovers a failed gap snapshot before accepting a later state event", async 
 it("re-snapshots state events and exposes a disconnected current Attempt honestly", async () => {
   let snapshots = 0;
   let completed = false;
-  const observed = Date.now();
+  // A fixed future observation stays non-stale without manufacturing a UI
+  // timestamp from the client clock.
+  const observed = 1_790_000_000;
   installFetch({
     "/v1/projects/project-one/commander-options": () =>
       Response.json({ items: [] }),
@@ -679,18 +717,33 @@ it("re-snapshots state events and exposes a disconnected current Attempt honestl
       snapshots += 1;
       return Response.json(
         snapshotFor(conversation, {
-          runs: [
+          runs: ["run-a"],
+          run_summaries: [
             {
               id: "run-a",
-              tasks: [{ id: "task-a", current_attempt_id: "attempt-a" }],
-              attempts: [
-                {
-                  id: "attempt-a",
-                  task_id: "task-a",
-                  status: completed ? "completed" : "running",
-                  observed_at: observed,
-                },
-              ],
+              project_id: project.id,
+              conversation_id: conversation.id,
+              state: completed ? "completed" : "running",
+            },
+          ],
+          tasks: [
+            {
+              id: "task-a",
+              run_id: "run-a",
+              role: "Task A",
+              state: "ready",
+              readiness: "ready",
+              depends_on: [],
+              checks: [],
+            },
+          ],
+          attempts: [
+            {
+              id: "attempt-a",
+              run_id: "run-a",
+              kind: "planning",
+              state: completed ? "completed" : "running",
+              observed_at: observed,
             },
           ],
         }),
@@ -723,4 +776,257 @@ it("re-snapshots state events and exposes a disconnected current Attempt honestl
   expect(
     screen.getByRole("button", { name: /attempt-a/ }).textContent,
   ).toContain("completed");
+});
+
+it("retires a definitive draft conflict, reconciles, and saves the local edit with a new key", async () => {
+  const commands: { key: string; revision: string; body: unknown }[] = [];
+  let snapshots = 0;
+  installFetch({
+    "/v1/projects/project-one/commander-options": () =>
+      Response.json({ items: [] }),
+    "/v1/projects/project-one/conversations": () =>
+      Response.json({ items: [conversation] }),
+    "/v1/conversations/conversation-one/snapshot": () => {
+      snapshots += 1;
+      return Response.json(
+        snapshotFor(conversation, {
+          draft: {
+            content: snapshots === 1 ? "" : "server draft",
+            revision: snapshots === 1 ? 1 : 2,
+          },
+        }),
+      );
+    },
+    "/v1/conversations/conversation-one/draft": (_input, init) => {
+      commands.push({
+        key: String(
+          (init?.headers as Record<string, string>)["Idempotency-Key"],
+        ),
+        revision: String((init?.headers as Record<string, string>)["If-Match"]),
+        body: JSON.parse(String(init?.body)),
+      });
+      return commands.length === 1
+        ? new Response(
+            JSON.stringify({
+              reason_code: "DRAFT_REVISION_CONFLICT",
+              current_revision: 2,
+            }),
+            { status: 409 },
+          )
+        : Response.json({ revision: 3 });
+    },
+  });
+  let uuid = 0;
+  vi.stubGlobal("crypto", { randomUUID: () => `draft-command-${++uuid}` });
+  render(<CommanderWorkbench projects={[project]} csrf="csrf" />);
+  const input = await screen.findByRole("textbox", { name: "消息草稿" });
+  await userEvent.type(input, "local X");
+  await userEvent.click(screen.getByRole("button", { name: "保存草稿" }));
+
+  await vi.waitFor(() => expect(commands).toHaveLength(2));
+  expect(snapshots).toBeGreaterThanOrEqual(2);
+  expect(commands.map((command) => command.revision)).toEqual(['"1"', '"2"']);
+  expect(commands.map((command) => command.body)).toEqual([
+    {
+      content: "local X",
+      selected_task_id: null,
+      base_plan_revision: null,
+    },
+    {
+      content: "local X",
+      selected_task_id: null,
+      base_plan_revision: null,
+    },
+  ]);
+  expect(commands[0].key).not.toBe(commands[1].key);
+  expect((input as HTMLTextAreaElement).value).toBe("local X");
+});
+
+it("persists the post-send clear and restores a later local Y after refresh", async () => {
+  let serverDraft = "";
+  let serverRevision = 0;
+  const draftBodies: string[] = [];
+  installFetch({
+    "/v1/projects/project-one/commander-options": () =>
+      Response.json({ items: [] }),
+    "/v1/projects/project-one/conversations": () =>
+      Response.json({ items: [conversation] }),
+    "/v1/conversations/conversation-one/snapshot": () =>
+      Response.json(
+        snapshotFor(conversation, {
+          draft: { content: serverDraft, revision: serverRevision },
+        }),
+      ),
+    "/v1/conversations/conversation-one/draft": (_input, init) => {
+      const body = JSON.parse(String(init?.body)) as { content: string };
+      draftBodies.push(body.content);
+      serverDraft = body.content;
+      serverRevision += 1;
+      return Response.json({ revision: serverRevision });
+    },
+    "/v1/conversations/conversation-one/messages": () =>
+      Response.json({
+        client_message_id: "stable-command-id",
+        conversation_id: conversation.id,
+      }),
+  });
+  render(<CommanderWorkbench projects={[project]} csrf="csrf" />);
+  const input = await screen.findByRole("textbox", { name: "消息草稿" });
+  await userEvent.type(input, "X");
+  await userEvent.click(screen.getByRole("button", { name: "保存草稿" }));
+  await vi.waitFor(() => expect(draftBodies).toEqual(["X"]));
+  await userEvent.click(
+    screen.getByRole("button", { name: "发送给 Commander" }),
+  );
+  await vi.waitFor(() => expect(draftBodies).toEqual(["X", ""]));
+  await vi.waitFor(() => expect((input as HTMLTextAreaElement).value).toBe(""));
+
+  await userEvent.type(input, "Y");
+  cleanup();
+  render(<CommanderWorkbench projects={[project]} csrf="csrf" />);
+  const restored = await screen.findByRole("textbox", { name: "消息草稿" });
+  expect((restored as HTMLTextAreaElement).value).toBe("Y");
+  expect(screen.getByText("未发送的本地草稿待保存")).toBeTruthy();
+});
+
+it("accepts consecutive feedback sequences once without a false snapshot recovery", async () => {
+  let snapshots = 0;
+  installFetch({
+    "/v1/projects/project-one/commander-options": () =>
+      Response.json({ items: [] }),
+    "/v1/projects/project-one/conversations": () =>
+      Response.json({ items: [conversation] }),
+    "/v1/conversations/conversation-one/snapshot": () => {
+      snapshots += 1;
+      return Response.json(
+        snapshotFor(conversation, {
+          runs: ["run-a"],
+          run_summaries: [{ id: "run-a", state: "running" }],
+          tasks: [],
+          attempts: [
+            {
+              id: "attempt-a",
+              run_id: "run-a",
+              kind: "planning",
+              state: "unknown",
+            },
+          ],
+          snapshot_event_seq: 10,
+        }),
+      );
+    },
+    "/v1/conversations/conversation-one/draft": () =>
+      Response.json({ revision: 1 }),
+  });
+  render(<CommanderWorkbench projects={[project]} csrf="csrf" />);
+  await userEvent.click(
+    await screen.findByRole("button", { name: /attempt-a/ }),
+  );
+  const source = EventSourceFixture.instances.at(-1)!;
+  await act(async () => {
+    source.emit("feedback", {
+      sequence: 11,
+      attempt_id: "attempt-a",
+      state: "waiting_input",
+      observed_at: 1_790_000_000,
+    });
+    source.emit("feedback", {
+      sequence: 12,
+      attempt_id: "attempt-a",
+      state: "completed",
+      observed_at: 1_790_000_001,
+    });
+    source.emit("feedback", {
+      sequence: 11,
+      attempt_id: "attempt-a",
+      state: "running",
+      observed_at: 1_790_000_002,
+    });
+  });
+
+  expect(screen.getByRole("status").textContent).toContain("已完成");
+  expect(snapshots).toBe(1);
+  expect(EventSourceFixture.instances).toHaveLength(1);
+});
+
+it("retains a local-only candidate selection through recovery and excludes sibling and old-version checks", async () => {
+  let snapshots = 0;
+  installFetch({
+    "/v1/projects/project-one/commander-options": () =>
+      Response.json({ items: [] }),
+    "/v1/projects/project-one/conversations": () =>
+      Response.json({ items: [conversation] }),
+    "/v1/conversations/conversation-one/snapshot": () => {
+      snapshots += 1;
+      return Response.json(
+        snapshotFor(conversation, {
+          runs: ["run-a"],
+          run_summaries: [{ id: "run-a", state: "running" }],
+          tasks: [
+            {
+              id: "task-a",
+              run_id: "run-a",
+              state: "ready",
+              readiness: "ready",
+              depends_on: [],
+              checks: [],
+            },
+            {
+              id: "task-b",
+              run_id: "run-a",
+              state: "ready",
+              readiness: "ready",
+              depends_on: [],
+              checks: [],
+            },
+          ],
+          attempts: [
+            { id: "attempt-a", run_id: "run-a", state: "running" },
+            { id: "attempt-b", run_id: "run-a", state: "running" },
+          ],
+          candidate: {
+            items: [
+              { id: "candidate-a", version: 2 },
+              { id: "candidate-a", version: 1 },
+            ],
+          },
+          checks: {
+            items: [
+              {
+                candidate_id: "candidate-a",
+                candidate_version: 2,
+                result: "current candidate",
+              },
+              {
+                candidate_id: "candidate-a",
+                candidate_version: 1,
+                result: "old candidate",
+              },
+              { task_id: "task-b", result: "sibling B" },
+            ],
+          },
+          snapshot_event_seq: snapshots * 10,
+        }),
+      );
+    },
+  });
+  render(<CommanderWorkbench projects={[project]} csrf="csrf" />);
+  const candidates = await screen.findAllByRole("button", {
+    name: /candidate-a/,
+  });
+  await userEvent.click(candidates[0]);
+  await vi.waitFor(() => expect(snapshots).toBeGreaterThanOrEqual(2));
+  await userEvent.click(screen.getByRole("button", { name: "Checks" }));
+  await vi.waitFor(() =>
+    expect(
+      screen.getByText(
+        (_, element) =>
+          element?.tagName === "PRE" &&
+          element.textContent?.includes("current candidate") === true,
+      ),
+    ).toBeTruthy(),
+  );
+  expect(screen.queryByText(/old candidate/)).toBeNull();
+  expect(screen.queryByText(/sibling B/)).toBeNull();
+  expect(screen.getByRole("alert").textContent).toContain("仅保存在本地");
 });
