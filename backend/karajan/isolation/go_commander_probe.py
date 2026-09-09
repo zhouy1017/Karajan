@@ -11,7 +11,7 @@ import json
 import os
 import stat
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from contextlib import AbstractContextManager
 from pathlib import Path
 from typing import Any, Literal, cast
@@ -52,24 +52,50 @@ def _final_evidence(final: dict[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in final.items() if key != "text"}
 
 
-def _selection_shape(messages: list[dict[str, Any]]) -> tuple[list[str], str]:
+def _selection_shape(messages: object) -> tuple[list[str], int, str, str]:
+    if not isinstance(messages, list):
+        return [], 0, "unavailable", "unknown"
     assistants = [
-        message for message in messages if message.get("info", {}).get("role") == "assistant"
+        message
+        for message in messages
+        if isinstance(message, Mapping)
+        and isinstance(message.get("info"), Mapping)
+        and message["info"].get("role") == "assistant"
     ]
-    candidate = assistants[-1] if assistants else {}
-    info = candidate.get("info", {})
-    finish = info.get("finish") if isinstance(info.get("finish"), str) else "unknown"
-    parts = candidate.get("parts", [])
-    text_parts = (
-        [
-            part["text"]
-            for part in parts
-            if part.get("type") == "text" and type(part.get("text")) is str
-        ]
-        if isinstance(parts, list)
-        else []
+    if not assistants:
+        return [], 0, "unavailable", "unknown"
+    candidate = assistants[-1]
+    info = candidate.get("info")
+    finish = info.get("finish") if isinstance(info, Mapping) else None
+    safe_finish = finish if isinstance(finish, str) else "unknown"
+    parts = candidate.get("parts")
+    if not isinstance(parts, list):
+        return [], 0, "unavailable", safe_finish
+    text_parts: list[str] = []
+    text_part_count = 0
+    malformed = False
+    for part in parts:
+        if not isinstance(part, Mapping):
+            malformed = True
+            continue
+        if part.get("type") != "text":
+            continue
+        text_part_count += 1
+        payload = part.get("text")
+        if type(payload) is str:
+            text_parts.append(payload)
+        else:
+            malformed = True
+    shape = (
+        "malformed"
+        if malformed
+        else "one_text"
+        if text_part_count == 1
+        else "none"
+        if text_part_count == 0
+        else "multiple"
     )
-    return text_parts, finish
+    return text_parts, text_part_count, shape, safe_finish
 
 
 def _context(accounting: GoRequestAccounting, spec: dict[str, Any]) -> dict[str, Any]:
@@ -341,10 +367,17 @@ def observe_go_commander_probe(
         try:
             final = _final(messages, session["id"], prompt)
         except ValueError:
-            text_parts, finish = _selection_shape(messages)
-            record["planning_output_diagnostic"] = planning_output_selection_diagnostic(
-                text_parts, finish=finish
-            )
+            try:
+                text_parts, text_part_count, text_part_shape, finish = _selection_shape(messages)
+                record["planning_output_diagnostic"] = planning_output_selection_diagnostic(
+                    text_parts,
+                    finish=finish,
+                    text_part_count=text_part_count,
+                    text_part_shape=text_part_shape,
+                )
+            except Exception:
+                # Diagnostics are optional and must never replace the selection error.
+                pass
             raise
         if len(final["text"].encode()) > spec["evidence_limits"]["final_output_bytes"]:
             raise ValueError("COMMANDER_OUTPUT_LIMIT_EXCEEDED")

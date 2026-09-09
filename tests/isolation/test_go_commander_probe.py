@@ -130,14 +130,30 @@ def test_commander_native_probe_uses_original_journal_and_empty_tools(
 
 @pytest.mark.skipif(sys.platform != "linux", reason="Fixed Linux native required")
 @pytest.mark.parametrize(
-    ("finish", "text_parts", "reason_code"),
+    ("finish", "parts", "reason_code", "expected_text_part_count", "expected_shape"),
     [
-        ("length", ["FAKE_INCOMPLETE_SECRET"], "NATIVE_FINAL_INCOMPLETE"),
-        ("stop", ["FAKE_PART_SECRET_ONE", "FAKE_PART_SECRET_TWO"], "NATIVE_FINAL_TEXT_AMBIGUOUS"),
+        ("length", [None], "NATIVE_FINAL_INCOMPLETE", 0, "malformed"),
+        (
+            "stop",
+            [
+                {"type": "text", "text": "FAKE_PART_SECRET_ONE"},
+                {"type": "text", "text": None},
+            ],
+            "NATIVE_FINAL_TEXT_AMBIGUOUS",
+            2,
+            "malformed",
+        ),
     ],
 )
 def test_commander_native_probe_persists_rejected_final_shape_diagnostic(
-    tmp_path, accounting, monkeypatch, finish, text_parts, reason_code
+    tmp_path,
+    accounting,
+    monkeypatch,
+    finish,
+    parts,
+    reason_code,
+    expected_text_part_count,
+    expected_shape,
 ):
     runtime = runtime_artifact()
     source = commander_runtime_source(runtime, accounting)
@@ -170,7 +186,7 @@ def test_commander_native_probe_persists_rejected_final_shape_diagnostic(
         ]
         assistant = assistants[-1]
         assistant["info"]["finish"] = finish
-        assistant["parts"] = [{"type": "text", "text": text} for text in text_parts]
+        assistant["parts"] = parts
         return original_select_final(messages, session_id, prompt)
 
     monkeypatch.setattr(commander_probe, "select_final", reject_shape)
@@ -194,5 +210,6 @@ def test_commander_native_probe_persists_rejected_final_shape_diagnostic(
     diagnostic = result["planning_output_diagnostic"]
     assert diagnostic["category"] == "selection"
     assert diagnostic["finish"] == finish
-    assert diagnostic["text_part_count"] == len(text_parts)
+    assert diagnostic["text_part_count"] == expected_text_part_count
+    assert diagnostic["text_part_shape"] == expected_shape
     assert "FAKE_" not in json.dumps(result, sort_keys=True)

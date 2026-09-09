@@ -32,6 +32,14 @@ _DIAGNOSTIC_CATEGORIES = {
     "unknown",
 }
 _DIAGNOSTIC_FINISHES = {"stop", "tool-calls", "length", "error", "unknown", "missing"}
+_DIAGNOSTIC_TEXT_SHAPES = {
+    "none",
+    "one_text",
+    "multiple",
+    "malformed",
+    "unavailable",
+}
+MAX_DIAGNOSTIC_TEXT_PARTS = 256
 
 
 class _DiagnosticDuplicateKey(ValueError):
@@ -154,7 +162,11 @@ def planning_output_diagnostic(
 
 
 def planning_output_selection_diagnostic(
-    text_parts: list[str], *, finish: str = "unknown"
+    text_parts: list[str],
+    *,
+    finish: str = "unknown",
+    text_part_count: int | None = None,
+    text_part_shape: str | None = None,
 ) -> dict[str, Any]:
     """Return bounded evidence when native final selection rejects its shape."""
 
@@ -168,8 +180,14 @@ def planning_output_selection_diagnostic(
                 continue
             hasher.update(encoded_text)
             byte_length += len(encoded_text)
-    safe_count = len(text_parts)
+    safe_count = len(text_parts) if text_part_count is None else text_part_count
+    if type(safe_count) is not int or safe_count < 0:
+        safe_count = 0
+    safe_count = min(safe_count, MAX_DIAGNOSTIC_TEXT_PARTS)
     safe_finish = finish if finish in _DIAGNOSTIC_FINISHES else "unknown"
+    safe_shape = text_part_shape
+    if safe_shape not in _DIAGNOSTIC_TEXT_SHAPES:
+        safe_shape = "one_text" if safe_count == 1 else "none" if safe_count == 0 else "multiple"
     return {
         "schema_version": _DIAGNOSTIC_SCHEMA,
         "category": "selection",
@@ -177,9 +195,7 @@ def planning_output_selection_diagnostic(
         "sha256": hasher.hexdigest(),
         "finish": safe_finish,
         "text_part_count": safe_count,
-        "text_part_shape": (
-            "one_text" if safe_count == 1 else "none" if safe_count == 0 else "multiple"
-        ),
+        "text_part_shape": safe_shape,
         "decoder_line": None,
         "decoder_column": None,
     }
@@ -309,6 +325,7 @@ def parse_planning_output(
 
 __all__ = [
     "MAX_DEPTH",
+    "MAX_DIAGNOSTIC_TEXT_PARTS",
     "MAX_OUTPUT_BYTES",
     "PlanningOutputError",
     "PlanningOutputVersion",

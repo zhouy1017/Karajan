@@ -147,7 +147,7 @@ class FailedSelectionDiagnosticCommanderSuiteDouble(COnlyFixedCommanderSuiteDoub
 
     def observe(self, start, credential, *, current_guard):
         diagnostic = planning_output_selection_diagnostic(
-            ["FAKE_SELECTION_SECRET_ONE", "FAKE_SELECTION_SECRET_TWO"], finish="length"
+            [], finish="length", text_part_count=0, text_part_shape="malformed"
         )
         return {
             "status": "failed",
@@ -353,7 +353,8 @@ def test_failed_selection_diagnostic_round_trips_without_raw_text(commander_case
     assert scenario["scenario"] == "denied_tool"
     assert diagnostic["category"] == "selection"
     assert diagnostic["finish"] == "length"
-    assert diagnostic["text_part_shape"] == "multiple"
+    assert diagnostic["text_part_count"] == 0
+    assert diagnostic["text_part_shape"] == "malformed"
     assert "FAKE_SELECTION_SECRET" not in json.dumps(reread, sort_keys=True)
 
 
