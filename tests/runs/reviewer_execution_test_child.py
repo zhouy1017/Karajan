@@ -12,6 +12,8 @@ import json
 import os
 import sys
 import threading
+import time
+from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
 
@@ -87,6 +89,15 @@ def _service(directory: Path) -> ReviewerExecutionIntents:
     candidates = CandidateStore(Path(port["candidate_directory"]), existing_only=True)
     ApprovedReviewerBindings(admissions, candidates, qualifications)
     source = ReviewerExecutionSource(**port["source"])
+    replacement = port.get("changed_source")
+
+    def current_source() -> ReviewerExecutionSource:
+        if (directory / "reviewer-execution-test-source-changed").exists():
+            if not isinstance(replacement, dict):
+                raise RuntimeError("missing changed source test port")
+            return ReviewerExecutionSource(**replacement)
+        return source
+
     service = ReviewerExecutionIntents(
         Path(port["execution_database"]),
         admissions,
@@ -94,7 +105,7 @@ def _service(directory: Path) -> ReviewerExecutionIntents:
         source=source,
         host=RunnerHost(Path(port["host_directory"]), existing_only=True),
         launch_compiler=lambda _: ReviewerLaunchSpec.__new__(ReviewerLaunchSpec),
-        current_source=lambda: source,
+        current_source=current_source,
         existing_only=True,
     )
     return service
@@ -164,6 +175,8 @@ def main() -> int:
     lost_reply = mode == ["lost-reply"]
     concurrent = mode == ["concurrent"]
     lifecycle = mode == ["lifecycle"]
+    paused = mode == ["paused"]
+    source_wait = mode == ["source-wait"]
     directory = Path.cwd()
     result = {"pid": os.getpid()}
     persist_effects = _install_forbidden_effect_counters(directory)
@@ -210,7 +223,44 @@ def main() -> int:
             except Exception as error:
                 result["cancel_error"] = str(error)
         else:
-            result["claim_allowed"] = _service(directory).claim_registered_observer(
+            service = _service(directory)
+            if source_wait:
+                (directory / "reviewer-execution-test-child-service-ready").write_text("ready")
+                begin = directory / "reviewer-execution-test-child-final-writer-begin"
+                deadline = time.monotonic() + 5
+                while not begin.exists():
+                    if time.monotonic() >= deadline:
+                        raise RuntimeError("parent did not begin final writer wait")
+                    time.sleep(0.01)
+                original_db = service._db
+
+                @contextmanager
+                def final_writer_boundary(*, write=True):
+                    if write:
+                        (directory / "reviewer-execution-test-child-final-writer-ready").write_text(
+                            "ready"
+                        )
+                        release = directory / "reviewer-execution-test-child-final-writer-release"
+                        deadline = time.monotonic() + 5
+                        while not release.exists():
+                            if time.monotonic() >= deadline:
+                                raise RuntimeError("parent did not release final writer")
+                            time.sleep(0.01)
+                        attempt = directory / "reviewer-execution-test-child-final-writer-attempt"
+                        attempt.write_text("attempt")
+                    with original_db(write=write) as db:
+                        yield db
+
+                service._db = final_writer_boundary
+            if paused:
+                (directory / "reviewer-execution-test-child-ready").write_text("ready")
+                deadline = time.monotonic() + 5
+                release = directory / "reviewer-execution-test-child-release"
+                while not release.exists():
+                    if time.monotonic() >= deadline:
+                        raise RuntimeError("parent did not release direct child")
+                    time.sleep(0.01)
+            result["claim_allowed"] = service.claim_registered_observer(
                 run_id, reviewer_id, principal=principal, timeout_seconds=5
             )["claim_allowed"]
     except Exception as error:  # output is test-local and content-free

@@ -2,8 +2,10 @@ import hashlib
 import json
 import os
 import shutil
+import sqlite3
 import stat
 import sys
+import threading
 from pathlib import Path
 
 import httpx
@@ -285,6 +287,7 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
         **{f"state/{name}": (state / name).read_bytes() for name in stores},
     }
     first = open_reviewer_execution_intents(control)
+    assert isinstance(first, ReviewerExecutionIntents)
     assert database.read_bytes() == factory_storage_before["execution"]
     assert intents.host.database.read_bytes() == factory_storage_before["host"]
     assert journal.read_bytes() == factory_storage_before["journal"]
@@ -294,6 +297,20 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
     journal_before = journal.read_bytes()
     descriptor = control / "reviewer-execution-bootstrap.json"
     other = tmp_path / "other.sqlite"
+    ReviewerExecutionIntents(
+        other,
+        intents.admissions,
+        candidates,
+        source=first.source,
+        host=RunnerHost(intents.host.directory, existing_only=True),
+        launch_compiler=lambda _: ReviewerLaunchSpec(ProcessSpec(("fixture",), tmp_path), "3" * 64),
+    )
+    other_before = other.read_bytes()
+    # The factory's copied qualification fixture intentionally does not claim
+    # a fresh successful lifecycle (its route stays
+    # REVIEWER_RESERVED_ROUTE_NOT_CURRENT).  Keep that product boundary, but
+    # use the factory's real descriptor resolver at the valid fixture's final
+    # receiver boundary below.
     seeded = ReviewerExecutionIntents(
         database,
         intents.admissions,
@@ -301,9 +318,48 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
         source=first.source,
         host=RunnerHost(intents.host.directory, existing_only=True),
         launch_compiler=lambda _: ReviewerLaunchSpec(ProcessSpec(("fixture",), tmp_path), "3" * 64),
+        current_source=first.current_source,
     )
-    original = seeded.prepare(run_id, reviewer["id"], principal="owner", command_key="prepare")
+    original = seeded.prepare(
+        run_id, reviewer["id"], principal="owner", command_key="factory-source-wait"
+    )
     host_prepare = seeded.host.prepare
+    entered = threading.Event()
+
+    def wait_for_host_writer(*args, **kwargs):
+        entered.set()
+        return host_prepare(*args, **kwargs)
+
+    seeded.host.prepare = wait_for_host_writer
+    holder = sqlite3.connect(seeded.host.database, isolation_level=None, timeout=5)
+    holder.execute("BEGIN IMMEDIATE")
+    errors: list[BaseException] = []
+
+    def freeze_while_descriptor_changes() -> None:
+        try:
+            seeded.freeze_launch(run_id, reviewer["id"], principal="owner")
+        except BaseException as error:
+            errors.append(error)
+
+    thread = threading.Thread(target=freeze_while_descriptor_changes)
+    thread.start()
+    assert entered.wait(5)
+    changed = reviewer_settings.document() | {"execution_database": str(other)}
+    descriptor.write_text(json.dumps(changed, sort_keys=True, separators=(",", ":")) + "\n")
+    holder.commit()
+    holder.close()
+    thread.join(10)
+    assert not thread.is_alive()
+    assert errors and isinstance(errors[0], RunError)
+    assert "REVIEWER_EXECUTION_BOOTSTRAP_CHANGED" in str(errors[0])
+    assert seeded.read(run_id, reviewer["id"], principal="owner")["host_prepared_id"] is None
+    with pytest.raises(KeyError):
+        seeded.host.inspect(original["planned_attempt_id"])
+    assert other.read_bytes() == other_before
+    descriptor.write_text(
+        json.dumps(reviewer_settings.document(), sort_keys=True, separators=(",", ":")) + "\n"
+    )
+    seeded.host.prepare = host_prepare
 
     def lose_host_reply(*args, **kwargs):
         host_prepare(*args, **kwargs)
@@ -358,15 +414,6 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
 
     # Replacing the facade's own descriptor is a current-source change, not a
     # historical-read failure.  The next effect guard must see it.
-    ReviewerExecutionIntents(
-        other,
-        intents.admissions,
-        candidates,
-        source=first.source,
-        host=RunnerHost(intents.host.directory, existing_only=True),
-        launch_compiler=first.launch_compiler,
-    )
-    other_before = other.read_bytes()
     changed = reviewer_settings.document() | {"execution_database": str(other)}
     descriptor.write_text(json.dumps(changed, sort_keys=True, separators=(",", ":")) + "\n")
     with pytest.raises(RunError, match="REVIEWER_EXECUTION_BOOTSTRAP_CHANGED"):

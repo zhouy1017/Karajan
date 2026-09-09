@@ -535,17 +535,21 @@ class ReviewerExecutionIntents:
         Complete Candidate snapshot/diff work happened in ``_compiled``
         before this shared producer guard was acquired.
         """
-        if self.current_source is not None and self.current_source() != self.source:
-            raise RunError("REVIEWER_EXECUTION_SOURCE_CHANGED")
+        self._assert_current_source()
         capability = held.get("final_effect_capability")
         if not isinstance(capability, ReviewerFinalEffectCapability):
             raise RunError("REVIEWER_EXECUTION_BOUNDARY_INVALID")
-        return capability.prepare_current(expected_input, prepared_input)
+        return capability.prepare_current(
+            expected_input, prepared_input, self._assert_current_source
+        )
 
-    @contextmanager
-    def _current_guard(self, value: dict[str, Any]) -> Iterator[Callable[[], None]]:
+    def _assert_current_source(self) -> None:
         if self.current_source is not None and self.current_source() != self.source:
             raise RunError("REVIEWER_EXECUTION_SOURCE_CHANGED")
+
+    @contextmanager
+    def _current_guard(self, value: dict[str, Any]) -> Iterator[PreparedReviewerFinalEffect]:
+        self._assert_current_source()
         binding, compiled = self._compiled(
             value["run_id"], value["reviewer_operation_id"], value["principal"]
         )
@@ -567,10 +571,7 @@ class ReviewerExecutionIntents:
                 held, value["reviewer_input"], compiled
             )
 
-            def assert_temporal_current() -> None:
-                prepared_effect.assert_current()
-
-            yield assert_temporal_current
+            yield prepared_effect
 
     def freeze_launch(
         self, run_id: str, reviewer_operation_id: str, *, principal: str
@@ -580,7 +581,7 @@ class ReviewerExecutionIntents:
             raise RunError("REVIEWER_EXECUTION_NOT_PREPARED")
         if value["cancel_requested"]:
             raise RunError("REVIEWER_EXECUTION_CANCELLED")
-        with self._current_guard(value) as assert_temporal_current:
+        with self._current_guard(value) as prepared_effect:
             if value.get("launch") is None:
                 compiled_launch = self.launch_compiler(deepcopy(value))
                 launch = launch_document(
@@ -596,12 +597,13 @@ class ReviewerExecutionIntents:
                     Path(launch["process_spec"]["cwd"]),
                     float(launch["process_spec"]["timeout_seconds"]),
                 ),
-                before_write=assert_temporal_current,
+                before_nonce=prepared_effect.assert_source_current,
+                before_write=prepared_effect.assert_current,
             )
             control = self.host.initialize_control_once(
                 value["planned_attempt_id"], prepared_id=value["start_key"], fence=value["fence"],
                 authorization_ref=value["authorization_ref"],
-                before_write=assert_temporal_current,
+                before_write=prepared_effect.assert_current,
             )
         if not control["dispatch_enabled"]:
             raise RunError("REVIEWER_EXECUTION_CONTROL_REVOKED")
@@ -639,18 +641,10 @@ class ReviewerExecutionIntents:
                 "launch_phase": snapshot.launch_phase,
                 "remote_stop": snapshot.remote_stop,
             }
-            # A reply lost after Host's preparation commit leaves no execution
-            # receipt.  Correlate that historical Host row without creating a
-            # receipt, control, claim, or any new authority in this ledger.
-            if value["host_prepared_id"] is None:
-                return deepcopy(value | {"host_observation": observation})
-        with self._db() as db:
-            current = self._load(db, run_id, reviewer_operation_id, principal)
-            if current is None or current["execution_id"] != value["execution_id"]:
-                raise RunError("REVIEWER_EXECUTION_BINDING_INVALID")
-            current["host_observation"] = observation
-            self._save(db, current)
-            return deepcopy(current)
+            # Observations are correlation-only, including a reply lost after
+            # Host preparation. They must not create a ledger receipt or
+            # require a ledger writer.
+            return deepcopy(value | {"host_observation": observation})
 
     def claim_registered_observer(
         self,
@@ -672,11 +666,24 @@ class ReviewerExecutionIntents:
         runner = self.host.wait_for_runner_registration(
             value["planned_attempt_id"], timeout_seconds=timeout_seconds
         )
-        with self._current_guard(value) as assert_temporal_current:
+        with self._current_guard(value) as prepared_effect:
+            launch = value.get("launch")
+            if not isinstance(launch, dict):
+                raise RunError("REVIEWER_EXECUTION_BINDING_INVALID")
+            try:
+                spec = ProcessSpec(
+                    tuple(launch["process_spec"]["argv"]),
+                    Path(launch["process_spec"]["cwd"]),
+                    float(launch["process_spec"]["timeout_seconds"]),
+                )
+            except (KeyError, TypeError, ValueError):
+                raise RunError("REVIEWER_EXECUTION_BINDING_INVALID") from None
             with self.host.current_runner_guard(
                 value["planned_attempt_id"],
                 fence=value["fence"],
                 authorization_ref=value["authorization_ref"],
+                expected_manifest=host_manifest(value),
+                expected_spec=spec,
             ) as current:
                 if current != runner:
                     raise RunError("REVIEWER_EXECUTION_RUNNER_CHANGED")
@@ -699,6 +706,6 @@ class ReviewerExecutionIntents:
                     serialized = self._serialized_save(current_value)
                     # The complete persisted claim payload exists before the
                     # final scalar authority check and adjacent UPDATE.
-                    assert_temporal_current()
+                    prepared_effect.assert_current()
                     self._save(db, current_value, serialized)
                     return deepcopy(current_value | {"claim_allowed": True})

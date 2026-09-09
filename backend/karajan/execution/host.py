@@ -222,6 +222,7 @@ class RunnerHost:
         start_key: str,
         spec: ProcessSpec,
         *,
+        before_nonce: Callable[[], None] | None = None,
         before_write: Callable[[], None] | None = None,
     ) -> Snapshot:
         if not start_key or len(start_key) > 256:
@@ -243,6 +244,13 @@ class RunnerHost:
                     raise StartConflict("START_KEY_PAYLOAD_MISMATCH")
             else:
                 try:
+                    # A deployment-source check must follow acquisition of
+                    # this Host writer but precede every new row material,
+                    # including the nonce.  Keep the established final scalar
+                    # callback below the nonce, where it remains adjacent to
+                    # the INSERT.
+                    if before_nonce is not None:
+                        before_nonce()
                     # The nonce is part of the prepared Host row. Materialize
                     # it before the caller's final authority check so elapsed
                     # authority cannot commit a new preparation.
@@ -381,7 +389,13 @@ class RunnerHost:
 
     @contextmanager
     def current_fence_guard(
-        self, attempt_id: str, *, fence: int, authorization_ref: str
+        self,
+        attempt_id: str,
+        *,
+        fence: int,
+        authorization_ref: str,
+        expected_manifest: HostManifest | None = None,
+        expected_spec: ProcessSpec | None = None,
     ) -> Iterator[dict[str, object]]:
         """Hold the accepted writer identity through a trusted capture transaction.
 
@@ -392,6 +406,13 @@ class RunnerHost:
         _identifier.validate_python(attempt_id, strict=True)
         _identifier.validate_python(authorization_ref, strict=True)
         _positive_integer.validate_python(fence, strict=True)
+        if (expected_manifest is None) != (expected_spec is None):
+            raise ValueError("Expected Host manifest and ProcessSpec must be paired.")
+        expected_attempt = None
+        expected_spec_json = None
+        if expected_manifest is not None and expected_spec is not None:
+            expected_attempt = parse_host_manifest_json(expected_manifest.model_dump_json())
+            expected_spec_json = encoded(expected_spec.document())
         with self._connect(existing_only=True) as connection:
             connection.execute("BEGIN IMMEDIATE")
             connection.execute("PRAGMA query_only=ON")
@@ -424,6 +445,11 @@ class RunnerHost:
                 or attempt.id != attempt_id
             ):
                 raise LaunchDenied("CAPTURE_START_BINDING_INVALID")
+            if (
+                expected_attempt is not None
+                and (attempt != expected_attempt or row["spec"] != expected_spec_json)
+            ):
+                raise LaunchDenied("CAPTURE_PREPARED_BINDING_MISMATCH")
             control = connection.execute(
                 "SELECT * FROM controls WHERE attempt_id=?", (attempt_id,)
             ).fetchone()
@@ -502,7 +528,13 @@ class RunnerHost:
 
     @contextmanager
     def current_runner_guard(
-        self, attempt_id: str, *, fence: int, authorization_ref: str
+        self,
+        attempt_id: str,
+        *,
+        fence: int,
+        authorization_ref: str,
+        expected_manifest: HostManifest | None = None,
+        expected_spec: ProcessSpec | None = None,
     ) -> Iterator[ProcessIdentity]:
         """Fence effects to the exact live ProcessSpec child, not its descendants.
 
@@ -510,7 +542,13 @@ class RunnerHost:
         The caller cannot supply a PID or adopt a historical runner identity.
         The outer fence transaction holds Host withdrawal through the effect.
         """
-        with self.current_fence_guard(attempt_id, fence=fence, authorization_ref=authorization_ref):
+        with self.current_fence_guard(
+            attempt_id,
+            fence=fence,
+            authorization_ref=authorization_ref,
+            expected_manifest=expected_manifest,
+            expected_spec=expected_spec,
+        ):
             with self._connect(existing_only=True) as connection:
                 connection.execute("PRAGMA query_only=ON")
                 row = connection.execute(

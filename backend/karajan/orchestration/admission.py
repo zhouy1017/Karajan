@@ -29,12 +29,18 @@ class PreparedReviewerFinalEffect:
     _prepare_input: Callable[[object, object | None], object]
     _expected_input: object
     _prepared_input: object
+    _source_check: Callable[[], None]
+
+    def assert_source_current(self) -> None:
+        """Check deployment identity before a receiver creates any Host material."""
+        self._source_check()
 
     def assert_current(self) -> None:
         # Rebuild the complete current controller/CAS/Check input against the
         # immutable snapshot material. This detects an unavailable Check or a
         # current binding change after a receiver waited, without another pair
         # of full filesystem snapshots or diff construction in that writer.
+        self.assert_source_current()
         self._prepare_input(self._expected_input, self._prepared_input)
         self._final_scalar_check()
         try:
@@ -52,7 +58,10 @@ class ReviewerFinalEffectCapability:
     _prepare_input: Callable[[object, object | None], object]
 
     def prepare_current(
-        self, expected_input: object, prepared_input: object
+        self,
+        expected_input: object,
+        prepared_input: object,
+        source_check: Callable[[], None],
     ) -> PreparedReviewerFinalEffect:
         # The compiler produced this private immutable complete input before
         # any Admission/Run/Project/Capacity/Candidate writer was acquired.
@@ -68,6 +77,7 @@ class ReviewerFinalEffectCapability:
             self._prepare_input,
             expected_input,
             prepared_input,
+            source_check,
         )
 
 

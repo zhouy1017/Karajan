@@ -17,6 +17,7 @@ import karajan.orchestration.reviewer_input as reviewer_input
 import pytest
 from karajan.capacity.store import CapacityEffectCapability
 from karajan.execution import Activation, LaunchDenied, ProcessSpec, RunnerHost
+from karajan.orchestration.reviewer_execution_binding import host_manifest
 from karajan.orchestration.reviewer_execution_intent import (
     ReviewerExecutionIntents,
     ReviewerExecutionSource,
@@ -484,11 +485,118 @@ def test_new_intent_rechecks_current_deployment_source_at_its_writer_boundary(
     service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
     changed = ReviewerExecutionSource("3" * 64, "4" * 64)
     service.current_source = lambda: changed
-    before, host_before = service.database.read_bytes(), service.host.database.read_bytes()
+    before = service.database.read_bytes()
     with pytest.raises(RunError, match="REVIEWER_EXECUTION_SOURCE_CHANGED"):
         service.prepare(run_id, reviewer_id, principal="owner", command_key="stale-new-intent")
     assert service.database.read_bytes() == before
     assert service.read(run_id, reviewer_id, principal="owner") is None
+
+
+@pytest.mark.parametrize("boundary", ["new_intent", "host_prepare", "initialize_control"])
+def test_current_source_change_after_actual_receiver_writer_wait_blocks_effect(
+    tmp_path, binding_case, boundary
+):
+    """The final source read follows, rather than precedes, each writer wait."""
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    changed = [False]
+    replacement = ReviewerExecutionSource("3" * 64, "4" * 64)
+    service.current_source = lambda: replacement if changed[0] else service.source
+    host_before = service.host.database.read_bytes()
+    errors: list[BaseException] = []
+    reached, release = threading.Event(), threading.Event()
+    holder: sqlite3.Connection | None = None
+    holder_thread: threading.Thread | None = None
+
+    if boundary == "new_intent":
+        database = service.database
+        original_db = service._db
+
+        @contextmanager
+        def writer(*, write=True):
+            if write:
+                reached.set()
+            with original_db(write=write) as db:
+                yield db
+
+        service._db = writer
+
+        def action():
+            return service.prepare(
+                run_id, reviewer_id, principal="owner", command_key="writer-wait"
+            )
+
+    else:
+        intent = service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+        database = service.host.database
+        if boundary == "host_prepare":
+            original_prepare = service.host.prepare
+
+            def prepare(*args, **kwargs):
+                reached.set()
+                return original_prepare(*args, **kwargs)
+
+            service.host.prepare = prepare
+        else:
+            launch = service.launch_compiler(intent)
+            service.host.prepare(host_manifest(intent), intent["start_key"], launch.process_spec)
+            host_before = service.host.database.read_bytes()
+            original_control = service.host.initialize_control_once
+            holder_ready = threading.Event()
+
+            def hold_control_writer():
+                nonlocal holder
+                holder = sqlite3.connect(database, isolation_level=None, timeout=5)
+                holder.execute("BEGIN IMMEDIATE")
+                holder_ready.set()
+                assert release.wait(5)
+                holder.commit()
+                holder.close()
+
+            def initialize_control(*args, **kwargs):
+                nonlocal holder_thread
+                holder_thread = threading.Thread(target=hold_control_writer)
+                holder_thread.start()
+                assert holder_ready.wait(5)
+                reached.set()
+                return original_control(*args, **kwargs)
+
+            service.host.initialize_control_once = initialize_control
+
+        def action():
+            return service.freeze_launch(run_id, reviewer_id, principal="owner")
+
+    if boundary != "initialize_control":
+        holder = sqlite3.connect(database, isolation_level=None, timeout=5)
+        holder.execute("BEGIN IMMEDIATE")
+
+    def invoke():
+        try:
+            action()
+        except BaseException as error:
+            errors.append(error)
+
+    thread = threading.Thread(target=invoke)
+    thread.start()
+    assert reached.wait(5)
+    changed[0] = True
+    assert holder is not None
+    if boundary != "initialize_control":
+        holder.commit()
+        holder.close()
+    else:
+        release.set()
+    thread.join(10)
+    if holder_thread is not None:
+        holder_thread.join(10)
+        assert not holder_thread.is_alive()
+    assert not thread.is_alive()
+    assert errors and isinstance(errors[0], RunError)
+    assert "REVIEWER_EXECUTION_SOURCE_CHANGED" in str(errors[0])
+    current = service.read(run_id, reviewer_id, principal="owner")
+    if boundary == "new_intent":
+        assert current is None
+    else:
+        assert current is not None and current["host_prepared_id"] is None
     assert service.host.database.read_bytes() == host_before
 
 
@@ -1468,6 +1576,54 @@ def test_lost_host_prepare_reply_reopens_for_historical_read_only_correlation(
         reopened.claim_registered_observer(run_id, reviewer_id, principal="owner")
 
 
+def test_successful_inspect_host_is_read_only_across_store_reopen(tmp_path, binding_case):
+    """A normal fixed Host preparation never records a read observation."""
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    prepared = service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+    service.freeze_launch(run_id, reviewer_id, principal="owner")
+    with sqlite3.connect(service.database) as db:
+        before = db.execute(
+            "SELECT intent FROM reviewer_executions WHERE execution_id=?",
+            (prepared["execution_id"],),
+        ).fetchone()[0]
+    mtime_before = service.database.stat().st_mtime_ns
+    writes = []
+    original_db = service._db
+
+    @contextmanager
+    def observe_db(*, write=True):
+        writes.append(write)
+        with original_db(write=write) as db:
+            yield db
+
+    service._db = observe_db
+    observed = service.inspect_host(run_id, reviewer_id, principal="owner")
+    assert observed["host_observation"]["prepared_id"] == prepared["start_key"]
+    assert writes == [False]
+    assert service.database.stat().st_mtime_ns == mtime_before
+    with sqlite3.connect(service.database) as db:
+        assert db.execute(
+            "SELECT intent FROM reviewer_executions WHERE execution_id=?",
+            (prepared["execution_id"],),
+        ).fetchone()[0] == before
+    reopened = ReviewerExecutionIntents(
+        service.database,
+        service.admissions,
+        service.candidates,
+        source=service.source,
+        host=RunnerHost(service.host.directory, existing_only=True),
+        launch_compiler=service.launch_compiler,
+        existing_only=True,
+    )
+    again = reopened.inspect_host(run_id, reviewer_id, principal="owner")
+    assert again["host_observation"] == observed["host_observation"]
+    with sqlite3.connect(reopened.database) as db:
+        assert db.execute(
+            "SELECT intent FROM reviewer_executions WHERE execution_id=?",
+            (prepared["execution_id"],),
+        ).fetchone()[0] == before
+
+
 def test_cancel_serializes_with_actual_inspect_host_writer_and_stays_durable(
     tmp_path, binding_case
 ):
@@ -1576,6 +1732,51 @@ def test_unregistered_or_unstarted_host_cannot_claim_observer(tmp_path, binding_
     assert service.read(run_id, reviewer_id, principal="owner")["effect_claim"] is None
 
 
+def _write_direct_child_port(
+    directory: Path,
+    service: ReviewerExecutionIntents,
+    source: ReviewerExecutionSource,
+    qualification_facts: dict[object, object],
+    *,
+    changed_source: ReviewerExecutionSource | None = None,
+) -> None:
+    (directory / "reviewer-execution-test-port.json").write_text(
+        json.dumps(
+            {
+                "stores": {
+                    "projects": str(service.admissions.routing.planner.projects.database),
+                    "runs": str(service.admissions.routing.planner.database),
+                    "capacity": str(service.admissions.routing.capacity.path),
+                    "admissions": str(service.admissions.database),
+                },
+                "candidate_directory": str(service.candidates.directory),
+                "host_directory": str(service.host.directory),
+                "execution_database": str(service.database),
+                "allowed_roots": [
+                    str(path) for path in service.admissions.routing.planner.projects.allowed_roots
+                ],
+                "project_clock": service.admissions.routing.planner.projects.clock(),
+                "planner_clock": service.admissions.routing.planner.clock(),
+                "capacity_clock": service.admissions.routing.capacity.clock(),
+                "estimate_clock": service.admissions.routing.estimates.clock(),
+                "source": {
+                    "runner_source_sha256": source.runner_source_sha256,
+                    "native_source_sha256": source.native_source_sha256,
+                },
+                "changed_source": (
+                    {
+                        "runner_source_sha256": changed_source.runner_source_sha256,
+                        "native_source_sha256": changed_source.native_source_sha256,
+                    }
+                    if changed_source is not None
+                    else None
+                ),
+                "qualification_facts": qualification_facts,
+            }
+        )
+    )
+
+
 @pytest.mark.skipif(
     sys.platform == "win32", reason="Host direct-child identity is Linux P evidence"
 )
@@ -1616,33 +1817,7 @@ def test_existing_store_direct_child_claim_is_one_shot_and_cancelled_recovery_st
     intent = service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
     prepared = service.freeze_launch(run_id, reviewer_id, principal="owner")
     assert observed_facts
-    (tmp_path / "reviewer-execution-test-port.json").write_text(
-        json.dumps(
-            {
-                "stores": {
-                    "projects": str(service.admissions.routing.planner.projects.database),
-                    "runs": str(service.admissions.routing.planner.database),
-                    "capacity": str(service.admissions.routing.capacity.path),
-                    "admissions": str(service.admissions.database),
-                },
-                "candidate_directory": str(service.candidates.directory),
-                "host_directory": str(service.host.directory),
-                "execution_database": str(service.database),
-                "allowed_roots": [
-                    str(path) for path in service.admissions.routing.planner.projects.allowed_roots
-                ],
-                "project_clock": service.admissions.routing.planner.projects.clock(),
-                "planner_clock": service.admissions.routing.planner.clock(),
-                "capacity_clock": service.admissions.routing.capacity.clock(),
-                "estimate_clock": service.admissions.routing.estimates.clock(),
-                "source": {
-                    "runner_source_sha256": source.runner_source_sha256,
-                    "native_source_sha256": source.native_source_sha256,
-                },
-                "qualification_facts": observed_facts[-1],
-            }
-        )
-    )
+    _write_direct_child_port(tmp_path, service, source, observed_facts[-1])
     activation = Activation(
         "reviewer-test-activation",
         intent["planned_attempt_id"],
@@ -1771,3 +1946,173 @@ def test_existing_store_direct_child_claim_is_one_shot_and_cancelled_recovery_st
     assert reopened.cancel(run_id, reviewer_id, principal="owner")["cancel_requested"] is True
     with pytest.raises(RunError, match="REVIEWER_EXECUTION_CANCELLED"):
         reopened.claim_registered_observer(run_id, reviewer_id, principal="owner")
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="Host direct-child identity is Linux P evidence"
+)
+@pytest.mark.parametrize("field", ["profile_id", "permissions", "timeout_seconds"])
+def test_registered_direct_child_rejects_tampered_original_host_binding(
+    tmp_path, binding_case, field
+):
+    """A registered child cannot claim a Host row changed after preparation."""
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    qualification = binding_case[1]
+    observed_facts = []
+    original_facts = qualification._facts
+
+    def record_facts(*args):
+        value = original_facts(*args)
+        observed_facts.append(deepcopy(value))
+        return value
+
+    qualification._facts = record_facts
+    source = service.source
+    child = Path(__file__).with_name("reviewer_execution_test_child.py").resolve()
+    service.launch_compiler = lambda _: ReviewerLaunchSpec(
+        ProcessSpec(
+            (sys.executable, "-I", str(child), run_id, reviewer_id, "owner", "paused"),
+            tmp_path,
+            20,
+        ),
+        "3" * 64,
+    )
+    intent = service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+    prepared = service.freeze_launch(run_id, reviewer_id, principal="owner")
+    _write_direct_child_port(tmp_path, service, source, observed_facts[-1])
+    activation = Activation(
+        "reviewer-tamper-activation",
+        intent["planned_attempt_id"],
+        intent["fence"],
+        intent["authorization_ref"],
+        intent["budget_ref"],
+        time.time() + 30,
+    )
+    service.host.start(prepared["start_key"], activation)
+    ready = tmp_path / "reviewer-execution-test-child-ready"
+    deadline = time.monotonic() + 30
+    while not ready.exists():
+        assert time.monotonic() < deadline, "direct child did not reach claim boundary"
+        time.sleep(0.02)
+    while True:
+        with sqlite3.connect(service.host.database) as db:
+            registered = db.execute(
+                "SELECT runner_pid FROM executions WHERE attempt_id=?",
+                (intent["planned_attempt_id"],),
+            ).fetchone()
+        if registered is not None and registered[0] is not None:
+            break
+        assert time.monotonic() < deadline, "direct child did not register with Host"
+        time.sleep(0.02)
+    with sqlite3.connect(service.host.database) as db:
+        db.row_factory = sqlite3.Row
+        row = db.execute(
+            "SELECT manifest,spec FROM executions WHERE start_key=?", (prepared["start_key"],)
+        ).fetchone()
+        assert row is not None
+        if field == "timeout_seconds":
+            spec = json.loads(row["spec"])
+            spec["timeout_seconds"] = 19
+            db.execute(
+                "UPDATE executions SET spec=? WHERE start_key=?",
+                (json.dumps(spec, sort_keys=True, separators=(",", ":")), prepared["start_key"]),
+            )
+        else:
+            manifest = json.loads(row["manifest"])
+            if field == "profile_id":
+                manifest["profile_id"] = "tampered-profile"
+            else:
+                manifest["permissions"] = ["read", "tampered-permission"]
+            db.execute(
+                "UPDATE executions SET manifest=? WHERE start_key=?",
+                (
+                    json.dumps(manifest, sort_keys=True, separators=(",", ":")),
+                    prepared["start_key"],
+                ),
+            )
+        db.commit()
+    (tmp_path / "reviewer-execution-test-child-release").write_text("release")
+    result_path = tmp_path / "reviewer-execution-test-child-result.json"
+    while not result_path.exists():
+        assert time.monotonic() < deadline, "tampered direct child did not reply"
+        time.sleep(0.02)
+    result = json.loads(result_path.read_text())
+    assert "CAPTURE_PREPARED_BINDING_MISMATCH" in result.get("error", "")
+    effects = json.loads((tmp_path / "reviewer-execution-test-child-effects.json").read_text())
+    assert effects["claim_observed"] is False
+    assert all(value == 0 for value in effects["counters"].values())
+    assert service.read(run_id, reviewer_id, principal="owner")["effect_claim"] is None
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="Host direct-child identity is Linux P evidence"
+)
+def test_registered_direct_child_rechecks_source_after_final_writer_wait(tmp_path, binding_case):
+    """The registered child rereads source only after its final ledger wait."""
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    qualification = binding_case[1]
+    observed_facts = []
+    original_facts = qualification._facts
+
+    def record_facts(*args):
+        value = original_facts(*args)
+        observed_facts.append(deepcopy(value))
+        return value
+
+    qualification._facts = record_facts
+    source = service.source
+    replacement = ReviewerExecutionSource("3" * 64, "4" * 64)
+    child = Path(__file__).with_name("reviewer_execution_test_child.py").resolve()
+    service.launch_compiler = lambda _: ReviewerLaunchSpec(
+        ProcessSpec(
+            (sys.executable, "-I", str(child), run_id, reviewer_id, "owner", "source-wait"),
+            tmp_path,
+            20,
+        ),
+        "3" * 64,
+    )
+    intent = service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+    prepared = service.freeze_launch(run_id, reviewer_id, principal="owner")
+    _write_direct_child_port(
+        tmp_path, service, source, observed_facts[-1], changed_source=replacement
+    )
+    activation = Activation(
+        "reviewer-source-wait-activation",
+        intent["planned_attempt_id"],
+        intent["fence"],
+        intent["authorization_ref"],
+        intent["budget_ref"],
+        time.time() + 30,
+    )
+    service.host.start(prepared["start_key"], activation)
+    service_ready = tmp_path / "reviewer-execution-test-child-service-ready"
+    deadline = time.monotonic() + 30
+    while not service_ready.exists():
+        assert time.monotonic() < deadline, "direct child did not compose existing stores"
+        time.sleep(0.02)
+    holder = sqlite3.connect(service.database, isolation_level=None, timeout=5)
+    holder.execute("BEGIN IMMEDIATE")
+    (tmp_path / "reviewer-execution-test-child-final-writer-begin").write_text("begin")
+    ready = tmp_path / "reviewer-execution-test-child-final-writer-ready"
+    attempt = tmp_path / "reviewer-execution-test-child-final-writer-attempt"
+    release = tmp_path / "reviewer-execution-test-child-final-writer-release"
+    while not ready.exists():
+        assert time.monotonic() < deadline, "direct child did not reach final ledger boundary"
+        time.sleep(0.02)
+    release.write_text("release")
+    while not attempt.exists():
+        assert time.monotonic() < deadline, "direct child did not attempt final ledger writer"
+        time.sleep(0.02)
+    (tmp_path / "reviewer-execution-test-source-changed").write_text("changed")
+    holder.commit()
+    holder.close()
+    result_path = tmp_path / "reviewer-execution-test-child-result.json"
+    while not result_path.exists():
+        assert time.monotonic() < deadline, "source-changed child did not reply"
+        time.sleep(0.02)
+    result = json.loads(result_path.read_text())
+    assert "REVIEWER_EXECUTION_SOURCE_CHANGED" in result.get("error", "")
+    effects = json.loads((tmp_path / "reviewer-execution-test-child-effects.json").read_text())
+    assert effects["claim_observed"] is False
+    assert all(value == 0 for value in effects["counters"].values())
+    assert service.read(run_id, reviewer_id, principal="owner")["effect_claim"] is None
