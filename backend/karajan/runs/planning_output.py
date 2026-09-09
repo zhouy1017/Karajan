@@ -5,6 +5,7 @@ admission, inspect a Run, or persist a plan.  The controller supplies the
 version because that value is part of the trusted execution binding.
 """
 
+import hashlib
 import json
 import math
 from typing import Any, Literal, overload
@@ -17,6 +18,27 @@ from .routing_authorization import PlanV2
 MAX_OUTPUT_BYTES = 262_144
 MAX_DEPTH = 16
 PlanningOutputVersion = Literal["v1", "v2"]
+_DIAGNOSTIC_SCHEMA = "karajan.planning-output-diagnostic.v1"
+_DIAGNOSTIC_CATEGORIES = {
+    "success",
+    "json_syntax",
+    "duplicate_key",
+    "non_finite_number",
+    "json_structure",
+    "schema",
+    "input",
+    "limit",
+    "unknown",
+}
+_DIAGNOSTIC_FINISHES = {"stop", "tool-calls", "unknown", "missing"}
+
+
+class _DiagnosticDuplicateKey(ValueError):
+    pass
+
+
+class _DiagnosticNonFiniteNumber(ValueError):
+    pass
 
 
 class PlanningOutputError(ValueError):
@@ -25,6 +47,102 @@ class PlanningOutputError(ValueError):
     def __init__(self, code: str) -> None:
         self.code = code
         super().__init__(code)
+
+
+def _diagnostic_bytes(content: str | bytes) -> bytes:
+    if type(content) is bytes:
+        return content
+    if type(content) is str:
+        try:
+            return content.encode("utf-8", errors="strict")
+        except UnicodeError:
+            return b""
+    return b""
+
+
+def _diagnostic_category(
+    content: str | bytes, reason_code: str
+) -> tuple[str, int | None, int | None]:
+    if reason_code == "SUCCESS":
+        return "success", None, None
+    if reason_code == "PLANNING_OUTPUT_SCHEMA_INVALID":
+        return "schema", None, None
+    if reason_code == "PLANNING_OUTPUT_INPUT_INVALID":
+        return "input", None, None
+    if reason_code == "PLANNING_OUTPUT_LIMIT_EXCEEDED":
+        return "limit", None, None
+    if reason_code != "PLANNING_OUTPUT_JSON_INVALID":
+        return "unknown", None, None
+    if type(content) not in (str, bytes):
+        return "input", None, None
+    try:
+        json.loads(
+            content,
+            object_pairs_hook=_diagnostic_pairs,
+            parse_constant=_diagnostic_constant,
+            parse_float=_diagnostic_float,
+        )
+    except _DiagnosticDuplicateKey:
+        return "duplicate_key", None, None
+    except _DiagnosticNonFiniteNumber:
+        return "non_finite_number", None, None
+    except json.JSONDecodeError as error:
+        return "json_syntax", error.lineno, error.colno
+    except (ValueError, TypeError, RecursionError, OverflowError):
+        return "json_structure", None, None
+    return "json_structure", None, None
+
+
+def _diagnostic_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    seen: set[str] = set()
+    for key, _ in pairs:
+        if key in seen:
+            raise _DiagnosticDuplicateKey
+        seen.add(key)
+    return dict(pairs)
+
+
+def _diagnostic_constant(value: str) -> None:
+    raise _DiagnosticNonFiniteNumber
+
+
+def _diagnostic_float(value: str) -> float:
+    parsed = float(value)
+    if not math.isfinite(parsed):
+        raise _DiagnosticNonFiniteNumber
+    return parsed
+
+
+def planning_output_diagnostic(
+    content: str | bytes,
+    *,
+    reason_code: str,
+    finish: str = "unknown",
+    text_part_count: int = 0,
+) -> dict[str, Any]:
+    """Return bounded, content-free diagnostics for one parser boundary result."""
+
+    encoded = _diagnostic_bytes(content)
+    category, line, column = _diagnostic_category(content, reason_code)
+    safe_finish = finish if finish in _DIAGNOSTIC_FINISHES else "unknown"
+    safe_count = text_part_count if type(text_part_count) is int and text_part_count >= 0 else 0
+    return {
+        "schema_version": _DIAGNOSTIC_SCHEMA,
+        "category": category if category in _DIAGNOSTIC_CATEGORIES else "unknown",
+        "byte_length": len(encoded),
+        "sha256": hashlib.sha256(encoded).hexdigest(),
+        "finish": safe_finish,
+        "text_part_count": safe_count,
+        "text_part_shape": (
+            "one_text"
+            if safe_count == 1
+            else "none"
+            if safe_count == 0
+            else "multiple"
+        ),
+        "decoder_line": line,
+        "decoder_column": column,
+    }
 
 
 def _depth(text: str) -> None:
@@ -154,5 +272,6 @@ __all__ = [
     "MAX_OUTPUT_BYTES",
     "PlanningOutputError",
     "PlanningOutputVersion",
+    "planning_output_diagnostic",
     "parse_planning_output",
 ]

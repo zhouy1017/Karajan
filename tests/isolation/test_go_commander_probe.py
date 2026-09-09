@@ -117,6 +117,7 @@ def test_commander_native_probe_uses_original_journal_and_empty_tools(
     assert result["status"] == "passed", result["reason_codes"]
     assert result["observation_origin"] == "http_fixture"
     assert result["native_final"]["finish"] == "stop"
+    assert "text" not in result["native_final"]
     assert result["parsed_plan"] == spec["cases"][scenario]["expected_plan"]
     assert result["journal"]["state"] == "revoked"
     assert result["native_cleanup"]["local_stop"] == "confirmed"
