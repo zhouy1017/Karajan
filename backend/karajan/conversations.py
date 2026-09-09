@@ -430,53 +430,51 @@ class ConversationStore:
 
     def run_conversation(self, run_id: str, project_id: str) -> str:
         with self._transaction() as db:
-            row = db.execute(
-                "SELECT conversation_id, project_id FROM conversation_run_bindings WHERE run_id=?",
-                (run_id,),
-            ).fetchone()
-            if row is None:
-                raise ConversationError("RUN_CONVERSATION_UNBOUND")
-            if row["project_id"] != project_id:
-                raise ConversationError("CROSS_PROJECT_REFERENCE")
-            return str(row["conversation_id"])
+            binding = self._binding_status(db, run_id, project_id)
+            if binding["recovery_blocker"] is not None:
+                raise ConversationError(binding["recovery_blocker"])
+            return str(binding["conversation_id"])
 
     def bound_conversation(self, run_id: str, project_id: str) -> str:
         """Read an already migrated binding without creating recovery state."""
         with self._transaction() as db:
-            row = db.execute(
-                "SELECT conversation_id, project_id FROM conversation_run_bindings WHERE run_id=?",
-                (run_id,),
-            ).fetchone()
-            if row is None or row["project_id"] != project_id:
-                raise ConversationError("RUN_CONVERSATION_UNBOUND")
-            return str(row["conversation_id"])
+            binding = self._binding_status(db, run_id, project_id)
+            if binding["recovery_blocker"] is not None:
+                raise ConversationError(binding["recovery_blocker"])
+            return str(binding["conversation_id"])
 
     def run_binding(self, run_id: str, project_id: object) -> dict[str, str | None]:
         """Return a durable binding or its migration blocker for compatibility reads."""
         with self._transaction() as db:
-            blocker = db.execute(
-                "SELECT reason_code FROM conversation_migration_blockers WHERE run_id=?",
-                (run_id,),
-            ).fetchone()
-            if blocker is not None:
-                return {"conversation_id": None, "recovery_blocker": str(blocker["reason_code"])}
-            if not isinstance(project_id, str):
-                return {"conversation_id": None, "recovery_blocker": "PROJECT_ID_INVALID"}
-            row = db.execute(
-                "SELECT conversation_id, project_id FROM conversation_run_bindings WHERE run_id=?",
-                (run_id,),
-            ).fetchone()
-            if row is not None:
-                if row["project_id"] != project_id:
-                    return {"conversation_id": None, "recovery_blocker": "CROSS_PROJECT_REFERENCE"}
-                try:
-                    item = self._conversation(db, str(row["conversation_id"]))
-                except ConversationError:
-                    return {"conversation_id": None, "recovery_blocker": "CONVERSATION_NOT_FOUND"}
-                if item["project_id"] != project_id:
-                    return {"conversation_id": None, "recovery_blocker": "CROSS_PROJECT_REFERENCE"}
-                return {"conversation_id": str(row["conversation_id"]), "recovery_blocker": None}
+            return self._binding_status(db, run_id, project_id)
+
+    def _binding_status(
+        self, db: sqlite3.Connection, run_id: str, project_id: object
+    ) -> dict[str, str | None]:
+        """Read the one authoritative recovery/binding state in this snapshot."""
+        blocker = db.execute(
+            "SELECT reason_code FROM conversation_migration_blockers WHERE run_id=?",
+            (run_id,),
+        ).fetchone()
+        if blocker is not None:
+            return {"conversation_id": None, "recovery_blocker": str(blocker["reason_code"])}
+        if not isinstance(project_id, str):
+            return {"conversation_id": None, "recovery_blocker": "PROJECT_ID_INVALID"}
+        row = db.execute(
+            "SELECT conversation_id, project_id FROM conversation_run_bindings WHERE run_id=?",
+            (run_id,),
+        ).fetchone()
+        if row is None:
             return {"conversation_id": None, "recovery_blocker": "RUN_CONVERSATION_UNBOUND"}
+        if row["project_id"] != project_id:
+            return {"conversation_id": None, "recovery_blocker": "CROSS_PROJECT_REFERENCE"}
+        try:
+            item = self._conversation(db, str(row["conversation_id"]))
+        except ConversationError:
+            return {"conversation_id": None, "recovery_blocker": "CONVERSATION_NOT_FOUND"}
+        if item["project_id"] != project_id:
+            return {"conversation_id": None, "recovery_blocker": "CROSS_PROJECT_REFERENCE"}
+        return {"conversation_id": str(row["conversation_id"]), "recovery_blocker": None}
 
     @staticmethod
     def _execution_next_action(execution: dict[str, Any]) -> str:
@@ -586,7 +584,7 @@ class ConversationStore:
                 )
             ]
             runs = [
-                row["run_id"]
+                str(row["run_id"])
                 for row in db.execute(
                     "SELECT run_id FROM conversation_run_bindings WHERE conversation_id=?",
                     (conversation_id,),
@@ -598,14 +596,32 @@ class ConversationStore:
             blockers: builtins.list[dict[str, Any]] = []
             agents: builtins.list[dict[str, Any]] = []
             for run_id in runs:
+                binding = self._binding_status(db, run_id, item["project_id"])
+                if binding["recovery_blocker"] is not None:
+                    blockers.append(
+                        {"run_id": run_id, "reason_code": binding["recovery_blocker"]}
+                    )
+                    continue
                 row = db.execute("SELECT snapshot FROM runs WHERE id=?", (run_id,)).fetchone()
                 if row is None:
-                    raise ConversationError("RUN_CONVERSATION_UNBOUND")
-                run: dict[str, Any] = json.loads(row["snapshot"])
+                    blockers.append({"run_id": run_id, "reason_code": "RUN_CONVERSATION_UNBOUND"})
+                    continue
+                run = json.loads(row["snapshot"])
+                if not isinstance(run, dict):
+                    blockers.append({"run_id": run_id, "reason_code": "RUN_CONVERSATION_UNBOUND"})
+                    continue
                 if run.get("owner") != "owner":
-                    raise ConversationError("RUN_CONVERSATION_UNBOUND")
-                if run["project_id"] != item["project_id"]:
-                    raise ConversationError("CROSS_PROJECT_REFERENCE")
+                    blockers.append({"run_id": run_id, "reason_code": "RUN_CONVERSATION_UNBOUND"})
+                    continue
+                binding = self._binding_status(db, run_id, run.get("project_id"))
+                if binding["recovery_blocker"] is not None:
+                    blockers.append(
+                        {"run_id": run_id, "reason_code": binding["recovery_blocker"]}
+                    )
+                    continue
+                if run.get("project_id") != item["project_id"]:
+                    blockers.append({"run_id": run_id, "reason_code": "CROSS_PROJECT_REFERENCE"})
+                    continue
                 active = next(
                     (
                         plan
@@ -886,11 +902,30 @@ class ConversationStore:
             "WHERE b.conversation_id=?",
             (conversation_id,),
         ):
-            run: dict[str, Any] = json.loads(row["snapshot"])
-            if any(intent["id"] == selected_id for intent in run["planning_intents"]):
+            run = json.loads(row["snapshot"])
+            if not isinstance(run, dict) or not isinstance(run.get("id"), str):
+                continue
+            binding = self._binding_status(db, run["id"], run.get("project_id"))
+            if (
+                binding["recovery_blocker"] is not None
+                or binding["conversation_id"] != conversation_id
+            ):
+                continue
+            intents = run.get("planning_intents")
+            if isinstance(intents, list) and any(
+                isinstance(intent, dict) and intent.get("id") == selected_id for intent in intents
+            ):
                 return True
-            if any(
-                task["id"] == selected_id for plan in run["plans"] for task in plan["plan"]["tasks"]
+            plans = run.get("plans")
+            if isinstance(plans, list) and any(
+                isinstance(plan, dict)
+                and isinstance(plan.get("plan"), dict)
+                and isinstance(plan["plan"].get("tasks"), list)
+                and any(
+                    isinstance(task, dict) and task.get("id") == selected_id
+                    for task in plan["plan"]["tasks"]
+                )
+                for plan in plans
             ):
                 return True
         return False

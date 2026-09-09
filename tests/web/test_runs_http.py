@@ -151,6 +151,16 @@ def test_historical_recovery_blockers_do_not_hide_healthy_run_reads(
 ) -> None:
     client, headers, payload = run_client
     healthy = client.post("/v1/runs", json=payload, headers=headers).json()
+    message = client.post(
+        f"/v1/conversations/{healthy['conversation_id']}/messages",
+        json={"client_message_id": "healthy-message", "content": "keep this"},
+        headers={**headers, "Idempotency-Key": "healthy-message"},
+    ).json()
+    draft = client.put(
+        f"/v1/conversations/{healthy['conversation_id']}/draft",
+        json={"content": "keep this draft"},
+        headers={**headers, "Idempotency-Key": "healthy-draft", "If-Match": '"1"'},
+    ).json()
     app = client.app
     planner = app.state.planning_execution.planner
     with planner._transaction() as db:
@@ -205,6 +215,28 @@ def test_historical_recovery_blockers_do_not_hide_healthy_run_reads(
     for run_id in ("null_project", "absent_project", "malformed_project"):
         assert items[run_id]["conversation_id"] is None
         assert items[run_id]["conversation_recovery_blocker"] == "PROJECT_ID_INVALID"
+    project_runs = client.get("/v1/runs", params={"project_id": payload["project_id"]})
+    assert [item["id"] for item in project_runs.json()["items"]] == [healthy["id"]]
+    filtered = client.get(
+        "/v1/runs",
+        params={
+            "project_id": payload["project_id"],
+            "conversation_id": healthy["conversation_id"],
+        },
+    )
+    assert [item["id"] for item in filtered.json()["items"]] == [healthy["id"]]
+    conversation_runs = client.get(f"/v1/conversations/{healthy['conversation_id']}/runs")
+    assert [item["id"] for item in conversation_runs.json()["items"]] == [healthy["id"]]
+    for path in ("hub", "snapshot"):
+        snapshot = client.get(f"/v1/conversations/{healthy['conversation_id']}/{path}")
+        assert snapshot.status_code == 200
+        body = snapshot.json()
+        assert [item["id"] for item in body["run_summaries"]] == [healthy["id"]]
+        assert body["messages"] == [message]
+        assert body["draft"] == draft
+        assert {"run_id": "bound_missing_project", "reason_code": "PROJECT_NOT_FOUND"} in body[
+            "blockers"
+        ]
 
 
 def test_migration_repairs_only_the_absent_legacy_draft(

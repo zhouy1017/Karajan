@@ -521,8 +521,9 @@ class RunPlanner:
         return [
             item
             for item in snapshots
-            if item["owner"] == principal
-            and (project_id is None or item["project_id"] == project_id)
+            if isinstance(item, dict)
+            and item.get("owner") == principal
+            and (project_id is None or item.get("project_id") == project_id)
         ]
 
     def events(self, run_id: str, *, principal: str) -> builtins.list[dict[str, Any]]:
