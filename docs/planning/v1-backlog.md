@@ -6,7 +6,7 @@
 
 用户已将目标扩展为整个 PRD 的设计、拆票、实现与 GitHub gate。M1–M4 共 20 个任务已发布为 GitHub Issues #11–#30；原生父子关系和 37 条依赖边已逐项读回核对，实际链接见[发布记录](v1/github-publication.json)。任务发布不代表功能已实现或验收通过；实施证据由覆盖清单独立记录。
 
-当前顺序以 [当前业务顺序](business-first.md) 和 [#153 业务简报](business-first-issue.md) 为准：先闭合工作台 Planning 演示，再继续同一需求的 Candidate、checks、Reviewer 和 PR。本文保留原阶段范围、验收及依赖；任务发布时的状态与 GitHub 当前状态分开读取。
+当前顺序以 [当前业务顺序](business-first.md) 的 P1–P4 为准：仓库/会话、显式分工、真实并行候选、独立审查和 PR。[#153 业务简报](business-first-issue.md) 仅保留原规划切片范围。本文保留原阶段范围、验收及依赖；任务发布时的状态与 GitHub 当前状态分开读取。
 
 授权事实保留：ChatGPT/Codex、Claude 与 Go 的真实测试授权和现金 API 边界按现有记录核对；它们不改变当前业务顺序，也不把资格记录当作产品行为证据。
 

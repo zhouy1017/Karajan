@@ -6,7 +6,7 @@
 
 已发布 [PRD 父任务 #1](https://github.com/zhouy1017/Karajan/issues/1)、8 个 M0 Issues、20 个 M1–M4 任务和 [CI 任务 #10](https://github.com/zhouy1017/Karajan/issues/10)。已取得固定 Go 场景的真实证据，完整来源资格与产品交付仍须按原范围验收。任务详情见 [完整拆分](v1-backlog.md)，实际编号及关系核验状态见 [后续任务发布记录](v1/github-publication.json)。M0-01 等是规格标识，#2 等是实际 GitHub 编号。
 
-当前顺序以 [当前业务顺序](business-first.md) 和 [#153 业务简报](business-first-issue.md) 为准：先完成工作台到真实 Planning 的首个演示，再推进同一需求的 Candidate、checks、独立 Reviewer 和同一 PR；并行、多来源、完整资源与维护属于后续范围。本文的 M0–M4 依赖和原 AC 保留为历史范围映射，实时状态以 GitHub 为准。
+当前顺序以 [当前业务顺序](business-first.md) 为准：开仓库选 Commander、会话与可编辑分工、两个 Worker 真实并行、组合 checks/独立 Review/PR。[#153 业务简报](business-first-issue.md) 是原规划切片发布快照。广来源与完整资源管理属于后续范围，最小并行属于首演。本文的 M0–M4 依赖和原 AC 保留为历史范围映射，实时状态以 GitHub 为准。
 
 ## 1. 路线与完成语义
 

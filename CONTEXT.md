@@ -4,6 +4,10 @@ Karajan 是面向个人的多来源 Agent 代码交付平台。Commander 理解�
 
 ## Language
 
+**项目（Project）**：一个受管仓库的稳定工作上下文，容纳多个 Commander 会话及其关联运行。项目身份独立于可修改的显示名称；会话和运行都必须通过稳定 `project_id` 归属它。
+
+**Commander 会话（Conversation）**：项目内持续讨论需求、确认分工和接收汇报的持久上下文，包含消息、草稿、任务建议及多个关联 Run。它永远只属于一个 Project，不等同于某个 Worker 任务；新会话本身不批准或启动执行。
+
 **需求（Requirement）**：用户希望在一个代码项目中获得的行为变化，以及判断变化是否完成的验收标准。
 _Avoid_：将需求、任务、一次执行混称为 job。
 
@@ -16,7 +20,7 @@ _Avoid_：用 Agent 会话代指任务。
 
 **任务简报（Task Brief）**：描述一个任务的目标、允许修改的范围、验收标准、依赖材料及停止条件的版本化约定。
 
-**运行（Run）**：平台推进某项需求的一次完整执行过程，包含多个任务及其结果。
+**运行（Run）**：平台推进某项需求的一次完整执行过程，包含多个任务及其结果。每个 Run 必须属于一个 Conversation 和同一 Project；Conversation 可以没有 Run，也可以保留多个历史或当前 Run。
 
 **执行尝试（Attempt）**：某个任务的一次具体执行。重试会产生新的执行尝试，任务本身的身份保持不变。
 
@@ -31,7 +35,21 @@ _Avoid_：把 Agent 的完成声明当作候选已通过验证。
 
 ## 模型协作与资源分配
 
-**Commander**：负责接收用户意图、反馈、设计和任务拆分的 Agent 角色。多个 Commander 可以参与同一项目，具体决策权由项目的协作规则定义。
+**Commander**：持续接收用户意图，拆分任务并提出初步分配，在用户调整确认后统领委派、问题处理与最终结果汇总的主 Agent 角色。同一 Run 只有一个有效的主 Commander；其汇总不替代独立 Reviewer 的审查证据。
+
+**可信协调器（Trusted Coordinator）**：按已批准的计划机械推进任务依赖、权限与额度核验、Attempt 调度和状态提交的业务控制者。它不替代 Commander 做需求拆分、取舍或验收判断。
+
+**Commander 工作台（Commander Workbench）**：以 Commander Hub 为中心，配合任务、Agent 与候选详情，聚合并观察/控制一个 Project 内 Conversation 的工作界面。Hub 是读模型，不拥有第二份 Run 状态。
+
+**Commander Hub**：用户与主 Commander 持续协作的主工作面，集中呈现分工建议、调整确认、任务缩略卡片、阻塞与最终汇报；其他页面提供展开详情和更多操作。
+
+**模型反馈（Model Feedback）**：来自 Commander/Worker/Reviewer Attempt 的可观察进度、等待、输出或终态事件，带来源和时间。它与只表示浏览器连接存活的 Connection Heartbeat 分开；心跳不能证明执行成功、失败或停止。
+
+**显式绑定（Explicit Binding）**：用户在批准版本中直接指定任务角色、模型、来源或依赖的选择，其优先级高于默认路由规则；不能在能力或额度不足时被静默改写。
+
+**任务依赖（Task Dependency）**：任务之间必须先满足的输入或完成条件。没有未满足依赖的任务可以被调度，依赖关系改变会影响后续候选和证据的有效性。
+
+**模型改派（Model Reassignment）**：为尚未开始的任务或新 Attempt 选择另一个已允许的模型/来源。运行中的 Attempt 保持原绑定，不热切换；改派必须留下原因和新的 Attempt 记录。
 
 **Worker**：承担有明确范围和验收条件的实现任务的 Agent 角色。
 

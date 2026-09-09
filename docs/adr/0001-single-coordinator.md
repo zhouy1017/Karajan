@@ -9,3 +9,5 @@ status: accepted
 相比“Bernstein 全任务图＋外置策略”，这需要实现有限的业务依赖推进，但不会让两套系统同时决定重试、模型与终态。先接具体 CLI/API adapter，Bernstein 满足同一受控执行接口后复用。此决定取代前期草案的状态所有权建议。
 
 依据见 [来源](../architecture/sources.md#bernstein)，契约见 [状态设计](../architecture/01-control-and-state.md)。尚未实现或完成底座验收。
+
+2026-09-09 的 [Commander 工作台设计](../prd/commander-workbench.md) 是本决定在用户界面上的指针：一个持久主 Commander 负责判断拆分、委派、升级建议和验收，可信协调器负责机械调度与状态提交。该设计补充入口和可观察交互，不改变本 ADR 的唯一业务协调器所有权，也不把 Bernstein 或其他模型变成第二个主控。
