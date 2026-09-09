@@ -161,7 +161,16 @@ class RunPlanner:
         ):
             raise RunError("PROJECT_SNAPSHOT_CHANGED")
         if project["configuration"]["status"] != "offline_valid":
-            raise RunError("CONFIGURATION_NOT_READY")
+            from karajan.projects import ProjectError
+
+            try:
+                readiness = self.projects.planning_preparation_readiness(
+                    request["project_id"], principal=principal
+                )
+            except ProjectError:
+                raise RunError("CONFIGURATION_NOT_READY") from None
+            if not (version_two and readiness["qualification_pending"]):
+                raise RunError("CONFIGURATION_NOT_READY")
         execution_policy = None
         if version_two:
             from karajan.projects import ProjectError
@@ -303,6 +312,10 @@ class RunPlanner:
         identifier(run_id)
         if principal is not None:
             identifier(principal)
+        # Public Run reads participate in the same writer guard as admission.
+        # A controller that already holds Run authority uses ``_get`` on that
+        # connection instead; bypassing this transaction lets a public reader
+        # observe a half-consumed admission.
         with self._transaction() as db:
             run = self._get(db, run_id)
             if principal is not None and run["owner"] != principal:
@@ -442,14 +455,23 @@ class RunPlanner:
             raise RunError("USER_DECISION_REQUIRED")
 
     def submit_plan(
-        self, run_id: str, request: dict[str, Any], *, command_key: str, principal: str
+        self,
+        run_id: str,
+        request: dict[str, Any],
+        *,
+        command_key: str,
+        principal: str,
+        _submission_guard: Callable[[dict[str, Any]], Callable[[], None]] | None = None,
     ) -> dict[str, Any]:
         version_two = (
             isinstance(request, dict) and request.get("schema_version") == "karajan.submit-plan.v2"
         )
         request = {"run_id": run_id, **parse(SubmitPlanV2 if version_two else SubmitPlan, request)}
 
+        release_submission_guard: Callable[[], None] | None = None
+
         def apply(db: sqlite3.Connection) -> dict[str, Any]:
+            nonlocal release_submission_guard
             run = self._get(db, run_id)
             if version_two != (run["schema_version"] == "karajan.run-planning.v2"):
                 raise RunError("RUN_PROTOCOL_VERSION_MISMATCH")
@@ -470,6 +492,12 @@ class RunPlanner:
                 raise RunError("PLANNING_ADMISSION_REQUIRED")
             if request["expected_plan_revision"] != run["latest_plan_revision"]:
                 raise RunError("PLAN_REVISION_STALE")
+            # The planning execution controller acquires its durable cancellation
+            # fence here.  It remains held through this Run transaction's commit,
+            # so cancellation cannot commit between the final observation and Plan
+            # insertion.
+            if _submission_guard is not None:
+                release_submission_guard = _submission_guard(run)
             try:
                 validate_plan(request["plan"], run["authorization_ceiling"])
                 impact = plan_impact(request["plan"], run)
@@ -499,6 +527,16 @@ class RunPlanner:
                     ]
                 )
             result["plan_digest"] = digest(result)
+            # The producer-owned Project lease may re-observe external
+            # qualification material.  Run this final check after all plan
+            # preparation, immediately before the first durable Plan write.
+            final_recheck = (
+                getattr(release_submission_guard, "recheck", None)
+                if release_submission_guard is not None
+                else None
+            )
+            if callable(final_recheck):
+                final_recheck()
             run["plans"].append(result)
             run["latest_plan_revision"] = result["plan_revision"]
             if run["active_plan_revision"] is None:
@@ -506,7 +544,11 @@ class RunPlanner:
             self._save(db, run)
             return result
 
-        return self._command("submit_plan", request, principal, command_key, apply)
+        try:
+            return self._command("submit_plan", request, principal, command_key, apply)
+        finally:
+            if release_submission_guard is not None:
+                release_submission_guard()
 
     def command_receipt(
         self, kind: str, request: dict[str, Any], *, principal: str, command_key: str
@@ -555,7 +597,7 @@ class RunPlanner:
         binding_sha256: str,
         principal: str,
         command_key: str,
-        submission_guard: Callable[[], None] | None = None,
+        submission_fence: Callable[[], Any] | None = None,
     ) -> dict[str, Any]:
         """Internal controller port; no HTTP route accepts this material.
 
@@ -594,14 +636,24 @@ class RunPlanner:
                 raise RunError("PLANNING_EXECUTION_RECEIPT_CONFLICT")
         if request.get("term") != receipt["term"] or request.get("intent_id") != intent_id:
             raise RunError("PLANNING_EXECUTION_SUBMISSION_BINDING_MISMATCH")
-        if submission_guard is not None:
-            submission_guard()
-        return self.submit_plan(
-            run_id,
-            {key: value for key, value in request.items() if key != "run_id"},
-            principal=receipt["principal"],
-            command_key=command_key,
-        )
+        arguments = {
+            "principal": receipt["principal"],
+            "command_key": command_key,
+        }
+        payload = {key: value for key, value in request.items() if key != "run_id"}
+        if submission_fence is None:
+            return self.submit_plan(run_id, payload, **arguments)
+        # The controller obtains its Execution fence before this method opens
+        # the Run transaction.  The yielded callback is deliberately invoked
+        # only after Run is held, so its Project source authority completes the
+        # one Execution -> Run -> Project ordering through commit.
+        with submission_fence() as submission_guard:
+            return self.submit_plan(
+                run_id,
+                payload,
+                _submission_guard=submission_guard,
+                **arguments,
+            )
 
     def approve_plan(
         self, run_id: str, request: dict[str, Any], *, command_key: str, principal: str

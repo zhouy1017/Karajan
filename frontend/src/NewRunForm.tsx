@@ -1,11 +1,56 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { RunProject } from "./ProjectRuns";
 
+type RegisteredPolicy = {
+  schema_version?:
+    "karajan.execution-policy.v1" | "karajan.execution-policy.v2";
+  id: string;
+  revision: number;
+  digest: string;
+  constraints: {
+    profile_refs: { id: string; revision: number }[];
+    channel_ids: string[];
+    tools: string[];
+    data_destinations: string[];
+    required_capabilities: string[];
+    min_isolation: "tool_sandboxed";
+  };
+  validation?: {
+    checks: { id: string }[];
+    review: { id: string };
+  };
+};
+
 type Configuration = {
+  execution_policy: {
+    id: string;
+    revision: number;
+    digest: string;
+    authorization: {
+      profile_refs: { id: string; revision: number }[];
+      channel_ids: string[];
+      tools: string[];
+      data_destinations: string[];
+      required_capabilities: string[];
+      min_isolation: "tool_sandboxed";
+      currency_limits: Record<string, string>;
+      max_attempt_duration_seconds: number;
+      max_quality_repair_rounds: number;
+      stage_permissions: Record<
+        string,
+        { normal: boolean; quality_indices: number[] }
+      >;
+      checks?: string[];
+    };
+  };
   approved_profile_refs: { id: string; revision: number }[];
   rulebook: {
     profile_groups: { commander_qualified: { id: string; revision: number }[] };
     resource_policy: { run_budget_ref: string };
+    rules?: {
+      id: string;
+      quality_escalation_groups?: unknown[];
+    }[];
   };
   resources: {
     budgets: {
@@ -16,6 +61,79 @@ type Configuration = {
     }[];
   };
 };
+type PlanningPreparationReadiness = {
+  schema_version: "karajan.planning-preparation-readiness.v1";
+  project_id: string;
+  configuration_revision: number;
+  configuration_digest: string | null;
+  configuration_status: "draft" | "offline_valid" | string;
+  v2_preparation_allowed: boolean;
+  qualification_state: "unknown" | string;
+  qualification_pending: boolean | null;
+  reason_codes: string[];
+  activation_allowed: false;
+};
+
+function policyForRun(
+  policy: RegisteredPolicy,
+  configuration: Configuration,
+): Configuration["execution_policy"] {
+  const validationChecks = policy.validation
+    ? [
+        ...policy.validation.checks.map((check) => check.id),
+        policy.validation.review.id,
+      ]
+    : ["independent_review"];
+  const budget = configuration.resources.budgets.find(
+    (item) => item.id === configuration.rulebook.resource_policy.run_budget_ref,
+  );
+  if (!budget) throw new Error("EXECUTION_POLICY_BUDGET_MISSING");
+  const stagePermissions = configuration.rulebook.rules
+    ? Object.fromEntries(
+        configuration.rulebook.rules.map((rule) => [
+          rule.id,
+          {
+            normal: true,
+            quality_indices: Array.from(
+              { length: rule.quality_escalation_groups?.length ?? 0 },
+              (_, index) => index,
+            ),
+          },
+        ]),
+      )
+    : {
+        normal: {
+          normal: true,
+          quality_indices: validationChecks.map((_, index) => index),
+        },
+      };
+  return {
+    id: policy.id,
+    revision: policy.revision,
+    digest: policy.digest,
+    authorization: {
+      ...policy.constraints,
+      currency_limits: budget.currency_limits as Record<string, string>,
+      max_attempt_duration_seconds: budget.max_duration_seconds,
+      max_quality_repair_rounds: 0,
+      stage_permissions: stagePermissions,
+      checks: validationChecks,
+    },
+  };
+}
+
+function selectPolicy(policies: RegisteredPolicy[]): RegisteredPolicy {
+  const v2 = policies.filter(
+    (policy) => policy.schema_version === "karajan.execution-policy.v2",
+  );
+  const ids = [...new Set(v2.map((policy) => policy.id))];
+  if (ids.length !== 1) throw new Error("EXECUTION_POLICY_ID_AMBIGUOUS");
+  const selected = v2
+    .filter((policy) => policy.id === ids[0])
+    .sort((a, b) => b.revision - a.revision)[0];
+  if (!selected) throw new Error("EXECUTION_POLICY_NOT_FOUND");
+  return selected;
+}
 type FormProps = {
   project: RunProject;
   csrf: string;
@@ -94,13 +212,45 @@ function RunDraft({ project, csrf, onSaved }: FormProps) {
   }, [csrf, project.id]);
   useEffect(() => {
     let active = true;
-    if (project.configuration.status !== "offline_valid") return;
+    if (
+      project.configuration.status !== "offline_valid" &&
+      project.configuration.status !== "draft"
+    )
+      return;
     fetch(`/v1/projects/${encodeURIComponent(project.id)}/configuration`)
       .then(async (response) => {
         if (!response.ok) throw new Error();
         const saved = await response.json();
         if (saved.project_revision !== project.revision) throw new Error();
-        if (active) setConfiguration(saved.configuration);
+        if (project.configuration.status === "draft") {
+          const readinessResponse = await fetch(
+            `/v1/projects/${encodeURIComponent(project.id)}/planning-preparation-readiness`,
+          );
+          if (!readinessResponse.ok) throw new Error();
+          const readiness =
+            (await readinessResponse.json()) as PlanningPreparationReadiness;
+          if (
+            readiness.schema_version !==
+              "karajan.planning-preparation-readiness.v1" ||
+            readiness.project_id !== project.id ||
+            readiness.configuration_digest !== project.configuration.digest ||
+            !readiness.v2_preparation_allowed
+          )
+            throw new Error();
+        }
+        if (!active) return;
+        let next = saved.configuration as Configuration;
+        if (!next.execution_policy) {
+          const policiesResponse = await fetch(
+            `/v1/projects/${encodeURIComponent(project.id)}/execution-policies`,
+          );
+          if (!policiesResponse.ok) throw new Error();
+          const policies = (await policiesResponse.json())
+            .items as RegisteredPolicy[];
+          const policy = selectPolicy(policies);
+          next = { ...next, execution_policy: policyForRun(policy, next) };
+        }
+        if (active) setConfiguration(next);
       })
       .catch(() => {
         if (active) setError("无法读取当前配置，请重新打开项目。");
@@ -117,20 +267,34 @@ function RunDraft({ project, csrf, onSaved }: FormProps) {
     if (sending.current || !storageKey || storageError) return;
     let current = command.current;
     if (!current) {
-      if (!configuration || !budget || commander === "") return;
+      if (
+        !configuration ||
+        !budget ||
+        !configuration.execution_policy ||
+        commander === ""
+      )
+        return;
       const profile =
         configuration.rulebook.profile_groups.commander_qualified[
           Number(commander)
         ];
       if (!profile) return;
       const body = JSON.stringify({
+        schema_version: "karajan.create-run.v2",
         project_id: project.id,
         project_revision: project.revision,
         configuration_digest: project.configuration.digest,
+        execution_policy: {
+          id: configuration.execution_policy.id,
+          revision: configuration.execution_policy.revision,
+          digest: configuration.execution_policy.digest,
+        },
         requirement: { goal, acceptance: lines(acceptance) },
         participants: [{ principal: "lead", profile, purpose: "lead" }],
         authorization: {
-          profile_refs: configuration.approved_profile_refs,
+          ...configuration.execution_policy.authorization,
+          profile_refs:
+            configuration.execution_policy.authorization.profile_refs,
           read_paths: lines(readPaths),
           write_paths: lines(writePaths),
           budget_ref: budget.id,
@@ -209,8 +373,10 @@ function RunDraft({ project, csrf, onSaved }: FormProps) {
   }
   if (
     project.configuration.status !== "offline_valid" &&
+    !configuration &&
     !pending &&
-    storageKey
+    storageKey &&
+    !error
   )
     return (
       <p className="muted">先补齐项目配置，再保存带有执行范围的新需求。</p>
@@ -301,6 +467,12 @@ function RunDraft({ project, csrf, onSaved }: FormProps) {
               .map((ref) => `${ref.id}（版本 ${ref.revision}）`)
               .join("、")}
             。实际任务分配以待确认计划为准。
+          </p>
+        )}
+        {!pending && configuration?.execution_policy && (
+          <p className="field-help">
+            执行政策：{configuration.execution_policy.id}（版本{" "}
+            {configuration.execution_policy.revision}）。
           </p>
         )}
         {!pending && budget && (

@@ -261,3 +261,97 @@ def assert_planning_bootstrap_current(
     if actual != expected_sha256.lower():
         raise RunError("PLANNING_ADMISSION_BOOTSTRAP_CHANGED")
     return settings
+
+
+def provision_planning_bootstrap(
+    control_directory: Path, state_directory: Path, allowed_roots: tuple[Path, ...]
+) -> PlanningBootstrapSettings:
+    """Explicitly provision empty controller stores and one protected descriptor.
+
+    This setup action creates no Project, Run, Commander qualification, admission,
+    execution, admission decision, output artifact, or Plan.  It does create
+    the otherwise empty output ledger so a runtime factory never provisions
+    one while assembling production authority. Runtime factories subsequently
+    reopen only these fixed stores through ``read_planning_bootstrap``.
+    """
+    from karajan.capacity import CapacityStore
+    from karajan.orchestration.planning_admission import PlanningAdmissionAuthority
+    from karajan.orchestration.planning_execution import PlanningExecution
+    from karajan.projects import ProjectRegistry
+    from karajan.projects.demand import AttemptEstimateStore
+    from karajan.runs import RunPlanner
+
+    control, state = control_directory.absolute(), state_directory.absolute()
+    roots = tuple(path.absolute() for path in allowed_roots)
+    if not roots or control.exists() or state.exists() or control == state:
+        raise _invalid()
+    try:
+        control.mkdir(mode=0o700)
+        state.mkdir(mode=0o700)
+        _private(control, directory=True)
+        _private(state, directory=True)
+        projects = ProjectRegistry(state / "projects.sqlite", roots)
+        planner = RunPlanner(state / "runs.sqlite", projects)
+        # Normal application composition always constructs ApprovedRunRouting,
+        # whose estimate ledger is in the protected project store.  Provision
+        # its empty schema here; no estimate is registered by this action.
+        AttemptEstimateStore(planner)
+        capacity = CapacityStore(state / "capacity.sqlite")
+        # ``create_app`` also opens this normal routing assessment ledger with
+        # all planning stores in existing-only mode.  Create its schema while
+        # provisioning, without assessing a task or reserving capacity.
+        from karajan.orchestration.routing import ApprovedRunRouting
+        from karajan.projects.qualification import ProfileQualificationStore
+
+        ApprovedRunRouting(planner, ProfileQualificationStore(projects), capacity)
+        execution = PlanningExecution(state / "planning-execution.sqlite", planner)
+        from karajan.orchestration.planning_transport import PlanningOutputStore
+
+        output_ledger = state / "planning-output.sqlite"
+        PlanningOutputStore(output_ledger, authority_kind="production")
+        output_ledger.chmod(0o600)
+        _private(output_ledger)
+
+        class NoCommanderFacts:
+            def read_commander(
+                self, binding: dict[str, Any], *, scope: str, reader_version: str
+            ) -> None:
+                del binding, scope, reader_version
+                return None
+
+        PlanningAdmissionAuthority(
+            state / "planning-admission.sqlite",
+            execution.database,
+            planner,
+            capacity,
+            NoCommanderFacts(),
+            authority_kind="production",
+        )
+        settings = PlanningBootstrapSettings(
+            control,
+            state,
+            execution.database,
+            state / "planning-admission.sqlite",
+            state / "capacity.sqlite",
+            state / "projects.sqlite",
+            roots,
+        )
+        descriptor = control / PLANNING_ADMISSION_BOOTSTRAP
+        raw = (
+            json.dumps(settings.document(), sort_keys=True, separators=(",", ":")) + "\n"
+        ).encode()
+        fd = os.open(descriptor, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        with os.fdopen(fd, "wb") as stream:
+            stream.write(raw)
+            stream.flush()
+            os.fsync(stream.fileno())
+        _private(descriptor)
+        read_planning_bootstrap(control)
+        from karajan.orchestration.planning_snapshot import (
+            provision_planning_repository_snapshots,
+        )
+
+        provision_planning_repository_snapshots(control)
+        return settings
+    except (OSError, RunError, ValueError):
+        raise _invalid() from None

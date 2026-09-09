@@ -11,6 +11,7 @@ import subprocess
 import sys
 import threading
 import time
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +22,19 @@ from ._opencode_projection import projection_files, verify_projected_file
 
 RUNTIME_SHA256 = "ca6c0e1f42be3120595bf6848937e7586ec862c87fa7aa111e89c7cc6e9a4650"
 MAX_FRAME = 1024 * 1024
+
+
+@dataclass(frozen=True)
+class RuntimeStopProof:
+    """A start-time identity for one private PID namespace init process."""
+
+    pid: int
+    birth: str
+    pid_namespace: str
+    boot_id: str
+
+    def value(self) -> dict[str, object]:
+        return asdict(self)
 
 
 def _verify_runtime(path: Path) -> None:
@@ -59,6 +73,72 @@ def _namespace_processes(namespace: str) -> list[dict[str, Any]]:
     return observed
 
 
+def _namespace_init(pid: int) -> int | None:
+    try:
+        status = Path(f"/proc/{pid}/status").read_text().splitlines()
+        return int(next(line for line in status if line.startswith("NSpid:")).split()[-1])
+    except (FileNotFoundError, ProcessLookupError, StopIteration, ValueError):
+        return None
+
+
+def _boot_id() -> str | None:
+    try:
+        value = Path("/proc/sys/kernel/random/boot_id").read_text(encoding="ascii").strip()
+        return value if len(value) == 36 and value.isascii() else None
+    except (OSError, UnicodeDecodeError):
+        return None
+
+
+def stop_from_proof(value: object) -> dict[str, Any]:
+    """Signal only the exact private namespace init captured by ``start``.
+
+    The caller supplies persisted bytes, never a PID chosen by an API client.
+    A proof must still match the live birth, namespace and namespace-init role
+    before and after pidfd acquisition.  Unprovable ownership remains unknown.
+    """
+    if sys.platform != "linux" or not isinstance(value, dict):
+        return {"local_stop": "unknown"}
+    pid, birth, namespace, boot_id = (
+        value.get("pid"),
+        value.get("birth"),
+        value.get("pid_namespace"),
+        value.get("boot_id"),
+    )
+    if (
+        type(pid) is not int
+        or pid < 1
+        or not isinstance(birth, str)
+        or not isinstance(namespace, str)
+        or not isinstance(boot_id, str)
+    ):
+        return {"local_stop": "unknown"}
+    try:
+        self_namespace = os.readlink("/proc/self/ns/pid")
+        if boot_id != _boot_id() or namespace == self_namespace or _birth(pid) != birth:
+            return {"local_stop": "unknown"}
+        if os.readlink(f"/proc/{pid}/ns/pid") != namespace or _namespace_init(pid) != 1:
+            return {"local_stop": "unknown"}
+        pidfd = os.pidfd_open(pid)
+        try:
+            if (
+                _birth(pid) != birth
+                or os.readlink(f"/proc/{pid}/ns/pid") != namespace
+                or _namespace_init(pid) != 1
+            ):
+                return {"local_stop": "unknown"}
+            signal.pidfd_send_signal(pidfd, signal.SIGKILL)
+        finally:
+            os.close(pidfd)
+        deadline = time.monotonic() + 5
+        while _namespace_processes(namespace):
+            if time.monotonic() >= deadline:
+                return {"local_stop": "unknown"}
+            time.sleep(0.02)
+        return {"local_stop": "confirmed", "namespace_init_stopped": True}
+    except (FileNotFoundError, OSError, ProcessLookupError, ValueError):
+        return {"local_stop": "unknown"}
+
+
 class IsolatedOpenCode:
     runtime: Path
     directory: Path
@@ -70,6 +150,7 @@ class IsolatedOpenCode:
     _lifecycle_lock: threading.RLock
     _close_lock: threading.RLock
     _projection: list[dict[str, Any]] | None
+    _no_tools: bool
     _started_successfully: bool
 
     def __init__(
@@ -80,15 +161,20 @@ class IsolatedOpenCode:
         capability: str,
         *,
         model_id: str = "glm-5.3-flash",
+        output_tokens: int = 4096,
         projection: list[dict[str, Any]] | None = None,
+        no_tools: bool = False,
     ) -> None:
         if sys.platform != "linux":
             raise ValueError("LINUX_NAMESPACES_REQUIRED")
         if model_id != "glm-5.3-flash":
             raise ValueError("FIXED_MODEL_REQUIRED")
+        if type(output_tokens) is not int or not 0 < output_tokens <= 4096:
+            raise ValueError("OUTPUT_TOKEN_LIMIT_REQUIRED")
         if not capability or len(capability) > 256 or not capability.isprintable():
             raise ValueError("LOCAL_CAPABILITY_INVALID")
         self._projection = projection_files(projection) if projection is not None else None
+        self._no_tools = no_tools
         self.runtime = runtime.resolve(strict=True)
         _verify_runtime(self.runtime)
         self.upstream_socket = upstream_socket.resolve(strict=True)
@@ -103,6 +189,7 @@ class IsolatedOpenCode:
         self._owned_workspace = self.workspace
         self.capability = capability
         self.model_id = model_id
+        self.output_tokens = output_tokens
         self._process: subprocess.Popen[bytes] | None = None
         self._control: socket.socket | None = None
         self._snapshot: dict[str, Any] = {
@@ -156,6 +243,8 @@ class IsolatedOpenCode:
                 self._capture_pins = ProjectionPins(self._owned_workspace, projection)
             with (self.directory / "projection.json").open("x", encoding="utf-8") as stream:
                 json.dump(projection, stream, allow_nan=False)
+            if self._no_tools:
+                (self.directory / "no-tools").touch(exist_ok=False)
             outer, inner = socket.socketpair()
             outer.settimeout(30)
             command = [
@@ -194,7 +283,14 @@ class IsolatedOpenCode:
                         stderr=log,
                     )
             inner.close()
-            self._send({"capability": self.capability, "model_id": self.model_id}, outer)
+            self._send(
+                {
+                    "capability": self.capability,
+                    "model_id": self.model_id,
+                    "output_tokens": self.output_tokens,
+                },
+                outer,
+            )
             welcome = self._receive(outer)
             with self._lifecycle_lock:
                 if self._snapshot["state"] != "starting":
@@ -227,7 +323,7 @@ class IsolatedOpenCode:
     def request(self, method: str, route: str, body: object = None) -> Any:
         with self._request_lock:
             with self._lifecycle_lock:
-                validate_request(method, route, body, self._sessions)
+                validate_request(method, route, body, self._sessions, no_tools=self._no_tools)
                 if self._control is None or self._snapshot["state"] != "running":
                     raise ValueError("RUNTIME_NOT_RUNNING")
                 control = self._control
@@ -289,6 +385,25 @@ class IsolatedOpenCode:
             snapshot: dict[str, Any] = json.loads(json.dumps(self._snapshot))
         snapshot["runtime_sha256"] = RUNTIME_SHA256
         return snapshot
+
+    def stop_proof(self) -> dict[str, object]:
+        """Export this running native object's exact, non-host stop identity."""
+        with self._lifecycle_lock:
+            identity, namespace = self._init_identity, self._started_namespace
+            if identity is None or not isinstance(namespace, str):
+                raise ValueError("RUNTIME_STOP_PROOF_UNAVAILABLE")
+            boot_id = _boot_id()
+            if boot_id is None:
+                raise ValueError("RUNTIME_STOP_PROOF_UNAVAILABLE")
+            proof = RuntimeStopProof(identity["pid"], identity["birth"], namespace, boot_id)
+        if (
+            namespace == os.readlink("/proc/self/ns/pid")
+            or _birth(proof.pid) != proof.birth
+            or os.readlink(f"/proc/{proof.pid}/ns/pid") != namespace
+            or _namespace_init(proof.pid) != 1
+        ):
+            raise ValueError("RUNTIME_STOP_PROOF_UNAVAILABLE")
+        return proof.value()
 
     def readonly_projection_observation(self) -> list[dict[str, Any]]:
         """Read actual mount flags and file identities in our live namespace.

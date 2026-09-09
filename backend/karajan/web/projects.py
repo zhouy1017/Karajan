@@ -58,6 +58,23 @@ def register_project_routes(app: FastAPI, registry: ProjectRegistry) -> None:
     def get_configuration(project_id: str) -> dict[str, Any]:
         return registry.get_configuration(project_id)
 
+    @app.get("/v1/projects/{project_id}/planning-preparation-readiness")
+    def get_planning_preparation_readiness(project_id: str) -> dict[str, Any]:
+        return registry.planning_preparation_readiness(project_id, principal="owner")
+
+    @app.get(
+        "/v1/projects/{project_id}/execution-policies/{policy_id}/revisions/{revision}"
+    )
+    def get_execution_policy(project_id: str, policy_id: str, revision: int) -> dict[str, Any]:
+        """Expose an existing owner policy; browser input cannot create one."""
+        return registry.get_execution_policy(
+            project_id, policy_id, revision, principal="owner"
+        )
+
+    @app.get("/v1/projects/{project_id}/execution-policies")
+    def list_execution_policies(project_id: str) -> dict[str, Any]:
+        return {"items": registry.list_execution_policies(project_id, principal="owner")}
+
     @app.patch("/v1/projects/{project_id}")
     def update_project(project_id: str, request: Request, data: dict[str, Any]) -> JSONResponse:
         result = registry.update(

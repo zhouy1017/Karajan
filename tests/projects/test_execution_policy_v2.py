@@ -371,3 +371,105 @@ def test_policy_registration_requires_owner_and_legacy_schema_cannot_smuggle_new
         projects.register_execution_policy(
             project_id, document, command_key="smuggled", principal="owner"
         )
+
+
+def _apply_capability_pending_configuration(approved, *, extra_draft_issue: bool = False):
+    projects, project_id = approved["projects"], approved["project_id"]
+    project = projects.get(project_id)
+    configuration = deepcopy(projects.get_configuration(project_id)["configuration"])
+    registration = configuration["resources"]["profiles"][0]
+    for evidence in registration["capability_evidence"]:
+        evidence.update(
+            status="not_run",
+            profile_digest=None,
+            runtime_version=None,
+            evidence_ref=None,
+            provenance=None,
+        )
+    if extra_draft_issue:
+        registration["enabled"] = False
+    preview = projects.preview_configuration(
+        project_id, configuration, command_key="capability-pending-preview", principal="owner"
+    )
+    applied = projects.apply_configuration(
+        project_id,
+        preview["preview_id"],
+        expected_revision=project["revision"],
+        command_key="capability-pending-apply",
+        principal="owner",
+    )
+    return applied, preview
+
+
+def _v2_create_request(project, existing, policy):
+    return {
+        "schema_version": "karajan.create-run.v2",
+        "project_id": project["id"],
+        "project_revision": project["revision"],
+        "configuration_digest": project["configuration"]["digest"],
+        "requirement": existing["requirement"],
+        "participants": existing["participants"],
+        "execution_policy": {key: policy[key] for key in ("id", "revision", "digest")},
+        "authorization": deepcopy(existing["authorization_ceiling"]),
+    }
+
+
+def test_v2_can_persist_a_requirement_when_only_commander_capability_is_pending(approved, tmp_path):
+    projects, project_id = approved["projects"], approved["project_id"]
+    project, preview = _apply_capability_pending_configuration(approved)
+    assert {issue["code"] for issue in preview["issues"]} == {"CAPABILITY_NOT_PASSED"}
+    readiness = projects.planning_preparation_readiness(project_id, principal="owner")
+    assert readiness == {
+        "schema_version": "karajan.planning-preparation-readiness.v1",
+        "project_id": project_id,
+        "configuration_revision": project["configuration"]["revision"],
+        "configuration_digest": project["configuration"]["digest"],
+        "configuration_status": "draft",
+        "v2_preparation_allowed": True,
+        "qualification_state": "unknown",
+        "qualification_pending": True,
+        "reason_codes": ["CAPABILITY_NOT_PASSED"],
+        "activation_allowed": False,
+    }
+    policy = v2_document(approved)
+    policy["configuration_digest"] = project["configuration"]["digest"]
+    policy = projects.register_execution_policy(
+        project_id, policy, command_key="capability-pending-policy", principal="owner"
+    )
+    existing = approved["planner"].get(approved["run_id"], principal="owner")
+    request = _v2_create_request(project, existing, policy)
+    sends: list[str] = []
+    run = RunPlanner(
+        tmp_path / "capability-pending-runs.sqlite",
+        projects,
+        admissions=lambda reference: sends.append(reference),
+    ).create(request, command_key="capability-pending-run", principal="owner")
+    assert run["schema_version"] == "karajan.run-planning.v2"
+    assert run["configuration_snapshot"]["digest"] == project["configuration"]["digest"]
+    assert sends == []
+
+
+def test_other_draft_issues_remain_unready_for_v2_policy_and_run(approved, tmp_path):
+    projects, project_id = approved["projects"], approved["project_id"]
+    project, preview = _apply_capability_pending_configuration(approved, extra_draft_issue=True)
+    assert "PROFILE_UNAVAILABLE" in {issue["code"] for issue in preview["issues"]}
+    readiness = projects.planning_preparation_readiness(project_id, principal="owner")
+    assert readiness["v2_preparation_allowed"] is False
+    assert readiness["qualification_state"] == "unknown"
+    assert readiness["qualification_pending"] is None
+    policy = v2_document(approved)
+    policy["configuration_digest"] = project["configuration"]["digest"]
+    with pytest.raises(ProjectError, match="CONFIGURATION_NOT_READY"):
+        projects.register_execution_policy(
+            project_id, policy, command_key="other-draft-policy", principal="owner"
+        )
+    existing = approved["planner"].get(approved["run_id"], principal="owner")
+    request = _v2_create_request(
+        project,
+        existing,
+        {"id": "unregistered", "revision": 1, "digest": "0" * 64},
+    )
+    with pytest.raises(RunError, match="CONFIGURATION_NOT_READY"):
+        RunPlanner(tmp_path / "other-draft-runs.sqlite", projects).create(
+            request, command_key="other-draft-run", principal="owner"
+        )

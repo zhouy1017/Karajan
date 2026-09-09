@@ -18,6 +18,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from karajan.capacity import CapacityStore
 from karajan.orchestration.admission import ApprovedTaskAdmission
+from karajan.orchestration.planning_execution import PlanningExecution
+from karajan.orchestration.planning_transport import PlanningTransport
 from karajan.orchestration.routing import ApprovedRunRouting
 from karajan.projects import ProjectRegistry
 from karajan.projects.qualification import ProfileQualificationStore
@@ -26,6 +28,7 @@ from karajan.runs import RunPlanner
 from .admission import register_admission_routes
 from .approved_routing import register_approved_routing_routes
 from .body_limit import BodyLimitMiddleware
+from .planning import PlanningWorkbench, register_planning_routes
 from .projects import register_project_routes
 from .resources import register_resource_routes
 from .runs import register_run_routes
@@ -119,6 +122,9 @@ def create_app(
     bootstrap_token: str,
     allowed_roots: Sequence[Path] = (),
     frontend_directory: Path | None = None,
+    planning_execution: PlanningExecution | None = None,
+    planning_transport: PlanningTransport | None = None,
+    planning_control_directory: Path | None = None,
 ) -> FastAPI:
     BootstrapInput(token=bootstrap_token)
     parsed_origin = urlsplit(origin)
@@ -137,12 +143,51 @@ def create_app(
     sessions = SessionStore(state_directory / "sessions.sqlite", bootstrap_token)
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
     app.add_middleware(BodyLimitMiddleware)
-    projects = ProjectRegistry(state_directory / "projects.sqlite", allowed_roots)
+    if planning_control_directory is not None and (
+        planning_execution is not None or planning_transport is not None
+    ):
+        raise ValueError("Planning controller cannot be combined with injected planning services")
+    production_transport = (
+        PlanningTransport.from_trusted_factory(planning_control_directory)
+        if planning_control_directory is not None
+        else None
+    )
+    controller_execution = planning_execution or (
+        planning_transport.execution if planning_transport is not None else None
+    )
+    controller_execution = controller_execution or (
+        production_transport.execution if production_transport is not None else None
+    )
+    projects = (
+        controller_execution.planner.projects
+        if controller_execution is not None
+        else ProjectRegistry(state_directory / "projects.sqlite", allowed_roots)
+    )
     register_project_routes(app, projects)
     register_simulation_routes(app, projects)
-    planner = RunPlanner(state_directory / "runs.sqlite", projects)
-    capacity = CapacityStore(state_directory / "capacity.sqlite")
+    planner = (
+        controller_execution.planner
+        if controller_execution is not None
+        else RunPlanner(state_directory / "runs.sqlite", projects)
+    )
+    capacity = (
+        controller_execution.capacity
+        if controller_execution is not None and controller_execution.capacity is not None
+        else CapacityStore(state_directory / "capacity.sqlite")
+    )
     register_run_routes(app, planner)
+    execution = controller_execution or PlanningExecution(
+        state_directory / "planning-execution.sqlite", planner
+    )
+    if execution.planner is not planner:
+        raise ValueError("Planning execution must use this application's Run planner")
+    planning_transport = planning_transport or production_transport
+    if planning_transport is not None and planning_transport.execution is not execution:
+        raise ValueError("Planning transport must use this application's execution controller")
+    planning = PlanningWorkbench(
+        state_directory / "workbench-planning.sqlite", planner, execution, planning_transport
+    )
+    register_planning_routes(app, planning)
     register_resource_routes(app, capacity)
     routing = ApprovedRunRouting(planner, ProfileQualificationStore(projects), capacity)
     register_approved_routing_routes(app, routing)

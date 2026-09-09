@@ -9,6 +9,8 @@ from pathlib import Path
 
 import uvicorn
 
+from karajan.runs import RunError
+
 from .app import create_app
 
 
@@ -48,6 +50,7 @@ def main() -> int:
     serve.add_argument("--state-directory", type=Path, required=True)
     serve.add_argument("--project-root", type=Path, action="append", default=[])
     serve.add_argument("--frontend-directory", type=Path)
+    serve.add_argument("--planning-control-directory", type=Path)
     serve.add_argument("--port", type=int, default=8765)
     arguments = parser.parse_args()
     try:
@@ -65,8 +68,9 @@ def main() -> int:
             bootstrap_token=token,
             allowed_roots=arguments.project_root,
             frontend_directory=arguments.frontend_directory,
+            planning_control_directory=arguments.planning_control_directory,
         )
-    except (OSError, ValueError, subprocess.SubprocessError):
+    except (OSError, RunError, ValueError, subprocess.SubprocessError):
         print(
             "Local workbench setup rejected. Check the dedicated state directory and local paths."
         )

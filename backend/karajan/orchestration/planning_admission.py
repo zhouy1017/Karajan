@@ -90,18 +90,16 @@ class PersistentCommanderQualificationReader:
         self.control_directory = control_directory
         self._source_settings: Any | None = None
         self._credentials: CredentialSourceStore | None = None
-        # Construction opens its own existing Project transactions, so it must
-        # occur before commander_facts_guard owns the Project connection. An
-        # absent/invalid deployment source is a no-fact condition, not a
-        # factory promotion or a second credential ledger.
+        # CredentialSourceStore performs its own Project transactions, so build
+        # the existing-only handle before commander_facts_guard owns one. The
+        # descriptor is still re-read below before every facts read/effect;
+        # cached material is never a substitute for that current check.
         try:
-            from karajan.orchestration.go_task_runtime import _read_bootstrap
+            from karajan.orchestration.go_commander_qualification import (
+                read_commander_qualification_settings,
+            )
 
-            settings, _ = _read_bootstrap(self.control_directory)
-            if (
-                settings.state_directory / "projects.sqlite"
-            ).resolve() != self.planner.projects.database.resolve():
-                raise RunError("COMMANDER_SOURCE_STATE_MISMATCH")
+            settings, _ = read_commander_qualification_settings(self.control_directory)
             self._credentials = CredentialSourceStore(
                 self.planner.projects,
                 sources={
@@ -113,7 +111,6 @@ class PersistentCommanderQualificationReader:
             )
             self._source_settings = settings
         except (CredentialSourceError, OSError, RunError, ValueError):
-            self._source_settings = None
             self._credentials = None
 
     def _current_source(
@@ -126,32 +123,79 @@ class PersistentCommanderQualificationReader:
         seal before yielding a generation. A missing future Commander suite or
         unsupported platform remains unavailable instead of becoming a pass.
         """
-        from karajan.adapters.opencode.go_context import GoRequestAccounting
-        from karajan.orchestration.go_task_runtime import (
-            _read_bootstrap,
-            deployment_source,
+        from karajan.orchestration.go_commander_qualification import (
+            read_commander_qualification_settings,
         )
+        from karajan.projects.go_commander_suite import FixedGoCommanderSuite
 
-        settings = self._source_settings
+        settings, descriptor_sha256 = read_commander_qualification_settings(self.control_directory)
+        cached = self._source_settings
         credentials = self._credentials
-        if settings is None or credentials is None:
+        if cached is None or credentials is None:
             raise RunError("COMMANDER_SOURCE_UNAVAILABLE")
-        current_settings, bootstrap_sha = _read_bootstrap(self.control_directory)
-        if current_settings.document() != settings.document():
+        if settings.document() != cached.document():
             raise RunError("COMMANDER_SOURCE_CHANGED")
+        from karajan.orchestration.go_commander_qualification import (
+            validate_commander_qualification_settings,
+        )
+        legacy_history_only = settings.journal_path is None or settings.work_root is None
+        if not legacy_history_only:
+            validate_commander_qualification_settings(
+                self.planner.projects,
+                settings,
+                repositories=(Path(current["repository"]["root"]).absolute(),),
+            )
         profile = current["registration"]["profile"]
         generation = credentials.current_locked(
             db, project_id, profile["auth_ref"], principal=principal
         )
-        runtime = deployment_source(settings, GoRequestAccounting(settings.tokenizer_directory))
-        return {
-            "schema_version": "karajan.commander-qualification-source.v1",
-            "bootstrap_sha256": bootstrap_sha,
-            "credential_generation": generation["generation"],
-            "credential_source": generation["source"],
-            "profile_sha256": digest(profile),
-            "runtime": runtime,
-        }
+        if legacy_history_only:
+            # This keeps old v2 material seals observable for record/history
+            # recovery, but deliberately makes its source unequal to every
+            # production start: it has no Journal/work-root authority.
+            source = FixedGoCommanderSuite(
+                settings.runtime,
+                settings.tokenizer_directory,
+                descriptor_sha256,
+                descriptor_path=self.control_directory / "commander-qualification-source.v2.json",
+                project_database=self.planner.projects.database,
+            ).source(current, generation)
+            source["legacy_history_only"] = True
+            return source
+        assert settings.journal_path is not None
+        assert settings.work_root is not None
+        from karajan.adapters.opencode.go_journal import GoCallJournal
+
+        return FixedGoCommanderSuite(
+            settings.runtime,
+            settings.tokenizer_directory,
+            descriptor_sha256,
+            journal=GoCallJournal(settings.journal_path, existing_only=True),
+            work_root=settings.work_root,
+            descriptor_path=self.control_directory / "commander-qualification-source.v2.json",
+            project_database=self.planner.projects.database,
+        ).source(current, generation)
+
+    def current_output_source(self, binding: dict[str, Any]) -> dict[str, Any]:
+        """Read current protected producer material without requiring a pass.
+
+        Output arming precedes admission.  A missing or failed Commander record
+        must therefore remain an ordinary durable admission denial, rather than
+        becoming a transport-only source exception.  This retains only the
+        Project reader transaction needed for the existing sealed-current
+        credential observation and never enters Capacity or an effect guard.
+        """
+        run = self.planner.get(binding["run_id"], principal=binding["owner"])
+        registration = self._registration(run, binding)
+        if registration is None:
+            raise RunError("COMMANDER_SOURCE_UNAVAILABLE")
+        with self.qualifications._owned(run["project_id"], binding["owner"]) as db:
+            current = self.qualifications._binding(
+                db,
+                run["project_id"],
+                {"id": registration["id"], "revision": registration["revision"]},
+            )
+            return self._current_source(db, run["project_id"], current, binding["owner"])
 
     @staticmethod
     def _registration(run: dict[str, Any], binding: dict[str, Any]) -> dict[str, Any] | None:
@@ -824,7 +868,13 @@ class PlanningAdmissionAuthority:
             if prior is not None:
                 if prior["payload"] != payload:
                     raise RunError("IDEMPOTENCY_CONFLICT")
-                return dict(json.loads(prior["result"]))
+                prior_result = dict(json.loads(prior["result"]))
+                # The key was durably claimed before Capacity.  If its caller
+                # lost a reply, re-enter the same ID-only recovery path; all
+                # later effects retain their separately fixed Capacity keys.
+                if prior_result == placeholder:
+                    return None
+                return prior_result
             db.execute(
                 "INSERT INTO commands VALUES (?,?,?,?)",
                 (principal, command_key, payload, encoded(placeholder)),
@@ -968,8 +1018,7 @@ class PlanningAdmissionAuthority:
             estimate.get("schema_version") != "karajan.planning-estimate.v1"
             or not isinstance(estimate.get("digest"), str)
             or estimate["digest"] != digest(sealed)
-            or estimate.get("configuration_sha256")
-            != held_run["configuration_snapshot"]["digest"]
+            or estimate.get("configuration_sha256") != held_run["configuration_snapshot"]["digest"]
             or not isinstance(estimate.get("demand"), dict)
             or not estimate["demand"]
             or any(type(value) is not str for value in estimate["demand"].values())
@@ -985,7 +1034,7 @@ class PlanningAdmissionAuthority:
     ) -> _FinalBoundary:
         """Finish comparison and parsing before Capacity's constant-time tail."""
         self._assert_estimate_live(record, held_run)
-        current = self._assert_qualification_binding(record, qualification)
+        current = self._assert_qualification_binding(record, qualification, reobserve=True)
         qualification_until, facts_until = self._qualification_deadlines(current)
         usage = record.get("budget_usage")
         budget = record.get("budget")
@@ -1184,6 +1233,41 @@ class PlanningAdmissionAuthority:
             self._save(db, current)
             return current
 
+    def _recover_original_capacity_receipts(self, record: dict[str, Any]) -> dict[str, Any]:
+        """Advance an interrupted record only from its already fixed Capacity receipts."""
+        if record["phase"] == "capacity_admit_unknown":
+            request = record["capacity_request"]
+            assert isinstance(request, dict)
+            receipt = self.capacity.command_receipt(
+                "admit", request, command_key=record["capacity_command_key"]
+            )
+            if receipt is None:
+                return record
+            with self._transaction() as db:
+                current = self._load(db, record["execution_id"]) or record
+                self._capacity_admit_transition(current, receipt)
+                self._save(db, current)
+                record = current
+        if record["phase"] in {"unknown", "capacity_activate_unknown"}:
+            request = record.get("capacity_activation_request")
+            if not isinstance(request, dict):
+                return record
+            receipt = self.capacity.command_receipt(
+                "activate", request, command_key=record["capacity_activation_command_key"]
+            )
+            if receipt is None:
+                return record
+            with self._transaction() as db:
+                current = self._load(db, record["execution_id"]) or record
+                current["capacity_activation_receipt"] = receipt
+                current["phase"] = (
+                    "admitted" if receipt.get("decision") == "capacity_revalidated" else "denied"
+                )
+                current["reason_codes"] = receipt.get("reason_codes", [])
+                self._save(db, current)
+                return current
+        return record
+
     def advance(self, execution_id: str, principal: str, command_key: str) -> dict[str, Any]:
         """Fence cancellation through every planning admission mutation."""
         for value in (execution_id, principal, command_key):
@@ -1191,6 +1275,35 @@ class PlanningAdmissionAuthority:
         self._assert_bootstrap_current()
         with self._execution_guard(execution_id, principal) as binding:
             return self._advance_locked(execution_id, principal, command_key, binding)
+
+    def recover_original_receipt(
+        self, execution_id: str, principal: str, command_key: str
+    ) -> dict[str, Any]:
+        """Reconcile only the original admission command's durable Capacity receipts.
+
+        This narrow recovery port neither claims a command nor calls Capacity
+        effects.  It can update the result of the already bound admission key
+        when Capacity committed but its reply was lost.
+        """
+        for value in (execution_id, principal, command_key):
+            identifier(value)
+        self._assert_bootstrap_current()
+        with self._execution_guard(execution_id, principal) as binding:
+            payload = encoded([execution_id, digest(binding)])
+            with self._transaction() as db:
+                command = db.execute(
+                    "SELECT payload FROM commands WHERE principal=? AND key=?",
+                    (principal, command_key),
+                ).fetchone()
+                record = self._load(db, execution_id)
+            if command is None or command["payload"] != payload:
+                raise RunError("PLANNING_ADMISSION_RECEIPT_RECOVERY_UNAVAILABLE")
+            if record is None or record["binding_sha256"] != digest(binding):
+                raise RunError("PLANNING_ADMISSION_RECEIPT_RECOVERY_UNAVAILABLE")
+            if command_key != record["capacity_command_key"]:
+                raise RunError("PLANNING_ADMISSION_RECEIPT_RECOVERY_UNAVAILABLE")
+            recovered = self._recover_original_capacity_receipts(record)
+            return self._finish_command(recovered, principal, command_key, payload)
 
     def _advance_locked(
         self, execution_id: str, principal: str, command_key: str, binding: dict[str, Any]
@@ -1204,58 +1317,14 @@ class PlanningAdmissionAuthority:
         record = self._prepare(execution_id, binding, principal)
         if record["phase"] in {"admitted", "denied"}:
             return self._finish_command(record, principal, command_key, payload)
-        if record["phase"] == "unknown":
-            request = record.get("capacity_activation_request")
-            if not isinstance(request, dict):
-                return self._finish_command(record, principal, command_key, payload)
-            receipt = self.capacity.command_receipt(
-                "activate", request, command_key=record["capacity_activation_command_key"]
+        if record["phase"] in {
+            "unknown",
+            "capacity_admit_unknown",
+            "capacity_activate_unknown",
+        }:
+            return self._finish_command(
+                self._recover_original_capacity_receipts(record), principal, command_key, payload
             )
-            if receipt is None:
-                return self._finish_command(record, principal, command_key, payload)
-            with self._transaction() as db:
-                current = self._load(db, execution_id) or record
-                current["capacity_activation_receipt"] = receipt
-                current["phase"] = (
-                    "admitted" if receipt.get("decision") == "capacity_revalidated" else "denied"
-                )
-                current["reason_codes"] = receipt.get("reason_codes", [])
-                self._save(db, current)
-                record = current
-            return self._finish_command(record, principal, command_key, payload)
-        if record["phase"] == "capacity_admit_unknown":
-            request = record["capacity_request"]
-            assert isinstance(request, dict)
-            receipt = self.capacity.command_receipt(
-                "admit", request, command_key=record["capacity_command_key"]
-            )
-            if receipt is None:
-                return self._finish_command(record, principal, command_key, payload)
-            with self._transaction() as db:
-                current = self._load(db, execution_id) or record
-                self._capacity_admit_transition(current, receipt)
-                self._save(db, current)
-                record = current
-            if record["phase"] == "denied":
-                return self._finish_command(record, principal, command_key, payload)
-        if record["phase"] == "capacity_activate_unknown":
-            request = record["capacity_activation_request"]
-            assert isinstance(request, dict)
-            receipt = self.capacity.command_receipt(
-                "activate", request, command_key=record["capacity_activation_command_key"]
-            )
-            if receipt is None:
-                return self._finish_command(record, principal, command_key, payload)
-            with self._transaction() as db:
-                current = self._load(db, execution_id) or record
-                current["capacity_activation_receipt"] = receipt
-                current["phase"] = (
-                    "admitted" if receipt.get("decision") == "capacity_revalidated" else "denied"
-                )
-                current["reason_codes"] = receipt.get("reason_codes", [])
-                self._save(db, current)
-                record = current
-            return self._finish_command(record, principal, command_key, payload)
         # A pre-Plan execution may only draw planning authority from the full,
         # owner-frozen v2 policy.  Legacy Runs do not carry the authorization
         # fields needed by the ordinary evaluator; guessing them would expand
@@ -1268,17 +1337,6 @@ class PlanningAdmissionAuthority:
         ):
             return self._finish_command(
                 self._deny(record, "PLANNING_POLICY_REQUIRED"),
-                principal,
-                command_key,
-                payload,
-            )
-        # Route construction needs the concrete demand and duration.  Deny it
-        # before dereferencing the estimate so a provisioner omission is an
-        # idempotent, zero-effect command outcome rather than a claimed-key
-        # placeholder that cannot be replayed.
-        if not isinstance(record.get("estimate"), dict):
-            return self._finish_command(
-                self._deny(record, "PLANNING_ESTIMATE_MISSING"),
                 principal,
                 command_key,
                 payload,
@@ -1323,6 +1381,12 @@ class PlanningAdmissionAuthority:
             and qualification.get("provenance") != "official"
         ):
             record = self._deny(record, "COMMANDER_QUALIFICATION_REQUIRED")
+        elif not isinstance(record.get("estimate"), dict):
+            # An unavailable capacity observation cannot obscure the distinct
+            # Commander qualification gate. A qualified Commander still
+            # reaches this zero-effect, idempotent estimate denial before any
+            # route or reservation can be claimed.
+            record = self._deny(record, "PLANNING_ESTIMATE_MISSING")
         else:
             route_sources = self._evaluate_planning_route(run, binding, record, qualification)
             route, reserved = route_sources["route"], route_sources["reserved"]
@@ -1518,12 +1582,26 @@ class PlanningAdmissionAuthority:
             self._save(db, record)
         return self._finish_command(record, principal, command_key, payload)
 
+    def current_output_source(self, binding: dict[str, Any]) -> dict[str, Any]:
+        """Expose the read-only current Commander material to OutputAuthority."""
+        reader = getattr(self.qualifications, "current_output_source", None)
+        if not callable(reader):
+            raise RunError("COMMANDER_SOURCE_UNAVAILABLE")
+        source = reader(binding)
+        if not isinstance(source, dict):
+            raise RunError("COMMANDER_SOURCE_UNAVAILABLE")
+        return source
+
     def read_admission(self, binding: dict[str, Any]) -> object:
         """Read the original durable record only; it never calls Capacity."""
         with self._transaction() as db:
             record = self._load(db, binding["execution_id"])
         if record is None or record["binding_sha256"] != digest(binding):
             raise ValueError("PLANNING_ADMISSION_NOT_FOUND")
+        estimate = record.get("estimate")
+        duration_seconds = (
+            estimate.get("duration_seconds") if isinstance(estimate, dict) else None
+        )
         return {
             "schema_version": "karajan.planning-admission-evidence.v1",
             "binding_sha256": record["binding_sha256"],
@@ -1540,6 +1618,7 @@ class PlanningAdmissionAuthority:
             "capacity_activation_request": record["capacity_activation_request"] or {},
             "capacity_activation_command_key": record["capacity_activation_command_key"],
             "capacity_activation_receipt": record["capacity_activation_receipt"],
+            "duration_seconds": duration_seconds,
             "state": "admitted"
             if record["phase"] == "admitted"
             else "unknown"
@@ -1550,6 +1629,7 @@ class PlanningAdmissionAuthority:
                 "capacity_activate_unknown",
             }
             else "denied",
+            "reason_codes": record.get("reason_codes", []),
         }
 
     @contextmanager

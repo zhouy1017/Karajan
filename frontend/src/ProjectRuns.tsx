@@ -41,9 +41,31 @@ type Plan = {
     }[];
   };
 };
+type PlanningStatus = {
+  intent: {
+    id: string;
+    term: number;
+    principal: string;
+    profile: { id: string; revision: number };
+    budget_ref: string;
+    state: string;
+  } | null;
+  execution: {
+    id: string;
+    binding_sha256: string;
+    state: string;
+    cancel_requested: boolean;
+    reason_codes: string[];
+  } | null;
+  availability: {
+    state: "blocked" | string;
+    reason_code?: string;
+  };
+};
 type Run = {
   schema_version?: string;
   id: string;
+  project_id?: string;
   requirement: { goal: string; acceptance: string[] };
   commander: { term: number; principal: string };
   active_plan_revision: number | null;
@@ -51,6 +73,8 @@ type Run = {
   dispatch_enabled: boolean;
   plans: Plan[];
   handoffs: Handoff[];
+  planning?: PlanningStatus | null;
+  command?: PlanningCommand;
   configuration_snapshot?: {
     configuration: {
       resources: {
@@ -64,6 +88,53 @@ type Run = {
     };
   };
 };
+type PlanningCommand = {
+  id: string;
+  state: string;
+  reason_code?: string;
+};
+type PlanningRead = {
+  schema_version: "karajan.workbench-planning.v1";
+  run: Run;
+  planning: PlanningStatus | null;
+  command?: PlanningCommand;
+};
+type PlanningExecuteReceipt = PlanningRead & {
+  command?: PlanningCommand;
+};
+
+function planningBlockedMessage(reasonCode?: string) {
+  switch (reasonCode) {
+    case "PLANNING_TRANSPORT_UNAVAILABLE":
+      return "规划已准备，执行服务尚未就绪。";
+    case "PLANNING_EXECUTION_CANCELLED":
+      return "规划已取消。";
+    case "PLANNING_EXECUTION_BINDING_STALE":
+      return "规划版本已失效，请重新读取。";
+    case "COMMANDER_QUALIFICATION_REQUIRED":
+    case "COMMANDER_QUALIFICATION_EXPIRED":
+    case "COMMANDER_QUALIFICATION_CHANGED":
+    case "COMMANDER_PROFILE_FACTS_EXPIRED":
+    case "COMMANDER_ROUTE_NOT_AUTHORIZED":
+      return "当前 Commander 资格不可用，请先完成或更新资格核验。";
+    case "PLANNING_BUDGET_EXHAUSTED":
+    case "PLANNING_BUDGET_EXPIRED":
+    case "PLANNING_BUDGET_SCOPE_MISMATCH":
+    case "PLANNING_BUDGET_USAGE_INVALID":
+    case "PLANNING_BUDGET_USAGE_MISSING":
+    case "PLANNING_ESTIMATE_EXCEEDS_BUDGET":
+    case "PLANNING_FINITE_BUDGET_REQUIRED":
+      return "当前规划预算不足或已失效，请检查预算范围和剩余额度。";
+    case "PLANNING_CAPACITY_DENIED":
+    case "PLANNING_CAPACITY_BINDING_REQUIRED":
+    case "PLANNING_CAPACITY_ACTIVATION_UNKNOWN":
+      return "当前规划资源容量不可用，请检查容量授权和绑定状态。";
+    default:
+      return reasonCode
+        ? `当前规划暂不能执行（服务端代码：${reasonCode}）。`
+        : "当前规划暂不能执行。";
+  }
+}
 type Handoff = {
   id: string;
   digest: string;
@@ -103,6 +174,7 @@ function RunWorkbench({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [planningReadError, setPlanningReadError] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [reviewEpoch, setReviewEpoch] = useState(0);
   const command = useRef<{ identity: string; key: string } | null>(null);
@@ -119,6 +191,7 @@ function RunWorkbench({
     setRuns([]);
     setError("");
     setNotice("");
+    setPlanningReadError(false);
     fetch(`/v1/runs?project_id=${encodeURIComponent(project.id)}`)
       .then(async (response) => {
         if (!response.ok) throw new Error("无法读取需求，请重试。");
@@ -151,21 +224,234 @@ function RunWorkbench({
     try {
       const response = await fetch(`/v1/runs/${encodeURIComponent(id)}`);
       if (!response.ok) throw new Error("无法读取当前计划，请重试。");
-      const result = await response.json();
+      const result = (await response.json()) as Run;
       if (!current()) return false;
       if (
         result.id !== id ||
         (result.project_id !== undefined && result.project_id !== project.id)
       )
         throw new Error("计划与当前项目不一致，请重新打开需求。");
-      setSelected(result);
-      return true;
+      // A successful read makes a previous transient planning read failure
+      // stale, including when the run already contains a plan.
+      setPlanningReadError(false);
+      const commandStorageKey = `karajan:planning-execute-command:${id}`;
+      // A persisted command (or a run without a plan) needs the planning
+      // snapshot because the run GET does not carry the durable command view.
+      // A completed run with its authoritative plan needs no second read.
+      if (
+        result.plans.length > 0 &&
+        sessionStorage.getItem(commandStorageKey) === null
+      ) {
+        setSelected(result);
+        return true;
+      }
+      try {
+        const planningResponse = await fetch(
+          `/v1/runs/${encodeURIComponent(id)}/planning`,
+        );
+        if (!current()) return false;
+        if (!planningResponse.ok) throw new Error("规划状态读取失败。");
+        const planningResult = (await planningResponse.json()) as PlanningRead;
+        if (!current()) return false;
+        if (planningResult.run?.id !== id)
+          throw new Error("规划状态与当前需求不一致。");
+        setPlanningReadError(false);
+        setSelected({
+          ...planningResult.run,
+          planning: planningResult.planning,
+          command: planningResult.command,
+        });
+        if (planningResult.command?.state === "failed") {
+          setError(
+            planningResult.command.reason_code
+              ? `生成计划未完成（服务端代码：${planningResult.command.reason_code}）。`
+              : "生成计划未完成，请重新读取。",
+          );
+        } else if (planningResult.command?.state === "unknown") {
+          setNotice("生成计划结果未知；可使用同一请求身份重新读取。");
+        }
+        return true;
+      } catch (cause) {
+        if (!current()) return false;
+        setSelected(result);
+        setPlanningReadError(true);
+        setError("规划状态读取失败，请重新读取。");
+        return true;
+      }
     } catch (cause) {
       if (current())
         setError(cause instanceof Error ? cause.message : "无法读取计划。");
       return false;
     } finally {
       if (current()) setBusy(false);
+    }
+  }
+
+  function followPlanningCommand(
+    id: string,
+    generation: number,
+    commandStorageKey: string,
+  ) {
+    let attempts = 0;
+    const poll = async () => {
+      const session = lifetime.current;
+      if (!session.active || reading.current !== generation) return;
+      try {
+        const response = await fetch(
+          `/v1/runs/${encodeURIComponent(id)}/planning`,
+        );
+        if (!response.ok) throw new Error("规划状态读取失败。");
+        const result = (await response.json()) as PlanningRead;
+        if (
+          !session.active ||
+          reading.current !== generation ||
+          result.run?.id !== id
+        )
+          return;
+        const refreshed = {
+          ...result.run,
+          planning: result.planning,
+          command: result.command,
+        };
+        setSelected(refreshed);
+        setPlanningReadError(false);
+        const durableCommand = result.command;
+        const commandState = durableCommand?.state;
+        if (commandState === "failed") {
+          setError(
+            durableCommand?.reason_code
+              ? `生成计划未完成（服务端代码：${durableCommand.reason_code}）。`
+              : "生成计划未完成，请重新读取。",
+          );
+          sessionStorage.removeItem(commandStorageKey);
+          command.current = null;
+          return;
+        }
+        if (commandState === "completed") {
+          sessionStorage.removeItem(commandStorageKey);
+          command.current = null;
+          setNotice("");
+          return;
+        }
+        if (commandState === "unknown") {
+          // A duplicate execute may observe the original worker's pending
+          // dispatch after that worker has temporarily lost its reply.  Keep
+          // the same command identity and perform bounded read-only tracking;
+          // the server may promote this durable receipt to completed.
+          setNotice("生成计划结果未知；正在读取原请求的实际状态…");
+        }
+      } catch {
+        if (!session.active || reading.current !== generation) return;
+        setPlanningReadError(true);
+        setNotice("生成计划请求已保存，正在重试读取实际状态…");
+      }
+      attempts += 1;
+      if (attempts < 300 && session.active && reading.current === generation)
+        window.setTimeout(() => void poll(), 1000);
+    };
+    window.setTimeout(() => void poll(), 500);
+  }
+
+  async function startPlanning() {
+    if (!selected || sending.current) return;
+    sending.current = true;
+    const session = lifetime.current;
+    const generation = reading.current;
+    setBusy(true);
+    setError("");
+    setNotice("准备规划请求已提交，正在读取实际状态…");
+    const endpoint = `/v1/runs/${encodeURIComponent(selected.id)}/planning-start`;
+    const identity = endpoint + "{}";
+    const commandStorageKey = `karajan:planning-command:${selected.id}`;
+    try {
+      if (command.current?.identity !== identity) {
+        const storedKey = sessionStorage.getItem(commandStorageKey);
+        const key = storedKey ?? crypto.randomUUID();
+        sessionStorage.setItem(commandStorageKey, key);
+        command.current = { identity, key };
+      }
+      const commandKey = command.current?.key;
+      if (!commandKey) throw new Error("无法建立准备规划请求身份，请重试。");
+      const response = await fetch(endpoint, {
+        method: "POST",
+        body: "{}",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrf,
+          "Idempotency-Key": commandKey,
+        },
+      });
+      if (!session.active || reading.current !== generation) return;
+      if (!response.ok) throw new Error("准备规划未被接受，请重试。");
+      const refreshed = await openRun(selected.id);
+      sessionStorage.removeItem(commandStorageKey);
+      command.current = null;
+      if (session.active)
+        setNotice(refreshed ? "" : "规划请求已提交，请重新打开需求读取状态。");
+    } catch (cause) {
+      if (session.active)
+        setError(
+          cause instanceof Error ? cause.message : "准备规划结果未知，请重试。",
+        );
+    } finally {
+      sending.current = false;
+      if (session.active) setBusy(false);
+    }
+  }
+
+  async function executePlanning() {
+    if (!selected || sending.current) return;
+    const id = selected.id;
+    sending.current = true;
+    const session = lifetime.current;
+    const generation = reading.current;
+    setBusy(true);
+    setError("");
+    setNotice("生成计划请求已提交，正在读取实际状态…");
+    const endpoint = `/v1/runs/${encodeURIComponent(id)}/planning-execute`;
+    const identity = endpoint + "{}";
+    const commandStorageKey = `karajan:planning-execute-command:${id}`;
+    try {
+      if (command.current?.identity !== identity) {
+        const storedKey = sessionStorage.getItem(commandStorageKey);
+        const key = storedKey ?? crypto.randomUUID();
+        sessionStorage.setItem(commandStorageKey, key);
+        command.current = { identity, key };
+      }
+      const commandKey = command.current?.key;
+      if (!commandKey) throw new Error("无法建立生成计划请求身份，请重试。");
+      const response = await fetch(endpoint, {
+        method: "POST",
+        body: "{}",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrf,
+          "Idempotency-Key": commandKey,
+        },
+      });
+      if (!session.active || reading.current !== generation) return;
+      if (!response.ok) throw new Error("生成计划未被接受，请重试。");
+      const receipt = (await response.json()) as PlanningExecuteReceipt;
+      const refreshed = await openRun(id);
+      const followGeneration = reading.current;
+      if (response.status === 202 && receipt.command?.id) {
+        followPlanningCommand(id, followGeneration, commandStorageKey);
+      } else {
+        sessionStorage.removeItem(commandStorageKey);
+        command.current = null;
+      }
+      if (session.active)
+        setNotice(
+          refreshed ? "" : "生成计划请求已提交，请重新打开需求读取状态。",
+        );
+    } catch (cause) {
+      if (session.active)
+        setError(
+          cause instanceof Error ? cause.message : "生成计划结果未知，请重试。",
+        );
+    } finally {
+      sending.current = false;
+      if (session.active) setBusy(false);
     }
   }
 
@@ -311,6 +597,9 @@ function RunWorkbench({
     selected?.configuration_snapshot?.configuration.resources.budgets.find(
       (item) => item.id === handoff?.resource_impact.budget_ref,
     );
+  const planning = selected?.planning;
+  const canStartPlanning =
+    !!selected && !plan && !planning && !planningReadError;
   return (
     <section className="project-form">
       <h2>{project.name} · 需求与计划</h2>
@@ -446,6 +735,48 @@ function RunWorkbench({
             主 Commander · {selected.commander.principal} · 第{" "}
             {selected.commander.term} 任
           </p>
+          {!plan && (
+            <section
+              className="preview-result"
+              aria-labelledby="planning-status"
+            >
+              <h3 id="planning-status">规划准备</h3>
+              {planningReadError ? (
+                <p role="alert">规划状态读取失败，请重新读取。</p>
+              ) : !planning ? (
+                <>
+                  <p>需求已保存。准备规划会由受信服务读取需求和仓库状态。</p>
+                  <button
+                    disabled={busy || !canStartPlanning}
+                    onClick={() => void startPlanning()}
+                  >
+                    准备规划
+                  </button>
+                </>
+              ) : planning.availability.state === "blocked" ? (
+                <>
+                  <p role="status">
+                    {planningBlockedMessage(planning.availability.reason_code)}
+                  </p>
+                  <p className="field-help">
+                    当前服务暂不能继续执行，需求和规划状态已保留。
+                  </p>
+                </>
+              ) : planning.availability.state === "awaiting" ? (
+                <>
+                  <p role="status">规划已准备，可以生成计划。</p>
+                  <button
+                    disabled={busy}
+                    onClick={() => void executePlanning()}
+                  >
+                    生成计划
+                  </button>
+                </>
+              ) : (
+                <p role="status">正在准备规划，请稍候读取实际状态。</p>
+              )}
+            </section>
+          )}
           {plan ? (
             <>
               <h3>计划第 {plan.plan_revision} 版</h3>
