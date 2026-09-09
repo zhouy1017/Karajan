@@ -1484,8 +1484,11 @@ def test_lost_activation_reply_reopens_the_original_capacity_command(
 ) -> None:
     service, authority, run, execution = _case(tmp_path, configured)
     original = authority.capacity.activate
+    activations = 0
 
     def lose_reply(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        nonlocal activations
+        activations += 1
         original(*args, **kwargs)
         raise RuntimeError("activation reply lost")
 
@@ -1514,6 +1517,12 @@ def test_lost_activation_reply_reopens_the_original_capacity_command(
     recovered = reopened.advance(execution["id"], "owner", "advance")
     assert recovered["phase"] == "admitted"
     assert len(authority.capacity.snapshot()["reservations"]) == 1
+    assert activations == 1
+    assert authority.capacity.command_receipt(
+        "activate",
+        {"admission_id": authority.capacity.snapshot()["reservations"][0]["id"]},
+        command_key="planning-activate:" + execution["id"],
+    ) is not None
 
 
 def test_rejected_command_key_cannot_be_reused_for_another_execution(

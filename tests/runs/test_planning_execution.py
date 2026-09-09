@@ -1673,6 +1673,47 @@ def test_cancellation_during_submission_guard_source_read_prevents_plan(
     assert service.planner.get(run["id"], principal="owner")["plans"] == []
 
 
+def test_cancellation_after_submission_guard_serializes_after_run_commit(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A cancel arriving after the guard cannot commit in the old Run-write gap."""
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authorities)
+    authorities.activate()
+    started = Event()
+    original_cancel = service.cancel
+    original_save = service.planner._save
+    pending: list[Any] = []
+    workers = ThreadPoolExecutor(max_workers=1)
+
+    def cancelling(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        started.set()
+        return original_cancel(*args, **kwargs)
+
+    def save_after_guard(db: sqlite3.Connection, value: dict[str, Any]) -> None:
+        if value["plans"] and not pending:
+            future = workers.submit(
+                cancelling, execution["id"], principal="owner", command_key="cancel-after-guard"
+            )
+            assert started.wait(2), "cancel did not reach the execution fence"
+            assert not future.done(), "cancel crossed the held execution fence"
+            original_save(db, value)
+            pending.append(future)
+            return
+        original_save(db, value)
+
+    monkeypatch.setattr(service.planner, "_save", save_after_guard)
+    try:
+        submitted = service.submit(execution["id"], principal="owner", command_key="submit")
+        cancelled = pending[0].result(timeout=5)
+    finally:
+        workers.shutdown(wait=True)
+    assert submitted["state"] == "submitted"
+    assert cancelled["cancel_requested"] is False
+    assert cancelled["state"] == "submitted"
+    assert service.planner.get(run["id"], principal="owner")["plans"] == [submitted["submission"]]
+
+
 def test_source_drift_after_capture_blocks_reopened_claim(
     configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
