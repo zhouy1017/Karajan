@@ -78,12 +78,12 @@ SSE 客户端按以下顺序恢复：
 
 | 缺口 | 当前事实/风险 | 归属与验收 |
 |---|---|---|
-| Project/Run 之间缺 Conversation 持久身份 | 当前 `/v1/runs` 以 project 直接关联，PR155 扩展 Planning 但未提供会话聚合 | #159/#160 后端接线；UX-AC01/02/13/14，FR01/03/17/18；先完成 schema/backfill/兼容读写 |
+| Project/Run 之间缺 Conversation 持久身份 | 当前 `/v1/runs` 以 project 直接关联，PR155 扩展 Planning 但未提供会话聚合 | #159 负责身份迁移与兼容读写，#160 复用其身份接入计划；UX-AC01/02/13/14，FR01/03/17/18；先完成 schema/backfill/兼容读写 |
 | Hub 聚合与 currentCandidate 回链 | 现有 ProjectRuns/计划页面按 Run 展示，缺项目内会话主聚合和候选回链 | #159/#162；UX-AC05/08/11，FR14/17/19/20 |
-| 消息、草稿、任务提案的持久化 | 现有 Run 输入不是 Conversation message/draft；自然语言输入、项目切换和未发送草稿需新实体 | #160；UX-AC02/03/13/14，FR03/04/05/17 |
-| 版本/幂等/跨项目约束 | 现有 Project/Run 命令已有一部分 key/revision 约束，需贯穿新增层并拒绝交叉引用 | #160/#161；UX-AC03/06/09/14，FR04/05/11/15/18 |
+| 消息、草稿、任务提案的持久化 | 现有 Run 输入不是 Conversation message/draft；自然语言输入、项目切换和未发送草稿需新实体 | #159 负责会话/消息/草稿持久化与恢复；#160 负责 Commander 提案生成和编辑；UX-AC02/03/13/14，FR03/04/05/17 |
+| 版本/幂等/跨项目约束 | 现有 Project/Run 命令已有一部分 key/revision 约束，需贯穿新增层并拒绝交叉引用 | #159 负责新增会话/草稿身份、版本及跨项目约束；#160 负责提案/批准；#161/#162 负责运行/交付事实；UX-AC03/06/09/14，FR04/05/11/15/18 |
 | progress/heartbeat/terminal truth | 现有事件/快照设计有游标，但 Workbench 尚未统一模型反馈、连接心跳和终态字段 | #159/#161/#162；UX-AC10/12，FR15/17/18/19 |
-| 新建入口不自动执行 | 新 UI 需让新对话/新任务落在 proposal/draft，不触发 approval/dispatch | #160；UX-AC02/03/13，FR03/04/12 |
+| 新建入口不自动执行 | 新 UI 需让新对话/新任务落在 proposal/draft，不触发 approval/dispatch | #159 负责非执行的新会话/任务草稿创建与读回；#160 承接交给 Commander 的提案及批准接线；UX-AC02/03/13，FR03/04/12 |
 | 真实并行和独立 Review | 本文只定义消费契约；当前 C/P/S/G 仍未完成，模型自报和 fixture 不能关闭首演 | #161/#162；UX-AC04/08，FR07/13/14/19/20；保留真实低级模型身份、重叠窗口和独立 Reviewer 证据 |
 
 ## 6. 验收记录要求
