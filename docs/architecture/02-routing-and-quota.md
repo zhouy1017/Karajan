@@ -1,6 +1,6 @@
 # Rulebook、配额与换源
 
-Rulebook 是用户可编辑、可模拟、可版本化的路由契约。模型提出任务要求，确定性程序执行契约。主 Commander、顾问、Worker、Reviewer、修复与重试都经过准入。
+Rulebook 是用户可编辑、可模拟、可版本化的路由契约。Commander 主导提出任务、角色与模型/Profile 绑定；确定性程序执行硬约束。显式绑定优先于 Rulebook，主 Commander、顾问、Worker、Reviewer、修复与重试都经过准入。
 
 ## 1. 接入目录
 
@@ -52,13 +52,18 @@ on dependency / result / quota observation / reset timer / user command:
   按优先级、等待时间和 Run 轮转顺序遍历
   对每个 task:
     固定 task_revision + authorization + rulebook_revision
-    匹配规则，得到候选 Profile revisions
+    binding_mode 为互斥的 strict-single / preferred-with-approved-alternatives / default
+    strict-single：候选仅为 strict Profile revision；不得 fallback
+    preferred-with-approved-alternatives：首 Attempt 仅为 preferred Profile revision
+    default：匹配 Rulebook，得到默认候选 Profile revisions 并按规则排序
+    仅对 preferred-with-approved-alternatives：旧 Attempt 已确定停止或隔离后，新 Attempt 才以 approved alternatives
+      与原 authorization、Rulebook 硬允许集合取交集重新建候选；不与旧单 Profile 候选取交集
     过滤能力、隔离、工具、数据去向、独立性、计费和健康硬条件
     计算每个候选的资源向量及已知/估算/未知程度
     排除任一硬约束不满足的候选
     对剩余候选按版本化策略稳定排序
     在短事务内重查任务/池版本并尝试原子预留
-    成功：写 Attempt、RouteDecision 和 StartAttempt outbox
+    成功：写 Attempt、RouteDecision（注明 binding_mode 与 preferred/alternative）和 StartAttempt outbox
     失败：继续其他候选或登记 Blocker；继续调度独立任务
 ```
 
@@ -70,7 +75,7 @@ on dependency / result / quota observation / reset timer / user command:
 
 瓶颈压力只对可比较的、归一化后的各池占用比例取最大值。接近重置且有剩余额度可在同档候选中加偏好；必须同时满足周/月等较长窗口。优先用完订阅、最快完成可以作为另外两套显式策略，不与默认策略暗中叠加。
 
-路由解释保存完整输入快照：命中规则、候选及淘汰原因、各池观察、估计依据、排序值、最终配置及同分规则。模拟使用同一个求解器，但不预留、不调用模型；模拟结果只对所示快照有效。
+三种 binding mode 都执行能力、隔离、工具、数据去向、独立性、计费、健康和全部资源硬规则。strict-single 不合格即登记 Blocker，不由默认 Rulebook 回退；default 才使用 Rulebook 候选和排序。approved alternatives 不是初始选择，也不能改变当前 Attempt；它们只在旧 Attempt 已确定停止或隔离、并完成暂停/消费核对后，用于新 Attempt，绝不新增后台热切换。路由解释保存完整输入快照：binding mode、命中规则、候选及淘汰原因、各池观察、估计依据、排序值、最终配置及同分规则。模拟使用同一个求解器，但不预留、不调用模型；模拟结果只对所示快照有效。
 
 ## 4. 配额池与预算
 
@@ -161,7 +166,7 @@ unknown 配额不会被视为可无限调用：必须有用户允许的保守模
 | `NO_QUALIFIED_PROFILE` | 显示资格缺口，保留其他独立任务可运行 |
 | `BUDGET_EXHAUSTED` | 停止新消费，给出等待/改计划/增预算的具体选项 |
 
-自动换源只改变获准的 Profile，保留 task revision、目标、难度、风险、权限和验收条件。原执行必须确认结束，或已证明无法继续写入/调用且剩余消费单独占账，才可派发替代 Attempt。单纯 fence 失效不足以证明这一点。
+自动换源是高级 opt-in：只有批准版本显式给出允许集合、成本/能力边界和数据去向时才可使用。它只改变获准的 Profile，保留 task revision、目标、难度、风险、权限和验收条件；来源、计费路径或成本扩大必须重新批准。原执行先暂停并确认结束，或已证明无法继续写入/调用且剩余消费单独占账，才可派发替代 Attempt。单纯 fence 失效不足以证明这一点，也绝不热切换。
 
 质量升级使用同一路由行的显式 stage：审批时分别冻结正常组和各个预授权升级组；仅 `QUALITY_FAILED` 且修复次数允许时激活下一个 stage，再与授权集合和全部硬条件取交集。示例中的 `quality_escalation_groups` 按顺序定义阶段，不会被普通 eligible_groups 覆盖，也不会自动修改任务复杂度/风险。升级组未获批准则不能执行；任务目标或接口变化另建 Task revision。
 

@@ -56,6 +56,20 @@ def test_preparation_survives_restart_and_rejects_same_key_with_changed_input(
         restarted.prepare(manifest(2), "start-1", spec)
 
 
+def test_historical_preparation_lookup_is_read_only_and_requires_every_identity(
+    tmp_path: Path,
+) -> None:
+    host = RunnerHost(tmp_path / "state")
+    spec = ProcessSpec((sys.executable, "-c", "print('fixture')"), tmp_path)
+    host.prepare(manifest(), "start-1", spec)
+    before = host.database.read_bytes()
+    assert host.inspect_original_preparation(manifest(), "start-1").state == "prepared"
+    assert host.database.read_bytes() == before
+    with pytest.raises(LaunchDenied, match="PREPARED_BINDING_MISMATCH"):
+        host.inspect_original_preparation(manifest(2), "start-1")
+    assert host.database.read_bytes() == before
+
+
 @pytest.mark.parametrize("denial", ["paused", "old-fence", "expired", "wrong-budget"])
 def test_start_requires_current_unpaused_unexpired_authorization(
     tmp_path: Path, denial: str

@@ -91,9 +91,47 @@ def compile_reviewer_input(
         operation = GoExecutionIntents.read_operation(
             admissions, run_id, operation_id, principal=principal
         )
+        return compile_reviewer_input_from_records(
+            candidates,
+            run=run,
+            operation=operation,
+            principal=principal,
+            final_check_evidence_ids=final_check_evidence_ids,
+        )
+    except RunError:
+        raise
+    except CandidateError as error:
+        raise RunError(error.code) from None
+    except (
+        AttributeError,
+        KeyError,
+        TypeError,
+        ValueError,
+        ValidationError,
+        OSError,
+        RecursionError,
+    ):
+        raise RunError("REVIEWER_INPUT_INVALID") from None
+
+
+def compile_reviewer_input_from_records(
+    candidates: CandidateStore,
+    *,
+    run: dict[str, Any],
+    operation: dict[str, Any],
+    principal: str,
+    final_check_evidence_ids: Collection[str],
+    prepared_input: ReviewerInput | None = None,
+) -> ReviewerInput:
+    """Compile from producer-held controller records without reopening their DBs.
+
+    The admission effect guard already holds these exact Run and Worker records.
+    A receiving writer can therefore recompile the full Candidate CAS and Check
+    input without inverting the established controller lock order.
+    """
+    try:
         if (
-            operation.get("run_id") != run_id
-            or operation.get("id") != operation_id
+            operation.get("run_id") != run.get("id")
             or operation.get("state") not in {"reserved", "execution_pending", "executing"}
         ):
             raise RunError("REVIEWER_INPUT_OPERATION_INVALID")
@@ -125,6 +163,7 @@ def compile_reviewer_input(
             current=current,
             read_paths=workspace["read_paths"],
             approved=approved,
+            prepared_input=prepared_input,
         )
     except RunError:
         raise
@@ -151,6 +190,7 @@ def _compile(
     current: Mapping[str, str] | None = None,
     read_paths: Collection[str] | None = None,
     approved: Mapping[str, Any] | None = None,
+    prepared_input: ReviewerInput | None = None,
 ) -> ReviewerInput:
     if not isinstance(subject, Mapping) or set(subject) != _SUBJECT_FIELDS:
         raise RunError("REVIEWER_INPUT_SUBJECT_INVALID")
@@ -187,7 +227,14 @@ def _compile(
     ):
         raise RunError("REVIEWER_INPUT_CANDIDATE_STALE")
     checks = _final_checks(candidates, candidate, evidence_ids, current=current)
-    files, diff = _materialize_content(candidates, candidate, read_paths=read_paths)
+    if prepared_input is None:
+        files, diff = _materialize_content(candidates, candidate, read_paths=read_paths)
+    else:
+        # This is an O(snapshot bytes) integrity read, not a materialization
+        # or diff. It keeps both compiler snapshots physically current while
+        # the producer guard compares the immutable prepared full input.
+        candidates.verify_reviewer_input_artifacts(candidate["id"])
+        files, diff = _prepared_material(prepared_input, actual_identity)
     payload = {
         "schema_version": "karajan.reviewer-input.v2",
         "candidate": actual_identity,
@@ -214,6 +261,44 @@ def _compile(
         candidate_revision=actual_identity["revision"],
         check_evidence_ids=tuple(row["evidence_id"] for row in checks),
     )
+
+
+def _prepared_material(
+    prepared_input: ReviewerInput, actual_identity: Mapping[str, Any]
+) -> tuple[list[dict[str, str]], str]:
+    """Reuse private full-snapshot material for a final current-input rebuild.
+
+    This is not a public compiler shortcut: the producer's compiler creates
+    the value before its shared effect guards. The caller still reconstructs
+    all current records, Checks and final bytes before comparing the retained
+    input identity at the receiver boundary.
+    """
+    try:
+        if (
+            prepared_input.size != len(prepared_input.content)
+            or prepared_input.content_sha256 != hashlib.sha256(prepared_input.content).hexdigest()
+        ):
+            raise ValueError
+        value = json.loads(prepared_input.content)
+        if (
+            not isinstance(value, dict)
+            or value.get("schema_version") != "karajan.reviewer-input.v2"
+            or value.get("candidate") != actual_identity
+            or not isinstance(value.get("files"), list)
+            or not isinstance(value.get("diff"), str)
+        ):
+            raise ValueError
+        files = value["files"]
+        if any(
+            not isinstance(row, dict)
+            or set(row) != {"path", "mode", "content"}
+            or any(not isinstance(row[key], str) for key in row)
+            for row in files
+        ):
+            raise ValueError
+        return files, value["diff"]
+    except (AttributeError, TypeError, ValueError, UnicodeError, json.JSONDecodeError):
+        raise RunError("REVIEWER_INPUT_INVALID") from None
 
 
 def _approved_context(

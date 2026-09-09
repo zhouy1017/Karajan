@@ -6,7 +6,8 @@
 
 | 状态 | 唯一拥有者 | 其他部分的角色 |
 |---|---|---|
-| Requirement、Plan、用户确认、授权 | Karajan Planning / Policy | Commander 提案，Web 发命令 |
+| Project、CommanderConversation、消息和草稿 | 认证的项目/会话记录 | 侧栏与 Hub 读取聚合；导航不改变执行生命周期 |
+| Requirement、Plan、用户确认、授权 | 版本化 Planning / Policy 记录 | Commander 主导拆解、判断与验收建议；Web 发命令 |
 | Run、Task、有效 Attempt、任务依赖 | Karajan Coordination | 执行器事件作为观测输入 |
 | 进程树、供应商会话、调用返回 | Execution 及具体执行器 | 协调器核对并更新业务记录 |
 | Profile、Rulebook、本地预算/预留 | Karajan Policy / Capacity | 执行器只能使用已准入配置 |
@@ -22,6 +23,8 @@
 
 ```mermaid
 erDiagram
+    PROJECT ||--o{ COMMANDER_CONVERSATION : organizes
+    COMMANDER_CONVERSATION ||--o{ RUN : groups
     PROJECT ||--o{ REQUIREMENT : contains
     REQUIREMENT ||--o{ RUN : executed_as
     RUN ||--o{ PLAN_REVISION : proposes
