@@ -1,6 +1,6 @@
 # 当前业务顺序
 
-修订：2026-09-09。本文是当前唯一的开发执行入口；设计分类、M0–M4/DG 历史承接和实现切片见 [设计治理](design-governance-20260909.md)。活动用户行为规格见 [Commander Workbench PRD](../prd/commander-workbench.md)。原 PRD、Issue 正文、架构约束、原 AC 和候选失败证据继续有效；本修订更新首演的交互组织和执行顺序，不把历史候选写成已完成。
+修订：2026-09-09。本文是当前唯一的开发执行入口；设计分类、M0–M4/DG 历史承接和实现切片见 [设计治理](design-governance-20260909.md)。活动用户行为规格见 [Commander Workbench PRD](../prd/commander-workbench.md)。r5 UI 方向已确认，产品 AC 仍未完成；原 PRD、Issue 正文、架构约束、原 AC 和候选失败证据继续有效。本修订更新首演的交互组织和执行顺序，不把历史候选写成已完成。
 
 当前产品父范围仍是 [#1 v1 PRD](https://github.com/zhouy1017/Karajan/issues/1)，工作台业务闭环是 [#153](https://github.com/zhouy1017/Karajan/issues/153)，其原生父票为 [#12](https://github.com/zhouy1017/Karajan/issues/12)。本轮设计治理 Issue 为 [#158](https://github.com/zhouy1017/Karajan/issues/158)。#153 不关闭、不扩写成完整 v1；其原 AC 和业务简报仍保存为发布快照，当前页面行为由新 PRD revision 承接。
 
@@ -23,7 +23,7 @@ r4 将“项目 → Commander 会话”的侧栏层级纳入 P1/UX-AC14。切换
 
 ## 当前队列与复用
 
-本轮只推进 P1→P2→P3→P4，允许已明确的直接依赖并行准备。优先复用 `#11`、`#12`、`#16`、`#17`、`#13`、`#14`、`#153`、`#93` 的原范围、接口和候选；还应核对 #112、#142、#146、#147、#90、#94、#95、#116 等现有接线。新工作台切片按 [#159 入口](https://github.com/zhouy1017/Karajan/issues/159) → [#160 分工](https://github.com/zhouy1017/Karajan/issues/160) → [#161 并行](https://github.com/zhouy1017/Karajan/issues/161) → [#162 审查交付](https://github.com/zhouy1017/Karajan/issues/162) 执行；范围映射见 [治理索引](design-governance-20260909.md#新工作台实现切片)。四票当前 queued，本文不启动产品编码。
+本轮只推进 P1→P2→P3→P4，允许已明确的直接依赖并行准备。优先复用 `#11`、`#12`、`#16`、`#17`、`#13`、`#14`、`#153`、`#93` 的原范围、接口和候选；还应核对 #112、#142、#146、#147、#90、#94、#95、#116 等现有接线。新工作台切片按 [#159 入口](https://github.com/zhouy1017/Karajan/issues/159) → [#160 分工](https://github.com/zhouy1017/Karajan/issues/160) → [#161 并行](https://github.com/zhouy1017/Karajan/issues/161) → [#162 审查交付](https://github.com/zhouy1017/Karajan/issues/162) 执行；范围映射见 [治理索引](design-governance-20260909.md#新工作台实现切片)。四票当前 queued，开发与验收按各票原范围和当前候选证据推进。
 
 复用规则如下：
 

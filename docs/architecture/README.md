@@ -1,6 +1,6 @@
 # Karajan Commander Workbench 架构
 
-修订：2026-09-09。状态：**以 [Commander Workbench PRD](../prd/commander-workbench.md) 为当前规格；历史 v1 基线与 A01–A26 保留，真实接口/账户尚未验收。** 逐项决定和修正见 [审阅记录](06-review-and-decisions.md)。
+修订：2026-09-09。状态：**Commander Workbench r5 UI 方向已确认，以 [Commander Workbench PRD](../prd/commander-workbench.md) 为当前规格；产品 AC、真实接口/账户尚未验收，历史 v1 基线与 A01–A26 保留。** 逐项决定和修正见 [审阅记录](06-review-and-decisions.md)。
 
 Karajan 是个人使用的多来源 Agent 代码交付平台。用户从仓库会话选择主 Commander 并持续对话；Toil 式 Commander 主导拆解、判断、升级和验收建议。用户编辑任务、角色和模型并批准精确版本后，可信协调器只做硬约束准入、机械调度和状态落盘；Worker、独立 Reviewer 完成代码、检查、审查和 PR，合并由用户决定。
 

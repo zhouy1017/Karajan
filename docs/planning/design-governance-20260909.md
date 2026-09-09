@@ -6,7 +6,7 @@
 
 唯一产品首演是：打开受管仓库，选择 Commander 模型和来源，进入高级 Commander 会话，持续对话后查看并编辑任务角色、指定模型来源和依赖；用户可以一键接受建议或修改，随后批准同一版本；两个无依赖任务由便宜模型真实并行编码；组合候选再独立运行 checks、review、diff 和 PR 交付。
 
-新的产品行为规格是 [Commander Workbench PRD](../prd/commander-workbench.md)（2026-09-09 revision，由设计作者维护）。本治理文档负责文档层级、旧范围承接和执行队列；PRD 负责用户行为、状态和界面细节。旧 [v1 PRD](../prd/karajan-v1.md)、架构验收和原 Issue 正文仍是必需范围基线，未被本轮静默删除。
+新的产品行为规格是 [Commander Workbench PRD](../prd/commander-workbench.md)（2026-09-09 r5，UI 方向已确认，产品 AC 尚未完成）。本治理文档负责文档层级、旧范围承接和执行队列；PRD 负责用户行为、状态和界面细节。旧 [v1 PRD](../prd/karajan-v1.md)、架构验收和原 Issue 正文仍是必需范围基线，未被本轮静默删除。
 
 2026-09-09 r2 的核心日常入口是 Commander Hub：主会话集中呈现 Commander 的初步拆分与分配、用户调整确认、运行任务缩略卡片和最终汇报。Tasks / Agents 看板、计划、任务和交付页提供更多细节及操作，返回 Hub 保留同一 Run 状态。资格、规则、预算和容量编辑仍按需展开。可信程序调度承担 admission、授权、幂等、恢复和证据收据；卡片直接读取状态，不能靠 Commander 轮询浪费主模型调用。Commander 汇总检查及独立审查结果，但不能覆盖其证据和交付 gate。
 

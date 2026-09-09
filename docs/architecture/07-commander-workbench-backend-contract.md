@@ -8,15 +8,15 @@
 
 - `Project` 是受管仓库的稳定身份，拥有仓库基准、策略和所有会话；项目名称、分支文本或当前页面选择不能代替 `project_id`。
 - `CommanderConversation` 是项目内持久的用户/Commander 控制上下文，拥有消息、未发送草稿、当前 Commander profile/source、任务建议和用户确认记录。它可以没有 Run，也可以有多个历史或当前 Run；一个会话不会跨项目。
-- `Run` 是会话针对某项 Requirement 的一次完整执行过程，仍拥有 plan revision、Task、Attempt、Candidate、Evidence 和 Delivery。每个 Run 必须绑定且只能绑定一个 `conversation_id` 和一个 `project_id`；该 project 必须等于 conversation 的 project。
+- `Run` 是会话针对某项 Requirement 的一次完整执行过程，仍拥有 plan revision、Task、Attempt、Candidate、Evidence 和 Delivery。每个 Run 必须绑定且只能绑定一个 `conversation_id` 和一个 `project_id`；该 project 必须等于 conversation 的 project。Run 批准后固定其 Commander term、Profile/source 和 authorization；用户之后切换会话默认选择只影响未来草稿/新 Run，不回写或热切换已批准 Run。
 - `Task`、`Agent/Attempt`、Candidate、checks、Review 和 PR 事实归属 Run；Hub 是聚合读模型，不拥有第二份状态。
 
 当前代码已有认证的 `POST/GET /v1/projects`、`GET /v1/projects/{id}`、`POST/GET /v1/runs`、`GET /v1/runs/{id}` 以及 ProjectRuns/NewRunForm 的 Project→Run 入口。只读核对 PR155 候选确认它仍以 `project_id` 创建 Run、在 Run 里保存 Commander term/plan/approval，并扩展 Planning readiness、snapshot/transport 与前端计划状态；它没有建立 Conversation 身份。迁移保持旧路由可用，同时把现有 Run 归入一个确定的会话：
 
-1. 数据库新增 `commander_conversations`，以及 `runs.conversation_id` 非空外键；迁移脚本为每个旧 Project 建立明确的 legacy conversation，旧 Run 按已有创建/更新顺序归入，保留原 Run ID、revision、term、plan 和证据引用。
-2. 新建项目不自动创建会话或 Run；用户点击“与 Commander 开始”或“新对话”才创建 Conversation。新任务只创建会话草稿/待确认建议，不创建执行 Attempt。
+1. 数据库新增 `commander_conversations`，以及 `runs.conversation_id` 非空外键；迁移脚本为每个旧 Project 建立一个确定的 legacy conversation，旧 Run 按规范化 `created_at, id` 顺序归入，保留原 Run ID、revision、term、plan 和证据引用。迁移运行多次结果相同。
+2. 新建项目不自动创建会话或 Run；用户点击“与 Commander 开始”或“新对话”才创建 Conversation。为兼容旧 `POST /v1/runs`，服务端在确实缺少 `conversation_id` 时幂等地 ensure 该项目的 default/legacy conversation，再创建 Run；这不是用户导航创建会话。若请求带有不存在、已删除或不属于该项目的 conversation，则返回 `CROSS_PROJECT_REFERENCE`/`CONVERSATION_NOT_FOUND`，不能猜测归属。新任务只创建会话草稿/待确认建议，不创建执行 Attempt。
 3. `GET /v1/runs?project_id=` 继续返回所有项目 Run；新增 `conversation_id` 过滤和显式 `GET /v1/conversations/{id}/runs`。旧 `POST /v1/runs` 可以继续接受兼容请求，但必须由服务端解析 `conversation_id`，缺失时使用项目的 legacy/default conversation，并返回迁移后的身份。
-4. 新 UI 只把 Conversation/Hub 作为控制入口；旧 ProjectRuns 作为详情/兼容读视图。两者读取同一个快照聚合和事件游标，不各自维护运行状态。
+4. 新 UI 只把 Conversation/Hub 作为控制入口；旧 ProjectRuns 作为详情/兼容读视图。两者读取同一个快照聚合和事件游标，不各自维护运行状态。缺失 conversation 只对历史迁移/兼容创建走 deterministic default；已声明但无效的引用一律阻塞。
 
 迁移要求保持幂等、可回滚和可审计：重复迁移不改变 Run ID 或候选 digest；跨项目 conversation/run 绑定返回稳定 `CROSS_PROJECT_REFERENCE`；旧数据缺 conversation 时显示恢复阻塞而不是猜测归属。
 
@@ -53,8 +53,8 @@
 | 会话草稿 | `PUT /v1/conversations/{id}/draft` | `If-Match` + draft revision；切换会话可恢复，冲突返回当前草稿 |
 | 新任务建议 | `POST /v1/conversations/{id}/task-drafts` | 创建需求/任务草稿和待确认 proposal；不自动插入已批准 Run，不启动 Worker |
 | 提案修订 | `POST /v1/conversations/{id}/proposals` | 由可信服务编译 task graph、profile/source、依赖和 authorization preview；生成新 proposal revision |
-| 接受建议 | `POST /v1/conversations/{id}/proposals/{revision}/accept` | 仅保存用户确认的 proposed assignment；仍不执行，直到显式 `approve` |
-| 计划批准/分发 | 既有 `POST /v1/runs/{id}/plan-approval`，建议增加 `conversation_id` 校验 | 必须传 `plan_revision`, `authorization_digest`, `If-Match`；旧版本/错误会话返回 409/412；这是唯一允许进入 dispatch 的用户命令 |
+| 接受建议 | `POST /v1/conversations/{id}/proposals/{revision}/accept` | 可选的轻量确认动作，用于保存用户对默认分工的调整；不要求用户为“接受建议”与“批准计划”重复确认 |
+| 计划批准/分发 | 现有 `POST /v1/runs/{id}/plan-approval`（由当前 `backend/karajan/web/runs.py` 暴露），建议增加 `conversation_id` 校验 | 必须传 `plan_revision`, `authorization_digest`, `If-Match`；旧版本/错误会话返回 409/412；这是唯一允许进入 dispatch 的用户命令。若用户直接确认未改动的默认建议，该命令同时记录 acceptance 与 approval |
 | Hub 快照 | `GET /v1/conversations/{id}/hub` | 聚合当前 Run/Task/Agent/Candidate/checks/review/PR 摘要；只读，不能成为第二状态机 |
 | 事件流 | `GET /v1/conversations/{id}/events?after_seq=N` | SSE 返回 snapshot watermark；游标过期或检测到缺口返回 `event_gap`，客户端重新 GET snapshot 后从新 seq 继续 |
 | 单 Attempt 反馈 | `GET /v1/attempts/{id}/feedback?after_seq=N` | 显示 model progress、来源时间和 terminal truth；不以连接 heartbeat 代替执行事件 |
@@ -78,13 +78,13 @@ SSE 客户端按以下顺序恢复：
 
 | 缺口 | 当前事实/风险 | 归属与验收 |
 |---|---|---|
-| Project/Run 之间缺 Conversation 持久身份 | 当前 `/v1/runs` 以 project 直接关联，PR155 扩展 Planning 但未提供会话聚合 | 后端迁移任务；UX-AC01/02/13/14，FR01/03/17/18；先完成 schema/backfill/兼容读写 |
-| Hub 聚合与 currentCandidate 回链 | 现有 ProjectRuns/计划页面按 Run 展示，缺项目内会话主聚合和候选回链 | Workbench backend + UI owner；UX-AC05/08/11，FR14/17/19/20 |
-| 消息、草稿、任务提案的持久化 | 现有 Run 输入不是 Conversation message/draft；自然语言输入、项目切换和未发送草稿需新实体 | Conversation API owner；UX-AC02/03/13/14，FR03/04/05/17 |
-| 版本/幂等/跨项目约束 | 现有 Project/Run 命令已有一部分 key/revision 约束，需贯穿新增层并拒绝交叉引用 | API/coordination owner；UX-AC03/06/09/14，FR04/05/11/15/18 |
-| progress/heartbeat/terminal truth | 现有事件/快照设计有游标，但 Workbench 尚未统一模型反馈、连接心跳和终态字段 | Execution + Workbench owner；UX-AC10/12，FR15/17/18/19 |
-| 新建入口不自动执行 | 新 UI 需让新对话/新任务落在 proposal/draft，不触发 approval/dispatch | Planning/HTTP owner；UX-AC02/03/13，FR03/04/12 |
-| 真实并行和独立 Review | 本文只定义消费契约；当前 C/P/S/G 仍未完成，模型自报和 fixture 不能关闭首演 | P3/P4 Issue owners；UX-AC04/08，FR07/13/14/19/20；保留真实低级模型身份、重叠窗口和独立 Reviewer 证据 |
+| Project/Run 之间缺 Conversation 持久身份 | 当前 `/v1/runs` 以 project 直接关联，PR155 扩展 Planning 但未提供会话聚合 | #159/#160 后端接线；UX-AC01/02/13/14，FR01/03/17/18；先完成 schema/backfill/兼容读写 |
+| Hub 聚合与 currentCandidate 回链 | 现有 ProjectRuns/计划页面按 Run 展示，缺项目内会话主聚合和候选回链 | #159/#162；UX-AC05/08/11，FR14/17/19/20 |
+| 消息、草稿、任务提案的持久化 | 现有 Run 输入不是 Conversation message/draft；自然语言输入、项目切换和未发送草稿需新实体 | #160；UX-AC02/03/13/14，FR03/04/05/17 |
+| 版本/幂等/跨项目约束 | 现有 Project/Run 命令已有一部分 key/revision 约束，需贯穿新增层并拒绝交叉引用 | #160/#161；UX-AC03/06/09/14，FR04/05/11/15/18 |
+| progress/heartbeat/terminal truth | 现有事件/快照设计有游标，但 Workbench 尚未统一模型反馈、连接心跳和终态字段 | #159/#161/#162；UX-AC10/12，FR15/17/18/19 |
+| 新建入口不自动执行 | 新 UI 需让新对话/新任务落在 proposal/draft，不触发 approval/dispatch | #160；UX-AC02/03/13，FR03/04/12 |
+| 真实并行和独立 Review | 本文只定义消费契约；当前 C/P/S/G 仍未完成，模型自报和 fixture 不能关闭首演 | #161/#162；UX-AC04/08，FR07/13/14/19/20；保留真实低级模型身份、重叠窗口和独立 Reviewer 证据 |
 
 ## 6. 验收记录要求
 
