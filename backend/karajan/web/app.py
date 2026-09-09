@@ -188,9 +188,10 @@ def create_app(
     # Hub consumes the same controller ledger used by PlanningWorkbench; it
     # must not derive an alternate execution state from Run intents.
     conversations = ConversationStore(projects, planner, planning_execution=execution)
-    proposals = ProposalStore(planner, conversations)
+    proposals = ProposalStore(planner, conversations, qualifications)
     app.state.planning_execution = execution
     app.state.conversations = conversations
+    app.state.proposals = proposals
     register_run_routes(app, planner, conversations, proposals)
     register_conversation_routes(app, conversations)
     register_proposal_routes(app, proposals)

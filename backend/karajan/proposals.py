@@ -9,6 +9,9 @@ creates a Worker request.
 
 from __future__ import annotations
 
+import json
+from collections.abc import Iterator
+from contextlib import contextmanager
 from copy import deepcopy
 from typing import Any, cast
 
@@ -17,6 +20,7 @@ from pydantic import ValidationError
 from karajan.conversations import ConversationError, ConversationStore
 from karajan.projects import ProjectError
 from karajan.projects.models import ProfileRef
+from karajan.projects.qualification import ProfileQualificationStore, QualificationError
 from karajan.runs import RunError, RunPlanner
 from karajan.runs.planning import digest
 from karajan.runs.routing_authorization import resolve_binding
@@ -51,8 +55,14 @@ _REQUEST_FIELDS = {
 class ProposalStore:
     """Owner-intent proposal module, persisted in the existing Run aggregate."""
 
-    def __init__(self, planner: RunPlanner, conversations: ConversationStore) -> None:
+    def __init__(
+        self,
+        planner: RunPlanner,
+        conversations: ConversationStore,
+        qualifications: ProfileQualificationStore,
+    ) -> None:
         self.planner, self.conversations = planner, conversations
+        self.qualifications = qualifications
 
     @staticmethod
     def _input(request: dict[str, Any]) -> dict[str, Any]:
@@ -111,22 +121,22 @@ class ProposalStore:
         key: str,
     ) -> dict[str, Any]:
         request = self._input(request)
-        if request["run_id"] != request.get("run_id"):
-            raise ProposalError("PROPOSAL_INPUT_INVALID")
+        identity = self._identity(conversation_id, request)
 
         def apply(db: Any) -> dict[str, Any]:
             run = self.planner._get(db, request["run_id"])
             self._owner_conversation(db, run, conversation_id, principal)
             base = self._base(run, request)
             compiled, assignments = self._compile(run, base, request["edits"])
-            proposal_revision = len(run.setdefault("owner_proposals", [])) + 1
-            result = self._record(run, base, compiled, assignments, request, proposal_revision)
-            run["owner_proposals"].append(result)
-            self.planner._save(db, run)
+            with self._current_authority_guard(run, assignments, plan=compiled):
+                proposal_revision = self._next_revision(db, conversation_id)
+                result = self._record(run, base, compiled, assignments, request, proposal_revision)
+                run.setdefault("owner_proposals", []).append(result)
+                self.planner._save(db, run)
             return result
 
         try:
-            return self.planner._command("proposal", request, principal, key, apply)
+            return self.planner._command("proposal", identity, principal, key, apply)
         except RunError as error:
             raise ProposalError(error.code) from None
 
@@ -149,7 +159,8 @@ class ProposalStore:
             except ConversationError:
                 continue
             proposals.extend(item.get("owner_proposals", []))
-        proposals.sort(key=lambda item: (item["run_id"], item["proposal_revision"]))
+        self._assert_unique_revisions(proposals)
+        proposals.sort(key=lambda item: item["proposal_revision"])
         if revision is not None:
             proposals = [item for item in proposals if item["proposal_revision"] == revision]
             if not proposals:
@@ -205,6 +216,7 @@ class ProposalStore:
                 raise ProposalError("PROPOSAL_AMBIGUOUS")
             run_id = found[0]["run_id"]
             request = {**request, "run_id": run_id}
+        identity = self._identity(str(request["conversation_id"]), request)
 
         def apply(db: Any) -> dict[str, Any]:
             run = self.planner._get(db, str(run_id))
@@ -212,20 +224,20 @@ class ProposalStore:
             if run["revision"] != request["run_revision"]:
                 raise RunError("RUN_REVISION_STALE")
             proposal = self._proposal(run, int(request["proposal_revision"]))
-            self._current_source_guard(run, proposal["assignments"])
-            if accept and proposal.get("accepted_at") is None:
-                proposal["accepted_at"] = self.planner.clock()
-                proposal["accepted_by"] = principal
-            if kind == "proposal_accept":
+            with self._current_authority_guard(run, proposal["assignments"]):
+                if accept and proposal.get("accepted_at") is None:
+                    proposal["accepted_at"] = self.planner.clock()
+                    proposal["accepted_by"] = principal
+                if kind == "proposal_accept":
+                    self.planner._save(db, run)
+                    return proposal
+                approval = self._approval(run, proposal, request, principal)
+                proposal["approval_id"] = approval["id"]
                 self.planner._save(db, run)
-                return proposal
-            approval = self._approval(run, proposal, request, principal)
-            proposal["approval_id"] = approval["id"]
-            self.planner._save(db, run)
-            return approval
+                return approval
 
         try:
-            return self.planner._command(kind, request, principal, key, apply)
+            return self.planner._command(kind, identity, principal, key, apply)
         except RunError as error:
             raise ProposalError(error.code) from None
 
@@ -314,37 +326,78 @@ class ProposalStore:
                 resolve_binding(run, plan)
         except ValueError as error:
             raise RunError(str(error)) from None
-        self._current_source_guard(run, assignments, plan=plan)
         return plan, assignments
 
-    def _current_source_guard(
+    def _identity(self, conversation_id: str, request: dict[str, Any]) -> dict[str, Any]:
+        try:
+            project_id = self.conversations.conversation_project(conversation_id)
+        except ConversationError as error:
+            raise ProposalError(error.code) from None
+        return {
+            "run_id": request.get("run_id"),
+            "project_id": project_id,
+            "conversation_id": conversation_id,
+            "resource_id": request.get("run_id"),
+            "request": request,
+        }
+
+    def _next_revision(self, db: Any, conversation_id: str) -> int:
+        """Allocate the durable conversation-wide route identity under the Run lock."""
+        row = db.execute(
+            "SELECT next_revision FROM conversation_proposal_revisions WHERE conversation_id=?",
+            (conversation_id,),
+        ).fetchone()
+        maximum = 0
+        seen: set[int] = set()
+        for item in db.execute(
+            "SELECT r.snapshot FROM runs r JOIN conversation_run_bindings b ON b.run_id=r.id "
+            "WHERE b.conversation_id=?",
+            (conversation_id,),
+        ):
+            run = json.loads(item["snapshot"])
+            for proposal in run.get("owner_proposals", []):
+                if isinstance(proposal, dict):
+                    revision = proposal.get("proposal_revision")
+                    if type(revision) is not int or revision < 1:
+                        raise RunError("PROPOSAL_REVISION_INVALID")
+                    if revision in seen:
+                        raise RunError("PROPOSAL_REVISION_AMBIGUOUS")
+                    seen.add(revision)
+                    maximum = max(maximum, revision)
+        if row is None:
+            db.execute(
+                "INSERT INTO conversation_proposal_revisions VALUES (?, ?)",
+                (conversation_id, maximum + 2),
+            )
+            return maximum + 1
+        revision = max(int(row["next_revision"]), maximum + 1)
+        db.execute(
+            "UPDATE conversation_proposal_revisions SET next_revision=? WHERE conversation_id=?",
+            (revision + 1, conversation_id),
+        )
+        return revision
+
+    @staticmethod
+    def _assert_unique_revisions(proposals: list[dict[str, Any]]) -> None:
+        """Never expose a route identity that maps to more than one Run."""
+        seen: set[int] = set()
+        for proposal in proposals:
+            revision = proposal.get("proposal_revision")
+            if type(revision) is not int or revision < 1:
+                raise ProposalError("PROPOSAL_REVISION_INVALID")
+            if revision in seen:
+                raise ProposalError("PROPOSAL_REVISION_AMBIGUOUS")
+            seen.add(revision)
+
+    @contextmanager
+    def _current_authority_guard(
         self,
         run: dict[str, Any],
         assignments: dict[str, dict[str, Any]],
         *,
         plan: dict[str, Any] | None = None,
-    ) -> None:
-        """Check current Project membership/source while holding the Run writer.
-
-        This keeps the existing Run -> Project lock order and deliberately uses
-        current project configuration, not a UI readiness flag or a diagnostic.
-        """
-        try:
-            exported = self.planner.projects.get_configuration(run["project_id"])
-            current = exported["configuration"]
-        except ProjectError as error:
-            raise RunError(error.code) from None
-        if not isinstance(current, dict):
-            raise RunError("CONFIGURATION_NOT_READY")
-        approved = {
-            (ref["id"], ref["revision"])
-            for ref in current.get("approved_profile_refs", [])
-        }
-        profiles = {}
-        for item in current.get("resources", {}).get("profiles", []):
-            profile = item.get("profile") if isinstance(item, dict) else None
-            if isinstance(profile, dict):
-                profiles[(profile.get("id"), profile.get("revision"))] = profile
+    ) -> Iterator[None]:
+        """Fence current source/qualification state through the Run mutation."""
         effective = plan or next(
             (
                 p["plan"]
@@ -355,26 +408,43 @@ class ProposalStore:
         )
         if not isinstance(effective, dict):
             raise RunError("PLAN_REVISION_STALE")
-        for ref in effective["authorization"]["profile_refs"]:
-            key = (ref["id"], ref["revision"])
-            if key not in approved or key not in profiles:
-                raise RunError("PROFILE_SOURCE_REVOKED")
-        authorized_profiles = {
+        refs = {
             (ref["id"], ref["revision"])
             for ref in effective["authorization"]["profile_refs"]
         }
-        for assignment in assignments.values():
-            selected = assignment["profile_ref"]
-            profile_key = (selected["id"], selected["revision"])
-            if profile_key not in authorized_profiles:
-                raise RunError("PROFILE_SOURCE_REVOKED")
-            matches = [
-                profile
-                for key, profile in profiles.items()
-                if key == profile_key
-            ]
-            if len(matches) != 1 or matches[0]["binding"]["channel_id"] != assignment["source_ref"]:
-                raise RunError("PROFILE_SOURCE_REVOKED")
+        configuration = run["configuration_snapshot"]["configuration"]
+        registrations = [
+            registration
+            for registration in configuration["resources"]["profiles"]
+            if (registration["id"], registration["revision"]) in refs
+        ]
+        if len(registrations) != len(refs):
+            raise RunError("PROFILE_SOURCE_REVOKED")
+        try:
+            with self.qualifications.proposal_authority_guard(
+                run["project_id"], registrations, principal="owner"
+            ) as view:
+                rows = view["profiles"]
+                current = view["catalog"]
+                for row in rows:
+                    if row["qualification"] is None:
+                        raise RunError(row["reason_codes"][0])
+                profiles = {
+                    (item["id"], item["revision"]): item["profile"]
+                    for item in current["resources"]["profiles"]
+                    if item["profile"] is not None
+                }
+                for assignment in assignments.values():
+                    selected = assignment["profile_ref"]
+                    profile_key = (selected["id"], selected["revision"])
+                    profile = profiles.get(profile_key)
+                    if profile_key not in refs or not isinstance(profile, dict):
+                        raise RunError("PROFILE_SOURCE_REVOKED")
+                    if profile["binding"]["channel_id"] != assignment["source_ref"]:
+                        raise RunError("PROFILE_SOURCE_REVOKED")
+                yield
+        except (ProjectError, QualificationError) as error:
+            raise RunError(error.code) from None
 
     def _record(
         self,

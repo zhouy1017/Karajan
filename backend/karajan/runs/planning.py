@@ -105,6 +105,7 @@ class RunPlanner:
                         "at",
                         "result",
                     ],
+                    "conversation_proposal_revisions": ["conversation_id", "next_revision"],
                 },
             )
             return
@@ -158,6 +159,9 @@ class RunPlanner:
                   conversation_id TEXT NOT NULL REFERENCES commander_conversations(id),
                   event_type TEXT NOT NULL,
                   object_revision INTEGER NOT NULL, payload TEXT NOT NULL, at REAL NOT NULL);
+                CREATE TABLE IF NOT EXISTS conversation_proposal_revisions (
+                  conversation_id TEXT PRIMARY KEY REFERENCES commander_conversations(id),
+                  next_revision INTEGER NOT NULL);
                 """
             )
 

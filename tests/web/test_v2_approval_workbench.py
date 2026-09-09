@@ -7,6 +7,7 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 from karajan.projects import ProjectRegistry
+from karajan.projects.qualification import ProfileQualificationStore
 from karajan.runs import RunPlanner
 from test_runs_http import run_client
 
@@ -71,6 +72,14 @@ def v2_plan(
         max_attempt_duration_seconds=25,
         max_quality_repair_rounds=2,
         stage_permissions={"bounded-worker": {"normal": True, "quality_indices": [0]}},
+    )
+    ProfileQualificationStore(registry).qualify_local_fixture(
+        request["project_id"],
+        {"id": "fixture-profile", "revision": 1},
+        principal="owner",
+        command_key="proposal-fixture-qualification",
+        fixture_root=tmp_path / "repositories",
+        validity_seconds=60,
     )
     response = client.post("/v1/runs", json=request, headers=headers)
     assert response.status_code == 201
