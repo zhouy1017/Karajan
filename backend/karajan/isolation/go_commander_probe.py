@@ -30,6 +30,7 @@ from karajan.runs.planning_output import (
     PlanningOutputError,
     parse_planning_output,
     planning_output_diagnostic,
+    planning_output_selection_diagnostic,
 )
 
 from ._go_reviewer_evidence import select_final, terminal
@@ -49,6 +50,26 @@ def _final_evidence(final: dict[str, Any]) -> dict[str, Any]:
     """Keep final-message evidence without retaining provider-generated text."""
 
     return {key: value for key, value in final.items() if key != "text"}
+
+
+def _selection_shape(messages: list[dict[str, Any]]) -> tuple[list[str], str]:
+    assistants = [
+        message for message in messages if message.get("info", {}).get("role") == "assistant"
+    ]
+    candidate = assistants[-1] if assistants else {}
+    info = candidate.get("info", {})
+    finish = info.get("finish") if isinstance(info.get("finish"), str) else "unknown"
+    parts = candidate.get("parts", [])
+    text_parts = (
+        [
+            part["text"]
+            for part in parts
+            if part.get("type") == "text" and type(part.get("text")) is str
+        ]
+        if isinstance(parts, list)
+        else []
+    )
+    return text_parts, finish
 
 
 def _context(accounting: GoRequestAccounting, spec: dict[str, Any]) -> dict[str, Any]:
@@ -317,7 +338,14 @@ def observe_go_commander_probe(
             for value in (secret, canary, relay.capability, authorization.capability)
         ):
             raise ValueError("SENSITIVE_NATIVE_OUTPUT")
-        final = _final(messages, session["id"], prompt)
+        try:
+            final = _final(messages, session["id"], prompt)
+        except ValueError:
+            text_parts, finish = _selection_shape(messages)
+            record["planning_output_diagnostic"] = planning_output_selection_diagnostic(
+                text_parts, finish=finish
+            )
+            raise
         if len(final["text"].encode()) > spec["evidence_limits"]["final_output_bytes"]:
             raise ValueError("COMMANDER_OUTPUT_LIMIT_EXCEEDED")
         try:

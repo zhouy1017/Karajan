@@ -14,7 +14,10 @@ import pytest
 from karajan.projects.go_commander_suite import FixedGoCommanderSuite
 from karajan.projects.qualification import ProfileQualificationStore, QualificationError
 from karajan.routing.compiler import digest
-from karajan.runs.planning_output import planning_output_diagnostic
+from karajan.runs.planning_output import (
+    planning_output_diagnostic,
+    planning_output_selection_diagnostic,
+)
 from test_projected_qualification_store import projected
 from test_qualification_store import case
 
@@ -133,6 +136,27 @@ class FailedDiagnosticCommanderSuiteDouble(COnlyFixedCommanderSuiteDouble):
                     "scenario": "legal_plan",
                     "status": "failed",
                     "reason_codes": ["PLANNING_OUTPUT_JSON_INVALID"],
+                    "planning_output_diagnostic": diagnostic,
+                }
+            ],
+        }
+
+
+class FailedSelectionDiagnosticCommanderSuiteDouble(COnlyFixedCommanderSuiteDouble):
+    """A failed native-selection observation with no retained final text."""
+
+    def observe(self, start, credential, *, current_guard):
+        diagnostic = planning_output_selection_diagnostic(
+            ["FAKE_SELECTION_SECRET_ONE", "FAKE_SELECTION_SECRET_TWO"], finish="length"
+        )
+        return {
+            "status": "failed",
+            "reason_codes": ["NATIVE_FINAL_INCOMPLETE"],
+            "scenarios": [
+                {
+                    "scenario": "denied_tool",
+                    "status": "failed",
+                    "reason_codes": ["NATIVE_FINAL_INCOMPLETE"],
                     "planning_output_diagnostic": diagnostic,
                 }
             ],
@@ -313,6 +337,24 @@ def test_failed_planning_diagnostic_round_trips_without_raw_text(commander_case)
     assert diagnostic["finish"] == "stop"
     assert diagnostic["text_part_shape"] == "one_text"
     assert "FAKE_SECRET_IN_FAILURE_TEXT" not in json.dumps(reread, sort_keys=True)
+
+
+def test_failed_selection_diagnostic_round_trips_without_raw_text(commander_case):
+    case = commander_case
+    case["store"].commander_suite = FailedSelectionDiagnosticCommanderSuiteDouble()
+
+    record = qualify(case, "bounded-selection-diagnostic")
+    reread = case["store"].get(case["project_id"], record["id"], principal="owner")
+    scenario = reread["record"]["observation"]["scenarios"][0]
+    diagnostic = scenario["planning_output_diagnostic"]
+
+    assert reread["record"]["status"] == "failed"
+    assert reread["record"]["reason_codes"] == ["NATIVE_FINAL_INCOMPLETE"]
+    assert scenario["scenario"] == "denied_tool"
+    assert diagnostic["category"] == "selection"
+    assert diagnostic["finish"] == "length"
+    assert diagnostic["text_part_shape"] == "multiple"
+    assert "FAKE_SELECTION_SECRET" not in json.dumps(reread, sort_keys=True)
 
 
 def test_official_commander_facts_only_project_suite_observed_capabilities(commander_case):

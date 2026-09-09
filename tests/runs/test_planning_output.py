@@ -10,6 +10,7 @@ from karajan.runs.planning_output import (
     PlanningOutputError,
     parse_planning_output,
     planning_output_diagnostic,
+    planning_output_selection_diagnostic,
 )
 from karajan.runs.routing_authorization import PlanV2
 
@@ -185,6 +186,7 @@ def test_v1_rejects_v2_only_fields() -> None:
 
 def test_rejects_bad_encoding_surrogates_subclasses_and_versions() -> None:
     rejected(b"\xff", "PLANNING_OUTPUT_INPUT_INVALID")
+    rejected(b"\xef\xbb\xbf{}", "PLANNING_OUTPUT_JSON_INVALID")
     rejected('{"summary":"\\ud800"}', "PLANNING_OUTPUT_INPUT_INVALID")
 
     class CustomText(str):
@@ -252,6 +254,31 @@ def test_diagnostic_never_serializes_malicious_failure_text() -> None:
     serialized = json.dumps(diagnostic, sort_keys=True)
     assert secret not in serialized
     assert content not in serialized
+
+
+def test_bom_diagnostic_uses_the_strict_utf8_parser_pipeline() -> None:
+    diagnostic = planning_output_diagnostic(
+        b"\xef\xbb\xbf{}",
+        reason_code="PLANNING_OUTPUT_JSON_INVALID",
+        finish="stop",
+        text_part_count=1,
+    )
+
+    assert diagnostic["category"] == "json_syntax"
+    assert diagnostic["decoder_line"] == 1
+    assert diagnostic["decoder_column"] == 1
+
+
+def test_selection_diagnostic_is_bounded_for_multiple_text_parts() -> None:
+    diagnostic = planning_output_selection_diagnostic(
+        ["FAKE_SECRET_ONE", "FAKE_SECRET_TWO"], finish="length"
+    )
+
+    serialized = json.dumps(diagnostic, sort_keys=True)
+    assert diagnostic["category"] == "selection"
+    assert diagnostic["finish"] == "length"
+    assert diagnostic["text_part_shape"] == "multiple"
+    assert "FAKE_SECRET" not in serialized
 
 
 def test_success_diagnostic_is_observational_only() -> None:

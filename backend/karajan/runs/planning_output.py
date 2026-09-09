@@ -21,6 +21,7 @@ PlanningOutputVersion = Literal["v1", "v2"]
 _DIAGNOSTIC_SCHEMA = "karajan.planning-output-diagnostic.v1"
 _DIAGNOSTIC_CATEGORIES = {
     "success",
+    "selection",
     "json_syntax",
     "duplicate_key",
     "non_finite_number",
@@ -30,7 +31,7 @@ _DIAGNOSTIC_CATEGORIES = {
     "limit",
     "unknown",
 }
-_DIAGNOSTIC_FINISHES = {"stop", "tool-calls", "unknown", "missing"}
+_DIAGNOSTIC_FINISHES = {"stop", "tool-calls", "length", "error", "unknown", "missing"}
 
 
 class _DiagnosticDuplicateKey(ValueError):
@@ -71,10 +72,17 @@ def _diagnostic_category(
         return "input", None, None
     if reason_code == "PLANNING_OUTPUT_LIMIT_EXCEEDED":
         return "limit", None, None
+    if reason_code == "SELECTION_REJECTED":
+        return "selection", None, None
     if reason_code != "PLANNING_OUTPUT_JSON_INVALID":
         return "unknown", None, None
     if type(content) not in (str, bytes):
         return "input", None, None
+    if type(content) is bytes:
+        try:
+            content = content.decode("utf-8", errors="strict")
+        except UnicodeError:
+            return "input", None, None
     try:
         json.loads(
             content,
@@ -142,6 +150,38 @@ def planning_output_diagnostic(
         ),
         "decoder_line": line,
         "decoder_column": column,
+    }
+
+
+def planning_output_selection_diagnostic(
+    text_parts: list[str], *, finish: str = "unknown"
+) -> dict[str, Any]:
+    """Return bounded evidence when native final selection rejects its shape."""
+
+    hasher = hashlib.sha256()
+    byte_length = 0
+    for text in text_parts:
+        if type(text) is str:
+            try:
+                encoded_text = text.encode("utf-8", errors="strict")
+            except UnicodeError:
+                continue
+            hasher.update(encoded_text)
+            byte_length += len(encoded_text)
+    safe_count = len(text_parts)
+    safe_finish = finish if finish in _DIAGNOSTIC_FINISHES else "unknown"
+    return {
+        "schema_version": _DIAGNOSTIC_SCHEMA,
+        "category": "selection",
+        "byte_length": byte_length,
+        "sha256": hasher.hexdigest(),
+        "finish": safe_finish,
+        "text_part_count": safe_count,
+        "text_part_shape": (
+            "one_text" if safe_count == 1 else "none" if safe_count == 0 else "multiple"
+        ),
+        "decoder_line": None,
+        "decoder_column": None,
     }
 
 
@@ -273,5 +313,6 @@ __all__ = [
     "PlanningOutputError",
     "PlanningOutputVersion",
     "planning_output_diagnostic",
+    "planning_output_selection_diagnostic",
     "parse_planning_output",
 ]
