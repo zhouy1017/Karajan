@@ -241,15 +241,18 @@ class ConversationStore:
         runs = self.planner.list(principal="owner")
         with self._transaction(write=True) as db:
             for run in runs:
-                run_id, project_id = run["id"], run.get("project_id")
-                if not isinstance(run_id, str) or not isinstance(project_id, str):
+                run_id, project_id = run.get("id"), run.get("project_id")
+                if not isinstance(run_id, str):
+                    continue
+                if not isinstance(project_id, str):
+                    self._record_migration_blocker(db, run_id, project_id, "PROJECT_ID_INVALID")
                     continue
                 if db.execute(
                     "SELECT 1 FROM conversation_migration_blockers WHERE run_id=?", (run_id,)
                 ).fetchone() is not None:
                     continue
                 try:
-                    self._project(project_id)
+                    self._validate_migration_project(project_id)
                     bound = db.execute(
                         "SELECT conversation_id, project_id FROM conversation_run_bindings "
                         "WHERE run_id=?",
@@ -261,6 +264,8 @@ class ConversationStore:
                         conversation = self._conversation(db, str(bound["conversation_id"]))
                         if conversation["project_id"] != project_id:
                             raise ConversationError("CROSS_PROJECT_REFERENCE")
+                        if str(bound["conversation_id"]) == legacy_conversation_id(project_id):
+                            ensure_legacy_conversation(db, project_id)
                         continue
                     if "conversation_id" in run:
                         conversation_id = run["conversation_id"]
@@ -283,10 +288,29 @@ class ConversationStore:
                         if isinstance(rejected, ConversationError)
                         else str(rejected)
                     )
-                    db.execute(
-                        "INSERT OR IGNORE INTO conversation_migration_blockers VALUES (?, ?, ?)",
-                        (run_id, project_id, code),
-                    )
+                    self._record_migration_blocker(db, run_id, project_id, code)
+
+    def _validate_migration_project(self, project_id: str) -> None:
+        """Map a historical malformed Project ID separately from an unknown one."""
+        try:
+            self.projects.get(project_id)
+        except ProjectError as rejected:
+            code = (
+                "PROJECT_ID_INVALID"
+                if rejected.code == "IDENTIFIER_INVALID"
+                else "PROJECT_NOT_FOUND"
+            )
+            raise ConversationError(code) from None
+
+    @staticmethod
+    def _record_migration_blocker(
+        db: sqlite3.Connection, run_id: str, project_id: object, code: str
+    ) -> None:
+        """Keep one authoritative per-Run recovery fact, including null IDs."""
+        db.execute(
+            "INSERT OR IGNORE INTO conversation_migration_blockers VALUES (?, ?, ?)",
+            (run_id, project_id if isinstance(project_id, str) else "", code),
+        )
 
     def list(self, project_id: str) -> builtins.list[dict[str, Any]]:
         self._project(project_id)
@@ -365,6 +389,7 @@ class ConversationStore:
         return result
 
     def bind_run(self, project_id: str, run_id: str, conversation_id: str | None) -> str:
+        self._project(project_id)
         with self._transaction(write=True) as db:
             if conversation_id is None:
                 conversation_id = legacy_conversation_id(project_id)
@@ -426,28 +451,32 @@ class ConversationStore:
                 raise ConversationError("RUN_CONVERSATION_UNBOUND")
             return str(row["conversation_id"])
 
-    def run_binding(self, run_id: str, project_id: str) -> dict[str, str | None]:
+    def run_binding(self, run_id: str, project_id: object) -> dict[str, str | None]:
         """Return a durable binding or its migration blocker for compatibility reads."""
         with self._transaction() as db:
+            blocker = db.execute(
+                "SELECT reason_code FROM conversation_migration_blockers WHERE run_id=?",
+                (run_id,),
+            ).fetchone()
+            if blocker is not None:
+                return {"conversation_id": None, "recovery_blocker": str(blocker["reason_code"])}
+            if not isinstance(project_id, str):
+                return {"conversation_id": None, "recovery_blocker": "PROJECT_ID_INVALID"}
             row = db.execute(
                 "SELECT conversation_id, project_id FROM conversation_run_bindings WHERE run_id=?",
                 (run_id,),
             ).fetchone()
             if row is not None:
                 if row["project_id"] != project_id:
-                    raise ConversationError("CROSS_PROJECT_REFERENCE")
-                item = self._conversation(db, str(row["conversation_id"]))
+                    return {"conversation_id": None, "recovery_blocker": "CROSS_PROJECT_REFERENCE"}
+                try:
+                    item = self._conversation(db, str(row["conversation_id"]))
+                except ConversationError:
+                    return {"conversation_id": None, "recovery_blocker": "CONVERSATION_NOT_FOUND"}
                 if item["project_id"] != project_id:
-                    raise ConversationError("CROSS_PROJECT_REFERENCE")
+                    return {"conversation_id": None, "recovery_blocker": "CROSS_PROJECT_REFERENCE"}
                 return {"conversation_id": str(row["conversation_id"]), "recovery_blocker": None}
-            blocker = db.execute(
-                "SELECT project_id, reason_code FROM conversation_migration_blockers "
-                "WHERE run_id=?",
-                (run_id,),
-            ).fetchone()
-            if blocker is not None and blocker["project_id"] == project_id:
-                return {"conversation_id": None, "recovery_blocker": str(blocker["reason_code"])}
-            raise ConversationError("RUN_CONVERSATION_UNBOUND")
+            return {"conversation_id": None, "recovery_blocker": "RUN_CONVERSATION_UNBOUND"}
 
     @staticmethod
     def _execution_next_action(execution: dict[str, Any]) -> str:

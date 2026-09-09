@@ -45,6 +45,7 @@ def ensure_legacy_conversation(
         conversation = cast(dict[str, Any], json.loads(row["snapshot"]))
         if conversation.get("project_id") != project_id:
             raise ConversationProjectionError("CROSS_PROJECT_REFERENCE")
+        _ensure_initial_draft(db, conversation_id, project_id)
         return conversation
     conversation = {
         "id": conversation_id,
@@ -61,25 +62,7 @@ def ensure_legacy_conversation(
         "INSERT INTO commander_conversations VALUES (?, ?, ?)",
         (conversation_id, project_id, encoded(conversation)),
     )
-    # Draft revision is a public concurrency value.  Create it together with
-    # every compatibility conversation just as explicit creation does.
-    db.execute(
-        "INSERT INTO conversation_drafts VALUES (?, ?)",
-        (
-            conversation_id,
-            encoded(
-                {
-                    "conversation_id": conversation_id,
-                    "project_id": project_id,
-                    "draft_id": str(uuid.uuid4()),
-                    "content": "",
-                    "selected_task_id": None,
-                    "base_plan_revision": None,
-                    "revision": 1,
-                }
-            ),
-        ),
-    )
+    _ensure_initial_draft(db, conversation_id, project_id)
     cursor = db.execute(
         "INSERT INTO conversation_events("
         "project_id, conversation_id, event_type, object_revision, payload, at) "
@@ -101,3 +84,30 @@ def ensure_legacy_conversation(
         (encoded(conversation), conversation_id),
     )
     return conversation
+
+
+def _ensure_initial_draft(db: sqlite3.Connection, conversation_id: str, project_id: str) -> None:
+    """Repair only an absent legacy draft; preserve its durable revision otherwise."""
+    if db.execute(
+        "SELECT 1 FROM conversation_drafts WHERE conversation_id=?", (conversation_id,)
+    ).fetchone() is not None:
+        return
+    # Draft revision is a public concurrency value.  Create it together with
+    # every compatibility conversation just as explicit creation does.
+    db.execute(
+        "INSERT INTO conversation_drafts VALUES (?, ?)",
+        (
+            conversation_id,
+            encoded(
+                {
+                    "conversation_id": conversation_id,
+                    "project_id": project_id,
+                    "draft_id": str(uuid.uuid4()),
+                    "content": "",
+                    "selected_task_id": None,
+                    "base_plan_revision": None,
+                    "revision": 1,
+                }
+            ),
+        ),
+    )

@@ -188,21 +188,6 @@ class RunPlanner:
         request = dict(request)
         conversation_supplied = "conversation_id" in request
         conversation_id = request.pop("conversation_id") if conversation_supplied else None
-        # A supplied identity is included in the command digest even when it
-        # is malformed.  It must not alias the omitted-field legacy command.
-        identity = digest(["create", request]) if not conversation_supplied else digest(
-            ["create", request, conversation_id]
-        )
-        with self._transaction() as db:
-            previous = self._replay(db, principal, command_key, identity)
-            if previous is not None:
-                return self._enrich_conversation_identity(db, previous)
-        if conversation_supplied:
-            if conversation_id is None:
-                raise RunError("RUN_INPUT_INVALID")
-            if not isinstance(conversation_id, str):
-                raise RunError("RUN_INPUT_INVALID")
-            identifier(conversation_id)
         version_two = (
             isinstance(request, dict) and request.get("schema_version") == "karajan.create-run.v2"
         )
@@ -212,6 +197,20 @@ class RunPlanner:
             )
         except ValidationError:
             raise RunError("RUN_INPUT_INVALID") from None
+        # Receipt identity remains the released-baseline, model-normalized DTO
+        # digest.  Schema validation is local and does not observe mutable
+        # project/profile configuration, so it can precede receipt replay.
+        if conversation_supplied:
+            if conversation_id is None or not isinstance(conversation_id, str):
+                raise RunError("RUN_INPUT_INVALID")
+            identifier(conversation_id)
+        identity = digest(["create", request]) if not conversation_supplied else digest(
+            ["create", request, conversation_id]
+        )
+        with self._transaction() as db:
+            previous = self._replay(db, principal, command_key, identity)
+            if previous is not None:
+                return self._enrich_conversation_identity(db, previous)
         project = self.projects.get(request["project_id"])
         legacy_conversation = not conversation_supplied
         if legacy_conversation:

@@ -146,6 +146,101 @@ def test_default_app_shares_its_execution_ledger_with_hub(tmp_path: Path) -> Non
     assert app.state.conversations.planning_execution is app.state.planning_execution
 
 
+def test_historical_recovery_blockers_do_not_hide_healthy_run_reads(
+    run_client: tuple[TestClient, dict[str, str], dict[str, Any]]
+) -> None:
+    client, headers, payload = run_client
+    healthy = client.post("/v1/runs", json=payload, headers=headers).json()
+    app = client.app
+    planner = app.state.planning_execution.planner
+    with planner._transaction() as db:
+        db.execute(
+            "INSERT INTO runs VALUES (?, ?)",
+            (
+                "bound_missing_project",
+                json.dumps(
+                    {
+                        "id": "bound_missing_project",
+                        "owner": "owner",
+                        "project_id": "missing-project",
+                    }
+                ),
+            ),
+        )
+        db.execute(
+            "INSERT INTO conversation_run_bindings VALUES (?, ?, ?)",
+            ("bound_missing_project", healthy["conversation_id"], "missing-project"),
+        )
+        db.execute(
+            "INSERT INTO runs VALUES (?, ?)",
+            (
+                "null_project",
+                json.dumps({"id": "null_project", "owner": "owner", "project_id": None}),
+            ),
+        )
+        db.execute(
+            "INSERT INTO runs VALUES (?, ?)",
+            ("absent_project", json.dumps({"id": "absent_project", "owner": "owner"})),
+        )
+        db.execute(
+            "INSERT INTO runs VALUES (?, ?)",
+            (
+                "malformed_project",
+                json.dumps({"id": "malformed_project", "owner": "owner", "project_id": ""}),
+            ),
+        )
+    app.state.conversations.migrate_legacy_runs()
+
+    response = client.get("/v1/runs")
+    assert response.status_code == 200
+    items = {item["id"]: item for item in response.json()["items"]}
+    assert items[healthy["id"]]["conversation_id"] == healthy["conversation_id"]
+    assert items["bound_missing_project"] == {
+        "id": "bound_missing_project",
+        "owner": "owner",
+        "project_id": "missing-project",
+        "conversation_id": None,
+        "conversation_recovery_blocker": "PROJECT_NOT_FOUND",
+    }
+    for run_id in ("null_project", "absent_project", "malformed_project"):
+        assert items[run_id]["conversation_id"] is None
+        assert items[run_id]["conversation_recovery_blocker"] == "PROJECT_ID_INVALID"
+
+
+def test_migration_repairs_only_the_absent_legacy_draft(
+    run_client: tuple[TestClient, dict[str, str], dict[str, Any]]
+) -> None:
+    client, headers, payload = run_client
+    run = client.post("/v1/runs", json=payload, headers=headers).json()
+    app = client.app
+    planner = app.state.planning_execution.planner
+    with planner._transaction() as db:
+        db.execute(
+            "DELETE FROM conversation_drafts WHERE conversation_id=?", (run["conversation_id"],)
+        )
+
+    app.state.conversations.migrate_legacy_runs()
+    with planner._transaction() as db:
+        repaired = json.loads(
+            db.execute(
+                "SELECT snapshot FROM conversation_drafts WHERE conversation_id=?",
+                (run["conversation_id"],),
+            ).fetchone()["snapshot"]
+        )
+    assert repaired["revision"] == 1
+    reopened = ConversationStore(planner.projects, RunPlanner(planner.database, planner.projects))
+    saved = reopened.draft(
+        run["conversation_id"],
+        {"content": "repaired"},
+        principal="owner",
+        key="repair-draft",
+        revision=1,
+    )
+    assert saved["revision"] == 2 and saved["content"] == "repaired"
+    reopened.migrate_legacy_runs()
+    assert reopened.snapshot(run["conversation_id"])["draft"] == saved
+
+
 def test_hub_uses_the_persisted_execution_ledger_for_attempt_recovery(
     tmp_path: Path, run_client: tuple[TestClient, dict[str, str], dict[str, Any]]
 ) -> None:

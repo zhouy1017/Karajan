@@ -12,6 +12,7 @@ from pathlib import Path
 import pytest
 from karajan.projects import ProjectRegistry
 from karajan.runs import RunError, RunPlanner
+from karajan.runs.models import CreateRun
 from karajan.runs.planning import digest
 
 
@@ -223,6 +224,35 @@ def test_historical_create_replay_enriches_identity_without_rewriting_its_receip
             ).fetchone()["result"]
         )
     assert "conversation_id" not in stored
+
+
+def test_baseline_normalized_create_receipt_replays_without_rewriting_its_digest(
+    tmp_path: Path, project: tuple[ProjectRegistry, dict, Path]
+) -> None:
+    """Seed the released-baseline receipt; do not create it through this version."""
+    registry, configured, _ = project
+    planner = RunPlanner(tmp_path / "runs.sqlite", registry)
+    raw_request = create_request(configured)
+    baseline_request = CreateRun.model_validate(raw_request).model_dump()
+    baseline_result = {"id": "baseline-receipt", "project_id": configured["id"], "revision": 1}
+    baseline_digest = digest(["create", baseline_request])
+    with planner._transaction() as db:
+        db.execute(
+            "INSERT INTO run_commands VALUES (?, ?, ?, ?, NULL)",
+            ("owner", "baseline-normalized", baseline_digest, json.dumps(baseline_result)),
+        )
+
+    assert (
+        planner.create(raw_request, command_key="baseline-normalized", principal="owner")
+        == baseline_result
+    )
+    with planner._transaction() as db:
+        stored = db.execute(
+            "SELECT digest, result FROM run_commands WHERE principal=? AND key=?",
+            ("owner", "baseline-normalized"),
+        ).fetchone()
+    assert stored["digest"] == baseline_digest
+    assert json.loads(stored["result"]) == baseline_result
 
 
 class ScriptedAdmissionReader:

@@ -87,7 +87,7 @@ def register_run_routes(
 
 def _run_response(item: dict[str, Any], conversations: ConversationStore) -> dict[str, Any]:
     """Overlay the normalized migration identity without rewriting Run receipts."""
-    binding = conversations.run_binding(item["id"], item["project_id"])
+    binding = conversations.run_binding(item["id"], item.get("project_id"))
     snapshot_conversation = item.get("conversation_id")
     if (
         snapshot_conversation is not None
