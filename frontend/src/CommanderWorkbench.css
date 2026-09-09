@@ -106,6 +106,12 @@
   min-width: 118px;
   font-size: 12px;
 }
+.configured-mark {
+  align-self: end;
+  color: #16634f;
+  font-size: 11px;
+  white-space: nowrap;
+}
 .commander-tabs {
   margin: 22px 0;
   border-bottom: 1px solid #e1e9e4;
@@ -206,6 +212,19 @@
   justify-content: flex-start;
   margin: 15px 0;
 }
+.task-row {
+  width: 100%;
+  border: 0;
+  text-align: left;
+  background: transparent;
+  color: inherit;
+  padding: 7px;
+  border-radius: 6px;
+}
+.task-row:hover,
+.task-row.selected {
+  background: #edf5f0;
+}
 .task-status {
   color: #4c9070;
   font-size: 18px;
@@ -213,6 +232,16 @@
 .task-row strong,
 .task-row small {
   display: block;
+}
+.agent-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 12px 0;
+  font-size: 12px;
+}
+.agent-row span {
+  color: #71837b;
 }
 .task-row small {
   color: #819188;
@@ -252,6 +281,16 @@
   padding: 15px;
   background: #f5f8f6;
   border-radius: 7px;
+}
+.fact-view {
+  overflow: auto;
+  max-height: 440px;
+  padding: 15px;
+  background: #f5f8f6;
+  border-radius: 7px;
+  color: #315148;
+  font-size: 12px;
+  white-space: pre-wrap;
 }
 .detail-list span,
 .detail-list small {

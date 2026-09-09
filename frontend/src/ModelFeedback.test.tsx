@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ModelFeedback } from "./ModelFeedback";
 
@@ -74,7 +74,9 @@ describe("ModelFeedback", () => {
       />,
     );
 
-    expect(screen.getByRole("status").textContent).toContain("反馈中断，等待核对");
+    expect(screen.getByRole("status").textContent).toContain(
+      "反馈中断，等待核对",
+    );
     expect(screen.getByRole("status").textContent).toContain("最近反馈：");
     expect(
       screen.getByText("上次反馈超过 10 秒 未更新，状态待核对"),
@@ -91,8 +93,12 @@ describe("ModelFeedback", () => {
       />,
     );
 
-    expect(screen.getByRole("status").textContent).toContain("反馈中断，等待核对");
-    expect(screen.getByRole("status").textContent).toContain("连接：连接状态未知");
+    expect(screen.getByRole("status").textContent).toContain(
+      "反馈中断，等待核对",
+    );
+    expect(screen.getByRole("status").textContent).toContain(
+      "连接：连接状态未知",
+    );
   });
 
   it("does not show stale warning for waiting_output when feedback is fresh", () => {
@@ -133,23 +139,30 @@ describe("ModelFeedback", () => {
       />,
     );
 
-    expect(screen.getByRole("status").textContent).toContain("反馈中断，等待核对");
+    expect(screen.getByRole("status").textContent).toContain(
+      "反馈中断，等待核对",
+    );
   });
 
-  it("does not invent updates from timers or heartbeat data", () => {
-    const timer = vi.spyOn(globalThis, "setInterval");
-    const animation = vi.spyOn(globalThis, "requestAnimationFrame");
+  it("ages a connected state into reconciliation without changing its observed time", () => {
+    vi.useFakeTimers();
+    vi.spyOn(Date, "now").mockReturnValue(BASE_TIME);
     render(
       <ModelFeedback
-        state="idle"
-        lastObservedAt={BASE_TIME}
+        state="waiting_output"
+        lastObservedAt={BASE_TIME - 500}
         connection="connected"
         staleDurationMs={10_000}
       />,
     );
 
-    expect(timer).not.toHaveBeenCalled();
-    expect(animation).not.toHaveBeenCalled();
+    expect(screen.getByRole("status").textContent).toContain("等待运行输出");
+    vi.spyOn(Date, "now").mockReturnValue(BASE_TIME + 15_000);
+    act(() => vi.advanceTimersByTime(5_000));
+    expect(screen.getByRole("status").textContent).toContain(
+      "反馈中断，等待核对",
+    );
+    expect(screen.getByRole("status").textContent).toContain("最近反馈：");
   });
 
   it("treats invalid/overflow timestamps as unknown and renders stable fallback", () => {

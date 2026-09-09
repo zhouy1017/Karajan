@@ -1,4 +1,4 @@
-import { type JSX } from "react";
+import { useEffect, useState, type JSX } from "react";
 import "./ModelFeedback.css";
 
 type StableModelState =
@@ -60,14 +60,12 @@ const awaitingLabel = "反馈中断，等待核对";
 const awaitingIcon = "⚠️";
 const MAX_SAFE_FEEDBACK_TIME = 8_640_000_000_000_000;
 
-function describeStatus(
-  props: {
-    state: ModelFeedbackState;
-    stale: boolean;
-    disconnected: boolean;
-    observed: boolean;
-  },
-): {
+function describeStatus(props: {
+  state: ModelFeedbackState;
+  stale: boolean;
+  disconnected: boolean;
+  observed: boolean;
+}): {
   state: DisplayState;
   icon: string;
   label: string;
@@ -90,11 +88,7 @@ function describeStatus(
 }
 
 function isFiniteDisplayTime(ts: number): boolean {
-  return (
-    Number.isFinite(ts) &&
-    ts > 0 &&
-    ts <= MAX_SAFE_FEEDBACK_TIME
-  );
+  return Number.isFinite(ts) && ts > 0 && ts <= MAX_SAFE_FEEDBACK_TIME;
 }
 
 function isoObservedAt(lastObservedAt: number): string | undefined {
@@ -126,6 +120,17 @@ export function ModelFeedback({
   connection,
   staleDurationMs,
 }: ModelFeedbackProps): JSX.Element {
+  const [, setClock] = useState(() => Date.now());
+  useEffect(() => {
+    if (
+      !isFiniteDisplayTime(lastObservedAt) ||
+      !Number.isFinite(staleDurationMs)
+    )
+      return;
+    const interval = Math.min(Math.max(staleDurationMs / 2, 1_000), 30_000);
+    const timer = window.setInterval(() => setClock(Date.now()), interval);
+    return () => window.clearInterval(timer);
+  }, [lastObservedAt, staleDurationMs, state, connection]);
   const disconnected = connection === "disconnected";
   const unknown = connection === "unknown";
   const observed = isFiniteDisplayTime(lastObservedAt);
@@ -170,12 +175,12 @@ export function ModelFeedback({
       </p>
       {display.state === "awaiting_reconciliation" && (
         <p className="model-feedback-hint">
-          <span>上次反馈超过 {staleDurationText(staleDurationMs)} 未更新，状态待核对</span>
+          <span>
+            上次反馈超过 {staleDurationText(staleDurationMs)} 未更新，状态待核对
+          </span>
         </p>
       )}
-      <time dateTime={isoObservedAt(lastObservedAt)}>
-        {observedText}
-      </time>
+      <time dateTime={isoObservedAt(lastObservedAt)}>{observedText}</time>
     </section>
   );
 }
