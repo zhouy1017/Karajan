@@ -305,6 +305,36 @@ were **static red** findings. Although an old-backend/current-tests behavioral
 attempt had been planned in commentary, this author did not run it; no
 behavioural red result is claimed retroactively here.
 
+## PR150 zero-effect boundary evidence follow-up (2026-09-09)
+
+The bounded Linux factory regression now installs all boundary counters before
+the first production `open_reviewer_execution_intents` construction. The
+counters wrap the concrete `RunnerHost.start`,
+`observe_go_reviewer_tools`, `httpx.Client.send`, Reviewer suite
+`parse_review_output`, `GoCallJournal.create_grant`,
+`GoCallJournal.begin_call`, Candidate `gate`, and Candidate `_save_evidence`
+entries. Every forbidden entry increments its counter and immediately fails the
+test if reached; only the real Candidate gate delegates, because it is the
+existing read-only current-context check.
+
+The test opens the actual existing-only factory, reopens history, exercises the
+descriptor rejection, and runs the seeded real Run/Candidate/Host lifecycle.
+It snapshots the execution ledger, Host ledger, configured Journal, and copied
+state stores around the first factory construction and checks unchanged bytes.
+The observed result is `gate > 0` and zero for native, HTTP send, parser,
+Journal grant, Journal call, and Evidence-save counters; the configured
+Journal bytes also remain unchanged. This remains C/P bounded evidence: the
+factory-composed `prepare` still rejects with
+`REVIEWER_RESERVED_ROUTE_NOT_CURRENT` because the persistent factory
+qualification reader and seeded fixture source differ. That failure is
+retained as `failed`, and no successful factory qualification or native/HTTP
+service lifecycle is claimed; the existing seeded facade evidence remains
+fixture-owned and `not_run` for those capabilities.
+
+| Command | Result |
+| --- | --- |
+| WSL2 Ubuntu, `env -u KARAJAN_OPENCODE_LINUX_BINARY KARAJAN_REQUIRE_OPENCODE_ISOLATION=1 KARAJAN_REQUIRE_GO_TOKENIZER=1 KARAJAN_GO_TOKENIZER_DIRECTORY=/tmp/karajan-pr155-tree/.cache/go-context-artifacts HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 PYTHONPATH=backend:tests:tests/projects:tests/runs:tests/candidates /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest tests/runs/test_reviewer_execution_bootstrap.py::test_existing_factory_reopens_identity_and_rechecks_own_descriptor -q -p no:cacheprovider --basetemp=/tmp/karajan-dg01-pr150-boundary-green-20260909` | **P passed:** `1 passed in 10.53s`; fixed Linux runtime path was discovered by the test and no provider/model call was enabled. |
+
 Final verification of this follow-up source completed with the CI-relative
 tokenizer value, runtime override unset, and required isolation/tokenizer and
 offline flags: Windows main `.venv` ran the seven affected modules with

@@ -6,7 +6,9 @@ import stat
 import sys
 from pathlib import Path
 
+import httpx
 import pytest
+from karajan.adapters.opencode import go_journal
 from karajan.execution import ProcessSpec, RunnerHost
 from karajan.orchestration.go_task_runtime import GoTaskSettings, write_go_task_bootstrap
 from karajan.orchestration.reviewer_execution_bootstrap import (
@@ -196,27 +198,76 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
         launch_compiler=lambda _: ReviewerLaunchSpec(ProcessSpec(("fixture",), tmp_path), "3" * 64),
     )
 
-    # Production opens actual existing descriptors/stores and hashes the fixed,
-    # standalone runtime/tokenizer source. This does not qualify or call a model.
-    first = open_reviewer_execution_intents(control)
-    from karajan.adapters.opencode.go_journal import GoCallJournal
+    # Install every forbidden-boundary counter before the first factory
+    # construction. A forbidden entry fails immediately, so a future factory
+    # composition cannot turn this bounded observer into a native/HTTP/model
+    # execution or a parser/Evidence side effect.
+    from karajan.isolation import go_reviewer_probe
+    from karajan.projects import go_reviewer_suite
 
-    counters = {name: 0 for name in ("native", "grant", "call", "gate", "evidence")}
+    counters = {
+        name: 0 for name in ("native", "http_send", "parser", "grant", "call", "gate", "evidence")
+    }
 
-    def count(name, original):
+    def count(name, original, *, forbidden=False):
         def wrapped(*args, **kwargs):
             counters[name] += 1
+            if forbidden:
+                raise AssertionError(f"forbidden Reviewer boundary called: {name}")
             return original(*args, **kwargs)
 
         return wrapped
 
-    monkeypatch.setattr(RunnerHost, "start", count("native", RunnerHost.start))
-    monkeypatch.setattr(GoCallJournal, "create_grant", count("grant", GoCallJournal.create_grant))
-    monkeypatch.setattr(GoCallJournal, "begin_call", count("call", GoCallJournal.begin_call))
+    monkeypatch.setattr(
+        go_reviewer_probe,
+        "observe_go_reviewer_tools",
+        count("native", go_reviewer_probe.observe_go_reviewer_tools, forbidden=True),
+    )
+    monkeypatch.setattr(
+        httpx.Client,
+        "send",
+        count("http_send", httpx.Client.send, forbidden=True),
+    )
+    monkeypatch.setattr(
+        go_reviewer_suite,
+        "parse_review_output",
+        count("parser", go_reviewer_suite.parse_review_output, forbidden=True),
+    )
+    monkeypatch.setattr(
+        RunnerHost,
+        "start",
+        count("native", RunnerHost.start, forbidden=True),
+    )
+    monkeypatch.setattr(
+        go_journal.GoCallJournal,
+        "create_grant",
+        count("grant", go_journal.GoCallJournal.create_grant, forbidden=True),
+    )
+    monkeypatch.setattr(
+        go_journal.GoCallJournal,
+        "begin_call",
+        count("call", go_journal.GoCallJournal.begin_call, forbidden=True),
+    )
     monkeypatch.setattr(type(candidates), "gate", count("gate", type(candidates).gate))
     monkeypatch.setattr(
         type(candidates), "_save_evidence", count("evidence", type(candidates)._save_evidence)
     )
+
+    # Production opens actual existing descriptors/stores and hashes the fixed,
+    # standalone runtime/tokenizer source. This does not qualify or call a model.
+    factory_storage_before = {
+        "execution": database.read_bytes(),
+        "host": (intents.host.database).read_bytes(),
+        "journal": journal.read_bytes(),
+        **{f"state/{name}": (state / name).read_bytes() for name in stores},
+    }
+    first = open_reviewer_execution_intents(control)
+    assert database.read_bytes() == factory_storage_before["execution"]
+    assert intents.host.database.read_bytes() == factory_storage_before["host"]
+    assert journal.read_bytes() == factory_storage_before["journal"]
+    assert {
+        f"state/{name}": (state / name).read_bytes() for name in stores
+    } == {key: value for key, value in factory_storage_before.items() if key.startswith("state/")}
     journal_before = journal.read_bytes()
     descriptor = control / "reviewer-execution-bootstrap.json"
     other = tmp_path / "other.sqlite"
@@ -297,11 +348,14 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
     assert other.read_bytes() == other_before
     assert reopened.cancel(run_id, reviewer["id"], principal="owner")["cancel_requested"]
     # The real Candidate gate is a read-only current-context check required by
-    # compilation; its observed calls are not quality effects.  The connected
-    # Evidence writer and every forbidden transport/native boundary stay zero.
+    # compilation; its observed calls are not quality effects. The connected
+    # Evidence writer and every forbidden native/HTTP/parser/Journal boundary
+    # stay zero.
     assert counters["gate"] > 0
     assert {key: value for key, value in counters.items() if key != "gate"} == {
         "native": 0,
+        "http_send": 0,
+        "parser": 0,
         "grant": 0,
         "call": 0,
         "evidence": 0,
