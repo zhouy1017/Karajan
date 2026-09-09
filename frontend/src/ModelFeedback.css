@@ -33,8 +33,7 @@
   text-align: left;
 }
 .model-feedback-meta,
-.model-feedback-hint,
-.model-feedback-assertion {
+.model-feedback-hint {
   margin: 0;
   font-size: 0.95rem;
   line-height: 1.5;
@@ -43,9 +42,6 @@
 .model-feedback-hint {
   font-weight: 600;
   color: #6a4a14;
-}
-.model-feedback-assertion {
-  color: #7a2d24;
 }
 @keyframes model-feedback-spin {
   to {

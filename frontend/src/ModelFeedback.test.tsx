@@ -1,9 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import fs from "node:fs";
-import path from "node:path";
 import { ModelFeedback } from "./ModelFeedback";
-import "./ModelFeedback.css";
 
 afterEach(() => {
   cleanup();
@@ -25,9 +22,10 @@ describe("ModelFeedback", () => {
       />,
     );
 
-    expect(screen.getByText("模型运行中")).toBeTruthy();
-    expect(screen.getByText(/最近反馈：/)).toBeTruthy();
-    expect(screen.getByText("连接：连接就绪")).toBeTruthy();
+    const status = screen.getByRole("status");
+    expect(status.textContent).toContain("模型运行中");
+    expect(status.textContent).toContain("最近反馈：");
+    expect(status.textContent).toContain("连接：连接就绪");
   });
 
   it("does not downgrade completed/failed/cancelled when stale or disconnected", () => {
@@ -41,7 +39,7 @@ describe("ModelFeedback", () => {
       />,
     );
 
-    expect(screen.getByText("已完成")).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toContain("已完成");
     expect(screen.queryByText("反馈中断，等待核对")).toBeNull();
 
     rerender(
@@ -52,7 +50,7 @@ describe("ModelFeedback", () => {
         staleDurationMs={10_000}
       />,
     );
-    expect(screen.getByText("已失败")).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toContain("已失败");
 
     rerender(
       <ModelFeedback
@@ -62,10 +60,10 @@ describe("ModelFeedback", () => {
         staleDurationMs={10_000}
       />,
     );
-    expect(screen.getByText("已取消")).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toContain("已取消");
   });
 
-  it("shows stale/disconnected as awaiting reconciliation for non-terminal states and keeps last observed time", () => {
+  it("renders awaiting reconciliation only for stale or disconnected non-terminal states and keeps last observed time", () => {
     vi.spyOn(Date, "now").mockReturnValue(BASE_TIME);
     render(
       <ModelFeedback
@@ -76,15 +74,71 @@ describe("ModelFeedback", () => {
       />,
     );
 
-    const label = screen.getByText("反馈中断，等待核对");
-    expect(label).toBeTruthy();
-    const timeNode = screen.getByText("最近反馈：").closest("p") as HTMLElement;
-    expect(timeNode).toContainHTML("最近反馈：");
-    expect(screen.getByText("终态尚未到达，当前不应改判完成/失败/取消。")).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toContain("反馈中断，等待核对");
+    expect(screen.getByRole("status").textContent).toContain("最近反馈：");
+    expect(
+      screen.getByText("上次反馈超过 10 秒 未更新，状态待核对"),
+    ).toBeTruthy();
+  });
+
+  it("treats unknown connection as awaiting reconciliation for running states", () => {
+    render(
+      <ModelFeedback
+        state="running"
+        lastObservedAt={BASE_TIME}
+        connection="unknown"
+        staleDurationMs={10_000}
+      />,
+    );
+
+    expect(screen.getByRole("status").textContent).toContain("反馈中断，等待核对");
+    expect(screen.getByRole("status").textContent).toContain("连接：连接状态未知");
+  });
+
+  it("does not show stale warning for waiting_output when feedback is fresh", () => {
+    vi.spyOn(Date, "now").mockReturnValue(BASE_TIME);
+    render(
+      <ModelFeedback
+        state="waiting_output"
+        lastObservedAt={BASE_TIME - 500}
+        connection="connected"
+        staleDurationMs={10_000}
+      />,
+    );
+
+    expect(screen.getByRole("status").textContent).toContain("等待运行输出");
+    expect(screen.queryByText("状态待核对")).toBeNull();
+  });
+
+  it("switches to awaiting reconciliation after stale clock advance without timers", () => {
+    const now = vi.spyOn(Date, "now");
+    now.mockReturnValue(BASE_TIME);
+    const { rerender } = render(
+      <ModelFeedback
+        state="waiting_output"
+        lastObservedAt={BASE_TIME - 500}
+        connection="connected"
+        staleDurationMs={10_000}
+      />,
+    );
+    expect(screen.queryByText("反馈中断，等待核对")).toBeNull();
+
+    now.mockReturnValue(BASE_TIME + 15_000);
+    rerender(
+      <ModelFeedback
+        state="waiting_output"
+        lastObservedAt={BASE_TIME - 500}
+        connection="connected"
+        staleDurationMs={10_000}
+      />,
+    );
+
+    expect(screen.getByRole("status").textContent).toContain("反馈中断，等待核对");
   });
 
   it("does not invent updates from timers or heartbeat data", () => {
     const timer = vi.spyOn(globalThis, "setInterval");
+    const animation = vi.spyOn(globalThis, "requestAnimationFrame");
     render(
       <ModelFeedback
         state="idle"
@@ -95,14 +149,37 @@ describe("ModelFeedback", () => {
     );
 
     expect(timer).not.toHaveBeenCalled();
+    expect(animation).not.toHaveBeenCalled();
   });
 
-  it("contains reduced-motion boundary in stylesheet", () => {
-    const css = fs.readFileSync(
-      path.join("frontend", "src", "ModelFeedback.css"),
-      "utf8",
+  it("treats invalid/overflow timestamps as unknown and renders stable fallback", () => {
+    render(
+      <ModelFeedback
+        state="running"
+        lastObservedAt={Number.POSITIVE_INFINITY}
+        connection="connected"
+        staleDurationMs={10_000}
+      />,
     );
-    expect(css).toContain("@media (prefers-reduced-motion: reduce)");
-    expect(css).toContain("animation: none !important;");
+
+    expect(screen.getByText("尚未接收反馈")).toBeTruthy();
+    const time = screen.getByText("尚未接收反馈");
+    expect(time.closest("time")?.getAttribute("datetime")).toBeNull();
+  });
+
+  it("renders accessible status classes and icons", () => {
+    render(
+      <ModelFeedback
+        state="running"
+        lastObservedAt={BASE_TIME - 500}
+        connection="connected"
+        staleDurationMs={10_000}
+      />,
+    );
+
+    const status = screen.getByRole("status");
+    expect(status.className).toContain("model-feedback");
+    expect(status.className).toContain("model-feedback--running");
+    expect(screen.getByTestId("model-feedback-icon").textContent).toBe("⏳");
   });
 });

@@ -1,4 +1,5 @@
 import { type JSX } from "react";
+import "./ModelFeedback.css";
 
 type StableModelState =
   | "running"
@@ -57,39 +58,60 @@ type DisplayState = ModelFeedbackState | "awaiting_reconciliation";
 
 const awaitingLabel = "反馈中断，等待核对";
 const awaitingIcon = "⚠️";
+const MAX_SAFE_FEEDBACK_TIME = 8_640_000_000_000_000;
 
 function describeStatus(
-  props: { state: ModelFeedbackState; stale: boolean; disconnected: boolean },
+  props: {
+    state: ModelFeedbackState;
+    stale: boolean;
+    disconnected: boolean;
+    observed: boolean;
+  },
 ): {
   state: DisplayState;
   icon: string;
   label: string;
-  isBlocked: boolean;
 } {
   if (
     !terminalStates.has(props.state) &&
-    (props.stale || props.disconnected)
+    (props.stale || props.disconnected || !props.observed)
   ) {
     return {
       state: "awaiting_reconciliation",
       icon: awaitingIcon,
       label: awaitingLabel,
-      isBlocked: true,
     };
   }
   return {
     state: props.state,
     icon: iconByState[props.state],
     label: labelByState[props.state],
-    isBlocked: false,
   };
 }
 
-function formatObservedAt(lastObservedAt: number): string {
-  if (!Number.isFinite(lastObservedAt) || lastObservedAt <= 0)
-    return "尚未接收反馈";
+function isFiniteDisplayTime(ts: number): boolean {
+  return (
+    Number.isFinite(ts) &&
+    ts > 0 &&
+    ts <= MAX_SAFE_FEEDBACK_TIME
+  );
+}
+
+function isoObservedAt(lastObservedAt: number): string | undefined {
+  if (!isFiniteDisplayTime(lastObservedAt)) return undefined;
 
   const date = new Date(lastObservedAt);
+  if (Number.isNaN(date.getTime())) return undefined;
+
+  return date.toISOString();
+}
+
+function displayObservedAt(lastObservedAt: number): string {
+  if (!isFiniteDisplayTime(lastObservedAt)) return "尚未接收反馈";
+
+  const date = new Date(lastObservedAt);
+  if (Number.isNaN(date.getTime())) return "尚未接收反馈";
+
   return `${date.toLocaleDateString("zh-CN")} ${date.toLocaleTimeString("zh-CN")}`;
 }
 
@@ -105,12 +127,20 @@ export function ModelFeedback({
   staleDurationMs,
 }: ModelFeedbackProps): JSX.Element {
   const disconnected = connection === "disconnected";
+  const unknown = connection === "unknown";
+  const observed = isFiniteDisplayTime(lastObservedAt);
   const stale =
-    Number.isFinite(lastObservedAt) &&
+    observed &&
+    Number.isFinite(staleDurationMs) &&
     Date.now() - lastObservedAt > staleDurationMs &&
     staleDurationMs >= 0;
-  const display = describeStatus({ state, stale, disconnected });
-  const observedText = formatObservedAt(lastObservedAt);
+  const display = describeStatus({
+    state,
+    stale,
+    disconnected: disconnected || unknown,
+    observed,
+  });
+  const observedText = displayObservedAt(lastObservedAt);
   const connectionText =
     connection === "connected"
       ? "连接就绪"
@@ -138,24 +168,14 @@ export function ModelFeedback({
         <span>最近反馈：{observedText}</span>
         <span>连接：{connectionText}</span>
       </p>
-      {(display.state === "awaiting_reconciliation" ||
-        state === "waiting_output") && (
+      {display.state === "awaiting_reconciliation" && (
         <p className="model-feedback-hint">
           <span>上次反馈超过 {staleDurationText(staleDurationMs)} 未更新，状态待核对</span>
         </p>
       )}
-      <time dateTime={
-        Number.isFinite(lastObservedAt) && lastObservedAt > 0
-          ? new Date(lastObservedAt).toISOString()
-          : undefined
-      }>
+      <time dateTime={isoObservedAt(lastObservedAt)}>
         {observedText}
       </time>
-      {display.isBlocked && (
-        <p className="model-feedback-assertion">
-          终态尚未到达，当前不应改判完成/失败/取消。
-        </p>
-      )}
     </section>
   );
 }
