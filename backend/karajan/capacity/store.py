@@ -64,6 +64,30 @@ class _CapacityTemporalFence:
         )
 
 
+@dataclass
+class CapacityEffectCapability:
+    """Ephemeral full Capacity fence for one held pre-effect transaction.
+
+    This deliberately retains Capacity's own reservation deadline and temporal
+    fence rather than exporting their scalar fields for a consumer to rebuild.
+    It is valid only while ``pre_effect_guard`` still owns its transaction.
+    """
+
+    _clock: Callable[[], float]
+    _expires_at: float
+    _temporal_fence: _CapacityTemporalFence
+
+    def assert_current(self) -> None:
+        now = self._clock()
+        if now < self._temporal_fence.floor:
+            raise CapacityError("CAPACITY_CLOCK_REGRESSED")
+        if self._expires_at <= now:
+            raise CapacityError("RESERVATION_EXPIRED")
+        if not self._temporal_fence.current(now):
+            raise CapacityError("CAPACITY_EFFECT_FENCE_EXPIRED")
+        self._temporal_fence = self._temporal_fence.through(now)
+
+
 class _UnactivatedCancellation(AdmissionRef):
     evidence_ref: Identifier
 
@@ -997,6 +1021,10 @@ class CapacityStore:
                     evaluated_at=temporal_fence.floor,
                 )
                 raise CapacityError(temporal[0])
+            temporal_fence = temporal_fence.through(now)
+            capacity_effect_capability = CapacityEffectCapability(
+                self._now, item["expires_at"], temporal_fence
+            )
             yield {
                 "decision": "capacity_revalidated",
                 "reason_codes": [],
@@ -1010,6 +1038,9 @@ class CapacityStore:
                 "available_before": availability,
                 "activation_allowed": False,
                 "live_qualification": "not_run",
+                # This is an in-memory capability of the still-held Capacity
+                # transaction, never a receipt or a reconstructable facts subset.
+                "capacity_final_effect_capability": capacity_effect_capability,
             }
 
     def cancel_unactivated(

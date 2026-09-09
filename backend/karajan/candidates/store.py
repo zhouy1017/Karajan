@@ -137,6 +137,20 @@ class CandidateStore:
             if connection is not None:
                 connection.close()
 
+    @contextmanager
+    def check_publication_guard(self) -> Iterator[None]:
+        """Hold Candidate metadata stable through one receiving effect.
+
+        This is a producer-owned SQLite writer reservation, not a caller-supplied
+        check list.  A Reviewer receiver takes it only after Capacity's effect
+        guard, so the established order is controller -> Capacity -> Candidate.
+        ``record_check`` can wait, but cannot publish a newer complete Check set
+        between the receiver's final material reads/comparison and its effect.
+        """
+        with self._connection() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            yield
+
     def _git(
         self, args: list[str], data: bytes | None = None, *, repository: Path | None = None
     ) -> bytes:
@@ -500,6 +514,24 @@ class CandidateStore:
         if row is None:
             raise CandidateError("BASELINE_NOT_FOUND")
         return self._baseline(row[0], baseline_id)
+
+    def verify_reviewer_input_artifacts(self, candidate_id: str) -> None:
+        """Verify both immutable snapshots without materializing or diffing them.
+
+        The Reviewer effect guard uses this only to recheck physical CAS
+        availability for compiler-prepared material. It accepts no caller
+        paths, bytes, manifest, or snapshot selection.
+        """
+        candidate = self.get(candidate_id)
+        try:
+            baseline = self.get_baseline(candidate["request"]["baseline_id"])
+            artifacts = [
+                row["artifact"] for row in candidate["manifest"] + baseline["manifest"]
+            ]
+        except (KeyError, TypeError):
+            raise CandidateError("CANDIDATE_INVALID") from None
+        if not all(self._available(artifact) for artifact in artifacts):
+            raise CandidateError("ARTIFACT_UNAVAILABLE")
 
     @staticmethod
     def _baseline(data: str, baseline_id: str) -> dict[str, Any]:

@@ -16,14 +16,25 @@ from test_task_workspace import git
 
 
 @pytest.fixture
-def workspace_case(projected, tmp_path):
+def workspace_case(projected, tmp_path, request: pytest.FixtureRequest):
     repository = projected["repository"]
-    for name, content in {
+    files = {
         "src/report.py": b"print('approved task')\n",
         "src/reference.txt": b"Reference contract\n",
         "tests/test_report.py": b"assert True\n",
         "docs/private.txt": b"Unprojected baseline file\n",
-    }.items():
+    }
+    # The Reviewer input deliberately uses the approved Worker read scope,
+    # while the Reviewer task itself remains scoped to src/report.py.  Keep a
+    # real, bounded large CAS fixture available for lock-boundary tests.
+    if getattr(request, "param", None) == "large_candidate":
+        files.update(
+            {
+                f"src/unrelated-{index:02d}.txt": (f"unrelated-{index:02d}\n".encode() * 512)
+                for index in range(24)
+            }
+        )
+    for name, content in files.items():
         path = repository / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(content)

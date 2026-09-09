@@ -5,10 +5,12 @@ import sqlite3
 import uuid
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from karajan.capacity import CapacityError
+from karajan.capacity.store import CapacityEffectCapability
 from karajan.routing.compiler import RoutingError, digest
 from karajan.runs import RunError
 from karajan.runs.planning import encoded, identifier
@@ -16,6 +18,67 @@ from karajan.storage import open_database, require_schema
 
 from .execution_budget import capture_run_budget_boundary
 from .routing import ApprovedRunRouting
+
+
+@dataclass(frozen=True)
+class PreparedReviewerFinalEffect:
+    """One immutable full input prepared by the held Reviewer producer."""
+
+    _final_scalar_check: Callable[[], None]
+    _capacity_check: CapacityEffectCapability
+    _prepare_input: Callable[[object, object | None], object]
+    _expected_input: object
+    _prepared_input: object
+    _source_check: Callable[[], None]
+
+    def assert_source_current(self) -> None:
+        """Check deployment identity before a receiver creates any Host material."""
+        self._source_check()
+
+    def assert_current(self) -> None:
+        # Rebuild the complete current controller/CAS/Check input against the
+        # immutable snapshot material. This detects an unavailable Check or a
+        # current binding change after a receiver waited, without another pair
+        # of full filesystem snapshots or diff construction in that writer.
+        self.assert_source_current()
+        self._prepare_input(self._expected_input, self._prepared_input)
+        self._final_scalar_check()
+        try:
+            self._capacity_check.assert_current()
+        except CapacityError:
+            raise RunError("REVIEWER_CAPACITY_REVALIDATION_FAILED") from None
+
+
+@dataclass(frozen=True)
+class ReviewerFinalEffectCapability:
+    """Ephemeral producer-owned preparation capability for one Reviewer effect."""
+
+    _prepare: Callable[[], Callable[[], None]]
+    _capacity_check: CapacityEffectCapability
+    _prepare_input: Callable[[object, object | None], object]
+
+    def prepare_current(
+        self,
+        expected_input: object,
+        prepared_input: object,
+        source_check: Callable[[], None],
+    ) -> PreparedReviewerFinalEffect:
+        # The compiler produced this private immutable complete input before
+        # any Admission/Run/Project/Capacity/Candidate writer was acquired.
+        # Under the producer guard, rebuild and compare every current input
+        # field from held records and checks using only that material. This
+        # keeps CAS snapshots and diff construction out of shared writers while
+        # retaining final physical CAS/check and scalar authority.
+        final_scalar_check = self._prepare()
+        self._prepare_input(expected_input, prepared_input)
+        return PreparedReviewerFinalEffect(
+            final_scalar_check,
+            self._capacity_check,
+            self._prepare_input,
+            expected_input,
+            prepared_input,
+            source_check,
+        )
 
 
 class ApprovedTaskAdmission:
@@ -742,6 +805,13 @@ class ApprovedTaskAdmission:
                         )
 
                     def check_reviewer_final_effect_boundary() -> Callable[[], None]:
+                        # The receiver may have waited behind its own SQLite
+                        # writer. Re-read the producer-owned Candidate CAS and
+                        # complete Check logs only after that writer is held,
+                        # before retaining the scalar temporal checks below.
+                        # This preserves operation -> Run -> Project ->
+                        # Capacity ownership and accepts no caller material.
+                        check_reviewer_effect_boundary()
                         if (
                             capacity_boundary is None
                             or capacity_quota_fence is None
@@ -750,7 +820,21 @@ class ApprovedTaskAdmission:
                         ):
                             raise RunError("REVIEWER_CAPACITY_BOUNDARY_INVALID")
 
+                        # The held Project reader repeats the actual
+                        # qualification/credential material check in this
+                        # preparation phase, before Capacity records
+                        # ``prepared_at`` for its O(1) scalar callback.
+                        source_recheck = getattr(current, "recheck_source", None)
+                        if not callable(source_recheck):
+                            raise RunError("REVIEWER_QUALIFICATION_SOURCE_CHANGED")
+                        source_recheck()
+
                         def final_check() -> None:
+                            # Complete snapshot/diff material was prepared
+                            # outside the receiver writer, but the small
+                            # producer-owned credential/source byte check
+                            # remains current at the actual effect boundary.
+                            source_recheck()
                             capacity_now = self.routing.capacity.clock()
                             try:
                                 capacity_quota_fence.assert_current(as_of=capacity_now)
@@ -763,6 +847,46 @@ class ApprovedTaskAdmission:
 
                         return final_check
 
+                    def check_reviewer_current_input(
+                        expected_input: object, prepared_input: object | None
+                    ) -> object:
+                        """Rebuild the full pinned input from held producer records."""
+                        from .reviewer_input import (
+                            ReviewerInput,
+                            compile_reviewer_input_from_records,
+                        )
+
+                        if prepared_input is not None and not isinstance(
+                            prepared_input, ReviewerInput
+                        ):
+                            raise RunError("REVIEWER_EXECUTION_BOUNDARY_INVALID")
+
+                        try:
+                            evidence_ids = [
+                                row["evidence"]["id"]
+                                for row in worker_operation["validation"]["checks"]["runs"]
+                            ]
+                        except (KeyError, TypeError):
+                            raise RunError("REVIEWER_INPUT_CHECKS_INCOMPLETE") from None
+                        compiled = compile_reviewer_input_from_records(
+                            bindings.candidates,
+                            run=run,
+                            operation=worker_operation,
+                            principal=principal,
+                            final_check_evidence_ids=evidence_ids,
+                            prepared_input=prepared_input,
+                        )
+                        current_input = {
+                            "schema_version": "karajan.reviewer-input.v2",
+                            "sha256": compiled.content_sha256,
+                            "size": compiled.size,
+                            "allowed_files": list(compiled.allowed_files),
+                            "check_evidence_ids": list(compiled.check_evidence_ids),
+                        }
+                        if expected_input != current_input:
+                            raise RunError("REVIEWER_EXECUTION_INPUT_CHANGED")
+                        return compiled
+
                     with self.routing.capacity.pre_effect_guard(
                         capacity_receipt["admission_id"],
                         expected_request=request,
@@ -770,11 +894,32 @@ class ApprovedTaskAdmission:
                         after_capacity_facts=check_reviewer_capacity_route,
                         before_effect_yield=check_reviewer_final_effect_boundary,
                     ) as capacity:
-                        yield {
-                            "operation": operation,
-                            "revalidation": current,
-                            "capacity": capacity,
-                        }
+                        # This closure deliberately remains an in-memory capability
+                        # of the held Admission/Capacity transactions.  Consumers
+                        # use it only at their own final writer boundary; it is not
+                        # a serializable receipt and cannot be reconstructed from
+                        # the yielded controller facts.
+                        capacity_effect_capability = capacity.get(
+                            "capacity_final_effect_capability"
+                        )
+                        if not isinstance(capacity_effect_capability, CapacityEffectCapability):
+                            raise RunError("REVIEWER_CAPACITY_BOUNDARY_INVALID")
+                        # Candidate publication is ordered after Capacity and
+                        # retained until the receiving ledger/Host write. It
+                        # owns no controller locks, so record_check has no
+                        # reverse edge and can only serialize after this effect.
+                        with bindings.candidates.check_publication_guard():
+                            final_effect_check = ReviewerFinalEffectCapability(
+                                check_reviewer_final_effect_boundary,
+                                capacity_effect_capability,
+                                check_reviewer_current_input,
+                            )
+                            yield {
+                                "operation": operation,
+                                "revalidation": current,
+                                "capacity": capacity,
+                                "final_effect_capability": final_effect_check,
+                            }
 
 
 def _request(assessment: dict[str, Any]) -> dict[str, Any] | None:

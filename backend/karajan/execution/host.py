@@ -9,7 +9,7 @@ import subprocess
 import sys
 import time
 import uuid
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -216,7 +216,15 @@ class RunnerHost:
         finally:
             connection.close()
 
-    def prepare(self, manifest: HostManifest, start_key: str, spec: ProcessSpec) -> Snapshot:
+    def prepare(
+        self,
+        manifest: HostManifest,
+        start_key: str,
+        spec: ProcessSpec,
+        *,
+        before_nonce: Callable[[], None] | None = None,
+        before_write: Callable[[], None] | None = None,
+    ) -> Snapshot:
         if not start_key or len(start_key) > 256:
             raise ValueError("Invalid start key.")
         manifest_json = manifest.model_dump_json()
@@ -236,6 +244,23 @@ class RunnerHost:
                     raise StartConflict("START_KEY_PAYLOAD_MISMATCH")
             else:
                 try:
+                    # A deployment-source check must follow acquisition of
+                    # this Host writer but precede every new row material,
+                    # including the nonce.  Keep the established final scalar
+                    # callback below the nonce, where it remains adjacent to
+                    # the INSERT.
+                    if before_nonce is not None:
+                        before_nonce()
+                    # The nonce is part of the prepared Host row. Materialize
+                    # it before the caller's final authority check so elapsed
+                    # authority cannot commit a new preparation.
+                    nonce = uuid.uuid4().hex
+                    # A caller may have waited for this writer after checking
+                    # its own authority.  Keep its final, scalar recheck next
+                    # to the actual Host effect without giving Host any
+                    # routing or admission capability.
+                    if before_write is not None:
+                        before_write()
                     connection.execute(
                         "INSERT INTO executions (start_key, attempt_id, request_digest, manifest, "
                         "spec, state, nonce) VALUES (?, ?, ?, ?, ?, 'prepared', ?)",
@@ -245,7 +270,7 @@ class RunnerHost:
                             digest,
                             manifest_json,
                             spec_json,
-                            uuid.uuid4().hex,
+                            nonce,
                         ),
                     )
                 except sqlite3.IntegrityError as error:
@@ -282,6 +307,7 @@ class RunnerHost:
         prepared_id: str,
         fence: int,
         authorization_ref: str,
+        before_write: Callable[[], None] | None = None,
     ) -> dict[str, object]:
         """Initialize the exact prepared launch without overwriting any control.
 
@@ -315,6 +341,8 @@ class RunnerHost:
             if old is None:
                 if row["state"] != "prepared" or row["activation"] is not None:
                     raise LaunchDenied("CONTROL_PREPARED_REQUIRED")
+                if before_write is not None:
+                    before_write()
                 connection.execute(
                     "INSERT INTO controls VALUES (?,?,?,1)",
                     (attempt_id, fence, authorization_ref),
@@ -331,9 +359,43 @@ class RunnerHost:
                 "activation_allowed": False,
             }
 
+    def inspect_original_preparation(self, manifest: HostManifest, start_key: str) -> Snapshot:
+        """Read and correlate one already-persisted preparation without effects.
+
+        This is intentionally narrower than ``prepare``: it neither creates a
+        row nor initializes control.  A recovery consumer supplies its original
+        fixed manifest and start key, and receives a snapshot only when every
+        persisted Host identity still matches.
+        """
+        if not start_key or len(start_key) > 256:
+            raise ValueError("Invalid start key.")
+        manifest_json = manifest.model_dump_json()
+        expected = parse_host_manifest_json(manifest_json)
+        with self._connect(existing_only=True) as connection:
+            connection.execute("PRAGMA query_only=ON")
+            row = connection.execute(
+                "SELECT start_key,attempt_id,manifest FROM executions WHERE start_key=?",
+                (start_key,),
+            ).fetchone()
+        if row is None:
+            raise KeyError(start_key)
+        try:
+            actual = parse_host_manifest_json(row["manifest"])
+        except (TypeError, ValueError):
+            raise LaunchDenied("PREPARED_BINDING_MISMATCH") from None
+        if row["attempt_id"] != expected.id or actual != expected:
+            raise LaunchDenied("PREPARED_BINDING_MISMATCH")
+        return self.inspect(expected.id)
+
     @contextmanager
     def current_fence_guard(
-        self, attempt_id: str, *, fence: int, authorization_ref: str
+        self,
+        attempt_id: str,
+        *,
+        fence: int,
+        authorization_ref: str,
+        expected_manifest: HostManifest | None = None,
+        expected_spec: ProcessSpec | None = None,
     ) -> Iterator[dict[str, object]]:
         """Hold the accepted writer identity through a trusted capture transaction.
 
@@ -344,6 +406,13 @@ class RunnerHost:
         _identifier.validate_python(attempt_id, strict=True)
         _identifier.validate_python(authorization_ref, strict=True)
         _positive_integer.validate_python(fence, strict=True)
+        if (expected_manifest is None) != (expected_spec is None):
+            raise ValueError("Expected Host manifest and ProcessSpec must be paired.")
+        expected_attempt = None
+        expected_spec_json = None
+        if expected_manifest is not None and expected_spec is not None:
+            expected_attempt = parse_host_manifest_json(expected_manifest.model_dump_json())
+            expected_spec_json = encoded(expected_spec.document())
         with self._connect(existing_only=True) as connection:
             connection.execute("BEGIN IMMEDIATE")
             connection.execute("PRAGMA query_only=ON")
@@ -376,6 +445,11 @@ class RunnerHost:
                 or attempt.id != attempt_id
             ):
                 raise LaunchDenied("CAPTURE_START_BINDING_INVALID")
+            if (
+                expected_attempt is not None
+                and (attempt != expected_attempt or row["spec"] != expected_spec_json)
+            ):
+                raise LaunchDenied("CAPTURE_PREPARED_BINDING_MISMATCH")
             control = connection.execute(
                 "SELECT * FROM controls WHERE attempt_id=?", (attempt_id,)
             ).fetchone()
@@ -454,7 +528,13 @@ class RunnerHost:
 
     @contextmanager
     def current_runner_guard(
-        self, attempt_id: str, *, fence: int, authorization_ref: str
+        self,
+        attempt_id: str,
+        *,
+        fence: int,
+        authorization_ref: str,
+        expected_manifest: HostManifest | None = None,
+        expected_spec: ProcessSpec | None = None,
     ) -> Iterator[ProcessIdentity]:
         """Fence effects to the exact live ProcessSpec child, not its descendants.
 
@@ -462,7 +542,13 @@ class RunnerHost:
         The caller cannot supply a PID or adopt a historical runner identity.
         The outer fence transaction holds Host withdrawal through the effect.
         """
-        with self.current_fence_guard(attempt_id, fence=fence, authorization_ref=authorization_ref):
+        with self.current_fence_guard(
+            attempt_id,
+            fence=fence,
+            authorization_ref=authorization_ref,
+            expected_manifest=expected_manifest,
+            expected_spec=expected_spec,
+        ):
             with self._connect(existing_only=True) as connection:
                 connection.execute("PRAGMA query_only=ON")
                 row = connection.execute(
