@@ -527,6 +527,16 @@ class RunPlanner:
                     ]
                 )
             result["plan_digest"] = digest(result)
+            # The producer-owned Project lease may re-observe external
+            # qualification material.  Run this final check after all plan
+            # preparation, immediately before the first durable Plan write.
+            final_recheck = (
+                getattr(release_submission_guard, "recheck", None)
+                if release_submission_guard is not None
+                else None
+            )
+            if callable(final_recheck):
+                final_recheck()
             run["plans"].append(result)
             run["latest_plan_revision"] = result["plan_revision"]
             if run["active_plan_revision"] is None:

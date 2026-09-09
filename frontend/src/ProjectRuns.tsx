@@ -317,27 +317,28 @@ function RunWorkbench({
         setPlanningReadError(false);
         const durableCommand = result.command;
         const commandState = durableCommand?.state;
-        if (
-          commandState === "completed" ||
-          commandState === "failed" ||
-          commandState === "unknown"
-        ) {
-          if (commandState === "failed") {
-            setError(
-              durableCommand?.reason_code
-                ? `生成计划未完成（服务端代码：${durableCommand.reason_code}）。`
-                : "生成计划未完成，请重新读取。",
-            );
-            sessionStorage.removeItem(commandStorageKey);
-            command.current = null;
-          } else if (commandState === "unknown") {
-            setNotice("生成计划结果未知；可使用同一请求身份重新读取。");
-          } else {
-            sessionStorage.removeItem(commandStorageKey);
-            command.current = null;
-            setNotice("");
-          }
+        if (commandState === "failed") {
+          setError(
+            durableCommand?.reason_code
+              ? `生成计划未完成（服务端代码：${durableCommand.reason_code}）。`
+              : "生成计划未完成，请重新读取。",
+          );
+          sessionStorage.removeItem(commandStorageKey);
+          command.current = null;
           return;
+        }
+        if (commandState === "completed") {
+          sessionStorage.removeItem(commandStorageKey);
+          command.current = null;
+          setNotice("");
+          return;
+        }
+        if (commandState === "unknown") {
+          // A duplicate execute may observe the original worker's pending
+          // dispatch after that worker has temporarily lost its reply.  Keep
+          // the same command identity and perform bounded read-only tracking;
+          // the server may promote this durable receipt to completed.
+          setNotice("生成计划结果未知；正在读取原请求的实际状态…");
         }
       } catch {
         if (!session.active || reading.current !== generation) return;

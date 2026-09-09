@@ -3147,6 +3147,107 @@ def test_direct_factory_submit_rechecks_live_output_source_before_claim(
     assert recovered.planner.get(run["id"], principal="owner")["plans"] == []
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="private production source requires Linux")
+def test_production_submit_rejects_a_valid_qualification_replacement_after_source_read(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A replacement official record cannot authorize an already-armed output."""
+    control, _, run, execution = _persistent_production_transport_case(tmp_path, configured)
+    transport = PlanningTransport.from_trusted_factory(control)
+    persisted = transport.execution.planner.get(run["id"], principal="owner")
+    intent = persisted["planning_intents"][0]
+    plan = submit_request(persisted, intent)["plan"]
+    for task in plan["tasks"]:
+        task["paths"] = ["original.txt"]
+
+    replaced = False
+    original_source = transport.execution._submission_source
+    reader = transport.execution.admissions.qualifications
+    qualifications = reader.qualifications
+
+    def replace_after_source(execution_record: dict[str, Any]) -> dict[str, Any]:
+        nonlocal replaced
+        source = original_source(execution_record)
+        if not replaced:
+            with qualifications._owned(run["project_id"], "owner") as db:
+                row = db.execute(
+                    "SELECT id,record FROM profile_qualification_records "
+                    "ORDER BY rowid DESC LIMIT 1"
+                ).fetchone()
+                assert row is not None
+                record = json.loads(row[1])
+                record["valid_until"] = time.time() + 120
+                db.execute(
+                    "UPDATE profile_qualification_records SET record=?,digest=? WHERE id=?",
+                    (json.dumps(record), digest(record), row[0]),
+                )
+            current = reader.read_commander(
+                execution_record["binding"],
+                scope=COMMANDER_QUALIFICATION_SCOPE,
+                reader_version="karajan.commander-qualification-reader.v1",
+            )
+            assert current is not None
+            assert current["valid_until"] > time.time()
+            assert current["record_sha256"] != source["qualification_record_sha256"]
+            replaced = True
+        return source
+
+    monkeypatch.setattr(transport.execution, "_submission_source", replace_after_source)
+    monkeypatch.setattr(
+        ProductionGoPlanningProducer,
+        "produce",
+        lambda self, model_input, *, binding, admission: json.dumps(
+            plan, separators=(",", ":")
+        ).encode(),
+    )
+
+    result = transport.execute(execution["id"], principal="owner", command_key="replacement")
+    assert replaced
+    assert result["state"] == "blocked"
+    assert result["reason_codes"] == ["PLANNING_OUTPUT_SOURCE_CHANGED"]
+    assert transport.execution.planner.get(run["id"], principal="owner")["plans"] == []
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="private production source requires Linux")
+def test_production_submit_rechecks_credential_material_after_plan_validation(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Credential material changing during validation blocks Plan persistence."""
+    control, _, run, execution = _persistent_production_transport_case(tmp_path, configured)
+    transport = PlanningTransport.from_trusted_factory(control)
+    persisted = transport.execution.planner.get(run["id"], principal="owner")
+    intent = persisted["planning_intents"][0]
+    plan = submit_request(persisted, intent)["plan"]
+    for task in plan["tasks"]:
+        task["paths"] = ["original.txt"]
+    from karajan.orchestration.go_commander_qualification import (
+        read_commander_qualification_settings,
+    )
+    from karajan.runs import planning as runs_planning
+
+    settings, _ = read_commander_qualification_settings(control)
+    credential_path = Path(settings.credential_sources[0].path)
+    original_validate = runs_planning.validate_plan
+
+    def mutate_during_validation(value: dict[str, Any], ceiling: dict[str, Any]) -> None:
+        original_validate(value, ceiling)
+        credential_path.write_text("production-replacement-material\n", encoding="utf-8")
+
+    monkeypatch.setattr(runs_planning, "validate_plan", mutate_during_validation)
+    monkeypatch.setattr(
+        ProductionGoPlanningProducer,
+        "produce",
+        lambda self, model_input, *, binding, admission: json.dumps(
+            plan, separators=(",", ":")
+        ).encode(),
+    )
+
+    result = transport.execute(execution["id"], principal="owner", command_key="credential-change")
+    assert result["state"] == "blocked"
+    assert result["reason_codes"] == ["PLANNING_OUTPUT_SOURCE_CHANGED"]
+    assert transport.execution.planner.get(run["id"], principal="owner")["plans"] == []
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="private deployment modes require Linux")
 @pytest.mark.parametrize("alias", ["symlink", "hardlink"])
 def test_persistent_factory_rejects_snapshot_ledger_alias_without_writes(

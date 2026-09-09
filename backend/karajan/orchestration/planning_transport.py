@@ -383,6 +383,17 @@ class PlanningOutputStore:
                 raise RunError("PLANNING_OUTPUT_SOURCE_UNAVAILABLE") from error
             if digest(current) != source["source_sha256"]:
                 raise RunError("PLANNING_OUTPUT_SOURCE_CHANGED")
+            # Keep the source identity components available to the execution
+            # fence.  The ledger seals the complete source digest, while the
+            # Project-held qualification lease compares these two values again
+            # immediately before the Run plan is persisted.
+            if self.authority_kind == "production":
+                source["qualification_source_sha256"] = current.get(
+                    "qualification_source_sha256"
+                )
+                source["qualification_record_sha256"] = current.get(
+                    "qualification_record_sha256"
+                )
         return source
 
     def read_output(self, execution_id: str, binding: dict[str, Any]) -> dict[str, Any]:

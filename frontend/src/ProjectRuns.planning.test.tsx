@@ -545,6 +545,22 @@ it("keeps polling while output is pending and displays the completed plan", asyn
           },
           command: { id: "command-1", state: "accepted" },
         });
+      if (planningReads === 4)
+        return Response.json({
+          ...awaitingPlanning,
+          planning: {
+            ...awaitingPlanning.planning,
+            availability: {
+              state: "blocked",
+              reason_code: "PLANNING_OUTPUT_PENDING",
+            },
+          },
+          command: {
+            id: "command-1",
+            state: "unknown",
+            reason_code: "PLANNING_EXECUTE_COMMAND_UNKNOWN",
+          },
+        });
       return Response.json({
         ...awaitingPlanning,
         run: finalRun,
@@ -672,7 +688,7 @@ it("keeps an unknown command identity across reopening without sending again", a
     await screen.findByRole("button", { name: "生成计划" }),
   );
   await screen.findByText(
-    "生成计划结果未知；可使用同一请求身份重新读取。",
+    "生成计划结果未知；正在读取原请求的实际状态…",
     {},
     { timeout: 4000 },
   );

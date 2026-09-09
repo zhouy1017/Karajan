@@ -68,6 +68,11 @@ class PlanningOutputSource(Contract):
     binding_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     authority_kind: Literal["fixture", "production"]
     source_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    # Production sources retain the qualification identity observed while the
+    # output was armed.  The output ledger stores only the complete source
+    # digest; these fields are supplied by its current-source reader on reads.
+    qualification_source_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    qualification_record_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
 
 
 class PlanningAdmissionAuthority(Protocol):
@@ -78,6 +83,36 @@ class PlanningOutputAuthority(Protocol):
     def read_source(self, binding: dict[str, Any]) -> object: ...
 
     def read_output(self, execution_id: str, binding: dict[str, Any]) -> object: ...
+
+
+@dataclass(slots=True)
+class _SubmissionSourceLease:
+    """Project-held production source lease with a final re-observation."""
+
+    guard: Any
+    current: dict[str, Any]
+    expected_source: dict[str, Any]
+    released: bool = False
+
+    def recheck(self) -> None:
+        refresh = getattr(self.current, "recheck", None)
+        if not callable(refresh):
+            raise RunError("PLANNING_OUTPUT_SOURCE_CHANGED")
+        refreshed = refresh()
+        if not isinstance(refreshed, dict):
+            raise RunError("PLANNING_OUTPUT_SOURCE_CHANGED")
+        if (
+            refreshed.get("source_generation_sha256")
+            != self.expected_source.get("qualification_source_sha256")
+            or refreshed.get("record_sha256")
+            != self.expected_source.get("qualification_record_sha256")
+        ):
+            raise RunError("PLANNING_OUTPUT_SOURCE_CHANGED")
+
+    def __call__(self) -> None:
+        if not self.released:
+            self.released = True
+            self.guard.__exit__(None, None, None)
 
 
 @dataclass(frozen=True, slots=True, repr=False)
@@ -1225,7 +1260,7 @@ class PlanningExecution:
             raise
         return self._record_submission(execution_id, principal, submission)
 
-    def _submission_source(self, execution: dict[str, Any]) -> None:
+    def _submission_source(self, execution: dict[str, Any]) -> dict[str, Any]:
         """Read the sealed output source before taking the submission fence."""
         if self.outputs is None:
             raise RunError("PLANNING_OUTPUT_AUTHORITY_UNAVAILABLE")
@@ -1245,6 +1280,7 @@ class PlanningExecution:
             "source_sha256"
         ] != execution.get("output_source_sha256"):
             raise RunError("PLANNING_OUTPUT_SOURCE_CHANGED")
+        return source
 
     @contextmanager
     def _submission_fence(
@@ -1259,7 +1295,7 @@ class PlanningExecution:
         guard remains live until both Plan and its command receipt commit.
         """
         execution = self.get(execution_id, principal=principal)
-        self._submission_source(execution)
+        expected_source = self._submission_source(execution)
         transaction = self._transaction()
         db = transaction.__enter__()
         try:
@@ -1269,7 +1305,7 @@ class PlanningExecution:
                 raise RunError("PLANNING_EXECUTION_CANCELLED")
 
             def source_guard(run: dict[str, Any]) -> Callable[[], None]:
-                return self._submission_source_guard(current, run)
+                return self._submission_source_guard(current, run, expected_source)
 
             yield source_guard
         except BaseException as error:
@@ -1279,7 +1315,10 @@ class PlanningExecution:
             transaction.__exit__(None, None, None)
 
     def _submission_source_guard(
-        self, execution: dict[str, Any], run: dict[str, Any]
+        self,
+        execution: dict[str, Any],
+        run: dict[str, Any],
+        expected_source: dict[str, Any],
     ) -> Callable[[], None]:
         """Keep the production credential/qualification authority through Plan commit."""
         authority = self.admissions
@@ -1307,11 +1346,15 @@ class PlanningExecution:
         if current is None:
             guard.__exit__(None, None, None)
             raise RunError("PLANNING_OUTPUT_SOURCE_CHANGED")
-
-        def release() -> None:
+        if (
+            current.get("source_generation_sha256")
+            != expected_source.get("qualification_source_sha256")
+            or current.get("record_sha256")
+            != expected_source.get("qualification_record_sha256")
+        ):
             guard.__exit__(None, None, None)
-
-        return release
+            raise RunError("PLANNING_OUTPUT_SOURCE_CHANGED")
+        return _SubmissionSourceLease(guard, current, expected_source)
 
     def _record_submission(
         self, execution_id: str, principal: str, submission: dict[str, Any]

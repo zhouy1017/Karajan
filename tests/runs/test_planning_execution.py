@@ -8,7 +8,7 @@ import subprocess
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from copy import deepcopy
 from pathlib import Path
 from threading import Event, get_ident
@@ -16,7 +16,7 @@ from typing import Any
 
 import pytest
 from karajan.capacity import CapacityStore
-from karajan.orchestration.planning_execution import PlanningExecution
+from karajan.orchestration.planning_execution import PlanningExecution, _SubmissionSourceLease
 from karajan.orchestration.planning_snapshot import PlanningRepositorySnapshotStore
 from karajan.projects import ProjectRegistry
 from karajan.runs import RunError, RunPlanner
@@ -1626,6 +1626,54 @@ def test_output_authority_change_at_run_submission_guard_prevents_plan(
     rejected = service.submit(execution["id"], principal="owner", command_key="submit")
     assert rejected["submission"] is None
     assert rejected["reason_codes"] == [reason]
+    assert service.planner.get(run["id"], principal="owner")["plans"] == []
+
+
+@pytest.mark.parametrize("refresh", ["replacement", "expired"])
+def test_final_source_recheck_rejects_changed_or_expired_qualification(
+    configured: dict, tmp_path: Path, refresh: str
+) -> None:
+    """Plan material cannot commit after the producer lease loses its facts."""
+    service, run, intent, authorities = planning_case(tmp_path, configured)
+    execution = begin(service, run, intent, authorities)
+    authorities.activate()
+    persisted = service.planner.get(run["id"], principal="owner")
+    persisted_intent = persisted["planning_intents"][0]
+    request = {"run_id": run["id"], **proposal(persisted, persisted_intent)}
+
+    class CurrentQualification(dict[str, Any]):
+        def recheck(self) -> dict[str, Any] | None:
+            if refresh == "expired":
+                return None
+            return {
+                **self,
+                "source_generation_sha256": "c" * 64,
+                "record_sha256": "d" * 64,
+            }
+
+    lease = _SubmissionSourceLease(
+        guard=nullcontext(),
+        current=CurrentQualification(
+            source_generation_sha256="a" * 64,
+            record_sha256="b" * 64,
+        ),
+        expected_source={
+            "qualification_source_sha256": "a" * 64,
+            "qualification_record_sha256": "b" * 64,
+        },
+    )
+
+    with pytest.raises(RunError, match="^PLANNING_OUTPUT_SOURCE_CHANGED$"):
+        service.planner._submit_planning_execution_plan(
+            run["id"],
+            persisted_intent["id"],
+            request,
+            execution_id=execution["id"],
+            binding_sha256=execution["binding_sha256"],
+            principal="owner",
+            command_key="final-source-recheck-" + refresh,
+            submission_fence=lambda: nullcontext(lambda _run: lease),
+        )
     assert service.planner.get(run["id"], principal="owner")["plans"] == []
 
 
