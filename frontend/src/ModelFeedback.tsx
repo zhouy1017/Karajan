@@ -1,4 +1,4 @@
-import { useEffect, useState, type JSX } from "react";
+import { useEffect, useReducer, type JSX } from "react";
 import "./ModelFeedback.css";
 
 type StableModelState =
@@ -120,7 +120,9 @@ export function ModelFeedback({
   connection,
   staleDurationMs,
 }: ModelFeedbackProps): JSX.Element {
-  const [, setClock] = useState(() => Date.now());
+  // This counter exists only to re-render an observed timestamp as it ages.
+  // It intentionally never manufactures an observation from the local clock.
+  const [, refreshClock] = useReducer((value: number) => value + 1, 0);
   useEffect(() => {
     if (
       !isFiniteDisplayTime(lastObservedAt) ||
@@ -128,7 +130,7 @@ export function ModelFeedback({
     )
       return;
     const interval = Math.min(Math.max(staleDurationMs / 2, 1_000), 30_000);
-    const timer = window.setInterval(() => setClock(Date.now()), interval);
+    const timer = window.setInterval(refreshClock, interval);
     return () => window.clearInterval(timer);
   }, [lastObservedAt, staleDurationMs, state, connection]);
   const disconnected = connection === "disconnected";

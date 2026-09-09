@@ -170,6 +170,14 @@ function snapshotFor(
   };
 }
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
+
 it("keeps an unresolved A draft out of B and restores it after failed navigation save", async () => {
   const draftUrls: string[] = [];
   installFetch({
@@ -302,7 +310,7 @@ it("persists Task and Attempt selection and scopes detail facts to the selected 
     "/v1/conversations/conversation-one/snapshot": Response.json(
       snapshotFor(conversation, {
         proposed_plan: { tasks: [{ id: "task-a", title: "Task A" }] },
-        runs: [
+        run_summaries: [
           {
             id: "run-a",
             tasks: [{ id: "task-a", title: "Task A" }],
@@ -418,4 +426,301 @@ it("allows configured selections before first conversation and never invents fee
       },
     ]),
   );
+});
+
+it("keeps a newer edit dirty when an older draft acknowledgement arrives", async () => {
+  const first = deferred<Response>();
+  const second = deferred<Response>();
+  let saves = 0;
+  installFetch({
+    "/v1/projects/project-one/commander-options": () =>
+      Response.json({ items: [] }),
+    "/v1/projects/project-one/conversations": () =>
+      Response.json({ items: [conversation] }),
+    "/v1/conversations/conversation-one/snapshot": () =>
+      Response.json(snapshotFor(conversation)),
+    "/v1/conversations/conversation-one/draft": () => {
+      saves += 1;
+      return saves === 1 ? first.promise : second.promise;
+    },
+  });
+  render(<CommanderWorkbench projects={[project]} csrf="csrf" />);
+  const input = await screen.findByRole("textbox", { name: "消息草稿" });
+  await userEvent.type(input, "X");
+  await userEvent.click(screen.getByRole("button", { name: "保存草稿" }));
+  await userEvent.type(input, "Y");
+  await act(async () => first.resolve(Response.json({ revision: 1 })));
+  await vi.waitFor(() => expect(saves).toBe(2));
+  expect((input as HTMLTextAreaElement).value).toBe("XY");
+  expect(
+    sessionStorage.getItem(
+      `karajan:commander-draft:${project.id}:${conversation.id}`,
+    ),
+  ).toContain("XY");
+  expect(screen.getByText("未发送的本地草稿待保存")).toBeTruthy();
+  await act(async () => second.resolve(Response.json({ revision: 2 })));
+});
+
+it("preserves text typed while send and task commands await their responses", async () => {
+  const message = deferred<Response>();
+  const task = deferred<Response>();
+  installFetch({
+    "/v1/projects/project-one/commander-options": () =>
+      Response.json({ items: [] }),
+    "/v1/projects/project-one/conversations": () =>
+      Response.json({ items: [conversation] }),
+    "/v1/conversations/conversation-one/snapshot": () =>
+      Response.json(snapshotFor(conversation)),
+    "/v1/conversations/conversation-one/messages": () => message.promise,
+    "/v1/conversations/conversation-one/task-drafts": () => task.promise,
+  });
+  render(<CommanderWorkbench projects={[project]} csrf="csrf" />);
+  const input = await screen.findByRole("textbox", { name: "消息草稿" });
+  await userEvent.type(input, "send X");
+  await userEvent.click(
+    screen.getByRole("button", { name: "发送给 Commander" }),
+  );
+  await userEvent.type(input, " plus Y");
+  await act(async () => message.resolve(Response.json({ id: "message-a" })));
+  expect((input as HTMLTextAreaElement).value).toBe("send X plus Y");
+
+  await userEvent.click(screen.getByRole("button", { name: "＋ 新任务草稿" }));
+  await userEvent.type(input, " task later text");
+  await act(async () => task.resolve(Response.json({ id: "task-a" })));
+  expect((input as HTMLTextAreaElement).value).toBe(
+    "send X plus Y task later text",
+  );
+});
+
+it("does not let a late send response alter the newly selected conversation", async () => {
+  const message = deferred<Response>();
+  const conversationB = {
+    ...conversation,
+    id: "conversation-b",
+    title: "Conversation B",
+  };
+  sessionStorage.setItem("karajan:commander-project", project.id);
+  sessionStorage.setItem(
+    `karajan:commander-conversation:${project.id}`,
+    conversation.id,
+  );
+  installFetch({
+    "/v1/projects/project-one/commander-options": () =>
+      Response.json({ items: [] }),
+    "/v1/projects/project-one/conversations": () =>
+      Response.json({ items: [conversation, conversationB] }),
+    "/v1/conversations/conversation-one/snapshot": () =>
+      Response.json(snapshotFor(conversation)),
+    "/v1/conversations/conversation-one/messages": () => message.promise,
+    "/v1/conversations/conversation-one/draft": () =>
+      Response.json({ revision: 1 }),
+    "/v1/conversations/conversation-b/snapshot": () =>
+      Response.json(snapshotFor(conversationB)),
+  });
+  render(<CommanderWorkbench projects={[project]} csrf="csrf" />);
+  const input = await screen.findByRole("textbox", { name: "消息草稿" });
+  await userEvent.type(input, "message from A");
+  await userEvent.click(
+    screen.getByRole("button", { name: "发送给 Commander" }),
+  );
+  await userEvent.click(screen.getByRole("button", { name: "›项目一" }));
+  await userEvent.click(
+    await screen.findByRole("button", { name: /Conversation B/ }),
+  );
+  const bInput = await screen.findByRole("textbox", { name: "消息草稿" });
+  await userEvent.type(bInput, "draft for B");
+  await act(async () => message.resolve(Response.json({ id: "message-a" })));
+  expect((bInput as HTMLTextAreaElement).value).toBe("draft for B");
+});
+
+it("retries a body-incomplete creation with the same key and opens its intended new conversation", async () => {
+  const created = {
+    ...conversation,
+    id: "conversation-new",
+    title: "New blank",
+  };
+  const keys: string[] = [];
+  let attempts = 0;
+  installFetch({
+    "/v1/projects/project-one/commander-options": () =>
+      Response.json({ items: [] }),
+    "/v1/projects/project-one/conversations": (_input, init) => {
+      if (init?.method !== "POST")
+        return Response.json({
+          items: attempts ? [conversation, created] : [conversation],
+        });
+      keys.push(
+        String((init.headers as Record<string, string>)["Idempotency-Key"]),
+      );
+      attempts += 1;
+      return attempts === 1
+        ? new Response("{", {
+            status: 201,
+            headers: { "Content-Type": "application/json" },
+          })
+        : Response.json(created, { status: 201 });
+    },
+    "/v1/conversations/conversation-one/snapshot": () =>
+      Response.json(snapshotFor(conversation)),
+    "/v1/conversations/conversation-new/snapshot": () =>
+      Response.json(snapshotFor(created)),
+  });
+  render(<CommanderWorkbench projects={[project]} csrf="csrf" />);
+  await screen.findByRole("heading", { name: "Commander" });
+  await userEvent.click(screen.getByRole("button", { name: "新对话" }));
+  await screen.findByRole("alert");
+  await userEvent.click(screen.getByRole("button", { name: "新对话" }));
+  await screen.findByRole("heading", { name: "New blank" });
+  expect(keys).toHaveLength(2);
+  expect(keys[0]).toBe(keys[1]);
+});
+
+it("opens a blank B from active A while retaining A's unresolved local draft", async () => {
+  const created = { ...conversation, id: "conversation-b", title: "Blank B" };
+  let createdOnce = false;
+  installFetch({
+    "/v1/projects/project-one/commander-options": () =>
+      Response.json({ items: [] }),
+    "/v1/projects/project-one/conversations": (_input, init) => {
+      if (init?.method === "POST") {
+        createdOnce = true;
+        return Response.json(created, { status: 201 });
+      }
+      return Response.json({
+        items: createdOnce ? [conversation, created] : [conversation],
+      });
+    },
+    "/v1/conversations/conversation-one/snapshot": () =>
+      Response.json(snapshotFor(conversation)),
+    "/v1/conversations/conversation-b/snapshot": () =>
+      Response.json(snapshotFor(created)),
+    "/v1/conversations/conversation-one/draft": () =>
+      new Response(JSON.stringify({ reason_code: "A_DRAFT_TEMPORARY" }), {
+        status: 503,
+      }),
+  });
+  render(<CommanderWorkbench projects={[project]} csrf="csrf" />);
+  const input = await screen.findByRole("textbox", { name: "消息草稿" });
+  await userEvent.type(input, "A local draft");
+  await userEvent.click(screen.getByRole("button", { name: "新对话" }));
+  await screen.findByRole("heading", { name: "Blank B" });
+  expect(
+    (screen.getByRole("textbox", { name: "消息草稿" }) as HTMLTextAreaElement)
+      .value,
+  ).toBe("");
+  expect(
+    sessionStorage.getItem(
+      `karajan:commander-draft:${project.id}:${conversation.id}`,
+    ),
+  ).toContain("A local draft");
+  expect(screen.getByRole("alert").textContent).toContain("尚未保存到服务器");
+});
+
+it("recovers a failed gap snapshot before accepting a later state event", async () => {
+  let snapshots = 0;
+  installFetch({
+    "/v1/projects/project-one/commander-options": () =>
+      Response.json({ items: [] }),
+    "/v1/projects/project-one/conversations": () =>
+      Response.json({ items: [conversation] }),
+    "/v1/conversations/conversation-one/snapshot": () => {
+      snapshots += 1;
+      if (snapshots === 2)
+        return new Response(
+          JSON.stringify({ reason_code: "SNAPSHOT_TEMPORARY" }),
+          {
+            status: 503,
+          },
+        );
+      return Response.json(
+        snapshotFor(conversation, { snapshot_event_seq: snapshots * 10 }),
+      );
+    },
+  });
+  render(<CommanderWorkbench projects={[project]} csrf="csrf" />);
+  await screen.findByRole("textbox", { name: "消息草稿" });
+  await vi.waitFor(() =>
+    expect(EventSourceFixture.instances.at(-1)!.url).toContain("after_seq=10"),
+  );
+  await act(async () =>
+    EventSourceFixture.instances.at(-1)!.emit("event_gap", { sequence: 5 }),
+  );
+  await act(async () => {
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 1_100));
+  });
+  expect(snapshots).toBeGreaterThanOrEqual(3);
+  await act(async () => {
+    await Promise.resolve();
+  });
+  expect(EventSourceFixture.instances.at(-1)!.url).toContain("after_seq=30");
+  await act(async () => {
+    EventSourceFixture.instances.at(-1)!.emit("attempt_updated", {
+      sequence: 31,
+    });
+    await Promise.resolve();
+  });
+  expect(snapshots).toBeGreaterThanOrEqual(4);
+  await act(async () => {
+    await Promise.resolve();
+  });
+  expect(EventSourceFixture.instances.at(-1)!.url).toContain("after_seq=40");
+});
+
+it("re-snapshots state events and exposes a disconnected current Attempt honestly", async () => {
+  let snapshots = 0;
+  let completed = false;
+  const observed = Date.now();
+  installFetch({
+    "/v1/projects/project-one/commander-options": () =>
+      Response.json({ items: [] }),
+    "/v1/projects/project-one/conversations": () =>
+      Response.json({ items: [conversation] }),
+    "/v1/conversations/conversation-one/snapshot": () => {
+      snapshots += 1;
+      return Response.json(
+        snapshotFor(conversation, {
+          runs: [
+            {
+              id: "run-a",
+              tasks: [{ id: "task-a", current_attempt_id: "attempt-a" }],
+              attempts: [
+                {
+                  id: "attempt-a",
+                  task_id: "task-a",
+                  status: completed ? "completed" : "running",
+                  observed_at: observed,
+                },
+              ],
+            },
+          ],
+        }),
+      );
+    },
+    "/v1/conversations/conversation-one/draft": () =>
+      Response.json({ revision: 1 }),
+  });
+  render(<CommanderWorkbench projects={[project]} csrf="csrf" />);
+  const agent = await screen.findByRole("button", { name: /attempt-a/ });
+  await userEvent.click(agent);
+  const source = EventSourceFixture.instances.at(-1)!;
+  await act(async () => source.onopen?.());
+  expect(screen.getByRole("status").textContent).toContain("模型运行中");
+  await act(async () => source.onerror?.());
+  await vi.waitFor(() => expect(snapshots).toBeGreaterThanOrEqual(2));
+  expect(screen.getByRole("status").textContent).toContain(
+    "反馈中断，等待核对",
+  );
+  completed = true;
+  const current = EventSourceFixture.instances.at(-1)!;
+  await act(async () =>
+    current.emit("attempt_updated", {
+      sequence: 5,
+      attempt_id: "attempt-a",
+      state: "completed",
+    }),
+  );
+  await vi.waitFor(() => expect(snapshots).toBeGreaterThanOrEqual(3));
+  expect(
+    screen.getByRole("button", { name: /attempt-a/ }).textContent,
+  ).toContain("completed");
 });

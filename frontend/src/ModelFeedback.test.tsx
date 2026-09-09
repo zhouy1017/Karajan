@@ -180,7 +180,23 @@ describe("ModelFeedback", () => {
     expect(time.closest("time")?.getAttribute("datetime")).toBeNull();
   });
 
+  it("never substitutes the local clock for a missing feedback time", () => {
+    const now = vi.spyOn(Date, "now");
+    render(
+      <ModelFeedback
+        state="running"
+        lastObservedAt={0}
+        connection="connected"
+        staleDurationMs={10_000}
+      />,
+    );
+
+    expect(now).not.toHaveBeenCalled();
+    expect(screen.getByText("尚未接收反馈")).toBeTruthy();
+  });
+
   it("renders accessible status classes and icons", () => {
+    vi.spyOn(Date, "now").mockReturnValue(BASE_TIME);
     render(
       <ModelFeedback
         state="running"
