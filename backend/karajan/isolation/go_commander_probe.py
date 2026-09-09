@@ -11,7 +11,7 @@ import json
 import os
 import stat
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from contextlib import AbstractContextManager
 from pathlib import Path
 from typing import Any, Literal, cast
@@ -26,7 +26,12 @@ from karajan.adapters.opencode.go_relay import (
 )
 from karajan.projects.go_commander_suite import LIMITS, probe_spec
 from karajan.routing.compiler import digest
-from karajan.runs.planning_output import PlanningOutputError, parse_planning_output
+from karajan.runs.planning_output import (
+    PlanningOutputError,
+    parse_planning_output,
+    planning_output_diagnostic,
+    planning_output_selection_diagnostic,
+)
 
 from ._go_reviewer_evidence import select_final, terminal
 from ._opencode_inner import configuration
@@ -39,6 +44,58 @@ _PROJECTION = [
     {"path": "inline-only", "sha256": hashlib.sha256(_ANCHOR).hexdigest(), "writable": False}
 ]
 _NATIVE_LOG_BYTES = probe_spec()["evidence_limits"]["native_log_bytes"]
+
+
+def _final_evidence(final: dict[str, Any]) -> dict[str, Any]:
+    """Keep final-message evidence without retaining provider-generated text."""
+
+    return {key: value for key, value in final.items() if key != "text"}
+
+
+def _selection_shape(messages: object) -> tuple[list[str], int, str, str]:
+    if not isinstance(messages, list):
+        return [], 0, "unavailable", "unknown"
+    assistants = [
+        message
+        for message in messages
+        if isinstance(message, Mapping)
+        and isinstance(message.get("info"), Mapping)
+        and message["info"].get("role") == "assistant"
+    ]
+    if not assistants:
+        return [], 0, "unavailable", "unknown"
+    candidate = assistants[-1]
+    info = candidate.get("info")
+    finish = info.get("finish") if isinstance(info, Mapping) else None
+    safe_finish = finish if isinstance(finish, str) else "unknown"
+    parts = candidate.get("parts")
+    if not isinstance(parts, list):
+        return [], 0, "unavailable", safe_finish
+    text_parts: list[str] = []
+    text_part_count = 0
+    malformed = False
+    for part in parts:
+        if not isinstance(part, Mapping):
+            malformed = True
+            continue
+        if part.get("type") != "text":
+            continue
+        text_part_count += 1
+        payload = part.get("text")
+        if type(payload) is str:
+            text_parts.append(payload)
+        else:
+            malformed = True
+    shape = (
+        "malformed"
+        if malformed
+        else "one_text"
+        if text_part_count == 1
+        else "none"
+        if text_part_count == 0
+        else "multiple"
+    )
+    return text_parts, text_part_count, shape, safe_finish
 
 
 def _context(accounting: GoRequestAccounting, spec: dict[str, Any]) -> dict[str, Any]:
@@ -244,6 +301,7 @@ def observe_go_commander_probe(
         "provider_remote_stop": "unknown",
         "runtime_tools_status": "not_run",
         "dispatch_eligible": False,
+        "planning_output_diagnostic": None,
     }
     try:
         root = _relay_socket_root()
@@ -306,13 +364,42 @@ def observe_go_commander_probe(
             for value in (secret, canary, relay.capability, authorization.capability)
         ):
             raise ValueError("SENSITIVE_NATIVE_OUTPUT")
-        final = _final(messages, session["id"], prompt)
+        try:
+            final = _final(messages, session["id"], prompt)
+        except ValueError:
+            try:
+                text_parts, text_part_count, text_part_shape, finish = _selection_shape(messages)
+                record["planning_output_diagnostic"] = planning_output_selection_diagnostic(
+                    text_parts,
+                    finish=finish,
+                    text_part_count=text_part_count,
+                    text_part_shape=text_part_shape,
+                )
+            except Exception:
+                # Diagnostics are optional and must never replace the selection error.
+                pass
+            raise
         if len(final["text"].encode()) > spec["evidence_limits"]["final_output_bytes"]:
             raise ValueError("COMMANDER_OUTPUT_LIMIT_EXCEEDED")
-        plan = parse_planning_output(final["text"], version="v2").model_dump(mode="json")
+        try:
+            plan = parse_planning_output(final["text"], version="v2").model_dump(mode="json")
+        except PlanningOutputError as error:
+            record["planning_output_diagnostic"] = planning_output_diagnostic(
+                final["text"],
+                reason_code=error.code,
+                finish=final["finish"],
+                text_part_count=final["text_part_count"],
+            )
+            raise
+        record["planning_output_diagnostic"] = planning_output_diagnostic(
+            final["text"],
+            reason_code="SUCCESS",
+            finish=final["finish"],
+            text_part_count=final["text_part_count"],
+        )
         if not _semantically_valid(plan, spec, scenario):
             raise ValueError("FIXED_PLAN_SEMANTICS_MISMATCH")
-        record["native_final"], record["parsed_plan"] = final, plan
+        record["native_final"], record["parsed_plan"] = _final_evidence(final), plan
     except PlanningOutputError as error:
         reasons.append(error.code)
     except Exception as error:

@@ -4,6 +4,7 @@ The double is deliberately local to this test.  Its fixture provenance is
 persisted and it cannot be read as an official Commander planning fact.
 """
 
+import json
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from copy import deepcopy
@@ -13,6 +14,10 @@ import pytest
 from karajan.projects.go_commander_suite import FixedGoCommanderSuite
 from karajan.projects.qualification import ProfileQualificationStore, QualificationError
 from karajan.routing.compiler import digest
+from karajan.runs.planning_output import (
+    planning_output_diagnostic,
+    planning_output_selection_diagnostic,
+)
 from test_projected_qualification_store import projected
 from test_qualification_store import case
 
@@ -108,6 +113,52 @@ class OfficialCommanderSuiteDouble(COnlyFixedCommanderSuiteDouble):
                     "observation_origin": "official_go",
                 }
                 for scenario in ("legal_plan", "denied_tool")
+            ],
+        }
+
+
+class FailedDiagnosticCommanderSuiteDouble(COnlyFixedCommanderSuiteDouble):
+    """A failed observation carrying only the bounded parser diagnostic DTO."""
+
+    def observe(self, start, credential, *, current_guard):
+        assert credential.generation == start["auth_generation"]
+        diagnostic = planning_output_diagnostic(
+            '{"summary":"FAKE_SECRET_IN_FAILURE_TEXT",}',
+            reason_code="PLANNING_OUTPUT_JSON_INVALID",
+            finish="stop",
+            text_part_count=1,
+        )
+        return {
+            "status": "failed",
+            "reason_codes": ["PLANNING_OUTPUT_JSON_INVALID"],
+            "scenarios": [
+                {
+                    "scenario": "legal_plan",
+                    "status": "failed",
+                    "reason_codes": ["PLANNING_OUTPUT_JSON_INVALID"],
+                    "planning_output_diagnostic": diagnostic,
+                }
+            ],
+        }
+
+
+class FailedSelectionDiagnosticCommanderSuiteDouble(COnlyFixedCommanderSuiteDouble):
+    """A failed native-selection observation with no retained final text."""
+
+    def observe(self, start, credential, *, current_guard):
+        diagnostic = planning_output_selection_diagnostic(
+            [], finish="length", text_part_count=0, text_part_shape="malformed"
+        )
+        return {
+            "status": "failed",
+            "reason_codes": ["NATIVE_FINAL_INCOMPLETE"],
+            "scenarios": [
+                {
+                    "scenario": "denied_tool",
+                    "status": "failed",
+                    "reason_codes": ["NATIVE_FINAL_INCOMPLETE"],
+                    "planning_output_diagnostic": diagnostic,
+                }
             ],
         }
 
@@ -264,6 +315,47 @@ def test_production_suite_is_unavailable_not_a_success_stub(commander_case, tmp_
     assert record["status"] == "failed"
     assert record["reason_codes"] == ["COMMANDER_NATIVE_PROBE_UNAVAILABLE"]
     assert "commander_facts" not in record
+
+
+def test_failed_planning_diagnostic_round_trips_without_raw_text(commander_case):
+    case = commander_case
+    suite = FailedDiagnosticCommanderSuiteDouble()
+    case["store"].commander_suite = suite
+
+    record = qualify(case, "bounded-diagnostic")
+    reread = case["store"].get(case["project_id"], record["id"], principal="owner")
+    reread_record = reread["record"]
+    scenario = reread_record["observation"]["scenarios"][0]
+    diagnostic = scenario["planning_output_diagnostic"]
+
+    assert reread_record["status"] == "failed"
+    assert reread_record["reason_codes"] == ["PLANNING_OUTPUT_JSON_INVALID"]
+    assert scenario["scenario"] == "legal_plan"
+    assert diagnostic["category"] == "json_syntax"
+    assert diagnostic["byte_length"] > 0
+    assert len(diagnostic["sha256"]) == 64
+    assert diagnostic["finish"] == "stop"
+    assert diagnostic["text_part_shape"] == "one_text"
+    assert "FAKE_SECRET_IN_FAILURE_TEXT" not in json.dumps(reread, sort_keys=True)
+
+
+def test_failed_selection_diagnostic_round_trips_without_raw_text(commander_case):
+    case = commander_case
+    case["store"].commander_suite = FailedSelectionDiagnosticCommanderSuiteDouble()
+
+    record = qualify(case, "bounded-selection-diagnostic")
+    reread = case["store"].get(case["project_id"], record["id"], principal="owner")
+    scenario = reread["record"]["observation"]["scenarios"][0]
+    diagnostic = scenario["planning_output_diagnostic"]
+
+    assert reread["record"]["status"] == "failed"
+    assert reread["record"]["reason_codes"] == ["NATIVE_FINAL_INCOMPLETE"]
+    assert scenario["scenario"] == "denied_tool"
+    assert diagnostic["category"] == "selection"
+    assert diagnostic["finish"] == "length"
+    assert diagnostic["text_part_count"] == 0
+    assert diagnostic["text_part_shape"] == "malformed"
+    assert "FAKE_SELECTION_SECRET" not in json.dumps(reread, sort_keys=True)
 
 
 def test_official_commander_facts_only_project_suite_observed_capabilities(commander_case):
