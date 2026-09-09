@@ -32,9 +32,12 @@ class ReviewerFinalEffectCapability:
         # The receiver invokes this only after acquiring its writer. Complete
         # material reads precede its final full Candidate/Check comparison; the
         # producer-owned Candidate publication guard remains held through the
-        # receiving effect and then the retained scalar fences.
-        self._prepare()()
+        # receiving effect and the retained scalar fences. Retain the scalar
+        # closure until all materialization and comparison has completed, so a
+        # Run, qualification, or quota window cannot elapse in that interval.
+        final_scalar_check = self._prepare()
         self._prepare_input(expected_input)
+        final_scalar_check()
         try:
             self._capacity_check.assert_current()
         except CapacityError:

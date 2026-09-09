@@ -9,7 +9,9 @@ import time
 from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
+from types import SimpleNamespace
 
+import karajan.execution.host as runner_host_module
 import karajan.orchestration.reviewer_execution_intent as reviewer_execution_intent
 import karajan.orchestration.reviewer_input as reviewer_input
 import pytest
@@ -162,6 +164,166 @@ def test_payload_preparation_precedes_the_final_expiry_check(
         assert current is None
     else:
         assert current is not None and current["effect_claim"] is None
+
+
+@pytest.mark.parametrize(
+    ("boundary", "expired", "reason"),
+    [
+        ("new_intent", "run", "RUN_DURATION_LIMIT"),
+        ("host", "run", "RUN_DURATION_LIMIT"),
+        ("control", "run", "RUN_DURATION_LIMIT"),
+        ("claim", "run", "RUN_DURATION_LIMIT"),
+        ("new_intent", "qualification", "REVIEWER_QUALIFICATION_EXPIRED"),
+        ("new_intent", "quota", "REVIEWER_CAPACITY_REVALIDATION_FAILED"),
+        ("host", "quota", "REVIEWER_CAPACITY_REVALIDATION_FAILED"),
+        ("control", "quota", "REVIEWER_CAPACITY_REVALIDATION_FAILED"),
+        ("claim", "quota", "REVIEWER_CAPACITY_REVALIDATION_FAILED"),
+    ],
+)
+def test_final_input_compilation_expiry_blocks_each_actual_effect(
+    tmp_path, binding_case, monkeypatch, boundary, expired, reason
+):
+    """Final input materialization cannot outlive non-Capacity authority."""
+    if expired == "qualification":
+        original_facts = binding_case[1].original._facts
+
+        def short_lived_facts(*args, **kwargs):
+            observed = original_facts(*args, **kwargs)
+            observed["facts"]["valid_until"] = 1001.0
+            return observed
+
+        monkeypatch.setattr(binding_case[1].original, "_facts", short_lived_facts)
+    service, run_id, reviewer_id, _ = _service(
+        tmp_path,
+        binding_case,
+        conservative_observation_age=5 if expired == "quota" else None,
+    )
+    capacity = service.admissions.routing.capacity
+    now = [1000.0]
+    capacity.clock = lambda: now[0]
+    service.admissions.routing.planner.clock = lambda: now[0]
+    if expired == "run":
+        with sqlite3.connect(service.admissions.database) as db:
+            row = db.execute(
+                "SELECT data FROM run_execution_budgets WHERE run_id=?", (run_id,)
+            ).fetchone()
+            budget = json.loads(row[0])
+            budget.update(started_at=1000.0, max_duration_seconds=1.0)
+            db.execute(
+                "UPDATE run_execution_budgets SET data=? WHERE run_id=?",
+                (json.dumps(budget), run_id),
+            )
+    if boundary != "new_intent":
+        service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+    if boundary == "claim":
+        service.freeze_launch(run_id, reviewer_id, principal="owner")
+        from karajan.execution._platform import process_identity
+
+        identity = process_identity(os.getpid())
+        assert identity is not None
+
+        @contextmanager
+        def current_runner(*args, **kwargs):
+            yield identity
+
+        service.host.wait_for_runner_registration = lambda *args, **kwargs: identity
+        service.host.current_runner_guard = current_runner
+
+    admission_id = service.admissions.get(
+        run_id, reviewer_id, principal="owner"
+    )["capacity_receipt"]["admission_id"]
+    reservation = next(
+        row for row in capacity.snapshot()["reservations"] if row["id"] == admission_id
+    )
+
+    original_compile = reviewer_input.compile_reviewer_input_from_records
+    compilation_count = 0
+
+    def expire_after_real_materialization(*args, **kwargs):
+        nonlocal compilation_count
+        compiled = original_compile(*args, **kwargs)
+        compilation_count += 1
+        if compilation_count < (2 if boundary == "new_intent" else 1):
+            return compiled
+        if expired == "run":
+            now[0] = 1001.0
+        elif expired == "qualification":
+            now[0] = 1001.0
+        else:
+            now[0] = 1006.0
+        assert now[0] < reservation["expires_at"]
+        return compiled
+
+    monkeypatch.setattr(
+        reviewer_input, "compile_reviewer_input_from_records", expire_after_real_materialization
+    )
+    if boundary == "new_intent":
+        def action():
+            return service.prepare(
+                run_id, reviewer_id, principal="owner", command_key="compiled-expiry"
+            )
+    elif boundary in {"host", "control"}:
+        def action():
+            return service.freeze_launch(run_id, reviewer_id, principal="owner")
+    else:
+        def action():
+            return service.claim_registered_observer(
+                run_id, reviewer_id, principal="owner", timeout_seconds=0.01
+            )
+
+    with pytest.raises(RunError, match=reason):
+        action()
+    current = service.read(run_id, reviewer_id, principal="owner")
+    if boundary == "new_intent":
+        assert current is None
+        return
+    assert current is not None and current["effect_claim"] is None
+    if boundary == "host":
+        with pytest.raises(KeyError):
+            service.host.inspect(current["planned_attempt_id"])
+    if boundary == "control":
+        with sqlite3.connect(service.host.database) as db:
+            assert db.execute("SELECT COUNT(*) FROM controls").fetchone()[0] == 0
+
+
+def test_host_nonce_expiry_prevents_host_control_and_claim_effects(
+    tmp_path, binding_case, monkeypatch
+):
+    """The actual Host nonce must be prepared before its final authority check."""
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+    admission_id = service.admissions.get(
+        run_id, reviewer_id, principal="owner"
+    )["capacity_receipt"]["admission_id"]
+    reservation = next(
+        row
+        for row in service.admissions.routing.capacity.snapshot()["reservations"]
+        if row["id"] == admission_id
+    )
+    now = [1000.0]
+    service.admissions.routing.capacity.clock = lambda: now[0]
+    original_uuid4 = runner_host_module.uuid.uuid4
+
+    def expire_during_host_nonce():
+        now[0] = reservation["expires_at"] + 0.001
+        return original_uuid4()
+
+    monkeypatch.setattr(
+        runner_host_module, "uuid", SimpleNamespace(uuid4=expire_during_host_nonce)
+    )
+    with pytest.raises(RunError, match="REVIEWER_CAPACITY_REVALIDATION_FAILED"):
+        service.freeze_launch(run_id, reviewer_id, principal="owner")
+    current = service.read(run_id, reviewer_id, principal="owner")
+    assert current is not None and current["effect_claim"] is None
+    with pytest.raises(KeyError):
+        service.host.inspect(current["planned_attempt_id"])
+    with sqlite3.connect(service.host.database) as db:
+        assert db.execute(
+            "SELECT COUNT(*) FROM executions WHERE start_key=?", (current["start_key"],)
+        ).fetchone()[0] == 0
+        assert db.execute(
+            "SELECT COUNT(*) FROM controls WHERE attempt_id=?", (current["planned_attempt_id"],)
+        ).fetchone()[0] == 0
 
 
 @pytest.mark.parametrize("contents", [b"", b"not a sqlite ledger"])

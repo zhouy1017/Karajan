@@ -243,6 +243,10 @@ class RunnerHost:
                     raise StartConflict("START_KEY_PAYLOAD_MISMATCH")
             else:
                 try:
+                    # The nonce is part of the prepared Host row. Materialize
+                    # it before the caller's final authority check so elapsed
+                    # authority cannot commit a new preparation.
+                    nonce = uuid.uuid4().hex
                     # A caller may have waited for this writer after checking
                     # its own authority.  Keep its final, scalar recheck next
                     # to the actual Host effect without giving Host any
@@ -258,7 +262,7 @@ class RunnerHost:
                             digest,
                             manifest_json,
                             spec_json,
-                            uuid.uuid4().hex,
+                            nonce,
                         ),
                     )
                 except sqlite3.IntegrityError as error:
