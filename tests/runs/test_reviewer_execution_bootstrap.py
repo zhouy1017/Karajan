@@ -9,7 +9,9 @@ from pathlib import Path
 import httpx
 import pytest
 from karajan.adapters.opencode import go_journal
+from karajan.candidates import review_output
 from karajan.execution import ProcessSpec, RunnerHost
+from karajan.isolation.opencode_runtime import IsolatedOpenCode
 from karajan.orchestration.go_task_runtime import GoTaskSettings, write_go_task_bootstrap
 from karajan.orchestration.reviewer_execution_bootstrap import (
     ReviewerExecutionSettings,
@@ -206,7 +208,18 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
     from karajan.projects import go_reviewer_suite
 
     counters = {
-        name: 0 for name in ("native", "http_send", "parser", "grant", "call", "gate", "evidence")
+        name: 0
+        for name in (
+            "observer",
+            "host_start",
+            "native_start",
+            "http_send",
+            "parser",
+            "grant",
+            "call",
+            "gate",
+            "evidence",
+        )
     }
 
     def count(name, original, *, forbidden=False):
@@ -221,7 +234,12 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
     monkeypatch.setattr(
         go_reviewer_probe,
         "observe_go_reviewer_tools",
-        count("native", go_reviewer_probe.observe_go_reviewer_tools, forbidden=True),
+        count("observer", go_reviewer_probe.observe_go_reviewer_tools, forbidden=True),
+    )
+    monkeypatch.setattr(
+        IsolatedOpenCode,
+        "start",
+        count("native_start", IsolatedOpenCode.start, forbidden=True),
     )
     monkeypatch.setattr(
         httpx.Client,
@@ -234,9 +252,14 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
         count("parser", go_reviewer_suite.parse_review_output, forbidden=True),
     )
     monkeypatch.setattr(
+        review_output,
+        "parse_review_output",
+        count("parser", review_output.parse_review_output, forbidden=True),
+    )
+    monkeypatch.setattr(
         RunnerHost,
         "start",
-        count("native", RunnerHost.start, forbidden=True),
+        count("host_start", RunnerHost.start, forbidden=True),
     )
     monkeypatch.setattr(
         go_journal.GoCallJournal,
@@ -349,11 +372,14 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
     assert reopened.cancel(run_id, reviewer["id"], principal="owner")["cancel_requested"]
     # The real Candidate gate is a read-only current-context check required by
     # compilation; its observed calls are not quality effects. The connected
-    # Evidence writer and every forbidden native/HTTP/parser/Journal boundary
-    # stay zero.
+    # Evidence writer and every forbidden observer/Host/native-runtime/HTTP/
+    # parser/Journal boundary stay zero. The parser counter covers both the
+    # suite's imported consumer alias and the defining candidates module.
     assert counters["gate"] > 0
     assert {key: value for key, value in counters.items() if key != "gate"} == {
-        "native": 0,
+        "observer": 0,
+        "host_start": 0,
+        "native_start": 0,
         "http_send": 0,
         "parser": 0,
         "grant": 0,
