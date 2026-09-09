@@ -441,6 +441,25 @@ class PlanningTransport:
         for value in (execution_id, principal, command_key):
             identifier(value)
         current = self.execution.get(execution_id, principal=principal)
+        model_input: PlanningModelInput | None = None
+        if current["state"] == "awaiting_admission":
+            # Validate the controller-owned resource vector before recording
+            # any output command or arming a source.  Unsupported native units
+            # must be a zero-effect rejection, not a durable send claim.
+            self.execution.freeze_repository_snapshot(
+                execution_id, principal=principal, command_key="planning-snapshot:" + execution_id
+            )
+            model_input = compile_planning_input(
+                self.execution,
+                self.accounting,
+                execution_id=execution_id,
+                principal=principal,
+            )
+            try:
+                self._register_controller_estimate(current, model_input, principal=principal)
+            except RunError as error:
+                if str(error) != "PLANNING_ESTIMATE_SOURCE_UNAVAILABLE":
+                    raise
         # Persist the user command's exact subject/resource binding before an
         # output source is armed, a dispatch is claimed, or a producer can send.
         self.outputs.claim_execute_command(
@@ -456,21 +475,18 @@ class PlanningTransport:
             if self.outputs.claim_dispatch(current["binding"]) != "completed":
                 return current
         if current["state"] in {"awaiting_admission", "admission_unknown"}:
-            self.execution.freeze_repository_snapshot(
-                execution_id, principal=principal, command_key="planning-snapshot:" + execution_id
-            )
-            model_input = compile_planning_input(
-                self.execution,
-                self.accounting,
-                execution_id=execution_id,
-                principal=principal,
-            )
-            if current["state"] == "awaiting_admission":
-                try:
-                    self._register_controller_estimate(current, model_input, principal=principal)
-                except RunError as error:
-                    if str(error) != "PLANNING_ESTIMATE_SOURCE_UNAVAILABLE":
-                        raise
+            if model_input is None:
+                self.execution.freeze_repository_snapshot(
+                    execution_id,
+                    principal=principal,
+                    command_key="planning-snapshot:" + execution_id,
+                )
+                model_input = compile_planning_input(
+                    self.execution,
+                    self.accounting,
+                    execution_id=execution_id,
+                    principal=principal,
+                )
             # This records a read-only output identity.  ``admit`` verifies it
             # before it can transition to awaiting_output; it does not send.
             self.outputs.arm(current["binding"], self.producer.source(current["binding"]))

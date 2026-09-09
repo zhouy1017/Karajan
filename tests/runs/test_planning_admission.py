@@ -454,22 +454,15 @@ def test_two_intents_share_the_original_frozen_planning_budget(
 def test_production_native_send_releases_guard_for_cancelled_wait(
     configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The real production producer does not hold the admission lock while waiting.
+    """A reopened production transport stops its original owned native process.
 
-    The Commander facts are the explicit fixture authority used throughout this
-    C/P test module.  The producer, admission effect guard, Journal, Relay and
-    isolated OpenCode process are production code; only the upstream response
-    is local and no provider credential or qualification is forged.
+    The test-only persistent qualification and credential are installed before
+    either transport is opened.  The worker and both controllers then use only
+    the same trusted factory state; no live SQLite store is copied on reopen.
     """
-    runtime = _prepared_runtime()
-    tokenizer = _prepared_tokenizer()
-    service, authority, run, execution = _case(tmp_path, configured)
-    service.admissions = authority
-    admitted = authority.advance(execution["id"], "owner", "native-admit")
-    assert admitted["phase"] == "admitted", repr(admitted["reason_codes"])
-    accounting = GoRequestAccounting(Path(tokenizer))
-    journal = GoCallJournal(tmp_path / "production-journal.sqlite")
+    control, _, run, execution = _persistent_production_transport_case(tmp_path, configured)
     entered, release, stopped = Event(), Event(), Event()
+    requests: list[dict[str, Any]] = []
 
     from karajan.isolation.opencode_runtime import IsolatedOpenCode
 
@@ -488,10 +481,11 @@ def test_production_native_send_releases_guard_for_cancelled_wait(
             assert release.wait(timeout=10)
             yield _local_response().content
 
-    def upstream(_request: httpx.Request) -> httpx.Response:
+    def upstream(request: httpx.Request) -> httpx.Response:
         # MockTransport calls this synchronously while client.stream opens.
         # Delay body iteration instead, which is the real response wait after
         # the relay has released its one send guard.
+        requests.append(json.loads(request.content))
         return httpx.Response(
             200, headers={"content-type": "text/event-stream"}, stream=DelayedResponse()
         )
@@ -504,47 +498,46 @@ def test_production_native_send_releases_guard_for_cancelled_wait(
             super().__init__(*args, **kwargs)
 
     monkeypatch.setattr("karajan.orchestration.planning_transport.GoRelay", LocalRelay)
-    producer = ProductionGoPlanningProducer(
-        service,
-        accounting,
-        journal,
-        runtime,
-        tmp_path / "native-work",
-        _LocalPlanningCredentials(),
-        "b" * 64,
-    )
-    # The production producer consumes the narrow durable receipt, including
-    # its controller-derived bound; callers cannot supply a new estimate.
-    native_admission = authority.read_admission(execution["binding"])
+    transport = PlanningTransport.from_trusted_factory(control)
+
+    def execute() -> dict[str, Any]:
+        # This release belongs to the worker from its first instruction.  An
+        # early factory/transport failure therefore cannot be hidden by the
+        # executor context manager waiting on DelayedResponse.
+        try:
+            return transport.execute(execution["id"], principal="owner", command_key="execute")
+        finally:
+            release.set()
+
     with ThreadPoolExecutor(max_workers=1) as workers:
-        pending = workers.submit(
-            producer.produce,
-            _native_model_input(accounting),
-            binding=execution["binding"],
-            admission=native_admission,
-        )
-        if not entered.wait(timeout=20):
-            assert pending.done(), "relay never crossed its production send guard"
-            pending.result()
-        cancelled_at = time.monotonic()
-        # This controller was reopened after the producer registered its native
-        # proof, so it has no in-memory stopper to borrow from the owner.
-        reopened = PlanningExecution(service.database, service.planner)
-        cancelled = reopened.cancel(execution["id"], principal="owner", command_key="cancel-wait")
-        assert time.monotonic() - cancelled_at < 2
-        assert cancelled["state"] == "cancelled"
-        assert stopped.wait(timeout=2)
-        assert cancelled["native_cleanup"]["local_stop"] == "confirmed"
-        assert cancelled["provider_remote_stop"] == "unknown"
-        release.set()
-        with pytest.raises(RunError) as failed:
-            pending.result(timeout=30)
-        assert failed.value.code in {
-            "PLANNING_EXECUTION_CANCELLED",
-            "PLANNING_EFFECT_NOT_ADMITTED",
-            "PLANNING_NATIVE_TIMEOUT",
-        }
-    assert service.planner.get(run["id"], principal="owner")["plans"] == []
+        pending = workers.submit(execute)
+        try:
+            if not entered.wait(timeout=20):
+                assert pending.done(), "relay never crossed its production send guard"
+                pending.result()
+            reopened = PlanningTransport.from_trusted_factory(control)
+            assert reopened.execution is not transport.execution
+            assert reopened.execution._native_stoppers == {}
+            cancelled_at = time.monotonic()
+            cancelled = reopened.execution.cancel(
+                execution["id"], principal="owner", command_key="cancel-wait"
+            )
+            assert time.monotonic() - cancelled_at < 2
+            assert cancelled["state"] == "cancelled"
+            assert stopped.wait(timeout=2)
+            assert cancelled["native_cleanup"]["local_stop"] == "confirmed"
+            assert cancelled["provider_remote_stop"] == "unknown"
+            with pytest.raises(RunError) as failed:
+                pending.result(timeout=30)
+            assert failed.value.code in {
+                "PLANNING_EXECUTION_CANCELLED",
+                "PLANNING_EFFECT_NOT_ADMITTED",
+                "PLANNING_NATIVE_TIMEOUT",
+            }
+        finally:
+            release.set()
+    assert len(requests) == 1
+    assert reopened.execution.planner.get(run["id"], principal="owner")["plans"] == []
 
 
 @pytest.mark.skipif(sys.platform != "linux", reason="native planning requires Linux namespaces")
@@ -557,100 +550,9 @@ def test_production_transport_consumes_registered_budget_and_publishes_one_plan(
     fixtures.  The transport, controller estimate, admission receipt, producer,
     Relay, Journal, output authority, and Run submit path remain production code.
     """
-    production_configuration = json.loads(
-        (Path(__file__).parents[2] / "examples/projects/offline-configuration.json").read_text()
+    control, service, run, execution = _persistent_production_transport_case(
+        tmp_path, configured
     )
-    production_configuration["resources"]["quota_pools"][0]["unit"] = "requests"
-    preview = configured["registry"].preview_configuration(
-        configured["id"],
-        production_configuration,
-        command_key="request-unit-preview",
-        principal="owner",
-    )
-    configured = {
-        **configured["registry"].apply_configuration(
-            configured["id"],
-            preview["preview_id"],
-            expected_revision=configured["revision"],
-            command_key="request-unit-apply",
-            principal="owner",
-        ),
-        "registry": configured["registry"],
-    }
-    _, authority, run, execution = _case(
-        tmp_path,
-        configured,
-        register_estimate=False,
-        paths=["original.txt"],
-        execution_policy=_native_v2_policy(configured),
-        clock=time.time,
-        observation_at=time.time(),
-        capacity_unit="requests",
-    )
-    # The production reader opens this existing-only ledger after bootstrap.
-    ProfileQualificationStore(authority.planner.projects)
-    control, _ = _output_source_control(tmp_path, authority, run)
-    state = tmp_path / "protected-state"
-    outputs = PlanningOutputStore(state / "planning-output.sqlite", authority_kind="production")
-    outputs.database.chmod(0o600)
-    provision_planning_repository_snapshots(control)
-    service = PlanningExecution.from_trusted_factory(control)
-    assert isinstance(service.admissions, PlanningAdmissionAuthority)
-    reader = service.admissions.qualifications
-    assert isinstance(reader, PersistentCommanderQualificationReader)
-    profile = run["configuration_snapshot"]["configuration"]["resources"]["profiles"][0]
-    fixture_facts = authority.qualifications.read_commander(
-        execution["binding"],
-        scope=COMMANDER_QUALIFICATION_SCOPE,
-        reader_version="karajan.commander-qualification-reader.v1",
-    )
-    assert fixture_facts is not None
-    with reader.qualifications._owned(run["project_id"], "owner") as db:
-        bound = reader.qualifications._binding(
-            db, run["project_id"], {"id": profile["id"], "revision": profile["revision"]}
-        )
-        source = reader._current_source(db, run["project_id"], bound, "owner")
-        profile_facts = deepcopy(fixture_facts["profile_facts"])
-        profile_facts["valid_until"] = time.time() + 60
-        start = {
-            "qualification_scope": COMMANDER_QUALIFICATION_SCOPE,
-            "profile_binding": bound,
-            "source": source,
-            "execution_start": {"test_only": "production-transport"},
-        }
-        record = {
-            "id": "test-production-transport-qualification",
-            "binding": start,
-            "qualification_scope": COMMANDER_QUALIFICATION_SCOPE,
-            "status": "passed",
-            "provenance": "official",
-            "observed_at": time.time(),
-            "valid_until": time.time() + 60,
-            "commander_facts": {
-                "profile_facts": profile_facts,
-                "capability_evidence": fixture_facts["capability_evidence"],
-                "source_generation_sha256": digest(source),
-            },
-        }
-        db.execute(
-            "INSERT INTO profile_qualification_starts VALUES (?,?,?,?,?,?)",
-            (
-                record["id"],
-                run["project_id"],
-                "owner",
-                "test-production-transport",
-                record["id"],
-                json.dumps(start),
-            ),
-        )
-        db.execute(
-            "INSERT INTO profile_qualification_start_seals VALUES (?,?)",
-            (record["id"], digest(start)),
-        )
-        db.execute(
-            "INSERT INTO profile_qualification_records VALUES (?,?,?)",
-            (record["id"], json.dumps(record), digest(record)),
-        )
     plan = submit_request(
         service.planner.get(run["id"], principal="owner"),
         service.planner.get(run["id"], principal="owner")["planning_intents"][0],
@@ -1775,6 +1677,161 @@ def _output_source_control(
         ),
     )
     return control, key
+
+
+def _persistent_production_transport_case(
+    tmp_path: Path, configured: dict, *, capacity_unit: str = "requests"
+) -> tuple[Path, PlanningExecution, dict[str, Any], dict[str, Any]]:
+    """Build the complete existing-only production factory fixture before use."""
+    production_configuration = json.loads(
+        (Path(__file__).parents[2] / "examples/projects/offline-configuration.json").read_text()
+    )
+    production_configuration["resources"]["quota_pools"][0]["unit"] = capacity_unit
+    preview = configured["registry"].preview_configuration(
+        configured["id"],
+        production_configuration,
+        command_key=capacity_unit + "-unit-preview",
+        principal="owner",
+    )
+    configured = {
+        **configured["registry"].apply_configuration(
+            configured["id"],
+            preview["preview_id"],
+            expected_revision=configured["revision"],
+            command_key=capacity_unit + "-unit-apply",
+            principal="owner",
+        ),
+        "registry": configured["registry"],
+    }
+    _, authority, run, execution = _case(
+        tmp_path,
+        configured,
+        register_estimate=False,
+        paths=["original.txt"],
+        execution_policy=_native_v2_policy(configured),
+        clock=time.time,
+        observation_at=time.time(),
+        capacity_unit=capacity_unit,
+    )
+    # The production reader opens this existing-only qualification ledger after
+    # its complete protected state, source and snapshot stores already exist.
+    ProfileQualificationStore(authority.planner.projects)
+    control, _ = _output_source_control(tmp_path, authority, run)
+    state = tmp_path / "protected-state"
+    outputs = PlanningOutputStore(state / "planning-output.sqlite", authority_kind="production")
+    outputs.database.chmod(0o600)
+    provision_planning_repository_snapshots(control)
+    service = PlanningExecution.from_trusted_factory(control)
+    assert isinstance(service.admissions, PlanningAdmissionAuthority)
+    reader = service.admissions.qualifications
+    assert isinstance(reader, PersistentCommanderQualificationReader)
+    profile = run["configuration_snapshot"]["configuration"]["resources"]["profiles"][0]
+    fixture_facts = authority.qualifications.read_commander(
+        execution["binding"],
+        scope=COMMANDER_QUALIFICATION_SCOPE,
+        reader_version="karajan.commander-qualification-reader.v1",
+    )
+    assert fixture_facts is not None
+    with reader.qualifications._owned(run["project_id"], "owner") as db:
+        bound = reader.qualifications._binding(
+            db, run["project_id"], {"id": profile["id"], "revision": profile["revision"]}
+        )
+        source = reader._current_source(db, run["project_id"], bound, "owner")
+        profile_facts = deepcopy(fixture_facts["profile_facts"])
+        profile_facts["valid_until"] = time.time() + 60
+        start = {
+            "qualification_scope": COMMANDER_QUALIFICATION_SCOPE,
+            "profile_binding": bound,
+            "source": source,
+            "execution_start": {"test_only": "production-transport"},
+        }
+        record = {
+            "id": "test-production-transport-qualification",
+            "binding": start,
+            "qualification_scope": COMMANDER_QUALIFICATION_SCOPE,
+            "status": "passed",
+            "provenance": "official",
+            "observed_at": time.time(),
+            "valid_until": time.time() + 60,
+            "commander_facts": {
+                "profile_facts": profile_facts,
+                "capability_evidence": fixture_facts["capability_evidence"],
+                "source_generation_sha256": digest(source),
+            },
+        }
+        db.execute(
+            "INSERT INTO profile_qualification_starts VALUES (?,?,?,?,?,?)",
+            (
+                record["id"],
+                run["project_id"],
+                "owner",
+                "test-production-transport",
+                record["id"],
+                json.dumps(start),
+            ),
+        )
+        db.execute(
+            "INSERT INTO profile_qualification_start_seals VALUES (?,?)",
+            (record["id"], digest(start)),
+        )
+        db.execute(
+            "INSERT INTO profile_qualification_records VALUES (?,?,?)",
+            (record["id"], json.dumps(record), digest(record)),
+        )
+    return control, service, run, execution
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="native planning requires Linux namespaces")
+@pytest.mark.parametrize("capacity_unit", ["tokens", "percent"])
+def test_production_transport_rejects_unsupported_estimate_unit_before_any_effect(
+    configured: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capacity_unit: str
+) -> None:
+    """Production transport rejects a current non-request window before any send claim."""
+    control, service, run, execution = _persistent_production_transport_case(
+        tmp_path, configured, capacity_unit=capacity_unit
+    )
+
+    def unexpected_produce(*args: object, **kwargs: object) -> bytes:
+        del args, kwargs
+        raise AssertionError("unsupported estimates must not start native production")
+
+    monkeypatch.setattr(ProductionGoPlanningProducer, "produce", unexpected_produce)
+    transport = PlanningTransport.from_trusted_factory(control)
+    output_database = tmp_path / "protected-state" / "planning-output.sqlite"
+    assert isinstance(transport.execution.admissions, PlanningAdmissionAuthority)
+    with pytest.raises(RunError, match="^PLANNING_ESTIMATE_UNIT_UNSUPPORTED$"):
+        transport.execute(execution["id"], principal="owner", command_key="execute")
+
+    with sqlite3.connect(output_database) as db:
+        assert {
+            table: db.execute("SELECT COUNT(*) FROM " + table).fetchone()[0]
+            for table in (
+                "planning_execute_commands",
+                "planning_output_sources",
+                "planning_output_claims",
+                "planning_outputs",
+            )
+        } == {
+            "planning_execute_commands": 0,
+            "planning_output_sources": 0,
+            "planning_output_claims": 0,
+            "planning_outputs": 0,
+        }
+    with sqlite3.connect(transport.execution.admissions.database) as db:
+        assert db.execute("SELECT COUNT(*) FROM planning_estimates").fetchone()[0] == 0
+    with sqlite3.connect(transport.execution.capacity.path) as db:
+        assert (
+            db.execute(
+                "SELECT COUNT(*) FROM commands WHERE key LIKE 'planning-activate:%'"
+            ).fetchone()[0]
+            == 0
+        )
+    assert transport.execution.capacity.snapshot()["reservations"] == []
+    assert (
+        transport.execution.get(execution["id"], principal="owner")["state"]
+        == "awaiting_admission"
+    )
+    assert service.planner.get(run["id"], principal="owner")["plans"] == []
 
 
 def test_persistent_factory_missing_descriptor_rejects_without_creating_stores(
