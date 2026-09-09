@@ -422,3 +422,45 @@ def test_expired_or_current_profile_changed_authority_blocks_without_effects(
     )
     assert changed.json()["reason_code"] in {"PROFILE_DISABLED", "PROFILE_IDENTITY_MISMATCH"}
     assert planner.get(run["id"])["active_plan_revision"] is None
+
+
+def test_current_source_binding_change_blocks_proposal_approval(v2_plan: tuple) -> None:
+    client, headers, planner, run, _, plan = v2_plan
+    conversation_id = planner.get(run["id"])["conversation_id"]
+    proposal = client.post(
+        f"/v1/conversations/{conversation_id}/proposals",
+        json=_proposal_request(run, plan),
+        headers={**headers, "Idempotency-Key": "source-before-change"},
+    ).json()
+    configuration = deepcopy(planner.projects.get_configuration(run["project_id"])["configuration"])
+    replacement_channel = deepcopy(configuration["resources"]["channels"][0])
+    replacement_channel["id"] = "fixture-channel-b"
+    configuration["resources"]["channels"].append(replacement_channel)
+    binding = configuration["resources"]["profiles"][0]["profile"]["binding"]
+    binding["channel_id"] = "fixture-channel-b"
+    preview = planner.projects.preview_configuration(
+        run["project_id"], configuration, command_key="change-source", principal="owner"
+    )
+    planner.projects.apply_configuration(
+        run["project_id"],
+        preview["preview_id"],
+        expected_revision=planner.projects.get(run["project_id"])["revision"],
+        command_key="apply-source-change",
+        principal="owner",
+    )
+    blocked = client.post(
+        f"/v1/runs/{run['id']}/plan-approval",
+        json={
+            **approval(plan),
+            "conversation_id": conversation_id,
+            "proposal_revision": proposal["proposal_revision"],
+        },
+        headers={
+            "If-Match": f'"{proposal["run_revision"]}"',
+            **headers,
+            "Idempotency-Key": "source-after-change",
+        },
+    )
+    assert blocked.status_code == 409, blocked.text
+    assert blocked.json()["reason_code"] == "PROFILE_IDENTITY_MISMATCH"
+    assert planner.get(run["id"])["active_plan_revision"] is None
