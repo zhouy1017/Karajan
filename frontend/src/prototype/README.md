@@ -4,22 +4,28 @@
 
 ## 打开
 
-在 `frontend` 目录运行 `npm run demo -- --port 4178 --strictPort`，打开 [演示](http://127.0.0.1:4178/prototype/commander?variant=A&scene=run)。原型仅在开发模式下启用。
+在 `frontend` 目录运行 `npm run demo -- --port 4178 --strictPort`，打开 [Commander Hub](http://127.0.0.1:4178/prototype/commander?variant=A&scene=hub&stage=proposal)。原型仅在开发模式下启用。
 
 ## 讨论入口
 
 - [打开仓库](http://127.0.0.1:4178/prototype/commander?variant=A&scene=open)：仓库与主 Commander 选择是否足够直接。
-- [Commander 对话](http://127.0.0.1:4178/prototype/commander?variant=A&scene=commander)：主会话怎样连接到具体任务。
+- [Hub · 调整确认](http://127.0.0.1:4178/prototype/commander?variant=A&scene=hub&stage=proposal)：Commander 建议分工、用户调整及确认。
+- [Hub · 运行任务](http://127.0.0.1:4178/prototype/commander?variant=A&scene=hub&stage=running)：主会话旁的任务缩略卡片和进度。
+- [Hub · 最终汇报](http://127.0.0.1:4178/prototype/commander?variant=A&scene=hub&stage=complete)：Commander 汇总成果与交付建议。
 - [任务分工](http://127.0.0.1:4178/prototype/commander?variant=A&scene=plan)：角色、模型、来源与依赖是否清楚。
 - [并行执行](http://127.0.0.1:4178/prototype/commander?variant=A&scene=run)：多个 Agent 的工作、阻塞和结果能否一眼看懂。
 - [审查交付](http://127.0.0.1:4178/prototype/commander?variant=A&scene=review)：Diff、检查、审查和 PR 的关系是否直观。
 
-执行场景可比较三种信息布局：A 任务工作台、B 并行看板、C Agent 工作区。顶部切场景，底部切布局；布局不是对三套产品功能的承诺。
+执行详情可比较三种信息布局：A 任务工作台、B 并行看板、C Agent 工作区。顶部进入 Hub 或展开详情，底部切布局。URL 的 stage 是刷新时载入的样例阶段；页面内展开/返回只切换视图，不推进任务。布局不是对三套产品功能的承诺。
 
 ## 当前结论
 
-等待用户对演示的反馈，尚未选定最终布局。演示数据和对话回复均为内存中的样例，刷新可恢复初始场景。用户可以直接用“场景 + 布局 + 控件”描述修改，例如“分工页 A 的模型选择保留，执行页用 B 的列布局”。
+2026-09-09 用户确认 Commander Hub 为主工作面：Commander 拆分任务并初步分配，用户调整确认后分发；运行任务以缩略卡片常驻主会话，结果由 Commander 汇总，其他页面提供更多细节和操作。原三种运行布局保留为详情视图的比较素材，不再作为日常主入口。具体视觉布局继续按演示反馈调整。
+
+演示数据和回复均为内存样例，页面内导航保留状态，刷新按 URL 重新载入样例。真实持久化、派发和证据汇总仍需产品实现。
 
 ## 已检查的交互
 
 2026-09-09：浏览器实操覆盖 Commander 模型切换、发送样例消息、分工模型和依赖编辑、启动、三种运行布局、暂停/继续派发及日志详情。类型检查和生产构建通过；开发入口未进入生产构建。以上仅验证原型可用于讨论，不作为真实任务执行、模型资格或产品验收证据。
+
+r2：浏览器从旧对话链接进入 Hub，修改首项模型及第二项依赖，确认后停留 Hub；展开分工后控件只读，返回保留选择与状态；模拟完成前置任务后启动依赖项，Worker 完成后启动 Reviewer，结束后回到同一会话的结果汇报。详情导航本身不会产生完成状态。

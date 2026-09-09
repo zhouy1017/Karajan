@@ -1,14 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "./commander-prototype.css";
 
 // Throwaway UI prototype: three structurally different Commander workbench layouts
 // on /prototype/commander, switchable with ?variant=A|B|C&scene=open|commander|plan|run|review.
 
 type Variant = "A" | "B" | "C";
-type Scene = "open" | "commander" | "plan" | "run" | "review";
+type Scene = "open" | "hub" | "commander" | "plan" | "run" | "review";
 type DetailTab = "Diff" | "Checks" | "Review" | "Logs" | "Dependencies";
 type TaskState = "ready" | "running" | "waiting" | "done";
 type PreviewMode = "diff" | "pr";
+type HubStage = "proposal" | "running" | "complete";
 
 type Task = {
   id: string;
@@ -24,13 +25,21 @@ type Task = {
 
 const sceneLabels: Record<Scene, string> = {
   open: "打开",
+  hub: "Hub",
   commander: "对话",
   plan: "分工",
   run: "运行",
   review: "交付",
 };
 
-const sceneOrder: Scene[] = ["open", "commander", "plan", "run", "review"];
+const sceneOrder: Scene[] = [
+  "open",
+  "hub",
+  "commander",
+  "plan",
+  "run",
+  "review",
+];
 const detailTabs: DetailTab[] = [
   "Diff",
   "Checks",
@@ -106,20 +115,81 @@ function Icon({ name, size = 16 }: { name: string; size?: number }) {
   );
 }
 
-function readQuery(): { variant: Variant; scene: Scene } {
+function tasksForStage(stage: HubStage): Task[] {
+  return initialTasks.map((task) => {
+    if (stage === "complete")
+      return {
+        ...task,
+        state: "done",
+        result: task.role === "Reviewer" ? "独立审查通过" : "候选已组合",
+      };
+    if (stage === "running")
+      return task.role === "Reviewer" || task.dependency !== "无"
+        ? { ...task, state: "waiting", result: "等待 Worker 产物" }
+        : { ...task, state: "running", result: "正在建立独立写区" };
+    return task.role === "Reviewer"
+      ? { ...task, state: "waiting", result: "等待批准后启动" }
+      : { ...task, state: "ready", result: "准备开始" };
+  });
+}
+
+function messagesForStage(stage: HubStage) {
+  const messages = [
+    {
+      from: "user" as const,
+      text: "我想为订单列表增加 CSV 导出。需要保留当前筛选条件，并在下载失败时给出清晰反馈。",
+    },
+    {
+      from: "commander" as const,
+      text: "明白了。我会先把导出接口与前端入口拆开，两个 Worker 可以并行处理；完成后再让独立 Reviewer 检查字段和失败反馈。",
+    },
+  ];
+  if (stage === "running")
+    messages.push({
+      from: "commander" as const,
+      text: "已按计划分发两个 Worker，运行中的 Profile 保持固定；完成后我会在这里汇总结果。",
+    });
+  if (stage === "complete")
+    messages.push({
+      from: "commander" as const,
+      text: "本轮样例已完成 CSV 接口和列表导出入口，保留筛选并补充失败反馈。候选 #demo-01，checks 通过，独立 Reviewer 建议交付；尚未创建 PR。你可展开 diff/审查后准备 PR。",
+    });
+  return messages;
+}
+
+function readQuery(): { variant: Variant; scene: Scene; stage: HubStage } {
   const params = new URLSearchParams(window.location.search);
   const variant = params.get("variant");
   const scene = params.get("scene");
+  const stageParam = params.get("stage");
+  const stage: HubStage =
+    stageParam === "running" || stageParam === "complete"
+      ? stageParam
+      : scene === "run"
+        ? "running"
+        : "proposal";
+  const sceneFromStage =
+    stageParam === "proposal" ||
+    stageParam === "running" ||
+    stageParam === "complete" ||
+    scene === "commander"
+      ? "hub"
+      : scene;
   return {
     variant: variant === "B" || variant === "C" ? variant : "A",
-    scene: sceneOrder.includes(scene as Scene) ? (scene as Scene) : "open",
+    scene: sceneOrder.includes(sceneFromStage as Scene)
+      ? (sceneFromStage as Scene)
+      : "hub",
+    stage,
   };
 }
 
-function updateUrl(variant: Variant, scene: Scene) {
+function updateUrl(variant: Variant, scene: Scene, stage?: HubStage) {
   const url = new URL(window.location.href);
   url.searchParams.set("variant", variant);
   url.searchParams.set("scene", scene);
+  if (scene === "hub" && stage) url.searchParams.set("stage", stage);
+  else url.searchParams.delete("stage");
   window.history.replaceState({}, "", url);
 }
 
@@ -142,13 +212,19 @@ function SelectField({
   value,
   options,
   onChange,
+  disabled = false,
 }: {
   value: string;
   options: string[];
   onChange: (value: string) => void;
+  disabled?: boolean;
 }) {
   return (
-    <select value={value} onChange={(event) => onChange(event.target.value)}>
+    <select
+      disabled={disabled}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+    >
       {options.map((option) => (
         <option key={option}>{option}</option>
       ))}
@@ -186,16 +262,18 @@ function TopBar({
       </div>
       <nav className="scene-nav" aria-label="演示场景">
         <span>演示场景</span>
-        {sceneOrder.map((item, index) => (
-          <button
-            className={scene === item ? "active" : ""}
-            key={item}
-            onClick={() => onScene(item)}
-          >
-            <b>{index + 1}</b>
-            {sceneLabels[item]}
-          </button>
-        ))}
+        {sceneOrder
+          .filter((item) => item !== "commander")
+          .map((item, index) => (
+            <button
+              className={scene === item ? "active" : ""}
+              key={item}
+              onClick={() => onScene(item)}
+            >
+              <b>{index + 1}</b>
+              {sceneLabels[item]}
+            </button>
+          ))}
       </nav>
       <div className="topbar-actions">
         <div className="resource-wrap">
@@ -260,28 +338,30 @@ function Sidebar({
       </div>
       <div className="sidebar-group">
         <small className="sidebar-label">工作流</small>
-        {sceneOrder.slice(1).map((item) => (
-          <button
-            className={`sidebar-nav ${scene === item ? "selected" : ""}`}
-            onClick={() => onScene(item)}
-            key={item}
-          >
-            <Icon
-              name={
-                item === "commander"
-                  ? "chat"
-                  : item === "run"
+        {sceneOrder
+          .filter((item) => item !== "open" && item !== "commander")
+          .map((item) => (
+            <button
+              className={`sidebar-nav ${scene === item ? "selected" : ""}`}
+              onClick={() => onScene(item)}
+              key={item}
+            >
+              <Icon
+                name={
+                  item === "run"
                     ? "agent"
                     : item === "review"
                       ? "check"
-                      : "task"
-              }
-              size={16}
-            />
-            <span>{sceneLabels[item]}</span>
-            {item === "plan" && <em>3</em>}
-          </button>
-        ))}
+                      : item === "hub"
+                        ? "chat"
+                        : "task"
+                }
+                size={16}
+              />
+              <span>{sceneLabels[item]}</span>
+              {item === "plan" && <em>3</em>}
+            </button>
+          ))}
       </div>
       <div className="sidebar-group task-nav">
         <small className="sidebar-label">任务</small>
@@ -486,6 +566,14 @@ function CommanderPanel({
   model: string;
   source: string;
 }) {
+  const chatRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (chatRef.current)
+      chatRef.current.scrollTo({
+        top: chatRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+  }, [messages.length]);
   return (
     <section
       className={`commander-panel ${compact ? "commander-compact" : ""}`}
@@ -503,7 +591,7 @@ function CommanderPanel({
           已连接
         </span>
       </div>
-      <div className="chat-stream">
+      <div className="chat-stream" ref={chatRef}>
         {messages.map((message, index) => (
           <div
             className={`chat-message ${message.from}`}
@@ -765,14 +853,310 @@ function CommanderScene({
   );
 }
 
+function HubScene({
+  stage,
+  tasks,
+  setTasks,
+  messages,
+  draft,
+  setDraft,
+  onSend,
+  onContinue,
+  onConfirm,
+  onSimulate,
+  onOpenDetails,
+  model,
+  setModel,
+  source,
+  setSource,
+}: {
+  stage: HubStage;
+  tasks: Task[];
+  setTasks: (tasks: Task[]) => void;
+  messages: { from: "user" | "commander"; text: string }[];
+  draft: string;
+  setDraft: (value: string) => void;
+  onSend: () => void;
+  onContinue: () => void;
+  onConfirm: () => void;
+  onSimulate: (id: string) => void;
+  onOpenDetails: (scene: Scene, taskId?: string) => void;
+  model: string;
+  setModel: (value: string) => void;
+  source: string;
+  setSource: (value: string) => void;
+}) {
+  const updateTask = (
+    id: string,
+    field: "role" | "model" | "source" | "dependency",
+    value: string,
+  ) =>
+    setTasks(
+      tasks.map((task) =>
+        task.id === id ? { ...task, [field]: value } : task,
+      ),
+    );
+  return (
+    <div className="scene-content hub-scene">
+      <div className="hub-heading">
+        <div>
+          <span className="eyebrow">COMMANDER HUB</span>
+          <h1>把协作留在一个工作面</h1>
+          <p>Commander 拆解、分发、汇总；你随时可以展开任一详情。</p>
+        </div>
+        <span className={`hub-stage stage-${stage}`}>
+          {stage === "proposal"
+            ? "建议待确认"
+            : stage === "running"
+              ? "任务进行中"
+              : "可交付候选"}
+        </span>
+      </div>
+      <div className="hub-layout">
+        <section className="hub-conversation">
+          <div className="hub-panel-label">
+            <span>持续对话</span>
+            <small>
+              {model} · {source}
+            </small>
+          </div>
+          <CommanderPanel
+            messages={messages}
+            draft={draft}
+            setDraft={setDraft}
+            onSend={onSend}
+            onContinue={onContinue}
+            model={model}
+            source={source}
+          />
+        </section>
+        <aside className="hub-workspace">
+          <div className="hub-panel-label">
+            <span>
+              {stage === "proposal"
+                ? "建议分工"
+                : stage === "running"
+                  ? "运行摘要"
+                  : "结果汇总"}
+            </span>
+            <button
+              className="text-button"
+              onClick={() =>
+                onOpenDetails(
+                  stage === "proposal"
+                    ? "plan"
+                    : stage === "running"
+                      ? "run"
+                      : "review",
+                )
+              }
+            >
+              展开详情 <Icon name="arrow" size={12} />
+            </button>
+          </div>
+          {stage === "proposal" ? (
+            <HubPlanCard
+              tasks={tasks}
+              onUpdate={updateTask}
+              onConfirm={onConfirm}
+            />
+          ) : stage === "running" ? (
+            <HubRunCards
+              tasks={tasks}
+              onSimulate={onSimulate}
+              onOpenDetails={(taskId) => onOpenDetails("run", taskId)}
+            />
+          ) : (
+            <HubCompleteCard onOpenDetails={() => onOpenDetails("review")} />
+          )}
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function HubPlanCard({
+  tasks,
+  onUpdate,
+  onConfirm,
+}: {
+  tasks: Task[];
+  onUpdate: (
+    id: string,
+    field: "role" | "model" | "source" | "dependency",
+    value: string,
+  ) => void;
+  onConfirm: () => void;
+}) {
+  const parallelCount = tasks.filter(
+    (task) => task.role === "Worker" && task.dependency === "无",
+  ).length;
+  return (
+    <section className="hub-plan" id="hub-plan">
+      <div className="hub-card-head">
+        <div>
+          <strong>Commander 的初步分工</strong>
+          <small>可编辑配置 · 计划 v1 · {parallelCount} 项可并行</small>
+        </div>
+        <span className="version-chip">待确认</span>
+      </div>
+      <div className="hub-plan-rows">
+        {tasks.map((task) => (
+          <div className="hub-plan-row" key={task.id}>
+            <div className="hub-plan-main">
+              <span
+                className={`task-index ${task.role === "Reviewer" ? "reviewer" : "worker"}`}
+              >
+                {task.role === "Reviewer" ? "S" : "W"}
+              </span>
+              <div className="hub-task-copy">
+                <strong>{task.title}</strong>
+                <small>{task.detail}</small>
+              </div>
+            </div>
+            <div className="hub-plan-controls">
+              <label>
+                角色
+                <SelectField
+                  value={task.role}
+                  options={["Worker", "Reviewer"]}
+                  onChange={(value) => onUpdate(task.id, "role", value)}
+                />
+              </label>
+              <label>
+                模型
+                <SelectField
+                  value={task.model}
+                  options={["Terra", "Luna", "Sol"]}
+                  onChange={(value) => onUpdate(task.id, "model", value)}
+                />
+              </label>
+              <label>
+                来源
+                <SelectField
+                  value={task.source}
+                  options={["Codex", "ChatGPT"]}
+                  onChange={(value) => onUpdate(task.id, "source", value)}
+                />
+              </label>
+              <label>
+                依赖
+                <SelectField
+                  value={task.dependency}
+                  options={
+                    task.id === "csv-api"
+                      ? ["无"]
+                      : task.id === "csv-entry"
+                        ? ["无", "后端接口"]
+                        : ["前两项"]
+                  }
+                  onChange={(value) => onUpdate(task.id, "dependency", value)}
+                />
+              </label>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="hub-card-foot">
+        <small>确认后才会分发；运行中的 Profile 保持固定。</small>
+        <button className="primary" onClick={onConfirm}>
+          确认并分发 <Icon name="arrow" size={14} />
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function HubRunCards({
+  tasks,
+  onSimulate,
+  onOpenDetails,
+}: {
+  tasks: Task[];
+  onSimulate: (id: string) => void;
+  onOpenDetails: (taskId?: string) => void;
+}) {
+  const runningCount = tasks.filter((task) => task.state === "running").length;
+  const waitingCount = tasks.filter((task) => task.state === "waiting").length;
+  return (
+    <section className="hub-run-cards">
+      <div className="hub-run-head">
+        <span>
+          <i className="pulse" /> {runningCount} 个运行中 · {waitingCount}{" "}
+          个等待
+        </span>
+        <small>
+          {runningCount} 个运行中 · {waitingCount} 个等待依赖 · 样例动作推进
+        </small>
+      </div>
+      {tasks.map((task) => (
+        <div
+          className={`hub-run-card ${task.role === "Reviewer" ? "reviewer" : ""}`}
+          key={task.id}
+          onClick={() => onOpenDetails(task.id)}
+        >
+          <span
+            className={`task-index ${task.role === "Reviewer" ? "reviewer" : "worker"}`}
+          >
+            {task.role === "Reviewer" ? "S" : "W"}
+          </span>
+          <div className="hub-task-copy">
+            <strong>{task.title}</strong>
+            <small>
+              {task.model} · {task.source} · {task.result}
+            </small>
+          </div>
+          <StatusPill state={task.state} />
+          {task.state === "running" && (
+            <button
+              className="simulate-button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onSimulate(task.id);
+              }}
+            >
+              模拟任务完成
+            </button>
+          )}
+        </div>
+      ))}
+      <button className="detail-link" onClick={() => onOpenDetails()}>
+        查看运行详情 <Icon name="arrow" size={12} />
+      </button>
+    </section>
+  );
+}
+
+function HubCompleteCard({ onOpenDetails }: { onOpenDetails: () => void }) {
+  return (
+    <section className="hub-complete-card">
+      <div className="complete-mark">✓</div>
+      <div>
+        <strong>本轮样例已完成 CSV 接口和列表导出入口</strong>
+        <p>
+          保留筛选并补充失败反馈 · 候选 #demo-01 · checks 通过 · Reviewer
+          建议交付 · 尚未创建 PR
+        </p>
+      </div>
+      <button className="primary wide" onClick={onOpenDetails}>
+        展开检查与交付 <Icon name="arrow" size={14} />
+      </button>
+    </section>
+  );
+}
+
 function PlanScene({
   tasks,
   setTasks,
   onStart,
+  onBackToHub,
+  stage,
 }: {
   tasks: Task[];
   setTasks: (tasks: Task[]) => void;
   onStart: () => void;
+  onBackToHub: () => void;
+  stage: HubStage;
 }) {
   const parallelCount = tasks.filter(
     (task) => task.role === "Worker" && task.dependency === "无",
@@ -795,21 +1179,34 @@ function PlanScene({
           <h1>确认任务分工</h1>
           <p>你可以调整角色、模型和来源，再接受这份计划。</p>
         </div>
-        <div className="plan-summary">
-          <span className="summary-number">{parallelCount}</span>
-          <div>
-            <strong>项可并行</strong>
-            <small>独立写区 · 固定配置</small>
+        <div className="detail-title-actions">
+          <button className="back-hub" onClick={onBackToHub}>
+            ← 返回 Commander Hub
+          </button>
+          <div className="plan-summary">
+            <span className="summary-number">{parallelCount}</span>
+            <div>
+              <strong>项可并行</strong>
+              <small>独立写区 · 固定配置</small>
+            </div>
           </div>
         </div>
       </div>
       <section className="plan-card">
         <div className="plan-card-head">
           <div>
-            <strong>建议任务图</strong>
-            <small>由 Commander 根据当前需求生成 · 计划版本 v1</small>
+            <strong>
+              {stage === "proposal" ? "建议任务图" : "已批准任务图"}
+            </strong>
+            <small>
+              {stage === "proposal"
+                ? "由 Commander 根据当前需求生成 · 计划版本 v1"
+                : "当前运行绑定 · 计划版本 v1"}
+            </small>
           </div>
-          <span className="version-chip">待批准</span>
+          <span className="version-chip">
+            {stage === "proposal" ? "待批准" : "已批准版本"}
+          </span>
         </div>
         <div className="plan-table-wrap">
           <table className="plan-table">
@@ -843,6 +1240,7 @@ function PlanScene({
                     <SelectField
                       value={task.role}
                       options={["Worker", "Reviewer"]}
+                      disabled={stage !== "proposal"}
                       onChange={(value) => updateTask(task.id, "role", value)}
                     />
                   </td>
@@ -850,6 +1248,7 @@ function PlanScene({
                     <SelectField
                       value={task.model}
                       options={["Terra", "Luna", "Sol"]}
+                      disabled={stage !== "proposal"}
                       onChange={(value) => updateTask(task.id, "model", value)}
                     />
                   </td>
@@ -857,6 +1256,7 @@ function PlanScene({
                     <SelectField
                       value={task.source}
                       options={["Codex", "ChatGPT"]}
+                      disabled={stage !== "proposal"}
                       onChange={(value) => updateTask(task.id, "source", value)}
                     />
                   </td>
@@ -870,6 +1270,7 @@ function PlanScene({
                             ? ["无", "后端接口"]
                             : ["前两项"]
                       }
+                      disabled={stage !== "proposal"}
                       onChange={(value) =>
                         updateTask(task.id, "dependency", value)
                       }
@@ -888,17 +1289,28 @@ function PlanScene({
             <span className="check-circle">✓</span>
             <span>
               <strong>范围清楚</strong>
-              <small>接受后将固定这份计划与配置</small>
+              <small>
+                {stage === "proposal"
+                  ? "接受后将固定这份计划与配置"
+                  : "配置已固定，运行中的 Profile 不可更改"}
+              </small>
             </span>
           </div>
-          <button className="primary" onClick={onStart}>
-            接受并启动 <Icon name="arrow" size={15} />
+          <button
+            className="primary"
+            onClick={onStart}
+            disabled={stage !== "proposal"}
+          >
+            {stage === "proposal" ? "接受并启动" : "已批准，返回 Hub"}{" "}
+            <Icon name="arrow" size={15} />
           </button>
         </div>
       </section>
       <div className="plan-note">
         <span>i</span>{" "}
-        模型和来源是演示选项。未启动任务可以继续调整，运行后配置将保持不变。
+        {stage === "proposal"
+          ? "模型和来源是演示选项。未启动任务可以继续调整，运行后配置将保持不变。"
+          : "模型、来源和依赖已随批准版本固定；详情页仅供查看。"}
       </div>
     </div>
   );
@@ -908,10 +1320,12 @@ function RunTaskCard({
   task,
   selected,
   onSelect,
+  onComplete,
 }: {
   task: Task;
   selected: boolean;
   onSelect: () => void;
+  onComplete?: () => void;
 }) {
   return (
     <button
@@ -939,6 +1353,17 @@ function RunTaskCard({
         />
       </div>
       <span className="run-task-result">{task.result}</span>
+      {task.state !== "done" && onComplete && (
+        <span
+          className="run-simulate"
+          onClick={(event) => {
+            event.stopPropagation();
+            onComplete();
+          }}
+        >
+          模拟任务完成
+        </span>
+      )}
     </button>
   );
 }
@@ -954,6 +1379,8 @@ function RunScene({
   variant,
   runView,
   setRunView,
+  onBackToHub,
+  onSimulate,
 }: {
   tasks: Task[];
   selectedTask: Task;
@@ -965,6 +1392,8 @@ function RunScene({
   variant: Variant;
   runView: "tasks" | "agents";
   setRunView: (view: "tasks" | "agents") => void;
+  onBackToHub: () => void;
+  onSimulate: (id: string) => void;
 }) {
   const workers = tasks.filter((task) => task.role !== "Reviewer");
   const reviewer = tasks.find((task) => task.role === "Reviewer") ?? tasks[2];
@@ -981,6 +1410,9 @@ function RunScene({
           </p>
         </div>
         <div className="run-controls">
+          <button className="back-hub" onClick={onBackToHub}>
+            ← 返回 Commander Hub
+          </button>
           <span className="run-clock">
             <i className="pulse" /> 示例运行 · 00:42
           </span>
@@ -1046,6 +1478,7 @@ function RunScene({
                   task={task}
                   selected={selectedTask.id === task.id}
                   onSelect={() => setSelectedTask(task)}
+                  onComplete={() => onSimulate(task.id)}
                 />
               ))}
               <div
@@ -1055,7 +1488,10 @@ function RunScene({
                 <span className="task-index reviewer">S</span>
                 <div>
                   <strong>{reviewer.title}</strong>
-                  <small>Sol · ChatGPT · {reviewer.dependency}后开始</small>
+                  <small>
+                    {reviewer.model} · {reviewer.source} · {reviewer.dependency}
+                    后开始
+                  </small>
                 </div>
                 <StatusPill state="waiting" />
                 <Icon name="arrow" size={15} />
@@ -1219,9 +1655,15 @@ function AgentColumn({
 function ReviewScene({
   onPrepare,
   onViewDiff,
+  onBackToHub,
+  stage,
+  reviewer,
 }: {
   onPrepare: () => void;
   onViewDiff: () => void;
+  onBackToHub: () => void;
+  stage: HubStage;
+  reviewer: Task;
 }) {
   return (
     <div className="scene-content review-scene">
@@ -1231,17 +1673,37 @@ function ReviewScene({
           <h1>检查并准备交付</h1>
           <p>所有证据都绑定到候选 #demo-01，提交前仍由你决定。</p>
         </div>
-        <span className="ready-chip">
-          <span>✓</span> 可准备 PR
-        </span>
+        <div className="detail-title-actions">
+          <button className="back-hub" onClick={onBackToHub}>
+            ← 返回 Commander Hub
+          </button>
+          <span
+            className={
+              stage === "complete"
+                ? "ready-chip"
+                : "ready-chip review-waiting-chip"
+            }
+          >
+            <span>{stage === "complete" ? "✓" : "·"}</span>{" "}
+            {stage === "complete" ? "可准备 PR" : "等待审查完成"}
+          </span>
+        </div>
       </div>
       <div className="review-grid">
         <section className="review-main">
           <div className="candidate-banner">
-            <div className="candidate-icon">✓</div>
+            <div className="candidate-icon">
+              {stage === "complete" ? "✓" : "·"}
+            </div>
             <div>
-              <strong>候选 #demo-01 已冻结</strong>
-              <small>组合顺序：后端 CSV 接口 → 前端导出入口</small>
+              <strong>
+                {stage === "complete" ? "候选 #demo-01 已冻结" : "等待候选汇总"}
+              </strong>
+              <small>
+                {stage === "complete"
+                  ? "组合顺序：后端 CSV 接口 → 前端导出入口"
+                  : "两个 Worker 完成后才会冻结组合候选"}
+              </small>
             </div>
             <span className="candidate-date">刚刚 · 示例</span>
           </div>
@@ -1251,13 +1713,35 @@ function ReviewScene({
                 <span className="eyebrow">验收证据</span>
                 <h2>Checks</h2>
               </div>
-              <span className="pass-label">全部通过</span>
+              <span
+                className={
+                  stage === "complete" ? "pass-label" : "waiting-label"
+                }
+              >
+                {stage === "complete" ? "全部通过" : "等待候选"}
+              </span>
             </div>
             <div className="checks-grid">
-              <Evidence label="类型检查" value="通过 · 42s" ok />
-              <Evidence label="行为检查" value="通过 · 18s" ok />
-              <Evidence label="候选完整性" value="通过 · 2s" ok />
-              <Evidence label="工作区隔离" value="已核对" ok />
+              <Evidence
+                label="类型检查"
+                value={stage === "complete" ? "通过 · 42s" : "等待运行"}
+                ok={stage === "complete"}
+              />
+              <Evidence
+                label="行为检查"
+                value={stage === "complete" ? "通过 · 18s" : "未开始"}
+                ok={stage === "complete"}
+              />
+              <Evidence
+                label="候选完整性"
+                value={stage === "complete" ? "通过 · 2s" : "等待候选"}
+                ok={stage === "complete"}
+              />
+              <Evidence
+                label="工作区隔离"
+                value={stage === "complete" ? "已核对" : "未开始"}
+                ok={stage === "complete"}
+              />
             </div>
           </div>
           <div className="evidence-card diff-card">
@@ -1266,27 +1750,38 @@ function ReviewScene({
                 <span className="eyebrow">候选变更</span>
                 <h2>Diff</h2>
               </div>
-              <button className="text-button" onClick={onViewDiff}>
-                查看完整 diff <Icon name="arrow" size={13} />
+              <button
+                className="text-button"
+                onClick={onViewDiff}
+                disabled={stage !== "complete"}
+              >
+                {stage === "complete" ? "查看完整 diff" : "Diff 待候选"}{" "}
+                <Icon name="arrow" size={13} />
               </button>
             </div>
-            <div className="diff-files">
-              <div>
-                <span className="file-badge">M</span>
-                <strong>orders/export.ts</strong>
-                <span>+42 −7</span>
+            {stage === "complete" ? (
+              <div className="diff-files">
+                <div>
+                  <span className="file-badge">M</span>
+                  <strong>orders/export.ts</strong>
+                  <span>+42 −7</span>
+                </div>
+                <div>
+                  <span className="file-badge">M</span>
+                  <strong>OrderList.tsx</strong>
+                  <span>+42 −5</span>
+                </div>
+                <div>
+                  <span className="file-badge new">A</span>
+                  <strong>export.test.ts</strong>
+                  <span>+18</span>
+                </div>
               </div>
-              <div>
-                <span className="file-badge">M</span>
-                <strong>OrderList.tsx</strong>
-                <span>+42 −5</span>
+            ) : (
+              <div className="review-pending">
+                候选尚未冻结，Diff 会在 Worker 结果和独立审查完成后出现。
               </div>
-              <div>
-                <span className="file-badge new">A</span>
-                <strong>export.test.ts</strong>
-                <span>+18</span>
-              </div>
-            </div>
+            )}
           </div>
         </section>
         <aside className="review-side">
@@ -1295,15 +1790,29 @@ function ReviewScene({
               <span className="avatar reviewer-avatar">S</span>
               <div>
                 <strong>独立 Reviewer</strong>
-                <small>Sol · ChatGPT</small>
+                <small>
+                  {reviewer.model} · {reviewer.source}
+                </small>
               </div>
-              <span className="pass-label">通过</span>
+              <span
+                className={
+                  stage === "complete" ? "pass-label" : "waiting-label"
+                }
+              >
+                {stage === "complete" ? "通过" : "等待中"}
+              </span>
             </div>
             <div className="review-verdict">
-              <span>✓</span>
+              <span>{stage === "complete" ? "✓" : "·"}</span>
               <div>
-                <strong>建议交付</strong>
-                <p>未发现阻塞问题。CSV 字段顺序与失败反馈符合需求。</p>
+                <strong>
+                  {stage === "complete" ? "建议交付" : "等待候选"}
+                </strong>
+                <p>
+                  {stage === "complete"
+                    ? "未发现阻塞问题。CSV 字段顺序与失败反馈符合需求。"
+                    : "两个 Worker 完成后，Reviewer 才会读取冻结候选。"}
+                </p>
               </div>
             </div>
             <div className="review-meta">
@@ -1317,7 +1826,11 @@ function ReviewScene({
             <span className="eyebrow">交付</span>
             <h3>准备一个 PR</h3>
             <p>演示动作只生成本地交付预览，不会写入 GitHub。</p>
-            <button className="primary wide" onClick={onPrepare}>
+            <button
+              className="primary wide"
+              onClick={onPrepare}
+              disabled={stage !== "complete"}
+            >
               准备 PR <Icon name="arrow" size={15} />
             </button>
           </div>
@@ -1490,31 +2003,14 @@ function PrototypeSwitcher({
 
 export function CommanderPrototype() {
   const query = useMemo(readQuery, []);
+  const queryTasks = tasksForStage(query.stage);
   const [variant, setVariantState] = useState<Variant>(query.variant);
   const [scene, setSceneState] = useState<Scene>(query.scene);
-  const [tasks, setTasks] = useState<Task[]>(() =>
-    query.scene === "run"
-      ? initialTasks.map((task) =>
-          task.role === "Reviewer"
-            ? { ...task, state: "waiting", result: "等待 Worker 产物" }
-            : { ...task, state: "running", result: "正在建立独立写区" },
-        )
-      : initialTasks,
-  );
-  const [selectedTask, setSelectedTask] = useState<Task>(initialTasks[0]);
+  const [stage, setStage] = useState<HubStage>(query.stage);
+  const [tasks, setTasks] = useState<Task[]>(queryTasks);
+  const [selectedTask, setSelectedTask] = useState<Task>(queryTasks[0]);
   const [detailTab, setDetailTab] = useState<DetailTab>("Diff");
-  const [messages, setMessages] = useState<
-    { from: "user" | "commander"; text: string }[]
-  >([
-    {
-      from: "user",
-      text: "我想为订单列表增加 CSV 导出。需要保留当前筛选条件，并在下载失败时给出清晰反馈。",
-    },
-    {
-      from: "commander",
-      text: "明白了。我会先把导出接口与前端入口拆开，两个 Worker 可以并行处理；完成后再让独立 Reviewer 检查字段和失败反馈。",
-    },
-  ]);
+  const [messages, setMessages] = useState(messagesForStage(query.stage));
   const [draft, setDraft] = useState("");
   const [model, setModel] = useState("Astra");
   const [source, setSource] = useState("Codex");
@@ -1525,55 +2021,30 @@ export function CommanderPrototype() {
 
   const setVariant = (next: Variant) => {
     setVariantState(next);
-    updateUrl(next, scene);
+    updateUrl(next, scene, stage);
   };
-  const sceneTasks = (next: Scene): Task[] =>
-    tasks.map((task) => {
-      if (next === "plan")
-        return task.role === "Reviewer"
-          ? { ...task, state: "waiting", result: "等待批准后启动" }
-          : { ...task, state: "ready", result: "准备开始" };
-      if (next === "run")
-        return task.role === "Reviewer" || task.dependency !== "无"
-          ? { ...task, state: "waiting", result: "等待 Worker 产物" }
-          : { ...task, state: "running", result: "正在建立独立写区" };
-      if (next === "review")
-        return {
-          ...task,
-          state: "done",
-          result: task.role === "Reviewer" ? "独立审查通过" : "候选已组合",
-        };
-      return task;
-    });
   const setScene = (next: Scene) => {
-    const nextTasks = sceneTasks(next);
-    setTasks(nextTasks);
-    setSelectedTask(
-      nextTasks.find((task) => task.id === selectedTask.id) ?? nextTasks[0],
-    );
     setSceneState(next);
-    updateUrl(variant, next);
+    updateUrl(variant, next, stage);
+    window.scrollTo({ top: 0, behavior: "instant" });
+  };
+  const setHubStage = (next: HubStage) => {
+    setStage(next);
+    setSceneState("hub");
+    updateUrl(variant, "hub", next);
     window.scrollTo({ top: 0, behavior: "instant" });
   };
   const reset = () => {
     setVariantState("A");
-    setSceneState("open");
-    setTasks(initialTasks);
-    setSelectedTask(initialTasks[0]);
-    setMessages([
-      {
-        from: "user",
-        text: "我想为订单列表增加 CSV 导出。需要保留当前筛选条件，并在下载失败时给出清晰反馈。",
-      },
-      {
-        from: "commander",
-        text: "明白了。我会先把导出接口与前端入口拆开，两个 Worker 可以并行处理；完成后再让独立 Reviewer 检查字段和失败反馈。",
-      },
-    ]);
+    setSceneState("hub");
+    setStage("proposal");
+    setTasks(tasksForStage("proposal"));
+    setSelectedTask(tasksForStage("proposal")[0]);
+    setMessages(messagesForStage("proposal"));
     setDraft("");
     setPaused(false);
     setPreview(null);
-    updateUrl("A", "open");
+    updateUrl("A", "hub", "proposal");
   };
   const sendMessage = () => {
     if (!draft.trim()) return;
@@ -1588,6 +2059,7 @@ export function CommanderPrototype() {
     setDraft("");
   };
   const startRun = () => {
+    if (stage !== "proposal") return;
     const nextTasks: Task[] = tasks.map((task) =>
       task.role === "Reviewer" || task.dependency !== "无"
         ? { ...task, state: "waiting", result: "等待 Worker 产物" }
@@ -1597,7 +2069,65 @@ export function CommanderPrototype() {
     setSelectedTask(
       nextTasks.find((task) => task.id === selectedTask.id) ?? nextTasks[0],
     );
-    setScene("run");
+    setMessages((currentMessages) => [
+      ...currentMessages,
+      {
+        from: "commander",
+        text: `已按计划分发：${nextTasks
+          .filter(
+            (task) => task.role !== "Reviewer" && task.state === "running",
+          )
+          .map((task) => `${task.title}（${task.model}）`)
+          .join("、")}。Reviewer 将在依赖完成后回到 Hub 汇总。`,
+      },
+    ]);
+    setStage("running");
+    setSceneState("hub");
+    updateUrl(variant, "hub", "running");
+    window.scrollTo({ top: 0, behavior: "instant" });
+  };
+  const simulateTask = (id: string) => {
+    const current = tasks.find((task) => task.id === id);
+    if (!current || current.state !== "running") return;
+    let nextTasks: Task[] = tasks.map((task) =>
+      task.id === id
+        ? {
+            ...task,
+            state: "done",
+            result: task.role === "Reviewer" ? "独立审查通过" : "样例任务完成",
+          }
+        : task,
+    );
+    const workersReady = nextTasks
+      .filter((task) => task.role !== "Reviewer")
+      .every((task) => task.state === "done");
+    nextTasks = nextTasks.map((task) => {
+      if (task.state !== "waiting") return task;
+      if (task.role === "Reviewer" && workersReady)
+        return { ...task, state: "running", result: "正在独立审查候选" };
+      if (
+        task.dependency === "后端接口" &&
+        nextTasks.find((candidate) => candidate.id === "csv-api")?.state ===
+          "done"
+      )
+        return { ...task, state: "running", result: "依赖已满足，准备写入" };
+      return task;
+    });
+    setTasks(nextTasks);
+    setMessages((currentMessages) => [
+      ...currentMessages,
+      {
+        from: "commander",
+        text:
+          workersReady && current.role !== "Reviewer"
+            ? "两个 Worker 的样例结果已就绪，Reviewer 已开始独立检查。"
+            : current.role === "Reviewer"
+              ? "独立 Reviewer 的样例检查已完成，候选可以回到 Hub 汇总。"
+              : `${current.title} 的样例任务已完成，其他任务继续保留在当前状态。`,
+      },
+    ]);
+    if (nextTasks.every((task) => task.state === "done"))
+      setHubStage("complete");
   };
   const preparePr = () => setPreview("pr");
 
@@ -1606,6 +2136,7 @@ export function CommanderPrototype() {
       const next = readQuery();
       setVariantState(next.variant);
       setSceneState(next.scene);
+      setStage(next.stage);
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
@@ -1615,7 +2146,42 @@ export function CommanderPrototype() {
   if (scene === "open")
     content = (
       <OpenScene
-        onStart={() => setScene("commander")}
+        onStart={() => setScene("hub")}
+        model={model}
+        setModel={setModel}
+        source={source}
+        setSource={setSource}
+      />
+    );
+  else if (scene === "hub")
+    content = (
+      <HubScene
+        stage={stage}
+        tasks={tasks}
+        setTasks={setTasks}
+        messages={messages}
+        draft={draft}
+        setDraft={setDraft}
+        onSend={sendMessage}
+        onContinue={() => {
+          window.setTimeout(
+            () =>
+              (stage === "proposal"
+                ? document.getElementById("hub-plan")
+                : document.querySelector(".hub-workspace")
+              )?.scrollIntoView({ behavior: "smooth", block: "center" }),
+            0,
+          );
+        }}
+        onConfirm={startRun}
+        onSimulate={simulateTask}
+        onOpenDetails={(next, taskId) => {
+          if (taskId)
+            setSelectedTask(
+              tasks.find((task) => task.id === taskId) ?? selectedTask,
+            );
+          setScene(next);
+        }}
         model={model}
         setModel={setModel}
         source={source}
@@ -1638,7 +2204,13 @@ export function CommanderPrototype() {
     );
   else if (scene === "plan")
     content = (
-      <PlanScene tasks={tasks} setTasks={setTasks} onStart={startRun} />
+      <PlanScene
+        tasks={tasks}
+        setTasks={setTasks}
+        onStart={startRun}
+        onBackToHub={() => setScene("hub")}
+        stage={stage}
+      />
     );
   else if (scene === "run")
     content = (
@@ -1659,6 +2231,8 @@ export function CommanderPrototype() {
         variant={variant}
         runView={runView}
         setRunView={setRunView}
+        onBackToHub={() => setScene("hub")}
+        onSimulate={simulateTask}
       />
     );
   else
@@ -1666,6 +2240,9 @@ export function CommanderPrototype() {
       <ReviewScene
         onPrepare={preparePr}
         onViewDiff={() => setPreview("diff")}
+        onBackToHub={() => setScene("hub")}
+        stage={stage}
+        reviewer={tasks.find((task) => task.role === "Reviewer") ?? tasks[2]}
       />
     );
 
@@ -1691,17 +2268,14 @@ export function CommanderPrototype() {
         />
       )}
       <main className="prototype-main">{content}</main>
-      {scene !== "open" && variant === "A" && (
+      {scene !== "open" && scene !== "hub" && variant === "A" && (
         <div className="commander-peek">
           <span className="commander-avatar">✦</span>
           <span>
             <strong>Commander</strong>
             <small>随时可以继续讨论</small>
           </span>
-          <button
-            onClick={() => setScene("commander")}
-            aria-label="打开 Commander"
-          >
+          <button onClick={() => setScene("hub")} aria-label="打开 Commander">
             ↗
           </button>
         </div>
