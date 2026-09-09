@@ -78,6 +78,24 @@ type WorkTask = {
   attempt_id?: string;
 };
 
+type Attempt = {
+  id: string;
+  status?: string;
+  task_id?: string;
+  run_id?: string;
+};
+type Selection = { kind: "task" | "attempt"; id: string } | null;
+type LocalDraft = {
+  content: string;
+  selectedId: string | null;
+  dirty: boolean;
+  error?: string;
+};
+type FeedbackByAttempt = Record<
+  string,
+  { state: ModelFeedbackState; observed: number; connection: ConnectionStatus }
+>;
+
 type CommanderOption = {
   profile_ref: string;
   profile_revision?: number;
@@ -166,6 +184,66 @@ function feedbackState(
   return null;
 }
 
+function draftStorageKey(pid: string, cid: string): string {
+  return `karajan:commander-draft:${pid}:${cid}`;
+}
+
+function settingsStorageKey(pid: string): string {
+  return `karajan:commander-creation-settings:${pid}`;
+}
+
+function commandIdentity(
+  command: string,
+  target: string,
+  body: unknown,
+  revision?: number,
+): string {
+  return `${command}:${target}:${revision ?? ""}:${JSON.stringify(body)}`;
+}
+
+function eventAttemptId(value: Record<string, unknown>): string | undefined {
+  const payload =
+    typeof value.payload === "object" && value.payload !== null
+      ? (value.payload as Record<string, unknown>)
+      : value;
+  const attemptId = payload.attempt_id ?? value.attempt_id;
+  return typeof attemptId === "string" ? attemptId : undefined;
+}
+
+function observedTimestamp(value: Record<string, unknown>): number {
+  const payload =
+    typeof value.payload === "object" && value.payload !== null
+      ? (value.payload as Record<string, unknown>)
+      : value;
+  const observed = payload.observed_at ?? value.observed_at;
+  if (typeof observed !== "number" || !Number.isFinite(observed)) return 0;
+  return observed < 10_000_000_000 ? observed * 1000 : observed;
+}
+
+function scopedFact(fact: unknown, selection: Selection): unknown {
+  if (!selection || fact == null) return null;
+  const matches = (value: unknown): boolean => {
+    if (typeof value !== "object" || value === null) return false;
+    const item = value as Record<string, unknown>;
+    return (
+      item.id === selection.id ||
+      item.task_id === selection.id ||
+      item.source_task_id === selection.id ||
+      item.attempt_id === selection.id
+    );
+  };
+  if (Array.isArray(fact)) return fact.filter(matches);
+  if (typeof fact !== "object") return null;
+  const record = fact as Record<string, unknown>;
+  if (matches(record)) return record;
+  if (record[selection.id] != null) return record[selection.id];
+  for (const key of ["items", "results", "entries", "events"]) {
+    if (Array.isArray(record[key]))
+      return (record[key] as unknown[]).filter(matches);
+  }
+  return null;
+}
+
 export function CommanderWorkbench({
   projects,
   csrf,
@@ -199,22 +277,28 @@ export function CommanderWorkbench({
   const [draftDirty, setDraftDirty] = useState(false);
   const [profile, setProfile] = useState("");
   const [source, setSource] = useState("");
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selection, setSelection] = useState<Selection>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [feedback, setFeedback] = useState<{
-    state: ModelFeedbackState;
-    observed: number;
-    connection: ConnectionStatus;
-  }>({ state: "idle", observed: 0, connection: "unknown" });
+  const [feedbackByAttempt, setFeedbackByAttempt] = useState<FeedbackByAttempt>(
+    {},
+  );
+  const [connection, setConnection] = useState<ConnectionStatus>("unknown");
+  const [subscriptionVersion, setSubscriptionVersion] = useState(0);
   const eventSeqRef = useRef(0);
   const generation = useRef(0);
   const projectRef = useRef(projectId);
   const conversationRef = useRef(conversationId);
   const draftRef = useRef(draft);
+  const selectionRef = useRef<Selection>(selection);
   const draftRevisionRef = useRef<Record<string, number>>({});
+  const localDrafts = useRef<Record<string, LocalDraft>>({});
   const draftOperations = useRef(new Map<string, string>());
   const draftQueues = useRef(new Map<string, Promise<boolean>>());
+  const commandOperations = useRef(new Map<string, string>());
+  const creationSettings = useRef<
+    Record<string, { profile: string; source: string }>
+  >({});
   const eventTimer = useRef<number | undefined>(undefined);
   const streamRef = useRef<EventSource | null>(null);
   const project = projects.find((item) => item.id === projectId) ?? projects[0];
@@ -223,7 +307,31 @@ export function CommanderWorkbench({
     projectRef.current = projectId;
     conversationRef.current = conversationId;
     draftRef.current = draft;
-  }, [projectId, conversationId, draft]);
+    selectionRef.current = selection;
+  }, [projectId, conversationId, draft, selection]);
+
+  const rememberLocalDraft = useCallback(
+    (pid: string, cid: string, value: LocalDraft) => {
+      if (!cid) return;
+      localDrafts.current[`${pid}:${cid}`] = value;
+      sessionStorage.setItem(draftStorageKey(pid, cid), value.content);
+    },
+    [],
+  );
+
+  const rememberCreationSettings = useCallback(
+    (pid: string, nextProfile: string, nextSource: string) => {
+      creationSettings.current[pid] = {
+        profile: nextProfile,
+        source: nextSource,
+      };
+      sessionStorage.setItem(
+        settingsStorageKey(pid),
+        JSON.stringify({ profile: nextProfile, source: nextSource }),
+      );
+    },
+    [],
+  );
 
   const loadConversations = useCallback(async (id: string) => {
     try {
@@ -272,7 +380,11 @@ export function CommanderWorkbench({
       setSnapshot(null);
       setOptions([]);
       eventSeqRef.current = 0;
-      setFeedback({ state: "idle", observed: 0, connection: "unknown" });
+      setFeedbackByAttempt({});
+      setConnection("unknown");
+      setDraft("");
+      setDraftDirty(false);
+      setSelection(null);
       sessionStorage.setItem("karajan:commander-project", pid);
       sessionStorage.setItem(`karajan:commander-conversation:${pid}`, id);
       sessionStorage.setItem("karajan:commander-conversation", id);
@@ -287,16 +399,40 @@ export function CommanderWorkbench({
         )
           return;
         setSnapshot(data);
-        const localDraft = sessionStorage.getItem(
-          `karajan:commander-draft:${pid}:${id}`,
-        );
-        setDraft(data.draft?.content ?? localDraft ?? "");
-        setDraftDirty(false);
+        eventSeqRef.current = data.snapshot_event_seq ?? 0;
+        const local = localDrafts.current[`${pid}:${id}`];
+        const serverDraft = data.draft?.content ?? "";
+        // A local dirty value represents an unresolved server write.  It wins
+        // over a recovered snapshot, while a clean cached value never does.
+        const restored = local?.dirty
+          ? local
+          : {
+              content: serverDraft,
+              selectedId: data.draft?.selected_task_id ?? null,
+              dirty: false,
+            };
+        setDraft(restored.content);
+        setDraftDirty(restored.dirty);
+        if (restored.dirty && restored.error) setError(restored.error);
         draftRevisionRef.current[id] = data.draft?.revision ?? 0;
-        setSelectedTaskId(data.draft?.selected_task_id ?? null);
+        const restoredIsAttempt = (data.runs ?? []).some((run) =>
+          (run.attempts ?? []).some(
+            (attempt) => attempt.id === restored.selectedId,
+          ),
+        );
+        setSelection(
+          restored.selectedId
+            ? {
+                kind: restoredIsAttempt ? "attempt" : "task",
+                id: restored.selectedId,
+              }
+            : null,
+        );
         setProfile(data.conversation?.commander_profile_ref ?? "");
         setSource(data.conversation?.commander_source_ref ?? "");
         await loadOptions(pid, token);
+        if (token === generation.current)
+          setSubscriptionVersion((old) => old + 1);
       } catch (cause) {
         if (token === generation.current)
           setError(
@@ -312,6 +448,30 @@ export function CommanderWorkbench({
   useEffect(() => {
     if (conversationId) void openConversation(conversationId, projectId);
   }, []); // restore after refresh
+
+  useEffect(() => {
+    if (
+      !conversationId &&
+      projectId &&
+      conversations[projectId]?.length === 0
+    ) {
+      const saved = sessionStorage.getItem(settingsStorageKey(projectId));
+      if (saved) {
+        try {
+          const value = JSON.parse(saved) as {
+            profile?: string;
+            source?: string;
+          };
+          setProfile(value.profile ?? "");
+          setSource(value.source ?? "");
+        } catch {
+          setProfile("");
+          setSource("");
+        }
+      }
+      void loadOptions(projectId, generation.current);
+    }
+  }, [conversationId, conversations, loadOptions, projectId]);
 
   useEffect(() => {
     if (conversationId || !projectId) return;
@@ -390,21 +550,26 @@ export function CommanderWorkbench({
       }
       const state = feedbackState(eventName, value);
       if (state) {
-        const payload =
-          typeof value.payload === "object" && value.payload !== null
-            ? (value.payload as Record<string, unknown>)
-            : value;
-        const observed = payload.observed_at ?? value.observed_at;
-        const timestamp =
-          typeof observed === "number"
-            ? observed < 10_000_000_000
-              ? observed * 1000
-              : observed
-            : Date.now();
-        setFeedback({ state, observed: timestamp, connection: "connected" });
+        const attemptId = eventAttemptId(value);
+        if (attemptId)
+          setFeedbackByAttempt((old) => ({
+            ...old,
+            [attemptId]: {
+              state,
+              observed: observedTimestamp(value),
+              connection: "connected",
+            },
+          }));
       }
       if (value.freshness === "stale")
         setSnapshot((old) => old && { ...old, freshness: "stale" });
+      const eventChangesFacts = !state;
+      if (eventChangesFacts) {
+        // Named events carry an invalidation, not a complete Hub projection.
+        // Reload before advancing the local watermark so the facts stay honest.
+        void recover();
+        return;
+      }
       if (sequence != null)
         setSnapshot((old) => old && { ...old, snapshot_event_seq: sequence });
     };
@@ -415,14 +580,22 @@ export function CommanderWorkbench({
         `/v1/conversations/${encodeURIComponent(cid)}/events?after_seq=${eventSeqRef.current}`,
       );
       streamRef.current = stream;
-      stream.onopen = () =>
-        setFeedback((old) => ({ ...old, connection: "connected" }));
+      stream.onopen = () => setConnection("connected");
+      stream.onmessage = (event) => handle("message", event);
       [
         "conversation_created",
         "conversation_settings_saved",
         "message_created",
         "draft_saved",
         "task_draft_created",
+        "conversation_updated",
+        "task_updated",
+        "attempt_updated",
+        "run_updated",
+        "candidate_updated",
+        "checks_updated",
+        "review_updated",
+        "delivery_updated",
         "feedback",
         "model_feedback",
         "progress",
@@ -442,7 +615,7 @@ export function CommanderWorkbench({
       stream.onerror = () => {
         stream.close();
         if (disposed || token !== generation.current) return;
-        setFeedback((old) => ({ ...old, connection: "disconnected" }));
+        setConnection("disconnected");
         window.clearTimeout(eventTimer.current);
         eventTimer.current = window.setTimeout(connect, 1000);
       };
@@ -453,23 +626,28 @@ export function CommanderWorkbench({
       close();
       window.clearTimeout(eventTimer.current);
     };
-  }, [conversationId, projectId, openConversation]);
+  }, [conversationId, openConversation, projectId, subscriptionVersion]);
 
   const saveDraft = useCallback(
     (
       value = draftRef.current,
-      taskId: string | null = selectedTaskId,
+      taskId: string | null = selectionRef.current?.id ?? null,
       context = { pid: projectRef.current, cid: conversationRef.current },
     ): Promise<boolean> => {
       if (!context.cid) return Promise.resolve(false);
-      const identity = `${context.cid}:${value}:${taskId ?? ""}`;
       const previous =
         draftQueues.current.get(context.cid) ?? Promise.resolve(true);
       const operation = previous.then(async () => {
+        const revision = draftRevisionRef.current[context.cid] ?? 0;
+        const body = {
+          content: value,
+          selected_task_id: taskId,
+          base_plan_revision: null,
+        };
+        const identity = commandIdentity("draft", context.cid, body, revision);
         const operationId =
           draftOperations.current.get(identity) ?? crypto.randomUUID();
         draftOperations.current.set(identity, operationId);
-        const revision = draftRevisionRef.current[context.cid] ?? 0;
         try {
           const response = await fetch(
             `/v1/conversations/${encodeURIComponent(context.cid)}/draft`,
@@ -481,11 +659,7 @@ export function CommanderWorkbench({
                 "Idempotency-Key": stableKey("draft", operationId),
                 "If-Match": `"${revision}"`,
               },
-              body: JSON.stringify({
-                content: value,
-                selected_task_id: taskId,
-                base_plan_revision: null,
-              }),
+              body: JSON.stringify(body),
             },
           );
           if (!response.ok)
@@ -493,13 +667,17 @@ export function CommanderWorkbench({
           const result = (await response.json()) as { revision?: number };
           if (typeof result.revision === "number")
             draftRevisionRef.current[context.cid] = result.revision;
-          sessionStorage.setItem(
-            `karajan:commander-draft:${context.pid}:${context.cid}`,
-            value,
-          );
+          draftOperations.current.delete(identity);
+          rememberLocalDraft(context.pid, context.cid, {
+            content: value,
+            selectedId: taskId,
+            dirty: false,
+          });
           if (
             projectRef.current === context.pid &&
-            conversationRef.current === context.cid
+            conversationRef.current === context.cid &&
+            draftRef.current === value &&
+            (selectionRef.current?.id ?? null) === taskId
           ) {
             setDraftDirty(false);
             setSnapshot(
@@ -517,17 +695,19 @@ export function CommanderWorkbench({
           }
           return true;
         } catch (cause) {
-          sessionStorage.setItem(
-            `karajan:commander-draft:${context.pid}:${context.cid}`,
-            value,
-          );
+          const message =
+            cause instanceof Error ? cause.message : "草稿保存失败，请重试。";
+          rememberLocalDraft(context.pid, context.cid, {
+            content: value,
+            selectedId: taskId,
+            dirty: true,
+            error: message,
+          });
           if (
             projectRef.current === context.pid &&
             conversationRef.current === context.cid
           )
-            setError(
-              cause instanceof Error ? cause.message : "草稿保存失败，请重试。",
-            );
+            setError(message);
           return false;
         }
       });
@@ -538,19 +718,21 @@ export function CommanderWorkbench({
       });
       return operation;
     },
-    [csrf, selectedTaskId],
+    [csrf, rememberLocalDraft],
   );
 
-  async function createConversation(task = false) {
-    const targetProject = project;
+  async function createConversation(
+    task = false,
+    targetProjectId = projectRef.current,
+  ) {
+    const targetProject = projects.find((item) => item.id === targetProjectId);
     const targetConversation = conversationRef.current;
+    const content = draftRef.current;
     if (!targetProject || (task && !targetConversation)) return;
-    if (task && !draftRef.current.trim()) {
+    if (task && !content.trim()) {
       setError("请先写下新任务目标。");
       return;
     }
-    const operationId = crypto.randomUUID();
-    const targetProjectId = targetProject.id;
     const token = generation.current;
     setBusy(true);
     setError("");
@@ -558,13 +740,28 @@ export function CommanderWorkbench({
       const endpoint = task
         ? `/v1/conversations/${encodeURIComponent(targetConversation)}/task-drafts`
         : `/v1/projects/${encodeURIComponent(targetProjectId)}/conversations`;
+      const targetSettings =
+        targetProjectId === projectRef.current
+          ? { profile, source }
+          : (creationSettings.current[targetProjectId] ?? {
+              profile: "",
+              source: "",
+            });
       const body = task
-        ? { requirement: draftRef.current }
+        ? { requirement: content }
         : {
             title: "新的 Commander 会话",
-            commander_profile_ref: profile || null,
-            commander_source_ref: source || null,
+            commander_profile_ref: targetSettings.profile || null,
+            commander_source_ref: targetSettings.source || null,
           };
+      const identity = commandIdentity(
+        task ? "task-draft" : "conversation",
+        task ? targetConversation : targetProjectId,
+        body,
+      );
+      const operationId =
+        commandOperations.current.get(identity) ?? crypto.randomUUID();
+      commandOperations.current.set(identity, operationId);
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -582,18 +779,35 @@ export function CommanderWorkbench({
           response,
           task ? "新任务草稿未保存，请重试。" : "新会话未创建，请重试。",
         );
+      commandOperations.current.delete(identity);
       if (task) {
-        setDraft("");
-        setDraftDirty(false);
-        await openConversation(targetConversation, targetProjectId, token);
+        if (
+          token === generation.current &&
+          targetProjectId === projectRef.current &&
+          targetConversation === conversationRef.current
+        ) {
+          setDraft("");
+          setDraftDirty(false);
+          rememberLocalDraft(targetProjectId, targetConversation, {
+            content: "",
+            selectedId: selectionRef.current?.id ?? null,
+            dirty: false,
+          });
+          await openConversation(targetConversation, targetProjectId, token);
+        }
       } else {
         const value = (await response.json()) as Conversation;
         await loadConversations(targetProjectId);
-        if (token === generation.current)
+        if (
+          token === generation.current &&
+          targetProjectId === projectRef.current &&
+          !conversationRef.current
+        )
           await openConversation(value.id, targetProjectId);
       }
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "新建失败。");
+      if (token === generation.current)
+        setError(cause instanceof Error ? cause.message : "新建失败。");
     } finally {
       setBusy(false);
     }
@@ -604,7 +818,12 @@ export function CommanderWorkbench({
     const pid = projectRef.current;
     const content = draftRef.current;
     if (!cid || !content.trim()) return;
-    const clientMessageId = crypto.randomUUID();
+    const token = generation.current;
+    const body = { content };
+    const identity = commandIdentity("message", cid, body);
+    const clientMessageId =
+      commandOperations.current.get(identity) ?? crypto.randomUUID();
+    commandOperations.current.set(identity, clientMessageId);
     setBusy(true);
     setError("");
     try {
@@ -618,26 +837,42 @@ export function CommanderWorkbench({
             "Idempotency-Key": stableKey("message", clientMessageId),
           },
           body: JSON.stringify({
-            content,
+            content: body.content,
             client_message_id: clientMessageId,
           }),
         },
       );
       if (!response.ok)
         throw await describeError(response, "消息未保存，请重试。");
-      if (pid === projectRef.current && cid === conversationRef.current) {
+      commandOperations.current.delete(identity);
+      if (
+        token === generation.current &&
+        pid === projectRef.current &&
+        cid === conversationRef.current
+      ) {
         setDraft("");
         setDraftDirty(false);
+        rememberLocalDraft(pid, cid, {
+          content: "",
+          selectedId: null,
+          dirty: false,
+        });
+        await openConversation(cid, pid);
       }
-      await openConversation(cid, pid);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "消息未保存，请重试。");
+      if (
+        token === generation.current &&
+        pid === projectRef.current &&
+        cid === conversationRef.current
+      )
+        setError(
+          cause instanceof Error ? cause.message : "消息未保存，请重试。",
+        );
     } finally {
       setBusy(false);
     }
   }
   async function saveSettings(nextProfile: string, nextSource: string) {
-    if (!conversationId) return;
     if (
       !options.some(
         (item) =>
@@ -651,8 +886,21 @@ export function CommanderWorkbench({
     const cid = conversationRef.current;
     setProfile(nextProfile);
     setSource(nextSource);
+    rememberCreationSettings(pid, nextProfile, nextSource);
+    // An empty project has no Conversation resource to update yet.  This is a
+    // creation choice only; it is sent when the user explicitly creates one.
+    if (!cid) return;
+    const token = generation.current;
     try {
-      const operationId = crypto.randomUUID();
+      const body = {
+        commander_profile_ref: nextProfile,
+        commander_source_ref: nextSource,
+      };
+      const revision = snapshot?.conversation?.revision ?? 0;
+      const identity = commandIdentity("settings", cid, body, revision);
+      const operationId =
+        commandOperations.current.get(identity) ?? crypto.randomUUID();
+      commandOperations.current.set(identity, operationId);
       const response = await fetch(
         `/v1/conversations/${encodeURIComponent(cid)}/settings`,
         {
@@ -661,23 +909,26 @@ export function CommanderWorkbench({
             "Content-Type": "application/json",
             "X-CSRF-Token": csrf,
             "Idempotency-Key": stableKey("settings", operationId),
-            "If-Match": `"${snapshot?.conversation?.revision ?? 0}"`,
+            "If-Match": `"${revision}"`,
           },
-          body: JSON.stringify({
-            commander_profile_ref: nextProfile,
-            commander_source_ref: nextSource,
-          }),
+          body: JSON.stringify(body),
         },
       );
       if (!response.ok)
         throw await describeError(response, "选择保存失败，请重试。");
+      commandOperations.current.delete(identity);
       const value = (await response.json()) as Conversation;
-      if (pid === projectRef.current && cid === conversationRef.current)
+      if (
+        token === generation.current &&
+        pid === projectRef.current &&
+        cid === conversationRef.current
+      )
         setSnapshot((old) => old && { ...old, conversation: value });
     } catch (cause) {
-      setError(
-        cause instanceof Error ? cause.message : "选择保存失败，请重试。",
-      );
+      if (token === generation.current)
+        setError(
+          cause instanceof Error ? cause.message : "选择保存失败，请重试。",
+        );
     }
   }
 
@@ -691,7 +942,11 @@ export function CommanderWorkbench({
       cid: conversationRef.current,
     };
     if (oldContext.cid && draftDirty)
-      await saveDraft(draftRef.current, selectedTaskId, oldContext);
+      await saveDraft(
+        draftRef.current,
+        selectionRef.current?.id ?? null,
+        oldContext,
+      );
     const token = ++generation.current;
     setExpanded((old) => ({ ...old, [nextProjectId]: true }));
     setProjectId(nextProjectId);
@@ -701,8 +956,10 @@ export function CommanderWorkbench({
     setSnapshot(null);
     setOptions([]);
     setDraft("");
-    setSelectedTaskId(null);
-    setFeedback({ state: "idle", observed: 0, connection: "unknown" });
+    setDraftDirty(false);
+    setSelection(null);
+    setFeedbackByAttempt({});
+    setConnection("unknown");
     sessionStorage.setItem("karajan:commander-project", nextProjectId);
     const items = await loadConversations(nextProjectId);
     if (token !== generation.current || projectRef.current !== nextProjectId)
@@ -715,7 +972,28 @@ export function CommanderWorkbench({
       : items[items.length - 1]?.id;
     if (nextConversation)
       await openConversation(nextConversation, nextProjectId, token);
-    else await loadOptions(nextProjectId, token);
+    else {
+      const savedSettings = sessionStorage.getItem(
+        settingsStorageKey(nextProjectId),
+      );
+      if (savedSettings) {
+        try {
+          const value = JSON.parse(savedSettings) as {
+            profile?: string;
+            source?: string;
+          };
+          setProfile(value.profile ?? "");
+          setSource(value.source ?? "");
+        } catch {
+          setProfile("");
+          setSource("");
+        }
+      } else {
+        setProfile("");
+        setSource("");
+      }
+      await loadOptions(nextProjectId, token);
+    }
   }
 
   const tasks = useMemo<WorkTask[]>(
@@ -735,7 +1013,7 @@ export function CommanderWorkbench({
       ),
     [snapshot],
   );
-  const agents = useMemo(
+  const agents = useMemo<Attempt[]>(
     () =>
       (snapshot?.runs ?? []).flatMap((run) =>
         (run.attempts ?? []).map((attempt) => ({ ...attempt, run_id: run.id })),
@@ -745,7 +1023,18 @@ export function CommanderWorkbench({
   const selectedOption = options.find(
     (item) => item.profile_ref === profile && item.source_ref === source,
   );
-  const fact =
+  const selectedAttemptId =
+    selection?.kind === "attempt"
+      ? selection.id
+      : agents.find((agent) => agent.task_id === selection?.id)?.id;
+  const selectedFeedback = selectedAttemptId
+    ? (feedbackByAttempt[selectedAttemptId] ?? {
+        state: "idle" as const,
+        observed: 0,
+        connection,
+      })
+    : { state: "idle" as const, observed: 0, connection };
+  const conversationFact =
     tab === "Diff"
       ? snapshot?.candidate
       : tab === "Checks"
@@ -755,6 +1044,7 @@ export function CommanderWorkbench({
           : tab === "Logs"
             ? snapshot?.logs
             : snapshot?.dependencies;
+  const fact = scopedFact(conversationFact, selection);
   return (
     <section className="commander-workbench" aria-label="Commander 工作台">
       <aside className="commander-sidebar">
@@ -781,13 +1071,26 @@ export function CommanderWorkbench({
         </button>
         {projects.map((item) => (
           <div className="project-tree" key={item.id}>
-            <button
-              className={`project-tree-row ${item.id === project?.id ? "selected" : ""}`}
-              onClick={() => void selectProject(item.id)}
-            >
-              <span>{expanded[item.id] ? "⌄" : "›"}</span>
-              <strong>{item.name}</strong>
-            </button>
+            <div className="project-tree-row-wrap">
+              <button
+                className={`project-tree-row ${item.id === project?.id ? "selected" : ""}`}
+                onClick={() => void selectProject(item.id)}
+              >
+                <span>{expanded[item.id] ? "⌄" : "›"}</span>
+                <strong>{item.name}</strong>
+              </button>
+              <button
+                className="project-create-button"
+                aria-label={`在 ${item.name} 新建对话`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  void createConversation(false, item.id);
+                }}
+                disabled={busy}
+              >
+                ＋
+              </button>
+            </div>
             {expanded[item.id] &&
               (conversations[item.id] ?? []).map((conversation) => (
                 <button
@@ -795,7 +1098,10 @@ export function CommanderWorkbench({
                   key={conversation.id}
                   onClick={async () => {
                     if (draftDirty)
-                      await saveDraft(draftRef.current, selectedTaskId);
+                      await saveDraft(
+                        draftRef.current,
+                        selectionRef.current?.id ?? null,
+                      );
                     await openConversation(conversation.id, item.id);
                   }}
                 >
@@ -931,9 +1237,9 @@ export function CommanderWorkbench({
               </span>
             </nav>
             <ModelFeedback
-              state={feedback.state}
-              lastObservedAt={feedback.observed}
-              connection={feedback.connection}
+              state={selectedFeedback.state}
+              lastObservedAt={selectedFeedback.observed}
+              connection={selectedFeedback.connection}
               staleDurationMs={120000}
             />
             {tab === "Hub" && (
@@ -965,9 +1271,14 @@ export function CommanderWorkbench({
                     onChange={(event) => {
                       setDraft(event.target.value);
                       setDraftDirty(true);
-                      sessionStorage.setItem(
-                        `karajan:commander-draft:${projectRef.current}:${conversationRef.current}`,
-                        event.target.value,
+                      rememberLocalDraft(
+                        projectRef.current,
+                        conversationRef.current,
+                        {
+                          content: event.target.value,
+                          selectedId: selectionRef.current?.id ?? null,
+                          dirty: true,
+                        },
                       );
                     }}
                     onBlur={() => void saveDraft()}
@@ -1010,16 +1321,11 @@ export function CommanderWorkbench({
                     {tasks.length ? (
                       tasks.map((task) => (
                         <button
-                          className={`task-row ${task.id === selectedTaskId ? "selected" : ""}`}
+                          className={`task-row ${selection?.kind === "task" && task.id === selection.id ? "selected" : ""}`}
                           key={task.id}
                           onClick={() => {
-                            setSelectedTaskId(task.id);
-                            if (
-                              (snapshot?.task_drafts ?? []).some(
-                                (item) => item.id === task.id,
-                              )
-                            )
-                              void saveDraft(draftRef.current, task.id);
+                            setSelection({ kind: "task", id: task.id });
+                            void saveDraft(draftRef.current, task.id);
                           }}
                         >
                           <span className="task-status">
@@ -1047,10 +1353,17 @@ export function CommanderWorkbench({
                     <p className="eyebrow">Agents</p>
                     {agents.length ? (
                       agents.map((agent) => (
-                        <div className="agent-row" key={agent.id}>
+                        <button
+                          className={`agent-row ${selection?.kind === "attempt" && agent.id === selection.id ? "selected" : ""}`}
+                          key={agent.id}
+                          onClick={() => {
+                            setSelection({ kind: "attempt", id: agent.id });
+                            void saveDraft(draftRef.current, agent.id);
+                          }}
+                        >
                           <strong>{agent.id}</strong>
                           <span>{agent.status ?? "待确认"}</span>
-                        </div>
+                        </button>
                       ))
                     ) : (
                       <p className="muted">当前会话暂无 Agent Attempt 事实。</p>
@@ -1063,9 +1376,13 @@ export function CommanderWorkbench({
               <div className="detail-panel">
                 <p className="eyebrow">{tab.toUpperCase()}</p>
                 <h2>{tab}</h2>
-                {fact == null ? (
+                {!selection ? (
                   <p className="muted">
-                    当前会话暂无 {tab} 事实，或证据尚未产生。
+                    选择 Task 或 Agent 后查看其 {tab} 事实。
+                  </p>
+                ) : fact == null ? (
+                  <p className="muted">
+                    所选对象暂无 {tab} 事实，或证据尚未产生。
                   </p>
                 ) : (
                   <pre className="fact-view">
