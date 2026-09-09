@@ -852,6 +852,12 @@ class RunPlanner:
             if version_two != (run["schema_version"] == "karajan.run-planning.v2"):
                 raise RunError("RUN_PROTOCOL_VERSION_MISMATCH")
             self._owner(run, principal)
+            if run.get("owner_proposals"):
+                # Proposal-bearing Runs must use ProposalStore's
+                # conversation/revision/If-Match authority path.  Keeping
+                # this at the Run seam prevents non-HTTP consumers from
+                # bypassing source freshness or immutable proposal binding.
+                raise RunError("CONVERSATION_PROPOSAL_BINDING_REQUIRED")
             self._term(run, request["term"])
             if request["plan_revision"] != run["latest_plan_revision"] or not run["plans"]:
                 raise RunError("PLAN_REVISION_STALE")

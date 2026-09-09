@@ -712,6 +712,17 @@ class ConversationStore:
                                 "reason_code": "TASK_NOT_READY",
                             }
                         )
+            proposal_revisions: set[int] = set()
+            for proposal in proposals:
+                revision = proposal.get("proposal_revision") if isinstance(proposal, dict) else None
+                if type(revision) is not int or revision < 1 or revision in proposal_revisions:
+                    raise ConversationError("PROPOSAL_REVISION_AMBIGUOUS")
+                proposal_revisions.add(revision)
+            current_proposal = (
+                max(proposals, key=lambda proposal: proposal["proposal_revision"])
+                if proposals
+                else None
+            )
             return {
                 "conversation": item,
                 "messages": messages,
@@ -723,7 +734,7 @@ class ConversationStore:
                 "attempts": attempts,
                 "agents": agents,
                 "proposals": proposals,
-                "current_proposal": proposals[-1] if proposals else None,
+                "current_proposal": current_proposal,
                 "blockers": blockers,
                 "snapshot_event_seq": item["last_event_seq"],
             }

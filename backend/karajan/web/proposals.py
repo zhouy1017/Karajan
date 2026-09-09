@@ -23,6 +23,7 @@ def register_proposal_routes(app: FastAPI, store: ProposalStore) -> None:
                     "STALE",
                     "MISMATCH",
                     "CONFLICT",
+                    "COLLISION",
                     "REUSED",
                     "CROSS_PROJECT",
                     "ALREADY",

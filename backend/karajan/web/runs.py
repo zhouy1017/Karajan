@@ -78,12 +78,12 @@ def register_run_routes(
         # Conversation-aware clients must bind the immutable proposal they saw.
         # Legacy Run clients keep their released route and cannot accidentally
         # address a cross-project proposal by omitting the new identity.
+        if {"run_id", "run_revision"} & set(data):
+            raise RunError("APPROVAL_ROUTE_AUTHORITY_OVERRIDE")
         has_conversation_fields = {"conversation_id", "proposal_revision"} & set(data)
         if has_conversation_fields:
             if has_conversation_fields != {"conversation_id", "proposal_revision"}:
-                from fastapi import HTTPException
-
-                raise HTTPException(422, {"reason_code": "CONVERSATION_PROPOSAL_BINDING_REQUIRED"})
+                raise RunError("CONVERSATION_PROPOSAL_BINDING_REQUIRED")
             from .projects import expected_revision
 
             return proposals.approve(
@@ -93,6 +93,8 @@ def register_run_routes(
                 key=command_key(request),
                 principal="owner",
             )
+        if planner.get(run_id, principal="owner").get("owner_proposals"):
+            raise RunError("CONVERSATION_PROPOSAL_BINDING_REQUIRED")
         return planner.approve_plan(
             run_id, data, command_key=command_key(request), principal="owner"
         )

@@ -157,7 +157,7 @@ def _validate_workspace(
         raise RunError("TASK_INPUT_UNIQUE_TASK_REQUIRED")
     task = matches[0]
     requirements = routing["task_requirements"][task["id"]]
-    if requirements != {
+    expected_requirements = {
         key: task[key]
         for key in (
             "revision",
@@ -173,7 +173,11 @@ def _validate_workspace(
             "context_tokens",
             "duration_seconds",
         )
-    }:
+    }
+    for key in ("profile_ref", "source_ref", "checks"):
+        if task.get(key) is not None:
+            expected_requirements[key] = task[key]
+    if requirements != expected_requirements:
         raise RunError("TASK_INPUT_TASK_BINDING_MISMATCH")
     if (
         task["role"] != "worker"

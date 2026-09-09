@@ -10,8 +10,9 @@ creates a Worker request.
 from __future__ import annotations
 
 import json
+import uuid
 from collections.abc import Iterator
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from copy import deepcopy
 from typing import Any, cast
 
@@ -123,20 +124,29 @@ class ProposalStore:
         request = self._input(request)
         identity = self._identity(conversation_id, request)
 
-        def apply(db: Any) -> dict[str, Any]:
-            run = self.planner._get(db, request["run_id"])
-            self._owner_conversation(db, run, conversation_id, principal)
-            base = self._base(run, request)
-            compiled, assignments = self._compile(run, base, request["edits"])
-            with self._current_authority_guard(run, assignments, plan=compiled):
-                proposal_revision = self._next_revision(db, conversation_id)
-                result = self._record(run, base, compiled, assignments, request, proposal_revision)
-                run.setdefault("owner_proposals", []).append(result)
-                self.planner._save(db, run)
-            return result
-
         try:
-            return self.planner._command("proposal", identity, principal, key, apply)
+            # Run is acquired first by _command.  The Project guard is entered
+            # only inside its operation and this stack remains open until that
+            # Run transaction has durably committed.
+            with ExitStack() as holds:
+
+                def apply(db: Any) -> dict[str, Any]:
+                    run = self.planner._get(db, request["run_id"])
+                    self._owner_conversation(db, run, conversation_id, principal)
+                    base = self._base(run, request)
+                    compiled, assignments = self._compile(run, base, request["edits"])
+                    holds.enter_context(
+                        self._current_authority_guard(run, assignments, plan=compiled)
+                    )
+                    proposal_revision = self._next_revision(db, conversation_id)
+                    result = self._record(
+                        run, base, compiled, assignments, request, proposal_revision
+                    )
+                    run.setdefault("owner_proposals", []).append(result)
+                    self.planner._save(db, run)
+                    return result
+
+                return self.planner._command("proposal", identity, principal, key, apply)
         except RunError as error:
             raise ProposalError(error.code) from None
 
@@ -196,9 +206,11 @@ class ProposalStore:
             raise ProposalError("CONVERSATION_ID_REQUIRED")
         if type(request.get("proposal_revision")) is not int:
             raise ProposalError("PROPOSAL_REVISION_REQUIRED")
+        if {"run_id", "run_revision"} & set(request):
+            raise ProposalError("APPROVAL_ROUTE_AUTHORITY_OVERRIDE")
         return self._mutate_proposal(
             "proposal_approve",
-            {"run_id": run_id, "run_revision": run_revision, **request},
+            {**request, "run_id": run_id, "run_revision": run_revision},
             principal,
             key,
             accept=True,
@@ -218,26 +230,36 @@ class ProposalStore:
             request = {**request, "run_id": run_id}
         identity = self._identity(str(request["conversation_id"]), request)
 
-        def apply(db: Any) -> dict[str, Any]:
-            run = self.planner._get(db, str(run_id))
-            self._owner_conversation(db, run, str(request["conversation_id"]), principal)
-            if run["revision"] != request["run_revision"]:
-                raise RunError("RUN_REVISION_STALE")
-            proposal = self._proposal(run, int(request["proposal_revision"]))
-            with self._current_authority_guard(run, proposal["assignments"]):
-                if accept and proposal.get("accepted_at") is None:
-                    proposal["accepted_at"] = self.planner.clock()
-                    proposal["accepted_by"] = principal
-                if kind == "proposal_accept":
-                    self.planner._save(db, run)
-                    return proposal
-                approval = self._approval(run, proposal, request, principal)
-                proposal["approval_id"] = approval["id"]
-                self.planner._save(db, run)
-                return approval
-
         try:
-            return self.planner._command(kind, identity, principal, key, apply)
+            # This ExitStack closes only after _command's Run transaction
+            # commits (or rolls back), retaining source authority across the
+            # durable proposal/acceptance/approval write.
+            with ExitStack() as holds:
+
+                def apply(db: Any) -> dict[str, Any]:
+                    run = self.planner._get(db, str(run_id))
+                    self._owner_conversation(db, run, str(request["conversation_id"]), principal)
+                    if run["revision"] != request["run_revision"]:
+                        raise RunError("RUN_REVISION_STALE")
+                    proposal = self._proposal(run, int(request["proposal_revision"]))
+                    self._assert_proposal_current(run, proposal)
+                    holds.enter_context(
+                        self._current_authority_guard(
+                            run, proposal["assignments"], plan=proposal["preview"]
+                        )
+                    )
+                    if accept and proposal.get("accepted_at") is None:
+                        proposal["accepted_at"] = self.planner.clock()
+                        proposal["accepted_by"] = principal
+                    if kind == "proposal_accept":
+                        self.planner._save(db, run)
+                        return proposal
+                    approval = self._approval(run, proposal, request, principal)
+                    proposal["approval_id"] = approval["id"]
+                    self.planner._save(db, run)
+                    return approval
+
+                return self.planner._command(kind, identity, principal, key, apply)
         except RunError as error:
             raise ProposalError(error.code) from None
 
@@ -291,7 +313,6 @@ class ProposalStore:
     ) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
         plan = cast(dict[str, Any], deepcopy(base["plan"]))
         tasks = {task["id"]: task for task in plan["tasks"]}
-        assignments: dict[str, dict[str, Any]] = {}
         for edit in edits:
             task = tasks.get(edit["task_id"])
             if task is None:
@@ -306,17 +327,17 @@ class ProposalStore:
             if "write_paths" in edit:
                 task["paths"] = edit["write_paths"]
             if "checks" in edit:
-                # Checks are run-wide authorization facts.  A task may display
-                # a subset, but it cannot remove or add an unapproved check.
-                checks = edit["checks"]
-                if set(plan["authorization"]["checks"]) != set(checks):
-                    raise RunError("REQUIRED_CHECKS_REMOVED")
+                # Existing required checks remain run-wide mandatory.  The
+                # task copy binds that full required set into the immutable
+                # preview/routing record; it never acts as a UI-only subset.
+                task["checks"] = edit["checks"]
             profile = edit.get("profile_ref")
             source = edit.get("source_ref")
             if profile is not None or source is not None:
                 if profile is None or source is None:
                     raise RunError("PROFILE_SOURCE_BINDING_REQUIRED")
-                assignments[task["id"]] = {"profile_ref": profile, "source_ref": source}
+                task["profile_ref"] = profile
+                task["source_ref"] = source
             if task != before:
                 task["revision"] += 1
         try:
@@ -326,6 +347,14 @@ class ProposalStore:
                 resolve_binding(run, plan)
         except ValueError as error:
             raise RunError(str(error)) from None
+        assignments = {
+            task["id"]: {
+                "profile_ref": task["profile_ref"],
+                "source_ref": task["source_ref"],
+            }
+            for task in plan["tasks"]
+            if task.get("profile_ref") is not None or task.get("source_ref") is not None
+        }
         return plan, assignments
 
     def _identity(self, conversation_id: str, request: dict[str, Any]) -> dict[str, Any]:
@@ -456,65 +485,74 @@ class ProposalStore:
         revision: int,
     ) -> dict[str, Any]:
         unchanged = plan == base["plan"]
-        routing = (
-            base.get("routing_binding")
-            if unchanged
-            else (
-                resolve_binding(run, plan)
-                if run["schema_version"] == "karajan.run-planning.v2"
-                else None
-            )
-        )
-        authorization_digest = (
-            base["authorization_digest"]
-            if unchanged
-            else digest(
-                [run["configuration_snapshot"]["digest"], plan["authorization"]]
-                + ([routing] if routing else [])
-            )
-        )
-        plan_digest = (
-            base["plan_digest"]
-            if unchanged
-            else digest(
-                {
-                    "plan": plan,
-                    "authorization_digest": authorization_digest,
-                    "routing_binding": routing,
-                }
-            )
-        )
+        inserted = None if unchanged else self._inserted_plan(run, base, plan, request)
+        approved = base if inserted is None else inserted
         return {
             "proposal_revision": revision,
             "project_id": run["project_id"],
             "conversation_id": run["conversation_id"],
             "run_id": run["id"],
             "term": request["term"],
+            "base_term": base["term"],
             "base_plan_revision": base["plan_revision"],
             "plan_revision": base["plan_revision"]
-            if plan == base["plan"]
-            else run["latest_plan_revision"] + 1,
+            if inserted is None
+            else inserted["plan_revision"],
             "base_plan_digest": base["plan_digest"],
+            "base_authorization_digest": base["authorization_digest"],
+            "base_configuration_digest": base["configuration_digest"],
+            "base_routing_digest": base.get("routing_digest"),
             "base_output_provenance": base["provenance"],
             "user_adjustments": request["edits"],
             "assignments": assignments,
             "task_graph_digest": digest(plan["tasks"]),
             "source_digest": digest(assignments),
-            "authorization_digest": authorization_digest,
-            "plan_digest": plan_digest,
-            "configuration_digest": run["configuration_snapshot"]["digest"],
-            "routing_digest": (
-                base.get("routing_digest")
-                if unchanged
-                else digest(routing)
-                if routing
-                else None
-            ),
+            "authorization_digest": approved["authorization_digest"],
+            "plan_digest": approved["plan_digest"],
+            "configuration_digest": approved["configuration_digest"],
+            "routing_digest": approved.get("routing_digest"),
             "preview": plan,
+            "inserted_plan": inserted,
             "run_revision": run["revision"] + 1,
             "accepted_at": None,
             "approval_id": None,
         }
+
+    def _inserted_plan(
+        self,
+        run: dict[str, Any],
+        base: dict[str, Any],
+        plan: dict[str, Any],
+        request: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Freeze the exact owner Plan record before proposal persistence."""
+        routing = (
+            resolve_binding(run, plan)
+            if run["schema_version"] == "karajan.run-planning.v2"
+            else None
+        )
+        authorization_digest = digest(
+            [run["configuration_snapshot"]["digest"], plan["authorization"]]
+            + ([routing] if routing is not None else [])
+        )
+        record: dict[str, Any] = {
+            "plan_revision": base["plan_revision"] + 1,
+            "term": request["term"],
+            "submitted_by": run["owner"],
+            "intent_id": None,
+            "plan": deepcopy(plan),
+            "configuration_digest": run["configuration_snapshot"]["digest"],
+            "authorization_digest": authorization_digest,
+            "provenance": "owner_adjustment",
+            "base_output_provenance": base["provenance"],
+            "user_adjustments": deepcopy(request["edits"]),
+            "impact": plan_impact(plan, run),
+        }
+        if routing is not None:
+            record["routing_binding"] = routing
+            record["routing_digest"] = digest(routing)
+        record["plan_digest"] = digest(record)
+        return record
 
     @staticmethod
     def _proposal(run: dict[str, Any], revision: int) -> dict[str, Any]:
@@ -525,6 +563,60 @@ class ProposalStore:
         if proposal is None:
             raise RunError("PROPOSAL_NOT_FOUND")
         return cast(dict[str, Any], proposal)
+
+    @staticmethod
+    def _assert_proposal_current(run: dict[str, Any], proposal: dict[str, Any]) -> None:
+        """Bind acceptance and approval to one current base and exact Plan slot."""
+        base = next(
+            (
+                row
+                for row in run["plans"]
+                if row["plan_revision"] == proposal.get("base_plan_revision")
+            ),
+            None,
+        )
+        if base is None:
+            raise RunError("PLAN_REVISION_STALE")
+        if any(
+            proposal.get(proposal_key) != base.get(base_key)
+            for proposal_key, base_key in (
+                ("base_term", "term"),
+                ("base_plan_digest", "plan_digest"),
+                ("base_authorization_digest", "authorization_digest"),
+                ("base_configuration_digest", "configuration_digest"),
+                ("base_routing_digest", "routing_digest"),
+            )
+        ):
+            raise RunError("PROPOSAL_BASE_BINDING_MISMATCH")
+        if proposal.get("term") != run["commander"]["term"]:
+            raise RunError("COMMANDER_TERM_STALE")
+        inserted = proposal.get("inserted_plan")
+        if inserted is None:
+            if (
+                proposal.get("plan_revision") != base["plan_revision"]
+                or proposal.get("preview") != base["plan"]
+                or proposal.get("plan_digest") != base["plan_digest"]
+            ):
+                raise RunError("PROPOSAL_BINDING_INCOMPLETE")
+        elif (
+            not isinstance(inserted, dict)
+            or inserted.get("plan_revision") != base["plan_revision"] + 1
+            or inserted.get("term") != proposal.get("term")
+            or inserted.get("plan") != proposal.get("preview")
+            or inserted.get("plan_digest") != proposal.get("plan_digest")
+            or inserted.get("authorization_digest") != proposal.get("authorization_digest")
+            or inserted.get("configuration_digest") != proposal.get("configuration_digest")
+            or inserted.get("routing_digest") != proposal.get("routing_digest")
+            or digest({key: value for key, value in inserted.items() if key != "plan_digest"})
+            != inserted.get("plan_digest")
+        ):
+            raise RunError("PROPOSAL_BINDING_INCOMPLETE")
+        if run["latest_plan_revision"] != base["plan_revision"]:
+            if inserted is not None and any(
+                row["plan_revision"] == proposal.get("plan_revision") for row in run["plans"]
+            ):
+                raise RunError("PROPOSAL_PLAN_COLLISION")
+            raise RunError("PLAN_REVISION_STALE")
 
     def _approval(
         self, run: dict[str, Any], proposal: dict[str, Any], request: dict[str, Any], principal: str
@@ -546,31 +638,20 @@ class ProposalStore:
             raise RunError("COMMANDER_TERM_STALE")
         if proposal["approval_id"] is not None or run["active_plan_revision"] is not None:
             raise RunError("PLAN_ALREADY_APPROVED")
-        if proposal["plan_revision"] > run["latest_plan_revision"]:
-            plan = proposal["preview"]
-            record = {
-                "plan_revision": proposal["plan_revision"],
-                "term": proposal["term"],
-                "submitted_by": principal,
-                "intent_id": None,
-                "plan": plan,
-                "configuration_digest": proposal["configuration_digest"],
-                "authorization_digest": proposal["authorization_digest"],
-                "provenance": "owner_adjustment",
-                "base_output_provenance": proposal["base_output_provenance"],
-                "user_adjustments": proposal["user_adjustments"],
-                "impact": plan_impact(plan, run),
-                "plan_digest": proposal["plan_digest"],
-            }
-            if run["schema_version"] == "karajan.run-planning.v2":
-                record["routing_binding"] = resolve_binding(run, plan)
-                record["routing_digest"] = proposal["routing_digest"]
-            run["plans"].append(record)
-            run["latest_plan_revision"] = record["plan_revision"]
+        inserted = proposal.get("inserted_plan")
+        if inserted is not None:
+            if not isinstance(inserted, dict):
+                raise RunError("PROPOSAL_BINDING_INCOMPLETE")
+            if any(
+                row["plan_revision"] == proposal["plan_revision"] for row in run["plans"]
+            ):
+                raise RunError("PROPOSAL_PLAN_COLLISION")
+            run["plans"].append(deepcopy(inserted))
+            run["latest_plan_revision"] = inserted["plan_revision"]
         receipt = {name: request[name] for name in required}
         receipt.update(
             {
-                "id": __import__("uuid").uuid4().hex,
+                "id": uuid.uuid4().hex,
                 "approved_by": principal,
                 "approved_at": self.planner.clock(),
                 "dispatch_enabled": False,

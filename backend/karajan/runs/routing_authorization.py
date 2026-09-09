@@ -145,6 +145,56 @@ def resolve_binding(run: dict[str, Any], plan: dict[str, Any]) -> dict[str, Any]
     permitted = {(r["id"], r["revision"]) for r in authorization["profile_refs"]} & {
         (r["id"], r["revision"]) for r in run["authorization_ceiling"]["profile_refs"]
     }
+    registrations = {
+        (row["id"], row["revision"]): row
+        for row in config["resources"]["profiles"]
+        if isinstance(row, dict)
+    }
+
+    def task_requirements(task: dict[str, Any]) -> dict[str, Any]:
+        requirements = {
+            key: task[key]
+            for key in (
+                "revision",
+                "role",
+                "purpose",
+                "readiness",
+                "complexity",
+                "risk",
+                "paths",
+                "domains",
+                "required_capabilities",
+                "tools",
+                "context_tokens",
+                "duration_seconds",
+            )
+        }
+        profile, source = task.get("profile_ref"), task.get("source_ref")
+        checks = task.get("checks")
+        if (profile is None) != (source is None):
+            raise ValueError("PROFILE_SOURCE_BINDING_REQUIRED")
+        if profile is None:
+            if checks is not None:
+                requirements["checks"] = checks
+            return requirements
+        if not isinstance(profile, dict) or not isinstance(source, str):
+            raise ValueError("PROFILE_SOURCE_BINDING_REQUIRED")
+        key = (profile.get("id"), profile.get("revision"))
+        registration = registrations.get(key)
+        configured = registration.get("profile") if isinstance(registration, dict) else None
+        if (
+            key not in permitted
+            or not isinstance(configured, dict)
+            or configured.get("binding", {}).get("channel_id") != source
+            or source not in authorization["channel_ids"]
+        ):
+            raise ValueError("PROFILE_SOURCE_REVOKED")
+        requirements["profile_ref"] = {"id": key[0], "revision": key[1]}
+        requirements["source_ref"] = source
+        if checks is not None:
+            requirements["checks"] = checks
+        return requirements
+
     grants: dict[str, Any] = {}
     for rule in rulebook["rules"]:
         permission = authorization["stage_permissions"].get(rule["id"])
@@ -199,23 +249,7 @@ def resolve_binding(run: dict[str, Any], plan: dict[str, Any]) -> dict[str, Any]
         "stage_grants": grants,
         "authorization_ceiling_digest": digest(run["authorization_ceiling"]),
         "task_requirements": {
-            task["id"]: {
-                key: task[key]
-                for key in (
-                    "revision",
-                    "role",
-                    "purpose",
-                    "readiness",
-                    "complexity",
-                    "risk",
-                    "paths",
-                    "domains",
-                    "required_capabilities",
-                    "tools",
-                    "context_tokens",
-                    "duration_seconds",
-                )
-            }
+            task["id"]: task_requirements(task)
             for task in plan["tasks"]
         },
         "activation_allowed": False,
