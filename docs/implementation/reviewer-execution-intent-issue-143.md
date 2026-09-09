@@ -315,9 +315,10 @@ counters separately wrap `RunnerHost.start`,
 `parse_review_output` consumer alias and the defining
 `karajan.candidates.review_output.parse_review_output`,
 `GoCallJournal.create_grant`, `GoCallJournal.begin_call`, Candidate `gate`,
-and Candidate `_save_evidence` entries. Every forbidden entry increments its
-own counter and immediately fails the test if reached; only the real Candidate
-gate delegates, because it is the existing read-only current-context check.
+and Candidate `_save_evidence` entries. Transport, runtime, parser, Host start,
+and Journal entry wrappers fail immediately if reached. Candidate gate and
+Evidence-save wrappers delegate and count calls; the final assertion requires
+zero Evidence writes while permitting the existing read-only Candidate gate.
 
 The test opens the actual existing-only factory, reopens history, exercises the
 descriptor rejection, and runs the seeded real Run/Candidate/Host lifecycle.
@@ -338,7 +339,14 @@ fixture-owned and `not_run` for those capabilities.
 | --- | --- |
 | WSL2 Ubuntu, `env -u KARAJAN_OPENCODE_LINUX_BINARY KARAJAN_REQUIRE_OPENCODE_ISOLATION=1 KARAJAN_REQUIRE_GO_TOKENIZER=1 KARAJAN_GO_TOKENIZER_DIRECTORY=/tmp/karajan-pr155-tree/.cache/go-context-artifacts HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 PYTHONPATH=backend:tests:tests/projects:tests/runs:tests/candidates /tmp/karajan-candidate-mode-qy6_mqo2/venv/bin/python -m pytest tests/runs/test_reviewer_execution_bootstrap.py::test_existing_factory_reopens_identity_and_rechecks_own_descriptor -q -p no:cacheprovider --basetemp=/tmp/karajan-dg01-pr150-boundary-green-20260909` | **P passed:** `1 passed in 10.30s`; direct `IsolatedOpenCode.start` and parser-definition interception were installed before factory construction, all forbidden counters remained zero, and no provider/model call was enabled. |
 
-Final verification of this follow-up source completed with the CI-relative
+## Historical verification retained from candidate 35c5b00
+
+The following results were already recorded in `35c5b00`; they are historical
+evidence, not runs of the September 9 scalar/counter follow-ups. Those later
+changes use the targeted commands above and current PR quick CI; full testing
+now runs only in the daily nightly workflow.
+
+That earlier verification completed with the CI-relative
 tokenizer value, runtime override unset, and required isolation/tokenizer and
 offline flags: Windows main `.venv` ran the seven affected modules with
 **163 passed, 5 skipped in 244.76s**; WSL2's shared candidate venv ran the
