@@ -225,11 +225,23 @@ class PlanningWorkbench:
         state: str,
         reason_code: str | None = None,
     ) -> bool:
+        # A replay can only report an uncertain in-flight outcome.  The owner
+        # that later persists the Run receipt must be able to resolve that
+        # uncertainty; no other terminal state may replace it.
+        prior_states = ("accepted", "unknown") if state == "completed" else ("accepted",)
+        placeholders = ",".join("?" for _ in prior_states)
         with self._transaction() as db:
             updated = db.execute(
                 "UPDATE planning_execute_commands SET state=?, reason_code=? "
-                "WHERE principal=? AND key=? AND command_id=? AND state='accepted'",
-                (state, reason_code, record["principal"], record["key"], record["command_id"]),
+                "WHERE principal=? AND key=? AND command_id=? AND state IN (" + placeholders + ")",
+                (
+                    state,
+                    reason_code,
+                    record["principal"],
+                    record["key"],
+                    record["command_id"],
+                    *prior_states,
+                ),
             )
         return updated.rowcount == 1
 

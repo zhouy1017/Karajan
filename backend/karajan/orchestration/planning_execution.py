@@ -774,13 +774,41 @@ class PlanningExecution:
 
         return unregister
 
+    def register_native_stop_proof(
+        self, execution_id: str, binding_sha256: str, proof: dict[str, object]
+    ) -> None:
+        """Persist the native object's own stop proof for this exact execution."""
+        identifier(execution_id)
+        if len(binding_sha256) != 64 or not isinstance(proof, dict):
+            raise RunError("PLANNING_NATIVE_STOP_PROOF_INVALID")
+        with self._transaction() as db:
+            current = self._load(db, execution_id)
+            entry = {"binding_sha256": binding_sha256, "proof": proof}
+            previous = current.get("native_stop_proof")
+            if previous not in (None, entry):
+                raise RunError("PLANNING_NATIVE_STOP_PROOF_INVALID")
+            if current["binding_sha256"] != binding_sha256:
+                raise RunError("PLANNING_NATIVE_STOP_PROOF_INVALID")
+            current["native_stop_proof"] = entry
+            self._save(db, current)
+
     def _stop_owned_native(
         self, execution_id: str, principal: str, execution: dict[str, Any]
     ) -> dict[str, Any]:
         with self._native_stop_lock:
             stopper = self._native_stoppers.get(execution_id)
         if stopper is None:
-            cleanup = {"local_stop": "unknown"}
+            proof = execution.get("native_stop_proof")
+            if (
+                not isinstance(proof, dict)
+                or proof.get("binding_sha256") != execution.get("binding_sha256")
+                or not isinstance(proof.get("proof"), dict)
+            ):
+                cleanup = {"local_stop": "unknown"}
+            else:
+                from karajan.isolation.opencode_runtime import stop_from_proof
+
+                cleanup = stop_from_proof(proof["proof"])
         else:
             try:
                 cleanup = stopper()
@@ -1182,10 +1210,9 @@ class PlanningExecution:
             raise
         return self._record_submission(execution_id, principal, submission)
 
-    def _submission_allowed(self, execution_id: str, principal: str) -> None:
+    def _submission_allowed(self, execution_id: str, principal: str) -> Callable[[], None]:
         with self._transaction() as db:
             current = self._load(db, execution_id)
-            self._owner_run(current["run_id"], principal)
             if current["cancel_requested"]:
                 raise RunError("PLANNING_EXECUTION_CANCELLED")
         if self.outputs is None:
@@ -1206,14 +1233,25 @@ class PlanningExecution:
             "source_sha256"
         ] != current.get("output_source_sha256"):
             raise RunError("PLANNING_OUTPUT_SOURCE_CHANGED")
-        # The authority read is deliberately outside the controller lock.  A
-        # cancellation may therefore arrive while it is in progress, so make
-        # the final decision from a fresh durable observation.
-        with self._transaction() as db:
+        # The authority read is deliberately outside the controller lock.  Once
+        # it is valid, retain an execution write transaction until the enclosing
+        # Run transaction has committed.  This gives cancellation and Plan
+        # insertion one durable linearization point instead of a gap between a
+        # last read and the Run write.
+        transaction = self._transaction()
+        db = transaction.__enter__()
+        try:
             current = self._load(db, execution_id)
-            self._owner_run(current["run_id"], principal)
             if current["cancel_requested"]:
                 raise RunError("PLANNING_EXECUTION_CANCELLED")
+        except BaseException as error:
+            transaction.__exit__(type(error), error, error.__traceback__)
+            raise
+
+        def release() -> None:
+            transaction.__exit__(None, None, None)
+
+        return release
 
     def _record_submission(
         self, execution_id: str, principal: str, submission: dict[str, Any]

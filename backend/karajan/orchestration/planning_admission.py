@@ -868,7 +868,13 @@ class PlanningAdmissionAuthority:
             if prior is not None:
                 if prior["payload"] != payload:
                     raise RunError("IDEMPOTENCY_CONFLICT")
-                return dict(json.loads(prior["result"]))
+                prior_result = dict(json.loads(prior["result"]))
+                # The key was durably claimed before Capacity.  If its caller
+                # lost a reply, re-enter the same ID-only recovery path; all
+                # later effects retain their separately fixed Capacity keys.
+                if prior_result == placeholder:
+                    return None
+                return prior_result
             db.execute(
                 "INSERT INTO commands VALUES (?,?,?,?)",
                 (principal, command_key, payload, encoded(placeholder)),
@@ -1028,7 +1034,7 @@ class PlanningAdmissionAuthority:
     ) -> _FinalBoundary:
         """Finish comparison and parsing before Capacity's constant-time tail."""
         self._assert_estimate_live(record, held_run)
-        current = self._assert_qualification_binding(record, qualification)
+        current = self._assert_qualification_binding(record, qualification, reobserve=True)
         qualification_until, facts_until = self._qualification_deadlines(current)
         usage = record.get("budget_usage")
         budget = record.get("budget")

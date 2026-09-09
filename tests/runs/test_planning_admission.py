@@ -152,6 +152,7 @@ def planning_capacity(
     observation_max_age_seconds: int = 30,
     conservative_observation_max_age_seconds: int = 30,
     max_attempt_duration_seconds: int = 60,
+    unit: str = "percent",
 ) -> CapacityStore:
     """Real SQLite Capacity facts matching the frozen fixture configuration."""
     directory.mkdir()
@@ -163,7 +164,7 @@ def planning_capacity(
                 "id": pool,
                 "account_id": "fixture-account",
                 "kind": "service",
-                "unit": "percent",
+                "unit": unit,
                 "window_kind": "fixed",
             },
             command_key="pool-" + pool,
@@ -271,6 +272,7 @@ def _case(
     paths: list[str] | None = None,
     execution_policy: dict | None = None,
     observation_at: float = 1000.0,
+    capacity_unit: str = "percent",
 ) -> tuple[PlanningExecution, PlanningAdmissionAuthority, dict, Any]:
     planner = RunPlanner(tmp_path / "runs.sqlite", configured["registry"], clock=clock or time.time)
     fixed = configured["registry"].register_execution_policy(
@@ -295,6 +297,7 @@ def _case(
         observation_max_age_seconds=observation_max_age_seconds,
         conservative_observation_max_age_seconds=conservative_observation_max_age_seconds,
         max_attempt_duration_seconds=max_attempt_duration_seconds,
+        unit=capacity_unit,
     )
     binding = execution["binding"]
     capacity.register_profile(
@@ -463,7 +466,7 @@ def test_production_native_send_releases_guard_for_cancelled_wait(
     service, authority, run, execution = _case(tmp_path, configured)
     service.admissions = authority
     admitted = authority.advance(execution["id"], "owner", "native-admit")
-    assert admitted["phase"] == "admitted"
+    assert admitted["phase"] == "admitted", repr(admitted["reason_codes"])
     accounting = GoRequestAccounting(Path(tokenizer))
     journal = GoCallJournal(tmp_path / "production-journal.sqlite")
     entered, release, stopped = Event(), Event(), Event()
@@ -524,7 +527,10 @@ def test_production_native_send_releases_guard_for_cancelled_wait(
             assert pending.done(), "relay never crossed its production send guard"
             pending.result()
         cancelled_at = time.monotonic()
-        cancelled = service.cancel(execution["id"], principal="owner", command_key="cancel-wait")
+        # This controller was reopened after the producer registered its native
+        # proof, so it has no in-memory stopper to borrow from the owner.
+        reopened = PlanningExecution(service.database, service.planner)
+        cancelled = reopened.cancel(execution["id"], principal="owner", command_key="cancel-wait")
         assert time.monotonic() - cancelled_at < 2
         assert cancelled["state"] == "cancelled"
         assert stopped.wait(timeout=2)
@@ -551,6 +557,26 @@ def test_production_transport_consumes_registered_budget_and_publishes_one_plan(
     fixtures.  The transport, controller estimate, admission receipt, producer,
     Relay, Journal, output authority, and Run submit path remain production code.
     """
+    production_configuration = json.loads(
+        (Path(__file__).parents[2] / "examples/projects/offline-configuration.json").read_text()
+    )
+    production_configuration["resources"]["quota_pools"][0]["unit"] = "requests"
+    preview = configured["registry"].preview_configuration(
+        configured["id"],
+        production_configuration,
+        command_key="request-unit-preview",
+        principal="owner",
+    )
+    configured = {
+        **configured["registry"].apply_configuration(
+            configured["id"],
+            preview["preview_id"],
+            expected_revision=configured["revision"],
+            command_key="request-unit-apply",
+            principal="owner",
+        ),
+        "registry": configured["registry"],
+    }
     _, authority, run, execution = _case(
         tmp_path,
         configured,
@@ -559,6 +585,7 @@ def test_production_transport_consumes_registered_budget_and_publishes_one_plan(
         execution_policy=_native_v2_policy(configured),
         clock=time.time,
         observation_at=time.time(),
+        capacity_unit="requests",
     )
     # The production reader opens this existing-only ledger after bootstrap.
     ProfileQualificationStore(authority.planner.projects)
@@ -682,7 +709,7 @@ def test_production_native_output_requires_durable_completion_and_cleanup(
     service, authority, run, execution = _case(tmp_path, configured)
     service.admissions = authority
     admitted = authority.advance(execution["id"], "owner", "native-admit")
-    assert admitted["phase"] == "admitted"
+    assert admitted["phase"] == "admitted", repr(admitted["reason_codes"])
     accounting = GoRequestAccounting(Path(tokenizer))
     journal = GoCallJournal(tmp_path / "production-journal.sqlite")
 
@@ -1484,7 +1511,7 @@ def test_lost_activation_reply_reopens_the_original_capacity_command(
         authority.qualifications,
         authority_kind="fixture",
     )
-    recovered = reopened.advance(execution["id"], "owner", "recover")
+    recovered = reopened.advance(execution["id"], "owner", "advance")
     assert recovered["phase"] == "admitted"
     assert len(authority.capacity.snapshot()["reservations"]) == 1
 
@@ -2300,35 +2327,16 @@ def test_effect_guard_reobserves_material_sealed_commander_source_before_body(
 ) -> None:
     """A changed sealed key rejects before the effect context yields its body."""
     _, authority, run, execution = _case(tmp_path, configured)
-    key = tmp_path / "synthetic-boundary.key"
-    key.write_text("synthetic-boundary-key\n", encoding="utf-8")
-    key.chmod(0o600)
-    private = tmp_path / "synthetic-boundary-private"
+    fixture_facts = authority.qualifications.read_commander(
+        execution["binding"],
+        scope=COMMANDER_QUALIFICATION_SCOPE,
+        reader_version="karajan.commander-qualification-reader.v1",
+    )
+    assert fixture_facts is not None
     profile_record = run["configuration_snapshot"]["configuration"]["resources"]["profiles"][0]
-    auth_ref = profile_record["profile"]["auth_ref"]
-    CredentialSourceStore(
-        authority.planner.projects,
-        sources={(run["project_id"], auth_ref): LocalKeyFile("synthetic-boundary", key)},
-        private_directory=private,
-        clock=lambda: 1000.0,
-    ).register(
-        run["project_id"], auth_ref, principal="owner", command_key="synthetic-boundary-register"
-    )
-    # Initialize the reader ledger before reopening every production dependency
-    # in existing-only mode.  The record itself is an explicit test producer;
-    # production cannot create it from a caller supplied pass.
+    control, key = _output_source_control(tmp_path, authority, run)
+    # Initialize the reader ledger before reopening the one existing source.
     ProfileQualificationStore(authority.planner.projects)
-    control = tmp_path / "go-boundary-control"
-    control.mkdir(mode=0o700)
-    runtime = tmp_path / "runtime"
-    runtime.write_bytes(b"synthetic-runtime")
-    settings = CommanderQualificationSettings(
-        runtime,
-        Path(os.environ["KARAJAN_GO_TOKENIZER_DIRECTORY"]).resolve(),
-        private,
-        (CommanderCredentialSource(run["project_id"], auth_ref, "synthetic-boundary", key),),
-    )
-    write_commander_qualification_settings(control, settings)
     projects = ProjectRegistry(
         authority.planner.projects.database,
         authority.planner.projects.allowed_roots,
@@ -2339,30 +2347,24 @@ def test_effect_guard_reobserves_material_sealed_commander_source_before_body(
     reader = PersistentCommanderQualificationReader(
         planner, qualifications, control_directory=control
     )
+    # Both admission and its final effect guard use this one persistent reader.
+    # A fixture-to-persistent swap would make a later rejection ambiguous.
+    authority.qualifications = reader
     qualifications.commander_source = reader._current_source
-    with projects._transaction() as db:
-        source = reader._current_source(
-            db, run["project_id"], {"registration": profile_record}, "owner"
-        )
     with qualifications._owned(run["project_id"], "owner") as db:
         bound = qualifications._binding(
             db,
             run["project_id"],
             {"id": profile_record["id"], "revision": profile_record["revision"]},
         )
+        source = reader._current_source(db, run["project_id"], bound, "owner")
         start = {
             "qualification_scope": COMMANDER_QUALIFICATION_SCOPE,
             "profile_binding": bound,
             "source": source,
             "execution_start": {"synthetic": "capacity-boundary"},
         }
-        facts = authority.qualifications.read_commander(
-            execution["binding"],
-            scope=COMMANDER_QUALIFICATION_SCOPE,
-            reader_version="karajan.commander-qualification-reader.v1",
-        )
-        assert facts is not None
-        profile_facts = deepcopy(facts["profile_facts"])
+        profile_facts = deepcopy(fixture_facts["profile_facts"])
         profile_facts["valid_until"] = time.time() + 60
         record = {
             "id": "synthetic-capacity-boundary",
@@ -2374,7 +2376,7 @@ def test_effect_guard_reobserves_material_sealed_commander_source_before_body(
             "valid_until": time.time() + 60,
             "commander_facts": {
                 "profile_facts": profile_facts,
-                "capability_evidence": facts["capability_evidence"],
+                "capability_evidence": fixture_facts["capability_evidence"],
                 "source_generation_sha256": digest(source),
             },
         }
@@ -2398,9 +2400,16 @@ def test_effect_guard_reobserves_material_sealed_commander_source_before_body(
             (record["id"], json.dumps(record), digest(record)),
         )
     admitted = authority.advance(execution["id"], "owner", "synthetic-boundary-advance")
-    assert admitted["phase"] == "admitted"
-    key.write_text("synthetic-boundary-key-changed\n", encoding="utf-8")
-    authority.qualifications = reader
+    assert admitted["phase"] == "admitted", repr(admitted["reason_codes"])
+    with authority.effect_guard(execution["id"], "owner", "unchanged-credential-effect"):
+        pass
+    original_boundary = authority._capture_final_boundary
+
+    def mutate_inside_capacity_boundary(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        key.write_text("synthetic-boundary-key-changed\n", encoding="utf-8")
+        return original_boundary(*args, **kwargs)
+
+    monkeypatch.setattr(authority, "_capture_final_boundary", mutate_inside_capacity_boundary)
     with pytest.raises(RunError, match="^COMMANDER_QUALIFICATION_CHANGED$"):
         with authority.effect_guard(execution["id"], "owner", "changed-credential-effect"):
             pytest.fail("changed credentials entered a planning transport effect")
@@ -2602,7 +2611,7 @@ def test_fixture_admission_cannot_be_relabelled_after_production_reopen(
 ) -> None:
     _, authority, _, execution = _case(tmp_path, configured)
     admitted = authority.advance(execution["id"], "owner", "fixture-admit")
-    assert admitted["phase"] == "admitted"
+    assert admitted["phase"] == "admitted", repr(admitted["reason_codes"])
     assert authority.read_admission(execution["binding"])["authority_kind"] == "fixture"
     control = _protected_factory_control(tmp_path, authority)
     provision_planning_repository_snapshots(control)

@@ -455,7 +455,7 @@ class PlanningTransport:
                 self.outputs.arm(current["binding"], revalidate(current["binding"]))
             if self.outputs.claim_dispatch(current["binding"]) != "completed":
                 return current
-        if current["state"] == "awaiting_admission":
+        if current["state"] in {"awaiting_admission", "admission_unknown"}:
             self.execution.freeze_repository_snapshot(
                 execution_id, principal=principal, command_key="planning-snapshot:" + execution_id
             )
@@ -465,11 +465,12 @@ class PlanningTransport:
                 execution_id=execution_id,
                 principal=principal,
             )
-            try:
-                self._register_controller_estimate(current, model_input, principal=principal)
-            except RunError as error:
-                if str(error) != "PLANNING_ESTIMATE_SOURCE_UNAVAILABLE":
-                    raise
+            if current["state"] == "awaiting_admission":
+                try:
+                    self._register_controller_estimate(current, model_input, principal=principal)
+                except RunError as error:
+                    if str(error) != "PLANNING_ESTIMATE_SOURCE_UNAVAILABLE":
+                        raise
             # This records a read-only output identity.  ``admit`` verifies it
             # before it can transition to awaiting_output; it does not send.
             self.outputs.arm(current["binding"], self.producer.source(current["binding"]))
@@ -537,6 +538,11 @@ class PlanningTransport:
         windows = {pool: selected[pool].get("window_id") for pool in pools}
         if any(not isinstance(window, str) for window in windows.values()):
             raise RunError("PLANNING_ESTIMATE_SOURCE_UNAVAILABLE")
+        # A planning invocation has one countable request.  There is no trusted
+        # conversion from its frozen input to a percentage or token quantity, so
+        # refuse those pools rather than under-reserving an arbitrary "1".
+        if any(selected[pool].get("unit") != "requests" for pool in pools):
+            raise RunError("PLANNING_ESTIMATE_UNIT_UNSUPPORTED")
         ceiling = run["authorization_ceiling"]
         budget = next(
             (
@@ -1022,6 +1028,9 @@ class ProductionGoPlanningProducer:
                     "planning-native-start:" + binding["execution_id"],
                 ):
                     native.start()
+                self.execution.register_native_stop_proof(
+                    binding["execution_id"], digest(binding), native.stop_proof()
+                )
                 try:
                     content = FixtureGoPlanningProducer._native_output(
                         native,
@@ -1034,7 +1043,7 @@ class ProductionGoPlanningProducer:
                         ),
                         start_native=False,
                     )
-                except ValueError:
+                except (OSError, ValueError):
                     current = self.execution.get(
                         binding["execution_id"], principal=binding["owner"]
                     )

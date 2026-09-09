@@ -65,6 +65,24 @@ class IsolatedOpenCodeTests(unittest.TestCase):
         self.assertEqual(closed["remote_stop"], "unknown")
         self.assertEqual(runtime.close(), closed)
 
+    def test_persisted_stop_proof_rejects_wrong_boot_or_host_namespace_without_signal(self) -> None:
+        from karajan.isolation.opencode_runtime import IsolatedOpenCode, stop_from_proof
+
+        runtime = IsolatedOpenCode(
+            self.runtime, self.root / "run", self.upstream, "synthetic-local-capability"
+        )
+        self.addCleanup(runtime.close)
+        runtime.start()
+        proof = runtime.stop_proof()
+        wrong_boot = {**proof, "boot_id": "0" * 36}
+        wrong_birth = {**proof, "birth": "0"}
+        host_namespace = {**proof, "pid_namespace": os.readlink("/proc/self/ns/pid")}
+        with patch("karajan.isolation.opencode_runtime.os.pidfd_open") as opened:
+            self.assertEqual(stop_from_proof(wrong_boot)["local_stop"], "unknown")
+            self.assertEqual(stop_from_proof(wrong_birth)["local_stop"], "unknown")
+            self.assertEqual(stop_from_proof(host_namespace)["local_stop"], "unknown")
+        opened.assert_not_called()
+
     def test_private_management_reads_fixed_native_configuration(self) -> None:
         from karajan.isolation.opencode_runtime import IsolatedOpenCode
 

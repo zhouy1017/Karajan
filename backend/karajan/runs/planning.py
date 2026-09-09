@@ -312,11 +312,15 @@ class RunPlanner:
         identifier(run_id)
         if principal is not None:
             identifier(principal)
-        with self._transaction() as db:
+        db = sqlite3.connect(self.database.resolve().as_uri() + "?mode=ro", uri=True, timeout=10)
+        db.row_factory = sqlite3.Row
+        try:
             run = self._get(db, run_id)
             if principal is not None and run["owner"] != principal:
                 raise RunError("RUN_NOT_FOUND")
             return run
+        finally:
+            db.close()
 
     @contextmanager
     def activation_guard(self, run_id: str) -> Iterator[dict[str, Any]]:
@@ -451,14 +455,23 @@ class RunPlanner:
             raise RunError("USER_DECISION_REQUIRED")
 
     def submit_plan(
-        self, run_id: str, request: dict[str, Any], *, command_key: str, principal: str
+        self,
+        run_id: str,
+        request: dict[str, Any],
+        *,
+        command_key: str,
+        principal: str,
+        _submission_guard: Callable[[], Callable[[], None]] | None = None,
     ) -> dict[str, Any]:
         version_two = (
             isinstance(request, dict) and request.get("schema_version") == "karajan.submit-plan.v2"
         )
         request = {"run_id": run_id, **parse(SubmitPlanV2 if version_two else SubmitPlan, request)}
 
+        release_submission_guard: Callable[[], None] | None = None
+
         def apply(db: sqlite3.Connection) -> dict[str, Any]:
+            nonlocal release_submission_guard
             run = self._get(db, run_id)
             if version_two != (run["schema_version"] == "karajan.run-planning.v2"):
                 raise RunError("RUN_PROTOCOL_VERSION_MISMATCH")
@@ -479,6 +492,12 @@ class RunPlanner:
                 raise RunError("PLANNING_ADMISSION_REQUIRED")
             if request["expected_plan_revision"] != run["latest_plan_revision"]:
                 raise RunError("PLAN_REVISION_STALE")
+            # The planning execution controller acquires its durable cancellation
+            # fence here.  It remains held through this Run transaction's commit,
+            # so cancellation cannot commit between the final observation and Plan
+            # insertion.
+            if _submission_guard is not None:
+                release_submission_guard = _submission_guard()
             try:
                 validate_plan(request["plan"], run["authorization_ceiling"])
                 impact = plan_impact(request["plan"], run)
@@ -515,7 +534,11 @@ class RunPlanner:
             self._save(db, run)
             return result
 
-        return self._command("submit_plan", request, principal, command_key, apply)
+        try:
+            return self._command("submit_plan", request, principal, command_key, apply)
+        finally:
+            if release_submission_guard is not None:
+                release_submission_guard()
 
     def command_receipt(
         self, kind: str, request: dict[str, Any], *, principal: str, command_key: str
@@ -564,7 +587,7 @@ class RunPlanner:
         binding_sha256: str,
         principal: str,
         command_key: str,
-        submission_guard: Callable[[], None] | None = None,
+        submission_guard: Callable[[], Callable[[], None]] | None = None,
     ) -> dict[str, Any]:
         """Internal controller port; no HTTP route accepts this material.
 
@@ -603,13 +626,12 @@ class RunPlanner:
                 raise RunError("PLANNING_EXECUTION_RECEIPT_CONFLICT")
         if request.get("term") != receipt["term"] or request.get("intent_id") != intent_id:
             raise RunError("PLANNING_EXECUTION_SUBMISSION_BINDING_MISMATCH")
-        if submission_guard is not None:
-            submission_guard()
         return self.submit_plan(
             run_id,
             {key: value for key, value in request.items() if key != "run_id"},
             principal=receipt["principal"],
             command_key=command_key,
+            _submission_guard=submission_guard,
         )
 
     def approve_plan(

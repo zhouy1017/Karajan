@@ -54,3 +54,16 @@ def test_command_receipt_migration_names_columns_and_never_regresses_terminal(
     saved = workbench._execute_command_for_run("run", "owner")
     assert saved is not None
     assert workbench._command_view(saved) == {"id": command["command_id"], "state": "completed"}
+
+
+def test_completion_resolves_an_overlapping_replay_unknown(tmp_path: Path) -> None:
+    workbench = PlanningWorkbench(tmp_path / "workbench.sqlite", _Planner(), object())  # type: ignore[arg-type]
+    command = workbench._claim_execute("run", principal="owner", command_key="execute")
+
+    assert workbench._finish_execute(
+        command, state="unknown", reason_code="PLANNING_EXECUTE_COMMAND_UNKNOWN"
+    )
+    assert workbench._finish_execute(command, state="completed")
+    saved = workbench._execute_command_for_run("run", "owner")
+    assert saved is not None
+    assert workbench._command_view(saved) == {"id": command["command_id"], "state": "completed"}
