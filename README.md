@@ -2,7 +2,7 @@
 
 面向个人的多来源 Agent 代码交付平台：一个持久主 Commander 理解需求并提出可编辑分工，用户确认计划，可信协调器按 Rulebook 和服务配额组织实现、测试、审查并交付 PR。
 
-2026-09-09 的 [Commander 工作台设计](docs/prd/commander-workbench.md) 固定首演 UI：仓库/会话导航、持久 Commander 对话、Tasks/Agents 并行看板，以及 Diff/checks/review/logs/dependencies 详情。首演工作模式是批准同一版本后两个无依赖 Worker 并行、组合候选、独立 Reviewer 和 PR；设计基准不等于实现或来源资格已通过。当前执行顺序仍以 [当前业务顺序](docs/planning/business-first.md) 和 Issue 流程为准。
+2026-09-09 r2 的 [Commander 工作台设计](docs/prd/commander-workbench.md) 以 Commander Hub 为主工作面：Commander 提出任务拆分和初步分配，用户在主会话调整确认后分发；任务缩略卡片、阻塞与最终汇报集中回到 Hub。Tasks/Agents 看板和 Diff/checks/review/logs/dependencies 页面提供展开详情。首演工作模式仍是同版批准、两个 Worker 并行、组合候选、独立 Reviewer 和 PR；设计基准不等于实现或来源资格已通过。当前执行顺序以 [当前业务顺序](docs/planning/business-first.md) 和 Issue 流程为准。
 
 ## 产品需求与实施规划
 
