@@ -4,6 +4,10 @@ Karajan 是面向个人的多来源 Agent 代码交付平台。Commander 理解�
 
 ## Language
 
+**项目（Project）**：一个受管仓库的工作上下文，容纳该仓库的 Commander 会话及关联运行。项目身份独立于可修改的显示名称。
+
+**Commander 会话（Conversation）**：项目内持续讨论需求、确认分工和接收汇报的上下文，包含消息、草稿及关联 Run。它不等同于某个 Worker 任务。
+
 **需求（Requirement）**：用户希望在一个代码项目中获得的行为变化，以及判断变化是否完成的验收标准。
 _Avoid_：将需求、任务、一次执行混称为 job。
 
