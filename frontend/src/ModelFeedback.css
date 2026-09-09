@@ -1,0 +1,56 @@
+.model-feedback {
+  border: 1px solid #dce5df;
+  border-radius: 10px;
+  padding: 12px;
+  background: #f8fbf9;
+  color: #17322a;
+  display: grid;
+  gap: 8px;
+}
+.model-feedback-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+.model-feedback-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+  display: inline-flex;
+  width: 1.2rem;
+  justify-content: center;
+}
+.model-feedback--running .model-feedback-icon {
+  animation: model-feedback-spin 1.2s linear infinite;
+}
+.model-feedback--running .model-feedback-state,
+.model-feedback--waiting_output .model-feedback-state,
+.model-feedback--waiting_dependency .model-feedback-state,
+.model-feedback--waiting_input .model-feedback-state {
+  color: #0b4f3e;
+}
+.model-feedback-state {
+  text-align: left;
+}
+.model-feedback-meta,
+.model-feedback-hint {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #2e4b41;
+}
+.model-feedback-hint {
+  font-weight: 600;
+  color: #6a4a14;
+}
+@keyframes model-feedback-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .model-feedback--running .model-feedback-icon,
+  .model-feedback-icon {
+    animation: none !important;
+  }
+}

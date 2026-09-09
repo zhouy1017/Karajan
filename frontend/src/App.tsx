@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ProjectRuns } from "./ProjectRuns";
 import { ResourcePanel } from "./ResourcePanel";
 import { RulebookPanel } from "./RulebookPanel";
+import { CommanderWorkbench } from "./CommanderWorkbench";
 
 type Project = {
   id: string;
@@ -387,6 +388,7 @@ export function App() {
           />
         ) : (
           <section className="project-space">
+            <CommanderWorkbench projects={projects} csrf={csrf} />
             <div className="section-heading">
               <div>
                 <p className="eyebrow">YOUR ORCHESTRA</p>
