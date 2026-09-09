@@ -1,5 +1,7 @@
 # 接口与 Web 工作台
 
+本文件保留供应商无关的既有 HTTP、执行和资源接口；Project→CommanderConversation→Run 的迁移、Hub 聚合、持久消息/草稿、SSE 缺口恢复与反馈/心跳分离见 [Commander Workbench 后端契约](07-commander-workbench-backend-contract.md)。
+
 接口在 v1 内保持供应商无关。本文是拟实现协议；方法名和路径是设计，不代表仓库已有这些接口。
 
 ## 1. 任务输入与模型输出

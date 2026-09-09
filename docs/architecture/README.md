@@ -15,6 +15,7 @@ Karajan 是个人使用的多来源 Agent 代码交付平台。用户从仓库�
 | [Rulebook 与配额](02-routing-and-quota.md) | 如何选模型；多窗口预留、保留量、计费与换源 |
 | [执行、验证与交付](03-execution-and-delivery.md) | 不同服务如何工作；隔离、上下文、候选、测试和 PR |
 | [接口与 Web 工作台](04-api-and-workbench.md) | 适配接口、HTTP 接口、事件与用户操作 |
+| [Commander Workbench 后端契约](07-commander-workbench-backend-contract.md) | Project→Conversation→Run 关系、迁移、Hub 聚合、消息/草稿/提案、SSE 恢复与模型反馈边界 |
 | [实施与验收](05-build-and-validation.md) | 技术组合、目录、分阶段交付、故障验收和部署 |
 | [来源与未决事实](sources.md) | 哪些是用户决定、官方事实、设计推断和待验证事项 |
 | [Rulebook 示例](examples/rulebook.v1.json) | 规则如何表达；示例未绑定真实账户或型号 |
