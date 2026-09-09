@@ -31,11 +31,13 @@ _Avoid_：把 Agent 的完成声明当作候选已通过验证。
 
 ## 模型协作与资源分配
 
-**Commander**：负责持续接收用户意图、反馈和设计讨论，并提出可编辑的计划与任务分工的主 Agent 角色。同一 Run 只有一个有效的主 Commander；顾问只能提供建议，不能提交第二个主计划。
+**Commander**：持续接收用户意图，拆分任务并提出初步分配，在用户调整确认后统领委派、问题处理与最终结果汇总的主 Agent 角色。同一 Run 只有一个有效的主 Commander；其汇总不替代独立 Reviewer 的审查证据。
 
 **可信协调器（Trusted Coordinator）**：按已批准的计划机械推进任务依赖、权限与额度核验、Attempt 调度和状态提交的业务控制者。它不替代 Commander 做需求拆分、取舍或验收判断。
 
-**Commander 工作台（Commander Workbench）**：用户通过仓库/会话导航、持久 Commander 对话、任务与 Agent 看板及候选详情观察和控制一次 Run 的工作界面。
+**Commander 工作台（Commander Workbench）**：以 Commander Hub 为中心，配合任务、Agent 与候选详情，观察和控制一次 Run 的工作界面。
+
+**Commander Hub**：用户与主 Commander 持续协作的主工作面，集中呈现分工建议、调整确认、任务缩略卡片、阻塞与最终汇报；其他页面提供展开详情和更多操作。
 
 **显式绑定（Explicit Binding）**：用户在批准版本中直接指定任务角色、模型、来源或依赖的选择，其优先级高于默认路由规则；不能在能力或额度不足时被静默改写。
 
