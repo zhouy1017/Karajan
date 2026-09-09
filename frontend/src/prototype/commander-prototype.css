@@ -297,6 +297,31 @@
   padding: 0 8px 8px;
   text-transform: uppercase;
 }
+.sidebar-task-label {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.sidebar-task-label .sidebar-label {
+  flex: 1;
+}
+.sidebar-new-task {
+  color: #b8d8ca !important;
+  background: transparent !important;
+  border: 0;
+  padding: 0 7px 6px;
+  font-size: 14px;
+  line-height: 1;
+}
+.sidebar-new-task:hover {
+  color: #fff !important;
+}
+.sidebar-empty-tasks {
+  display: block;
+  padding: 7px 10px;
+  color: #78998e;
+  font-size: 10px;
+}
 .sidebar-nav,
 .task-nav-item {
   background: transparent;
@@ -650,6 +675,7 @@
   padding: 0 18px;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
   border-bottom: 1px solid var(--line);
 }
@@ -2383,6 +2409,281 @@
   padding: 18px 12px;
   font-size: 10px;
   line-height: 1.55;
+}
+.feedback-demo {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #84938d;
+  font-size: 9px;
+  white-space: nowrap;
+}
+.feedback-demo select {
+  width: auto;
+  padding: 5px 5px;
+  font-size: 9px;
+}
+.model-activity {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #6e8178;
+  font-size: 9px;
+  white-space: nowrap;
+}
+.model-activity small {
+  color: #9aa7a1;
+  font-size: 9px;
+}
+.commander-heading .model-activity small {
+  display: none;
+}
+.model-activity.compact {
+  gap: 4px;
+  color: #6c8177;
+  font-size: 9px;
+}
+.activity-label {
+  display: inline-block;
+}
+.activity-icon {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  background: #9aa7a1;
+  flex: 0 0 auto;
+}
+.activity-responding .activity-icon {
+  background: #58a27e;
+  animation: softpulse 1.3s infinite;
+}
+.activity-waiting_feedback .activity-icon {
+  background: #b39460;
+}
+.activity-waiting_dependency .activity-icon {
+  background: #b9a47c;
+}
+.activity-idle .activity-icon {
+  background: #aab5b0;
+}
+.activity-complete .activity-icon {
+  background: #5c9b70;
+}
+.activity-error .activity-icon {
+  background: #bd6b62;
+}
+.activity-disconnected .activity-icon {
+  background: #9c6c91;
+}
+.activity-stale .activity-icon {
+  background: #c18a45;
+  border: 1px dashed #916a37;
+}
+.activity-error,
+.activity-disconnected {
+  color: #9c5f59;
+}
+.activity-stale {
+  color: #9a713e;
+}
+.conversation-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1 0 100%;
+  min-width: 0;
+  margin-left: 0;
+}
+.conversation-actions select {
+  width: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 5px 4px;
+  font-size: 9px;
+}
+.conversation-actions .new-conversation-button {
+  flex: 0 0 auto;
+}
+.new-conversation-button,
+.new-task-button {
+  color: var(--teal) !important;
+  background: #e8f2ed !important;
+  border: 1px solid #d1e4da !important;
+  border-radius: 5px;
+  padding: 6px 8px;
+  font-size: 9px;
+  white-space: nowrap;
+}
+.new-conversation-button:hover,
+.new-task-button:hover {
+  background: #dcece4 !important;
+}
+.chat-empty {
+  min-height: 155px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  color: #84938d;
+  padding: 20px;
+}
+.chat-empty > span {
+  width: 29px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #e5f1ed;
+  color: var(--teal);
+  margin-bottom: 9px;
+}
+.chat-empty strong {
+  font-size: 11px;
+  color: #61756c;
+}
+.chat-empty p {
+  font-size: 10px;
+  margin-top: 5px;
+}
+.hub-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pending-task-card {
+  background: #fff;
+  border: 1px solid #d6e5dc;
+  border-radius: 7px;
+  padding: 16px;
+}
+.pending-task-card h3 {
+  font-size: 15px;
+  margin: 7px 0;
+}
+.pending-task-card > p {
+  color: #73847c;
+  font-size: 10px;
+  line-height: 1.6;
+}
+.pending-task-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 5px;
+  padding: 10px;
+  background: #f2f8f4;
+  color: #658076;
+  font-size: 10px;
+  line-height: 1.5;
+  margin: 15px 0 11px;
+}
+.pending-task-message .commander-avatar {
+  width: 23px;
+  height: 23px;
+  font-size: 11px;
+  flex: 0 0 auto;
+}
+.sample-plan-preview {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  color: #6a7f74;
+  font-size: 10px;
+}
+.sample-plan-preview span::before {
+  content: "·";
+  color: #72a18d;
+  margin-right: 6px;
+}
+.empty-task-card {
+  border-style: dashed;
+}
+.empty-task-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #8b9b93;
+  font-size: 10px;
+  margin-top: 18px;
+}
+.empty-task-state span:first-child {
+  color: #8eaaa0;
+  font-size: 17px;
+}
+.new-task-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(18, 39, 35, 0.34);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.new-task-dialog {
+  width: min(450px, 100%);
+  background: #fff;
+  border: 1px solid #cbdad3;
+  border-radius: 9px;
+  box-shadow: 0 20px 60px rgba(19, 53, 44, 0.22);
+  overflow: hidden;
+}
+.new-task-dialog-head,
+.new-task-dialog-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+}
+.new-task-dialog-head {
+  border-bottom: 1px solid var(--line);
+}
+.new-task-dialog-head h2 {
+  font-size: 17px;
+  margin-top: 5px;
+}
+.new-task-dialog-body {
+  padding: 16px 18px;
+}
+.new-task-dialog-body label {
+  display: block;
+  color: #75867e;
+  font-size: 10px;
+  margin-bottom: 13px;
+}
+.new-task-dialog-body input,
+.new-task-dialog-body textarea {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+}
+.new-task-dialog-body textarea {
+  resize: vertical;
+}
+.new-task-note {
+  color: #8a9992;
+  background: #f7faf8;
+  border-radius: 5px;
+  padding: 9px;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.new-task-dialog-foot {
+  justify-content: flex-end;
+  border-top: 1px solid var(--line);
+  background: #fafcfa;
+}
+@media (prefers-reduced-motion: reduce) {
+  .activity-responding .activity-icon,
+  .pulse {
+    animation: none;
+  }
+  .chat-stream {
+    scroll-behavior: auto;
+  }
 }
 @media (min-width: 801px) {
   .hub-conversation .commander-panel {

@@ -10,6 +10,30 @@ type DetailTab = "Diff" | "Checks" | "Review" | "Logs" | "Dependencies";
 type TaskState = "ready" | "running" | "waiting" | "done";
 type PreviewMode = "diff" | "pr";
 type HubStage = "proposal" | "running" | "complete";
+type FeedbackMode =
+  "normal" | "interrupted" | "recovered" | "failed" | "silent";
+type ActivityStatus =
+  | "responding"
+  | "waiting_feedback"
+  | "waiting_dependency"
+  | "idle"
+  | "complete"
+  | "error"
+  | "disconnected"
+  | "stale";
+type ConversationSnapshot = {
+  id: string;
+  title: string;
+  messages: { from: "user" | "commander"; text: string }[];
+  draft: string;
+  stage: HubStage;
+  tasks: Task[];
+  selectedTaskId: string;
+  paused: boolean;
+  model: string;
+  source: string;
+  pendingTask?: { title: string; summary: string };
+};
 
 type Task = {
   id: string;
@@ -208,6 +232,72 @@ function StatusPill({ state }: { state: TaskState }) {
   );
 }
 
+const activityLabels: Record<ActivityStatus, string> = {
+  responding: "响应中",
+  waiting_feedback: "等待模型反馈",
+  waiting_dependency: "等待依赖",
+  idle: "空闲",
+  complete: "已完成",
+  error: "异常",
+  disconnected: "连接中断",
+  stale: "反馈过期",
+};
+
+function ModelActivity({
+  status,
+  feedbackAt,
+  now,
+  compact = false,
+}: {
+  status: ActivityStatus;
+  feedbackAt: number;
+  now: number;
+  compact?: boolean;
+}) {
+  const age = Math.max(0, Math.floor((now - feedbackAt) / 1000));
+  const timeLabel =
+    age < 3
+      ? "刚刚"
+      : age < 60
+        ? `${age}秒前`
+        : `${Math.floor(age / 60)}分钟前`;
+  return (
+    <span
+      className={`model-activity activity-${status} ${compact ? "compact" : ""}`}
+      title={`本地模拟反馈 · ${activityLabels[status]} · 最后反馈 ${timeLabel}`}
+      aria-label={`${activityLabels[status]}，最后反馈${timeLabel}`}
+    >
+      <i className="activity-icon" aria-hidden="true" />
+      <span className="activity-label">
+        {activityLabels[status]} · {timeLabel}
+      </span>
+      {!compact && (
+        <small>
+          {status === "stale" ? `最后反馈 ${timeLabel}` : `反馈 ${timeLabel}`}
+        </small>
+      )}
+    </span>
+  );
+}
+
+function activityForTask(
+  task: Task,
+  feedbackMode: FeedbackMode,
+  feedbackAt: number,
+  now: number,
+): ActivityStatus {
+  if (task.state === "done") return "complete";
+  if (task.state === "ready") return "idle";
+  if (task.state === "waiting" && task.dependency !== "无")
+    return "waiting_dependency";
+  if (task.state === "waiting") return "waiting_feedback";
+  if (now - feedbackAt > 30000) return "stale";
+  if (feedbackMode === "interrupted") return "disconnected";
+  if (feedbackMode === "failed") return "error";
+  if (task.state === "running") return "responding";
+  return "idle";
+}
+
 function SelectField({
   value,
   options,
@@ -239,6 +329,8 @@ function TopBar({
   onReset,
   resourceOpen,
   setResourceOpen,
+  feedbackMode,
+  onFeedback,
 }: {
   variant: Variant;
   scene: Scene;
@@ -246,6 +338,8 @@ function TopBar({
   onReset: () => void;
   resourceOpen: boolean;
   setResourceOpen: (open: boolean) => void;
+  feedbackMode: FeedbackMode;
+  onFeedback: (mode: FeedbackMode) => void;
 }) {
   return (
     <header className="prototype-topbar">
@@ -276,6 +370,19 @@ function TopBar({
           ))}
       </nav>
       <div className="topbar-actions">
+        <label className="feedback-demo">
+          <span>反馈演示</span>
+          <select
+            value={feedbackMode}
+            onChange={(event) => onFeedback(event.target.value as FeedbackMode)}
+          >
+            <option value="normal">正常</option>
+            <option value="interrupted">中断</option>
+            <option value="recovered">恢复</option>
+            <option value="failed">失败</option>
+            <option value="silent">静默（过期）</option>
+          </select>
+        </label>
         <div className="resource-wrap">
           <button
             className="resource-chip"
@@ -313,12 +420,16 @@ function Sidebar({
   selectedTask,
   tasks,
   onTask,
+  sessionTitle,
+  onNewTask,
 }: {
   scene: Scene;
   onScene: (scene: Scene) => void;
   selectedTask: Task;
   tasks: Task[];
   onTask: (task: Task) => void;
+  sessionTitle: string;
+  onNewTask: () => void;
 }) {
   return (
     <aside className="workbench-sidebar">
@@ -331,7 +442,7 @@ function Sidebar({
       </div>
       <div className="sidebar-session">
         <small>当前会话</small>
-        <strong>为订单增加 CSV 导出</strong>
+        <strong>{sessionTitle}</strong>
         <span>
           <span className="online-dot" /> 高级 Commander
         </span>
@@ -359,37 +470,42 @@ function Sidebar({
                 size={16}
               />
               <span>{sceneLabels[item]}</span>
-              {item === "plan" && <em>3</em>}
+              {item === "plan" && <em>{tasks.length}</em>}
             </button>
           ))}
       </div>
       <div className="sidebar-group task-nav">
-        <small className="sidebar-label">任务</small>
-        {["csv-api", "csv-entry", "csv-review"].map((id) => (
+        <div className="sidebar-task-label">
+          <small className="sidebar-label">任务</small>
           <button
-            key={id}
-            onClick={() =>
-              onTask(tasks.find((task) => task.id === id) ?? selectedTask)
-            }
-            className={
-              selectedTask.id === id
-                ? "task-nav-item selected"
-                : "task-nav-item"
-            }
+            className="sidebar-new-task"
+            onClick={onNewTask}
+            aria-label="新任务"
           >
-            <span className="task-dot" />
-            <span>
-              {id === "csv-api"
-                ? "后端 CSV 接口"
-                : id === "csv-entry"
-                  ? "前端导出入口"
-                  : "独立审查"}
-            </span>
+            ＋
           </button>
-        ))}
+        </div>
+        {tasks.length > 0 ? (
+          tasks.map((task) => (
+            <button
+              key={task.id}
+              onClick={() => onTask(task)}
+              className={
+                selectedTask.id === task.id
+                  ? "task-nav-item selected"
+                  : "task-nav-item"
+              }
+            >
+              <span className="task-dot" />
+              <span>{task.title}</span>
+            </button>
+          ))
+        ) : (
+          <span className="sidebar-empty-tasks">暂无任务建议</span>
+        )}
       </div>
       <div className="sidebar-footer">
-        <span className="online-dot" /> 示例会话已连接
+        <span className="online-dot" /> 本地演示
       </div>
     </aside>
   );
@@ -400,11 +516,17 @@ function TaskDetail({
   detailTab,
   setDetailTab,
   variant,
+  activityStatus,
+  feedbackAt,
+  now,
 }: {
   task: Task;
   detailTab: DetailTab;
   setDetailTab: (tab: DetailTab) => void;
   variant: Variant;
+  activityStatus?: ActivityStatus;
+  feedbackAt?: number;
+  now?: number;
 }) {
   return (
     <aside className={`detail-panel detail-${variant}`}>
@@ -413,7 +535,17 @@ function TaskDetail({
           <span className="eyebrow">任务详情</span>
           <h2>{task.title}</h2>
         </div>
-        <StatusPill state={task.state} />
+        <div className="detail-status-stack">
+          <StatusPill state={task.state} />
+          {activityStatus && feedbackAt && now && (
+            <ModelActivity
+              status={activityStatus}
+              feedbackAt={feedbackAt}
+              now={now}
+              compact
+            />
+          )}
+        </div>
       </div>
       <p className="detail-description">{task.detail}</p>
       <div className="profile-row">
@@ -556,6 +688,13 @@ function CommanderPanel({
   onContinue,
   model,
   source,
+  activityStatus = "idle",
+  feedbackAt = 0,
+  now = 0,
+  conversations,
+  activeConversationId,
+  onSwitchConversation,
+  onNewConversation,
 }: {
   compact?: boolean;
   messages: { from: "user" | "commander"; text: string }[];
@@ -565,6 +704,13 @@ function CommanderPanel({
   onContinue: () => void;
   model: string;
   source: string;
+  activityStatus?: ActivityStatus;
+  feedbackAt?: number;
+  now?: number;
+  conversations?: ConversationSnapshot[];
+  activeConversationId?: string;
+  onSwitchConversation?: (id: string) => void;
+  onNewConversation?: () => void;
 }) {
   const chatRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -586,12 +732,49 @@ function CommanderPanel({
             {model} · {source}
           </small>
         </div>
+        {feedbackAt > 0 && (
+          <ModelActivity
+            status={activityStatus}
+            feedbackAt={feedbackAt}
+            now={now}
+          />
+        )}
         <span className="live-label">
           <i />
-          已连接
+          本地演示
         </span>
+        {conversations && activeConversationId && onSwitchConversation && (
+          <div className="conversation-actions">
+            <select
+              aria-label="切换会话"
+              value={activeConversationId}
+              onChange={(event) => onSwitchConversation(event.target.value)}
+            >
+              {conversations.map((conversation) => (
+                <option key={conversation.id} value={conversation.id}>
+                  {conversation.title}
+                </option>
+              ))}
+            </select>
+            {onNewConversation && (
+              <button
+                className="new-conversation-button"
+                onClick={onNewConversation}
+              >
+                ＋新对话
+              </button>
+            )}
+          </div>
+        )}
       </div>
       <div className="chat-stream" ref={chatRef}>
+        {messages.length === 0 && (
+          <div className="chat-empty">
+            <span>✦</span>
+            <strong>新的 Commander 会话</strong>
+            <p>从一个需求或约束开始，Commander 会先回示待规划状态。</p>
+          </div>
+        )}
         {messages.map((message, index) => (
           <div
             className={`chat-message ${message.from}`}
@@ -869,6 +1052,16 @@ function HubScene({
   setModel,
   source,
   setSource,
+  feedbackMode,
+  feedbackAt,
+  now,
+  commanderActivityStatus,
+  conversations,
+  activeConversationId,
+  onSwitchConversation,
+  onNewConversation,
+  onNewTask,
+  pendingTask,
 }: {
   stage: HubStage;
   tasks: Task[];
@@ -885,6 +1078,16 @@ function HubScene({
   setModel: (value: string) => void;
   source: string;
   setSource: (value: string) => void;
+  feedbackMode: FeedbackMode;
+  feedbackAt: number;
+  now: number;
+  commanderActivityStatus: ActivityStatus;
+  conversations: ConversationSnapshot[];
+  activeConversationId: string;
+  onSwitchConversation: (id: string) => void;
+  onNewConversation: () => void;
+  onNewTask: () => void;
+  pendingTask: { title: string; summary: string } | null;
 }) {
   const updateTask = (
     id: string,
@@ -904,13 +1107,18 @@ function HubScene({
           <h1>把协作留在一个工作面</h1>
           <p>Commander 拆解、分发、汇总；你随时可以展开任一详情。</p>
         </div>
-        <span className={`hub-stage stage-${stage}`}>
-          {stage === "proposal"
-            ? "建议待确认"
-            : stage === "running"
-              ? "任务进行中"
-              : "可交付候选"}
-        </span>
+        <div className="hub-heading-actions">
+          <button className="new-task-button" onClick={onNewTask}>
+            ＋新任务
+          </button>
+          <span className={`hub-stage stage-${stage}`}>
+            {stage === "proposal"
+              ? "建议待确认"
+              : stage === "running"
+                ? "任务进行中"
+                : "可交付候选"}
+          </span>
+        </div>
       </div>
       <div className="hub-layout">
         <section className="hub-conversation">
@@ -928,6 +1136,22 @@ function HubScene({
             onContinue={onContinue}
             model={model}
             source={source}
+            activityStatus={
+              feedbackMode === "failed"
+                ? "error"
+                : feedbackMode === "interrupted"
+                  ? "disconnected"
+                  : commanderActivityStatus === "waiting_feedback" &&
+                      now - feedbackAt > 30000
+                    ? "stale"
+                    : commanderActivityStatus
+            }
+            feedbackAt={feedbackAt}
+            now={now}
+            conversations={conversations}
+            activeConversationId={activeConversationId}
+            onSwitchConversation={onSwitchConversation}
+            onNewConversation={onNewConversation}
           />
         </section>
         <aside className="hub-workspace">
@@ -954,7 +1178,11 @@ function HubScene({
               展开详情 <Icon name="arrow" size={12} />
             </button>
           </div>
-          {stage === "proposal" ? (
+          {pendingTask ? (
+            <PendingTaskCard task={pendingTask} />
+          ) : tasks.length === 0 ? (
+            <EmptyTaskCard />
+          ) : stage === "proposal" ? (
             <HubPlanCard
               tasks={tasks}
               onUpdate={updateTask}
@@ -965,6 +1193,9 @@ function HubScene({
               tasks={tasks}
               onSimulate={onSimulate}
               onOpenDetails={(taskId) => onOpenDetails("run", taskId)}
+              feedbackMode={feedbackMode}
+              feedbackAt={feedbackAt}
+              now={now}
             />
           ) : (
             <HubCompleteCard onOpenDetails={() => onOpenDetails("review")} />
@@ -1071,10 +1302,16 @@ function HubRunCards({
   tasks,
   onSimulate,
   onOpenDetails,
+  feedbackMode,
+  feedbackAt,
+  now,
 }: {
   tasks: Task[];
   onSimulate: (id: string) => void;
   onOpenDetails: (taskId?: string) => void;
+  feedbackMode: FeedbackMode;
+  feedbackAt: number;
+  now: number;
 }) {
   const runningCount = tasks.filter((task) => task.state === "running").length;
   const waitingCount = tasks.filter((task) => task.state === "waiting").length;
@@ -1107,6 +1344,12 @@ function HubRunCards({
             </small>
           </div>
           <StatusPill state={task.state} />
+          <ModelActivity
+            status={activityForTask(task, feedbackMode, feedbackAt, now)}
+            feedbackAt={feedbackAt}
+            now={now}
+            compact
+          />
           {task.state === "running" && (
             <button
               className="simulate-button"
@@ -1142,6 +1385,164 @@ function HubCompleteCard({ onOpenDetails }: { onOpenDetails: () => void }) {
         展开检查与交付 <Icon name="arrow" size={14} />
       </button>
     </section>
+  );
+}
+
+function PendingTaskCard({
+  task,
+}: {
+  task: { title: string; summary: string };
+}) {
+  const [showSample, setShowSample] = useState(false);
+  return (
+    <section className="pending-task-card">
+      <span className="eyebrow">新任务 · 待规划</span>
+      <h3>{task.title}</h3>
+      <p>{task.summary}</p>
+      <div className="pending-task-message">
+        <span className="commander-avatar">✦</span>
+        <span>
+          Commander 已收到需求，将先拆分并等待确认；不会直接开始运行。
+        </span>
+      </div>
+      <button
+        className="text-button"
+        onClick={() => setShowSample(!showSample)}
+      >
+        {showSample ? "收起样例分工" : "查看样例分工（仅展示）"}{" "}
+        <Icon name="arrow" size={12} />
+      </button>
+      {showSample && (
+        <div className="sample-plan-preview">
+          <span>后端 CSV 接口 · Terra</span>
+          <span>前端导出入口 · Luna</span>
+          <span>独立审查 · Sol · 依赖前两项</span>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function EmptyTaskCard() {
+  return (
+    <section className="pending-task-card empty-task-card">
+      <span className="eyebrow">空白会话</span>
+      <h3>还没有任务建议</h3>
+      <p>
+        继续与 Commander 讨论需求，或使用“＋新任务”开始一个独立的待规划会话。
+      </p>
+      <div className="empty-task-state">
+        <span>◎</span>
+        <span>未分发 · 不会修改其他会话</span>
+      </div>
+    </section>
+  );
+}
+
+function EmptyDetailScene({
+  title,
+  onBackToHub,
+}: {
+  title: string;
+  onBackToHub: () => void;
+}) {
+  return (
+    <div className="scene-content empty-detail-scene">
+      <div className="scene-title-row">
+        <div>
+          <span className="eyebrow">COMMANDER HUB</span>
+          <h1>{title}</h1>
+          <p>当前会话还没有任务建议，先回到 Hub 与 Commander 讨论需求。</p>
+        </div>
+        <button className="back-hub" onClick={onBackToHub}>
+          ← 返回 Commander Hub
+        </button>
+      </div>
+      <section className="pending-task-card empty-task-card">
+        <span className="eyebrow">空白会话</span>
+        <h3>没有可展开的任务详情</h3>
+        <p>该会话尚未创建任务图，详情页不会引用其他会话的样例任务。</p>
+      </section>
+    </div>
+  );
+}
+
+function NewTaskDialog({
+  title,
+  summary,
+  setTitle,
+  setSummary,
+  onClose,
+  onCreate,
+}: {
+  title: string;
+  summary: string;
+  setTitle: (value: string) => void;
+  setSummary: (value: string) => void;
+  onClose: () => void;
+  onCreate: () => void;
+}) {
+  return (
+    <div
+      className="new-task-backdrop"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.currentTarget === event.target) onClose();
+      }}
+    >
+      <section
+        className="new-task-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="new-task-title"
+      >
+        <div className="new-task-dialog-head">
+          <div>
+            <span className="eyebrow">COMMANDER HUB</span>
+            <h2 id="new-task-title">创建一个新任务</h2>
+          </div>
+          <button className="preview-close" onClick={onClose} aria-label="关闭">
+            ×
+          </button>
+        </div>
+        <div className="new-task-dialog-body">
+          <label>
+            标题
+            <input
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="例如：为报告增加 PDF 导出"
+              autoFocus
+            />
+          </label>
+          <label>
+            简述
+            <textarea
+              value={summary}
+              onChange={(event) => setSummary(event.target.value)}
+              placeholder="告诉 Commander 目标、约束或验收重点"
+              rows={4}
+            />
+          </label>
+          <p className="new-task-note">
+            新任务会进入独立会话，由 Commander
+            回示待规划；不会修改当前已批准或运行中的任务。
+          </p>
+        </div>
+        <div className="new-task-dialog-foot">
+          <button className="secondary" onClick={onClose}>
+            取消
+          </button>
+          <button
+            className="primary"
+            onClick={onCreate}
+            disabled={!title.trim() || !summary.trim()}
+          >
+            交给 Commander <Icon name="arrow" size={14} />
+          </button>
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -1321,11 +1722,17 @@ function RunTaskCard({
   selected,
   onSelect,
   onComplete,
+  feedbackMode,
+  feedbackAt,
+  now,
 }: {
   task: Task;
   selected: boolean;
   onSelect: () => void;
   onComplete?: () => void;
+  feedbackMode: FeedbackMode;
+  feedbackAt: number;
+  now: number;
 }) {
   return (
     <button
@@ -1335,6 +1742,12 @@ function RunTaskCard({
       <div className="run-task-head">
         <span className="task-index worker">W</span>
         <StatusPill state={task.state} />
+        <ModelActivity
+          status={activityForTask(task, feedbackMode, feedbackAt, now)}
+          feedbackAt={feedbackAt}
+          now={now}
+          compact
+        />
       </div>
       <strong>{task.title}</strong>
       <small>
@@ -1381,6 +1794,9 @@ function RunScene({
   setRunView,
   onBackToHub,
   onSimulate,
+  feedbackMode,
+  feedbackAt,
+  now,
 }: {
   tasks: Task[];
   selectedTask: Task;
@@ -1394,6 +1810,9 @@ function RunScene({
   setRunView: (view: "tasks" | "agents") => void;
   onBackToHub: () => void;
   onSimulate: (id: string) => void;
+  feedbackMode: FeedbackMode;
+  feedbackAt: number;
+  now: number;
 }) {
   const workers = tasks.filter((task) => task.role !== "Reviewer");
   const reviewer = tasks.find((task) => task.role === "Reviewer") ?? tasks[2];
@@ -1447,6 +1866,9 @@ function RunScene({
                 tasks={workers}
                 selectedTask={selectedTask}
                 onSelect={setSelectedTask}
+                feedbackMode={feedbackMode}
+                feedbackAt={feedbackAt}
+                now={now}
               />
               <AgentColumn
                 title="Reviewer"
@@ -1454,6 +1876,9 @@ function RunScene({
                 tasks={[reviewer]}
                 selectedTask={selectedTask}
                 onSelect={setSelectedTask}
+                feedbackMode={feedbackMode}
+                feedbackAt={feedbackAt}
+                now={now}
               />
               <AgentColumn
                 title="Evidence"
@@ -1461,6 +1886,9 @@ function RunScene({
                 tasks={[]}
                 selectedTask={selectedTask}
                 onSelect={setSelectedTask}
+                feedbackMode={feedbackMode}
+                feedbackAt={feedbackAt}
+                now={now}
               />
             </div>
           ) : variant === "B" ? (
@@ -1469,6 +1897,9 @@ function RunScene({
               selectedTask={selectedTask}
               onSelect={setSelectedTask}
               reviewer={reviewer}
+              feedbackMode={feedbackMode}
+              feedbackAt={feedbackAt}
+              now={now}
             />
           ) : (
             <div className="run-task-stack">
@@ -1479,6 +1910,9 @@ function RunScene({
                   selected={selectedTask.id === task.id}
                   onSelect={() => setSelectedTask(task)}
                   onComplete={() => onSimulate(task.id)}
+                  feedbackMode={feedbackMode}
+                  feedbackAt={feedbackAt}
+                  now={now}
                 />
               ))}
               <div
@@ -1494,6 +1928,17 @@ function RunScene({
                   </small>
                 </div>
                 <StatusPill state="waiting" />
+                <ModelActivity
+                  status={activityForTask(
+                    reviewer,
+                    feedbackMode,
+                    feedbackAt,
+                    now,
+                  )}
+                  feedbackAt={feedbackAt}
+                  now={now}
+                  compact
+                />
                 <Icon name="arrow" size={15} />
               </div>
             </div>
@@ -1510,6 +1955,14 @@ function RunScene({
               detailTab={detailTab}
               setDetailTab={setDetailTab}
               variant={variant}
+              activityStatus={activityForTask(
+                selectedTask,
+                feedbackMode,
+                feedbackAt,
+                now,
+              )}
+              feedbackAt={feedbackAt}
+              now={now}
             />
           </aside>
         ) : (
@@ -1518,6 +1971,14 @@ function RunScene({
             detailTab={detailTab}
             setDetailTab={setDetailTab}
             variant={variant}
+            activityStatus={activityForTask(
+              selectedTask,
+              feedbackMode,
+              feedbackAt,
+              now,
+            )}
+            feedbackAt={feedbackAt}
+            now={now}
           />
         )}
       </div>
@@ -1530,11 +1991,17 @@ function ParallelBoard({
   selectedTask,
   onSelect,
   reviewer,
+  feedbackMode,
+  feedbackAt,
+  now,
 }: {
   tasks: Task[];
   selectedTask: Task;
   onSelect: (task: Task) => void;
   reviewer: Task;
+  feedbackMode: FeedbackMode;
+  feedbackAt: number;
+  now: number;
 }) {
   const columns: { key: TaskState; label: string; hint: string }[] = [
     { key: "ready", label: "待开始", hint: "已批准，等待派发" },
@@ -1568,6 +2035,12 @@ function ParallelBoard({
                 <small>
                   {task.model} · {task.source}
                 </small>
+                <ModelActivity
+                  status={activityForTask(task, feedbackMode, feedbackAt, now)}
+                  feedbackAt={feedbackAt}
+                  now={now}
+                  compact
+                />
                 <StatusPill state={task.state} />
               </button>
             ))}
@@ -1600,12 +2073,18 @@ function AgentColumn({
   tasks,
   selectedTask,
   onSelect,
+  feedbackMode,
+  feedbackAt,
+  now,
 }: {
   title: string;
   accent: string;
   tasks: Task[];
   selectedTask: Task;
   onSelect: (task: Task) => void;
+  feedbackMode: FeedbackMode;
+  feedbackAt: number;
+  now: number;
 }) {
   return (
     <div className={`agent-column accent-${accent}`}>
@@ -1632,6 +2111,12 @@ function AgentColumn({
                 <small>{task.source} · Attempt 01</small>
               </span>
             </div>
+            <ModelActivity
+              status={activityForTask(task, feedbackMode, feedbackAt, now)}
+              feedbackAt={feedbackAt}
+              now={now}
+              compact
+            />
             <b>
               {task.state === "running"
                 ? "运行中"
@@ -2011,6 +2496,30 @@ export function CommanderPrototype() {
   const [selectedTask, setSelectedTask] = useState<Task>(queryTasks[0]);
   const [detailTab, setDetailTab] = useState<DetailTab>("Diff");
   const [messages, setMessages] = useState(messagesForStage(query.stage));
+  const [conversations, setConversations] = useState<ConversationSnapshot[]>(
+    () => [
+      {
+        id: "primary",
+        title: "为订单增加 CSV 导出",
+        messages: messagesForStage(query.stage),
+        draft: "",
+        stage: query.stage,
+        tasks: queryTasks,
+        selectedTaskId: queryTasks[0]?.id ?? "",
+        paused: false,
+        model: "Astra",
+        source: "Codex",
+      },
+    ],
+  );
+  const [activeConversationId, setActiveConversationId] = useState("primary");
+  const [pendingTask, setPendingTask] = useState<{
+    title: string;
+    summary: string;
+  } | null>(null);
+  const [newTaskOpen, setNewTaskOpen] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskSummary, setNewTaskSummary] = useState("");
   const [draft, setDraft] = useState("");
   const [model, setModel] = useState("Astra");
   const [source, setSource] = useState("Codex");
@@ -2018,10 +2527,147 @@ export function CommanderPrototype() {
   const [resourceOpen, setResourceOpen] = useState(false);
   const [preview, setPreview] = useState<PreviewMode | null>(null);
   const [runView, setRunView] = useState<"tasks" | "agents">("tasks");
+  const [feedbackMode, setFeedbackMode] = useState<FeedbackMode>("normal");
+  const [feedbackAt, setFeedbackAt] = useState(() => Date.now());
+  const [now, setNow] = useState(() => Date.now());
+  const [commanderActivityStatus, setCommanderActivityStatus] =
+    useState<ActivityStatus>("idle");
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (feedbackMode !== "normal" && feedbackMode !== "recovered") return;
+    const timer = window.setInterval(() => setFeedbackAt(Date.now()), 3000);
+    return () => window.clearInterval(timer);
+  }, [feedbackMode]);
+
+  const saveActiveConversation = (
+    nextMessages = messages,
+    nextDraft = draft,
+    nextPending = pendingTask,
+  ) =>
+    conversations.map((conversation) =>
+      conversation.id === activeConversationId
+        ? {
+            ...conversation,
+            messages: nextMessages,
+            draft: nextDraft,
+            stage,
+            tasks,
+            selectedTaskId: selectedTask.id,
+            paused,
+            model,
+            source,
+            pendingTask: nextPending ?? undefined,
+          }
+        : conversation,
+    );
+  const switchConversation = (id: string) => {
+    if (id === activeConversationId) return;
+    const updated = saveActiveConversation();
+    const target = updated.find((conversation) => conversation.id === id);
+    if (!target) return;
+    setConversations(updated);
+    setActiveConversationId(id);
+    setMessages(target.messages);
+    setDraft(target.draft);
+    setPendingTask(target.pendingTask ?? null);
+    setStage(target.stage);
+    setTasks(target.tasks);
+    setSelectedTask(
+      target.tasks.find((task) => task.id === target.selectedTaskId) ??
+        initialTasks[0],
+    );
+    setPaused(target.paused);
+    setModel(target.model);
+    setSource(target.source);
+    updateUrl(variant, "hub", target.stage);
+  };
+  const createConversation = () => {
+    const updated = saveActiveConversation();
+    const id = `conversation-${Date.now()}`;
+    const next = {
+      id,
+      title: "新对话",
+      messages: [],
+      draft: "",
+      stage: "proposal" as HubStage,
+      tasks: [],
+      selectedTaskId: "",
+      paused: false,
+      model: "Astra",
+      source: "Codex",
+    };
+    setConversations([...updated, next]);
+    setActiveConversationId(id);
+    setMessages([]);
+    setDraft("");
+    setPendingTask(null);
+    setStage("proposal");
+    setTasks([]);
+    setSelectedTask(initialTasks[0]);
+    setPaused(false);
+    setModel("Astra");
+    setSource("Codex");
+    updateUrl(variant, "hub", "proposal");
+    setScene("hub");
+  };
+  const openNewTask = () => {
+    setNewTaskTitle("");
+    setNewTaskSummary("");
+    setNewTaskOpen(true);
+  };
+  const createTaskConversation = () => {
+    if (!newTaskTitle.trim() || !newTaskSummary.trim()) return;
+    const updated = saveActiveConversation();
+    const id = `task-${Date.now()}`;
+    const task = { title: newTaskTitle.trim(), summary: newTaskSummary.trim() };
+    const nextMessages = [
+      { from: "user" as const, text: `需求：${task.title}\n${task.summary}` },
+      {
+        from: "commander" as const,
+        text: "已收到，待拆分确认。我会先给出任务建议，不会直接开始运行。",
+      },
+    ];
+    const next = {
+      id,
+      title: task.title,
+      messages: nextMessages,
+      draft: "",
+      stage: "proposal" as HubStage,
+      tasks: [],
+      selectedTaskId: "",
+      paused: false,
+      model: "Astra",
+      source: "Codex",
+      pendingTask: task,
+    };
+    setConversations([...updated, next]);
+    setActiveConversationId(id);
+    setMessages(nextMessages);
+    setDraft("");
+    setPendingTask(task);
+    setStage("proposal");
+    setTasks([]);
+    setSelectedTask(initialTasks[0]);
+    setPaused(false);
+    setModel("Astra");
+    setSource("Codex");
+    updateUrl(variant, "hub", "proposal");
+    setNewTaskOpen(false);
+    setScene("hub");
+  };
 
   const setVariant = (next: Variant) => {
     setVariantState(next);
     updateUrl(next, scene, stage);
+  };
+  const simulateFeedback = (mode: FeedbackMode) => {
+    setFeedbackMode(mode);
+    if (mode === "normal" || mode === "recovered") setFeedbackAt(Date.now());
   };
   const setScene = (next: Scene) => {
     setSceneState(next);
@@ -2041,9 +2687,30 @@ export function CommanderPrototype() {
     setTasks(tasksForStage("proposal"));
     setSelectedTask(tasksForStage("proposal")[0]);
     setMessages(messagesForStage("proposal"));
+    const resetTasks = tasksForStage("proposal");
+    setConversations([
+      {
+        id: "primary",
+        title: "为订单增加 CSV 导出",
+        messages: messagesForStage("proposal"),
+        draft: "",
+        stage: "proposal",
+        tasks: resetTasks,
+        selectedTaskId: resetTasks[0].id,
+        paused: false,
+        model: "Astra",
+        source: "Codex",
+      },
+    ]);
+    setActiveConversationId("primary");
+    setPendingTask(null);
+    setNewTaskOpen(false);
     setDraft("");
     setPaused(false);
     setPreview(null);
+    setFeedbackMode("normal");
+    setFeedbackAt(Date.now());
+    setCommanderActivityStatus("idle");
     updateUrl("A", "hub", "proposal");
   };
   const sendMessage = () => {
@@ -2057,6 +2724,8 @@ export function CommanderPrototype() {
       },
     ]);
     setDraft("");
+    setCommanderActivityStatus("responding");
+    window.setTimeout(() => setCommanderActivityStatus("idle"), 900);
   };
   const startRun = () => {
     if (stage !== "proposal") return;
@@ -2081,6 +2750,7 @@ export function CommanderPrototype() {
           .join("、")}。Reviewer 将在依赖完成后回到 Hub 汇总。`,
       },
     ]);
+    setCommanderActivityStatus("waiting_feedback");
     setStage("running");
     setSceneState("hub");
     updateUrl(variant, "hub", "running");
@@ -2122,7 +2792,7 @@ export function CommanderPrototype() {
           workersReady && current.role !== "Reviewer"
             ? "两个 Worker 的样例结果已就绪，Reviewer 已开始独立检查。"
             : current.role === "Reviewer"
-              ? "独立 Reviewer 的样例检查已完成，候选可以回到 Hub 汇总。"
+              ? "本轮样例已完成 CSV 接口和列表导出入口，保留筛选并补充失败反馈。候选 #demo-01，checks 通过，独立 Reviewer 建议交付；尚未创建 PR。你可展开 diff/审查后准备 PR。"
               : `${current.title} 的样例任务已完成，其他任务继续保留在当前状态。`,
       },
     ]);
@@ -2182,6 +2852,16 @@ export function CommanderPrototype() {
             );
           setScene(next);
         }}
+        feedbackMode={feedbackMode}
+        feedbackAt={feedbackAt}
+        now={now}
+        commanderActivityStatus={commanderActivityStatus}
+        conversations={conversations}
+        activeConversationId={activeConversationId}
+        onSwitchConversation={switchConversation}
+        onNewConversation={createConversation}
+        onNewTask={openNewTask}
+        pendingTask={pendingTask}
         model={model}
         setModel={setModel}
         source={source}
@@ -2203,48 +2883,69 @@ export function CommanderPrototype() {
       />
     );
   else if (scene === "plan")
-    content = (
-      <PlanScene
-        tasks={tasks}
-        setTasks={setTasks}
-        onStart={startRun}
-        onBackToHub={() => setScene("hub")}
-        stage={stage}
-      />
-    );
+    content =
+      tasks.length === 0 ? (
+        <EmptyDetailScene
+          title="分工详情"
+          onBackToHub={() => setScene("hub")}
+        />
+      ) : (
+        <PlanScene
+          tasks={tasks}
+          setTasks={setTasks}
+          onStart={startRun}
+          onBackToHub={() => setScene("hub")}
+          stage={stage}
+        />
+      );
   else if (scene === "run")
-    content = (
-      <RunScene
-        tasks={tasks}
-        selectedTask={
-          tasks.find((task) => task.id === selectedTask.id) ?? selectedTask
-        }
-        setSelectedTask={(task) =>
-          setSelectedTask(
-            tasks.find((candidate) => candidate.id === task.id) ?? task,
-          )
-        }
-        detailTab={detailTab}
-        setDetailTab={setDetailTab}
-        paused={paused}
-        setPaused={setPaused}
-        variant={variant}
-        runView={runView}
-        setRunView={setRunView}
-        onBackToHub={() => setScene("hub")}
-        onSimulate={simulateTask}
-      />
-    );
+    content =
+      tasks.length === 0 ? (
+        <EmptyDetailScene
+          title="运行详情"
+          onBackToHub={() => setScene("hub")}
+        />
+      ) : (
+        <RunScene
+          tasks={tasks}
+          selectedTask={
+            tasks.find((task) => task.id === selectedTask.id) ?? selectedTask
+          }
+          setSelectedTask={(task) =>
+            setSelectedTask(
+              tasks.find((candidate) => candidate.id === task.id) ?? task,
+            )
+          }
+          detailTab={detailTab}
+          setDetailTab={setDetailTab}
+          paused={paused}
+          setPaused={setPaused}
+          variant={variant}
+          runView={runView}
+          setRunView={setRunView}
+          onBackToHub={() => setScene("hub")}
+          onSimulate={simulateTask}
+          feedbackMode={feedbackMode}
+          feedbackAt={feedbackAt}
+          now={now}
+        />
+      );
   else
-    content = (
-      <ReviewScene
-        onPrepare={preparePr}
-        onViewDiff={() => setPreview("diff")}
-        onBackToHub={() => setScene("hub")}
-        stage={stage}
-        reviewer={tasks.find((task) => task.role === "Reviewer") ?? tasks[2]}
-      />
-    );
+    content =
+      tasks.length === 0 ? (
+        <EmptyDetailScene
+          title="交付详情"
+          onBackToHub={() => setScene("hub")}
+        />
+      ) : (
+        <ReviewScene
+          onPrepare={preparePr}
+          onViewDiff={() => setPreview("diff")}
+          onBackToHub={() => setScene("hub")}
+          stage={stage}
+          reviewer={tasks.find((task) => task.role === "Reviewer") ?? tasks[2]}
+        />
+      );
 
   return (
     <div
@@ -2257,6 +2958,8 @@ export function CommanderPrototype() {
         onReset={reset}
         resourceOpen={resourceOpen}
         setResourceOpen={setResourceOpen}
+        feedbackMode={feedbackMode}
+        onFeedback={simulateFeedback}
       />
       {variant === "A" && (
         <Sidebar
@@ -2265,6 +2968,12 @@ export function CommanderPrototype() {
           selectedTask={selectedTask}
           tasks={tasks}
           onTask={setSelectedTask}
+          sessionTitle={
+            conversations.find(
+              (conversation) => conversation.id === activeConversationId,
+            )?.title ?? "Commander 会话"
+          }
+          onNewTask={openNewTask}
         />
       )}
       <main className="prototype-main">{content}</main>
@@ -2282,6 +2991,16 @@ export function CommanderPrototype() {
       )}
       {preview && (
         <ReviewPreview mode={preview} onClose={() => setPreview(null)} />
+      )}
+      {newTaskOpen && (
+        <NewTaskDialog
+          title={newTaskTitle}
+          summary={newTaskSummary}
+          setTitle={setNewTaskTitle}
+          setSummary={setNewTaskSummary}
+          onClose={() => setNewTaskOpen(false)}
+          onCreate={createTaskConversation}
+        />
       )}
       <PrototypeSwitcher variant={variant} setVariant={setVariant} />
     </div>
