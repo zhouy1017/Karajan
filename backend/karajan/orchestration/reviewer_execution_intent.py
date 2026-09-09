@@ -20,7 +20,11 @@ from karajan.routing.compiler import digest
 from karajan.runs import RunError
 from karajan.storage import ExistingStoreError, open_database, require_schema
 
-from .admission import ApprovedTaskAdmission, ReviewerFinalEffectCapability
+from .admission import (
+    ApprovedTaskAdmission,
+    PreparedReviewerFinalEffect,
+    ReviewerFinalEffectCapability,
+)
 from .go_execution_intent import GoExecutionIntents
 from .reviewer_execution_binding import compiler_binding, host_manifest, launch_document
 from .reviewer_input import ReviewerInput, compile_reviewer_input
@@ -56,6 +60,50 @@ def _require_existing_schema(database: Path) -> None:
         )
     except ExistingStoreError:
         raise RunError("REVIEWER_EXECUTION_LEDGER_UNAVAILABLE") from None
+
+
+_LEDGER_COLUMNS = (
+    "execution_id,run_id,reviewer_operation_id,principal,command_key,intent,state"
+)
+
+
+def _decode_intent_row(
+    row: sqlite3.Row,
+    *,
+    run_id: str | None = None,
+    reviewer_operation_id: str | None = None,
+    principal: str | None = None,
+) -> dict[str, Any]:
+    """Bind every persisted index column to the digest-protected intent body."""
+    try:
+        value = json.loads(row["intent"])
+        if not isinstance(value, dict) or value.get("intent_digest") != digest(
+            {key: item for key, item in value.items() if key != "intent_digest"}
+        ):
+            raise ValueError
+        identities = (
+            "execution_id",
+            "run_id",
+            "reviewer_operation_id",
+            "principal",
+            "command_key",
+        )
+        if any(value.get(key) != row[key] for key in identities) or (
+            value.get("phase") != row["state"]
+        ):
+            raise ValueError
+        if (
+            (run_id is not None and value["run_id"] != run_id)
+            or (
+                reviewer_operation_id is not None
+                and value["reviewer_operation_id"] != reviewer_operation_id
+            )
+            or (principal is not None and value["principal"] != principal)
+        ):
+            raise ValueError
+        return value
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+        raise RunError("REVIEWER_EXECUTION_BINDING_INVALID") from None
 
 
 def _reject_repository_ledger(database: Path, projects: object) -> None:
@@ -115,19 +163,20 @@ class ReviewerExecutionHistory:
         try:
             db.execute("BEGIN")
             row = db.execute(
-                "SELECT intent FROM reviewer_executions WHERE run_id=? AND reviewer_operation_id=?",
+                f"SELECT {_LEDGER_COLUMNS} FROM reviewer_executions "
+                "WHERE run_id=? AND reviewer_operation_id=?",
                 (run_id, reviewer_operation_id),
             ).fetchone()
             if row is None:
                 return None
-            value = json.loads(row["intent"])
-            if not isinstance(value, dict) or value.get("principal") != principal:
-                raise RunError("REVIEWER_EXECUTION_BINDING_INVALID")
-            if value.get("intent_digest") != digest(
-                {key: item for key, item in value.items() if key != "intent_digest"}
-            ):
-                raise RunError("REVIEWER_EXECUTION_BINDING_INVALID")
-            return deepcopy(value)
+            return deepcopy(
+                _decode_intent_row(
+                    row,
+                    run_id=run_id,
+                    reviewer_operation_id=reviewer_operation_id,
+                    principal=principal,
+                )
+            )
         finally:
             db.close()
 
@@ -264,19 +313,15 @@ class ReviewerExecutionIntents:
         self, db: sqlite3.Connection, run_id: str, operation_id: str, principal: str
     ) -> dict[str, Any] | None:
         row = db.execute(
-            "SELECT intent FROM reviewer_executions WHERE run_id=? AND reviewer_operation_id=?",
+            f"SELECT {_LEDGER_COLUMNS} FROM reviewer_executions "
+            "WHERE run_id=? AND reviewer_operation_id=?",
             (run_id, operation_id),
         ).fetchone()
         if row is None:
             return None
-        value = json.loads(row["intent"])
-        if not isinstance(value, dict):
-            raise RunError("REVIEWER_EXECUTION_BINDING_INVALID")
-        if value.get("principal") != principal or value.get("intent_digest") != digest(
-            {k: v for k, v in value.items() if k != "intent_digest"}
-        ):
-            raise RunError("REVIEWER_EXECUTION_BINDING_INVALID")
-        return value
+        return _decode_intent_row(
+            row, run_id=run_id, reviewer_operation_id=operation_id, principal=principal
+        )
 
     def _compiled(
         self, run_id: str, reviewer_operation_id: str, principal: str
@@ -318,12 +363,13 @@ class ReviewerExecutionIntents:
     ) -> dict[str, Any]:
         with self._db(write=False) as db:
             prior = db.execute(
-                "SELECT intent FROM reviewer_executions WHERE principal=? AND command_key=?",
+                f"SELECT {_LEDGER_COLUMNS} FROM reviewer_executions "
+                "WHERE principal=? AND command_key=?",
                 (principal, command_key),
             ).fetchone()
             existing = self._load(db, run_id, reviewer_operation_id, principal)
             if prior is not None:
-                prior_value = json.loads(prior["intent"])
+                prior_value = _decode_intent_row(prior)
                 if existing != prior_value:
                     raise RunError("IDEMPOTENCY_CONFLICT")
                 if existing is None:
@@ -340,6 +386,9 @@ class ReviewerExecutionIntents:
         ) as held:
             if compiler_binding(held, compiled, project_id=binding["project_id"]) != binding:
                 raise RunError("REVIEWER_EXECUTION_INPUT_CHANGED")
+            prepared_effect = self._prepare_current_effect_boundary(
+                held, binding["reviewer_input"]
+            )
             try:
                 with self._db() as db:
                     # The private-ledger writer may have waited after the
@@ -352,6 +401,7 @@ class ReviewerExecutionIntents:
                             "schema_version": "karajan.reviewer-execution-intent.v1",
                             "execution_id": str(uuid.uuid4()),
                             "principal": principal,
+                            "command_key": command_key,
                             "fence": 1,
                             "start_key": "reviewer-host-start:" + reviewer_operation_id,
                             "phase": "prepared",
@@ -367,7 +417,7 @@ class ReviewerExecutionIntents:
                     serialized = json.dumps(intent, sort_keys=True)
                     # All UUID/digest/JSON work is complete before this final
                     # scalar authority check and the immediately following SQL.
-                    self._assert_current_effect_boundary(held, binding["reviewer_input"])
+                    prepared_effect.assert_current()
                     db.execute(
                         "INSERT INTO reviewer_executions VALUES (?,?,?,?,?,?,?)",
                         (
@@ -383,14 +433,14 @@ class ReviewerExecutionIntents:
                 with self._db(write=False) as db:
                     existing = self._load(db, run_id, reviewer_operation_id, principal)
                     prior = db.execute(
-                        "SELECT intent FROM reviewer_executions "
+                        f"SELECT {_LEDGER_COLUMNS} FROM reviewer_executions "
                         "WHERE principal=? AND command_key=?",
                         (principal, command_key),
                     ).fetchone()
                     if (
                         existing is not None
                         and prior is not None
-                        and json.loads(prior["intent"]) == existing
+                        and _decode_intent_row(prior) == existing
                     ):
                         return deepcopy(existing)
                 raise RunError("REVIEWER_EXECUTION_ALREADY_PREPARED") from None
@@ -399,6 +449,13 @@ class ReviewerExecutionIntents:
         self, run_id: str, reviewer_operation_id: str, *, principal: str
     ) -> dict[str, Any] | None:
         """Persist cancellation; it never infers Host/native/remote completion."""
+        # Validate a matching execution identity before this request can alter
+        # its producer admission. In particular, an index-column tamper must
+        # not turn a later cancellation into a different Run/operation error
+        # or change the original admission before the common ledger boundary
+        # rejects the record.
+        with self._db(write=False) as db:
+            self._load(db, run_id, reviewer_operation_id, principal)
         self.admissions.cancel(run_id, reviewer_operation_id, principal=principal)
         # Take the ledger writer before loading so this update cannot promote
         # an old WAL snapshot after inspect_host has committed.
@@ -436,10 +493,10 @@ class ReviewerExecutionIntents:
             payload,
         )
 
-    def _assert_current_effect_boundary(
+    def _prepare_current_effect_boundary(
         self, held: dict[str, Any], expected_input: dict[str, Any]
-    ) -> None:
-        """Use the held producer's complete temporal fence at a real write.
+    ) -> PreparedReviewerFinalEffect:
+        """Prepare immutable full input before a receiver owns its write lock.
 
         Deployment-source reads can block, so they must complete before the
         producer samples its Capacity/Reviewer/Run clocks.  The retained
@@ -451,7 +508,7 @@ class ReviewerExecutionIntents:
         capability = held.get("final_effect_capability")
         if not isinstance(capability, ReviewerFinalEffectCapability):
             raise RunError("REVIEWER_EXECUTION_BOUNDARY_INVALID")
-        capability.assert_current(expected_input)
+        return capability.prepare_current(expected_input)
 
     @contextmanager
     def _current_guard(self, value: dict[str, Any]) -> Iterator[Callable[[], None]]:
@@ -474,8 +531,12 @@ class ReviewerExecutionIntents:
         with self.admissions.reviewer_reserved_effect_guard(
             value["run_id"], value["reviewer_operation_id"], principal=value["principal"]
         ) as held:
+            prepared_effect = self._prepare_current_effect_boundary(
+                held, value["reviewer_input"]
+            )
+
             def assert_temporal_current() -> None:
-                self._assert_current_effect_boundary(held, value["reviewer_input"])
+                prepared_effect.assert_current()
 
             yield assert_temporal_current
 

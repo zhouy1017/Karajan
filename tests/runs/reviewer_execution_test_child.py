@@ -15,14 +15,19 @@ import threading
 from copy import deepcopy
 from pathlib import Path
 
+import httpx
+
 # `-I` intentionally ignores PYTHONPATH.  The test launcher fixes the source
 # root by file location, rather than accepting it from argv or the environment.
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "backend"))
 
-from karajan.candidates import CandidateStore
+from karajan.adapters.opencode import go_journal
+from karajan.candidates import CandidateStore, review_output
 from karajan.capacity import CapacityStore
 from karajan.execution import RunnerHost
+from karajan.isolation import go_reviewer_probe
+from karajan.isolation.opencode_runtime import IsolatedOpenCode
 from karajan.orchestration.admission import ApprovedTaskAdmission
 from karajan.orchestration.reviewer_binding import ApprovedReviewerBindings
 from karajan.orchestration.reviewer_execution_intent import (
@@ -31,7 +36,7 @@ from karajan.orchestration.reviewer_execution_intent import (
     ReviewerLaunchSpec,
 )
 from karajan.orchestration.routing import ApprovedRunRouting
-from karajan.projects import ProjectRegistry
+from karajan.projects import ProjectRegistry, go_reviewer_suite
 from karajan.projects.demand import AttemptEstimateStore
 from karajan.projects.qualification import ProfileQualificationStore
 from karajan.runs import RunPlanner
@@ -95,12 +100,73 @@ def _service(directory: Path) -> ReviewerExecutionIntents:
     return service
 
 
+def _install_forbidden_effect_counters(directory: Path):
+    """Persist child-local proof that a real claim did not cross an effect port."""
+    counters = {
+        name: 0
+        for name in (
+            "observer",
+            "host_start",
+            "native_start",
+            "http_send",
+            "parser_suite",
+            "parser_output",
+            "journal_grant",
+            "journal_call",
+            "evidence_write",
+            "quality_effect",
+        )
+    }
+    lock = threading.Lock()
+    evidence = directory / "reviewer-execution-test-child-effects.json"
+
+    def persist(*, claim_observed: bool) -> None:
+        with lock:
+            value = {"claim_observed": claim_observed, "counters": counters}
+            evidence.write_text(
+                json.dumps(value, sort_keys=True),
+                encoding="utf-8",
+            )
+
+    def forbid(name, original):
+        def wrapped(*args, **kwargs):
+            with lock:
+                counters[name] += 1
+            persist(claim_observed=False)
+            raise AssertionError(f"forbidden Reviewer child boundary called: {name}")
+
+        return wrapped
+
+    go_reviewer_probe.observe_go_reviewer_tools = forbid(
+        "observer", go_reviewer_probe.observe_go_reviewer_tools
+    )
+    IsolatedOpenCode.start = forbid("native_start", IsolatedOpenCode.start)
+    RunnerHost.start = forbid("host_start", RunnerHost.start)
+    httpx.Client.send = forbid("http_send", httpx.Client.send)
+    go_reviewer_suite.parse_review_output = forbid(
+        "parser_suite", go_reviewer_suite.parse_review_output
+    )
+    review_output.parse_review_output = forbid("parser_output", review_output.parse_review_output)
+    go_journal.GoCallJournal.create_grant = forbid(
+        "journal_grant", go_journal.GoCallJournal.create_grant
+    )
+    go_journal.GoCallJournal.begin_call = forbid(
+        "journal_call", go_journal.GoCallJournal.begin_call
+    )
+    CandidateStore._save_evidence = forbid("evidence_write", CandidateStore._save_evidence)
+    CandidateStore.record_check = forbid("quality_effect", CandidateStore.record_check)
+    persist(claim_observed=False)
+    return persist
+
+
 def main() -> int:
     run_id, reviewer_id, principal, *mode = sys.argv[1:]
     lost_reply = mode == ["lost-reply"]
     concurrent = mode == ["concurrent"]
+    lifecycle = mode == ["lifecycle"]
     directory = Path.cwd()
     result = {"pid": os.getpid()}
+    persist_effects = _install_forbidden_effect_counters(directory)
     try:
         if concurrent:
             # Two independently reopened facades contend as the one actual
@@ -126,12 +192,33 @@ def main() -> int:
             if any(reply is None for reply in replies):
                 raise RuntimeError("claim reply missing")
             result["claims"] = [bool(reply["claim_allowed"]) for reply in replies if reply]
+        elif lifecycle:
+            service = _service(directory)
+            result["claim_allowed"] = service.claim_registered_observer(
+                run_id, reviewer_id, principal=principal, timeout_seconds=5
+            )["claim_allowed"]
+            result["replay_allowed"] = service.claim_registered_observer(
+                run_id, reviewer_id, principal=principal, timeout_seconds=5
+            )["claim_allowed"]
+            result["cancel_requested"] = service.cancel(
+                run_id, reviewer_id, principal=principal
+            )["cancel_requested"]
+            try:
+                service.claim_registered_observer(
+                    run_id, reviewer_id, principal=principal, timeout_seconds=5
+                )
+            except Exception as error:
+                result["cancel_error"] = str(error)
         else:
             result["claim_allowed"] = _service(directory).claim_registered_observer(
                 run_id, reviewer_id, principal=principal, timeout_seconds=5
             )["claim_allowed"]
     except Exception as error:  # output is test-local and content-free
         result["error"] = type(error).__name__ + ":" + str(error)
+    persist_effects(
+        claim_observed=bool(result.get("claim_allowed"))
+        or any(bool(value) for value in result.get("claims", []))
+    )
     if lost_reply:
         # The commit has completed; emulate loss between it and the child's
         # controller reply without fabricating a runner identity in the parent.

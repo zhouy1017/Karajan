@@ -545,6 +545,89 @@ def test_ledger_uses_wal_and_compiler_does_not_hold_its_writer(tmp_path, binding
     assert observed == ["wal"]
 
 
+def test_full_candidate_materialization_precedes_the_receiving_ledger_writer(
+    tmp_path, binding_case, monkeypatch
+):
+    """Both complete CAS snapshots/diff builds stay outside the receiver writer."""
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    writer_depth = [0]
+    materialization_writer_depths = []
+    original_db = service._db
+    original_materialize = reviewer_input._materialize_content
+
+    @contextmanager
+    def tracked_db(*, write=True):
+        with original_db(write=write) as db:
+            if write:
+                writer_depth[0] += 1
+            try:
+                yield db
+            finally:
+                if write:
+                    writer_depth[0] -= 1
+
+    def materialize(*args, **kwargs):
+        materialization_writer_depths.append(writer_depth[0])
+        assert writer_depth[0] == 0, "full Candidate snapshots ran inside receiver writer"
+        return original_materialize(*args, **kwargs)
+
+    service._db = tracked_db
+    monkeypatch.setattr(reviewer_input, "_materialize_content", materialize)
+    service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+    assert materialization_writer_depths == [0, 0]
+
+
+@pytest.mark.parametrize(
+    ("column", "replacement", "request_ids"),
+    [
+        ("run_id", "tampered-run", lambda run_id, reviewer_id: ("tampered-run", reviewer_id)),
+        (
+            "reviewer_operation_id",
+            "tampered-reviewer",
+            lambda run_id, reviewer_id: (run_id, "tampered-reviewer"),
+        ),
+        ("execution_id", "tampered-execution", lambda run_id, reviewer_id: (run_id, reviewer_id)),
+        ("principal", "tampered-owner", lambda run_id, reviewer_id: (run_id, reviewer_id)),
+        ("command_key", "tampered-command", lambda run_id, reviewer_id: (run_id, reviewer_id)),
+        ("state", "tampered-state", lambda run_id, reviewer_id: (run_id, reviewer_id)),
+    ],
+)
+def test_persisted_identity_column_tampering_is_rejected_at_every_reader_and_effect(
+    tmp_path, binding_case, column, replacement, request_ids
+):
+    """A digest-valid JSON body cannot outlive its SQLite identity columns."""
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    intent = service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+    before_host = service.host.database.read_bytes()
+    with sqlite3.connect(service.database) as db:
+        stored = db.execute(
+            "SELECT intent FROM reviewer_executions WHERE execution_id=?", (intent["execution_id"],)
+        ).fetchone()[0]
+        db.execute(
+            f"UPDATE reviewer_executions SET {column}=? WHERE execution_id=?",
+            (replacement, intent["execution_id"]),
+        )
+        db.commit()
+    requested_run, requested_reviewer = request_ids(run_id, reviewer_id)
+    history = reviewer_execution_intent.ReviewerExecutionHistory(service.database)
+    for action in (
+        lambda: service.read(requested_run, requested_reviewer, principal="owner"),
+        lambda: service.prepare(
+            requested_run, requested_reviewer, principal="owner", command_key="prepare"
+        ),
+        lambda: history.read(requested_run, requested_reviewer, principal="owner"),
+        lambda: service.freeze_launch(requested_run, requested_reviewer, principal="owner"),
+        lambda: service.cancel(requested_run, requested_reviewer, principal="owner"),
+    ):
+        with pytest.raises(RunError, match="REVIEWER_EXECUTION_BINDING_INVALID"):
+            action()
+    with sqlite3.connect(service.database) as db:
+        assert db.execute(
+            "SELECT intent FROM reviewer_executions WHERE intent=?", (stored,)
+        ).fetchone()[0] == stored
+    assert service.host.database.read_bytes() == before_host
+
+
 def test_missing_check_log_after_host_writer_wait_blocks_prepare(tmp_path, binding_case):
     """A Check CAS object must still exist when Host receives its write turn."""
     service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
@@ -1372,7 +1455,7 @@ def test_unregistered_or_unstarted_host_cannot_claim_observer(tmp_path, binding_
 @pytest.mark.skipif(
     sys.platform == "win32", reason="Host direct-child identity is Linux P evidence"
 )
-@pytest.mark.parametrize("mode", ["reply", "lost-reply", "concurrent"])
+@pytest.mark.parametrize("mode", ["reply", "lost-reply", "concurrent", "lifecycle"])
 def test_existing_store_direct_child_claim_is_one_shot_and_cancelled_recovery_stays_blocked(
     tmp_path, binding_case, mode
 ):
@@ -1460,6 +1543,28 @@ def test_existing_store_direct_child_claim_is_one_shot_and_cancelled_recovery_st
     assert result.get("claim_allowed", True) is True, result
     if mode == "concurrent":
         assert sorted(result["claims"]) == [False, True]
+    if mode == "lifecycle":
+        assert result["replay_allowed"] is False
+        assert result["cancel_requested"] is True
+        assert result["cancel_error"] == "REVIEWER_EXECUTION_CANCELLED"
+    effects_path = tmp_path / "reviewer-execution-test-child-effects.json"
+    while not effects_path.exists():
+        assert time.monotonic() < deadline, "direct child did not persist forbidden-effect counters"
+        time.sleep(0.02)
+    effects = json.loads(effects_path.read_text())
+    assert effects["claim_observed"] is True
+    assert effects["counters"] == {
+        "observer": 0,
+        "host_start": 0,
+        "native_start": 0,
+        "http_send": 0,
+        "parser_suite": 0,
+        "parser_output": 0,
+        "journal_grant": 0,
+        "journal_call": 0,
+        "evidence_write": 0,
+        "quality_effect": 0,
+    }
     claimed = service.read(run_id, reviewer_id, principal="owner")
     if mode != "lost-reply":
         assert claimed["effect_claim"]["runner"]["pid"] == result["pid"]
@@ -1475,10 +1580,16 @@ def test_existing_store_direct_child_claim_is_one_shot_and_cancelled_recovery_st
         current_source=lambda: source,
         existing_only=True,
     )
-    assert (
-        reopened.claim_registered_observer(run_id, reviewer_id, principal="owner")["claim_allowed"]
-        is False
-    )
+    if mode == "lifecycle":
+        with pytest.raises(RunError, match="REVIEWER_EXECUTION_CANCELLED"):
+            reopened.claim_registered_observer(run_id, reviewer_id, principal="owner")
+    else:
+        assert (
+            reopened.claim_registered_observer(
+                run_id, reviewer_id, principal="owner"
+            )["claim_allowed"]
+            is False
+        )
     # The lost-reply child deliberately writes no reply.  Observe its actual
     # Host terminal record before retrying the controller operation, so a
     # natural None -> 0 exit-code update cannot race a snapshot comparison.

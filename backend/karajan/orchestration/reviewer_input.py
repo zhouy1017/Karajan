@@ -121,6 +121,7 @@ def compile_reviewer_input_from_records(
     operation: dict[str, Any],
     principal: str,
     final_check_evidence_ids: Collection[str],
+    prepared_input: ReviewerInput | None = None,
 ) -> ReviewerInput:
     """Compile from producer-held controller records without reopening their DBs.
 
@@ -162,6 +163,7 @@ def compile_reviewer_input_from_records(
             current=current,
             read_paths=workspace["read_paths"],
             approved=approved,
+            prepared_input=prepared_input,
         )
     except RunError:
         raise
@@ -188,6 +190,7 @@ def _compile(
     current: Mapping[str, str] | None = None,
     read_paths: Collection[str] | None = None,
     approved: Mapping[str, Any] | None = None,
+    prepared_input: ReviewerInput | None = None,
 ) -> ReviewerInput:
     if not isinstance(subject, Mapping) or set(subject) != _SUBJECT_FIELDS:
         raise RunError("REVIEWER_INPUT_SUBJECT_INVALID")
@@ -224,7 +227,10 @@ def _compile(
     ):
         raise RunError("REVIEWER_INPUT_CANDIDATE_STALE")
     checks = _final_checks(candidates, candidate, evidence_ids, current=current)
-    files, diff = _materialize_content(candidates, candidate, read_paths=read_paths)
+    if prepared_input is None:
+        files, diff = _materialize_content(candidates, candidate, read_paths=read_paths)
+    else:
+        files, diff = _prepared_material(prepared_input, actual_identity)
     payload = {
         "schema_version": "karajan.reviewer-input.v2",
         "candidate": actual_identity,
@@ -251,6 +257,44 @@ def _compile(
         candidate_revision=actual_identity["revision"],
         check_evidence_ids=tuple(row["evidence_id"] for row in checks),
     )
+
+
+def _prepared_material(
+    prepared_input: ReviewerInput, actual_identity: Mapping[str, Any]
+) -> tuple[list[dict[str, str]], str]:
+    """Reuse private full-snapshot material for a final current-input rebuild.
+
+    This is not a public compiler shortcut: the effect capability creates the
+    value while holding the producer's Candidate publication guard. The caller
+    still reconstructs all current records, Checks and final bytes before
+    comparing the retained input identity at the receiver boundary.
+    """
+    try:
+        if (
+            prepared_input.size != len(prepared_input.content)
+            or prepared_input.content_sha256 != hashlib.sha256(prepared_input.content).hexdigest()
+        ):
+            raise ValueError
+        value = json.loads(prepared_input.content)
+        if (
+            not isinstance(value, dict)
+            or value.get("schema_version") != "karajan.reviewer-input.v2"
+            or value.get("candidate") != actual_identity
+            or not isinstance(value.get("files"), list)
+            or not isinstance(value.get("diff"), str)
+        ):
+            raise ValueError
+        files = value["files"]
+        if any(
+            not isinstance(row, dict)
+            or set(row) != {"path", "mode", "content"}
+            or any(not isinstance(row[key], str) for key in row)
+            for row in files
+        ):
+            raise ValueError
+        return files, value["diff"]
+    except (AttributeError, TypeError, ValueError, UnicodeError, json.JSONDecodeError):
+        raise RunError("REVIEWER_INPUT_INVALID") from None
 
 
 def _approved_context(

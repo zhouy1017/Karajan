@@ -172,6 +172,7 @@ def _current_assets_present(task: Any) -> bool:
         Path(task.runtime),
         Path(task.tokenizer_directory),
         Path(task.journal_path),
+        Path(task.qualification_work_root),
         private,
         *(Path(row.path) for row in task.credential_sources),
     )

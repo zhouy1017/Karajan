@@ -327,10 +327,12 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
     original_task = json.loads(task_descriptor.read_text())
     seal = private / "material-seal.key"
     seal_bytes = seal.read_bytes()
-    for missing in ("runtime", "tokenizer_directory", "credential_seal"):
+    for missing in ("runtime", "tokenizer_directory", "credential_seal", "qualification_work_root"):
         document = dict(original_task)
         if missing == "credential_seal":
             seal.unlink()
+        elif missing == "qualification_work_root":
+            task.qualification_work_root.rmdir()
         else:
             document[missing] = str(tmp_path / f"missing-{missing}")
             task_descriptor.write_text(
@@ -351,6 +353,8 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
         if missing == "credential_seal":
             seal.write_bytes(seal_bytes)
             seal.chmod(0o600)
+        elif missing == "qualification_work_root":
+            task.qualification_work_root.mkdir(mode=0o700)
 
     # Replacing the facade's own descriptor is a current-source change, not a
     # historical-read failure.  The next effect guard must see it.
@@ -369,7 +373,22 @@ def test_existing_factory_reopens_identity_and_rechecks_own_descriptor(
         reopened.freeze_launch(run_id, reviewer["id"], principal="owner")
     assert reopened.read(run_id, reviewer["id"], principal="owner") == historical
     assert other.read_bytes() == other_before
-    assert reopened.cancel(run_id, reviewer["id"], principal="owner")["cancel_requested"]
+    cancelled = reopened.cancel(run_id, reviewer["id"], principal="owner")
+    assert cancelled is not None and cancelled["cancel_requested"]
+    # Missing present-time qualification composition must still leave the
+    # fixed cancelled intent and its historical Host preparation inspectable.
+    descriptor.write_text(
+        json.dumps(reviewer_settings.document(), sort_keys=True, separators=(",", ":")) + "\n"
+    )
+    task.qualification_work_root.rmdir()
+    cold_cancelled = open_reviewer_execution_intents(control)
+    assert isinstance(cold_cancelled, ReviewerExecutionHistory)
+    assert cold_cancelled.read(run_id, reviewer["id"], principal="owner") == cancelled
+    cancelled_host = cold_cancelled.inspect_host(run_id, reviewer["id"], principal="owner")
+    assert cancelled_host["host_observation"]["prepared_id"] == original["start_key"]
+    assert database.read_bytes() != before  # only the durable cancellation differs
+    assert seeded.host.database.read_bytes() == host_before
+    task.qualification_work_root.mkdir(mode=0o700)
     # The real Candidate gate is a read-only current-context check required by
     # compilation; its observed calls are not quality effects. The connected
     # Evidence writer and every forbidden observer/Host/native-runtime/HTTP/
