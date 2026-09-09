@@ -12,7 +12,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from karajan.candidates import CandidateStore
 from karajan.execution import LaunchDenied, ProcessSpec, RunnerHost
@@ -106,6 +106,42 @@ def _decode_intent_row(
         raise RunError("REVIEWER_EXECUTION_BINDING_INVALID") from None
 
 
+def _find_intent_row(
+    db: sqlite3.Connection, run_id: str, reviewer_operation_id: str, principal: str
+) -> sqlite3.Row | None:
+    """Find indexed identity, then a digest-protected embedded match.
+
+    The normal indexed lookup is the fast path. If a persistent index column
+    was changed, an original request must find the embedded identity so the
+    common body/column binding check rejects it rather than creating a second
+    intent. This exact JSON query is a narrow lookup, not a ledger rebuild.
+    """
+    row = cast(
+        sqlite3.Row | None,
+        db.execute(
+            f"SELECT {_LEDGER_COLUMNS} FROM reviewer_executions "
+            "WHERE run_id=? AND reviewer_operation_id=?",
+            (run_id, reviewer_operation_id),
+        ).fetchone(),
+    )
+    if row is not None:
+        return row
+    try:
+        return cast(
+            sqlite3.Row | None,
+            db.execute(
+                f"SELECT {_LEDGER_COLUMNS} FROM reviewer_executions "
+                "WHERE json_valid(intent) "
+                "AND json_extract(intent, '$.run_id')=? "
+                "AND json_extract(intent, '$.reviewer_operation_id')=? "
+                "AND json_extract(intent, '$.principal')=?",
+                (run_id, reviewer_operation_id, principal),
+            ).fetchone(),
+        )
+    except sqlite3.Error:
+        raise RunError("REVIEWER_EXECUTION_BINDING_INVALID") from None
+
+
 def _reject_repository_ledger(database: Path, projects: object) -> None:
     """Reject direct, alias, and hard-linked ledgers under registered sources."""
     try:
@@ -162,11 +198,7 @@ class ReviewerExecutionHistory:
         db.row_factory = sqlite3.Row
         try:
             db.execute("BEGIN")
-            row = db.execute(
-                f"SELECT {_LEDGER_COLUMNS} FROM reviewer_executions "
-                "WHERE run_id=? AND reviewer_operation_id=?",
-                (run_id, reviewer_operation_id),
-            ).fetchone()
+            row = _find_intent_row(db, run_id, reviewer_operation_id, principal)
             if row is None:
                 return None
             return deepcopy(
@@ -312,11 +344,7 @@ class ReviewerExecutionIntents:
     def _load(
         self, db: sqlite3.Connection, run_id: str, operation_id: str, principal: str
     ) -> dict[str, Any] | None:
-        row = db.execute(
-            f"SELECT {_LEDGER_COLUMNS} FROM reviewer_executions "
-            "WHERE run_id=? AND reviewer_operation_id=?",
-            (run_id, operation_id),
-        ).fetchone()
+        row = _find_intent_row(db, run_id, operation_id, principal)
         if row is None:
             return None
         return _decode_intent_row(
@@ -387,7 +415,7 @@ class ReviewerExecutionIntents:
             if compiler_binding(held, compiled, project_id=binding["project_id"]) != binding:
                 raise RunError("REVIEWER_EXECUTION_INPUT_CHANGED")
             prepared_effect = self._prepare_current_effect_boundary(
-                held, binding["reviewer_input"]
+                held, binding["reviewer_input"], compiled
             )
             try:
                 with self._db() as db:
@@ -494,21 +522,25 @@ class ReviewerExecutionIntents:
         )
 
     def _prepare_current_effect_boundary(
-        self, held: dict[str, Any], expected_input: dict[str, Any]
+        self,
+        held: dict[str, Any],
+        expected_input: dict[str, Any],
+        prepared_input: ReviewerInput,
     ) -> PreparedReviewerFinalEffect:
-        """Prepare immutable full input before a receiver owns its write lock.
+        """Revalidate a prebuilt immutable input at one producer effect guard.
 
         Deployment-source reads can block, so they must complete before the
         producer samples its Capacity/Reviewer/Run clocks.  The retained
-        callable is valid only inside ``reviewer_reserved_effect_guard`` and
-        never opens its controller writers again.
+        callable is valid only inside ``reviewer_reserved_effect_guard``.
+        Complete Candidate snapshot/diff work happened in ``_compiled``
+        before this shared producer guard was acquired.
         """
         if self.current_source is not None and self.current_source() != self.source:
             raise RunError("REVIEWER_EXECUTION_SOURCE_CHANGED")
         capability = held.get("final_effect_capability")
         if not isinstance(capability, ReviewerFinalEffectCapability):
             raise RunError("REVIEWER_EXECUTION_BOUNDARY_INVALID")
-        return capability.prepare_current(expected_input)
+        return capability.prepare_current(expected_input, prepared_input)
 
     @contextmanager
     def _current_guard(self, value: dict[str, Any]) -> Iterator[Callable[[], None]]:
@@ -532,7 +564,7 @@ class ReviewerExecutionIntents:
             value["run_id"], value["reviewer_operation_id"], principal=value["principal"]
         ) as held:
             prepared_effect = self._prepare_current_effect_boundary(
-                held, value["reviewer_input"]
+                held, value["reviewer_input"], compiled
             )
 
             def assert_temporal_current() -> None:

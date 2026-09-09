@@ -51,15 +51,17 @@ class ReviewerFinalEffectCapability:
     _capacity_check: CapacityEffectCapability
     _prepare_input: Callable[[object, object | None], object]
 
-    def prepare_current(self, expected_input: object) -> PreparedReviewerFinalEffect:
-        # The producer has already acquired its Admission/Candidate guard, but
-        # the receiving Host or execution-ledger writer is deliberately not
-        # held. Materialize both complete CAS snapshots and build their diff
-        # here; the 256-KiB final input bound is not a bound on those copies.
-        # Retain only immutable material and scalar authority for the actual
-        # receiver write below.
+    def prepare_current(
+        self, expected_input: object, prepared_input: object
+    ) -> PreparedReviewerFinalEffect:
+        # The compiler produced this private immutable complete input before
+        # any Admission/Run/Project/Capacity/Candidate writer was acquired.
+        # Under the producer guard, rebuild and compare every current input
+        # field from held records and checks using only that material. This
+        # keeps CAS snapshots and diff construction out of shared writers while
+        # retaining final physical CAS/check and scalar authority.
         final_scalar_check = self._prepare()
-        prepared_input = self._prepare_input(expected_input, None)
+        self._prepare_input(expected_input, prepared_input)
         return PreparedReviewerFinalEffect(
             final_scalar_check,
             self._capacity_check,

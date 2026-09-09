@@ -545,36 +545,79 @@ def test_ledger_uses_wal_and_compiler_does_not_hold_its_writer(tmp_path, binding
     assert observed == ["wal"]
 
 
-def test_full_candidate_materialization_precedes_the_receiving_ledger_writer(
+@pytest.mark.parametrize("workspace_case", ["large_candidate"], indirect=True)
+def test_large_candidate_materialization_precedes_all_shared_producer_writers(
     tmp_path, binding_case, monkeypatch
 ):
-    """Both complete CAS snapshots/diff builds stay outside the receiver writer."""
+    """A small Reviewer scope never holds shared writers over full CAS copies."""
     service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
-    writer_depth = [0]
-    materialization_writer_depths = []
-    original_db = service._db
+    reviewer = service.admissions.get(run_id, reviewer_id, principal="owner")
+    worker = service.admissions.get(
+        run_id, reviewer["depends_on_operation_id"], principal="owner"
+    )
+    candidate = service.candidates.get(
+        worker["validation"]["checks"]["runs"][0]["evidence_request"]["candidate_id"]
+    )
+    task = next(
+        item
+        for plan in service.admissions.routing.planner.get(run_id, principal="owner")["plans"]
+        for item in plan["plan"]["tasks"]
+        if item["id"] == "review"
+    )
+    assert task["paths"] == ["src/report.py"]
+    assert len(candidate["manifest"]) >= 28
+
+    writer_depths = {
+        "admission": 0,
+        "run": 0,
+        "project": 0,
+        "capacity": 0,
+        "candidate": 0,
+    }
+    materialization_depths = []
     original_materialize = reviewer_input._materialize_content
 
     @contextmanager
-    def tracked_db(*, write=True):
-        with original_db(write=write) as db:
-            if write:
-                writer_depth[0] += 1
+    def tracked(original, name, *args, **kwargs):
+        with original(*args, **kwargs) as value:
+            writer_depths[name] += 1
             try:
-                yield db
+                yield value
             finally:
-                if write:
-                    writer_depth[0] -= 1
+                writer_depths[name] -= 1
+
+    def track_transaction(owner, name):
+        original = owner._transaction
+
+        @contextmanager
+        def transaction(*args, **kwargs):
+            with tracked(original, name, *args, **kwargs) as value:
+                yield value
+
+        monkeypatch.setattr(owner, "_transaction", transaction)
+
+    track_transaction(service.admissions, "admission")
+    track_transaction(service.admissions.routing.planner, "run")
+    track_transaction(service.admissions.routing.planner.projects, "project")
+    track_transaction(service.admissions.routing.capacity, "capacity")
+    original_publication_guard = service.candidates.check_publication_guard
+
+    @contextmanager
+    def publication_guard():
+        with tracked(original_publication_guard, "candidate"):
+            yield
 
     def materialize(*args, **kwargs):
-        materialization_writer_depths.append(writer_depth[0])
-        assert writer_depth[0] == 0, "full Candidate snapshots ran inside receiver writer"
+        materialization_depths.append(dict(writer_depths))
+        assert not any(writer_depths.values()), (
+            "full Candidate snapshots/diff ran inside a shared producer writer"
+        )
         return original_materialize(*args, **kwargs)
 
-    service._db = tracked_db
+    monkeypatch.setattr(service.candidates, "check_publication_guard", publication_guard)
     monkeypatch.setattr(reviewer_input, "_materialize_content", materialize)
     service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
-    assert materialization_writer_depths == [0, 0]
+    assert materialization_depths == [{name: 0 for name in writer_depths}]
 
 
 @pytest.mark.parametrize(
@@ -625,6 +668,33 @@ def test_persisted_identity_column_tampering_is_rejected_at_every_reader_and_eff
         assert db.execute(
             "SELECT intent FROM reviewer_executions WHERE intent=?", (stored,)
         ).fetchone()[0] == stored
+    assert service.host.database.read_bytes() == before_host
+
+
+def test_original_embedded_ids_reject_new_command_after_run_index_tamper(tmp_path, binding_case):
+    """An altered lookup column cannot free an embedded execution identity."""
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    intent = service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+    before_host = service.host.database.read_bytes()
+    with sqlite3.connect(service.database) as db:
+        db.execute(
+            "UPDATE reviewer_executions SET run_id=? WHERE execution_id=?",
+            ("tampered-run", intent["execution_id"]),
+        )
+        db.commit()
+    history = reviewer_execution_intent.ReviewerExecutionHistory(service.database)
+    for action in (
+        lambda: service.read(run_id, reviewer_id, principal="owner"),
+        lambda: history.read(run_id, reviewer_id, principal="owner"),
+        lambda: service.prepare(
+            run_id, reviewer_id, principal="owner", command_key="new-command-key"
+        ),
+        lambda: service.freeze_launch(run_id, reviewer_id, principal="owner"),
+    ):
+        with pytest.raises(RunError, match="REVIEWER_EXECUTION_BINDING_INVALID"):
+            action()
+    with sqlite3.connect(service.database) as db:
+        assert db.execute("SELECT COUNT(*) FROM reviewer_executions").fetchone()[0] == 1
     assert service.host.database.read_bytes() == before_host
 
 
@@ -786,6 +856,60 @@ def test_later_passed_check_before_receiver_guard_blocks_full_input_identity(
     thread.join(10)
     assert not thread.is_alive()
     assert outcome and isinstance(outcome[0], RunError)
+    assert service.read(run_id, reviewer_id, principal="owner") is None
+
+
+def test_baseline_artifact_change_after_preparation_blocks_final_input(tmp_path, binding_case):
+    """Cached snapshot bytes never hide a later physical baseline CAS change."""
+    service, run_id, reviewer_id, _ = _service(tmp_path, binding_case)
+    reviewer = service.admissions.get(run_id, reviewer_id, principal="owner")
+    worker = service.admissions.get(
+        run_id, reviewer["depends_on_operation_id"], principal="owner"
+    )
+    candidate = service.candidates.get(
+        worker["validation"]["checks"]["runs"][0]["evidence_request"]["candidate_id"]
+    )
+    baseline = service.candidates.get_baseline(candidate["request"]["baseline_id"])
+    candidate_artifacts = {row["artifact"]["sha256"] for row in candidate["manifest"]}
+    artifact = Path(
+        next(
+            row["artifact"]["path"]
+            for row in baseline["manifest"]
+            if row["artifact"]["sha256"] not in candidate_artifacts
+        )
+    )
+    assert artifact.is_file()
+    prepared, release, errors = threading.Event(), threading.Event(), []
+    original_guard = service.admissions.reviewer_reserved_effect_guard
+    guard_calls = 0
+
+    @contextmanager
+    def guard(*args, **kwargs):
+        nonlocal guard_calls
+        guard_calls += 1
+        with original_guard(*args, **kwargs) as held:
+            yield held
+        if guard_calls == 1:
+            prepared.set()
+            assert release.wait(5)
+
+    service.admissions.reviewer_reserved_effect_guard = guard
+
+    def prepare():
+        try:
+            service.prepare(run_id, reviewer_id, principal="owner", command_key="prepare")
+        except BaseException as error:
+            errors.append(error)
+
+    thread = threading.Thread(target=prepare)
+    thread.start()
+    assert prepared.wait(5)
+    artifact.write_bytes(b"baseline artifact replaced after compiler preparation")
+    release.set()
+    thread.join(10)
+    assert not thread.is_alive()
+    assert errors and isinstance(errors[0], RunError)
+    assert "ARTIFACT_UNAVAILABLE" in str(errors[0])
     assert service.read(run_id, reviewer_id, principal="owner") is None
 
 

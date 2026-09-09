@@ -515,6 +515,24 @@ class CandidateStore:
             raise CandidateError("BASELINE_NOT_FOUND")
         return self._baseline(row[0], baseline_id)
 
+    def verify_reviewer_input_artifacts(self, candidate_id: str) -> None:
+        """Verify both immutable snapshots without materializing or diffing them.
+
+        The Reviewer effect guard uses this only to recheck physical CAS
+        availability for compiler-prepared material. It accepts no caller
+        paths, bytes, manifest, or snapshot selection.
+        """
+        candidate = self.get(candidate_id)
+        try:
+            baseline = self.get_baseline(candidate["request"]["baseline_id"])
+            artifacts = [
+                row["artifact"] for row in candidate["manifest"] + baseline["manifest"]
+            ]
+        except (KeyError, TypeError):
+            raise CandidateError("CANDIDATE_INVALID") from None
+        if not all(self._available(artifact) for artifact in artifacts):
+            raise CandidateError("ARTIFACT_UNAVAILABLE")
+
     @staticmethod
     def _baseline(data: str, baseline_id: str) -> dict[str, Any]:
         try:

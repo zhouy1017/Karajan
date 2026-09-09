@@ -230,6 +230,10 @@ def _compile(
     if prepared_input is None:
         files, diff = _materialize_content(candidates, candidate, read_paths=read_paths)
     else:
+        # This is an O(snapshot bytes) integrity read, not a materialization
+        # or diff. It keeps both compiler snapshots physically current while
+        # the producer guard compares the immutable prepared full input.
+        candidates.verify_reviewer_input_artifacts(candidate["id"])
         files, diff = _prepared_material(prepared_input, actual_identity)
     payload = {
         "schema_version": "karajan.reviewer-input.v2",
@@ -264,10 +268,10 @@ def _prepared_material(
 ) -> tuple[list[dict[str, str]], str]:
     """Reuse private full-snapshot material for a final current-input rebuild.
 
-    This is not a public compiler shortcut: the effect capability creates the
-    value while holding the producer's Candidate publication guard. The caller
-    still reconstructs all current records, Checks and final bytes before
-    comparing the retained input identity at the receiver boundary.
+    This is not a public compiler shortcut: the producer's compiler creates
+    the value before its shared effect guards. The caller still reconstructs
+    all current records, Checks and final bytes before comparing the retained
+    input identity at the receiver boundary.
     """
     try:
         if (
