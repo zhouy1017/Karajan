@@ -8,6 +8,12 @@ status: accepted
 
 选择这一形状是为了把 [Bernstein 的任务列表、详情抽屉和 Agents 视图](https://bernstein.readthedocs.io/en/latest/gui/screens/) 与 [Toil 的主模型分解/委派/验收工作模式](https://github.com/zhouy1017/toil/blob/main/src/toil/_assets/skills/toil-offloading/SKILL.md) 组合到同一可追溯入口。它们是信息架构和协作方式的参考：Bernstein 的 [per-step routing](https://bernstein.readthedocs.io/en/latest/workflows/per-step-routing/) 主要覆盖 Claude 兼容 model/effort 路由，Toil 的固定 Sol/Deepseek/Luna 也不是跨来源资格或现成桌面 UI，因此不能直接成为 Karajan 的执行或路由所有权。
 
-本 ADR 只记录产品入口和协作边界，不全面替换现有执行底座、Rulebook、资源账本或独立交付决定。持久会话、看板筛选、Diff/checks/review/logs/dependencies 详情、加载/空态/运行/阻塞/恢复和模型改派边界由 [Commander 工作台设计](../prd/commander-workbench.md) 细化；在对应 UX-AC 和原 FR 验收前均保持未完成或阻塞状态。
+本 ADR 只记录产品入口和协作边界，不全面替换现有执行底座、Rulebook、资源账本或独立交付决定。持久会话、看板筛选、Diff/checks/review/logs/dependencies 详情、加载/空态/运行/阻塞/恢复和模型改派边界由 [Commander 工作台设计](../prd/commander-workbench.md) 细化；各自实现状态按对应 UX-AC、原 FR 与当前候选证据核对，本 ADR 不维护实时完成状态。
 
 后端身份沿 `Project → CommanderConversation → Run` 归属：一个项目可以有多个会话，一个会话可以保留多个 Run；新对话/新任务只保存消息、草稿或待确认提案，不隐含 execution approval。迁移、兼容旧 Project/Run 路由、Hub 聚合、SSE 缺口恢复以及 model progress 与 connection heartbeat 的分离见 [Commander Workbench 后端契约](../architecture/07-commander-workbench-backend-contract.md)。
+
+2026-09-14 r6 保留 Hub 主工作面，并加入模型网关连接、角色与 Workflow 编辑。原三角色协作及两 Worker 到 PR 是内置默认模板；可定制职责与流程由 [ADR 0006](0006-configurable-roles-and-workflows.md) 承接，外置模型访问由 [ADR 0005](0005-external-model-gateway.md) 承接，不将本 ADR 的示例作为唯一运行拓扑。
+
+同日 r7 的 [ADR 0007](0007-conversational-workflow-deployment.md) 将 Hub 主路径扩展为 Designer 对话生成配置、同源图表修改与确认、可信加载部署。可以直接使用已部署模板形成具体 Run，无需再次调用 Commander 重新设计；默认代码模板的原并行/PR 验收仍保留。
+
+同日 r8 的 [ADR 0008](0008-role-directed-scheduling.md) 将任务拆分与调度明确交给 Workflow 中获授权角色；用户确认初始范围和授权后，范围内的后续子任务可自动形成并派发。本文原两个 Worker 场景保留为历史验收样例，不是默认划分方式或产品人数上限。

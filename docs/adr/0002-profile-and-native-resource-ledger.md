@@ -9,3 +9,5 @@ status: accepted
 配额保留共享关系和原生单位，本地预留与服务消费分别核对。相比统一 token 余额，这增加配置/账本复杂度，但避免重复分配账户额度、隐藏现金路径和虚假精确余量。详见 [路由与配额](../architecture/02-routing-and-quota.md)。
 
 2026-09-09 的 Commander Workbench 工作方式不改变本决定：任务显式绑定的 Profile revision 优先于 Rulebook；改派须暂停并核对旧 Attempt 后新建，未获批准不得换来源或增加成本。来源概览区分可用/受限/未知及服务已报告/本地估算费用；共享池、保留量和原币细节仍由原生账本保存，未知不视为无限。
+
+2026-09-14 [ADR 0005](0005-external-model-gateway.md) 为 Profile 增加 GatewayConnection/ModelBinding 的版本绑定；统一网关不合并不同账户预算，也不把模型 alias 当真实来源。[ADR 0006](0006-configurable-roles-and-workflows.md) 的自定义角色按所需能力路由，不因名称继承旧资格或受保护额度。
