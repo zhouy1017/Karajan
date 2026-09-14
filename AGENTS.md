@@ -4,7 +4,7 @@
 
 开始或继续实现、拆分 Issue、准备 PR、验收或关闭 Issue 时，先读 [Issue 跟踪流程](docs/agents/issue-tracker.md)，按原范围、当前候选版本和 C/U/P/S/G 证据推进状态。
 
-2026-09-14 用户授权的 [r8 第一阶段](docs/planning/r8-phase1-20260914/README.md) 使用 Claude Code CLI worker，优先默认 gemini-use；该批模型安排优先于旧开发模型表。worker 实现并提交 PR，Commander 独立审核、返修并合并到 dev；总计不超过 4 个 PR，返修沿用原 PR。当前子票范围及真实状态以 #174–#178 和本批导航为准。
+2026-09-14 用户授权的 [r8 第一阶段](docs/planning/r8-phase1-20260914/README.md) 使用 Claude Code CLI worker；最初默认 gemini-use，随后用户重新配置默认 DeepSeek 并授权重试，实测配置为 `deepseek-v4.1-flash-high-opencodego[1m]`。本次按新默认派发，不覆盖模型参数；该批最新用户模型安排优先于旧开发模型表及原发布快照中的派发模型说明。worker 实现并提交 PR，Commander 独立审核、返修并合并到 dev；总计不超过 4 个 PR，返修沿用原 PR。当前子票范围及真实状态以 #174–#178 和本批导航为准。
 
 涉及模型来源或 Workflow 时，遵循 [外置网关](docs/architecture/08-provider-gateway.md)、[自定义角色/Workflow](docs/architecture/09-configurable-workflows.md)、[对话设计与部署](docs/architecture/10-conversational-workflow-deployment.md) 和 2026-09-14 r8 [角色调度契约](docs/architecture/11-role-directed-scheduling.md)：Designer 生成同源配置与图表，确认后可信部署；运行中的获授权调度角色按实际任务拆分、分配和决定并行规模，原授权内自动生效。Karajan 不硬编码前后端拆分或 coding Agent 数量上限，实际资源/用户政策决定准入和排队。定义与已启动 Attempt 固定，授权内运行图修订留痕；越权才重新确认。P1–P4 是开发承接顺序，原两任务仅验收样例；新设计不表示实现或原 Issue 已完成。
 

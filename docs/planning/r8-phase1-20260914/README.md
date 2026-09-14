@@ -1,6 +1,6 @@
 # r8 第一阶段实现派发
 
-日期：2026-09-14。父范围 [#174](https://github.com/zhouy1017/Karajan/issues/174) 隶属产品 [#1](https://github.com/zhouy1017/Karajan/issues/1)。本批按用户授权由 Claude Code CLI worker 实现，优先默认 `gemini-use`；Commander 独立审查、回派修复和合并到 `dev`。总计最多 4 个 PR，返修更新原 PR，不顺带合并旧 #172/#173，也不另开第 5 个文档 PR。
+日期：2026-09-14。父范围 [#174](https://github.com/zhouy1017/Karajan/issues/174) 隶属产品 [#1](https://github.com/zhouy1017/Karajan/issues/1)。本批按用户授权由 Claude Code CLI worker 实现。最初默认 `gemini-use`；用户随后重新配置默认 DeepSeek 并授权重试，实测配置为 `deepseek-v4.1-flash-high-opencodego[1m]`，本次不传 `--model` 覆盖。Commander 独立审查、回派修复和合并到 `dev`。总计最多 4 个 PR，返修更新原 PR，不顺带合并旧 #172/#173，也不另开第 5 个文档 PR。原发布快照中的模型说明保留历史字节，当前派发以最新用户授权为准。
 
 ## 切片与依赖
 

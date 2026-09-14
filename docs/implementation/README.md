@@ -38,6 +38,7 @@
 
 | 范围 | 现有记录 |
 |---|---|
+| 外置网关目录 | [R8-P1-01 网关目录](r8-phase1-gateway.md) |
 | 规则版本及工作台 | [Rulebook 路由](m3-rulebook-routing.md)、[版本发布](m3-rulebook-publication.md)、[路由模拟](m3-routing-workbench.md)、[资源工作台](m3-resource-workbench.md) |
 | 资格与绑定 | [Profile 资格](m3-profile-qualification.md)、[资格集合](profile-membership.md)、[批准 Run 路由](m3-approved-run-routing.md) |
 | 容量与估计 | [共享容量](m3-shared-capacity.md)、[容量事实](m3-capacity-facts.md)、[容量与路由准入](m3-capacity-routing-admission.md)、[Attempt 估计](m3-attempt-estimates.md) |

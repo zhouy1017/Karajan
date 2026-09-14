@@ -18,6 +18,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from karajan.capacity import CapacityStore
 from karajan.conversations import ConversationStore
+from karajan.gateway import GatewayCatalogStore
+from karajan.gateway.probe import SessionSecretResolver
 from karajan.orchestration.admission import ApprovedTaskAdmission
 from karajan.orchestration.planning_execution import PlanningExecution
 from karajan.orchestration.planning_transport import PlanningTransport
@@ -30,6 +32,7 @@ from .admission import register_admission_routes
 from .approved_routing import register_approved_routing_routes
 from .body_limit import BodyLimitMiddleware
 from .conversations import register_conversation_routes
+from .gateways import register_gateway_routes
 from .planning import PlanningWorkbench, register_planning_routes
 from .projects import register_project_routes
 from .resources import register_resource_routes
@@ -127,6 +130,7 @@ def create_app(
     planning_execution: PlanningExecution | None = None,
     planning_transport: PlanningTransport | None = None,
     planning_control_directory: Path | None = None,
+    gateway_secret_resolver: SessionSecretResolver | None = None,
 ) -> FastAPI:
     BootstrapInput(token=bootstrap_token)
     parsed_origin = urlsplit(origin)
@@ -202,6 +206,14 @@ def create_app(
     register_approved_routing_routes(app, routing)
     register_admission_routes(
         app, ApprovedTaskAdmission(state_directory / "task-admissions.sqlite", routing)
+    )
+    # The gateway catalog is an owner-scoped declaration store. It shares this
+    # application's project database so ownership, idempotency and CAS use the
+    # existing boundary, and it starts with no resolver: a connection with a
+    # secret_ref reports an explicit configuration gap until a trusted factory
+    # supplies one. It never dispatches work.
+    register_gateway_routes(
+        app, GatewayCatalogStore(projects, resolver=gateway_secret_resolver)
     )
 
     @app.middleware("http")
