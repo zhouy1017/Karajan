@@ -104,14 +104,14 @@ uv lock --check                                              -> Resolved 46 pack
 
 本记录早先版本把 `tests/projects/test_registry.py::test_invalid_project_identity_never_creates_a_project[not-git-REPOSITORY_INVALID]`（实际抛 `REPOSITORY_ROOT_REQUIRED`）记为"既有基线产品缺陷"。独立复核证明该判断是错的：当时 `--basetemp` 位于 Git worktree **内部**，`git rev-parse --show-toplevel` 因此向上找到 worktree 祖先并返回成功，用例的"非 Git 目录"前提被破坏。把 basetemp 放到 Git 检出之外后，四种变体全部通过。
 
-更正后的结论：这是**测试环境位置问题**，不是产品缺陷，也不构成本票修改 `projects/registry.py` 的证据。原始失败输出保留在上文引用的历史记录与 CI 日志中，不被改写或删除；本节仅说明更正。
+更正后的结论：这是**测试环境位置问题**，不是产品缺陷，也不构成本票修改 `projects/registry.py` 的证据。原始失败输出保留在协调器工作区的本机派发日志 `.cache/r8-phase1/workers/01-retry5-resume2.jsonl`（未提交）；提交 `048ffb4` 的本记录保留当时的失败摘要。该失败未发生在 CI 中，本节修正归因而不改写历史提交。
 
 ## 5. 边界与未覆盖范围
 
 - 不实现推理、工具循环、账户登录或网关管理 API；探测只对 `openai_compatible` 的 `/v1/models` 发一次 `GET`。
 - 目录可见、别名存在或绑定已登记都不构成 dispatch/execution 资格；所有记录固定 `execution_eligible=false`。
 - 声明身份与核验证据分开存储：`declared_identity=true` 时 `verified=false`、`verification_evidence=null`、provider/account/billing 观察值为 `unknown`。
-- 凭据形状参数名采用**歧义即拒绝**策略：`header_count` 这类仅提及受保护名词的名称也被拒绝，因为名称本身无法把它与 `header_value` 区分（`token_limit`、`max_tokens` 等常规参数不受影响）。
+- 凭据形状参数名采用**歧义即拒绝**策略：`header_count`、`token_limit` 这类含受保护名词的名称也被拒绝；`max_tokens`、`max_output_tokens` 等参数可用。
 - claim TTL 目前是构造参数默认 300 秒；过期后的自动核对发生在**下一次同键请求**时，本切片没有后台清理任务。
 - 不修改现有来源资格、已批准 Run、旧 Profile schema，也不新增任何 Agent 数量默认值。
 - 无真实 provider、凭据或付费调用；本记录的 C/P 证据不构成 S 证据。
