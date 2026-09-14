@@ -32,6 +32,10 @@ CATALOG_STATES = (
     "network_error",
     "invalid_response",
     "credential_unavailable",
+    # A probe was started under this command key but has not finished. The
+    # outcome is unknown and no second request is sent under the same key.
+    "probe_in_progress",
+    "outcome_unknown",
 )
 
 
@@ -88,7 +92,9 @@ class CatalogObservation:
     secret_echo_detected: bool = False
     redirected: bool = False
     follow_ups_sent: int = 0
-    requests_sent: int = 0
+    #: ``None`` means genuinely unknown: an interrupted probe may or may not have
+    #: sent its request, so zero would be a false claim.
+    requests_sent: int | None = 0
     inference_requests_sent: int = 0
 
 
@@ -175,7 +181,18 @@ def probe_catalog(
     }
     if secret is not None:
         headers["Authorization"] = "Bearer " + secret
-    connection = connection_type(parsed.hostname, parsed.port, timeout=TIMEOUT_SECONDS)
+    try:
+        # A malformed authority raises InvalidURL from the constructor, before
+        # any socket exists. It is a structured observation here, not a 500.
+        connection = connection_type(parsed.hostname, parsed.port, timeout=TIMEOUT_SECONDS)
+    except (OSError, ValueError, http.client.HTTPException):
+        return CatalogObservation(
+            status="invalid_response",
+            reason_codes=["GATEWAY_ORIGIN_NOT_CONNECTABLE"],
+            requested_origin=origin,
+            requested_path=catalog_path,
+            credential_supplied=secret is not None,
+        )
     try:
         connection.request("GET", catalog_path, headers=headers)
         response = connection.getresponse()

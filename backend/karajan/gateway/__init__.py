@@ -6,7 +6,7 @@ follows no redirect, performs no automatic fallback and grants no dispatch
 eligibility. See [外置网关](../../../docs/architecture/08-provider-gateway.md).
 """
 
-from .catalog import GatewayCatalogStore
+from .catalog import GatewayCatalogStore, content_digest, sealed
 from .errors import GatewayError
 from .models import (
     BindingCreate,
@@ -14,6 +14,7 @@ from .models import (
     DeclaredIdentity,
     ProtocolIdentity,
     TransformationPolicy,
+    addressable,
     discovery_path,
     parameter_name_is_credential_shaped,
     registered_origin,
@@ -37,9 +38,12 @@ __all__ = [
     "ProtocolIdentity",
     "SessionSecretResolver",
     "TransformationPolicy",
+    "addressable",
+    "content_digest",
     "discovery_path",
     "parameter_name_is_credential_shaped",
     "probe_catalog",
     "public_observation",
     "registered_origin",
+    "sealed",
 ]
