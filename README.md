@@ -1,70 +1,25 @@
 # Karajan
 
-面向个人的多来源 Agent 代码交付平台：一个持久主 Commander 理解需求并提出可编辑分工，用户确认计划，可信协调器按 Rulebook 和服务配额组织实现、测试、审查并交付 PR。
+Karajan 是面向个人、以仓库项目为上下文的多来源 Agent 工作流平台。用户用文字描述工作方式，由 Workflow Designer 编写角色与流程配置，借助流程图和职责表修改确认，再部署到 Karajan 引擎。流程可以产出报告、代码补丁或 PR；代码到 PR 是内置模板。
 
-2026-09-09 r4 的 [Commander 工作台设计](docs/prd/commander-workbench.md) 以项目 → Commander 会话的侧栏组织多个仓库，并以 Commander Hub 为主工作面：Commander 提出任务拆分和初步分配，用户在主会话调整确认后分发；任务缩略卡片、阻塞与最终汇报集中回到 Hub。模型状态显示实时反馈图标及最近反馈时间，会话和任务区提供快捷新建入口。Tasks/Agents 看板和 Diff/checks/review/logs/dependencies 页面提供展开详情。首演工作模式仍是同版批准、两个 Worker 并行、组合候选、独立 Reviewer 和 PR；设计基准不等于实现或来源资格已通过。当前执行顺序以 [当前业务顺序](docs/planning/business-first.md) 和 Issue 流程为准。
+当前设计基准为 **2026-09-14 r8**：不同 provider 默认经外置 CLIProxyAPI 接入；角色和 Workflow 可定制、版本化复用；图表与实际执行配置同源。Workflow 中获授权的调度角色按实际工作决定拆分、分工、依赖与并行规模，Karajan 校验并执行这些决定，不预置 coding Agent 人数上限或前后端拆分方式。详见 [角色调度契约](docs/architecture/11-role-directed-scheduling.md)。
 
-## 产品需求与实施规划
+## 从这里开始
 
-- [PRD v1](docs/prd/karajan-v1.md)：用户故事、功能需求、可观察验收和首版边界；[GitHub 父任务 #1](https://github.com/zhouy1017/Karajan/issues/1)。
-- [Commander 工作台设计](docs/prd/commander-workbench.md)：2026-09-09 UI/交互基准、状态行为和 UX-AC→FR 映射；当前为设计规格，未宣称已实现。
-- [M0–M4 历史范围映射](docs/planning/roadmap.md)：保留原阶段出口与验收责任；当前排期见业务顺序。
-- [历史阶段范围映射](docs/planning/delivery-goals/README.md)：保留原验收归属和出口；[2026-09-08 复审](docs/planning/review-20260908.md) 记录问题与修复证据。当前领取顺序使用上方业务入口。
-- [GitHub Issues](https://github.com/zhouy1017/Karajan/issues)：任务状态与依赖关系；[跟踪约定](docs/agents/issue-tracker.md)。
+| 目的 | 入口 |
+|---|---|
+| 了解整个设计及架构、设计部署、运行三张图 | [架构总览](docs/architecture/README.md) |
+| 查找当前设计、实现证据或历史材料 | [文档导航与维护规则](docs/README.md) |
+| 理解用户如何对话、改图表、确认和观察结果 | [Commander Workbench PRD](docs/prd/commander-workbench.md) |
+| 查看完整功能与验收范围 | [产品 PRD](docs/prd/karajan-v1.md) |
+| 查术语和重要决定 | [领域术语](CONTEXT.md)、[ADR 索引](docs/adr/README.md) |
+| 开发或恢复工作 | [当前业务顺序](docs/planning/business-first.md)、[Issue 跟踪流程](docs/agents/issue-tracker.md) |
+| 本地启动和验证已有实现 | [实现文档导航](docs/implementation/README.md)、[启动说明](docs/implementation/m1-local-workbench.md)、[测试质量门](docs/implementation/testing-gates.md) |
 
-PRD、8 个 M0 Issues、20 个 M1–M4 实现任务和独立 CI 任务已发布。M0 契约、执行恢复、预算和运行探针已分批实现，本地项目工作台已可登记仓库与预览、保存配置；真实账户资格尚未通过。后续任务见 [完整任务清单](docs/planning/v1-backlog.md) 与 [需求覆盖审计](docs/implementation/requirement-coverage.md)；GitHub 实际编号见 [发布记录](docs/planning/v1/github-publication.json)。
+## 设计与实现状态
 
-Go、ChatGPT/Codex 官方订阅和 Claude 官方订阅均已获真实测试授权，具体范围见 [2026-09-08 交接](docs/planning/commander-handoff-20260908.md)。现金 API、订阅外余额与现金后备仍暂停；授权不代表产品来源资格已通过。[Go 实测 PR #48](https://github.com/zhouy1017/Karajan/pull/48) 保存早期工具执行与权限拒绝证据。离线与真实证据逐项区分，诊断成功不自动启用执行配置。开发验证方式见 [测试与合并质量门](docs/implementation/testing-gates.md)。
+r8 是目标设计。仓库已有项目/会话/草稿、计划与批准、路由/资源账本，以及部分执行、候选检查和审查基础；这些切片按各自实现记录和候选版本使用。**外置网关、通用 Workflow、Designer/部署、角色驱动动态图及并行执行闭环尚未完成产品验收。**
 
-## 本地工作台
+实现文档记录的是各自提交和环境下的事实，不能把早期“待接通”或某个场景的通过当作今天的全局状态。当前任务状态从 [GitHub Issues](https://github.com/zhouy1017/Karajan/issues) 和对应候选证据核对；本地会话检查点见 [PROGRESS.md](PROGRESS.md)。模型来源、隔离、真实并行、PR 创建、远端 CI 与合并分别验收。
 
-[启动说明与实际验证](docs/implementation/m1-local-workbench.md) 包含依赖安装、构建和本机运行方式。服务启动后使用本地文件中的一次性访问码登录；项目状态、配置预览和版本化保存使用实际 SQLite。[需求与计划页面](docs/implementation/m1-run-workbench.md) 可保存需求、审阅并确认既有计划、决定指定 Commander 交接。[v2 授权审阅](docs/implementation/m3-v2-approval-workbench.md) 展示已有计划的完整服务、工具、资源与分发阶段范围，并确认精确版本；计划变化后必须重新审阅。当前尚不能从页面派发真实模型任务。
-
-[交付协调协议](docs/implementation/m1-delivery.md) 已提供本地可运行验证：固定候选推送、同一 PR 身份恢复、当前提交 CI 与暂停/取消。示例使用本地 Git 和明确的 PR 替身，生产交付仍等待当前候选权威、真实凭据与执行资格接线。
-
-[DeepSeek 离线接入](docs/implementation/m2-deepseek-offline.md) 包含纯协议适配、固定 OpenCode 工具循环、现有预算账本准入与可重跑故障样例。测试全部使用本地假服务，真实 API 资格保持 `not_run`。
-
-[OpenCode Go 实际诊断](docs/implementation/m2-opencode-go-live.md) 提供显式实测入口，验证固定官方 Go 模型、原生读写工具与权限拒绝。真实密钥由本地中继持有，GitHub CI 只运行无密钥回归；诊断与完整来源资格分别记录。
-
-[Go 隔离链路](docs/implementation/m2-opencode-go-isolated.md) 将固定 Linux 原生工具、独立网络空间、单一 Unix socket 推理出口与持久调用许可组合起来。[持久 Go 观察](docs/implementation/m3-go-profile-qualification.md) 将凭据 generation、固定场景和当前批准的 Profile 绑定，支持恢复与失效检查；任意 Task 路径、候选收集和完整运行资格仍待接通。
-
-[共享配额池](docs/implementation/m3-shared-capacity.md) 已提供跨 Run/模型的多窗口准入、当前 Commander 保护量、消费核销与未知额度规则。[资源工作台](docs/implementation/m3-resource-workbench.md) 可查看已有账户的共享窗口并保存 Commander 保护量，显示报告来源与未知状态。[容量事实导出](docs/implementation/m3-capacity-facts.md) 从同一账本只读捕获来源、覆盖与多 Run 占用，供统一路由组装器使用。实际调度接线与真实来源观察仍在推进。
-
-[Rulebook 路由](docs/implementation/m3-rulebook-routing.md) 已提供严格编译、固定快照模拟和候选解释，涵盖资格、原授权范围、多池压力、Commander 保护及原币预算。[规则版本发布](docs/implementation/m3-rulebook-publication.md) 提供矩阵编辑、服务器预览和不可变版本，旧 Run 保留固定规则并服从当前资格撤销。[模拟工作台](docs/implementation/m3-routing-workbench.md) 可用明确的离线快照演练当前编辑，查看候选顺序和淘汰原因。批准 Run 的正常 Worker 判断已接入可信事实组装；旧 Run 显式采用和实际统一派发仍待接入，模拟或发布不会启用执行配置。
-
-[串行执行协调](docs/implementation/m1-serial-orchestration.md) 已把批准计划、真实本机进程、固定候选、检查和独立审查串联为可恢复的离线流程。暂停、取消、输入变化与根任务重试都有持久记录；真实来源、资源原子准入和多 Worker 集成仍待接通。
-
-[已批准 Run 路由判断](docs/implementation/m3-approved-run-routing.md) 已直接消费持久批准、逐规则许可、当前资格、显式任务预测和容量账本，保存候选与排除依据，并提供认证 HTTP 入口。未取得真实资格的来源保持阻塞；判断收据不预留资源或启动 Agent。
-
-[任务配额准入](docs/implementation/m3-task-admission.md) 将该判断接到持久准入意图、真实容量预留、丢失响应恢复、取消与到期状态。未获真实资格时不建预留；预留后的 Agent 激活与实际执行仍待接通。
-
-[Go Task 上下文与验证政策](docs/implementation/m3-go-task-context.md) 将固定官方参考 tokenizer、批准余量和完整工具历史计量接入持久发送账本，并用 ExecutionPolicy v2 固定检查与环境定义。真实 OpenCode 的本机离线组合已验证；实际 Run 启动、可信收集与完整交付继续推进。
-
-[启动前复查](docs/implementation/m3-task-startup-guards.md) 固定原 Profile 和批准材料，在已提交的容量激活意图之后再次持锁检查最新容量，避免重复扣算自己的预留。受信执行入口和完整资格接线仍在继续。
-
-[Go 投影资格 v2](docs/implementation/m3-go-projected-qualification.md) 通过固定场景验证已有文件、完整请求计量和停止后的候选采集。批准 Run 的路由消费明确的 Worker/T1/read/edit 与上下文范围，超出范围时不能预约；真实 Task 启动、检查、Reviewer 和交付继续接线。进度见 [切片 #87](https://github.com/zhouy1017/Karajan/issues/87)。
-
-[Go Task 执行基础接口](docs/implementation/m3-go-task-execution-foundation.md) 增加原预约内的持久执行意图、直属 runner 身份核验、批准快照输入编译和每次发送前的门禁。真实原生 producer 已通过本地 HTTP fixture 的读写与撤回验证；完整批准 Task 的启动入口、候选回写和取消收尾继续接线。进度见 [切片 #89](https://github.com/zhouy1017/Karajan/issues/89)。
-
-## 完整架构设计
-
-从 [Karajan 完整架构设计 v1](docs/architecture/README.md) 开始阅读。它是当前设计入口，覆盖：
-
-- 模块职责、数据模型、任务状态、崩溃恢复和取消。
-- 多来源执行配置、Rulebook 矩阵、共享配额池、预算与换源。
-- 订阅与 API 执行、隔离、跨 Agent 上下文、候选验证和 PR 交付。
-- Web/执行器接口、配置示例、技术组合、实施阶段和验收矩阵。
-
-状态：2026-09-05 已由用户确定为 v1 设计基线；实现已推进到 Planning／Reviewer 业务接线及其余 M1–M4 范围。设计确认不代表真实账户/执行器资格通过，当前状态从 [GitHub Issues](https://github.com/zhouy1017/Karajan/issues) 与 [覆盖审计](docs/implementation/requirement-coverage.md) 读回。设计决定见 [决定记录](docs/architecture/06-review-and-decisions.md)，术语见 [CONTEXT.md](CONTEXT.md)。
-
-## 报告
-
-- [重度 Toil 类框架：底座选型与 Bernstein-first 设计报告](outputs/toil-like-heavy-framework-report.md)
-
-报告比较了 Toil、Bernstein、Claim Plane、Agent Workspace Fabric 等项目。后续设计已按用户目标收敛到 PR，并依据接口核查将 Bernstein 调整为须通过资格验收的复用候选；当前状态所有权以完整架构为准。
-
-## 前期设计材料
-
-- [Karajan 第一版设计草案](outputs/karajan-design-blueprint.md)：已确认的个人单机、Web 工作台、计划确认后自动交付 PR 的产品范围，以及模块职责、状态语义和分阶段验收建议。
-- [领域术语](CONTEXT.md)：需求、计划、任务、运行、执行尝试、候选变更与交付的统一含义。
-- [多来源路由与配额设计](outputs/karajan-routing-and-quota-design.md)：订阅与 API 混合接入、Commander 协作、Rulebook 矩阵、配额分配和跨服务换源。
+历史 M0–M4/DG 计划、已发布 Issue 正文及实验记录通过[规划导航](docs/planning/README.md)与[历史调研导航](outputs/README.md)保留。它们承担历史范围与证据追溯，活动架构由上面的 r8 文档定义。

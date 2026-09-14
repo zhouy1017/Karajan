@@ -14,6 +14,8 @@
 
 同一事件和 PR/分支只保留最新运行；被取消的运行不算通过。merge queue 是独立事件，必须单独订阅才会为 merge group 报告 `quality-gate`。
 
+<a id="ci-失败的修复分工"></a>
+
 ## CI 修复职责
 
 当前角色和模型分工以 [当前业务顺序](../planning/business-first.md) 为准：边界明确的修复交 Luna，生命周期、共享状态、隔离及复杂 CI 交 Terra，Standards／Spec 由独立 Astra reviewer 核对。Commander 提供固定失败 SHA、job/日志、反例、独占文件及复验入口，负责调度和机械集成。

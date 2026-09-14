@@ -1,0 +1,34 @@
+[
+  {
+    "slice": 1,
+    "number": 175,
+    "database_id": 5446942807,
+    "url": "https://github.com/zhouy1017/Karajan/issues/175",
+    "file": "docs/planning/r8-phase1-20260914/01-issue.md",
+    "sha256": "8352311ea06bfb2ce123b6fa8893b9d4409d34ae1e1292acdfc56ae6f2e9cd74"
+  },
+  {
+    "slice": 2,
+    "number": 176,
+    "database_id": 5446943394,
+    "url": "https://github.com/zhouy1017/Karajan/issues/176",
+    "file": "docs/planning/r8-phase1-20260914/02-issue.md",
+    "sha256": "0138968a486b3db3ac75a8ef78dc909672a55abeee9faa6d3c9973ab81b8add2"
+  },
+  {
+    "slice": 3,
+    "number": 177,
+    "database_id": 5446944015,
+    "url": "https://github.com/zhouy1017/Karajan/issues/177",
+    "file": "docs/planning/r8-phase1-20260914/03-issue.md",
+    "sha256": "8d31e78a61f018c34feae65e6616dcdb1dfbfdcf989ca98ae0782b4a16080672"
+  },
+  {
+    "slice": 4,
+    "number": 178,
+    "database_id": 5446944662,
+    "url": "https://github.com/zhouy1017/Karajan/issues/178",
+    "file": "docs/planning/r8-phase1-20260914/04-issue.md",
+    "sha256": "ac6e6735bffed018e7e82fc93b41fc87dbf62ac532b815fc76f21ee9fa457a25"
+  }
+]

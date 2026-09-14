@@ -1,17 +1,20 @@
 # Rulebook、配额与换源
 
-Rulebook 是用户可编辑、可模拟、可版本化的路由契约。Commander 主导提出任务、角色与模型/Profile 绑定；确定性程序执行硬约束。显式绑定优先于 Rulebook，主 Commander、顾问、Worker、Reviewer、修复与重试都经过准入。
+2026-09-14 r8 设计契约。Rulebook 负责来源选择与资源规则；获权 Workflow 角色根据实际任务作拆分、依赖、角色绑定、优先级和派发决定，见 [11](11-role-directed-scheduling.md)。引擎机械校验授权/能力和资源，不重新做业务分工。显式绑定优先，所有创作/调度/执行/审查/重试调用都准入计账。
+
+Workflow 决定自定义职责与步骤，Rulebook 负责来源和资源选择。能力从执行种类、风险、产物政策和 RoleDefinition 约束计算，不从角色名称推断；控制提交身份、保护量资格与审查独立性由可信策略绑定。网关连接、真实模型映射与共享账户去重见 [外置网关](08-provider-gateway.md)，流程及批准见 [Workflow](09-configurable-workflows.md)，目标 Run 之前的 Designer 创作准入与部署见 [对话与部署](10-conversational-workflow-deployment.md)。这些是设计要求，不表示新接入已获资格。
 
 ## 1. 接入目录
 
 | 对象 | 必需内容 | 不应混淆的对象 |
 |---|---|---|
 | Provider | 服务身份与官方/第三方来源 | 模型家族 |
-| Account | 订阅或 API 计费主体、共享额度关系、secret_ref | 某一个 API key |
+| Account | 订阅或 API 计费主体、共享额度关系、网关来源证据；上游秘密由外置网关持有 | 某一个 API key 或一个网关 alias |
 | Channel | 认证模式、endpoint/protocol、计费模式、可接受的数据去向 | Agent 角色 |
 | Model descriptor | 厂商 ID、已知版本/家族、上下文与工具能力、证据日期 | 自报型号或营销能力等级 |
 | Runtime descriptor | 固定执行器版本、OS/隔离、事件、取消与准入粒度 | 单纯模型 API |
-| Execution Profile revision | 上述绑定＋原生参数＋能力验收结果＋允许角色＋配额池关联 | 一段模型名称字符串 |
+| GatewayConnection / ModelBinding revision | 外置网关地址/协议/凭据引用、配置与变换摘要、公开模型及允许的真实来源映射 | provider 本身或未经验证的 model alias |
+| Execution Profile revision | 上述绑定＋运行参数＋所需能力的验收结果＋角色引用约束＋配额池关联 | 一段模型名称字符串或固定业务角色枚举 |
 
 Profile 生命周期为 `draft → qualifying → enabled → suspended / retired`。只有 enabled 且所需能力为 passed 的配置可接对应工作。capability 包含 `status / evidence_ref / tested_version / tested_at`，不能只写一个未经验证的 `supports_tools: true`。
 
@@ -21,25 +24,25 @@ Profile 生命周期为 `draft → qualifying → enabled → suspended / retire
 
 | 层 | 内容 | 改变时的影响 |
 |---|---|---|
-| 协作契约 | T0 准备度、角色权限、简报、验收、停止和交回条件 | 影响任务语义或授权时形成计划变更 |
-| 能力映射 | role/complexity/risk/domain → 合格 Profile 集；原生参数、审查独立性、升级/换源边界 | 形成 Rulebook revision；运行采用需重评估 |
+| 协作约束 | 引用角色/步骤的 T0 准备度、能力约束、简报、验收、停止和交回条件；职责提示不授予工具权限 | 定义内容在 Workflow 中版本化；影响实例任务或授权时形成计划变更 |
+| 能力映射 | execution_kind/required_capabilities/complexity/risk/domain 及显式 role_ref 约束 → 合格 Profile 集；参数、审查独立性、升级/换源边界 | 形成 Rulebook revision；运行采用需重评估 |
 | 资源策略 | Run 固定的预算模式、排序与额外限制；另引用账户级 CapacityPolicy 的保留量、安全余量和未知模式 | Run 策略不静默替换；共享池全局当前策略对所有新准入一致生效 |
 
-矩阵不是只有“难度 → 型号”两列。匹配维度至少包括角色、准备度、复杂度、风险、领域、工具要求、上下文需求、数据去向、最低隔离、独立审查和计费许可。
+匹配维度包括执行契约、准备度、复杂度、风险、领域、工具要求、上下文需求、数据去向、最低隔离、独立审查与计费许可。角色引用可进一步收紧候选，但把角色命名为 Commander/Reviewer 不会获得规划预算、保护量或审查资格。确定性步骤不参与模型选路，只接受适用的本地资源准入。
 
 | 工作类型 | 资格判断 | 建议候选类别 |
 |---|---|---|
-| T0：未决问题 | 不派实施 Worker；先澄清目标、接口、授权或取舍 | 已获规划预算的 Commander |
+| T0：未决问题 | 不派实现步骤；先澄清目标、接口、授权或取舍 | 已获独立创作/规划预算的 Designer 或规划 Agent |
 | T1：机械工作 | 已知范围、检查明确，风险仍单独判断 | `fast_qualified` |
 | T2：有界实现 | 稳定接口、明确简报、常规实现判断 | `standard_qualified` |
 | T3：复杂/关键任务 | 高复杂度或安全、数据、恢复等风险下限触发 | `critical_qualified` |
-| 最终 Review | 按候选复杂度/风险选；独立上下文、独立职责 | `review_*_qualified` |
+| 产物政策要求的独立审查 | 按审查范围复杂度/风险选；独立上下文、独立职责；PR 必需 | `review_*_qualified` |
 
 这些组是用户配置的具体 Profile revision 集，成员必须有相应能力证据。高级模型可以进入多个组；便宜模型经验证也可以进入适当组。T3 不因资源不足降为 T2；并行拓扑不改变任务类别。
 
-平台以项目可信规则计算风险下限，例如鉴权、数据库迁移、秘密处理、恢复协议等路径或职责触发额外门槛。Commander 分类和理由作为输入保留，不能覆盖更严格下限。
+平台以项目可信规则计算风险下限，例如鉴权、数据库迁移、秘密处理、恢复协议等路径或职责触发额外门槛。Agent 分类和理由作为输入保留，不能覆盖更严格下限。
 
-派生字段由编译器计算：复杂度只取 T1/T2/T3，顺序为 T1＜T2＜T3；T0 是 readiness 未完成，不进入此序列。`trusted_risk_floor` 来自已确认项目风险规则，基线 standard→T1、critical→T3；缺失风险映射拒绝准入。`effective_class = max(complexity, trusted_risk_floor)`。Reviewer 取其当前审查范围内作者任务和集成变化的最高要求，不能用“只读角色”降低风险等级。
+派生字段由编译器计算：复杂度只取 T1/T2/T3，顺序为 T1＜T2＜T3；T0 是 readiness 未完成，不进入此序列。`trusted_risk_floor` 来自已确认项目风险规则，基线 standard→T1、critical→T3；缺失风险映射拒绝准入。`effective_class = max(complexity, trusted_risk_floor)`。独立审查步骤取其审查范围内作者任务和集成变化的最高要求，不能用角色名称或只读权限降低风险等级。
 
 ## 3. 匹配与排序算法
 
@@ -48,10 +51,10 @@ Profile 生命周期为 `draft → qualifying → enabled → suspended / retire
 ```text
 on dependency / result / quota observation / reset timer / user command:
   先处理核对、撤销和取消
-  ready_tasks = 依赖产物有效且已获授权的任务
-  按优先级、等待时间和 Run 轮转顺序遍历
+  ready_tasks = 已接受运行图中依赖有效且有合法派发决定或静态规则的任务
+  保留获权角色的优先级/依赖；按用户批准的公平/资源政策机械选择可准入项
   对每个 task:
-    固定 task_revision + authorization + rulebook_revision
+    固定 graph/task revision + SchedulingDecision/授权范围 + rulebook revision
     binding_mode 为互斥的 strict-single / preferred-with-approved-alternatives / default
     strict-single：候选仅为 strict Profile revision；不得 fallback
     preferred-with-approved-alternatives：首 Attempt 仅为 preferred Profile revision
@@ -64,14 +67,14 @@ on dependency / result / quota observation / reset timer / user command:
     对剩余候选按版本化策略稳定排序
     在短事务内重查任务/池版本并尝试原子预留
     成功：写 Attempt、RouteDecision（注明 binding_mode 与 preferred/alternative）和 StartAttempt outbox
-    失败：继续其他候选或登记 Blocker；继续调度独立任务
+    失败：保留合法图与任务，记录资源队列/Blocker；不截断图、不自行改变业务分工
 ```
 
-已确认的资源目标是保护主 Commander 余量，再平衡配额、费用与速度。对应队列建议为：主 Commander 的必要反馈 → 完成已有工作的必要 Reviewer/修复/关键路径 → 普通 Worker → 可选顾问。加入等待时间提升与 Run 轮转；一个被阻塞的高级任务不能挡住整个队列。所有优先级都不能突破授权或能力硬条件。
+任务优先级和派发意图来自有效 SchedulingDecision 或已批准静态规则；Rulebook 的 Profile 排序不是另一套业务调度。用户可批准必要反馈保护、公平轮转/等待提升等共享资源规则，引擎按这些规则提供背压并解释暂未启动原因，不暗中用固定 Commander/Worker 队列覆盖角色决定。资源不足不删合法任务，优先级也不能越过授权/能力门。
 
 默认先限制资格和资源，再采用固定排序元组：`策略偏好档位 → 不确定性档位 → 瓶颈配额压力 → 预计新增现金 → 预计完成时间 → profile_id`。数据不足的排序项明确 unknown，并由该策略的保守规则处理，不能默认填 0。
 
-`preference_band` 来自当前规则的 `profile_preferences`，未指定为 0，数值小者优先，不能越过硬门槛。`uncertainty_band` 为 0（必需额度观察新鲜且需求可计算）、1（含已校准估算）、2（含明确许可的未知保守模式）；未许可的未知在过滤阶段拒绝。同档的压力按各可量化池“本次请求后的占用＋安全/角色保护量”除以该池上限后取最大值；无可计算值使用 unknown 哨兵、排在有值者后。延迟取相应 Profile/任务类别的已记录估计，未知也排在有值者后。排序输入和算法版本一并保存。
+`preference_band` 来自当前规则的 `profile_preferences`，未指定为 0，数值小者优先，不能越过硬门槛。`uncertainty_band` 为 0（必需额度观察新鲜且需求可计算）、1（含已校准估算）、2（含明确许可的未知保守模式）；未许可的未知在过滤阶段拒绝。同档的压力按各可量化池“本次请求后的占用＋安全/资格保护量”除以该池上限后取最大值；无可计算值使用 unknown 哨兵、排在有值者后。延迟取相应 Profile/任务类别的已记录估计，未知也排在有值者后。排序输入和算法版本一并保存。
 
 瓶颈压力只对可比较的、归一化后的各池占用比例取最大值。接近重置且有剩余额度可在同档候选中加偏好；必须同时满足周/月等较长窗口。优先用完订阅、最快完成可以作为另外两套显式策略，不与默认策略暗中叠加。
 
@@ -85,10 +88,10 @@ on dependency / result / quota observation / reset timer / user command:
 Go account:    {5h provider_value, weekly provider_value, monthly provider_value}
 DeepSeek:      {account concurrency, account cash(currency), Run cash budget}
 Subscription:  {reported short-window %, reported long-window %, local attempt slots}
-All profiles:  {project writer slots, Run time/attempt bounds, optional role reserve}
+All profiles:  {workspace writer exclusion, measured host capacity, explicit user limits, execution bounds}
 ```
 
-这些是不同来源可能提供的计量形态，具体池、单位与可观测性由接入验收确认。额度事实和当前限制见 [官方来源](sources.md#模型来源)。Go 的服务计量金额与 API 现金余额不是同一资产。
+这些是不同来源可能提供的计量形态，具体池/单位/可观测性由资格确认。Karajan 不固定全局或项目 coding Agent 人数，不设置新的默认数量；用户明确数量政策或实际账户/宿主能力是准入条件。每工作区单 writer 是冲突排他规则，资源不足时合法图排队，不被裁剪。Go 服务计量与 API 现金不同，来源依据见 [来源记录](sources.md#模型来源)。
 
 每个池声明 `scope / unit / window_kind / window_identity / reset_at / limit / observation_source / freshness / coverage`。窗口可能是固定重置、滚动窗口或令牌桶，不能统一为午夜清零。服务商未报告重置语义时标记 unknown，不能自行猜测下次可用时间。
 
@@ -100,12 +103,12 @@ available = effective_limit
           - locally_incurred_not_covered_by_report
           - future_reservations
           - safety_margin
-          - reserve_not_available_to_this_role
+          - reserve_not_available_to_this_authorized_identity
 ```
 
 以上数量必须属于同一池、单位和窗口。服务池与 Karajan 自身 allowance 池分开：服务池扣账户总体消费，本地 allowance 池只扣 Karajan 的消费。例如服务上限 100、平台份额 20、用户手动已用 50、平台尚未使用时，分别检查服务剩余 50 与平台剩余 20，不能用 20 减 50。余额型池使用 reported balance 减未覆盖支出与预留，不再次减一个已包含的 used 值。
 
-每个适用池都必须满足需求。两个不同 key 共享账户时不能重复登记两份额度；一个请求也不能只通过最宽松的那个窗口。
+每个适用池都必须满足需求。同一上游账户经多个 key、网关 alias 或原生兼容通道使用时按可信来源映射去重，不登记多份额度；一个请求不能只通过最宽松的窗口。网关本地余额或 `/models` 可见性不能替代上游消费与共享身份的证明。
 
 ### 4.1 预留的三个部分
 
@@ -117,7 +120,7 @@ available = effective_limit
 
 在 `BEGIN IMMEDIATE` 短事务中同时检查并登记所有池、预算、Attempt 和 outbox；事务内不请求服务商数据。实际值可能高于估计，差额必须入账并触发后续停止/重评估，不能为了保持“预算没超”截断账目。
 
-Attempt 预算与逐调用预算采用父子额度切片：call 从 Attempt 已预留额度中领取，不能同时把父预留和全部子预留重复扣减。未知长度的任务分段申请；没有余额时不发送下一次请求。订阅 CLI 无逐次控制时只能按已许可的有界 Attempt 处理。
+Attempt 预算与逐调用预算采用父子额度切片：call 从 Attempt 已预留额度中领取，不能同时把父预留和全部子预留重复扣减。Designer 调用使用其创作执行身份的父预算，不能要求先创建目标 Run 才可准入。未知长度的工作分段申请；没有余额时不发送下一次请求。显式原生兼容 CLI 无逐次控制时只能按已许可且已验收的有界 Attempt 处理。
 
 ### 4.2 报告延迟与外部消费
 
@@ -127,15 +130,15 @@ QuotaObservation 分别保存服务端时间与本地接收时间。能够用 re
 
 平台自己的预留不会锁住官方客户端额度。外部消费导致余量下降时，阻止新准入，必要时停止下一次调用或在执行器允许处取消；已经发出的请求仍可能消费。重置只处理确定所属窗口的预留/账项；跨窗口请求按照供应商归属，未知则保守保留并标记。
 
-### 4.3 Commander 保留量
+### 4.3 可信控制身份的保留量
 
-保留量定义在共享池上，不能每个 Run 各自声称拥有同一份额度。普通 Worker、T3 Worker 和可选顾问不能挤占主 Commander 的受保护余量；用户可以显式调整谁有权使用。
+保留量在共享池定义，不由各 Run 重复占有。默认代码模板的控制反馈保护可保留为显式用户政策，资格绑定实际授予范围/提交身份，不按 Commander 字符串，也不因委派复制账户额度。Designer 仅在独立创作授权含对应资格时可用。
 
 共享池有一个当前有效的全局 `CapacityPolicy revision`；所有 Run 在新准入时读取同一版本，Run 固定策略只能增加限制。旧 Run 不能用自己的旧保留量绕过新门槛。修改策略通过账户设置原子发布，保留既有消费与预留，不凭新值释放在途占用；下一调用/扩展预算重新准入。降低保护量也不扩大某 Run 已批准的来源或预算。RouteDecision 保存 Run Rulebook 与全局 CapacityPolicy 两个版本。
 
 已准入运行还可设置必要 review/收尾预算，避免把所有现金用于实现后没有资源验收。规划、顾问、上下文重发、失败、重试、修复和 review 都计入费用；不只计算产生最终代码的那次调用。
 
-保留量是本地分配目标。配额未知时显示“估算保护”；没有观测/校准依据时采用保守并发和调用上限，不能保证主 Commander 永远可用。
+保留量是本地分配目标。配额未知时显示“估算保护”；没有观测/校准依据时采用保守并发和调用上限，不能保证受保护的模型调用永远可用。
 
 ## 5. 现金限制与未知额度
 
@@ -149,7 +152,7 @@ QuotaObservation 分别保存服务端时间与本地接收时间。能够用 re
 
 用户在审阅 Q6 确认默认现金策略为 `bounded_calls`，订阅配额允许保守估算。仅支持 estimated_stop 的现金 Profile 不因已登记而自动启用；若将来选用，须明确更改对应预算策略。这个默认值不等于任何实际服务已经通过硬上限资格测试。
 
-未设置现金预算时现金配置不可派发；订阅中隐藏的“额外余额自动兜底”也属于现金路径，必须在服务设置和平台策略两处明确处理。规划期使用独立的小预算，避免在尚未批准实现计划时没有任何约束。
+未设置现金预算时现金配置不可派发；订阅中隐藏的“额外余额自动兜底”也属于现金路径，必须在网关/服务设置和平台策略两处明确处理。Designer 创作及模型规划使用独立有限预算，记录调用、自动修复、耗时和未知尾账；部署 readiness 的无副作用校验不需要业务输入，也不得偷偷调用付费模型来“测通”。
 
 unknown 配额不会被视为可无限调用：必须有用户允许的保守模式、并发/Attempt 上限、错误回路和本地消费跟踪。配置要求“必须有新鲜官方报告”而来源无法提供时，明确阻塞或换合格来源。
 
@@ -172,17 +175,17 @@ unknown 配额不会被视为可无限调用：必须有用户允许的保守模
 
 修复身份归于 `repair_chain_id` 和 Run 的累计质量轮次，不能归于临时 Task ID。协调器先收齐一个 `validation_cycle_id` 对应的必需检查结果，再建立失败批次；同一批次生成多个修复 Task 只增加一轮，下一次验证失败才进入下一轮。每个 repair Task 继承根任务/集成验证目标、父链、当前 stage 与累计次数；换源、重启、新 Task 或新计划不能自动清零既有 Run 消费/轮次。基础设施重试同样按根任务累计，另受 Run 总次数/时间/预算约束。
 
-新尝试使用新工作区和交接包。旧尝试消耗留在账上；未经验证的部分代码只能作为标明来源的参考候选。基础设施重试、质量修复、Commander 反复设计分别计数，统一受 Run 总调用/时间/费用上限约束，避免循环。
+需要工作区的新尝试使用独立副本和交接包。旧尝试消耗留在账上；未经验证的部分产物只能作为标明来源的参考。Run 内基础设施重试、质量修复与重新规划分别计数，受 Run 总调用/时间/费用上限约束。Run 之前的 Designer 创作循环另有持久累计上限，新 proposal、会话恢复或回执重试不清零；达到界限保留配置并等待用户决定，不自动部署。
 
 用户编辑规则后，模拟、校验、发布为新 revision。已有 Run 若需采用，提交显式 `reevaluate_policy` 命令；新允许集合还要与原授权取交集。扩张范围形成新确认，紧急收紧通过撤销/取消明确生效。
 
 ## 7. 配置契约
 
-[JSON 示例](examples/rulebook.v1.json) 表达规则结构、角色矩阵与建议默认值，不包含已启用模型。配置由编译器解析成内部类型后使用；禁止执行任意 Python/JavaScript 表达式作为规则。
+[JSON 示例](examples/rulebook.v1.json) 的旧三角色和双 writer 默认值保留历史/兼容字节，不是 r8 运行限制。新配置引用角色/能力/授予范围与显式用户资源政策；不继承旧人数默认值。编译器解析内部类型，禁止任意 Python/JavaScript 表达式。
 
 编译器必须拒绝：重复 ID、未知字段、无效 role/class、歧义匹配、未定义 Profile 组、单位不匹配、未知池引用、重复共享池、循环 fallback、空能力集合、不可执行的硬预算承诺。模型组可以暂为空，但发布时会产生“可模拟、不可派发”的明确警告；不能自动补一个型号。
 
-计划审批时把动态组解析为具体 Profile revisions 并冻结授权集合。新增组成员不自动进入旧 Run；配额观察仍可动态更新。规范化可执行字段计算 hash，展示文字和翻译独立版本化，不复制参考仓库对 Issue 正文全部字节的绑定方式。
+初始批准将动态来源组解析为固定 Profile/ModelBinding 集合；获权角色可在该集合内为新子任务绑定来源，不逐任务再批。新增集合外来源仍需扩权，实际配额动态观察。职责/配置字节的定义变更生成新包/预览；运行图中选择获准角色或来源产生有来源的图修订，不改原定义摘要。
 
 资源对象的字段和写入接口见 [接口文档第 8 节](04-api-and-workbench.md#8-资源配置契约)。示例中空引用表示尚未绑定账户，只有结构可检查；不是可运行配置。
 
