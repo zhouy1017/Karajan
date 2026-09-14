@@ -81,3 +81,7 @@ examples/candidate-checks/** -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-
 
 # Preserve the planning parser review archive byte-for-byte, including CRLF.
 examples/planning-output-review-109/* -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+
+# Preserve r8 Phase 1 published Issue input bytes and recorded hashes.
+docs/planning/r8-phase1-20260914/*-issue.md -text whitespace=cr-at-eol
+docs/planning/r8-phase1-20260914/github-publication.json -text whitespace=cr-at-eol
