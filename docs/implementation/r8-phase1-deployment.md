@@ -45,18 +45,19 @@ POST /v1/projects/{id}/workflow-rollbacks                                       
 
 ### 1.3 意图状态的一致性
 
-所有意图变更遵守同一条规则：**在写入它的那个事务内重读当前行，合并本次变更，再写回**。因此任何一次变更都作用在真正存储的内容上，而不是调用方手里的快照，两条同键尝试也就不会互相抹除证据。三条路径都遵循这一规则，只是所在事务不同：
+所有意图变更遵守同一条规则：**在写入它的那个事务内重读当前行，合并本次变更，再写回**。因此任何一次变更都作用在真正存储的内容上，而不是调用方手里的快照，两条同键尝试也就不会互相抹除证据。三条路径都遵循这一规则，但实现路径不同：
 
-- `_complete_intent` 在 `_activate` **已经打开的那个事务内**直接合并（激活、槽位 CAS、账本写入与完成标记必须在同一事务，不能拆开）；
-- `_record_step` 与 `_record_failure` 各自经 `_mutate_intent` 打开一个短事务：在同一事务内先查权威账本再决定是否写入，再合并当前行。
+- `_complete_intent` 在 `_activate` **已经打开的那个事务内**直接合并（激活、槽位 CAS、账本写入与完成标记必须同事务，不能拆开）；同事务内另经 `_durable_steps` 读一次当前行的已完成步骤，供发布的部署记录使用；
+- `_record_step` 经 `_mutate_intent` 打开一个短事务，在同一事务内重读当前行并合并步骤，**不查**幂等账本；
+- `_record_failure` 直接用 `_owned` 打开一个短事务，在同一事务内**先查权威幂等账本**再决定是否写入，然后把失败并入当前行。
 
-由此：步骤检查点不会用陈旧快照覆盖另一同键尝试写下的失败；已提交的成功命令不会被改写为失败；完成时此前所有失败搬进 `failure_history` 后再标记 `activated`，既不删除证据也不自相矛盾。
+由此：步骤检查点不会用陈旧快照覆盖另一同键尝试写下的失败；已提交的成功命令不会被改写为失败；发布出去的部署记录与 intent 报告同一组已完成步骤；完成时此前所有失败搬进 `failure_history` 后再标记 `activated`，既不删除证据也不自相矛盾。
 
 ## 2. 逐项验收
 
 | 原验收条件 | 实现与行为证据 | 层级 |
 |---|---|---|
-| AC1 确认绑定项目/会话、bundle/file/compiled 摘要、preview revision、slot expected active revision 与 deploy_only | `test_an_exact_confirmation_materialises_loads_and_activates`（真实 pending 目录清单与源 revision **逐字节相同**、回执摘要与记录一致、`process_id == os.getpid()`、`verify_bytes is True`） | C/P |
+| AC1 确认绑定项目/会话、bundle/file/compiled 摘要、preview revision、slot expected active revision 与 deploy_only | `test_an_exact_confirmation_materialises_loads_and_activates`（真实 pending 目录清单与源 revision **逐字节相同**、回执摘要与记录一致、`process_id == os.getpid()`、`verify_bytes is True`）、`test_the_published_record_reports_the_durable_completed_steps`（发布结果、detail 读回与同键重放三条公开路径都报告 `['materialize','load']` 而非空列表，且回执摘要与首次相同） | C/P |
 | AC1 不能由请求断言身份 | `test_a_confirmation_request_cannot_supply_identities`（`bundle_digest`/`compiled_digest`/`manifest`/`loader`/`files`/`business_inputs`/`principal` 全部 422 `INPUT_INVALID`）、`test_an_unknown_deploy_field_is_refused` | C |
 | AC1 deploy_and_run 明确 unsupported，且不写任何状态 | `test_the_action_is_explicit_and_deploy_and_run_is_unsupported`（501 `WORKFLOW_DEPLOY_ACTION_UNSUPPORTED`）、`test_an_unsupported_action_is_refused_before_any_state_change`（意图表为空、槽位 0） | C |
 | AC1 旧预览/摘要错误/变更字节拒绝 | `test_a_stale_confirmation_is_refused_after_a_newer_revision`（revision 2 发布后 revision 1 的确认 409 `WORKFLOW_PREVIEW_STALE` + `current_revision`）、`test_a_wrong_preview_identity_is_refused`、`test_a_package_whose_bytes_change_is_refused` | C/P |
@@ -125,23 +126,34 @@ uv lock --check --offline                                    -> Resolved 46 pack
 ```
 
 ```text
-pytest tests/workflows tests/web tests/contract              -> 337 passed, 4 skipped, 14 subtests passed
-                                                                (其中一条新增断言出现假阳性；见第 5 节)
-pytest tests/web/test_workflow_deployment_process.py         -> 14 passed
-pytest tests/web/test_workflow_deployment_http.py \
-       tests/web/test_workflow_deployment_process.py         -> 47 passed
-pytest <the five quick-gate files from testing-gates.md>      -> 54 passed
+pytest tests/workflows tests/web tests/contract              -> 337 passed, 4 skipped, 14 subtests passed, exit 1
+                                                                (其中一条新增断言出现假阳性，已修正；见第 5 节)
+pytest tests/web/test_workflow_deployment_process.py         -> 14 passed, exit 0
+                                                                (修正后的两组真实交错用例在此绑定)
+pytest tests/web/test_workflow_deployment_http.py            -> 34 passed, exit 0
+pytest <the five quick-gate files from testing-gates.md>      -> 54 passed, exit 0
 ```
+
+上面的 337 项广泛运行收集的是**交错用例替换之前**的进程套件，并因一条断言假阳性以 exit 1 结束；
+随后单独重跑修正后的进程套件得到 14 passed / exit 0。HTTP 套件在同一时间段为 33 passed；
+加入 completed_steps 公开路径回归后为 34 passed，两组部署套件合计 48 passed / exit 0。
+每个数字都保留其原始范围，不能互相替代。
 
 完整日志保存在 `.cache/r8-phase1/workers/logs-03/`（`pytest-20260915-163452-49276.log`
 广泛套件、`...-163943-24568.log` 进程套件、`...-164041-18700.log` 快速门），每一项都带真实
 退出码。
 
-`tests/web/test_workflow_deployment_process.py` 与 `..._http.py` 共 47 项通过。已知假阳性与全部历史失败记录见第 5 节。
+本地检查之外，候选 `34f1014214f6b6d653e5dfb74bd51bf62fe5c79f` 的远端 CI run
+[34948686730](https://github.com/zhouy1017/Karajan/actions/runs/34948686730) 已通过：`quick-python`
+在 Ubuntu 24.04 与 Windows 2022 均 pass，`frontend-quality` pass，必需汇总 `quality-gate`
+pass。远端绿灯只证明它实际覆盖的离线检查；独立 Standards/Spec 审查结论在 PR 中另行记录，
+CI 通过不等于审查已完成。本节的本地结果不包含该远端证据。
+
+`tests/web/test_workflow_deployment_process.py` 与 `..._http.py` 共 48 项通过。已知假阳性与全部历史失败记录见第 5 节。
 
 ## 5. 证据边界与保留的失败事实
 
-**C/P 覆盖**：本切片全部证据为 C（产品行为）与 P（本机执行）。没有 S（真实服务）或 G（GitHub 远端）证据，也没有任何真实模型调用。
+**C/P 覆盖**：本记录第 3、4 节描述的**本地**证据全部为 C（产品行为）与 P（本机执行），不含 S（真实服务）证据，也没有任何真实模型调用。远端 G（GitHub）证据不由本文声称，而在 PR 中单独报告：候选 `34f1014` 的必需 `quality-gate` 已通过，最终 head 的 CI 与独立审查结论以 PR 与远端检查为准。
 
 **不声称**：
 - 不创建、不执行任何 Run；`deploy_only` 不执行任何业务步骤（`business_steps_executed == 0`）；

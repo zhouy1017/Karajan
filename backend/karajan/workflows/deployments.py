@@ -41,7 +41,7 @@ import sqlite3
 import threading
 import time
 import uuid
-from collections.abc import Callable, Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
@@ -966,11 +966,19 @@ class DeploymentStore:
                 # confirmed against a slot that has since advanced. The active
                 # deployment is left exactly as it is.
                 raise WorkflowError("WORKFLOW_SLOT_REVISION_CONFLICT", current_revision=current)
+            # The steps this command really completed are read from the durable
+            # row *inside this transaction*, not from the caller's snapshot: a
+            # checkpoint may have been merged by another attempt of the same
+            # command after the snapshot was taken, and the published deployment
+            # must describe what is durably recorded. No nested transaction is
+            # opened, and no whole-row write from a stale copy is performed.
+            completed_steps = self._durable_steps(db, principal, command_key)
             record = self._deployment_record(
                 intent=intent,
                 receipt=receipt,
                 principal=principal,
                 delivery_kind=delivery_kind,
+                completed_steps=completed_steps,
             )
             db.execute(
                 "INSERT INTO workflow_deployments VALUES (?,?,?,?)",
@@ -1003,6 +1011,24 @@ class DeploymentStore:
             # than overwritten from a snapshot read before the activation began.
             self._complete_intent(db, principal, command_key, intent)
             return result, True
+
+    @staticmethod
+    def _durable_steps(
+        db: sqlite3.Connection, principal: str, command_key: str
+    ) -> list[str]:
+        """The completed steps really recorded for one command, as of now.
+
+        Read on the caller's own connection, so it participates in the caller's
+        transaction instead of waiting for a second writer that this same process
+        is already holding.
+        """
+        row = db.execute(
+            "SELECT record FROM workflow_deployment_intents WHERE principal=? AND key=?",
+            (principal, command_key),
+        ).fetchone()
+        if row is None:
+            return []
+        return [str(step) for step in (json.loads(row["record"]).get("completed_steps") or [])]
 
     @staticmethod
     def _complete_intent(
@@ -1068,6 +1094,7 @@ class DeploymentStore:
         receipt: LoadReceipt,
         principal: str,
         delivery_kind: str,
+        completed_steps: Sequence[str],
     ) -> dict[str, Any]:
         """The immutable deployment record, carrying its historical receipt."""
         record: dict[str, Any] = {
@@ -1100,7 +1127,10 @@ class DeploymentStore:
             },
             "commanded_by": principal,
             "commanded_at": intent["commanded_at"],
-            "completed_steps": list(intent.get("completed_steps") or []),
+            # Read from the durable row inside the activation transaction, so the
+            # published record describes what is really recorded rather than the
+            # caller's snapshot of it.
+            "completed_steps": list(completed_steps),
             "completed_at": self.clock(),
             # The historical receipt is what the activating process really read.
             # It is deliberately separate from the *current* loaded/readiness

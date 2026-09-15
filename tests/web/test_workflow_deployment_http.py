@@ -111,6 +111,53 @@ def test_the_action_is_explicit_and_deploy_and_run_is_unsupported(case: dict[str
     assert status(case)["slot_revision"] == 0
 
 
+def test_the_published_record_reports_the_durable_completed_steps(
+    case: dict[str, Any],
+) -> None:
+    """AC1/AC3: the published record describes what is really recorded.
+
+    The steps a command completed live in its durable intent. The deployment
+    record must report those, not a snapshot taken before the activation began -
+    otherwise the public result, the detail readback and a replay would all claim
+    a command did nothing, while the intent says otherwise.
+    """
+    assert create_bundle(case).status_code == 201
+    published = deploy(case, key="steps")
+    assert published.status_code == 201, published.text
+    record = published.json()["deployment"]
+    deployment_id = record["deployment_id"]
+    assert record["completed_steps"] == ["materialize", "load"]
+
+    # The durable intent agrees with the published record.
+    intent = json_rows(
+        case,
+        "SELECT record FROM workflow_deployment_intents WHERE principal=? AND key=?",
+        ("owner", "steps"),
+    )[0]
+    assert intent["completed_steps"] == record["completed_steps"]
+    assert intent["deployment_id"] == deployment_id
+
+    detail = case["client"].get(
+        url(case["project_id"], f"/workflow-deployments/{SLOT}/deployments/{deployment_id}")
+    )
+    assert detail.status_code == 200, detail.text
+    assert detail.json()["deployment"]["completed_steps"] == ["materialize", "load"]
+    # The immutable historical receipt is the same one the first response carried.
+    assert (
+        detail.json()["historical_receipt"]["receipt_digest"]
+        == record["load_receipt"]["receipt_digest"]
+    )
+
+    replayed = deploy(case, key="steps")
+    assert replayed.status_code == 200, replayed.text
+    assert replayed.json()["deployment"]["completed_steps"] == ["materialize", "load"]
+    assert replayed.json()["deployment"]["deployment_id"] == deployment_id
+    assert (
+        replayed.json()["deployment"]["load_receipt"]["receipt_digest"]
+        == record["load_receipt"]["receipt_digest"]
+    )
+
+
 def test_a_stale_confirmation_is_refused_after_a_newer_revision(case: dict[str, Any]) -> None:
     """AC1: a confirmation of revision 1 cannot activate it after revision 2 exists."""
     assert create_bundle(case).status_code == 201
