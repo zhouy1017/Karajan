@@ -82,10 +82,10 @@ python examples/workflows/bundle_preview.py
 脚本在同一进程内通过真实认证边界（Session + Origin + CSRF + `Idempotency-Key` + `If-Match`）创建会话、发布两个不同角色/拓扑的真实配置包、从表格命令编辑、读取同源 preview/diff、保存一条创作输入、读取执行种类目录，并在**新进程级应用**上重新读回同一 revision。实际输出（2026-09-15，Windows 11 + Python 3.12.14）：
 
 ```text
-conversation: 201 c1e4bf9e-8263-4e1e-a866-c4e619386504
+conversation: 201 fc7c501f-fb9e-4511-905e-dd9087246fe4
 bundle 1: 201 revision 1 readiness executable model_calls 0
   bundle digest   b781c12f5607b420
-  compiled digest e3b2f891e6c85d09
+  compiled digest 3bb1d1c3149b4d93
   manifest file   6ed0d1930e64bb03
 bundle 2: 201 True
 graph nodes: ['option-a', 'option-b', 'comparison']
@@ -102,7 +102,7 @@ diff: changed True changed_steps ['comparison'] roles_changed False
 authoring: 201 state pending_generation generated None
 execution kinds: {"agent_task@1": false, "artifact_aggregate@1": true, "candidate_integrate@1": false, "deterministic_check@1": false, "human_decision@1": false, "publish_pr@1": false}
 after restart: verified_files verified True compiled digest matches True
-adapter: input_name_ascending utf-8 digest 28800422da71c486
+adapter: input_name_ascending utf-8 inputs 2 digest adf41c5750d8d7e8
 ```
 
 脚本使用 `TestClient` 而不是真实网络端口以保持确定性；同一套路由在 `python -m karajan.web serve` 下由 `create_app` 注册，认证、来源校验、CSRF 与请求体上界相同。
@@ -113,7 +113,10 @@ adapter: input_name_ascending utf-8 digest 28800422da71c486
 uv lock --check --offline                                    -> Resolved 46 packages
 .venv/Scripts/python.exe -m ruff check .                     -> All checks passed!
 .venv/Scripts/python.exe -m mypy backend/karajan             -> Success: no issues found in 180 source files
-.venv/Scripts/python.exe -m pytest tests/workflows tests/web -> 245 passed, 4 skipped
+.venv/Scripts/python.exe -m pytest tests/workflows tests/web -> 262 passed, 4 skipped
+.venv/Scripts/python.exe -m pytest tests/projects tests/gateway \
+  -o "pythonpath=backend tests/web tests/runs tests/projects tests/adapters/opencode"
+                                                             -> 453 passed, 31 skipped
 .venv/Scripts/python.exe -m pytest tests/routing/test_authorization.py \
   tests/projects/test_qualification_store.py tests/runs/test_admission_guard.py \
   tests/web/test_task_admission_http.py tests/tools/test_ci_quality_gate.py -> 54 passed
@@ -121,6 +124,27 @@ python examples/workflows/bundle_preview.py                  -> exit 0（输出�
 ```
 
 每次 pytest 调用经 `run_tests_local.py`（本机检查点脚本，**不提交**）使用 `tempfile.mkdtemp` 生成的**全新唯一**目录作为 `--basetemp`，该目录位于所有 Git 检出之外，并保留真实退出码。
+
+### 4.1 独立审查发现的缺陷与修复
+
+以下问题由独立审查在**早期候选**上复现并在本 PR 内修复；每一项都有对应回归测试。原失败与更正后的归因一并保留。
+
+| 发现 | 修复 | 回归 |
+|---|---|---|
+| literal 与 reference 编译为同一输入与摘要；`literal:` 前缀被解码两次 | 标记保留在编译绑定中，仅在适配器解码一次；未标记字符串在适配器处作为引用被拒绝 | `test_a_literal_and_a_reference_keep_distinct_identities`、`test_a_marked_literal_prefix_is_decoded_exactly_once` |
+| 交付目标用"可能输出"而非**所选契约**判断 | 比较步骤实际声明的 `output_contract_kind` | `test_a_delivery_target_needs_the_selected_contract_not_a_possible_one` |
+| 聚合输出声明 `digest`/`input_count` 但实际不返回；条件可读不存在的字段 | 声明 schema 与真实返回值对齐为 `content_digest`/`input_count`，并在适配器内断言 | `test_the_real_aggregate_emits_every_field_its_schema_promises` |
+| 已声明指令模板缺失仍可执行 | 模板必须是本包真实文件，摘要进入角色身份 | `test_a_missing_instruction_template_is_refused`、`test_a_supplied_instruction_template_is_bound_by_its_own_bytes` |
+| `independence_requirements` 被静默丢弃 | 归一化、校验并冻结进角色身份与差异 | `test_independence_requirements_enter_the_identity_and_diff` |
+| 调度角色在两个别名（同 role ref、不同绑定）之间切换不改变摘要 | 冻结所选别名、`binding_ref` 与 `binding_identity`，并列出可绑定别名 | `test_the_selected_scheduler_alias_and_binding_are_frozen` |
+| 顶层未知字段（如 `api_key`）被忽略并原样回显 | 拒绝未知字段与凭据形状字段名；仅报告字段名，**不回显取值** | `test_an_unknown_workflow_field_is_refused_rather_than_ignored` |
+| 凭据可藏于合法结构化字段（`role.tool_constraints.auth.api_key`） | 递归检查映射/列表中的字段名；同时递归拒绝脚本/导入形状字段 | `test_a_credential_nested_in_a_structured_role_field_is_refused`、`test_a_credential_nested_in_a_legitimate_role_field_is_refused` |
+| 创作文字可在创建前抢占归属：会话 A 先存文字，会话 B 仍可创建同 ID bundle | 归属由**先使用该身份的命令**确定；创建前先校验，另一会话被拒且不写任何文件 | `test_authoring_text_cannot_be_filed_under_another_conversations_bundle`（含 authoring-first 分支） |
+| Windows-only 测试无条件执行 `cmd/mklink`，Linux 全量套件必然失败 | 改为可移植的目录链接辅助函数（Windows 用 junction，其他平台用 symlink），仅在平台确实无法建链时以明确原因跳过 | `test_a_link_never_receives_any_bundle_bytes`、`test_a_link_inside_the_bundle_is_refused`、`test_a_link_on_an_ancestor_of_the_revision_is_refused`、`test_a_preexisting_link_never_receives_any_bytes` |
+
+**关于 Unicode 证据的更正。** 早先一次 `UnicodeEncodeError` 复现使用 `TestClient.post(json=...)`，异常发生在**客户端序列化阶段**，并非服务端 500。因此本记录**不**声称修复了一个已复现的 HTTP 500。真实 HTTP 边界对 ASCII 转义的代理项 JSON 本就返回 `422 INPUT_INVALID`；`prepare_files`/摘要与适配器中的直接编码防护属于**服务层校验加固**，并有 `test_unpaired_surrogate_text_is_refused_rather_than_raising` 覆盖。
+
+**关于读取链路的一项撤回。** 曾有审查提出 `_verified_bundle` 只校验 bundle/revision 之下的链路。复核 `BundlePaths.resolve` 后确认其在读取前已用词法 root 做包含性检查，因此该猜测已**撤回**，未据此修改代码。
 
 ## 5. 边界与未覆盖范围
 

@@ -66,6 +66,234 @@ OPERATORS: frozenset[str] = frozenset(
     {"equals", "not_equals", "all", "any", "not", "at_least", "at_most"}
 )
 
+#: The fields each declared document may carry. An unknown field is refused
+#: rather than ignored: a bundle that names something the compiler never reads
+#: would otherwise be accepted as though it had been validated, and a field such
+#: as ``api_key`` would be stored and echoed back while meaning nothing here.
+#: Architecture/10 §3: a bundle carries references, never actual credentials.
+WORKFLOW_FIELDS = frozenset(
+    {
+        "schema_version",
+        "id",
+        "revision",
+        "delivery_kind",
+        "input_contract",
+        "inputs",
+        "roles",
+        "bindings",
+        "steps",
+        "completion",
+        "scheduling",
+        "rework",
+    }
+)
+
+ROLE_FIELDS = frozenset(
+    {
+        "id",
+        "revision",
+        "display_name",
+        "responsibilities",
+        "stop_conditions",
+        "required_capabilities",
+        "tool_constraints",
+        "input_contract_ref",
+        "output_contract_ref",
+        "instruction_template_ref",
+        "independence_requirements",
+    }
+)
+
+#: Names that identify a credential or an authentication factor. A declarative
+#: configuration references a secret; it never carries the material, so a
+#: credential-shaped field is refused by name. The submitted *value* is never
+#: echoed: the diagnostic names the field only, and never prints what was sent.
+CREDENTIAL_MARKERS = frozenset(
+    {
+        "api_key",
+        "apikey",
+        "api_secret",
+        "access_key",
+        "secret_key",
+        "private_key",
+        "client_secret",
+        "auth_token",
+        "access_token",
+        "refresh_token",
+        "id_token",
+        "session_token",
+        "password",
+        "passwd",
+        "passphrase",
+        "credential",
+        "credentials",
+        "bearer",
+        "authorization",
+        "cookie",
+        "cookies",
+    }
+)
+
+#: Reference-shaped names that are legitimate: they name where a credential
+#: lives rather than carrying it, so they are not treated as credential fields.
+CREDENTIAL_REFERENCE_FIELDS = frozenset({"secret_ref", "credential_ref", "auth_ref"})
+
+
+def _looks_like_credential(name: object) -> bool:
+    """Whether a declared field name identifies credential material."""
+    if not isinstance(name, str):
+        return False
+    normalised = name.strip().casefold().replace("-", "_").replace(" ", "_")
+    if normalised in CREDENTIAL_REFERENCE_FIELDS:
+        return False
+    if normalised in CREDENTIAL_MARKERS:
+        return True
+    return any(
+        normalised.endswith(marker) or normalised.startswith(marker)
+        for marker in CREDENTIAL_MARKERS
+    )
+
+
+def _refuse_unknown_fields(
+    document: Mapping[str, Any], allowed: frozenset[str], *, file: str
+) -> None:
+    """Refuse an undeclared field, and refuse credential-shaped names outright."""
+    diagnostics: list[Diagnostic] = []
+    for name in sorted(document, key=str):
+        if _looks_like_credential(name):
+            diagnostics.append(
+                located(
+                    "WORKFLOW_CREDENTIAL_FIELD_REFUSED",
+                    f"{file}#",
+                    "a declarative bundle references a secret; it never carries "
+                    f"credential material (field: {str(name)[:48]})",
+                )
+            )
+        elif name not in allowed:
+            diagnostics.append(
+                located(
+                    "WORKFLOW_FIELD_UNSUPPORTED",
+                    f"{file}#",
+                    f"unknown field: {str(name)[:48]}",
+                )
+            )
+    if diagnostics:
+        raise WorkflowError(diagnostics[0].code, diagnostics=diagnostics)
+
+
+def _refuse_nested_credentials(value: Any, *, file: str, depth: int = 0) -> None:
+    """Refuse a credential-shaped name anywhere inside a supported structure.
+
+    Checking only the top level of a document is not enough: a legitimate
+    structured field such as a role's ``tool_constraints`` is a declared place to
+    put a *limit*, so a credential hidden one level down inside it would be
+    stored and echoed back while the schema itself looked satisfied. Every
+    mapping key and list element of the supported structure is therefore
+    inspected, and only the field *name* is reported — never its value, so a
+    fixture value (or, in principle, a real one) is never echoed.
+
+    A reference-shaped name such as ``secret_ref`` is a location, not material,
+    and stays permitted.
+    """
+    if depth > MAXIMUM_SCHEMA_DEPTH:
+        raise WorkflowError(
+            "WORKFLOW_SCHEMA_INVALID",
+            diagnostics=[
+                located("WORKFLOW_SCHEMA_INVALID", file, "structure is nested too deeply")
+            ],
+        )
+    if isinstance(value, Mapping):
+        for name, nested in value.items():
+            if _looks_like_credential(name):
+                raise WorkflowError(
+                    "WORKFLOW_CREDENTIAL_FIELD_REFUSED",
+                    diagnostics=[
+                        located(
+                            "WORKFLOW_CREDENTIAL_FIELD_REFUSED",
+                            f"{file}#",
+                            "a declarative bundle references a secret; it never "
+                            "carries credential material in a nested field "
+                            f"(field: {str(name)[:48]})",
+                        )
+                    ],
+                )
+            _refuse_nested_credentials(nested, file=file, depth=depth + 1)
+    elif isinstance(value, list):
+        for item in value:
+            _refuse_nested_credentials(item, file=file, depth=depth + 1)
+
+
+def _refuse_nested_scripts(value: Any, *, file: str, depth: int = 0) -> None:
+    """Refuse a script, expression or import declaration at any depth.
+
+    A supported nested position takes declarative data. A key that names an
+    action, a script, an import or an executable expression is not part of any
+    supported structure, so it is refused by name rather than silently ignored —
+    a caller must not be able to believe an embedded command took effect.
+    """
+    if depth > MAXIMUM_SCHEMA_DEPTH:
+        raise WorkflowError(
+            "WORKFLOW_SCHEMA_INVALID",
+            diagnostics=[
+                located("WORKFLOW_SCHEMA_INVALID", file, "structure is nested too deeply")
+            ],
+        )
+    if isinstance(value, Mapping):
+        for name, nested in value.items():
+            if isinstance(name, str) and name.strip().casefold() in SCRIPT_FIELD_NAMES:
+                raise WorkflowError(
+                    "WORKFLOW_FIELD_UNSUPPORTED",
+                    diagnostics=[
+                        located(
+                            "WORKFLOW_FIELD_UNSUPPORTED",
+                            f"{file}#",
+                            "a declarative structure carries no script, import or "
+                            f"executable expression (field: {name[:48]})",
+                        )
+                    ],
+                )
+            _refuse_nested_scripts(nested, file=file, depth=depth + 1)
+    elif isinstance(value, list):
+        for item in value:
+            _refuse_nested_scripts(item, file=file, depth=depth + 1)
+
+
+#: Names that would embed an executable instruction where declarative data is
+#: expected. A supported nested position carries limits, not code.
+SCRIPT_FIELD_NAMES = frozenset(
+    {
+        "script",
+        "scripts",
+        "shell",
+        "command",
+        "commands",
+        "exec",
+        "eval",
+        "expression",
+        "expression_source",
+        "import",
+        "imports",
+        "module",
+        "modules",
+        "entrypoint",
+        "code",
+        "python",
+        "javascript",
+    }
+)
+
+#: Bounded nesting for the recursive schema checks, so an unusual document is a
+#: located refusal rather than a recursion error.
+MAXIMUM_SCHEMA_DEPTH = 16
+
+
+#: The independence conditions a role may declare. Each is a boolean declaration
+#: carried into the compiled identity; the effective requirement is later taken
+#: as the stricter of this and the project/delivery policy (architecture/09 §2).
+INDEPENDENCE_REQUIREMENTS = frozenset(
+    {"non_author", "new_context", "different_model_family"}
+)
+
 DELIVERY_GATES: Mapping[str, Mapping[str, Any]] = {
     "pr": {
         "required_checks": "project_policy",
@@ -110,6 +338,7 @@ class CompiledRole:
     output_contract_ref: str | None
     instruction_template_ref: str | None
     instruction_template_digest: str | None
+    independence_requirements: Mapping[str, Any]
 
     def as_document(self) -> dict[str, Any]:
         return {
@@ -128,6 +357,12 @@ class CompiledRole:
             # changing an instruction changes the compiled template rather than
             # silently reusing the previous one.
             "instruction_template_digest": self.instruction_template_digest,
+            # Declared independence conditions are a real constraint on who may
+            # perform the work, so they are frozen into the identity rather than
+            # discarded when they are added to the role file.
+            "independence_requirements": dict(
+                sorted(self.independence_requirements.items())
+            ),
         }
 
 
@@ -291,9 +526,12 @@ def compile_workflow(
         raise _schema("manifest.json", "#/", "expected a mapping")
     if not isinstance(workflow, Mapping):
         raise _schema("workflow.yaml", "#/", "expected a mapping")
+    _refuse_unknown_fields(workflow, WORKFLOW_FIELDS, file="workflow.yaml")
+    _refuse_nested_credentials(workflow, file="workflow.yaml")
+    _refuse_nested_scripts(workflow, file="workflow.yaml")
 
     declared_inputs = tuple(sorted(_declared_inputs(workflow.get("inputs"))))
-    available_roles = _roles(roles)
+    available_roles = _roles(roles, template_digests)
     chosen = _role_map(workflow.get("roles"), available_roles)
     role_definitions = _role_definitions(chosen, available_roles, template_digests)
     bindings = _bindings(workflow.get("bindings"), chosen)
@@ -315,7 +553,11 @@ def compile_workflow(
     delivery_kind = _delivery_kind(workflow.get("delivery_kind"))
     rework = _rework(workflow.get("rework"), compiled_steps)
     expansions, scheduling, dynamic_kinds = _scheduling(
-        workflow.get("scheduling"), chosen, declared_inputs
+        workflow.get("scheduling"),
+        chosen,
+        declared_inputs,
+        bindings,
+        binding_index or {},
     )
     # The delivery target is checked against both the static steps and the
     # declared dynamic boundaries, so an expansion cannot smuggle in a
@@ -389,12 +631,21 @@ def _require_registered_contract(contract_ref: str, location: str) -> None:
         )
 
 
-def _roles(roles: Mapping[str, Mapping[str, Any]]) -> dict[str, dict[str, Any]]:
+def _roles(
+    roles: Mapping[str, Mapping[str, Any]],
+    instruction_digests: Mapping[str, str],
+) -> dict[str, dict[str, Any]]:
     """Index the bundle's own role files by their fixed ``role:id@revision``."""
     indexed: dict[str, dict[str, Any]] = {}
     for name, document in roles.items():
         if not isinstance(document, Mapping):
             raise _schema(name, "#/", "role file must be a mapping")
+        _refuse_unknown_fields(document, ROLE_FIELDS, file=name)
+        # A supported structured position is checked all the way down, so a
+        # credential or an embedded script cannot hide inside a legitimate field
+        # such as ``tool_constraints``.
+        _refuse_nested_credentials(document, file=name)
+        _refuse_nested_scripts(document, file=name)
         role_id = _text(document.get("id"), file=name, pointer="#/id")
         pinned_revision = _revision(
             document.get("revision"), file=name, pointer="#/revision"
@@ -415,6 +666,29 @@ def _roles(roles: Mapping[str, Mapping[str, Any]]) -> dict[str, dict[str, Any]]:
                 raise _schema(name, f"#/{field_name}", "must be a list of text")
         if not isinstance(document.get("tool_constraints", {}), dict):
             raise _schema(name, "#/tool_constraints", "must be a mapping of declared limits")
+        # Declared independence requirements are a real constraint on who may do
+        # the work, so an unsupported shape is refused and a supported one is
+        # carried into the frozen role identity rather than discarded.
+        independence = document.get("independence_requirements", {})
+        if not isinstance(independence, Mapping):
+            raise _schema(
+                name,
+                "#/independence_requirements",
+                "must be a mapping of declared requirements",
+            )
+        for key, requirement in independence.items():
+            if not isinstance(key, str) or key not in INDEPENDENCE_REQUIREMENTS:
+                raise _schema(
+                    name,
+                    "#/independence_requirements",
+                    "an independence requirement must be one of the declared set",
+                )
+            if not isinstance(requirement, bool):
+                raise _schema(
+                    name,
+                    f"#/independence_requirements/{key}",
+                    "an independence requirement is a boolean declaration",
+                )
         for contract_field in ("input_contract_ref", "output_contract_ref"):
             declared = document.get(contract_field)
             if declared is None:
@@ -441,6 +715,21 @@ def _roles(roles: Mapping[str, Mapping[str, Any]]) -> dict[str, dict[str, Any]]:
                             "WORKFLOW_TEMPLATE_UNRESOLVED",
                             f"{name}#/instruction_template_ref",
                             "an instruction template must be one of the supported templates",
+                        )
+                    ],
+                )
+            if template not in instruction_digests:
+                # A referenced template must be a real file of this bundle. A
+                # supported name that was never supplied would otherwise resolve
+                # with no digest, letting a role claim an instruction whose bytes
+                # no one has stored or verified (docs/architecture/09 §2).
+                raise WorkflowError(
+                    "WORKFLOW_TEMPLATE_MISSING",
+                    diagnostics=[
+                        located(
+                            "WORKFLOW_TEMPLATE_MISSING",
+                            template,
+                            "the referenced instruction template is not part of this bundle",
                         )
                     ],
                 )
@@ -480,6 +769,9 @@ def _role_definitions(
                         "instruction": instruction_digests.get(
                             str(document.get("instruction_template_ref"))
                         ),
+                        "independence_requirements": document.get(
+                            "independence_requirements", {}
+                        ),
                     }
                 ),
                 responsibilities=tuple(document.get("responsibilities", [])),
@@ -491,6 +783,9 @@ def _role_definitions(
                 instruction_template_ref=document.get("instruction_template_ref"),
                 instruction_template_digest=instruction_digests.get(
                     str(document.get("instruction_template_ref"))
+                ),
+                independence_requirements=dict(
+                    document.get("independence_requirements", {})
                 ),
             )
         )
@@ -937,8 +1232,13 @@ def _resolve_inputs(
         enforce_contract=True,
         location=f"{step.location}/inputs",
     )
-    # The compiled table keeps the binding as the author wrote it, with a marked
-    # literal reduced to its payload: that payload is the data the step receives.
+    # The compiled table keeps every binding exactly as the author wrote it,
+    # including the ``literal:`` marker. Reducing a literal to its payload here
+    # would make ``first.output`` and ``literal:first.output`` compile to the same
+    # binding — and therefore the same template identity and an empty diff —
+    # even though one is a reference and the other is data. The marker is syntax
+    # that carries meaning, so it stays part of the compiled binding and is
+    # decoded exactly once, in the adapter that consumes the value.
     return {
         name: _compiled_value(value)
         for name, value in dict(sorted(declared.items())).items()
@@ -949,7 +1249,7 @@ def _resolve_inputs(
 def _compiled_value(value: Any) -> Any:
     if isinstance(value, list):
         return [_compiled_value(item) for item in value]
-    return resolved_text(value) if isinstance(value, str) else value
+    return value
 
 
 def _normalized_inputs(
@@ -1748,16 +2048,22 @@ def _check_delivery_gate(
     if producer is None:
         return
     required_kind = DELIVERY_ARTIFACT_KIND[delivery_kind]
-    actual = _produced_kinds(producer.execution_kind_ref)
-    if actual and required_kind not in actual:
+    # The *selected* contract decides, not the set of kinds the execution kind
+    # might be able to produce. A step that declares ``text@1`` cannot meet a
+    # patch target merely because its kind could in principle emit a Candidate,
+    # and a step that declares ``repair-patch@1`` cannot meet a report target.
+    # Checking the declared contract is what makes an incompatible target a
+    # located rejection instead of a name that happens to be allowed.
+    actual = producer.output_contract_kind
+    if actual != required_kind:
         raise WorkflowError(
             "WORKFLOW_DELIVERY_ARTIFACT_INCOMPATIBLE",
             diagnostics=[
                 located(
                     "WORKFLOW_DELIVERY_ARTIFACT_INCOMPATIBLE",
-                    f"{producer.location}/execution_kind",
-                    f"a {delivery_kind} target needs {required_kind} output, "
-                    f"and this step produces {', '.join(sorted(actual))}",
+                    f"{producer.location}/output_contract",
+                    f"a {delivery_kind} target needs a {required_kind} artifact, "
+                    f"and {producer.output_contract_ref} is {actual}",
                     step_id=producer.step_id,
                 )
             ],
@@ -1890,7 +2196,11 @@ SCHEDULING_ACTIONS = frozenset(
 
 
 def _scheduling(
-    value: Any, roles: Mapping[str, str], declared_inputs: Sequence[str]
+    value: Any,
+    roles: Mapping[str, str],
+    declared_inputs: Sequence[str],
+    bindings: Mapping[str, str],
+    binding_index: Mapping[str, Mapping[str, Any]],
 ) -> tuple[list[dict[str, Any]], dict[str, Any] | None, list[ExecutionKind]]:
     """Compile declared dynamic boundaries; nothing here grants authority."""
     if value is None:
@@ -2033,8 +2343,23 @@ def _scheduling(
                 },
             }
         )
+    scheduler_binding_ref = bindings.get(role_alias)
     scheduling = {
+        # The alias the author selected and the binding it selects are part of
+        # the compiled identity. Two aliases can point at the same role revision
+        # while binding different sources, so recording only the role reference
+        # would make switching between them invisible.
+        "role_alias": role_alias,
         "role_ref": roles[role_alias],
+        "binding_ref": scheduler_binding_ref,
+        "binding_identity": (
+            dict(binding_index[scheduler_binding_ref])
+            if scheduler_binding_ref and scheduler_binding_ref in binding_index
+            else None
+        ),
+        # The aliases a dynamic decision may bind, so the permitted surface is
+        # explicit rather than inferred from whatever the workflow happens to use.
+        "permitted_role_aliases": sorted(roles),
         "declared_actions": sorted(actions),
         # Declared here and granted nowhere: the compiled result states what the
         # workflow asks for, and a later SchedulerGrant decides what is allowed.

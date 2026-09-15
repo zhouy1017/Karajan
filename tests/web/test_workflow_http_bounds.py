@@ -7,11 +7,11 @@ result, an uncommitted materialisation that permanently blocked its revision, an
 a junction that received bytes before the write boundary was checked.
 """
 
-import subprocess
 from typing import Any
 
 from fastapi.testclient import TestClient
 from karajan.web import create_app
+from link_fixture import create_directory_link, remove_directory_link
 from workflow_fixtures import (
     BUNDLE,
     ORIGIN,
@@ -148,26 +148,58 @@ def test_authoring_text_cannot_be_filed_under_another_conversations_bundle(
         == []
     )
 
-    # Before any bundle revision exists, the first instruction claims the
-    # identity, and a later one from another conversation is refused.
-    fresh = create_bundle(case, bundle_id="fresh", key="fresh")
-    assert fresh.status_code == 201, fresh.text
+    # The instruction may come *before* any revision exists. Whichever command
+    # claims the identity first owns it, so this one claims it for this
+    # conversation; a create from another conversation must then be refused, and
+    # this conversation must still be able to publish its own bundle.
+    authored_first = "authored-first"
     first = case["client"].post(
         url(
             project_id,
-            f"/conversations/{case['conversation_id']}/workflows/fresh/authoring-inputs",
+            f"/conversations/{case['conversation_id']}/workflows/{authored_first}"
+            "/authoring-inputs",
         ),
-        json={"instruction": "start"},
-        headers={**case["headers"], "Idempotency-Key": "fresh-authoring"},
+        json={"instruction": "start from the defect report"},
+        headers={**case["headers"], "Idempotency-Key": "authored-first"},
     )
     assert first.status_code == 201, first.text
+    assert first.json()["state"] == "pending_generation"
+
+    hijack = case["client"].post(
+        url(project_id, f"/conversations/{other}/workflows/{authored_first}"),
+        json={"files": files(), "delivery_kind": "report"},
+        headers={**case["headers"], "Idempotency-Key": "hijack-create"},
+    )
+    assert hijack.status_code == 409, hijack.text
+    assert hijack.json()["reason_code"] == "WORKFLOW_CONVERSATION_MISMATCH"
+    # Nothing was written for the hijack: no revision and no directory appeared.
+    assert (
+        case["client"].get(url(project_id, f"/workflows/{authored_first}/revisions/1")).status_code
+        == 404
+    )
+    assert not (
+        case["directory"] / "workflow-bundles" / project_id / authored_first
+    ).exists()
+
+    # A later instruction from the other conversation is refused as well.
     crossed = case["client"].post(
-        url(project_id, f"/conversations/{other}/workflows/fresh/authoring-inputs"),
+        url(project_id, f"/conversations/{other}/workflows/{authored_first}/authoring-inputs"),
         json={"instruction": "hijack"},
-        headers={**case["headers"], "Idempotency-Key": "fresh-authoring-other"},
+        headers={**case["headers"], "Idempotency-Key": "authored-first-other"},
     )
     assert crossed.status_code == 409
     assert crossed.json()["reason_code"] == "WORKFLOW_CONVERSATION_MISMATCH"
+
+    # The original conversation can continue and publish its own bundle.
+    own = create_bundle(
+        case,
+        bundle_id=authored_first,
+        key="authored-first-create",
+        conversation_id=case["conversation_id"],
+    )
+    assert own.status_code == 201, own.text
+    assert own.json()["revision"] == 1
+    assert own.json()["conversation_id"] == case["conversation_id"]
 
 
 def test_a_replayed_edit_returns_the_complete_original_result(case: dict[str, Any]) -> None:
@@ -253,10 +285,8 @@ def test_an_uncommitted_materialization_is_recovered_after_reopen(
         assert stored.json()["readback"]["compiled_digest"] == created["compiled_digest"]
 
 
-def test_a_junction_never_receives_any_bundle_bytes(case: dict[str, Any]) -> None:
+def test_a_link_never_receives_any_bundle_bytes(case: dict[str, Any]) -> None:
     """AC1: the managed chain is validated before the first write."""
-    import os
-
     project_id = case["project_id"]
     outside = case["tmp_path"] / "outside"
     outside.mkdir()
@@ -264,11 +294,7 @@ def test_a_junction_never_receives_any_bundle_bytes(case: dict[str, Any]) -> Non
     before = sorted(str(path.relative_to(outside)) for path in outside.rglob("*"))
     link = case["directory"] / "workflow-bundles" / project_id
     link.parent.mkdir(parents=True, exist_ok=True)
-    subprocess.run(
-        ["cmd", "/c", "mklink", "/J", str(link), str(outside)],
-        check=True,
-        capture_output=True,
-    )
+    create_directory_link(link, outside)
     try:
         response = create_bundle(case, bundle_id="linked", key="linked")
         assert response.status_code == 422, response.text
@@ -278,7 +304,7 @@ def test_a_junction_never_receives_any_bundle_bytes(case: dict[str, Any]) -> Non
         assert sorted(str(path.relative_to(outside)) for path in outside.rglob("*")) == before
         assert (outside / "keep.txt").read_text(encoding="utf-8") == "untouched\n"
     finally:
-        os.rmdir(link)
+        remove_directory_link(link)
 
 
 def test_the_store_never_writes_outside_its_managed_root(case: dict[str, Any]) -> None:

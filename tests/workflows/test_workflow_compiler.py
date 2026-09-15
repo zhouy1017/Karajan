@@ -190,10 +190,16 @@ def test_plain_prose_stays_a_literal_while_a_reference_is_validated() -> None:
             completion={"required_steps": ["note"], "artifact": "note.output"},
         )
     )
-    # The marker is syntax; the compiled binding carries the data it denotes, so
-    # the value a step is compiled against and the value the adapter receives
-    # are the same string with the same meaning.
-    assert literal.steps[0].inputs["sources"] == "Hello. World"
+    # The marker is meaningful syntax, so it stays part of the compiled binding.
+    # Reducing it here would make a literal and a reference compile to the same
+    # value — and so to the same template identity. It is decoded exactly once,
+    # by the adapter that consumes the value.
+    assert literal.steps[0].inputs["sources"] == "literal:Hello. World"
+    from karajan.workflows.registry import artifact_aggregate
+
+    assert artifact_aggregate(literal.steps[0].inputs)["content"] == (
+        "## sources\nHello. World\n"
+    )
     # A dotted identity that is not a declared input is still an unresolved reference.
     rejection(
         workflow(
@@ -676,14 +682,28 @@ def test_resolved_gateway_binding_identity_is_part_of_the_template() -> None:
 
 
 def test_the_real_adapter_is_reachable_from_the_registry() -> None:
-    """The registered callable is the production one and is deterministic."""
-    result = artifact_aggregate({"sources": ["option-a.output"], "title": "Comparison"})
+    """The registered callable is the production one and is deterministic.
+
+    The adapter receives runtime data: an unmarked string is a symbolic
+    reference and has no meaning here, so real inputs are marked literals.
+    """
+    result = artifact_aggregate(
+        {"sources": ["literal:option-a.output"], "title": "literal:Comparison"}
+    )
     assert result["ordering"] == "input_name_ascending"
     assert result["encoding"] == "utf-8"
     assert result["content"].startswith("## sources\n")
-    assert artifact_aggregate({"sources": ["option-a.output"], "title": "Comparison"}) == result
+    assert artifact_aggregate(
+        {"sources": ["literal:option-a.output"], "title": "literal:Comparison"}
+    ) == result
     assert result["content_digest"] == artifact_aggregate(
-        {"title": "Comparison", "sources": ["option-a.output"]}
+        {"title": "literal:Comparison", "sources": ["literal:option-a.output"]}
     )["content_digest"]
     # Input order in the mapping never changes the result; only the sorted names do.
     assert result["byte_length"] == len(result["content"].encode("utf-8"))
+    # Every field the contract promises is really present, so a condition may
+    # read any of them.
+    from karajan.workflows.registry import contract_schema
+
+    for field in contract_schema("aggregated-report@1")["fields"]:
+        assert field in result

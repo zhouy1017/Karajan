@@ -7,10 +7,8 @@ ledger, not of a call graph.
 """
 
 import json
-import os
 import sqlite3
 import subprocess
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +16,7 @@ import pytest
 from karajan.projects import ProjectRegistry
 from karajan.workflows import WorkflowError
 from karajan.workflows import bundle as bundles
+from link_fixture import create_directory_link, remove_directory_link
 
 REPOSITORY_HELPERS = Path(__file__).resolve().parents[2] / "tests" / "web"
 
@@ -366,19 +365,14 @@ def test_normalized_duplicate_paths_are_refused_in_a_manifest(tmp_path: Path) ->
     assert raised.value.code == "WORKFLOW_PATH_DUPLICATE"
 
 
-@pytest.mark.skipif(sys.platform != "win32", reason="NTFS junctions are Windows-only")
-def test_a_junction_inside_the_bundle_is_refused(tmp_path: Path) -> None:
-    """AC1: a junction planted in a verified revision cannot redirect a read."""
+def test_a_link_inside_the_bundle_is_refused(tmp_path: Path) -> None:
+    """AC1: a directory link in a verified revision cannot redirect a read."""
     managed, root, _ = verified_fixture(tmp_path)
     outside = tmp_path / "outside"
     outside.mkdir()
     (outside / "planted.yaml").write_text("id: planted\nrevision: 1\n", encoding="utf-8")
     junction = root / "roles" / "linked"
-    subprocess.run(
-        ["cmd", "/c", "mklink", "/J", str(junction), str(outside)],
-        check=True,
-        capture_output=True,
-    )
+    create_directory_link(junction, outside)
     try:
         with pytest.raises(WorkflowError) as raised:
             bundles.read_directory(
@@ -391,13 +385,10 @@ def test_a_junction_inside_the_bundle_is_refused(tmp_path: Path) -> None:
             )
         assert raised.value.code == "WORKFLOW_PATH_LINK_ESCAPE"
     finally:
-        # The junction resolves to a real directory; removing the link itself is
-        # safe and leaves the target intact.
-        os.rmdir(junction)
+        remove_directory_link(junction)
 
 
-@pytest.mark.skipif(sys.platform != "win32", reason="NTFS junctions are Windows-only")
-def test_a_junction_on_an_ancestor_of_the_revision_is_refused(tmp_path: Path) -> None:
+def test_a_link_on_an_ancestor_of_the_revision_is_refused(tmp_path: Path) -> None:
     """A redirect above the revision directory is caught, not only at the leaf."""
     files = bundles.prepare_files(declared_files())
     manifest = bundles.manifest_document(
@@ -419,11 +410,7 @@ def test_a_junction_on_an_ancestor_of_the_revision_is_refused(tmp_path: Path) ->
     managed = tmp_path / "managed"
     managed.mkdir()
     link = managed / "compare-options"
-    subprocess.run(
-        ["cmd", "/c", "mklink", "/J", str(link), str(elsewhere)],
-        check=True,
-        capture_output=True,
-    )
+    create_directory_link(link, elsewhere)
     try:
         with pytest.raises(WorkflowError) as raised:
             bundles.read_directory(
@@ -436,7 +423,7 @@ def test_a_junction_on_an_ancestor_of_the_revision_is_refused(tmp_path: Path) ->
             )
         assert raised.value.code == "WORKFLOW_PATH_LINK_ESCAPE"
     finally:
-        os.rmdir(link)
+        remove_directory_link(link)
 
 
 def test_bundle_identity_must_be_one_addressable_segment() -> None:
@@ -494,7 +481,7 @@ def test_schema_helpers_are_absent_from_the_reader(tmp_path: Path) -> None:
     assert raised.value.code == "WORKFLOW_UNDECLARED_FILE"
 
 
-def test_a_preexisting_junction_never_receives_any_bytes(tmp_path: Path) -> None:
+def test_a_preexisting_link_never_receives_any_bytes(tmp_path: Path) -> None:
     """AC1: the chain is validated before the first write, not after it.
 
     A junction planted on the managed root, the project directory or the bundle
@@ -541,13 +528,9 @@ def test_a_preexisting_junction_never_receives_any_bytes(tmp_path: Path) -> None
         "delivery_kind": "report",
     }
 
-    # 1) The project directory is a junction pointing outside the managed tree.
+    # 1) The project directory is a link pointing outside the managed tree.
     project_link = managed / project["id"]
-    subprocess.run(
-        ["cmd", "/c", "mklink", "/J", str(project_link), str(outside)],
-        check=True,
-        capture_output=True,
-    )
+    create_directory_link(project_link, outside)
     try:
         with pytest.raises(WorkflowError) as raised:
             store.create_bundle(
@@ -561,16 +544,12 @@ def test_a_preexisting_junction_never_receives_any_bytes(tmp_path: Path) -> None
         assert raised.value.code == "WORKFLOW_PATH_LINK_ESCAPE"
         assert sorted(str(path.relative_to(outside)) for path in outside.rglob("*")) == before
     finally:
-        os.rmdir(project_link)
+        remove_directory_link(project_link)
 
-    # 2) The bundle directory itself is a junction pointing outside.
+    # 2) The bundle directory itself is a link pointing outside.
     bundle_link = managed / project["id"] / "bundle"
     bundle_link.parent.mkdir(parents=True)
-    subprocess.run(
-        ["cmd", "/c", "mklink", "/J", str(bundle_link), str(outside)],
-        check=True,
-        capture_output=True,
-    )
+    create_directory_link(bundle_link, outside)
     try:
         with pytest.raises(WorkflowError) as raised:
             store.create_bundle(
@@ -584,7 +563,7 @@ def test_a_preexisting_junction_never_receives_any_bytes(tmp_path: Path) -> None
         assert raised.value.code == "WORKFLOW_PATH_LINK_ESCAPE"
         assert sorted(str(path.relative_to(outside)) for path in outside.rglob("*")) == before
     finally:
-        os.rmdir(bundle_link)
+        remove_directory_link(bundle_link)
 
 
 def test_an_uncommitted_materialization_is_adopted_or_refused(tmp_path: Path) -> None:

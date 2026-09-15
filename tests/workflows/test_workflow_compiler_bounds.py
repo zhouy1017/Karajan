@@ -8,6 +8,7 @@ condition must be typed and cycle-free.
 """
 
 import pytest
+from karajan.workflows import bundle as bundles
 from karajan.workflows.compiler import (
     CompiledWorkflow,
     compile_workflow,
@@ -233,30 +234,102 @@ def test_a_marked_literal_must_carry_data_and_the_adapter_agrees() -> None:
     )
     assert compiled.executable is True
     binding = compiled.steps[0].inputs["sources"]
-    assert binding == "hello"
-    # The exact end-to-end step: the compiled binding feeds the real adapter.
+    # The marker stays in the compiled binding, so the literal and a reference to
+    # a step of the same name are distinct identities.
+    assert binding == "literal:hello"
+    # The exact end-to-end step: the compiled binding feeds the real adapter,
+    # which decodes the marker exactly once.
     result = artifact_aggregate(compiled.steps[0].inputs)
-    assert "hello" in result["content"]
+    assert result["content"] == "## sources\nhello\n"
     assert result["content_digest"]
     assert artifact_aggregate(compiled.steps[0].inputs) == result
 
 
-def test_a_marked_literal_and_plain_text_reach_the_adapter_identically() -> None:
-    """A title as free text and as a marked literal resolves to the same data."""
+def test_a_literal_and_a_reference_keep_distinct_identities() -> None:
+    """``first.output`` and ``literal:first.output`` are not the same binding."""
+    reference = compile_document(
+        workflow(
+            steps=[
+                {
+                    "id": "first",
+                    "execution_kind": "artifact_aggregate@1",
+                    "output_contract": "aggregated-report@1",
+                    "inputs": {"sources": "literal:a"},
+                },
+                {
+                    "id": "final",
+                    "execution_kind": "artifact_aggregate@1",
+                    "output_contract": "aggregated-report@1",
+                    "depends_on": ["first"],
+                    "inputs": {"sources": "first.output"},
+                },
+            ],
+            completion={"required_steps": ["first"], "artifact": "first.output"},
+        )
+    )
+    literal = compile_document(
+        workflow(
+            steps=[
+                {
+                    "id": "first",
+                    "execution_kind": "artifact_aggregate@1",
+                    "output_contract": "aggregated-report@1",
+                    "inputs": {"sources": "literal:a"},
+                },
+                {
+                    "id": "final",
+                    "execution_kind": "artifact_aggregate@1",
+                    "output_contract": "aggregated-report@1",
+                    "depends_on": ["first"],
+                    "inputs": {"sources": "literal:first.output"},
+                },
+            ],
+            completion={"required_steps": ["first"], "artifact": "first.output"},
+        )
+    )
+    assert reference.steps[1].inputs != literal.steps[1].inputs
+    assert reference.compiled_digest != literal.compiled_digest
+    difference = diff(reference, literal)
+    assert difference["changed"] is True
+    assert difference["changed_steps"] == ["final"]
+
+
+def test_a_marked_literal_prefix_is_decoded_exactly_once() -> None:
+    """``literal:literal:x`` yields the author's data, prefix and all."""
+    compiled = compile_document(
+        workflow(
+            steps=[
+                {
+                    "id": "note",
+                    "execution_kind": "artifact_aggregate@1",
+                    "output_contract": "aggregated-report@1",
+                    "inputs": {"sources": "literal:literal:keep-this-prefix"},
+                }
+            ],
+            completion={"required_steps": ["note"], "artifact": "note.output"},
+        )
+    )
+    result = artifact_aggregate(compiled.steps[0].inputs)
+    assert result["content"] == "## sources\nliteral:keep-this-prefix\n"
+
+
+def test_a_marked_literal_and_plain_text_differ_only_in_their_marker() -> None:
+    """Marked text is data; an unmarked string is a reference, not content."""
     marked = artifact_aggregate({"sources": "literal:x", "title": "literal:Report"})
-    plain = artifact_aggregate({"sources": "x", "title": "Report"})
-    assert marked["content_digest"] == plain["content_digest"]
-    assert marked["content"] == plain["content"]
+    assert marked["content"] == "## sources\nx\n## title\nReport\n"
+    # The unmarked form is a symbolic reference and is refused at the adapter,
+    # because a reference has no meaning as runtime data.
+    with pytest.raises(WorkflowError):
+        artifact_aggregate({"sources": "x", "title": "Report"})
 
 
 def test_the_adapter_enforces_the_same_declared_contract_as_the_compiler() -> None:
     """Runtime values are checked against the same registry contract.
 
-    The adapter receives resolved data, so a value it is handed is content rather
-    than a reference. What it still enforces is the contract shape: the declared
-    input names and a non-empty value for a required input. The compile-time
-    half — that a reference names an accepted artifact contract — has already
-    been decided before anything reaches here.
+    The adapter receives resolved data: marked literals are data, and an unmarked
+    string is a reference that has no runtime meaning and is refused. The
+    compile-time half — that a reference names an accepted artifact contract —
+    has already been decided before anything reaches here.
     """
     with pytest.raises(WorkflowError):
         artifact_aggregate({"unknown_input": "literal:x"})
@@ -266,10 +339,11 @@ def test_the_adapter_enforces_the_same_declared_contract_as_the_compiler() -> No
         artifact_aggregate({"sources": ["literal:"]})
     with pytest.raises(WorkflowError):
         artifact_aggregate({})
-    # Data of the declared type is accepted whether or not it carries the marker,
-    # because by this point the marker has already been resolved away.
-    assert artifact_aggregate({"sources": "x"})["content"]
-    assert artifact_aggregate({"sources": "literal:x"})["content"]
+    # An unmarked string is a symbolic reference, which has no runtime meaning.
+    with pytest.raises(WorkflowError):
+        artifact_aggregate({"sources": "first.output"})
+    # Marked data of the declared type is accepted and decoded exactly once.
+    assert artifact_aggregate({"sources": "literal:x"})["content"] == "## sources\nx\n"
 
 
 def test_unknown_kind_rejections_always_carry_a_location() -> None:
@@ -432,7 +506,7 @@ def test_a_candidate_kind_cannot_declare_a_text_contract() -> None:
 
 
 def test_a_role_contract_and_instruction_template_must_resolve() -> None:
-    """A role cannot reference an unregistered contract or an unknown template."""
+    """A role cannot reference an unregistered contract or a missing template."""
     broken_contract = {
         **ROLE_FILE,
         "input_contract_ref": "missing@999",
@@ -446,21 +520,67 @@ def test_a_role_contract_and_instruction_template_must_resolve() -> None:
         compile_document(roles={"roles/researcher.yaml": broken_template})
     assert raised.value.code == "WORKFLOW_TEMPLATE_UNRESOLVED"
 
-    # A supported template is accepted and its identity is part of the template.
+    # A supported *name* is not enough: the template must be a real file of this
+    # bundle, so a role cannot claim an instruction whose bytes nobody stored.
     supported = {**ROLE_FILE, "instruction_template_ref": "templates/researcher.md"}
-    compiled = compile_document(roles={"roles/researcher.yaml": supported})
-    assert compiled.role_definitions[0].instruction_template_ref == "templates/researcher.md"
+    with pytest.raises(WorkflowError) as raised:
+        compile_document(roles={"roles/researcher.yaml": supported})
+    assert raised.value.code == "WORKFLOW_TEMPLATE_MISSING"
+    assert raised.value.diagnostics[0].location == "templates/researcher.md"
+
+
+def test_a_supplied_instruction_template_is_bound_by_its_own_bytes() -> None:
+    """The template's real bytes are required and frozen into the identity."""
+    role = {**ROLE_FILE, "instruction_template_ref": "templates/researcher.md"}
+    supplied = "Read the approved material and record every source.\n"
+    compiled = compile_workflow(
+        MANIFEST,
+        workflow(),
+        {"roles/researcher.yaml": role},
+        bundle_digest="bundle-digest-placeholder",
+        role_digest="role-digest-placeholder",
+        template_digests={"templates/researcher.md": bundles.byte_digest(
+            supplied.encode("utf-8")
+        )},
+    )
+    frozen = compiled.role_definitions[0]
+    assert frozen.instruction_template_ref == "templates/researcher.md"
+    assert frozen.instruction_template_digest == bundles.byte_digest(supplied.encode("utf-8"))
+    # The digest is part of the role's own identity.
+    assert frozen.digest
+    document = projection(compiled)["roles"][0]
+    assert document["instruction_template_ref"] == "templates/researcher.md"
+    assert document["instruction_template_digest"] == frozen.instruction_template_digest
 
 
 def test_an_instruction_change_changes_the_compiled_identity() -> None:
-    """A template's content digest is part of the role's frozen identity."""
-    plain = compile_document()
-    templated = compile_document(
-        roles={"roles/researcher.yaml": {**ROLE_FILE,
-        "instruction_template_ref": "templates/researcher.md"}}
+    """Different template bytes produce a different compiled identity."""
+    role = {**ROLE_FILE, "instruction_template_ref": "templates/researcher.md"}
+    original = "Read the approved material and record every source.\n"
+    changed = "Read the approved material, record every source, and cite it.\n"
+    first = compile_workflow(
+        MANIFEST,
+        workflow(),
+        {"roles/researcher.yaml": role},
+        bundle_digest="bundle-digest-placeholder",
+        role_digest="role-digest-placeholder",
+        template_digests={"templates/researcher.md": bundles.byte_digest(
+            original.encode("utf-8")
+        )},
     )
-    assert plain.compiled_digest != templated.compiled_digest
-    assert diff(plain, templated)["roles_changed"] is True
+    second = compile_workflow(
+        MANIFEST,
+        workflow(),
+        {"roles/researcher.yaml": role},
+        bundle_digest="bundle-digest-placeholder",
+        role_digest="role-digest-placeholder",
+        template_digests={"templates/researcher.md": bundles.byte_digest(
+            changed.encode("utf-8")
+        )},
+    )
+    assert first.compiled_digest != second.compiled_digest
+    assert diff(first, second)["roles_changed"] is True
+    assert diff(first, second)["changed_roles"] == ["researcher"]
 
 
 def test_a_work_contract_scope_must_be_a_list_of_patterns() -> None:

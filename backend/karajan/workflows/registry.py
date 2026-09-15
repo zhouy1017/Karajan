@@ -55,9 +55,14 @@ CONTRACT_SCHEMAS: Mapping[str, Mapping[str, Any]] = {
     },
     "aggregated-report@1": {
         "kind": "text",
+        # These are the fields the registered adapter actually returns. A
+        # condition may only read a field a producer really emits, so the
+        # declared schema and the real result are kept identical — the
+        # aggregation emits ``content_digest`` and ``input_count`` exactly as
+        # listed here, and a test drives the real callable to prove it.
         "fields": {
             "content": "text",
-            "digest": "text",
+            "content_digest": "text",
             "input_count": "count",
             "byte_length": "count",
         },
@@ -148,13 +153,18 @@ def literal_text(value: str) -> str | None:
     return value[len(LITERAL_PREFIX) :] if value.startswith(LITERAL_PREFIX) else None
 
 
-def resolved_text(value: str) -> str:
-    """The data a binding contributes at run time.
+def is_reference(value: str) -> bool:
+    """Whether a compiled binding is a reference rather than marked data."""
+    return not value.startswith(LITERAL_PREFIX)
 
-    A marked literal contributes its payload; an unmarked value is already the
-    resolved data. The compiler and the adapter both use this, so the value a
-    step is compiled against and the value the adapter receives are the same
-    string with the same meaning.
+
+def resolved_text(value: str) -> str:
+    """Decode one compiled binding exactly once, into the data a step receives.
+
+    This is the *only* place the marker is removed, and the adapter is the only
+    caller, so a value is decoded exactly once. ``literal:literal:x`` therefore
+    yields ``literal:x`` — the author's data, prefix and all — rather than
+    losing a prefix it never wrote twice.
     """
     payload = literal_text(value)
     return payload if payload is not None else value
@@ -214,22 +224,39 @@ def validate_bindings(
 
 
 def resolve_for_adapter(inputs: Mapping[str, Any]) -> dict[str, Any]:
-    """Reduce compiled bindings to the values a real adapter receives.
+    """Turn compiled bindings into the data a real adapter receives.
 
-    This is the one place the compile-time representation is turned into runtime
-    data, so a binding the compiler accepted and the value the adapter validates
-    cannot disagree: the marker is removed here, and the registry contract is
-    then applied to the result.
+    The adapter is the only caller, and this is the only place the ``literal:``
+    marker is removed, so every value is decoded exactly once.
+
+    An unmarked string is still a symbolic reference (``first.output``,
+    ``requirement.x``). Such a value has no meaning at run time — resolution of
+    references belongs to the engine that wired the graph — so it is refused
+    here rather than being passed to the adapter as if it were content.
     """
     resolved: dict[str, Any] = {}
     for name, value in inputs.items():
         if isinstance(value, list):
-            resolved[name] = [resolved_text(item) for item in value]
+            resolved[name] = [_runtime_text(item) for item in value]
         elif isinstance(value, str):
-            resolved[name] = resolved_text(value)
+            resolved[name] = _runtime_text(value)
         else:
             resolved[name] = value
     return resolved
+
+
+def _runtime_text(value: Any) -> str:
+    if not isinstance(value, str) or not value:
+        raise WorkflowError("WORKFLOW_INPUT_INVALID")
+    if is_reference(value):
+        raise WorkflowError(
+            "WORKFLOW_INPUT_REFERENCE_UNRESOLVED",
+            fields={"input": "a symbolic reference is not runtime data"},
+        )
+    payload = resolved_text(value)
+    if not payload:
+        raise WorkflowError("WORKFLOW_INPUT_INVALID")
+    return payload
 
 
 def _input_error(code: str, location: str, detail: str, *, name: str) -> WorkflowError:
@@ -374,31 +401,58 @@ def artifact_aggregate(inputs: Mapping[str, Any]) -> Mapping[str, Any]:
     for name in names:
         value = checked[name]
         if isinstance(value, list):
-            # A list of references is aggregated in its declared order, which is
-            # the order the workflow author wrote, not a set.
+            # A list of values is aggregated in its declared order, which is the
+            # order the workflow author wrote, not a set.
             text = "\n".join(str(item) for item in value)
         else:
             text = str(value)
-        body = text.encode("utf-8")
+        body = _encodable(text)
         pieces.append(f"## {name}\n{body.decode('utf-8')}\n")
         digests.append({"name": name, "content_digest": byte_digest(body)})
     content = "".join(pieces)
-    encoded = content.encode("utf-8")
-    return {
+    encoded = _encodable(content)
+    result = {
         "content": content,
         "encoding": "utf-8",
         "separator": "\n",
         "ordering": "input_name_ascending",
         "input_digests": digests,
+        "input_count": len(digests),
         "aggregate_digest": content_digest({"ordering": "input_name_ascending", "inputs": digests}),
         "content_digest": byte_digest(encoded),
         "byte_length": len(encoded),
     }
+    # Every field the contract promises for this artifact is really present, so a
+    # condition may read any of them and the declared schema cannot drift away
+    # from the value a consumer actually receives.
+    promised = contract_schema("aggregated-report@1")["fields"]
+    missing = sorted(name for name in promised if name not in result)
+    if missing:
+        raise WorkflowError(
+            "WORKFLOW_ADAPTER_OUTPUT_INCOMPLETE",
+            fields={"missing_fields": missing[:8]},
+        )
+    return result
 
 
 #: The one adapter-backed reference; named here so the adapter can consult the
 #: same declared contract the compiler does.
 AGGREGATE_REF = "artifact_aggregate@1"
+
+
+def _encodable(text: str) -> bytes:
+    """Return storable UTF-8 bytes, refusing text that cannot be encoded.
+
+    A value that is not storable UTF-8 is a refusal the caller can act on, not an
+    internal error, so it is reported as a structured rejection.
+    """
+    try:
+        return text.encode("utf-8")
+    except UnicodeEncodeError:
+        raise WorkflowError(
+            "WORKFLOW_ADAPTER_INPUT_INVALID",
+            fields={"detail": "input is not storable utf-8 text"},
+        ) from None
 
 
 def _registry() -> dict[str, ExecutionKind]:

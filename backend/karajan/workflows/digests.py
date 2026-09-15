@@ -25,8 +25,17 @@ def canonical_json(value: Any) -> str:
 
 
 def content_digest(value: Any) -> str:
-    """Digest a JSON value through its canonical spelling."""
-    return hashlib.sha256(canonical_json(value).encode("utf-8")).hexdigest()
+    """Digest a JSON value through its canonical spelling.
+
+    ``canonical_json`` already refuses anything JSON cannot carry, and a value
+    that survived it is encodable, so this encoding cannot fail on a structure
+    that came through the normal path.
+    """
+    try:
+        encoded = canonical_json(value).encode("utf-8")
+    except UnicodeEncodeError:
+        raise WorkflowError("WORKFLOW_CONTENT_NOT_SERIALIZABLE") from None
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def byte_digest(data: bytes) -> str:

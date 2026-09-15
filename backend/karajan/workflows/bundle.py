@@ -52,6 +52,33 @@ from .layout import (
 MAXIMUM_FILE_BYTES = 1_048_576
 MAXIMUM_TOTAL_BYTES = 8_388_608
 
+
+def _encode_content(content: str, relative: str) -> bytes:
+    """Encode declared text, refusing text that is not storable UTF-8.
+
+    JSON can carry an unpaired surrogate (``"\\ud800"``), which Python accepts as
+    a ``str`` but cannot encode as UTF-8. Left unhandled it would raise an
+    uncaught ``UnicodeEncodeError`` — an internal error rather than a rejection —
+    so it is refused here, before anything is written, with a located reason that
+    does not echo the offending value.
+    """
+    try:
+        raw = content.encode("utf-8")
+    except UnicodeEncodeError:
+        raise WorkflowError(
+            "WORKFLOW_CONTENT_NOT_ENCODABLE",
+            diagnostics=[
+                located(
+                    "WORKFLOW_CONTENT_NOT_ENCODABLE",
+                    relative,
+                    "content is not storable utf-8 text",
+                )
+            ],
+        ) from None
+    if len(raw) > MAXIMUM_FILE_BYTES:
+        raise WorkflowError("WORKFLOW_CONTENT_TOO_LARGE")
+    return raw
+
 #: Manifest fields this schema version accepts. An unknown field is refused, so
 #: a bundle cannot carry an instruction the compiler never reads.
 MANIFEST_FIELDS = frozenset(
@@ -747,10 +774,7 @@ def prepare_files(declared: Sequence[Mapping[str, Any]]) -> dict[str, bytes]:
                 "WORKFLOW_SCHEMA_INVALID",
                 diagnostics=[located("WORKFLOW_SCHEMA_INVALID", relative, "content must be text")],
             )
-        raw = content.encode("utf-8")
-        if len(raw) > MAXIMUM_FILE_BYTES:
-            raise WorkflowError("WORKFLOW_CONTENT_TOO_LARGE")
-        files[relative] = raw
+        files[relative] = _encode_content(content, relative)
     for required in REQUIRED_PATHS:
         if required != MANIFEST_PATH and required not in files:
             raise WorkflowError(

@@ -458,17 +458,16 @@ class WorkflowStore:
             replay = self._replay(db, principal, command_key, request_digest)
             if replay is not None:
                 return replay, False
+            # The owning conversation is decided *before* any file is written.
+            # An identity claimed by an earlier authoring input already belongs
+            # to that conversation, so creating a revision from another one is
+            # refused here rather than after its bytes are on disk.
+            self._require_fixed_conversation(db, project_id, bundle_id, conversation_id)
             head_row = db.execute(
-                "SELECT revision, conversation_id FROM workflow_bundle_current "
-                "WHERE project_id=? AND id=?",
+                "SELECT revision FROM workflow_bundle_current WHERE project_id=? AND id=?",
                 (project_id, bundle_id),
             ).fetchone()
             head = int(head_row["revision"]) if head_row is not None else None
-            if head is not None and head_row["conversation_id"] != conversation_id:
-                # A bundle's owning conversation is fixed at creation: a later
-                # revision cannot move it into another conversation, which would
-                # otherwise let one conversation overwrite another's identity.
-                raise WorkflowError("WORKFLOW_CONVERSATION_MISMATCH")
             if expected_revision is None:
                 if head is not None:
                     raise WorkflowError("WORKFLOW_BUNDLE_EXISTS")
@@ -931,11 +930,30 @@ class WorkflowStore:
     def _require_fixed_conversation(
         self, db: sqlite3.Connection, project_id: str, bundle_id: str, conversation_id: str
     ) -> None:
+        """Require the conversation that already owns this bundle identity.
+
+        Ownership is established by whichever command claims the identity first,
+        and it is claimed by *both* kinds of command: a text authoring input and
+        a published revision. Consulting only the revision table would let one
+        conversation file design text first, then let a different conversation
+        create the bundle under it — after which the original conversation's own
+        input would be refused. Both records are therefore consulted, so the
+        identity has exactly one owner from its first use.
+        """
         row = db.execute(
             "SELECT conversation_id FROM workflow_bundle_current WHERE project_id=? AND id=?",
             (project_id, bundle_id),
         ).fetchone()
         if row is not None and row["conversation_id"] != conversation_id:
+            raise WorkflowError("WORKFLOW_CONVERSATION_MISMATCH")
+        claimed = db.execute(
+            "SELECT record FROM workflow_authoring_inputs "
+            "WHERE project_id=? AND id=? ORDER BY revision LIMIT 1",
+            (project_id, bundle_id),
+        ).fetchone()
+        if claimed is not None and (
+            json.loads(claimed["record"]).get("conversation_id") != conversation_id
+        ):
             raise WorkflowError("WORKFLOW_CONVERSATION_MISMATCH")
 
     def _verified_bundle(

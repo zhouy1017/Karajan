@@ -323,14 +323,20 @@ def main() -> int:
                 )
 
         # The registered adapter is a real callable; this is the only place it is
-        # invoked, and nothing above ran it.
+        # invoked, and nothing above ran it. It receives resolved data, so the
+        # values are marked literals: an unmarked string would be a symbolic
+        # reference, which has no meaning at run time and is refused there.
         from karajan.workflows.registry import artifact_aggregate
 
-        artifact = artifact_aggregate({"sources": ["option-a.output"], "title": "Compare"})
+        artifact = artifact_aggregate(
+            {"sources": ["literal:option-a report"], "title": "literal:Compare"}
+        )
         print(
             "adapter:",
             artifact["ordering"],
             artifact["encoding"],
+            "inputs",
+            artifact["input_count"],
             "digest",
             artifact["content_digest"][:16],
         )
