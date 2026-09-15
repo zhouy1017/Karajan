@@ -3224,6 +3224,28 @@ class SchedulingStore:
         return resolved
 
     @staticmethod
+    def _occupying_tasks(
+        db: sqlite3.Connection, project_id: str, run_id: str
+    ) -> list[str]:
+        """The task identities the run is really holding, from the claim ledger.
+
+        A claim holds a slot until a trusted terminal reconciliation releases it,
+        so this is the same population the occupancy counts are taken over, in
+        the same order.
+        """
+        rows = db.execute(
+            "SELECT record FROM budget_consumption WHERE project_id=? AND run_id=?",
+            (project_id, run_id),
+        ).fetchall()
+        held: list[str] = []
+        for row in rows:
+            record = json.loads(row["record"])
+            if record.get("released_at") is not None:
+                continue
+            held.append(str(record["task_id"]))
+        return sorted(held)
+
+    @staticmethod
     def _zone_holder(
         db: sqlite3.Connection,
         project_id: str,
@@ -3922,13 +3944,12 @@ class SchedulingStore:
             }
             occupancy = self._pool_occupancy(db, project_id, run_id, tasks)
             live = sum(occupancy.values())
-            # Every task that holds occupancy, so a caller can see *which* work
-            # is holding a shared pool rather than only the total.
-            holders = sorted(
-                task.task_id
-                for task in tasks.values()
-                if task.state in {"claimed", "unknown"}
-            )
+            # Every claim that holds occupancy, named from the same ledger the
+            # counts come from. Deriving the identities from the current task
+            # state instead would drop the holder the moment its graph node was
+            # superseded, while the count still included it: the readback would
+            # then disagree with itself about what the run is holding.
+            holders = self._occupying_tasks(db, project_id, run_id)
         return {
             "run_id": run_id,
             "occupancy": occupancy,

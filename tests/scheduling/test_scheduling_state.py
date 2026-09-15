@@ -316,7 +316,8 @@ def test_another_consumer_cannot_report_on_work_it_does_not_hold(
         {"outcome": "completed", "evidence_ref": "evidence:not-mine"},
         token=other["token"],
     )
-    assert response.status_code in {403, 409}, response.text
+    # The refusal is exact: this credential kind does not hold that claim.
+    assert response.status_code == 403, response.text
     assert response.json()["reason_code"] == "SCHEDULING_TASK_NOT_OWNED"
 
 
@@ -686,11 +687,15 @@ def test_the_queue_reports_waiting_reasons_without_dropping_tasks(
 def test_a_superseded_claim_still_holds_its_write_zone(
     granted_case: dict[str, Any],
 ) -> None:
-    """A write zone belongs to the execution, not to the node's graph state.
+    """A write zone and a pool slot belong to the execution, not to the graph node.
 
-    An unreconciled claim is still writing in its directory. Retiring the graph
-    node does not end that execution, so a successor naming the same zone must
-    wait until the original claim is settled by a trusted reconciliation.
+    The original task is claimed and left unreconciled. An authorised replacement
+    then supersedes it, carrying its obligation through an explicit mapping. The
+    original claim is still writing in that directory and still holding its pool
+    slot until a trusted reconciliation settles it, so a successor naming the
+    same zone waits while an independent zone is admitted. The readback names the
+    holder throughout: a count that included it while the identity list omitted it
+    would disagree with itself.
     """
     opened = expand(granted_case, [task_spec(item_key="old", zone="src/config/zone")])
     assert opened.status_code == 201, opened.text
@@ -709,15 +714,15 @@ def test_a_superseded_claim_still_holds_its_write_zone(
         expected_graph_revision=1,
     )
     assert sealed.status_code == 201, sealed.text
-    # Capacity for two, so the zone is the only thing that can block the second
-    # claim: the case must not be masked by a full pool.
+    # Capacity for two, so a full pool cannot mask the zone contention this case
+    # is about.
     admissible(granted_case, capacity=2, amount="2")
     first = claim(granted_case, "decision-1.old", key_value="claim-old")
     assert first.status_code == 201, first.text
+    frozen_claim = first.json()
 
-    # A sealed set takes no further members, so unrelated later work is added
-    # under its own set.
-    opened = granted_case["client"].post(
+    # A second, eligible open set receives the successor.
+    later = granted_case["client"].post(
         f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}/expansions",
         json={
             "grant_id": "configuration-repair-scope",
@@ -727,7 +732,7 @@ def test_a_superseded_claim_still_holds_its_write_zone(
         },
         headers={**granted_case["headers"], **key("expansion-later")},
     )
-    assert opened.status_code == 201, opened.text
+    assert later.status_code == 201, later.text
     replaced = decide(
         granted_case,
         [
@@ -735,26 +740,59 @@ def test_a_superseded_claim_still_holds_its_write_zone(
                 "action": "expand_graph",
                 "expansion_id": "later",
                 "tasks": [
-                    task_spec(
-                        item_key="new",
-                        zone="src/config/zone",
-                        expansion_id="later",
-                    )
+                    {
+                        **task_spec(
+                            item_key="new",
+                            zone="src/config/zone",
+                            expansion_id="later",
+                        ),
+                        "supersedes": "decision-1.old",
+                        "obligation_coverage": {
+                            "config-defect-triage": "config-defect-triage",
+                        },
+                    }
                 ],
             }
         ],
-        key_value="decision-successor",
-        decision_id="decision-successor",
+        key_value="decision-replace",
+        decision_id="decision-replace",
         expected_graph_revision=2,
     )
     assert replaced.status_code == 201, replaced.text
+    assert replaced.json()["nodes_superseded"] == ["decision-1.old"]
+
+    # The predecessor is retired in the graph, and its claim is untouched.
+    predecessor = granted_case["client"].get(
+        f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}"
+        "/tasks/decision-1.old",
+        headers=granted_case["headers"],
+    ).json()
+    assert predecessor["state"] == "superseded"
+    readback = granted_case["client"].get(
+        f"/v1/scheduling/protocol/projects/{granted_case['project_id']}"
+        f"/runs/{granted_case['run_id']}/claims/claim-old",
+        headers=protocol_headers(granted_case["consumer_token"]),
+    )
+    assert readback.status_code == 200, readback.text
+    assert readback.json() == frozen_claim
+
+    # The readback names the holder, and the pool count agrees with it.
+    state = granted_case["client"].get(
+        f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}/resources",
+        headers=granted_case["headers"],
+    ).json()
+    assert state["live_claims"] == 1, state
+    assert state["occupancy"] == {"pool-a": 1}, state
+    assert state["occupying_tasks"] == ["decision-1.old"], state
+
+    # The successor names the same zone, so it waits.
     sealed_later = decide(
         granted_case,
         [
             {
                 "action": "seal",
                 "expansion_id": "later",
-                "members": ["decision-successor.new"],
+                "members": ["decision-replace.new"],
                 "obligations": ["config-defect-triage"],
             }
         ],
@@ -763,26 +801,52 @@ def test_a_superseded_claim_still_holds_its_write_zone(
         expected_graph_revision=3,
     )
     assert sealed_later.status_code == 201, sealed_later.text
-
-    blocked = claim(granted_case, "decision-successor.new", key_value="claim-new")
+    blocked = claim(granted_case, "decision-replace.new", key_value="claim-new")
     assert blocked.status_code == 409, blocked.text
     assert blocked.json()["waiting_reason"] == "write_zone_busy"
 
-    # The original claim is untouched and still occupies the pool.
-    readback = granted_case["client"].get(
-        f"/v1/scheduling/protocol/projects/{granted_case['project_id']}"
-        f"/runs/{granted_case['run_id']}/claims/claim-old",
-        headers=protocol_headers(granted_case["consumer_token"]),
+    # An independent zone is admitted under the same capacity.
+    independent = granted_case["client"].post(
+        f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}/expansions",
+        json={
+            "grant_id": "configuration-repair-scope",
+            "expansion_id": "independent",
+            "goal": "unrelated work",
+            "required_outcomes": ["config-defect-triage"],
+        },
+        headers={**granted_case["headers"], **key("expansion-independent")},
     )
-    assert readback.status_code == 200, readback.text
-    assert readback.json() == first.json()
-    state = granted_case["client"].get(
-        f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}/resources",
-        headers=granted_case["headers"],
-    ).json()
-    assert state["live_claims"] == 1, state
+    assert independent.status_code == 201, independent.text
+    added = decide(
+        granted_case,
+        [
+            {
+                "action": "expand_graph",
+                "expansion_id": "independent",
+                "tasks": [
+                    task_spec(
+                        item_key="free",
+                        zone="src/config/other",
+                        expansion_id="independent",
+                    )
+                ],
+            },
+            {
+                "action": "seal",
+                "expansion_id": "independent",
+                "members": ["decision-independent.free"],
+                "obligations": ["config-defect-triage"],
+            },
+        ],
+        key_value="decision-independent",
+        decision_id="decision-independent",
+        expected_graph_revision=4,
+    )
+    assert added.status_code == 201, added.text
+    admitted = claim(granted_case, "decision-independent.free", key_value="claim-free")
+    assert admitted.status_code == 201, admitted.text
 
-    # Settling the original claim releases the zone for the successor.
+    # Settling the original claim releases its zone and its slot.
     reconciled = granted_case["client"].post(
         f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}"
         "/tasks/decision-1.old/reconciliation",
@@ -790,8 +854,13 @@ def test_a_superseded_claim_still_holds_its_write_zone(
         headers={**granted_case["headers"], **key("reconcile-old")},
     )
     assert reconciled.status_code == 200, reconciled.text
-    admitted = claim(granted_case, "decision-successor.new", key_value="claim-new")
-    assert admitted.status_code == 201, admitted.text
+    after = granted_case["client"].get(
+        f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}/resources",
+        headers=granted_case["headers"],
+    ).json()
+    assert after["occupying_tasks"] == ["decision-independent.free"], after
+    released = claim(granted_case, "decision-replace.new", key_value="claim-new")
+    assert released.status_code == 201, released.text
 
 
 def test_an_open_expansion_holds_its_join_and_its_members(
@@ -1311,7 +1380,9 @@ def test_an_output_contract_the_kind_cannot_produce_is_refused(
             }
         ],
     )
-    assert response.status_code in {403, 422}, response.text
+    # The refusal is exact: the payload names a contract the frozen kind cannot
+    # produce, which is a refusal of the request rather than a state conflict.
+    assert response.status_code == 422, response.text
     assert response.json()["reason_code"] == "SCHEDULING_OUTPUT_CONTRACT_INCOMPATIBLE"
     after = graph(granted_case)
     assert after["graph_revision"] == before["graph_revision"]
