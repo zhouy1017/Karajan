@@ -126,7 +126,8 @@ uv lock --check --offline                                    -> Resolved 46 pack
 ```
 
 ```text
-pytest tests/workflows tests/web tests/contract              -> 337 passed, 4 skipped, 14 subtests passed, exit 1
+pytest tests/workflows tests/web tests/contract              -> 1 failed, 337 passed, 4 skipped,
+                                                                 14 subtests passed, exit 1
                                                                 (其中一条新增断言出现假阳性，已修正；见第 5 节)
 pytest tests/web/test_workflow_deployment_process.py         -> 14 passed, exit 0
                                                                 (修正后的两组真实交错用例在此绑定)
@@ -143,17 +144,17 @@ pytest <the five quick-gate files from testing-gates.md>      -> 54 passed, exit
 广泛套件、`...-163943-24568.log` 进程套件、`...-164041-18700.log` 快速门），每一项都带真实
 退出码。
 
-本地检查之外，候选 `34f1014214f6b6d653e5dfb74bd51bf62fe5c79f` 的远端 CI run
-[34948686730](https://github.com/zhouy1017/Karajan/actions/runs/34948686730) 已通过：`quick-python`
-在 Ubuntu 24.04 与 Windows 2022 均 pass，`frontend-quality` pass，必需汇总 `quality-gate`
-pass。远端绿灯只证明它实际覆盖的离线检查；独立 Standards/Spec 审查结论在 PR 中另行记录，
-CI 通过不等于审查已完成。本节的本地结果不包含该远端证据。
+本地检查之外，远端证据由 PR 逐候选报告。`34f1014` 的 run
+[34948686730](https://github.com/zhouy1017/Karajan/actions/runs/34948686730) 是**更早候选**的
+历史记录（`quick-python` 两端、`frontend-quality` 与必需汇总 `quality-gate` 均 pass）。
+修复后的 head 需要它自己的 CI 与独立审查结论，二者都在 PR 中单独记录，本文不预先声明；
+CI 通过只证明它实际覆盖的离线检查，不等于审查已完成。本节的本地结果不包含远端证据。
 
 `tests/web/test_workflow_deployment_process.py` 与 `..._http.py` 共 48 项通过。已知假阳性与全部历史失败记录见第 5 节。
 
 ## 5. 证据边界与保留的失败事实
 
-**C/P 覆盖**：本记录第 3、4 节描述的**本地**证据全部为 C（产品行为）与 P（本机执行），不含 S（真实服务）证据，也没有任何真实模型调用。远端 G（GitHub）证据不由本文声称，而在 PR 中单独报告：候选 `34f1014` 的必需 `quality-gate` 已通过，最终 head 的 CI 与独立审查结论以 PR 与远端检查为准。
+**C/P 覆盖**：本记录第 3、4 节描述的**本地**证据全部为 C（产品行为）与 P（本机执行），不含 S（真实服务）证据，也没有任何真实模型调用。远端 G（GitHub）证据不由本文声称，而在 PR 中逐候选报告：每个候选各自取得其必需 `quality-gate`，结果以 PR 的检查与评论为准。
 
 **不声称**：
 - 不创建、不执行任何 Run；`deploy_only` 不执行任何业务步骤（`business_steps_executed == 0`）；
