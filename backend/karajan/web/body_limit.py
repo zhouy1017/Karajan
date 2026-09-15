@@ -1,4 +1,13 @@
-"""Bound JSON bodies before the application parses them."""
+"""Bound JSON bodies before the application parses them.
+
+One global bound is not sufficient here. A workflow bundle is a real document
+that legitimately contains thousands of steps, so the workbench's general request
+bound would quietly become a *task-count* policy: a legal configuration larger
+than roughly four hundred steps could never be uploaded. The bound for that one
+route is therefore declared explicitly and separately, and it is still a
+transport bound — measured in bytes, applied before parsing, and documented — not
+a limit on how many steps, tasks or agents a workflow may declare.
+"""
 
 import asyncio
 import json
@@ -6,6 +15,23 @@ import json
 from starlette.datastructures import Headers
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
+
+#: The general request bound for workbench commands.
+DEFAULT_MAXIMUM_BODY = 65_536
+
+#: The declared bound for a workflow bundle upload. It is larger than the general
+#: bound because a bundle is a document rather than a command payload, and it is
+#: still far below the per-file and per-bundle limits the workflow store itself
+#: enforces, so a legal configuration is never truncated into its first K steps.
+WORKFLOW_BUNDLE_PATHS = ("/workflows",)
+WORKFLOW_BUNDLE_MAXIMUM_BODY = 4_194_304
+
+
+def body_bound(path: str) -> int:
+    """The declared request bound for one path, as a positive byte count."""
+    if "/workflows" in path:
+        return WORKFLOW_BUNDLE_MAXIMUM_BODY
+    return DEFAULT_MAXIMUM_BODY
 
 
 class BodyLimitMiddleware:
@@ -16,6 +42,7 @@ class BodyLimitMiddleware:
         if scope["type"] != "http" or scope["method"] in {"GET", "HEAD", "OPTIONS"}:
             await self.app(scope, receive, send)
             return
+        limit = body_bound(scope.get("path", ""))
         body = bytearray()
         try:
             async with asyncio.timeout(10):
@@ -24,9 +51,9 @@ class BodyLimitMiddleware:
                     if message["type"] == "http.disconnect":
                         return
                     body.extend(message.get("body", b""))
-                    if len(body) > 65536:
+                    if len(body) > limit:
                         response = JSONResponse(
-                            {"reason_code": "REQUEST_TOO_LARGE"},
+                            {"reason_code": "REQUEST_TOO_LARGE", "maximum_bytes": limit},
                             status_code=413,
                             headers={"Cache-Control": "no-store"},
                         )

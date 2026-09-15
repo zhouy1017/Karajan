@@ -27,6 +27,7 @@ from karajan.orchestration.routing import ApprovedRunRouting
 from karajan.projects import ProjectRegistry
 from karajan.projects.qualification import ProfileQualificationStore
 from karajan.runs import RunPlanner
+from karajan.workflows import WorkflowStore
 
 from .admission import register_admission_routes
 from .approved_routing import register_approved_routing_routes
@@ -38,6 +39,7 @@ from .projects import register_project_routes
 from .resources import register_resource_routes
 from .runs import register_run_routes
 from .simulation import register_simulation_routes
+from .workflows import register_workflow_routes
 
 
 def _digest(value: str) -> str:
@@ -212,8 +214,22 @@ def create_app(
     # existing boundary, and it starts with no resolver: a connection with a
     # secret_ref reports an explicit configuration gap until a trusted factory
     # supplies one. It never dispatches work.
-    register_gateway_routes(
-        app, GatewayCatalogStore(projects, resolver=gateway_secret_resolver)
+    gateway_catalog = GatewayCatalogStore(projects, resolver=gateway_secret_resolver)
+    register_gateway_routes(app, gateway_catalog)
+    # Workflow bundles live in real files under an owned data root and are
+    # registered here only. The store shares this application's project database
+    # so ownership and idempotency reuse the existing boundary, and it resolves
+    # gateway bindings through the same catalog: by exact revision, without a
+    # probe and without resolving a credential.
+    gateway_catalog = GatewayCatalogStore(projects, resolver=gateway_secret_resolver)
+    register_workflow_routes(
+        app,
+        WorkflowStore(
+            projects,
+            conversations,
+            state_directory / "workflow-bundles",
+            gateway=gateway_catalog,
+        ),
     )
 
     @app.middleware("http")
