@@ -683,6 +683,117 @@ def test_the_queue_reports_waiting_reasons_without_dropping_tasks(
     assert blocked.status_code == 201, blocked.text
 
 
+def test_a_superseded_claim_still_holds_its_write_zone(
+    granted_case: dict[str, Any],
+) -> None:
+    """A write zone belongs to the execution, not to the node's graph state.
+
+    An unreconciled claim is still writing in its directory. Retiring the graph
+    node does not end that execution, so a successor naming the same zone must
+    wait until the original claim is settled by a trusted reconciliation.
+    """
+    opened = expand(granted_case, [task_spec(item_key="old", zone="src/config/zone")])
+    assert opened.status_code == 201, opened.text
+    sealed = decide(
+        granted_case,
+        [
+            {
+                "action": "seal",
+                "expansion_id": "defects",
+                "members": ["decision-1.old"],
+                "obligations": ["config-defect-triage"],
+            }
+        ],
+        key_value="decision-seal",
+        decision_id="decision-seal",
+        expected_graph_revision=1,
+    )
+    assert sealed.status_code == 201, sealed.text
+    # Capacity for two, so the zone is the only thing that can block the second
+    # claim: the case must not be masked by a full pool.
+    admissible(granted_case, capacity=2, amount="2")
+    first = claim(granted_case, "decision-1.old", key_value="claim-old")
+    assert first.status_code == 201, first.text
+
+    # A sealed set takes no further members, so unrelated later work is added
+    # under its own set.
+    opened = granted_case["client"].post(
+        f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}/expansions",
+        json={
+            "grant_id": "configuration-repair-scope",
+            "expansion_id": "later",
+            "goal": "a later batch",
+            "required_outcomes": ["config-defect-triage"],
+        },
+        headers={**granted_case["headers"], **key("expansion-later")},
+    )
+    assert opened.status_code == 201, opened.text
+    replaced = decide(
+        granted_case,
+        [
+            {
+                "action": "expand_graph",
+                "expansion_id": "later",
+                "tasks": [
+                    task_spec(
+                        item_key="new",
+                        zone="src/config/zone",
+                        expansion_id="later",
+                    )
+                ],
+            }
+        ],
+        key_value="decision-successor",
+        decision_id="decision-successor",
+        expected_graph_revision=2,
+    )
+    assert replaced.status_code == 201, replaced.text
+    sealed_later = decide(
+        granted_case,
+        [
+            {
+                "action": "seal",
+                "expansion_id": "later",
+                "members": ["decision-successor.new"],
+                "obligations": ["config-defect-triage"],
+            }
+        ],
+        key_value="decision-seal-later",
+        decision_id="decision-seal-later",
+        expected_graph_revision=3,
+    )
+    assert sealed_later.status_code == 201, sealed_later.text
+
+    blocked = claim(granted_case, "decision-successor.new", key_value="claim-new")
+    assert blocked.status_code == 409, blocked.text
+    assert blocked.json()["waiting_reason"] == "write_zone_busy"
+
+    # The original claim is untouched and still occupies the pool.
+    readback = granted_case["client"].get(
+        f"/v1/scheduling/protocol/projects/{granted_case['project_id']}"
+        f"/runs/{granted_case['run_id']}/claims/claim-old",
+        headers=protocol_headers(granted_case["consumer_token"]),
+    )
+    assert readback.status_code == 200, readback.text
+    assert readback.json() == first.json()
+    state = granted_case["client"].get(
+        f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}/resources",
+        headers=granted_case["headers"],
+    ).json()
+    assert state["live_claims"] == 1, state
+
+    # Settling the original claim releases the zone for the successor.
+    reconciled = granted_case["client"].post(
+        f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}"
+        "/tasks/decision-1.old/reconciliation",
+        json={"outcome": "completed", "evidence_ref": "evidence:original-settled"},
+        headers={**granted_case["headers"], **key("reconcile-old")},
+    )
+    assert reconciled.status_code == 200, reconciled.text
+    admitted = claim(granted_case, "decision-successor.new", key_value="claim-new")
+    assert admitted.status_code == 201, admitted.text
+
+
 def test_an_open_expansion_holds_its_join_and_its_members(
     granted_case: dict[str, Any],
 ) -> None:
@@ -875,6 +986,9 @@ def test_a_replacement_supersedes_the_task_it_replaces(
                     {
                         **task_spec(item_key="new", zone="src/config/new"),
                         "supersedes": "decision-1.old",
+                        "obligation_coverage": {
+                            "config-defect-triage": "config-defect-triage",
+                        },
                     }
                 ],
             }
@@ -904,6 +1018,7 @@ def test_a_replacement_supersedes_the_task_it_replaces(
     assert predecessor["history"][-1]["state"] == "superseded"
 
     # A replacement that dropped an obligation is refused, and commits nothing.
+    # It is made against the graph as it now is.
     revision = graph(granted_case)["graph_revision"]
     refused = decide(
         granted_case,
@@ -928,8 +1043,98 @@ def test_a_replacement_supersedes_the_task_it_replaces(
         expected_graph_revision=revision,
     )
     assert refused.status_code in {403, 409, 422}, refused.text
-    assert refused.json()["reason_code"] == "SCHEDULING_OBLIGATION_UNCOVERED"
+    assert refused.json()["reason_code"] == "SCHEDULING_OBLIGATION_COVERAGE_INVALID"
     assert graph(granted_case)["graph_revision"] == revision
+
+    # An unrelated coverage mapping is refused too: coverage may only speak for
+    # the task being replaced, and only about obligations that task owed.
+    malformed = decide(
+        granted_case,
+        [
+            {
+                "action": "expand_graph",
+                "expansion_id": "defects",
+                "tasks": [
+                    {
+                        **task_spec(item_key="invented", zone="src/config/invented"),
+                        "supersedes": "decision-replace.new",
+                        "obligation_coverage": {
+                            "not-a-predecessor": ["not-the-obligation"],
+                        },
+                    }
+                ],
+            }
+        ],
+        key_value="decision-malformed",
+        decision_id="decision-malformed",
+        expected_graph_revision=revision,
+    )
+    assert malformed.status_code in {403, 409, 422}, malformed.text
+    assert malformed.json()["reason_code"] == "SCHEDULING_OBLIGATION_COVERAGE_INVALID"
+    assert graph(granted_case)["graph_revision"] == revision
+
+    # A correct key whose target the successor never promises is refused as well:
+    # the value is a claim about coverage, so it is checked and not merely stored.
+    wrong_target = decide(
+        granted_case,
+        [
+            {
+                "action": "expand_graph",
+                "expansion_id": "defects",
+                "tasks": [
+                    {
+                        **task_spec(item_key="wrong-target", zone="src/config/wrong"),
+                        "supersedes": "decision-replace.new",
+                        "obligation_coverage": {
+                            "config-defect-triage": "an-outcome-nothing-promises",
+                        },
+                    }
+                ],
+            }
+        ],
+        key_value="decision-wrong-target",
+        decision_id="decision-wrong-target",
+        expected_graph_revision=revision,
+    )
+    assert wrong_target.status_code in {403, 409, 422}, wrong_target.text
+    assert wrong_target.json()["reason_code"] == "SCHEDULING_OBLIGATION_COVERAGE_INVALID"
+    assert graph(granted_case)["graph_revision"] == revision
+
+    # The replacement really seals. The open set followed the replacement, so
+    # its membership is the successor — which is what makes the set sealable
+    # rather than stuck naming a task the graph has already retired.
+    sealed = decide(
+        granted_case,
+        [
+            {
+                "action": "seal",
+                "expansion_id": "defects",
+                "members": ["decision-replace.new"],
+                "obligations": ["config-defect-triage"],
+            }
+        ],
+        key_value="decision-seal-after-replace",
+        decision_id="decision-seal-after-replace",
+        expected_graph_revision=revision,
+    )
+    if sealed.status_code != 201:
+        import json as _json
+
+        raise AssertionError(
+            sealed.text
+            + " MEMBERS="
+            + _json.dumps(
+                [
+                    {k: v.get("task_id") for k, v in item["members"].items()}
+                    for item in graph(granted_case)["expansions"]
+                ]
+            )
+        )
+    membership = graph(granted_case)["expansions"][0]["members"]
+    assert set(membership) == {"decision-replace.new"}, membership
+    # The successor is pinned to the version that exists, so the seal names a
+    # real member rather than an empty slot.
+    assert membership["decision-replace.new"]["digest"]
 
 
 def test_a_version_pinned_within_one_decision_is_readable(
@@ -1520,3 +1725,159 @@ def test_a_replayed_refusal_returns_its_original_record_unchanged(
     assert current["graph_revision"] == 1
     assert [item["revision"] for item in current["history"]] == [1]
     assert [item["task_id"] for item in pages(granted_case)] == ["decision-1.a"]
+
+
+def test_a_result_from_another_version_cannot_satisfy_a_pinned_member(
+    granted_case: dict[str, Any],
+) -> None:
+    """A seal pins a version, and only that version's result satisfies it.
+
+    A member edited after the seal is different work. Completing the *current*
+    task therefore says nothing about the version the seal fixed, and the join
+    stays held until a result for the pinned version exists.
+    """
+    expanded = expand(granted_case, [task_spec(item_key="member", zone="src/config/a")])
+    assert expanded.status_code == 201, expanded.text
+    join = expand(
+        granted_case,
+        [
+            task_spec(
+                item_key="join",
+                zone="src/config/join",
+                sources="literal:assembled",
+                joins=("defects",),
+            )
+        ],
+        key_value="decision-2",
+        decision_id="decision-2",
+        expected_graph_revision=1,
+    )
+    assert join.status_code == 201, join.text
+    sealed = decide(
+        granted_case,
+        [
+            {
+                "action": "seal",
+                "expansion_id": "defects",
+                "members": ["decision-1.member", "decision-2.join"],
+                "obligations": ["config-defect-triage"],
+            }
+        ],
+        key_value="decision-seal",
+        decision_id="decision-seal",
+        expected_graph_revision=2,
+    )
+    assert sealed.status_code == 201, sealed.text
+    pin = graph(granted_case)["expansions"][0]["members"]["decision-1.member"]
+    pinned_revision = int(pin["revision"])
+    pinned_digest = str(pin["digest"])
+
+    # An unauthorised edit moves the live member on.
+    edited = decide(
+        granted_case,
+        [{"action": "set_priority", "task_id": "decision-1.member", "priority": 5}],
+        key_value="decision-edit",
+        decision_id="decision-edit",
+        expected_graph_revision=3,
+    )
+    assert edited.status_code == 201, edited.text
+    live = granted_case["client"].get(
+        f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}"
+        "/tasks/decision-1.member",
+        headers=granted_case["headers"],
+    ).json()
+    assert int(live["revision"]) > pinned_revision
+    assert live["digest"] != pinned_digest
+
+    # The *current* version is claimed and reconciled to completion.
+    admissible(granted_case, capacity=4, amount="4")
+    claimed = claim(granted_case, "decision-1.member", key_value="claim-member")
+    assert claimed.status_code == 201, claimed.text
+    assert claimed.json()["task_digest"] == live["digest"]
+    reconciled = granted_case["client"].post(
+        f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}"
+        "/tasks/decision-1.member/reconciliation",
+        json={"outcome": "completed", "evidence_ref": "evidence:other-version"},
+        headers={**granted_case["headers"], **key("reconcile-member")},
+    )
+    assert reconciled.status_code == 200, reconciled.text
+    assert reconciled.json()["state"] == "completed"
+
+    # The join still waits: the completed work is a different version from the
+    # one the seal pinned.
+    page = queue(granted_case)
+    assert "decision-2.join" not in {item["task_id"] for item in page["items"]}, page
+    reasons = {item["task_id"]: item["reason"] for item in page["waiting"]}
+    assert reasons["decision-2.join"] == "join_member_pending", page["waiting"]
+
+
+def test_a_trusted_unknown_then_a_terminal_reconciliation_releases_once(
+    granted_case: dict[str, Any],
+) -> None:
+    """An owner who cannot settle an execution can settle it afterwards.
+
+    A trusted ``unknown`` records that the owner looked and could not determine
+    the ending. It keeps the occupancy, and it must not set the guard that the
+    later, real ending needs: when the execution is finally reconciled as
+    completed, the slot is released exactly once and the waiting task becomes
+    claimable. A later unverified report cannot reopen it.
+    """
+    open_and_seal(
+        granted_case,
+        [
+            task_spec(item_key="a", zone="src/config/a"),
+            task_spec(item_key="b", zone="src/config/b"),
+        ],
+    )
+    admissible(granted_case, capacity=1, amount="1")
+    assert claim(granted_case, "decision-1.a", key_value="claim-a").status_code == 201
+    assert claim(granted_case, "decision-1.b", key_value="claim-b").status_code == 409
+
+    # The owner reconciles as unknown: the occupancy is kept.
+    unknown = granted_case["client"].post(
+        f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}"
+        "/tasks/decision-1.a/reconciliation",
+        json={"outcome": "unknown", "evidence_ref": "evidence:could-not-determine"},
+        headers={**granted_case["headers"], **key("reconcile-unknown")},
+    )
+    assert unknown.status_code == 200, unknown.text
+    assert unknown.json()["state"] == "unknown"
+    state = granted_case["client"].get(
+        f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}/resources",
+        headers=granted_case["headers"],
+    ).json()
+    assert state["live_claims"] == 1, state
+    still_blocked = claim(granted_case, "decision-1.b", key_value="claim-b")
+    assert still_blocked.status_code == 409, still_blocked.text
+
+    # The real ending is settled afterwards: the slot is released once.
+    settled = granted_case["client"].post(
+        f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}"
+        "/tasks/decision-1.a/reconciliation",
+        json={"outcome": "completed", "evidence_ref": "evidence:settled-later"},
+        headers={**granted_case["headers"], **key("reconcile-settled")},
+    )
+    assert settled.status_code == 200, settled.text
+    assert settled.json()["state"] == "completed"
+    state = granted_case["client"].get(
+        f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}/resources",
+        headers=granted_case["headers"],
+    ).json()
+    assert state["live_claims"] == 0, state
+    assert claim(granted_case, "decision-1.b", key_value="claim-b").status_code == 201
+
+    # A late unverified report cannot reopen the settled task or restore the
+    # occupancy that the reconciliation deliberately released.
+    late = report(
+        granted_case,
+        "decision-1.a",
+        {"outcome": "completed", "evidence_ref": "evidence:late"},
+        key_value="report-late",
+    )
+    assert late.status_code == 200, late.text
+    assert late.json()["state"] == "completed", late.json()
+    after = granted_case["client"].get(
+        f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}/resources",
+        headers=granted_case["headers"],
+    ).json()
+    assert after["live_claims"] == 1, after

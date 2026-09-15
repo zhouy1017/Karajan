@@ -1973,6 +1973,9 @@ class SchedulingStore:
         # Every version this decision produced, so the commit can archive all of
         # them rather than only the survivors.
         versions: dict[str, list[dict[str, Any]]] = {}
+        # Which tasks this batch replaced, and by which successor.
+        replaced_within: dict[str, str] = {}
+        document_digests: dict[str, str] = {}
         nodes_retired: list[str] = []
         sealed: dict[str, list[str]] = {}
         for index, action in enumerate(parsed["actions"]):
@@ -2103,6 +2106,14 @@ class SchedulingStore:
                         # narrow what the run promised.
                         owed = set(str(item) for item in previous["required_outcomes"])
                         carried = set(str(item) for item in spec["required_outcomes"])
+                        coverage = dict(spec.get("obligation_coverage") or {})
+                        self._require_coverage(
+                            coverage,
+                            owed=owed,
+                            carried=carried,
+                            replaced=str(supersedes),
+                            pointer=f"{pointer}/tasks/{item_index}/obligation_coverage",
+                        )
                         uncovered = sorted(owed - carried)
                         if uncovered:
                             raise SchedulingError(
@@ -2119,6 +2130,7 @@ class SchedulingStore:
                                     )
                                 ],
                             )
+                        replaced_within[str(supersedes)] = task_id
                         previous["state"] = "superseded"
                         previous["superseded_by"] = task_id
                         history = list(previous.get("history") or [])
@@ -2151,6 +2163,7 @@ class SchedulingStore:
                     document["history"][0]["at"] = now
                     document = reseal_task(document)
                     working[task_id] = document
+                    document_digests[task_id] = str(document["digest"])
                     self._archive_version(document, versions)
                     members[task_id] = {
                         "task_id": task_id,
@@ -2161,6 +2174,27 @@ class SchedulingStore:
                         "required": bool(spec["required"]),
                     }
                     nodes_added.append(task_id)
+                # An *open* set that named a task this batch replaced follows the
+                # replacement: its members are not fixed yet, so leaving the
+                # retired identity in place would make the set unsealable for no
+                # reason a reader could act on. This edits the *staged map* the
+                # action already holds, so the assignment below cannot restore the
+                # retired key from a detached copy. A sealed set is untouched —
+                # that is what a seal means.
+                for replaced_id, successor_id in replaced_within.items():
+                    if replaced_id in members:
+                        previous_member = members.pop(replaced_id)
+                        members[successor_id] = {
+                            **previous_member,
+                            "task_id": successor_id,
+                            "revision": 1,
+                            "digest": str(document_digests.get(successor_id, "")),
+                            "replaced": replaced_id,
+                        }
+                for member in members.values():
+                    if member.get("revision") is None and member["task_id"] in working:
+                        member["revision"] = int(working[member["task_id"]].get("revision", 1))
+                        member["digest"] = str(working[member["task_id"]]["digest"])
                 expansion["members"] = members
                 expansion["batches"] = int(expansion["batches"]) + 1
                 working_expansions[expansion_id] = reseal_expansion(expansion)
@@ -2456,6 +2490,121 @@ class SchedulingStore:
             "sealed": sealed,
             "revision": revision,
         }
+
+    @staticmethod
+    def _require_coverage(
+        coverage: Mapping[str, Any],
+        *,
+        owed: set[str],
+        carried: set[str],
+        replaced: str,
+        pointer: str,
+    ) -> None:
+        """Check a replacement's obligation coverage, both key and value.
+
+        The supported shape is one entry per obligation the replaced task owed,
+        mapping the obligation's name to the successor outcome that carries it:
+        ``{"config-defect-triage": "config-defect-triage"}``. Both sides are
+        checked against what really exists — the key must be an obligation the
+        predecessor owed, and the value must be an outcome the successor really
+        promises — because a mapping whose values are never read records coverage
+        that may not exist.
+
+        The mapping is required whenever the predecessor owed something and the
+        successor does not restate every one of those outcomes itself: that is
+        exactly the "coverage of the original obligations" the design asks a
+        replacement to provide. A predecessor that owed nothing needs no mapping.
+        """
+        if not owed:
+            if coverage:
+                raise SchedulingError(
+                    "SCHEDULING_OBLIGATION_COVERAGE_INVALID",
+                    fields={"task_id": replaced, "owed": []},
+                    diagnostics=[
+                        located(
+                            "SCHEDULING_OBLIGATION_COVERAGE_INVALID",
+                            pointer,
+                            "the replaced task owed no obligation to cover",
+                        )
+                    ],
+                )
+            return
+        # A replacement states which obligation each successor outcome carries
+        # forward. Requiring the mapping rather than inferring it from matching
+        # outcome names is what makes the coverage a recorded fact: without it, a
+        # successor that happens to reuse a name would appear to cover an
+        # obligation nobody mapped, and a later reader could not tell the two
+        # apart. The design asks a refinement or replacement to supply exactly
+        # this mapping (architecture11 §6).
+        if not coverage:
+            raise SchedulingError(
+                "SCHEDULING_OBLIGATION_COVERAGE_INVALID",
+                fields={
+                    "task_id": replaced,
+                    "owed": sorted(owed)[:16],
+                    "missing": sorted(owed)[:16],
+                },
+                diagnostics=[
+                    located(
+                        "SCHEDULING_OBLIGATION_COVERAGE_INVALID",
+                        pointer,
+                        "a replacement maps every obligation it carries forward",
+                    )
+                ],
+            )
+        unmapped = sorted(owed - set(coverage))
+        if unmapped:
+            raise SchedulingError(
+                "SCHEDULING_OBLIGATION_COVERAGE_INVALID",
+                fields={"task_id": replaced, "unmapped": unmapped[:16]},
+                diagnostics=[
+                    located(
+                        "SCHEDULING_OBLIGATION_COVERAGE_INVALID",
+                        pointer,
+                        "every obligation the replaced task owed needs a mapping",
+                    )
+                ],
+            )
+        unrelated = sorted(key for key in coverage if key not in owed)
+        if unrelated:
+            raise SchedulingError(
+                "SCHEDULING_OBLIGATION_COVERAGE_INVALID",
+                fields={
+                    "task_id": replaced,
+                    "unrelated": unrelated[:16],
+                    "owed": sorted(owed)[:16],
+                },
+                diagnostics=[
+                    located(
+                        "SCHEDULING_OBLIGATION_COVERAGE_INVALID",
+                        pointer,
+                        "coverage may only speak for an obligation the replaced "
+                        "task really owed",
+                    )
+                ],
+            )
+        not_promised = sorted(
+            key
+            for key, target in coverage.items()
+            if not isinstance(target, str) or target not in carried
+        )
+        if not_promised:
+            raise SchedulingError(
+                "SCHEDULING_OBLIGATION_COVERAGE_INVALID",
+                fields={
+                    "task_id": replaced,
+                    "not_promised": not_promised[:16],
+                    "promised": sorted(carried)[:16],
+                },
+                diagnostics=[
+                    located(
+                        "SCHEDULING_OBLIGATION_COVERAGE_INVALID",
+                        pointer,
+                        "a coverage target must be an outcome the successor "
+                        "really promises",
+                    )
+                ],
+            )
 
     @staticmethod
     def _archive_version(
@@ -2876,28 +3025,39 @@ class SchedulingStore:
         being dropped from the answer.
         """
         size = self._page(limit)
+        # The zone a task wants is answered from the claim ledger, so the reasons
+        # are resolved inside the transaction that read the state rather than
+        # after it closes: a reason derived from a closed connection is a fact
+        # about nothing.
         with self._read(project_id) as db:
             self._run_row(db, project_id, run_id)
             tasks = self._tasks(db, project_id, run_id)
             expansions = self._expansions(db, project_id, run_id)
-        blocked_by_seal = self._join_blocked(expansions, tasks)
-        ready: list[Any] = []
-        waiting: list[dict[str, Any]] = []
-        for name in sorted(tasks):
-            task = tasks[name]
-            if task.state in {"completed", "failed", "cancelled", "superseded"}:
-                continue
-            if task.state == "claimed":
-                continue
-            reason = self._waiting_reason(
-                task=task,
-                tasks=tasks,
-                join_blocked=blocked_by_seal.get(task.task_id),
+            blocked_by_seal = self._join_blocked(
+                expansions, tasks, self._resolved_versions(db, project_id, run_id)
             )
-            if reason is None:
-                ready.append(task)
-            else:
-                waiting.append({"task_id": task.task_id, "reason": reason, "state": task.state})
+            ready: list[Any] = []
+            waiting: list[dict[str, Any]] = []
+            for name in sorted(tasks):
+                task = tasks[name]
+                if task.state in {"completed", "failed", "cancelled", "superseded"}:
+                    continue
+                if task.state == "claimed":
+                    continue
+                reason = self._waiting_reason(
+                    db=db,
+                    project_id=project_id,
+                    run_id=run_id,
+                    task=task,
+                    tasks=tasks,
+                    join_blocked=blocked_by_seal.get(task.task_id),
+                )
+                if reason is None:
+                    ready.append(task)
+                else:
+                    waiting.append(
+                        {"task_id": task.task_id, "reason": reason, "state": task.state}
+                    )
         ordered = ready_ordering(ready)
         start = 0
         if cursor is not None:
@@ -2922,6 +3082,7 @@ class SchedulingStore:
     def _join_blocked(
         expansions: Mapping[str, Mapping[str, Any]],
         tasks: Mapping[str, Any] | None = None,
+        resolved_versions: Mapping[str, tuple[int, str]] | None = None,
     ) -> dict[str, str]:
         """Tasks held back by an expansion set, with the reason each one is held.
 
@@ -2941,6 +3102,7 @@ class SchedulingStore:
         open set.
         """
         blocked: dict[str, str] = {}
+        resolved = resolved_versions or {}
         open_sets = {
             name for name, expansion in expansions.items() if expansion["state"] != "sealed"
         }
@@ -2961,21 +3123,40 @@ class SchedulingStore:
                     continue
                 # The set is sealed, so its members are fixed — and the join
                 # waits for every *required* member's real result, not merely for
-                # the seal. A sealed member that has not produced its result yet
-                # is exactly the case the seal exists to make checkable, so a
-                # fan-in that ran now would report a convergence over work that
-                # has not happened.
+                # the seal. The seal pinned a *version*, so the result has to be
+                # that version's: a member edited after the seal is different
+                # work, and completing it says nothing about the version the seal
+                # fixed. A fan-in that ran on that basis would report a
+                # convergence it never had.
                 live = tasks or {}
-                waiting = [
-                    str(member["task_id"])
-                    for member in joined["members"].values()
-                    if str(member["task_id"]) != task.task_id
-                    and bool(member.get("required", True))
-                    and (
-                        (holder := live.get(str(member["task_id"]))) is None
-                        or holder.state != "completed"
-                    )
-                ]
+                waiting = []
+                for member in joined["members"].values():
+                    member_id = str(member["task_id"])
+                    if member_id == task.task_id or not bool(member.get("required", True)):
+                        continue
+                    holder = live.get(member_id)
+                    if holder is None or holder.state != "completed":
+                        waiting.append(member_id)
+                        continue
+                    pinned_revision = member.get("revision")
+                    pinned_digest = member.get("digest")
+                    if pinned_revision is None or pinned_digest is None:
+                        # An unpinned entry is a replacement the seal has not yet
+                        # fixed a version for, so there is no result to match.
+                        waiting.append(member_id)
+                        continue
+                    # The result must belong to the version the seal pinned. The
+                    # evidence is the claim that was handed out for it and then
+                    # settled by a trusted terminal reconciliation: that claim
+                    # carries the frozen version it gave the consumer. Reading the
+                    # current task body instead would accept the result of work
+                    # the seal never pinned.
+                    settled = resolved.get(member_id)
+                    if settled is None or (
+                        int(settled[0]) != int(pinned_revision)
+                        or str(settled[1]) != str(pinned_digest)
+                    ):
+                        waiting.append(member_id)
                 if waiting:
                     blocked[task.task_id] = "join_member_pending"
         return blocked
@@ -2983,6 +3164,9 @@ class SchedulingStore:
     def _waiting_reason(
         self,
         *,
+        db: sqlite3.Connection,
+        project_id: str,
+        run_id: str,
         task: Any,
         tasks: Mapping[str, Any],
         join_blocked: str | None,
@@ -3000,29 +3184,75 @@ class SchedulingStore:
             if other.state in {"failed", "cancelled", "superseded", "unknown"}:
                 return "dependency_failed"
             return "dependency_pending"
-        if self._zone_holder(tasks, task.write_zone, exclude=task.task_id) is not None:
+        if (
+            self._zone_holder(
+                db, project_id, run_id, task.write_zone, exclude=task.task_id
+            )
+            is not None
+        ):
             return "write_zone_busy"
         return None
 
     @staticmethod
-    def _zone_holder(
-        tasks: Mapping[str, Any], zone: str, *, exclude: str | None = None
-    ) -> str | None:
-        """Any live holder of the same directory, by path identity rather than spelling.
+    def _resolved_versions(
+        db: sqlite3.Connection, project_id: str, run_id: str
+    ) -> dict[str, tuple[int, str]]:
+        """The frozen version each *settled* claim resolved, by task identity.
 
-        A plain string comparison would admit a second writer for the same tree
-        whenever the two tasks spelled it differently - a different case, or one
-        zone nested inside the other - so the comparison is made on the shared
-        path identity instead.
+        Only a claim a trusted terminal reconciliation released counts: an open
+        claim has produced no result, and a mere report is not a resolution. What
+        is returned is the version the claim handed out, which is the immutable
+        fact a seal pins against.
         """
-        for name in sorted(tasks):
-            if name == exclude:
+        rows = db.execute(
+            "SELECT record FROM budget_consumption WHERE project_id=? AND run_id=?",
+            (project_id, run_id),
+        ).fetchall()
+        resolved: dict[str, tuple[int, str]] = {}
+        for row in rows:
+            record = json.loads(row["record"])
+            if record.get("released_at") is None or record.get("reconciled_by") is None:
                 continue
-            other = tasks[name]
-            if other.state not in {"claimed", "unknown"}:
+            if str(record.get("outcome") or "") not in {"completed", "failed", "cancelled"}:
                 continue
-            if zones_overlap(str(other.write_zone), zone):
-                return name
+            if record.get("task_digest") is None:
+                continue
+            resolved[str(record["task_id"])] = (
+                int(record["task_revision"]),
+                str(record["task_digest"]),
+            )
+        return resolved
+
+    @staticmethod
+    def _zone_holder(
+        db: sqlite3.Connection,
+        project_id: str,
+        run_id: str,
+        zone: str,
+        *,
+        exclude: str | None = None,
+    ) -> str | None:
+        """Any live holder of the same directory, taken from the claim ledger.
+
+        A write zone belongs to an *execution*, not to a graph node's present
+        state. A task superseded in the graph while its claim is still
+        unreconciled is still writing in that directory, so consulting the graph
+        would hand the same zone to a second writer while the first is
+        unresolved. The comparison is on the shared path identity rather than on
+        spelling, so a different case or a nested path is the same zone.
+        """
+        rows = db.execute(
+            "SELECT record FROM budget_consumption WHERE project_id=? AND run_id=?",
+            (project_id, run_id),
+        ).fetchall()
+        for row in rows:
+            record = json.loads(row["record"])
+            if record.get("released_at") is not None:
+                continue
+            if str(record.get("task_id") or "") == exclude:
+                continue
+            if zones_overlap(str(record.get("write_zone") or ""), zone):
+                return str(record["task_id"])
         return None
 
     def claim(
@@ -3081,7 +3311,9 @@ class SchedulingStore:
                     ],
                 )
             expansions = self._expansions(db, project_id, run_id)
-            held_by = self._join_blocked(expansions, tasks).get(task_id)
+            held_by = self._join_blocked(
+                expansions, tasks, self._resolved_versions(db, project_id, run_id)
+            ).get(task_id)
             if held_by is not None:
                 raise SchedulingError(
                     "SCHEDULING_EXPANSION_NOT_SEALED",
@@ -3094,7 +3326,14 @@ class SchedulingStore:
                         )
                     ],
                 )
-            reason = self._waiting_reason(task=document, tasks=tasks, join_blocked=None)
+            reason = self._waiting_reason(
+                db=db,
+                project_id=project_id,
+                run_id=run_id,
+                task=document,
+                tasks=tasks,
+                join_blocked=None,
+            )
             if reason is not None:
                 raise SchedulingError(
                     "SCHEDULING_TASK_NOT_READY",
@@ -3198,6 +3437,9 @@ class SchedulingStore:
                 claim_id=claim_id,
                 task_id=task_id,
                 grant=grant,
+                write_zone=str(document.write_zone),
+                task_digest=str(document.digest),
+                task_revision=int(document.document.get("revision", 1)),
                 now=now,
             )
             return claim, True
@@ -3725,13 +3967,18 @@ class SchedulingStore:
                 ).resource_policy.pool_id
             except SchedulingError:
                 continue
+        del tasks
         counts: dict[str, int] = {}
-        for task in tasks.values():
-            if task.state not in {"claimed", "unknown"}:
+        rows = db.execute(
+            "SELECT record FROM budget_consumption "
+            "WHERE project_id=? AND run_id=?",
+            (project_id, run_id),
+        ).fetchall()
+        for row in rows:
+            record = json.loads(row["record"])
+            if record.get("released_at") is not None:
                 continue
-            pool = pools.get(str(task.document.get("grant_id") or ""))
-            if pool is None:
-                continue
+            pool = str(record["pool_id"])
             counts[pool] = counts.get(pool, 0) + 1
         return counts
 
@@ -3784,6 +4031,9 @@ class SchedulingStore:
         claim_id: str,
         task_id: str,
         grant: Grant,
+        write_zone: str,
+        task_digest: str,
+        task_revision: int,
         now: float,
     ) -> None:
         """Write the durable occupancy one accepted claim creates."""
@@ -3794,6 +4044,15 @@ class SchedulingStore:
             "task_id": task_id,
             "pool_id": grant.resource_policy.pool_id,
             "budget_ref": grant.resource_policy.budget_ref,
+            # The zone is recorded with the claim, so occupancy of a directory
+            # is answerable from the ledger rather than from the graph state of
+            # the node that happens to exist now.
+            "write_zone": str(write_zone),
+            # The version the claim handed out, frozen at claim time, so a
+            # terminal result can be matched to the version a seal pinned even
+            # after the live task has moved on.
+            "task_digest": str(task_digest),
+            "task_revision": int(task_revision),
             "root_grant_id": grant.root_grant_id,
             "grant_id": grant.grant_id,
             "grant_depth": grant.depth,
