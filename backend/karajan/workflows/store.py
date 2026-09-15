@@ -23,7 +23,6 @@ Boundaries that are structural rather than documented:
   acting principal, and a bundle's conversation is fixed when it is created.
 """
 
-import contextlib
 import json
 import os
 import sqlite3
@@ -49,7 +48,13 @@ from .compiler import (
 )
 from .digests import canonical_json, content_digest
 from .errors import WorkflowError, located
-from .layout import MANIFEST_PATH, WORKFLOW_PATH, BundlePaths, is_reparse_point
+from .layout import (
+    MANIFEST_PATH,
+    WORKFLOW_PATH,
+    BundlePaths,
+    discard_staging_tree,
+    require_trusted_chain,
+)
 from .registry import kind_for, registered_refs
 
 REQUIRED_SCHEMA = {
@@ -212,64 +217,11 @@ class WorkflowStore:
     def _require_trusted_chain(self, destination: Path) -> None:
         """Validate every existing component before anything is created below it.
 
-        This runs *before* any ``mkdir``, write, rename or cleanup. A junction on
-        the managed root, on the project directory or on the bundle directory
-        would otherwise redirect the very first write outside the managed tree,
-        so the bytes would already be on disk by the time a later read noticed.
-        Containment is checked as well as the reparse attribute, so a path that
-        resolved elsewhere is refused for that reason too.
+        Shared with the deployment store, so a bundle revision and a deployment
+        directory are validated by one implementation rather than by two that
+        could drift apart.
         """
-        root = self._trusted_root()
-        if is_reparse_point(root):
-            raise WorkflowError(
-                "WORKFLOW_PATH_LINK_ESCAPE",
-                diagnostics=[
-                    located(
-                        "WORKFLOW_PATH_LINK_ESCAPE",
-                        WORKFLOW_PATH,
-                        "the managed data root is a link",
-                    )
-                ],
-            )
-        if not destination.is_relative_to(root):
-            raise WorkflowError(
-                "WORKFLOW_PATH_LINK_ESCAPE",
-                diagnostics=[
-                    located(
-                        "WORKFLOW_PATH_LINK_ESCAPE",
-                        WORKFLOW_PATH,
-                        "the destination is outside the managed data root",
-                    )
-                ],
-            )
-        current = root
-        for segment in destination.relative_to(root).parts[:3]:
-            # The three controlled levels above a revision directory: project,
-            # bundle and the revision itself. A link on any of them redirects
-            # everything below, so each is inspected before it is written under.
-            current = current / segment
-            if current.exists() and is_reparse_point(current):
-                raise WorkflowError(
-                    "WORKFLOW_PATH_LINK_ESCAPE",
-                    diagnostics=[
-                        located(
-                            "WORKFLOW_PATH_LINK_ESCAPE",
-                            WORKFLOW_PATH,
-                            "the destination is reached through a link",
-                        )
-                    ],
-                )
-            if current.exists() and not current.is_dir():
-                raise WorkflowError(
-                    "WORKFLOW_STATE_UNAVAILABLE",
-                    diagnostics=[
-                        located(
-                            "WORKFLOW_STATE_UNAVAILABLE",
-                            WORKFLOW_PATH,
-                            "a managed directory is not a directory",
-                        )
-                    ],
-                )
+        require_trusted_chain(self._trusted_root(), destination, levels=3)
 
     def _reconcile_materialized(
         self,
@@ -1763,18 +1715,5 @@ def _write_bytes(path: Path, data: bytes) -> None:
 
 
 def _discard(path: Path) -> None:
-    """Remove a staging directory this process just created.
-
-    Only the staging path is touched and only its own files are unlinked, so no
-    other bundle directory can be affected.
-    """
-    if not path.exists():
-        return
-    for item in sorted(path.rglob("*"), reverse=True):
-        with contextlib.suppress(OSError):
-            if item.is_file():
-                item.unlink()
-            else:
-                item.rmdir()
-    with contextlib.suppress(OSError):
-        path.rmdir()
+    """Remove a staging directory this process just created."""
+    discard_staging_tree(path)

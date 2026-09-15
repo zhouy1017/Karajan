@@ -40,6 +40,7 @@
 |---|---|
 | 外置网关目录 | [R8-P1-01 网关目录](r8-phase1-gateway.md) |
 | Workflow 配置包与同源预览 | [R8-P1-02 配置包与同源编译预览](r8-phase1-workflows.md) |
+| Workflow 部署物化、可信加载与 active 槽位 | [R8-P1-03 部署加载与条件激活](r8-phase1-deployment.md) |
 | 规则版本及工作台 | [Rulebook 路由](m3-rulebook-routing.md)、[版本发布](m3-rulebook-publication.md)、[路由模拟](m3-routing-workbench.md)、[资源工作台](m3-resource-workbench.md) |
 | 资格与绑定 | [Profile 资格](m3-profile-qualification.md)、[资格集合](profile-membership.md)、[批准 Run 路由](m3-approved-run-routing.md) |
 | 容量与估计 | [共享容量](m3-shared-capacity.md)、[容量事实](m3-capacity-facts.md)、[容量与路由准入](m3-capacity-routing-admission.md)、[Attempt 估计](m3-attempt-estimates.md) |
