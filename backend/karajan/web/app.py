@@ -27,7 +27,7 @@ from karajan.orchestration.routing import ApprovedRunRouting
 from karajan.projects import ProjectRegistry
 from karajan.projects.qualification import ProfileQualificationStore
 from karajan.runs import RunPlanner
-from karajan.workflows import WorkflowStore
+from karajan.workflows import DeploymentStore, WorkflowStore
 
 from .admission import register_admission_routes
 from .approved_routing import register_approved_routing_routes
@@ -39,7 +39,7 @@ from .projects import register_project_routes
 from .resources import register_resource_routes
 from .runs import register_run_routes
 from .simulation import register_simulation_routes
-from .workflows import register_workflow_routes
+from .workflows import register_deployment_routes, register_workflow_routes
 
 
 def _digest(value: str) -> str:
@@ -221,16 +221,33 @@ def create_app(
     # so ownership and idempotency reuse the existing boundary, and it resolves
     # gateway bindings through the same catalog: by exact revision, without a
     # probe and without resolving a credential.
+    #
+    # Deployment is a separate store over the same project database: it records a
+    # durable intent, materialises a real pending package under its own data root,
+    # re-loads it through the trusted loader and moves one conditional slot. It
+    # shares ownership and the idempotency ledger with the bundle store, so there
+    # is no second authentication path and no second command table.
     gateway_catalog = GatewayCatalogStore(projects, resolver=gateway_secret_resolver)
-    register_workflow_routes(
-        app,
-        WorkflowStore(
-            projects,
-            conversations,
-            state_directory / "workflow-bundles",
-            gateway=gateway_catalog,
-        ),
+    workflow_store = WorkflowStore(
+        projects,
+        conversations,
+        state_directory / "workflow-bundles",
+        gateway=gateway_catalog,
     )
+    register_workflow_routes(app, workflow_store)
+    deployment_store = DeploymentStore(
+        projects,
+        conversations,
+        workflow_store,
+        state_directory / "workflow-deployments",
+    )
+    register_deployment_routes(app, deployment_store)
+    # Published so a caller of ``create_app`` (a test harness, an operator tool)
+    # can hold the live stores directly, rather than reaching into route
+    # closures. It grants nothing: both stores still take the acting principal
+    # and enforce ownership on every call.
+    app.state.workflow_store = workflow_store
+    app.state.deployment_store = deployment_store
 
     @app.middleware("http")
     async def session_boundary(

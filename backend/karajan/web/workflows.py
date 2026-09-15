@@ -17,7 +17,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
-from karajan.workflows import WorkflowError, WorkflowStore
+from karajan.workflows import DeploymentStore, WorkflowError, WorkflowStore
 
 from .projects import command_key, expected_revision
 
@@ -73,6 +73,28 @@ class AuthoringPayload(BaseModel):
     base_revision: Annotated[int, Field(gt=0, le=1_000_000)] | None = None
 
 
+class DeployPayload(BaseModel):
+    """An explicit deploy_only confirmation, bound to the confirmed preview.
+
+    There is no field for the bundle, the conversation or any digest: the route
+    already names the bundle and the conversation, and every identity is derived
+    server-side from the real published files. A caller therefore cannot state a
+    template identity the stored bytes would not satisfy.
+    """
+
+    model_config = ConfigDict(extra="forbid", strict=True)
+    action: Literal["deploy_only", "deploy_and_run"]
+    slot: Annotated[str, Field(min_length=1, max_length=96)] | None = None
+    expected_active_revision: Annotated[int, Field(ge=0, le=1_000_000)]
+    preview_id: Annotated[str, Field(min_length=64, max_length=64)]
+
+
+class RollbackPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    target_deployment_id: Annotated[str, Field(min_length=1, max_length=96)]
+    expected_active_revision: Annotated[int, Field(ge=0, le=1_000_000)]
+
+
 def _segment(value: object, code: str) -> str:
     """Reject a path parameter that can never name a stored, addressable record."""
     if (
@@ -104,6 +126,7 @@ def register_workflow_routes(app: FastAPI, store: WorkflowStore) -> None:
             error.code.endswith("CONFLICT")
             or "MISMATCH" in error.code
             or "CHANGED" in error.code
+            or "STALE" in error.code
             or "ALREADY_MATERIALIZED" in error.code
             # A published revision that no longer matches what it was verified
             # against is stale state, not a bad request: the caller must re-read.
@@ -116,6 +139,16 @@ def register_workflow_routes(app: FastAPI, store: WorkflowStore) -> None:
                 "WORKFLOW_COMPILER_REVISION_MISMATCH",
                 "WORKFLOW_RECORD_CHANGED",
                 "WORKFLOW_FILE_INVENTORY_MISMATCH",
+                # A slot or a package that no longer holds what it recorded is a
+                # state disagreement the caller resolves by re-reading, not a
+                # malformed request.
+                "WORKFLOW_UNCOMMITTED_MATERIALIZATION_MISMATCH",
+                "WORKFLOW_DEPLOYMENT_STATE_CHANGED",
+                "WORKFLOW_DEPLOYMENT_RECORD_CHANGED",
+                "WORKFLOW_PACKAGE_MISSING",
+                # Nothing is consumable before a deployment is really active;
+                # the caller resolves this by deploying, not by fixing a request.
+                "WORKFLOW_SLOT_EMPTY",
             }
         )
         status = (
@@ -123,6 +156,8 @@ def register_workflow_routes(app: FastAPI, store: WorkflowStore) -> None:
             if conflict
             else 404
             if error.code.endswith("NOT_FOUND")
+            else 501
+            if error.code == "WORKFLOW_DEPLOY_ACTION_UNSUPPORTED"
             else 422
         )
         return JSONResponse(document, status_code=status)
@@ -270,6 +305,98 @@ def register_workflow_routes(app: FastAPI, store: WorkflowStore) -> None:
     def list_authoring_inputs(project_id: str, bundle_id: str) -> dict[str, Any]:
         bundle_id = _segment(bundle_id, "WORKFLOW_BUNDLE_NOT_FOUND")
         return {"items": store.list_authoring_inputs(project_id, bundle_id, principal="owner")}
+
+
+def register_deployment_routes(app: FastAPI, deployments: DeploymentStore) -> None:
+    """The authenticated deployment, readback and rollback commands.
+
+    Deployment is its own resource rather than a field on a bundle: a bundle is a
+    saved definition, and a deployment is the fact that one exact revision was
+    materialised, loaded and made active in a slot. The routes accept no
+    credential, path, digests or principal; the acting principal is the
+    authenticated session, and every derived identity comes from the real files.
+    """
+
+    def _segment_or(value: str, code: str) -> str:
+        return _segment(value, code)
+
+    @app.post(
+        "/v1/projects/{project_id}/conversations/{conversation_id}"
+        "/workflows/{bundle_id}/revisions/{revision}/deployments",
+        status_code=201,
+    )
+    def deploy(
+        project_id: str,
+        conversation_id: str,
+        bundle_id: str,
+        revision: int,
+        request: Request,
+        data: DeployPayload,
+    ) -> JSONResponse:
+        bundle_id = _segment_or(bundle_id, "WORKFLOW_BUNDLE_NOT_FOUND")
+        revision = _revision(revision)
+        payload = data.model_dump(mode="json", exclude_none=True)
+        result, was_created = deployments.deploy(
+            project_id,
+            conversation_id,
+            bundle_id,
+            payload,
+            preview_revision=revision,
+            principal="owner",
+            command_key=command_key(request),
+        )
+        return JSONResponse(
+            result,
+            status_code=201 if was_created else 200,
+            headers={"ETag": f'"{result["slot"]["slot_revision"]}"'},
+        )
+
+    @app.get("/v1/projects/{project_id}/workflow-deployments/{slot}")
+    def deployment_status(project_id: str, slot: str) -> dict[str, Any]:
+        """The slot's present state, re-loaded from the real files on each call."""
+        return deployments.status(project_id, slot, principal="owner")
+
+    @app.get("/v1/projects/{project_id}/workflow-deployments/{slot}/history")
+    def deployment_history(project_id: str, slot: str) -> dict[str, Any]:
+        return {
+            "items": deployments.list_deployments(project_id, slot, principal="owner"),
+            "intents": deployments.pending(project_id, slot, principal="owner"),
+        }
+
+    @app.get(
+        "/v1/projects/{project_id}/workflow-deployments/{slot}/deployments/{deployment_id}"
+    )
+    def deployment_detail(project_id: str, slot: str, deployment_id: str) -> dict[str, Any]:
+        return deployments.deployment(
+            project_id, slot, _segment_or(deployment_id, "WORKFLOW_DEPLOYMENT_NOT_FOUND"),
+            principal="owner",
+        )
+
+    @app.get("/v1/projects/{project_id}/workflow-deployments/{slot}/definition")
+    def deployment_definition(project_id: str, slot: str) -> dict[str, Any]:
+        """The trusted consumer handle for the loaded and active definition.
+
+        Acquisition re-loads the active package in this process, so a handle is
+        only ever obtained from a definition this process has really re-read. The
+        handle is immutable: a later deployment or rollback changes the slot, not
+        a handle a consumer already holds. It is a definition, not an execution.
+        """
+        return deployments.accept(project_id, slot, principal="owner").as_document()
+
+    @app.post("/v1/projects/{project_id}/workflow-rollbacks", status_code=201)
+    def rollback(project_id: str, request: Request, data: RollbackPayload) -> JSONResponse:
+        """Re-activate one exact historical deployment through the same pipeline."""
+        result, was_created = deployments.rollback(
+            project_id,
+            data.model_dump(mode="json"),
+            principal="owner",
+            command_key=command_key(request),
+        )
+        return JSONResponse(
+            result,
+            status_code=201 if was_created else 200,
+            headers={"ETag": f'"{result["slot"]["slot_revision"]}"'},
+        )
 
 
 def _bundle_id(request: Request) -> str:

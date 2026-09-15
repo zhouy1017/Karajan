@@ -11,6 +11,7 @@ ignored, so a bundle containing something the compiler never reads cannot be
 published as if it had been validated.
 """
 
+import contextlib
 import os
 import unicodedata
 from pathlib import Path, PurePosixPath
@@ -171,6 +172,114 @@ class BundlePaths:
         if must_exist and not resolved.is_file():
             raise _path_error("WORKFLOW_FILE_MISSING", relative)
         return resolved
+
+
+def require_segment(value: object, *, code: str, detail: str, location: str) -> str:
+    """Require one addressable identity segment, never a location on a host.
+
+    A deployment, a slot and a bundle are named by a single path segment. The
+    value is first validated with the same rules as a bundle-relative path, and
+    then refused if it still contains a separator or a leading dot: a caller must
+    not be able to name a directory, escape the managed tree, or reach the
+    staging names this module creates for its own interrupted attempts.
+    """
+    if not isinstance(value, str) or not 1 <= len(value) <= 96:
+        raise _identity_error(code, detail, location)
+    try:
+        BundlePaths.validate(value)
+    except WorkflowError:
+        raise _identity_error(code, detail, location) from None
+    if "/" in value or "\\" in value or value.startswith("."):
+        raise _identity_error(code, detail, location)
+    return value
+
+
+def _identity_error(code: str, detail: str, location: str) -> WorkflowError:
+    return WorkflowError(code, diagnostics=[located(code, location, detail)])
+
+
+def require_trusted_chain(root: Path, destination: Path, *, levels: int = 3) -> None:
+    """Validate every existing component before anything is created below it.
+
+    This runs *before* any ``mkdir``, write, rename or cleanup. A junction on the
+    managed root, on a project directory or on a slot directory would otherwise
+    redirect the very first write outside the managed tree, so the bytes would
+    already be on disk by the time a later read noticed. Containment is checked
+    as well as the reparse attribute, so a path that resolved elsewhere is
+    refused for that reason too.
+
+    ``levels`` is the number of controlled directories below the managed root:
+    three for a bundle revision (project, bundle, revision) and three for a
+    deployment (project, slot, deployment).
+    """
+    if is_reparse_point(root):
+        raise WorkflowError(
+            "WORKFLOW_PATH_LINK_ESCAPE",
+            diagnostics=[
+                located(
+                    "WORKFLOW_PATH_LINK_ESCAPE",
+                    WORKFLOW_PATH,
+                    "the managed data root is a link",
+                )
+            ],
+        )
+    if not destination.is_relative_to(root):
+        raise WorkflowError(
+            "WORKFLOW_PATH_LINK_ESCAPE",
+            diagnostics=[
+                located(
+                    "WORKFLOW_PATH_LINK_ESCAPE",
+                    WORKFLOW_PATH,
+                    "the destination is outside the managed data root",
+                )
+            ],
+        )
+    current = root
+    for segment in destination.relative_to(root).parts[:levels]:
+        current = current / segment
+        if current.exists() and is_reparse_point(current):
+            raise WorkflowError(
+                "WORKFLOW_PATH_LINK_ESCAPE",
+                diagnostics=[
+                    located(
+                        "WORKFLOW_PATH_LINK_ESCAPE",
+                        WORKFLOW_PATH,
+                        "the destination is reached through a link",
+                    )
+                ],
+            )
+        if current.exists() and not current.is_dir():
+            raise WorkflowError(
+                "WORKFLOW_STATE_UNAVAILABLE",
+                diagnostics=[
+                    located(
+                        "WORKFLOW_STATE_UNAVAILABLE",
+                        WORKFLOW_PATH,
+                        "a managed directory is not a directory",
+                    )
+                ],
+            )
+
+
+def discard_staging_tree(path: Path) -> None:
+    """Remove a staging directory this process just created.
+
+    Only the staging path is touched and only its own files are unlinked, so no
+    other bundle, revision or deployment directory can be affected. A completed
+    or partially written *named* directory is never removed: it is left for
+    reconciliation, because deleting it would destroy the facts an interrupted
+    command has to be checked against.
+    """
+    if not path.exists():
+        return
+    for item in sorted(path.rglob("*"), reverse=True):
+        with contextlib.suppress(OSError):
+            if item.is_file():
+                item.unlink()
+            else:
+                item.rmdir()
+    with contextlib.suppress(OSError):
+        path.rmdir()
 
 
 def _path_error(code: str, relative: str) -> WorkflowError:
