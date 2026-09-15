@@ -440,6 +440,7 @@ def decide(
     expected_graph_revision: int = 0,
     graph_digest: str | None = None,
     inputs_digest: str | None = None,
+    reason: str = "one shared defect",
     extra: dict[str, Any] | None = None,
 ) -> Any:
     body = decision_body(
@@ -450,6 +451,7 @@ def decide(
         graph_digest=graph_digest,
         inputs_digest=inputs_digest or case["run"]["inputs_digest"],
         actions=actions,
+        reason=reason,
     )
     body.update(extra or {})
     return case["client"].post(
@@ -471,10 +473,12 @@ def expand(
     term: int = 0,
     expected_graph_revision: int = 0,
     graph_digest: str | None = None,
+    reason: str = "one shared defect",
+    expansion_id: str = "defects",
 ) -> Any:
     return decide(
         case,
-        [{"action": "expand_graph", "expansion_id": "defects", "tasks": specs}],
+        [{"action": "expand_graph", "expansion_id": expansion_id, "tasks": specs}],
         key_value=key_value,
         decision_id=decision_id,
         token=token,
@@ -482,6 +486,7 @@ def expand(
         term=term,
         expected_graph_revision=expected_graph_revision,
         graph_digest=graph_digest,
+        reason=reason,
     )
 
 

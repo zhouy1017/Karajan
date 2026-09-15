@@ -18,11 +18,14 @@ from scheduling_fixtures import (
     graph,
     issue,
     key,
+    observe,
     pages,
     protocol_headers,
     queue,
     report,
+    resource_policy,
     task_spec,
+    tasks,
 )
 
 
@@ -705,10 +708,15 @@ def test_an_open_expansion_holds_its_join_and_its_members(
     assert page["ready_count"] == 0
 
 
-def test_sealing_releases_the_members_and_the_join(
+def test_sealing_releases_the_members_and_still_holds_the_join(
     granted_case: dict[str, Any],
 ) -> None:
-    """The seal is what releases an expansion, and it names its real members."""
+    """The seal releases the members; the join waits for their real results.
+
+    Sealing fixes *which* members exist. It does not assert that they have
+    finished, so a fan-in that converged on "the members I have" while a required
+    member is still queued would report a result over work that has not happened.
+    """
     members = open_and_seal(
         granted_case,
         [
@@ -724,8 +732,24 @@ def test_sealing_releases_the_members_and_the_join(
     assert members == ["decision-1.member", "decision-1.join"]
     admissible(granted_case, capacity=4, amount="4")
     page = queue(granted_case)
-    assert {item["task_id"] for item in page["items"]} == set(members)
-    assert page["waiting"] == []
+    ready = {item["task_id"] for item in page["items"]}
+    reasons = {item["task_id"]: item["reason"] for item in page["waiting"]}
+    assert ready == {"decision-1.member"}, page
+    assert reasons["decision-1.join"] == "join_member_pending", page["waiting"]
+
+    # Once the member's result is verified, the join becomes ready.
+    claimed = claim(granted_case, "decision-1.member", key_value="claim-member")
+    assert claimed.status_code == 201, claimed.text
+    reconciled = granted_case["client"].post(
+        f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}"
+        "/tasks/decision-1.member/reconciliation",
+        json={"outcome": "completed", "evidence_ref": "evidence:member-done"},
+        headers={**granted_case["headers"], **key("reconcile-member")},
+    )
+    assert reconciled.status_code == 200, reconciled.text
+    after = queue(granted_case)
+    assert {item["task_id"] for item in after["items"]} == {"decision-1.join"}, after
+    assert after["waiting"] == []
 
 
 def test_a_seal_cannot_name_a_member_that_does_not_exist(
@@ -830,6 +854,140 @@ def test_an_obligation_survives_every_supported_edit(
     assert after["reports"][-1]["outcome"] == "failed"
 
 
+def test_a_replacement_supersedes_the_task_it_replaces(
+    granted_case: dict[str, Any],
+) -> None:
+    """A validated replacement retires its predecessor and carries its debts.
+
+    A replacement accepted without superseding anything would leave the original
+    queued beside its successor while the receipt claimed no node was replaced.
+    The predecessor keeps its record and its history, and the successor carries
+    every obligation the predecessor still owed.
+    """
+    assert expand(granted_case, [task_spec(item_key="old")]).status_code == 201
+    replaced = decide(
+        granted_case,
+        [
+            {
+                "action": "expand_graph",
+                "expansion_id": "defects",
+                "tasks": [
+                    {
+                        **task_spec(item_key="new", zone="src/config/new"),
+                        "supersedes": "decision-1.old",
+                    }
+                ],
+            }
+        ],
+        key_value="decision-replace",
+        decision_id="decision-replace",
+        expected_graph_revision=1,
+    )
+    assert replaced.status_code == 201, replaced.text
+    assert replaced.json()["nodes_superseded"] == ["decision-1.old"]
+
+    successor = granted_case["client"].get(
+        f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}"
+        "/tasks/decision-replace.new",
+        headers=granted_case["headers"],
+    ).json()
+    assert successor["supersedes"] == "decision-1.old"
+    assert successor["required_outcomes"] == ["config-defect-triage"]
+
+    predecessor = granted_case["client"].get(
+        f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}/tasks/decision-1.old",
+        headers=granted_case["headers"],
+    ).json()
+    assert predecessor["state"] == "superseded"
+    assert predecessor["superseded_by"] == "decision-replace.new"
+    assert predecessor["required_outcomes"] == ["config-defect-triage"]
+    assert predecessor["history"][-1]["state"] == "superseded"
+
+    # A replacement that dropped an obligation is refused, and commits nothing.
+    revision = graph(granted_case)["graph_revision"]
+    refused = decide(
+        granted_case,
+        [
+            {
+                "action": "expand_graph",
+                "expansion_id": "defects",
+                "tasks": [
+                    {
+                        **task_spec(
+                            item_key="narrower",
+                            zone="src/config/narrower",
+                            outcomes=(),
+                        ),
+                        "supersedes": "decision-replace.new",
+                    }
+                ],
+            }
+        ],
+        key_value="decision-narrow",
+        decision_id="decision-narrow",
+        expected_graph_revision=revision,
+    )
+    assert refused.status_code in {403, 409, 422}, refused.text
+    assert refused.json()["reason_code"] == "SCHEDULING_OBLIGATION_UNCOVERED"
+    assert graph(granted_case)["graph_revision"] == revision
+
+
+def test_a_version_pinned_within_one_decision_is_readable(
+    granted_case: dict[str, Any],
+) -> None:
+    """A decision that pins an intermediate revision leaves that version stored.
+
+    One accepted batch can bind a role, seal the set that pins the task, and then
+    hold its dispatch. The version the seal named is the intermediate one, so it
+    is the one that has to be readable afterwards — not only the batch's last.
+    """
+    expanded = expand(granted_case, [task_spec(item_key="a")])
+    assert expanded.status_code == 201, expanded.text
+    pinned_revision = int(
+        granted_case["client"].get(
+            f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}"
+            "/tasks/decision-1.a",
+            headers=granted_case["headers"],
+        ).json()["revision"]
+    )
+    batch = decide(
+        granted_case,
+        [
+            {"action": "bind_role", "task_id": "decision-1.a", "role_alias": "researcher"},
+            {
+                "action": "seal",
+                "expansion_id": "defects",
+                "members": ["decision-1.a"],
+                "obligations": ["config-defect-triage"],
+            },
+            {"action": "request_dispatch", "task_id": "decision-1.a", "dispatch": "held"},
+        ],
+        key_value="decision-batch",
+        decision_id="decision-batch",
+        expected_graph_revision=1,
+    )
+    assert batch.status_code == 201, batch.text
+    sealed = graph(granted_case)["expansions"][0]
+    pin = sealed["members"]["decision-1.a"]
+    current = granted_case["client"].get(
+        f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}/tasks/decision-1.a",
+        headers=granted_case["headers"],
+    ).json()
+    # The seal pinned a version the batch produced on the way, and the batch then
+    # moved the task on: the pinned version is intermediate, not the survivor.
+    assert pinned_revision < int(pin["revision"]) < int(current["revision"])
+
+    response = granted_case["client"].get(
+        f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}"
+        f"/tasks/decision-1.a/versions/{pin['revision']}",
+        params={"digest": pin["digest"]},
+        headers=granted_case["headers"],
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["revision"] == pin["revision"]
+    assert response.json()["digest"] == pin["digest"]
+
+
 def test_an_optional_member_still_carries_its_outcome(
     granted_case: dict[str, Any],
 ) -> None:
@@ -921,6 +1079,42 @@ def test_an_unknown_reference_is_refused(
         "SCHEDULING_GRANT_INPUT_NOT_PERMITTED",
         "SCHEDULING_INPUT_REFERENCE_UNRESOLVED",
     }
+
+
+def test_an_output_contract_the_kind_cannot_produce_is_refused(
+    granted_case: dict[str, Any],
+) -> None:
+    """A registered contract is not the same as one the frozen kind produces.
+
+    ``artifact_aggregate@1`` promises ``aggregated-report@1``. A task declaring a
+    contract this build knows about but that kind does not make is refused, and
+    nothing is committed.
+    """
+    before = graph(granted_case)
+    response = decide(
+        granted_case,
+        [
+            {
+                "action": "expand_graph",
+                "expansion_id": "defects",
+                "tasks": [
+                    {
+                        **task_spec(item_key="incompatible"),
+                        "output_contract_ref": "repair-patch@1",
+                    }
+                ],
+            }
+        ],
+    )
+    assert response.status_code in {403, 422}, response.text
+    assert response.json()["reason_code"] == "SCHEDULING_OUTPUT_CONTRACT_INCOMPATIBLE"
+    after = graph(granted_case)
+    assert after["graph_revision"] == before["graph_revision"]
+    assert tasks(granted_case)["items"] == []
+
+    # The compatible contract is still accepted.
+    compatible = expand(granted_case, [task_spec(item_key="compatible")])
+    assert compatible.status_code == 201, compatible.text
 
 
 def test_a_declared_reference_is_accepted(
@@ -1175,3 +1369,154 @@ def test_two_overlapping_grants_decide_concurrently_with_one_winner(
     )
     assert replay_loser.status_code == 409, replay_loser.text
     assert replay_loser.json()["reason_code"] == "SCHEDULING_GRAPH_REVISION_CONFLICT"
+
+
+# ------------------------------------------- observation metric semantics
+
+
+def test_a_used_observation_derives_its_remaining_from_its_limit(
+    granted_case: dict[str, Any],
+) -> None:
+    """A usage reading is not an availability reading.
+
+    ``metric: used`` with ``amount: 1`` and ``limit: 1`` means the pool is fully
+    consumed, so nothing may be admitted; reading the amount as if it were the
+    remaining quantity would hand out work against an exhausted pool. The
+    ``remaining`` path keeps its own meaning, and a usage reading with no
+    compatible limit stays explicitly unknown rather than being guessed at.
+    """
+    open_and_seal(
+        granted_case,
+        [
+            task_spec(item_key="a", zone="src/config/a"),
+            task_spec(item_key="b", zone="src/config/b"),
+        ],
+    )
+    policy = resource_policy(granted_case, max_concurrent_claims=4)
+    assert policy.status_code in {200, 201}, policy.text
+
+    exhausted = observe(
+        granted_case, metric="used", amount="1", limit="1", source_ref="ledger-used-full"
+    )
+    assert exhausted.status_code in {200, 201}, exhausted.text
+    blocked = claim(granted_case, "decision-1.a", key_value="claim-full")
+    assert blocked.status_code == 409, blocked.text
+    assert blocked.json()["reason_code"] == "SCHEDULING_CAPACITY_BUSY"
+    assert blocked.json()["remaining"] == 0, blocked.json()
+
+    fresh = observe(
+        granted_case, metric="used", amount="0", limit="1", source_ref="ledger-used-none"
+    )
+    assert fresh.status_code in {200, 201}, fresh.text
+    admitted = claim(granted_case, "decision-1.a", key_value="claim-full")
+    assert admitted.status_code == 201, admitted.text
+    assert admitted.json()["admission"]["remaining"] == 1, admitted.json()
+
+    # A usage reading with no compatible limit describes no usable pool.
+    unknown = observe(
+        granted_case, metric="used", amount="1", limit=None, source_ref="ledger-used-nolimit"
+    )
+    assert unknown.status_code in {200, 201}, unknown.text
+    other = claim(granted_case, "decision-1.b", key_value="claim-b")
+    assert other.status_code == 409, other.text
+    assert other.json()["reason_code"] == "SCHEDULING_CAPACITY_UNKNOWN"
+
+    # The remaining path is unchanged: it is the available quantity itself.
+    restored = observe(
+        granted_case, metric="remaining", amount="2", source_ref="ledger-remaining"
+    )
+    assert restored.status_code in {200, 201}, restored.text
+    again = claim(granted_case, "decision-1.b", key_value="claim-b")
+    assert again.status_code == 201, again.text
+
+
+# ------------------------------------------- immutable rejection receipts
+
+
+def test_a_replayed_refusal_returns_its_original_record_unchanged(
+    granted_case: dict[str, Any],
+) -> None:
+    """The first refusal owns the command key; nothing rewrites or bypasses it.
+
+    A stale decision is refused and recorded. Repeating the identical command
+    returns the *same* stored record with every original field, a different
+    payload under that key is a conflict, and the original payload afterwards
+    still answers with the original refusal. The graph and the queue are never
+    touched by any of the three.
+    """
+    first = expand(
+        granted_case,
+        [task_spec(item_key="a")],
+        key_value="decision-winner",
+    )
+    assert first.status_code == 201, first.text
+    stale = expand(
+        granted_case,
+        [task_spec(item_key="b")],
+        key_value="decision-loser",
+        decision_id="decision-loser",
+        expected_graph_revision=0,
+    )
+    assert stale.status_code == 409, stale.text
+    assert stale.json()["reason_code"] == "SCHEDULING_GRAPH_REVISION_CONFLICT"
+    assert stale.json()["current_graph_revision"] == 1
+
+    stored = granted_case["client"].get(
+        f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}"
+        "/decision-rejections/decision-loser",
+        headers=granted_case["headers"],
+    ).json()
+    assert stored["current_graph_revision"] == 1
+    assert stored["command_digest"] == stale.json()["command_digest"]
+
+    # The identical command replay returns the original record, unchanged.
+    replay = expand(
+        granted_case,
+        [task_spec(item_key="b")],
+        key_value="decision-loser",
+        decision_id="decision-loser",
+        expected_graph_revision=0,
+    )
+    assert replay.status_code == 409, replay.text
+    assert replay.json() == stored, replay.json()
+    again = granted_case["client"].get(
+        f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}"
+        "/decision-rejections/decision-loser",
+        headers=granted_case["headers"],
+    ).json()
+    assert again == stored
+
+    # A changed payload under that key is a conflict and does not overwrite.
+    changed = expand(
+        granted_case,
+        [task_spec(item_key="b")],
+        key_value="decision-loser",
+        decision_id="decision-loser",
+        expected_graph_revision=0,
+        reason="a different reason entirely",
+    )
+    assert changed.status_code == 409, changed.text
+    assert changed.json()["reason_code"] == "SCHEDULING_IDEMPOTENCY_CONFLICT"
+    untouched = granted_case["client"].get(
+        f"{granted_case['base']}/workflow-runs/{granted_case['run_id']}"
+        "/decision-rejections/decision-loser",
+        headers=granted_case["headers"],
+    ).json()
+    assert untouched == stored
+
+    # The original payload still answers with its original refusal.
+    original = expand(
+        granted_case,
+        [task_spec(item_key="b")],
+        key_value="decision-loser",
+        decision_id="decision-loser",
+        expected_graph_revision=0,
+    )
+    assert original.status_code == 409, original.text
+    assert original.json() == stored
+
+    # Nothing was committed anywhere along the way.
+    current = graph(granted_case)
+    assert current["graph_revision"] == 1
+    assert [item["revision"] for item in current["history"]] == [1]
+    assert [item["task_id"] for item in pages(granted_case)] == ["decision-1.a"]

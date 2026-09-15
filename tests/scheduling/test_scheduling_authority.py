@@ -407,7 +407,13 @@ def test_a_decision_commits_a_graph_revision_and_a_receipt(
     assert response.status_code == 201, response.text
     receipt = response.json()
     assert receipt["graph_revision"] == 1
-    assert receipt["accepted_under"] == "user_authorization"
+    # The revision is accepted under the grant that authorised it. The user's
+    # own approval is the Run's initial authorization, recorded once at creation,
+    # and is not recomputed into a "new approval" for each graph revision.
+    assert receipt["accepted_under"] == "accepted_under_grant"
+    assert receipt["authorizing_grant_id"] == "configuration-repair-scope"
+    assert receipt["authorizing_grant_depth"] == 0
+    assert receipt["user_authorization_id"] == "run-initial-authorization"
     assert receipt["nodes_added"] == ["decision-1.a", "decision-1.b"]
     assert receipt["task_count"] == 2
     assert receipt["model_calls"] == 0
@@ -449,7 +455,7 @@ def test_an_invalid_second_operation_leaves_the_graph_untouched(
             {"action": "set_priority", "task_id": "no-such-task", "priority": 3},
         ],
     )
-    assert response.status_code in {403, 404}, response.text
+    assert response.status_code == 404, response.text
     assert response.json()["reason_code"] == "SCHEDULING_TASK_NOT_FOUND"
     assert graph(granted_case)["graph_revision"] == 0
     assert tasks(granted_case)["items"] == []

@@ -139,6 +139,27 @@ class ReportPayload(BaseModel):
     note: Annotated[str, Field(max_length=8000)] = ""
 
 
+def refusal_status(code: str) -> int:
+    """The HTTP status one refusal reason code is reported with.
+
+    It is decided in exactly one place so that the response to a first refusal
+    and the response to a replay of it are the same status as well as the same
+    body: a caller that lost the first response must not be told something
+    different when it asks again.
+    """
+    if code in CONFLICT_CODES or code.endswith("CONFLICT"):
+        # A refusal the caller resolves by re-reading the current state.
+        return 409
+    if code.endswith("NOT_FOUND"):
+        return 404
+    if "SCOPE_INSUFFICIENT" in code or "NOT_PERMITTED" in code or "NOT_OWNED" in code:
+        # A capability this credential kind does not carry, or authority over
+        # something the caller does not own.
+        return 403
+    # Anything else is a payload the engine considered and refused.
+    return 422
+
+
 def bearer(request: Request) -> str:
     """The one credential a protocol request may present.
 
@@ -182,23 +203,19 @@ def register_scheduling_routes(app: FastAPI, store: SchedulingStore) -> None:
     @app.exception_handler(SchedulingError)
     async def scheduling_error(request: Request, error: SchedulingError) -> JSONResponse:
         del request
+        # A replayed refusal answers with the record that was stored once, so the
+        # caller receives exactly the reason, revision and command identity the
+        # first attempt received rather than a freshly derived document.
+        from karajan.scheduling.store import _RejectedDecision
+
+        if isinstance(error, _RejectedDecision):
+            # The status follows the reason code the record carries, so a replay
+            # answers exactly as the original refusal did.
+            return JSONResponse(
+                error.record, status_code=refusal_status(str(error.record["reason_code"]))
+            )
         document = error.document()
-        status = (
-            # A refusal the caller resolves by re-reading the current state.
-            409
-            if error.code in CONFLICT_CODES
-            else 404
-            if error.code.endswith("NOT_FOUND")
-            # A capability this credential kind does not carry, or authority
-            # over something the caller does not own.
-            else 403
-            if "SCOPE_INSUFFICIENT" in error.code
-            or "NOT_PERMITTED" in error.code
-            or "NOT_OWNED" in error.code
-            # Anything else is a payload the engine considered and refused.
-            else 422
-        )
-        return JSONResponse(document, status_code=status)
+        return JSONResponse(document, status_code=refusal_status(error.code))
 
     def protocol(request: Request, capability: str) -> Principal:
         """Resolve the bearer token and require one capability of its kind.
@@ -661,4 +678,10 @@ def register_scheduling_routes(app: FastAPI, store: SchedulingStore) -> None:
         return store.task(project_id, run_id, task_id)
 
 
-__all__ = ["PROTOCOL_PREFIX", "bearer", "management_principal", "register_scheduling_routes"]
+__all__ = [
+    "PROTOCOL_PREFIX",
+    "bearer",
+    "management_principal",
+    "refusal_status",
+    "register_scheduling_routes",
+]

@@ -56,12 +56,18 @@
 | AC2 grant 不能发明冻结部署之外的角色/种类/交付目标 | `_require_frozen_definitions`；`test_a_grant_cannot_invent_a_role_outside_the_frozen_deployment`（422 `SCHEDULING_GRANT_ROLE_UNRESOLVED` 且未写入）、`test_a_grant_cannot_raise_the_delivery_target`（report 部署不能授予 pr 目标） | C/P |
 | AC3 有效决定经身份/grant/动作/图版本/输入输出/无环/义务校验后在同一短事务提交图修订、回执与完整队列 | `_plan_decision` + `_commit_decision`；`test_a_decision_commits_a_graph_revision_and_a_receipt`、`test_an_invalid_second_operation_leaves_the_graph_untouched`（404 且图修订 0、任务为空）、`test_a_decision_made_against_a_stale_revision_conflicts`、`test_a_dependency_cycle_is_refused`、`test_a_decision_made_against_different_inputs_is_refused`、`test_an_action_the_grant_did_not_authorise_is_refused` | C/P |
 | AC3 幂等键重传不扩出重复节点、同键异载荷拒绝 | `test_the_same_decision_key_replays_and_a_changed_payload_conflicts`（重放 200，返回与首次**结构相等**的回执 JSON；异载荷 409 `SCHEDULING_IDEMPOTENCY_CONFLICT`） | C/P |
+| AC3 输出契约按所选执行种类校验 | `_Definitions.require_contract_for_kind`：`test_an_output_contract_the_kind_cannot_produce_is_refused`（`artifact_aggregate@1` + `repair-patch@1` 422 `SCHEDULING_OUTPUT_CONTRACT_INCOMPATIBLE` 且无图变更；兼容的 `aggregated-report@1` 仍 201） | C/P |
 | AC3 输入引用按声明与执行种类校验，不按参数名授权 | `_Definitions.validate_inputs` + `_references_of`：参数名来自执行种类，引用来自 grant 许可集合；`test_a_declared_reference_is_accepted`（正向）、`test_an_unknown_reference_is_refused`、`test_an_output_reference_to_a_nonexistent_producer_is_refused` | C/P |
 | AC4 两个有效 grant 可明确覆盖重叠范围；CAS 防覆盖并保留冲突回执 | `test_two_overlapping_grants_decide_concurrently_with_one_winner`：两个各自持凭证的 grant 从**两个线程**在同一 `expected_graph_revision` 上真正并发提交，恰好 201/409 各一，图只有 1 个新修订与 1 个任务，`scheduling_decision_rejections` 中留有失败方回执，双方重放各自可解释；`test_a_refused_decision_leaves_a_durable_conflict_receipt`、`test_a_refused_decision_does_not_commit_partial_work` | P |
 | AC4 冻结已领取工作项；后续图形成新修订；保留被替代/失败/消费与既有义务 | `test_a_claimed_snapshot_is_unchanged_by_a_later_revision`（领取回执按解析后的 JSON 结构相等，含身份与输入绑定）、`test_an_obligation_survives_every_supported_edit`（`set_priority`/`bind_role`/`request_dispatch`/`set_dependencies` 与失败报告均不改写 `required_outcomes`；被 hold 的任务确实不可领取，解除后才可）、`test_an_optional_member_still_carries_its_outcome`、`test_an_uncovered_obligation_is_refused_rather_than_committed` | C/P |
+| AC4 替代保留历史并覆盖义务 | `test_a_replacement_supersedes_the_task_it_replaces`（`nodes_superseded` 记录、后继 `supersedes` 指向原任务、原任务保留正文与历史、丢义务的替代被拒且无图变更） | C/P |
+| AC4 一个决定批次内的中间 pinned 版本可读回 | `_archive_version` + `scheduling_task_versions`；`test_a_version_pinned_within_one_decision_is_readable`（批次内 pin 的中间版本按 revision+digest 200 读回） | C/P |
+| AC5 批准来源区分初始批准与 grant 接受 | 每个已接受修订记录 `accepted_under_grant` 与 `authorizing_grant_id`/`authorizing_grant_depth`，Run 自身的初始批准单列；`test_a_decision_commits_a_graph_revision_and_a_receipt` 断言该组字段 | C/P |
 | AC4 已封口成员版本不可被后续修订静默改写 | `scheduling_task_versions` 归档每个任务版本；`_refresh_member` 只更新**未封口**集合；`test_a_sealed_member_version_is_readable_after_the_task_changes`（封口后编辑现有成员，sealed 记录不变，按 pinned revision+digest 读回原正文，错 digest 被拒）、`test_a_sealed_version_is_readable_after_a_restart`（在同一解释器内新建 `create_app` 重开同一 SQLite 与文件；**新 OS 进程**的队列/领取恢复由远端 root 探针单独证明，不由本用例声称） | C/P |
 | AC5 open 时不提前汇合；seal 固定成员 revision 并校验义务 | `_join_blocked` 区分「成员的集合仍 open」与「Join 引用的集合仍 open」；`test_an_open_expansion_holds_its_join_and_its_members`、`test_sealing_releases_the_members_and_the_join`、`test_a_seal_cannot_name_a_member_that_does_not_exist`、`test_an_obligation_survives_every_supported_edit` 中的未覆盖义务拒绝 | C/P |
 | AC5 1/3/7 及超过 100 项任务完整持久/分页读回，无默认 Agent/任务总数 | `test_tasks_are_persisted_and_paged_without_loss`（103 项、37/页、无重复无遗漏）、`test_a_large_task_set_is_persisted_and_paged_completely`（103 项全集相等，且第 100 项之后的任务仍可按精确身份取回）；分页上限只是单次响应字节/传输限制 | C/P |
+| AC5 观察的度量语义被正确解读 | `_admit` 按 `metric` 解释读数：`remaining` 是可用量本身，`used` 需配合其 `limit` 推导 `limit-used`（耗尽为 0），缺 limit 的 `used` 保持 unknown；`test_a_used_observation_derives_its_remaining_from_its_limit`（used1/limit1 拒绝、used0/limit1 放行、缺 limit unknown、remaining 路径不变） | C/P |
+| AC5 受信 unknown 不阻挡后续终端释放 | 只有**终端**核对才置释放守卫；`test_a_late_untrusted_report_cannot_undo_a_trusted_reconciliation` 覆盖占用保持与释放一次 | C/P |
 | AC5 资源等待由显式政策/可信观察判定，缺容量保留任务，释放后 ready；唤醒不调用模型 | `_admit` 在池无政策或无观察时返回 `SCHEDULING_CAPACITY_UNKNOWN`（未知不等于无限）；`test_sibling_grants_share_one_budget_and_occupancy`、`test_a_late_untrusted_report_cannot_undo_a_trusted_reconciliation`（容量 1 时第二任务 409，核对释放后可领取，全程 `model_calls == 0`） | C/P |
 | AC6 可信执行消费者读 ready 并幂等领取；记录 task/graph/grant 与写区；同区互斥、独立区可领取 | `claim` 在同一事务内重查任务/依赖/grant 链/写区/容量；`test_overlapping_write_zones_are_one_zone_and_independent_ones_are_not`（`src/config/zone` 与 `src/config/ZONE` 同一目录、`src/config/zone/sub` 在其内，三者互斥；`src/config/other` 独立可领取）、`test_the_queue_reports_waiting_reasons_without_dropping_tasks`、`test_a_repeated_claim_returns_the_same_work`（重复/丢失响应返回同一 claim）、`test_a_claim_for_another_task_under_a_used_key_conflicts` | C/P |
 | AC6 不能把 claim 或自述标成物理 started/completed；未知执行不自动释放占用 | `physical_execution` 固定 `not_started`、`verified_by_engine` false；`test_a_claim_is_a_handover_and_not_an_execution`、`test_a_late_untrusted_report_cannot_undo_a_trusted_reconciliation`（未核对 completed 保持 `claimed` 且占用 1）、`test_another_consumer_cannot_report_on_work_it_does_not_hold`（409 `SCHEDULING_TASK_NOT_OWNED`）、`test_a_consumer_cannot_reconcile_its_own_report`、`test_a_consumer_cannot_publish_a_trusted_resource_observation` | C/P |
@@ -76,8 +82,8 @@ python examples/workflows/role_scheduling.py
 脚本在真实认证边界内：发布并部署真实配置包、从 active 定义创建 Run、经管理命令签发 grant 与两个窄凭证、用角色凭证提交并封口一次决定、设置可信资源政策与观察、由执行消费者领取一个任务并在容量 1 下看到第二个任务被拒、消费者报告后由所有者核对并释放容量、等待任务转为可领取，最后读回图修订/任务分页/封口成员与其 pinned 版本正文。
 
 实际输出（2026-09-15，Windows 11 + Python 3.12.14）。下面是
-`.cache/r8-phase1/workers/04/example-role-scheduling-20260915-181545.log` 中被逐行核对过的内容，
-其中的身份字段是该次运行的真实值：
+`.cache/r8-phase1/workers/04/` 下示例日志中被逐行核对过的内容；`decision` 一行取自修复后的运行
+（`accepted_under_grant`），其余身份字段是其所来自那次运行的真实值，逐次运行不同：
 
 ```text
 deployed: revision 1 slot 1 readiness ready
@@ -86,7 +92,7 @@ run: run-2e2cf7d5a0224033af186e720886bfbe frozen revision 1 graph revision 0 mod
 grant: configuration-repair-scope depth 0 actions ['bind_role', 'expand_graph', 'seal', 'set_priority'] delegation False
 credentials: cred-135f741a24b87800cd636bad routes ['decision'] raw token stored False
 credential replay: True same identity True re-reveals token False
-decision: decision-1 graph revision 1 accepted under user_authorization tasks 2 approval required False
+decision: decision-1 graph revision 1 accepted under accepted_under_grant tasks 2 approval required False
   outstanding outcomes ['comparison-report'] nodes added ['decision-1.option-a', 'decision-1.option-b']
 seal: {'defects': ['decision-1.option-a', 'decision-1.option-b']} graph revision 2
 resource: pool-a remaining 1 source local_ledger
@@ -105,8 +111,9 @@ activation: {"slot": "default", "action": "deploy_only", "model_calls": 0}
 ```
 
 **每次运行都变化**：run、deployment、claim、凭证与 session 身份，以及 acquisition 摘要把加载时刻与进程纳入身份，
-因此它们逐次不同。**每次运行相同**（相同内容下）：`compiled_digest` 与内容派生的任务/图摘要；
-任务与图正文包含时间与状态字段，因此不声称其摘要跨运行相同。脚本内以断言校验的是结构事实
+因此它们逐次不同。**在相同内容下每次运行相同**：`compiled_digest`，因为编译结果是内容的纯函数。
+**不跨运行声称相同**：任务与图正文包含时间、状态与决策身份字段，因此它们的摘要随运行变化；
+本文不对它们跨运行的相等性作任何断言。脚本内以断言校验的是结构事实
 （例如 `physical_execution == "not_started"`、`stores_raw_token is False`、容量 1 下第二条 claim 为 409），
 身份字段仅作展示。
 
@@ -174,4 +181,7 @@ PR #182  quality-gate  pass
 - 不声称最终候选已集成、PR 已交付或完整 RS-AC/原 P3/P4 已完成；
 - 不声称任何真实执行器的资格、计费或隔离；本切片的凭证与消费者是受信协议身份，取 C/P 而非 S。
 
-**保留的失败事实**：本切片开发期间的独立探测记录于 `.cache/r8-phase1/workers/04/`。若干**早期 draft** 的失败被保留为历史并已在本候选修复，其中较重要的有：run id 只由 `(project, conversation, slot, inputs)` 派生导致新命令撞旧 run；重放先于来源检查导致 active 更换后原命令被误报 stale；输入只校验非空映射；grant 以参数名而非引用授权；`uncovered_obligations` 签名漂移；写区用字符串相等比较导致大小写别名与父子目录互相放行；凭证签发回执列名不一致；封口后成员版本被后续修订改写；未被核对的 completed 报告会终止任务并释放占用；被拒绝的决定没有持久回执。每一处都由第 2 节列出的永久回归覆盖，早期记录保留其原字节。
+**保留的失败事实**：本切片开发期间的独立探测记录于 `.cache/r8-phase1/workers/04/`。若干**早期 draft** 的失败被保留为历史并已在本候选修复，其中较重要的有：run id 只由 `(project, conversation, slot, inputs)` 派生导致新命令撞旧 run；原命令的查找发生在**新鲜来源校验之后**，因此 active 更换后原命令被误报 stale（修正是先做幂等重放）；输入只校验非空映射；grant 以参数名而非引用授权；`uncovered_obligations` 签名漂移；写区用字符串相等比较导致大小写别名与父子目录互相放行；凭证签发回执列名不一致；封口后成员版本被后续修订改写；未被核对的 completed 报告会终止任务并释放占用；被拒绝的决定没有持久回执；观察的 `used` 量被当作 `remaining` 读取而放行已耗尽的池；受信的 `unknown` 核对
+永久挡住后续终端释放；已封口的 join 在必需成员尚未产出结果时就汇合；合法替代被静默忽略；一个决定批次内的
+中间 pinned 版本未归档；输出契约只按全局注册表存在性校验；后续决定被标成新的用户批准。每一处都由第 2 节
+列出的永久回归覆盖，早期记录保留其原字节。

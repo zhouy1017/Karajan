@@ -449,6 +449,7 @@ def validate_task_spec(
         "SCHEDULING_TASK_INVALID",
         f"{pointer}/output_contract_ref",
     )
+    definitions.require_contract_for_kind(kind_ref, output_contract_ref, pointer)
     definitions.require_contract(output_contract_ref, pointer)
     inputs = value.get("inputs", {})
     if not isinstance(inputs, Mapping):
@@ -940,6 +941,8 @@ def graph_document(
     decision_id: str,
     grant_id: str,
     grant_revision: int,
+    authorizing_grant_id: str,
+    authorizing_grant_depth: int,
     accepted_under: str,
     user_authorization_id: str,
     inputs_digest: str,
@@ -971,6 +974,8 @@ def graph_document(
         "decision_id": decision_id,
         "grant_id": grant_id,
         "grant_revision": grant_revision,
+        "authorizing_grant_id": authorizing_grant_id,
+        "authorizing_grant_depth": authorizing_grant_depth,
         # How this revision came to exist: under the original user
         # authorization, or under a grant that authorization enabled. The
         # initial approval digest is never recomputed into a "new approval".
@@ -1079,6 +1084,36 @@ class _Definitions:
                     )
                 ],
             )
+
+    def require_contract_for_kind(
+        self, kind_ref: str, contract_ref: str, pointer: str
+    ) -> None:
+        """Require the output contract to be one the frozen kind really produces.
+
+        A contract this build knows about is not the same thing as a contract the
+        *selected execution kind* promises. Accepting any registered contract
+        would let a task declare an output the frozen definition cannot produce,
+        so the check is against the kind's own declared outputs.
+        """
+        kind = self.execution_kinds.get(kind_ref) or {}
+        outputs = [str(item) for item in kind.get("outputs") or ()]
+        if not outputs or contract_ref in outputs:
+            return
+        raise SchedulingError(
+            "SCHEDULING_OUTPUT_CONTRACT_INCOMPATIBLE",
+            fields={
+                "execution_kind_ref": kind_ref,
+                "output_contract_ref": contract_ref,
+                "declared_outputs": outputs[:16],
+            },
+            diagnostics=[
+                located(
+                    "SCHEDULING_OUTPUT_CONTRACT_INCOMPATIBLE",
+                    f"{pointer}/output_contract_ref",
+                    "the selected execution kind does not produce that contract",
+                )
+            ],
+        )
 
     def validate_inputs(
         self,

@@ -194,6 +194,27 @@ class Admitted:
         }
 
 
+class _RejectedDecision(SchedulingError):
+    """One already-recorded refusal, replayed with its original facts.
+
+    It carries the whole stored receipt, so the caller receives the same reason,
+    revision and command identity that the first attempt received. It is a
+    separate type from a freshly adjudicated refusal so the caller does not
+    record it a second time: the durable evidence is written once.
+    """
+
+    def __init__(self, record: dict[str, Any]) -> None:
+        super().__init__(
+            str(record["reason_code"]),
+            current_revision=(
+                None
+                if record.get("current_graph_revision") is None
+                else int(record["current_graph_revision"])
+            ),
+        )
+        self.record = record
+
+
 class SchedulingStore:
     """Durable roles, grants, graph revisions, resource facts and claims."""
 
@@ -1589,9 +1610,11 @@ class SchedulingStore:
                 parsed=parsed,
                 principal=principal,
             )
+        except _RejectedDecision:
+            raise
         except SchedulingError as error:
             if error.code in self.RECORDABLE_REJECTIONS:
-                self._record_rejection(
+                recorded = self._record_rejection(
                     project_id=project_id,
                     run_id=run_id,
                     command_key=command_key,
@@ -1601,6 +1624,11 @@ class SchedulingStore:
                     code=error.code,
                     current_revision=error.current_revision,
                 )
+                if recorded is not None:
+                    # The response to the first refusal carries the same fields
+                    # its stored record does, so a client that lost this response
+                    # and a client that re-reads the record see one document.
+                    raise _RejectedDecision(recorded) from None
             raise
 
     def _decision_transaction(
@@ -1777,7 +1805,7 @@ class SchedulingStore:
         principal: Principal,
         code: str,
         current_revision: int | None,
-    ) -> None:
+    ) -> dict[str, Any] | None:
         """Persist one refused decision, in its own committed transaction.
 
         The receipt names the immutable command identity - its key, its payload
@@ -1796,6 +1824,21 @@ class SchedulingStore:
         outcome = "conflict" if code.endswith("CONFLICT") else "rejected"
         try:
             with self._owned(project_id) as db:
+                existing = db.execute(
+                    "SELECT digest, record FROM scheduling_decision_rejections "
+                    "WHERE project_id=? AND run_id=? AND key=?",
+                    (project_id, run_id, command_key),
+                ).fetchone()
+                if existing is not None and existing["digest"] == digest:
+                    # This exact command already owns a refusal. That record is
+                    # the durable evidence and is returned unchanged.
+                    earlier: dict[str, Any] = json.loads(existing["record"])
+                    return earlier
+                if existing is not None:
+                    # The key is held by a *different* command. That is the
+                    # conflict the caller was just told about, and it must not be
+                    # replaced by the original command's refusal.
+                    return None
                 record = {
                     "schema_version": DECISION_SCHEMA_VERSION,
                     "outcome": outcome,
@@ -1811,6 +1854,7 @@ class SchedulingStore:
                     "credential_kind": principal.kind,
                     "expected_graph_revision": parsed["expected_graph_revision"],
                     "current_graph_revision": current_revision,
+                    "current_revision": current_revision,
                     "inputs_digest": parsed["inputs_digest"],
                     "recorded_at": self.clock(),
                     "accepted": False,
@@ -1820,14 +1864,18 @@ class SchedulingStore:
                 record["digest"] = content_digest(
                     {key: value for key, value in record.items() if key != "digest"}
                 )
+                # Write once. The first refusal of a command key is the durable
+                # evidence of what that command was and why it was refused, so a
+                # later attempt of the same key neither replaces its reason and
+                # timestamp nor rewrites the digest the command was made with.
                 db.execute(
                     "INSERT INTO scheduling_decision_rejections VALUES (?,?,?,?,?) "
-                    "ON CONFLICT(project_id, run_id, key) DO UPDATE SET "
-                    "digest=excluded.digest, record=excluded.record",
+                    "ON CONFLICT(project_id, run_id, key) DO NOTHING",
                     (project_id, run_id, command_key, digest, canonical_json(record)),
                 )
+                return record
         except (SchedulingError, sqlite3.Error, KeyError):
-            return
+            return None
 
     def rejections(self, project_id: str, run_id: str) -> list[dict[str, Any]]:
         """Every refused decision of this run, read back by its command key."""
@@ -1880,8 +1928,11 @@ class SchedulingStore:
             if refused is None:
                 return None
             if refused["digest"] != digest:
+                # The key is taken by a different payload: the original command
+                # owns this key, and nothing overwrites what it recorded.
                 raise SchedulingError("SCHEDULING_IDEMPOTENCY_CONFLICT")
-            raise SchedulingError(str(json.loads(refused["record"])["reason_code"]))
+            original: dict[str, Any] = json.loads(refused["record"])
+            raise _RejectedDecision(original)
         if row["digest"] != digest:
             raise SchedulingError("SCHEDULING_IDEMPOTENCY_CONFLICT")
         receipt: dict[str, Any] = json.loads(row["record"])
@@ -1919,6 +1970,9 @@ class SchedulingStore:
         run_id = str(run["run_id"])
         nodes_added: list[str] = []
         nodes_superseded: list[str] = []
+        # Every version this decision produced, so the commit can archive all of
+        # them rather than only the survivors.
+        versions: dict[str, list[dict[str, Any]]] = {}
         nodes_retired: list[str] = []
         sealed: dict[str, list[str]] = {}
         for index, action in enumerate(parsed["actions"]):
@@ -2027,6 +2081,60 @@ class SchedulingStore:
                                 )
                             ],
                         )
+                    supersedes = spec.get("supersedes")
+                    if supersedes is not None:
+                        previous = working.get(str(supersedes))
+                        if previous is None:
+                            raise SchedulingError("SCHEDULING_TASK_NOT_FOUND")
+                        if previous["state"] in {"superseded", "cancelled"}:
+                            raise SchedulingError(
+                                "SCHEDULING_TASK_FROZEN",
+                                fields={"task_id": str(supersedes)},
+                                diagnostics=[
+                                    located(
+                                        "SCHEDULING_TASK_FROZEN",
+                                        f"{pointer}/tasks/{item_index}/supersedes",
+                                        "that task is already retired",
+                                    )
+                                ],
+                            )
+                        # The replacement must carry every obligation the task it
+                        # replaces still owed, so a successor cannot quietly
+                        # narrow what the run promised.
+                        owed = set(str(item) for item in previous["required_outcomes"])
+                        carried = set(str(item) for item in spec["required_outcomes"])
+                        uncovered = sorted(owed - carried)
+                        if uncovered:
+                            raise SchedulingError(
+                                "SCHEDULING_OBLIGATION_UNCOVERED",
+                                fields={
+                                    "task_id": str(supersedes),
+                                    "uncovered": uncovered[:16],
+                                },
+                                diagnostics=[
+                                    located(
+                                        "SCHEDULING_OBLIGATION_UNCOVERED",
+                                        f"{pointer}/tasks/{item_index}/required_outcomes",
+                                        "a replacement carries every obligation it replaces",
+                                    )
+                                ],
+                            )
+                        previous["state"] = "superseded"
+                        previous["superseded_by"] = task_id
+                        history = list(previous.get("history") or [])
+                        history.append(
+                            {
+                                "state": "superseded",
+                                "at": now,
+                                "by": str(parsed["decision_id"]),
+                                "graph_revision": revision,
+                                "superseded_by": task_id,
+                            }
+                        )
+                        previous["history"] = history
+                        self._archive_version(previous, versions)
+                        working[str(supersedes)] = reseal_task(previous)
+                        nodes_superseded.append(str(supersedes))
                     document = task_document(
                         spec=spec,
                         task_id=task_id,
@@ -2036,13 +2144,14 @@ class SchedulingStore:
                         decision_id=str(parsed["decision_id"]),
                         role_ref=spec["role_ref"],
                         parent_task_id=expansion.get("parent_task_id"),
-                        supersedes=None,
+                        supersedes=supersedes,
                     )
                     document["grant_id"] = grant.grant_id
                     document["required_outcomes"] = list(spec["required_outcomes"])
                     document["history"][0]["at"] = now
                     document = reseal_task(document)
                     working[task_id] = document
+                    self._archive_version(document, versions)
                     members[task_id] = {
                         "task_id": task_id,
                         "revision": 1,
@@ -2288,6 +2397,7 @@ class SchedulingStore:
                 existing["dispatch"] = dispatch
             existing["revision"] = int(existing.get("revision", 1)) + 1
             working[task_id] = reseal_task(existing)
+            self._archive_version(working[task_id], versions)
             self._refresh_member(working_expansions, working[task_id])
         # The retired nodes and their replacements are settled after every action,
         # so an invalid batch cannot leave a half-retired node behind.
@@ -2342,9 +2452,25 @@ class SchedulingStore:
             "nodes_superseded": nodes_superseded,
             "nodes_retired": nodes_retired,
             "outstanding_outcomes": outstanding,
+            "versions": versions,
             "sealed": sealed,
             "revision": revision,
         }
+
+    @staticmethod
+    def _archive_version(
+        document: Mapping[str, Any], versions: dict[str, list[dict[str, Any]]]
+    ) -> None:
+        """Record one task version this decision produced.
+
+        The commit writes these to ``scheduling_task_versions``, so a version a
+        seal pinned is readable afterwards even when a later action in the same
+        batch moved the live task on.
+        """
+        task_id = str(document["task_id"])
+        recorded = versions.setdefault(task_id, [])
+        if all(item["digest"] != document["digest"] for item in recorded):
+            recorded.append(dict(document))
 
     @staticmethod
     def _refresh_member(
@@ -2431,20 +2557,24 @@ class SchedulingStore:
                 "record=excluded.record, digest=excluded.digest",
                 (project_id, run_id, name, canonical_json(document), document["digest"]),
             )
-            # The version is archived immutably, so a seal that pinned it stays
-            # resolvable even after the live task has been edited.
-            db.execute(
-                "INSERT INTO scheduling_task_versions VALUES (?,?,?,?,?,?) "
-                "ON CONFLICT(project_id, run_id, task_id, revision) DO NOTHING",
-                (
-                    project_id,
-                    run_id,
-                    name,
-                    int(document.get("revision", 1)),
-                    str(document["digest"]),
-                    canonical_json(document),
-                ),
-            )
+            # Every version this batch produced is archived immutably, not only
+            # the last one. A seal may pin an intermediate revision — a decision
+            # can bind a role and then seal and then hold dispatch — and a pinned
+            # digest with no stored body behind it cannot be read back.
+            pinned = plan.get("versions", {}).get(name) or [document]
+            for version in pinned:
+                db.execute(
+                    "INSERT INTO scheduling_task_versions VALUES (?,?,?,?,?,?) "
+                    "ON CONFLICT(project_id, run_id, task_id, revision) DO NOTHING",
+                    (
+                        project_id,
+                        run_id,
+                        name,
+                        int(version.get("revision", 1)),
+                        str(version["digest"]),
+                        canonical_json(version),
+                    ),
+                )
         for name, document in sorted(expansions.items()):
             db.execute(
                 "INSERT INTO task_expansions VALUES (?,?,?,?) "
@@ -2469,7 +2599,17 @@ class SchedulingStore:
             # The distinction the design requires: the initial user approval is
             # referenceable, and a later revision under a grant is not silently
             # recomputed into a "new approval".
-            accepted_under="user_authorization" if grant.depth == 0 else "accepted_under_grant",
+            # The initial user approval is the Run's own authorisation, recorded
+            # once at creation. Every accepted *decision* is taken under the
+            # grant that authorised it, whether that grant is a top-level one or
+            # a delegated one: recomputing a "new approval" here would present a
+            # subsequent decision as though the user had approved the graph.
+            accepted_under="accepted_under_grant",
+            # The grant that authorised this revision, with its depth, so a
+            # reader can tell which grant accepted it and that the user's own
+            # initial approval is a separate, earlier fact.
+            authorizing_grant_id=grant.grant_id,
+            authorizing_grant_depth=grant.depth,
             user_authorization_id=grant.root_authorization_id,
             inputs_digest=str(parsed["inputs_digest"]),
             nodes_added=plan["nodes_added"],
@@ -2500,6 +2640,8 @@ class SchedulingStore:
             "parent_graph_digest": parent_digest,
             "inputs_digest": parsed["inputs_digest"],
             "accepted_under": record["accepted_under"],
+            "authorizing_grant_id": grant.grant_id,
+            "authorizing_grant_depth": grant.depth,
             "user_authorization_id": grant.root_authorization_id,
             "nodes_added": plan["nodes_added"],
             "nodes_superseded": plan["nodes_superseded"],
@@ -2811,8 +2953,31 @@ class SchedulingStore:
                 blocked.setdefault(str(member), "expansion_member_open")
         for task in (tasks or {}).values():
             for reference in task.joins:
-                if reference in expansions and reference in open_sets:
+                joined = expansions.get(reference)
+                if joined is None:
+                    continue
+                if reference in open_sets:
                     blocked[task.task_id] = "join_expansion_open"
+                    continue
+                # The set is sealed, so its members are fixed — and the join
+                # waits for every *required* member's real result, not merely for
+                # the seal. A sealed member that has not produced its result yet
+                # is exactly the case the seal exists to make checkable, so a
+                # fan-in that ran now would report a convergence over work that
+                # has not happened.
+                live = tasks or {}
+                waiting = [
+                    str(member["task_id"])
+                    for member in joined["members"].values()
+                    if str(member["task_id"]) != task.task_id
+                    and bool(member.get("required", True))
+                    and (
+                        (holder := live.get(str(member["task_id"]))) is None
+                        or holder.state != "completed"
+                    )
+                ]
+                if waiting:
+                    blocked[task.task_id] = "join_member_pending"
         return blocked
 
     def _waiting_reason(
@@ -3167,7 +3332,14 @@ class SchedulingStore:
             document = tasks.get(task_id)
             if document is None:
                 raise SchedulingError("SCHEDULING_TASK_NOT_FOUND")
-            reconciled = bool(document.document.get("reconciled_at"))
+            # Only a *terminal* reconciliation settles the execution. A trusted
+            # "unknown" records that the owner looked and could not settle it, so
+            # it must not set the guard that the later, real ending needs.
+            reconciled = document.document.get("reconciliation_outcome") in {
+                "completed",
+                "failed",
+                "cancelled",
+            }
             if document.claim_id is None:
                 raise SchedulingError(
                     "SCHEDULING_TASK_NOT_CLAIMED",
@@ -3233,9 +3405,10 @@ class SchedulingStore:
             updated["untrusted_observations"] = int(
                 updated.get("untrusted_observations", 0)
             ) + (0 if trusted else 1)
-            if trusted and not reconciled:
+            if trusted:
                 updated["reconciled_at"] = now
                 updated["reconciled_by"] = principal.credential_id
+                updated["reconciliation_outcome"] = str(outcome)
             if trusted:
                 if outcome == "unknown":
                     updated["state"] = "unknown"
@@ -3709,11 +3882,31 @@ class SchedulingStore:
                 remaining=None,
                 source=str(observation["source"]),
             )
+        # The metric says what the reading *means*. ``remaining`` is the
+        # available quantity itself; ``used`` is what has been consumed, and it
+        # is only meaningful against its own limit. Treating ``used`` as if it
+        # were ``remaining`` would read "1 of 1 consumed" as "1 available", which
+        # admits work against a pool that is already exhausted.
         remaining: int | None = None
-        if observation["amount"] is not None:
-            remaining = max(
-                0, int(observation["amount"]) - int(policy["safety_margin"])
-            )
+        amount = observation["amount"]
+        limit = observation["limit"]
+        if observation["metric"] == "remaining" and amount is not None:
+            remaining = max(0, int(amount) - int(policy["safety_margin"]))
+        elif observation["metric"] == "used":
+            if amount is None or limit is None:
+                # A used quantity with no compatible limit does not describe a
+                # pool this engine can admit against, so it stays unknown rather
+                # than being turned into a number by assumption.
+                return Admitted(
+                    admitted=False,
+                    reason="SCHEDULING_CAPACITY_UNKNOWN",
+                    pool_id=pool_id,
+                    occupied=consumption.live_claims,
+                    capacity=min([ceiling, *ceilings]),
+                    remaining=None,
+                    source=str(observation["source"]),
+                )
+            remaining = max(0, int(limit) - int(amount) - int(policy["safety_margin"]))
         effective = min([ceiling, *ceilings])
         if consumption.live_claims >= effective:
             return Admitted(
