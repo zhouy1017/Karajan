@@ -127,12 +127,43 @@ pytest tests/routing/test_authorization.py
        tests/runs/test_admission_guard.py
        tests/web/test_task_admission_http.py
        tests/tools/test_ci_quality_gate.py                   -> 54 passed, exit 0
+pytest tests/web/test_workflow_deployment_process.py        -> 14 passed, exit 0
 python examples/workflows/role_scheduling.py                 -> exit 0
 ```
 
+广泛套件的**逐次来源**必须分开读，不能合并成一个总数：
+
+```text
+pytest tests/workflows tests/web tests/contract tests/scheduling
+  181332-6160  -> 1 failed, 408 passed, 4 skipped, 14 subtests passed, exit 1
+                  （唯一失败是 #177 套件中 test_an_oserror_...:329 的断言假阳性：
+                    assert "28" not in ... 撞上时间戳 1789467351.5286982；
+                    消毒后的 reason_code/at_step 检查本身通过）
+  182015-44336 -> 409 passed, 4 skipped, 14 subtests passed, exit 0
+                  （在断言**修正**之后启动，但在把该断言收紧为「记录形状恰好是
+                    reason_code/at_step/recorded_at 且 recorded_at 为数值」之前启动）
+  182222-39796 -> 14 passed, exit 0
+                  （严格形状断言生效后的定向重跑，绑定该断言本身）
+```
+
+因此：广泛套件在 182015 的 409 passed 是真实的，但它测的是修正版而非收紧版断言；收紧后的
+证据是 182222 的定向 14 passed。两个数字各自保留其来源，不互相替代，也不回填成一次
+「全绿」总数。原始失败记录 181332-6160 原样保留。
+
 每项都使用仓库质量门入口（见 [测试与合并质量门](testing-gates.md)）；`tests/scheduling` 的完整用例经真实 HTTP/SQLite/文件路径，不在断言前直接写库。完整日志、真实退出码与 basetemp 见 `.cache/r8-phase1/workers/logs-04/` 及本目录下的 `178-*` 记录。
 
-远端证据由 PR 逐候选报告。本节的本地结果不包含远端 CI，也不代替独立审查。
+远端证据（同一候选 `4d3dc7d`，base `cf96eba`）：
+
+```text
+PR #182  quality-gate  pass
+         quick-python (ubuntu-24.04)  pass
+         quick-python (windows-2022)  pass
+         frontend-quality             pass
+```
+
+这是该 head 自己的 `quality-gate`，不是更早候选的历史记录。CI 通过只证明它实际覆盖的离线检查；
+独立审查由 Commander 在本候选上单独进行，不以 CI 绿灯代替。本节的本地结果不包含远端 CI，
+也不代替独立审查。
 
 ## 5. 证据边界与保留的失败事实
 
