@@ -323,10 +323,17 @@ def test_an_oserror_during_the_copy_leaves_a_reconcilable_intent(
     assert intent["outcome"] == "failed"
     assert intent["failure"]["reason_code"] == "WORKFLOW_STEP_FAILED_OSERROR"
     assert intent["failure"]["at_step"] == "materialize"
-    # Nothing from the exception message reached the record.
+    # Nothing from the exception message reached the record. The OSError branch
+    # builds a fixed shape — ``reason_code``, ``at_step`` and ``recorded_at`` and
+    # nothing else — so the assertion is exact. Asserting on substrings of the
+    # whole document would flake on a wall-clock timestamp, and allowing extra
+    # fields would stop noticing a nested ``errno``, which is the leak this check
+    # exists to catch.
     recorded = json.dumps(intent["failure"])
     assert "No space left on device" not in recorded
-    assert "28" not in recorded.replace('"2"', "")
+    assert set(intent["failure"]) == {"reason_code", "at_step", "recorded_at"}
+    assert isinstance(intent["failure"]["recorded_at"], (int, float))
+    assert "errno" not in recorded
     assert str(case["directory"]) not in recorded
     # Nothing was activated, and the slot is still empty.
     assert json_rows(

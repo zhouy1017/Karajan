@@ -27,6 +27,7 @@ from karajan.orchestration.routing import ApprovedRunRouting
 from karajan.projects import ProjectRegistry
 from karajan.projects.qualification import ProfileQualificationStore
 from karajan.runs import RunPlanner
+from karajan.scheduling import SchedulingStore
 from karajan.workflows import DeploymentStore, WorkflowStore
 
 from .admission import register_admission_routes
@@ -38,6 +39,7 @@ from .planning import PlanningWorkbench, register_planning_routes
 from .projects import register_project_routes
 from .resources import register_resource_routes
 from .runs import register_run_routes
+from .scheduling import PROTOCOL_PREFIX, register_scheduling_routes
 from .simulation import register_simulation_routes
 from .workflows import register_deployment_routes, register_workflow_routes
 
@@ -242,12 +244,18 @@ def create_app(
         state_directory / "workflow-deployments",
     )
     register_deployment_routes(app, deployment_store)
+    # The scheduling control plane shares this application's project database and
+    # consumes the deployment store's real API: a Run is created from an active
+    # definition this process re-loads, never from a request-supplied identity.
+    scheduling_store = SchedulingStore(projects, deployment_store, conversations)
+    register_scheduling_routes(app, scheduling_store)
     # Published so a caller of ``create_app`` (a test harness, an operator tool)
     # can hold the live stores directly, rather than reaching into route
     # closures. It grants nothing: both stores still take the acting principal
     # and enforce ownership on every call.
     app.state.workflow_store = workflow_store
     app.state.deployment_store = deployment_store
+    app.state.scheduling_store = scheduling_store
 
     @app.middleware("http")
     async def session_boundary(
@@ -256,9 +264,24 @@ def create_app(
         if request.headers.getlist("host") != [parsed_origin.netloc]:
             return _error("HOST_REJECTED", 403)
         unsafe = request.method not in {"GET", "HEAD", "OPTIONS"}
-        if unsafe and request.headers.getlist("origin") != [origin]:
+        # The protocol family authenticates with its own bearer credential rather
+        # than with a cookie, so the browser-specific Origin check does not apply
+        # to it; the loopback Host check above still does.
+        protocol = request.url.path.startswith(PROTOCOL_PREFIX)
+        if unsafe and not protocol and request.headers.getlist("origin") != [origin]:
             return _error("ORIGIN_REJECTED", 403)
-        if request.url.path.startswith("/v1/") and request.url.path != "/v1/session/bootstrap":
+        # The protocol family is called by a trusted control-protocol consumer
+        # rather than by a browser, so it does not use the session cookie. The
+        # exemption is exactly one path prefix, and every route below it
+        # authenticates its own issued capability. A session cookie presented
+        # here grants nothing: the protocol dependency reads only the bearer
+        # token, so a browser session is not a second way in even when the
+        # cookie is still attached to the request.
+        if (
+            request.url.path.startswith("/v1/")
+            and not protocol
+            and request.url.path != "/v1/session/bootstrap"
+        ):
             current = sessions.lookup(request.cookies.get("karajan_session", ""))
             if current is None:
                 return _error("AUTHENTICATION_REQUIRED", 401)
