@@ -16,6 +16,9 @@ dependencies = [
     "transformers==5.16.1",
     "tokenizers==0.23.2",
     "Jinja2==3.1.6",
+    # The workflow bundle parser imports the safe loader directly, so PyYAML is
+    # declared here rather than relied on transitively.
+    "PyYAML>=6.0.3,<7",
 ]
 
 [project.optional-dependencies]
