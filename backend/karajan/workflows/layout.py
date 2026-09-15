@@ -56,14 +56,19 @@ def is_reparse_point(path: Path) -> bool:
     file attribute is inspected directly; without it a junction planted inside the
     bundle root would look like an ordinary directory and its contents would be
     read from outside the managed tree.
+
+    ``st_file_attributes`` exists only on Windows. It is reached through
+    ``getattr`` rather than an attribute access so the same code is correct and
+    type-checks on every platform: off Windows there is no such attribute, the
+    value is absent, and the symlink test above is the whole answer.
     """
     try:
         if path.is_symlink():
             return True
-        attributes = os.stat(path, follow_symlinks=False).st_file_attributes
-    except (OSError, AttributeError):
+        attributes = getattr(os.stat(path, follow_symlinks=False), "st_file_attributes", 0)
+    except OSError:
         return False
-    return bool(attributes & FILE_ATTRIBUTE_REPARSE_POINT)
+    return bool(int(attributes) & FILE_ATTRIBUTE_REPARSE_POINT)
 
 
 def normalized_key(relative: str) -> str:
