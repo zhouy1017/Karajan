@@ -28,7 +28,7 @@
 | `bundle_digest` | 规范化 manifest 内容（含已排序的文件摘要与固定引用），**排除自身 digest 字段** | manifest 自己；manifest 不进自己的文件清单，其自身字节哈希另记为 `manifest_file_digest` |
 | `compiled_digest` | 参数化模板：workflow 身份、冻结角色定义与内容摘要、绑定与已解析绑定身份、声明输入、步骤、完成策略、调度边界、返工、交付门、编译器版本 | **某次 Run 的具体输入、动态子任务实例**；可读图表不作为哈希输入 |
 
-读回（`verified_files`）始终重新读取磁盘字节、重算摘要并重新编译，再与不可变 revision 记录逐项比对。重启、第二个进程、被替换或损坏的文件因此产生**不匹配**，而不是在旧 revision 身份下返回一份新模板。
+读回（`verified_files`）始终重新读取磁盘字节、重算摘要并重新编译，再与不可变 revision 记录逐项比对。因此新服务实例、同一进程内的第二次读取、被替换或损坏的文件都会产生**不匹配**，而不是在旧 revision 身份下返回一份新模板。（本票的读回证据范围见第 3 节的说明：新服务实例、同一解释器；新进程加载事实由 #177 单独要求。）
 
 ### 1.2 一次发布的原子性
 
@@ -52,9 +52,9 @@ POST /v1/projects/{id}/conversations/{cid}/workflows/{bundle_id}/authoring-input
 
 | 原验收条件 | 实现与行为证据 | 层级 |
 |---|---|---|
-| AC1 真实文件持久化、重启读回、不可变 revision、文件/bundle 摘要 | `test_workflow_bundle.py::test_real_files_round_trip_with_separate_bundle_and_manifest_identities`（真实字节↔逐文件摘要一致、manifest 不自引用、`bundle_digest` 与字段自身无关）、`test_a_second_read_of_the_same_directory_is_identical`；HTTP 侧 `test_workflow_http.py::test_bundle_bytes_are_stored_verified_and_read_back_after_restart`（真实 `manifest.json` 与读回文档逐字节一致，重启后相同）、`test_workflow_http_bounds.py::test_a_restart_app_serves_the_same_preview_identity` | C/P |
-| AC1 路径穿越/绝对/drive/UNC/符号链接与 junction 逃逸/重复规范化路径/非法清单拒绝 | `test_declared_paths_are_validated_before_any_write`（14 种路径逐一断言理由码与定位）、`test_case_and_separator_duplicates_are_refused`、`test_normalized_duplicate_paths_are_refused_in_a_manifest`、`test_a_manifest_that_lists_itself_is_refused`、`test_a_missing_required_file_is_refused`、`test_a_caller_cannot_supply_the_manifest`、`test_a_junction_inside_the_bundle_is_refused`、`test_a_junction_on_an_ancestor_of_the_revision_is_refused`、`test_bundle_identity_must_be_one_addressable_segment` | C/P |
-| AC1 写边界：链接不得先收到字节 | `test_a_preexisting_junction_never_receives_any_bytes`（项目目录与 bundle 目录两种植入，断言外部目录清单**逐项未变**）、HTTP 侧 `test_workflow_http_bounds.py::test_a_junction_never_receives_any_bundle_bytes` 与 `test_the_store_never_writes_outside_its_managed_root` | P |
+| AC1 真实文件持久化、重启读回、不可变 revision、文件/bundle 摘要 | `test_workflow_bundle.py::test_real_files_round_trip_with_separate_bundle_and_manifest_identities`（真实字节↔逐文件摘要一致、manifest 不自引用、`bundle_digest` 与字段自身无关）、`test_a_second_read_of_the_same_directory_is_identical`；HTTP 侧 `test_workflow_http.py::test_bundle_bytes_are_stored_verified_and_read_back_after_restart`（真实 `manifest.json` 与读回文档逐字节一致，重开后相同）、`test_workflow_http_bounds.py::test_a_restart_app_serves_the_same_preview_identity` | C/P |
+| AC1 路径穿越/绝对/drive/UNC/符号链接与 junction 逃逸/重复规范化路径/非法清单拒绝 | `test_declared_paths_are_validated_before_any_write`（14 种路径逐一断言理由码与定位）、`test_case_and_separator_duplicates_are_refused`、`test_normalized_duplicate_paths_are_refused_in_a_manifest`、`test_a_manifest_that_lists_itself_is_refused`、`test_a_missing_required_file_is_refused`、`test_a_caller_cannot_supply_the_manifest`、`test_a_link_inside_the_bundle_is_refused`、`test_a_link_on_an_ancestor_of_the_revision_is_refused`、`test_bundle_identity_must_be_one_addressable_segment` | C/P |
+| AC1 写边界：链接不得先收到字节 | `test_a_preexisting_link_never_receives_any_bytes`（项目目录与 bundle 目录两种植入，断言外部目录清单**逐项未变**）、HTTP 侧 `test_workflow_http_bounds.py::test_a_link_never_receives_any_bundle_bytes` 与 `test_the_store_never_writes_outside_its_managed_root` | P |
 | AC1 未提交物化可恢复、不匹配孤儿字节被拒 | `test_an_uncommitted_materialization_is_adopted_or_refused`、HTTP 侧 `test_an_uncommitted_materialization_is_recovered_after_reopen`（真实重开进程后重放同一命令） | C/P |
 | AC2 登记执行种类、自定义角色、I/O、静态依赖、声明式条件、动态扩展边界 | `test_workflow_compiler.py` 全量；`test_two_custom_roles_resolve_by_alias_and_fixed_reference`（别名→固定 `role:id@rev`）、`test_artifact_reference_must_name_a_real_depended_on_producer`、`test_condition_facts_resolve_against_real_steps_and_inputs`、`test_unknown_execution_kind_is_located_and_never_guessed`、`test_dynamic_boundaries_contribute_to_capability_availability` | C |
 | AC2 缺引用/环/契约不兼容/未注册种类返回定位诊断，不猜成 Worker | `test_missing_references_cycles_and_contract_mismatches_are_located`、`test_unknown_kind_rejections_always_carry_a_location`（先断言 `diagnostics` 非空再遍历）、`test_condition_types_are_checked_against_declared_contract_fields`、`test_a_condition_cannot_create_a_hidden_cycle` | C |
@@ -65,10 +65,12 @@ POST /v1/projects/{id}/conversations/{cid}/workflows/{bundle_id}/authoring-input
 | AC4 表格/文件编辑直接写新 revision 且确定性编译，不调用模型 | `test_direct_edits_are_deterministic_and_call_no_model`（`model_calls == 0`、`edit_path == deterministic_structural`、新图真实含两条依赖）、`test_a_replayed_edit_returns_the_complete_original_result`（重放返回**完整**原结果） | C |
 | AC4 文字仅持久为创作输入/明确待生成状态 | `test_text_authoring_is_persisted_as_pending_and_generates_nothing`（`state == pending_generation`、`generated_configuration is None`、不产生 revision） | C |
 | AC4 旧 expected revision 冲突、迟到写入不覆盖新候选、相同幂等请求不多建版本 | `test_idempotency_replay_conflict_and_late_write_rejection`、`test_a_replayed_edit_returns_the_complete_original_result`（编辑后旧 `If-Match` 得到 409 + 当前 head）、`test_concurrent_writers_leave_exactly_one_revision`（两个 app 同库竞争，仅一者成功） | C/P |
-| AC5 HTTP 复用项目/会话归属与 Session/CSRF；两个不同角色/拓扑配置 | `test_two_role_topologies_compile_with_their_own_sources`、`test_an_unauthenticated_request_is_refused_before_any_file`（无会话 401、错误 Origin 403、缺 CSRF 403）、`test_a_record_is_read_only_through_its_own_project`、`test_a_second_project_cannot_read_another_projects_revision` | C |
+| AC5 HTTP 复用项目/会话归属与 Session/CSRF；两个不同角色/拓扑配置 | `test_two_role_topologies_compile_with_their_own_sources`、`test_an_unauthenticated_request_is_refused_before_any_file`（无会话 401、错误 Origin 403、缺 CSRF 403）、`test_a_record_is_read_only_through_its_own_project`、`test_a_second_project_cannot_read_another_projects_revision`、`test_authoring_text_cannot_be_filed_under_another_conversations_bundle`（含 authoring-first 抢占分支） | C |
+| AC5 结构化字段不得携带凭据或脚本；合法散文与声明式上限保留 | `tests/web/test_workflow_fields.py`（嵌套凭据 422 且不回显取值、未知字段拒绝、脚本字段拒绝、散文保留、未声明引用字段拒绝）、`test_workflow_semantics.py::test_a_credential_nested_in_a_structured_role_field_is_refused` | C |
+| AC2/AC3 身份与目标语义：literal 与引用分离、所选契约决定目标、模板字节绑定、独立性、调度别名 | `tests/workflows/test_workflow_semantics.py`、`test_a_literal_and_a_reference_keep_distinct_identities`、`test_a_marked_literal_prefix_is_decoded_exactly_once`、`test_a_supplied_instruction_template_is_bound_by_its_own_bytes`、`test_the_selected_scheduler_alias_and_binding_are_frozen` | C |
 | AC5 非法路径/图、>100 节点、直接编辑无模型、重启读回、旧版本冲突通过 | 见上各项 | C/P |
 | AC5 提供可运行 API/文件示例，Ruff/mypy/快速门通过 | 见第 3、4 节 | C/P |
-| 真实注册的确定性 `artifact_aggregate` 适配器：类型化文本输入→确定性报告产物，无模型/shell/任意导入/外部副作用 | `test_the_real_adapter_is_reachable_from_the_registry`、`test_a_marked_literal_must_carry_data_and_the_adapter_agrees`（编译绑定直接喂给真实适配器）、`test_the_adapter_enforces_the_same_declared_contract_as_the_compiler`、`test_a_marked_literal_and_plain_text_reach_the_adapter_identically` | C |
+| 真实注册的确定性 `artifact_aggregate` 适配器：类型化文本输入→确定性报告产物，无模型/shell/任意导入/外部副作用 | `test_the_real_adapter_is_reachable_from_the_registry`、`test_a_marked_literal_must_carry_data_and_the_adapter_agrees`（编译绑定直接喂给真实适配器）、`test_the_adapter_enforces_the_same_declared_contract_as_the_compiler`、`test_a_marked_literal_and_plain_text_differ_only_in_their_marker` | C |
 | 编译与 deploy-only 只校验模板/能力，绝不执行业务适配器来制造 ready | `test_compilation_never_invokes_the_business_adapter`（用记录型包装替换适配器后编译路径仍零调用）；deploy-only 记录 `model_calls == 0`、`activation_allowed == false` | C |
 | 与网关目录按固定引用衔接；未核验来源为草稿且明确不可执行 | `test_gateway_bindings_resolve_by_exact_revision_without_a_probe`（精确 revision + digest、`probe_performed:false`、`credential_resolved:false`、`execution_eligible:false`、`draft_only:true`；`@latest` 被拒；未知绑定不可解析） | C |
 | report/patch/pr 必需目标政策不因自定义名称绕过；无适配器的种类显示 unavailable | `test_delivery_target_cannot_be_met_by_changing_its_name`、`test_protected_gate_survives_optional_and_conditional_evasion`、`test_a_report_expansion_cannot_smuggle_in_remote_delivery`、`test_a_candidate_kind_cannot_declare_a_text_contract`、`test_an_unavailable_capability_is_reviewable_but_not_executable`、`test_the_execution_kind_catalog_reports_real_availability` | C |
@@ -79,7 +81,9 @@ POST /v1/projects/{id}/conversations/{cid}/workflows/{bundle_id}/authoring-input
 python examples/workflows/bundle_preview.py
 ```
 
-脚本在同一进程内通过真实认证边界（Session + Origin + CSRF + `Idempotency-Key` + `If-Match`）创建会话、发布两个不同角色/拓扑的真实配置包、从表格命令编辑、读取同源 preview/diff、保存一条创作输入、读取执行种类目录，并在**新进程级应用**上重新读回同一 revision。实际输出（2026-09-15，Windows 11 + Python 3.12.14）：
+脚本在同一解释器内通过真实认证边界（Session + Origin + CSRF + `Idempotency-Key` + `If-Match`）创建会话、发布两个不同角色/拓扑的真实配置包、从表格命令编辑、读取同源 preview/diff、保存一条创作输入、读取执行种类目录，并在一个**新建的应用/服务实例**上重新打开同一真实 SQLite 与文件后读回同一 revision。
+
+这里重开的是**同一解释器内的新服务实例**（重新 `create_app`、重新打开真实数据库与文件），不是新的操作系统进程；本票的 AC1 读回证据以该范围为准。真正的**新进程加载事实**由 #177 的部署加载契约单独要求与验收。实际输出（2026-09-15，Windows 11 + Python 3.12.14；会话 id 每次运行不同，其余摘要为确定性）：
 
 ```text
 conversation: 201 fc7c501f-fb9e-4511-905e-dd9087246fe4
