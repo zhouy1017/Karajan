@@ -1,6 +1,6 @@
 # 可定制角色与 Workflow 契约
 
-修订：2026-09-14 r8。状态：**待实现、待验收的角色/流程契约。** 用户通过对话设计并真实部署 Workflow，其中获授权调度角色按实际任务决定拆分、依赖、角色绑定、优先级与派发。Karajan 机械校验、排队、持久化和执行，不内置前后端分工或 coding Agent 人数上限。三角色流程/P1–P4 保留模板、原验收与工程顺序语义；对话部署见 [10](10-conversational-workflow-deployment.md)，动态运行图见 [11](11-role-directed-scheduling.md)。本文件不声称代码已迁移。
+修订：2026-09-16 r9 开发就绪审核。#176/PR180 已完成角色/Workflow 文件与编译控制面，#177/#178 已完成部署与调度控制面；**真实模型、全部执行种类和完整产品行为仍待验收。** 用户通过对话设计并真实部署 Workflow，其中获授权调度角色按实际任务决定拆分、依赖、角色绑定、优先级与派发。Karajan 机械校验、排队、持久化和执行，不内置前后端分工或 coding Agent 人数上限。三角色流程/P1–P4 保留模板、原验收与工程顺序语义；对话部署见 [10](10-conversational-workflow-deployment.md)，动态运行图见 [11](11-role-directed-scheduling.md)。已有与剩余能力按 [开发接线](13-development-integration-contract.md) 区分，禁止重复建设已完成控制面。
 
 本契约补充 [Commander Workbench PRD](../prd/commander-workbench.md)、[控制与状态](01-control-and-state.md)、[路由与配额](02-routing-and-quota.md) 和 [工作台后端契约](07-commander-workbench-backend-contract.md)。原代码交付模板、PR 验收和历史证据保留；新研究、文档或 patch 流程按自己的批准目标验收，不能借此宣布旧 PR 范围完成。
 
@@ -55,13 +55,13 @@ WorkflowDefinition 定义可复用职责、初始步骤/扩展点和调度规则
 | `TaskGraphRevision` / `ExpansionSet` | 不可变运行图、父版本/授权/决定来源；动态集合的成员、封口事实和未完成义务 |
 | `WorkflowStepInstance` | run/graph revision/step、Task/Attempt、条件决定、输入摘要、输出、返工及状态证据；已启动 Attempt 保持原快照 |
 
-内置执行种类可包括 `agent_task`、`deterministic_check`、`human_decision`、`artifact_aggregate`、`candidate_integrate` 和 `publish_pr`。这些名称是待实现注册项，不表示已经有可用适配器；Agent 步骤必须引用角色，人工和可信确定性步骤不伪装成模型角色。用户可组合已登记种类，新增种类必须经过代码实现与能力验收。`deterministic_check` 只引用用户认可的检查配置，不能在 Workflow 中塞入任意新 shell 命令来绕过原授权。
+内置执行种类可包括 `agent_task`、`deterministic_check`、`human_decision`、`artifact_aggregate`、`candidate_integrate` 和 `publish_pr`。当前六类均已有声明，只有 artifact_aggregate@1 有可用业务适配器，其余尚须生产接线及验收；Agent 步骤必须引用角色，人工和可信确定性步骤不伪装成模型角色。用户可组合已登记种类，新增种类必须经过代码实现与能力验收。`deterministic_check` 只引用用户认可的检查配置，不能在 Workflow 中塞入任意新 shell 命令来绕过原授权。
 
 初始编译校验已声明引用、输入输出、依赖无环、条件、扩展/委派范围、返工和授权影响，展示初始图与允许动态变化的边界。运行中每个 SchedulingDecision 再校验相同硬约束、提交身份/范围/任期及 base graph revision，接受后持久化新图再机械派发。未知角色/种类或不兼容契约拒绝，不猜测为 Worker，也不借动态调度引入未获准定义。
 
 用户指定的 Profile/source、依赖和职责进入编译结果；规则只能在批准的选择范围内求解。角色本身不固定品牌，也不能覆盖严格单一 Profile 绑定、预算、风险下限或来源资格。外部 provider 网关只承担模型访问职责，不解释 Workflow、增添隐藏任务或获得 Run 批准权。
 
-角色/Workflow API 为 Designer 的配置生成、保存、校验、图表投影和版本发布提供受控工具。建议资源 `/v1/role-definitions`、`/v1/workflow-definitions` 仍是拟新增契约；Designer 调用计入规划预算，纯解析/绘图/校验不调用模型、不预留任务资源。定义发布登记不可变模板，真实部署还须物化 pending 包、由调度器加载读回核对，再条件发布 active。用户的一次“确认并部署”可以在内部组合发布与部署，无需重复确认；若同时明确批准具体 Run 输入与权限，也可组合“部署并运行”。运行批准仍复用原 Plan/Run 约束，不由 Designer 自签授权。模板 compiled digest 与具体 Run 的 input/run_plan digest 分别保存；部署命令、配置包和回执见 [部署契约](10-conversational-workflow-deployment.md)。写操作继续校验认证、Idempotency-Key 和适用的 If-Match，过期编辑返回冲突。
+角色/Workflow API 为 Designer 的配置生成、保存、校验、图表投影和版本发布提供受控工具。当前复用项目范围内 WorkflowStore、真实包文件和编译投影；角色定义随固定配置包维护，未来独立角色目录不得另建状态权威，旧建议 `/v1/role-definitions`、`/v1/workflow-definitions` 不作为必须另建的第二套入口；Designer 调用计入规划预算，纯解析/绘图/校验不调用模型、不预留任务资源。定义发布登记不可变模板，真实部署还须物化 pending 包、由调度器加载读回核对，再条件发布 active。用户的一次“确认并部署”可以在内部组合发布与部署，无需重复确认；若同时明确批准具体 Run 输入与权限，也可组合“部署并运行”。运行批准仍复用原 Plan/Run 约束，不由 Designer 自签授权。模板 compiled digest 与具体 Run 的 input/run_plan digest 分别保存；部署命令、配置包和回执见 [部署契约](10-conversational-workflow-deployment.md)。写操作继续校验认证、Idempotency-Key 和适用的 If-Match，过期编辑返回冲突。
 
 ## 4. 依赖、条件、并行与返工
 

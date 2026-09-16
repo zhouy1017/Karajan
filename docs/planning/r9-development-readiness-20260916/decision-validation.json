@@ -1,0 +1,12 @@
+{
+  "new_tasks": 25,
+  "existing_open": 47,
+  "coverage_rows": 140,
+  "acyclic": true,
+  "documents": 23,
+  "local_links": 300,
+  "product_tests": "not_run: documentation and issue preparation only",
+  "source_id_sets_verified": true,
+  "decision_confirmed": true,
+  "spec_commit": "62598ab65e391e8ba90927e7ea45bda55ece2211"
+}

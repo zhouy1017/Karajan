@@ -1,12 +1,12 @@
 # Karajan 文档导航
 
-维护日期：2026-09-14。活动产品基准：**Commander Workbench r8 / 产品 PRD 1.6**。r8 将拆分和业务调度交给 Workflow 内获授权角色，取消内置 coding Agent 人数上限；本地规格更新不表示实现或远端 Issue 已完成。
+维护日期：2026-09-16。活动产品基准：**Commander Workbench r9 / 产品 PRD 1.7**。继承 r8 授权角色调度，新增同一 Commander 会话内按角色/Agent、任务、模型及实际 provider 查看 token 用量；本地规格更新不表示实现或远端 Issue 已完成。
 
 ## 先读哪一份
 
 1. [架构总览与流程图](architecture/README.md)：先理解用户入口、模块分工、外置网关和从设计到结果的完整过程。
 2. [Commander Workbench](prd/commander-workbench.md)：用户如何对话创作配置、审阅修改、确认部署及观察执行。
-3. [产品 PRD](prd/karajan-v1.md)：完整功能范围、FR01–27 与原 PRD 验收；UX 的完整正文只维护在工作台 PRD。
+3. [产品 PRD](prd/karajan-v1.md)：完整功能范围、FR01–29 与原 PRD 验收；UX 的完整正文只维护在工作台 PRD。
 4. [领域术语](../CONTEXT.md)：Project、Conversation、WorkflowBundle、Deployment、Run、Task、Attempt 等对象的区别。
 5. [ADR](adr/README.md)：理解决定及其后续承接；接受设计不等于已经实现。
 
@@ -14,6 +14,8 @@
 
 | 主题 | 唯一详细入口 |
 |---|---|
+| 完整开发接口、复用基线与分阶段出口 | [13 开发接线](architecture/13-development-integration-contract.md)、[Agent 就绪清单](planning/r9-development-readiness-20260916/README.md) |
+| 同一 Commander 会话的角色/Agent、任务、模型与实际 provider 用量统计 | [12 会话用量与实际路由](architecture/12-conversation-usage-accounting.md) |
 | 获授权角色决定拆分/调度、动态任务图、并行规模与资源背压 | [11 角色驱动的调度](architecture/11-role-directed-scheduling.md) |
 | 对话设计、配置文件、图表确认、部署与恢复 | [10 对话式 Workflow 设计与部署](architecture/10-conversational-workflow-deployment.md) |
 | 自定义角色、步骤语义、条件、并行、有限返工及产物目标 | [09 可定制角色与 Workflow](architecture/09-configurable-workflows.md) |
@@ -41,6 +43,8 @@
 | `planning/**/issue*.md`、发布 JSON 清单 | 原发布正文与身份/摘要记录；不直接修改已发布快照，新增行为通过新修订承接 |
 
 ## 本轮清理结果与后续维护
+
+r9 新增 FR28/29、UX-AC25–27、UA-AC01–07 与 ADR 0009，同步会话用量入口、实际路由证据、token 计量/去重和恢复要求。全量审核补充架构 13，并已创建增量父票 #183 与 #184–#208；当前正文、原生关系及标签的读回状态见 [就绪清单](planning/r9-development-readiness-20260916/README.md)。两项产品决定均已确认：全功能开发、来源独立验收；原硬门满足时允许明确标未知的有限启用，完整统计独立验收。以下保留 r8 文档整理范围。
 
 r8 在已整理文档上同步更新活动正文：初始授权和部署定义固定，角色可在授权内动态增图、分工和派发；运行图修订与初始批准分开记录。旧“两 writer”和固定前后端例子不再定义默认调度，原验收规模与历史记录继续保留。当前行为由 11 与 FR26/27、UX-AC23/24 承接。
 

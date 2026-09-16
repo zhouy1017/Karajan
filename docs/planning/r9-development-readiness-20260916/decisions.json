@@ -1,0 +1,7 @@
+{
+  "scope": "full_development_separate_source_qualification",
+  "metering": "allow_explicit_unknown_under_existing_gates",
+  "metering_text": "用户已确认：缺少精确 provider/token 可明确标未知或不完整，在原资格、授权、严格绑定与有限预算门全部满足时启用；完整统计独立验收。缺口使原硬门不可验证时仍阻塞，不新增消费许可。",
+  "confirmed_by": "用户：同意推荐",
+  "date": "2026-09-16"
+}

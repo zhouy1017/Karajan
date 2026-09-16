@@ -2,7 +2,7 @@
 
 Karajan 是面向个人、以仓库项目为上下文的多来源 Agent 工作流平台。本文是当前领域术语入口；架构解释与流程图见 [架构总览](docs/architecture/README.md)，文档分类见 [文档导航](docs/README.md)。
 
-2026-09-14 r8：用户与 Designer 对话定制角色/Workflow，以同源图表确认后部署；运行中的获授权角色按任务决定拆分、分工与调度，Karajan 不预设 coding Agent 人数上限。模型经外置 CLIProxyAPI 接入，按批准目标交付报告、补丁或 PR。新增网关、Designer、通用配置部署与角色调度仍待实现验收。
+2026-09-16 r9：继承对话定制角色/Workflow、同源图表部署与授权角色自适应调度，新增同一 Commander 会话按角色/Agent、任务、模型和实际底层 provider 查看 token 用量。模型经外置 CLIProxyAPI 接入，按批准目标交付报告、补丁或 PR，不预设 coding Agent 人数上限。新增会话用量和完整产品闭环仍待实现验收。
 
 ## Language
 
@@ -100,6 +100,10 @@ Commander、Worker、Reviewer 是内置角色定义的名称，不是全部可�
 **执行配置（Execution Profile）**：一个可被派发任务的模型绑定、调用通道、账户范围与执行器组合，带有明确能力和使用约束；采用网关时引用固定 ModelBinding，原生兼容路径仍保持独立身份。
 
 **模型调用（Model Call）**：一次向模型服务发起的请求。一个执行尝试可以包含多次调用，部分执行器只能报告整个尝试的用量。
+
+**上游发送（Upstream Attempt）**：一个 Model Call 经网关实际发往上游的一次请求；内部重试可能产生多次发送，实际 provider 与用量须由可关联可信证据支持，无法观察时保留覆盖缺口。
+
+**会话用量（Conversation Usage）**：同一 CommanderConversation 全部 Run 及无 Run 对话/创作执行的消费投影，可按角色、Agent 实例、任务、模型与实际 provider 分组。投影共享持久账本；已报告、估算、未知分开，token、金额与额度原生单位不混算。具体口径见 [会话用量契约](docs/architecture/12-conversation-usage-accounting.md)。
 
 **Rulebook**：用户配置的任务分配规则，分别表达协作契约、能力映射和资源分配策略，规定任务可使用哪些执行配置，以及允许的升级和换源方式。
 

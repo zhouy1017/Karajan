@@ -1,0 +1,1015 @@
+[
+  {
+    "id": "FR01",
+    "owners": [
+      165,
+      "PROJECT-SETTINGS"
+    ]
+  },
+  {
+    "id": "FR02",
+    "owners": [
+      "GW-QUALIFY",
+      "CODEX-S",
+      "CLAUDE-S",
+      "DEEPSEEK-S",
+      "GO-S",
+      "THIRDPARTY-S"
+    ]
+  },
+  {
+    "id": "FR03",
+    "owners": [
+      "COMMANDER",
+      "DESIGNER",
+      112,
+      113,
+      153,
+      "HANDOFF"
+    ]
+  },
+  {
+    "id": "FR04",
+    "owners": [
+      "COMMANDER",
+      170,
+      "DEPLOY-RUN",
+      "REVISION"
+    ]
+  },
+  {
+    "id": "FR05",
+    "owners": [
+      "REVISION",
+      "ROLE-RUN"
+    ]
+  },
+  {
+    "id": "FR06",
+    "owners": [
+      "RULES",
+      "PROJECT-SETTINGS"
+    ]
+  },
+  {
+    "id": "FR07",
+    "owners": [
+      "GW-CALL",
+      "RUNTIME"
+    ]
+  },
+  {
+    "id": "FR08",
+    "owners": [
+      "CAPACITY",
+      "ROLE-RUN"
+    ]
+  },
+  {
+    "id": "FR09",
+    "owners": [
+      "CAPACITY",
+      "CALL-BUDGET"
+    ]
+  },
+  {
+    "id": "FR10",
+    "owners": [
+      "CALL-BUDGET",
+      "DEEPSEEK-S",
+      "THIRDPARTY-S"
+    ]
+  },
+  {
+    "id": "FR11",
+    "owners": [
+      "REASSIGN"
+    ]
+  },
+  {
+    "id": "FR12",
+    "owners": [
+      "CAPACITY",
+      "HANDOFF"
+    ]
+  },
+  {
+    "id": "FR13",
+    "owners": [
+      "ROLE-RUN",
+      "WF-KINDS",
+      161
+    ]
+  },
+  {
+    "id": "FR14",
+    "owners": [
+      "WF-KINDS",
+      116,
+      117,
+      162,
+      "REASSIGN"
+    ]
+  },
+  {
+    "id": "FR15",
+    "owners": [
+      "RECOVERY",
+      "REVISION"
+    ]
+  },
+  {
+    "id": "FR16",
+    "owners": [
+      "RULES",
+      "RUNTIME",
+      "PROJECT-SETTINGS"
+    ]
+  },
+  {
+    "id": "FR17",
+    "owners": [
+      165,
+      166,
+      "USAGE"
+    ]
+  },
+  {
+    "id": "FR18",
+    "owners": [
+      "DEPLOY-RUN",
+      "RECOVERY",
+      "MAINTENANCE"
+    ]
+  },
+  {
+    "id": "FR19",
+    "owners": [
+      "WF-KINDS",
+      162
+    ]
+  },
+  {
+    "id": "FR20",
+    "owners": [
+      162,
+      "WF-KINDS",
+      "V1-EXIT"
+    ]
+  },
+  {
+    "id": "FR21",
+    "owners": [
+      "GW-CALL",
+      "GW-QUALIFY",
+      "PROJECT-SETTINGS"
+    ]
+  },
+  {
+    "id": "FR22",
+    "owners": [
+      "DESIGNER",
+      "WF-KINDS"
+    ]
+  },
+  {
+    "id": "FR23",
+    "owners": [
+      "WF-KINDS",
+      "ROLE-RUN"
+    ]
+  },
+  {
+    "id": "FR24",
+    "owners": [
+      "DESIGNER"
+    ]
+  },
+  {
+    "id": "FR25",
+    "owners": [
+      "DEPLOY-RUN"
+    ]
+  },
+  {
+    "id": "FR26",
+    "owners": [
+      "ROLE-RUN",
+      "REVISION"
+    ]
+  },
+  {
+    "id": "FR27",
+    "owners": [
+      "ROLE-RUN"
+    ]
+  },
+  {
+    "id": "FR28",
+    "owners": [
+      "GW-CALL",
+      "USAGE"
+    ]
+  },
+  {
+    "id": "FR29",
+    "owners": [
+      "GW-CALL",
+      "USAGE",
+      "GW-QUALIFY"
+    ]
+  },
+  {
+    "id": "UX-AC01",
+    "owners": [
+      165,
+      "PROJECT-SETTINGS"
+    ]
+  },
+  {
+    "id": "UX-AC02",
+    "owners": [
+      "COMMANDER",
+      165,
+      153,
+      160
+    ]
+  },
+  {
+    "id": "UX-AC03",
+    "owners": [
+      "COMMANDER",
+      170,
+      160
+    ]
+  },
+  {
+    "id": "UX-AC04",
+    "owners": [
+      161
+    ]
+  },
+  {
+    "id": "UX-AC05",
+    "owners": [
+      165,
+      162
+    ]
+  },
+  {
+    "id": "UX-AC06",
+    "owners": [
+      160,
+      "PROJECT-SETTINGS",
+      "CAPACITY"
+    ]
+  },
+  {
+    "id": "UX-AC07",
+    "owners": [
+      "REASSIGN"
+    ]
+  },
+  {
+    "id": "UX-AC08",
+    "owners": [
+      162
+    ]
+  },
+  {
+    "id": "UX-AC09",
+    "owners": [
+      170,
+      "REVISION"
+    ]
+  },
+  {
+    "id": "UX-AC10",
+    "owners": [
+      165,
+      "RECOVERY"
+    ]
+  },
+  {
+    "id": "UX-AC11",
+    "owners": [
+      "COMMANDER",
+      159,
+      160,
+      161,
+      162,
+      "R9-EXIT"
+    ]
+  },
+  {
+    "id": "UX-AC12",
+    "owners": [
+      166,
+      165,
+      "RUNTIME"
+    ]
+  },
+  {
+    "id": "UX-AC13",
+    "owners": [
+      165,
+      160
+    ]
+  },
+  {
+    "id": "UX-AC14",
+    "owners": [
+      165
+    ]
+  },
+  {
+    "id": "UX-AC15",
+    "owners": [
+      "PROJECT-SETTINGS",
+      "GW-CALL",
+      "GW-QUALIFY"
+    ]
+  },
+  {
+    "id": "UX-AC16",
+    "owners": [
+      "DESIGNER"
+    ]
+  },
+  {
+    "id": "UX-AC17",
+    "owners": [
+      "WF-KINDS"
+    ]
+  },
+  {
+    "id": "UX-AC18",
+    "owners": [
+      "REVISION",
+      "WF-KINDS"
+    ]
+  },
+  {
+    "id": "UX-AC19",
+    "owners": [
+      "DESIGNER"
+    ]
+  },
+  {
+    "id": "UX-AC20",
+    "owners": [
+      "DESIGNER"
+    ]
+  },
+  {
+    "id": "UX-AC21",
+    "owners": [
+      "DEPLOY-RUN"
+    ]
+  },
+  {
+    "id": "UX-AC22",
+    "owners": [
+      "DEPLOY-RUN"
+    ]
+  },
+  {
+    "id": "UX-AC23",
+    "owners": [
+      "ROLE-RUN"
+    ]
+  },
+  {
+    "id": "UX-AC24",
+    "owners": [
+      "ROLE-RUN"
+    ]
+  },
+  {
+    "id": "UX-AC25",
+    "owners": [
+      "USAGE"
+    ]
+  },
+  {
+    "id": "UX-AC26",
+    "owners": [
+      "USAGE",
+      "GW-QUALIFY"
+    ]
+  },
+  {
+    "id": "UX-AC27",
+    "owners": [
+      "USAGE",
+      "RECOVERY"
+    ]
+  },
+  {
+    "id": "A01",
+    "owners": [
+      161,
+      162,
+      "R9-EXIT"
+    ]
+  },
+  {
+    "id": "A02",
+    "owners": [
+      "GW-QUALIFY",
+      "CODEX-S",
+      "CLAUDE-S",
+      "DEEPSEEK-S",
+      "GO-S",
+      "THIRDPARTY-S"
+    ]
+  },
+  {
+    "id": "A03",
+    "owners": [
+      "CAPACITY"
+    ]
+  },
+  {
+    "id": "A04",
+    "owners": [
+      "CAPACITY"
+    ]
+  },
+  {
+    "id": "A05",
+    "owners": [
+      "CAPACITY",
+      "USAGE"
+    ]
+  },
+  {
+    "id": "A06",
+    "owners": [
+      "CAPACITY"
+    ]
+  },
+  {
+    "id": "A07",
+    "owners": [
+      "REASSIGN"
+    ]
+  },
+  {
+    "id": "A08",
+    "owners": [
+      "REASSIGN"
+    ]
+  },
+  {
+    "id": "A09",
+    "owners": [
+      "RUNTIME",
+      "RECOVERY"
+    ]
+  },
+  {
+    "id": "A10",
+    "owners": [
+      "RECOVERY"
+    ]
+  },
+  {
+    "id": "A11",
+    "owners": [
+      "RULES",
+      "REVISION"
+    ]
+  },
+  {
+    "id": "A12",
+    "owners": [
+      "GW-CALL",
+      "GW-QUALIFY",
+      "CODEX-S",
+      "CLAUDE-S",
+      "DEEPSEEK-S",
+      "GO-S",
+      "THIRDPARTY-S"
+    ]
+  },
+  {
+    "id": "A13",
+    "owners": [
+      6,
+      7,
+      "RUNTIME"
+    ]
+  },
+  {
+    "id": "A14",
+    "owners": [
+      7,
+      162
+    ]
+  },
+  {
+    "id": "A15",
+    "owners": [
+      116,
+      117,
+      162
+    ]
+  },
+  {
+    "id": "A16",
+    "owners": [
+      "REVISION",
+      162
+    ]
+  },
+  {
+    "id": "A17",
+    "owners": [
+      162,
+      "V1-EXIT"
+    ]
+  },
+  {
+    "id": "A18",
+    "owners": [
+      "CALL-BUDGET",
+      "REASSIGN",
+      "DESIGNER"
+    ]
+  },
+  {
+    "id": "A19",
+    "owners": [
+      "CALL-BUDGET"
+    ]
+  },
+  {
+    "id": "A20",
+    "owners": [
+      165,
+      "RECOVERY"
+    ]
+  },
+  {
+    "id": "A21",
+    "owners": [
+      "MAINTENANCE"
+    ]
+  },
+  {
+    "id": "A22",
+    "owners": [
+      "REVISION"
+    ]
+  },
+  {
+    "id": "A23",
+    "owners": [
+      "RECOVERY",
+      "CODEX-S",
+      "CLAUDE-S"
+    ]
+  },
+  {
+    "id": "A24",
+    "owners": [
+      "REASSIGN",
+      "WF-KINDS"
+    ]
+  },
+  {
+    "id": "A25",
+    "owners": [
+      "RULES",
+      "CAPACITY"
+    ]
+  },
+  {
+    "id": "A26",
+    "owners": [
+      "CALL-BUDGET"
+    ]
+  },
+  {
+    "id": "PRD-AC01",
+    "owners": [
+      "PROJECT-SETTINGS"
+    ]
+  },
+  {
+    "id": "PRD-AC02",
+    "owners": [
+      "COMMANDER",
+      112,
+      153
+    ]
+  },
+  {
+    "id": "PRD-AC03",
+    "owners": [
+      "RULES"
+    ]
+  },
+  {
+    "id": "PRD-AC04",
+    "owners": [
+      "HANDOFF"
+    ]
+  },
+  {
+    "id": "PRD-AC05",
+    "owners": [
+      165,
+      "RECOVERY"
+    ]
+  },
+  {
+    "id": "PRD-AC06",
+    "owners": [
+      162,
+      "WF-KINDS",
+      "V1-EXIT"
+    ]
+  },
+  {
+    "id": "GW-AC01",
+    "owners": [
+      "GW-CALL",
+      "GW-QUALIFY",
+      "RUNTIME"
+    ]
+  },
+  {
+    "id": "GW-AC02",
+    "owners": [
+      "GW-CALL",
+      "GW-QUALIFY",
+      "RUNTIME"
+    ]
+  },
+  {
+    "id": "GW-AC03",
+    "owners": [
+      "GW-CALL",
+      "GW-QUALIFY",
+      "RUNTIME"
+    ]
+  },
+  {
+    "id": "GW-AC04",
+    "owners": [
+      "GW-CALL",
+      "GW-QUALIFY",
+      "RUNTIME"
+    ]
+  },
+  {
+    "id": "GW-AC05",
+    "owners": [
+      "GW-CALL",
+      "GW-QUALIFY",
+      "RUNTIME"
+    ]
+  },
+  {
+    "id": "WF-AC01",
+    "owners": [
+      "WF-KINDS",
+      "RUNTIME",
+      "REVISION"
+    ]
+  },
+  {
+    "id": "WF-AC02",
+    "owners": [
+      "WF-KINDS",
+      "RUNTIME",
+      "REVISION"
+    ]
+  },
+  {
+    "id": "WF-AC03",
+    "owners": [
+      "WF-KINDS",
+      "RUNTIME",
+      "REVISION"
+    ]
+  },
+  {
+    "id": "WF-AC04",
+    "owners": [
+      "WF-KINDS",
+      "RUNTIME",
+      "REVISION"
+    ]
+  },
+  {
+    "id": "WF-AC05",
+    "owners": [
+      "WF-KINDS",
+      "RUNTIME",
+      "REVISION"
+    ]
+  },
+  {
+    "id": "WF-AC06",
+    "owners": [
+      "WF-KINDS",
+      "RUNTIME",
+      "REVISION"
+    ]
+  },
+  {
+    "id": "WF-AC07",
+    "owners": [
+      "WF-KINDS",
+      "RUNTIME",
+      "REVISION"
+    ]
+  },
+  {
+    "id": "WF-AC08",
+    "owners": [
+      "WF-KINDS",
+      "RUNTIME",
+      "REVISION"
+    ]
+  },
+  {
+    "id": "WF-AC09",
+    "owners": [
+      "WF-KINDS",
+      "RUNTIME",
+      "REVISION"
+    ]
+  },
+  {
+    "id": "WF-AC10",
+    "owners": [
+      "WF-KINDS",
+      "RUNTIME",
+      "REVISION"
+    ]
+  },
+  {
+    "id": "WF-AC11",
+    "owners": [
+      "WF-KINDS",
+      "RUNTIME",
+      "REVISION"
+    ]
+  },
+  {
+    "id": "WD-AC01",
+    "owners": [
+      "DESIGNER",
+      "DEPLOY-RUN"
+    ]
+  },
+  {
+    "id": "WD-AC02",
+    "owners": [
+      "DESIGNER",
+      "DEPLOY-RUN"
+    ]
+  },
+  {
+    "id": "WD-AC03",
+    "owners": [
+      "DESIGNER",
+      "DEPLOY-RUN"
+    ]
+  },
+  {
+    "id": "WD-AC04",
+    "owners": [
+      "DESIGNER",
+      "DEPLOY-RUN"
+    ]
+  },
+  {
+    "id": "WD-AC05",
+    "owners": [
+      "DESIGNER",
+      "DEPLOY-RUN"
+    ]
+  },
+  {
+    "id": "WD-AC06",
+    "owners": [
+      "DESIGNER",
+      "DEPLOY-RUN"
+    ]
+  },
+  {
+    "id": "WD-AC07",
+    "owners": [
+      "DESIGNER",
+      "DEPLOY-RUN"
+    ]
+  },
+  {
+    "id": "WD-AC08",
+    "owners": [
+      "DESIGNER",
+      "DEPLOY-RUN"
+    ]
+  },
+  {
+    "id": "WD-AC09",
+    "owners": [
+      "DESIGNER",
+      "DEPLOY-RUN"
+    ]
+  },
+  {
+    "id": "WD-AC10",
+    "owners": [
+      "DESIGNER",
+      "DEPLOY-RUN"
+    ]
+  },
+  {
+    "id": "RS-AC01",
+    "owners": [
+      "ROLE-RUN"
+    ]
+  },
+  {
+    "id": "RS-AC02",
+    "owners": [
+      "ROLE-RUN"
+    ]
+  },
+  {
+    "id": "RS-AC03",
+    "owners": [
+      "ROLE-RUN"
+    ]
+  },
+  {
+    "id": "RS-AC04",
+    "owners": [
+      "ROLE-RUN"
+    ]
+  },
+  {
+    "id": "RS-AC05",
+    "owners": [
+      "ROLE-RUN"
+    ]
+  },
+  {
+    "id": "RS-AC06",
+    "owners": [
+      "ROLE-RUN"
+    ]
+  },
+  {
+    "id": "RS-AC07",
+    "owners": [
+      "ROLE-RUN"
+    ]
+  },
+  {
+    "id": "RS-AC08",
+    "owners": [
+      "ROLE-RUN"
+    ]
+  },
+  {
+    "id": "RS-AC09",
+    "owners": [
+      "ROLE-RUN"
+    ]
+  },
+  {
+    "id": "RS-AC10",
+    "owners": [
+      "ROLE-RUN"
+    ]
+  },
+  {
+    "id": "UA-AC01",
+    "owners": [
+      "USAGE",
+      "GW-CALL",
+      "GW-QUALIFY"
+    ]
+  },
+  {
+    "id": "UA-AC02",
+    "owners": [
+      "USAGE",
+      "GW-CALL",
+      "GW-QUALIFY"
+    ]
+  },
+  {
+    "id": "UA-AC03",
+    "owners": [
+      "USAGE",
+      "GW-CALL",
+      "GW-QUALIFY"
+    ]
+  },
+  {
+    "id": "UA-AC04",
+    "owners": [
+      "USAGE",
+      "GW-CALL",
+      "GW-QUALIFY"
+    ]
+  },
+  {
+    "id": "UA-AC05",
+    "owners": [
+      "USAGE",
+      "GW-CALL",
+      "GW-QUALIFY"
+    ]
+  },
+  {
+    "id": "UA-AC06",
+    "owners": [
+      "USAGE",
+      "GW-CALL",
+      "GW-QUALIFY"
+    ]
+  },
+  {
+    "id": "UA-AC07",
+    "owners": [
+      "USAGE",
+      "GW-CALL",
+      "GW-QUALIFY"
+    ]
+  },
+  {
+    "id": "D01",
+    "owners": [
+      "RUNTIME",
+      "ROLE-RUN",
+      "RECOVERY",
+      162
+    ]
+  },
+  {
+    "id": "D02",
+    "owners": [
+      "HANDOFF",
+      "ROLE-RUN"
+    ]
+  },
+  {
+    "id": "D03",
+    "owners": [
+      "RULES",
+      "CAPACITY"
+    ]
+  },
+  {
+    "id": "D04",
+    "owners": [
+      "REASSIGN"
+    ]
+  },
+  {
+    "id": "D05",
+    "owners": [
+      116,
+      117,
+      162,
+      "GW-QUALIFY"
+    ]
+  },
+  {
+    "id": "D06",
+    "owners": [
+      "CALL-BUDGET"
+    ]
+  },
+  {
+    "id": "D07",
+    "owners": [
+      "HANDOFF"
+    ]
+  },
+  {
+    "id": "D08",
+    "owners": [
+      7,
+      "RUNTIME",
+      "RECOVERY",
+      "MAINTENANCE"
+    ]
+  },
+  {
+    "id": "D09",
+    "owners": [
+      "R9-EXIT",
+      "V1-EXIT"
+    ]
+  }
+]

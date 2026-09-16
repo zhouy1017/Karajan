@@ -1,0 +1,1800 @@
+{
+  "spec_commit": "62598ab65e391e8ba90927e7ea45bda55ece2211",
+  "issues": {
+    "R9": {
+      "number": 183,
+      "id": 5470027066,
+      "url": "https://github.com/zhouy1017/Karajan/issues/183"
+    },
+    "GW-CALL": {
+      "number": 184,
+      "id": 5470027176,
+      "url": "https://github.com/zhouy1017/Karajan/issues/184"
+    },
+    "RUNTIME": {
+      "number": 185,
+      "id": 5470027283,
+      "url": "https://github.com/zhouy1017/Karajan/issues/185"
+    },
+    "DESIGNER": {
+      "number": 186,
+      "id": 5470027392,
+      "url": "https://github.com/zhouy1017/Karajan/issues/186"
+    },
+    "COMMANDER": {
+      "number": 187,
+      "id": 5470027518,
+      "url": "https://github.com/zhouy1017/Karajan/issues/187"
+    },
+    "DEPLOY-RUN": {
+      "number": 188,
+      "id": 5470027623,
+      "url": "https://github.com/zhouy1017/Karajan/issues/188"
+    },
+    "ROLE-RUN": {
+      "number": 189,
+      "id": 5470027727,
+      "url": "https://github.com/zhouy1017/Karajan/issues/189"
+    },
+    "WF-KINDS": {
+      "number": 190,
+      "id": 5470027844,
+      "url": "https://github.com/zhouy1017/Karajan/issues/190"
+    },
+    "USAGE": {
+      "number": 191,
+      "id": 5470027933,
+      "url": "https://github.com/zhouy1017/Karajan/issues/191"
+    },
+    "GW-QUALIFY": {
+      "number": 192,
+      "id": 5470028028,
+      "url": "https://github.com/zhouy1017/Karajan/issues/192"
+    },
+    "R9-EXIT": {
+      "number": 193,
+      "id": 5470028141,
+      "url": "https://github.com/zhouy1017/Karajan/issues/193"
+    },
+    "PROJECT-SETTINGS": {
+      "number": 194,
+      "id": 5470028251,
+      "url": "https://github.com/zhouy1017/Karajan/issues/194"
+    },
+    "REVISION": {
+      "number": 195,
+      "id": 5470028424,
+      "url": "https://github.com/zhouy1017/Karajan/issues/195"
+    },
+    "RULES": {
+      "number": 196,
+      "id": 5470028530,
+      "url": "https://github.com/zhouy1017/Karajan/issues/196"
+    },
+    "CAPACITY": {
+      "number": 197,
+      "id": 5470028650,
+      "url": "https://github.com/zhouy1017/Karajan/issues/197"
+    },
+    "CALL-BUDGET": {
+      "number": 198,
+      "id": 5470028751,
+      "url": "https://github.com/zhouy1017/Karajan/issues/198"
+    },
+    "REASSIGN": {
+      "number": 199,
+      "id": 5470028872,
+      "url": "https://github.com/zhouy1017/Karajan/issues/199"
+    },
+    "HANDOFF": {
+      "number": 200,
+      "id": 5470028965,
+      "url": "https://github.com/zhouy1017/Karajan/issues/200"
+    },
+    "RECOVERY": {
+      "number": 201,
+      "id": 5470029066,
+      "url": "https://github.com/zhouy1017/Karajan/issues/201"
+    },
+    "MAINTENANCE": {
+      "number": 202,
+      "id": 5470029164,
+      "url": "https://github.com/zhouy1017/Karajan/issues/202"
+    },
+    "CODEX-S": {
+      "number": 203,
+      "id": 5470029283,
+      "url": "https://github.com/zhouy1017/Karajan/issues/203"
+    },
+    "CLAUDE-S": {
+      "number": 204,
+      "id": 5470029392,
+      "url": "https://github.com/zhouy1017/Karajan/issues/204"
+    },
+    "DEEPSEEK-S": {
+      "number": 205,
+      "id": 5470029499,
+      "url": "https://github.com/zhouy1017/Karajan/issues/205"
+    },
+    "GO-S": {
+      "number": 206,
+      "id": 5470029602,
+      "url": "https://github.com/zhouy1017/Karajan/issues/206"
+    },
+    "THIRDPARTY-S": {
+      "number": 207,
+      "id": 5470029705,
+      "url": "https://github.com/zhouy1017/Karajan/issues/207"
+    },
+    "V1-EXIT": {
+      "number": 208,
+      "id": 5470029805,
+      "url": "https://github.com/zhouy1017/Karajan/issues/208"
+    }
+  },
+  "records": [
+    {
+      "number": 1,
+      "state": "open",
+      "labels": [
+        "documentation",
+        "enhancement",
+        "kind:requirement",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        30,
+        29,
+        28,
+        27,
+        26,
+        25,
+        24,
+        23,
+        22,
+        21,
+        15,
+        11,
+        14,
+        12,
+        16,
+        13,
+        19,
+        18,
+        20,
+        17,
+        10,
+        60,
+        158,
+        174,
+        183
+      ],
+      "blocked_by": [],
+      "body_sha256": "545c886d72935cb89e8c67d1cae54a6ab73bd13e33c84051d231ee088da7978d",
+      "url": "https://github.com/zhouy1017/Karajan/issues/1"
+    },
+    {
+      "number": 6,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "ready-for-agent",
+        "kind:task",
+        "status:ready",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        62
+      ],
+      "blocked_by": [
+        2
+      ],
+      "body_sha256": "3cc54178b4e9d8028dabf98204e2bbaabeac6d89f26a12379a3d88e96f9b6d3d",
+      "url": "https://github.com/zhouy1017/Karajan/issues/6"
+    },
+    {
+      "number": 7,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        6,
+        5,
+        3
+      ],
+      "body_sha256": "faf3f6209e981ef31dcaba6f0f3cfb69e17dacde852f3b6ebab087d275b20c4b",
+      "url": "https://github.com/zhouy1017/Karajan/issues/7"
+    },
+    {
+      "number": 8,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:blocked",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        7,
+        4
+      ],
+      "body_sha256": "570973e5ba40106c688cb03544b3cfb95de7f0121aea38a66fe52c8449e59ebd",
+      "url": "https://github.com/zhouy1017/Karajan/issues/8"
+    },
+    {
+      "number": 9,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        2
+      ],
+      "body_sha256": "feddf97acc378a557ecf6c04b6748079e9d5e749dfdbb0371a66b66c45032238",
+      "url": "https://github.com/zhouy1017/Karajan/issues/9"
+    },
+    {
+      "number": 11,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:requirement",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        63,
+        194
+      ],
+      "blocked_by": [
+        4
+      ],
+      "body_sha256": "4abf277b2f707febb3b88d76f08f3058a56aa1161c8bac984fee522305cf520d",
+      "url": "https://github.com/zhouy1017/Karajan/issues/11"
+    },
+    {
+      "number": 12,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:requirement",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        77,
+        64,
+        93,
+        153,
+        160
+      ],
+      "blocked_by": [
+        8,
+        11
+      ],
+      "body_sha256": "e530e92c18528075bb97ae3d47790e2591ca8b063a025df2fec29d032367f709",
+      "url": "https://github.com/zhouy1017/Karajan/issues/12"
+    },
+    {
+      "number": 13,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:requirement",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        79,
+        69,
+        94,
+        95
+      ],
+      "blocked_by": [
+        12
+      ],
+      "body_sha256": "49e15e5604ab3ea3007b6c9b3bd62679dc8de9e7dc257ef807eaf36974a31394",
+      "url": "https://github.com/zhouy1017/Karajan/issues/13"
+    },
+    {
+      "number": 14,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:requirement",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        66,
+        162
+      ],
+      "blocked_by": [
+        13
+      ],
+      "body_sha256": "a24f9e6ac19a0a56b115d7dfe217b7c48cf1959775c6f531e6cac366a96eb40d",
+      "url": "https://github.com/zhouy1017/Karajan/issues/14"
+    },
+    {
+      "number": 15,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:requirement",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        195
+      ],
+      "blocked_by": [
+        13
+      ],
+      "body_sha256": "08ae9183d9c853cf64b9c1ef812d448a3c290e341709857ecf901755a102842d",
+      "url": "https://github.com/zhouy1017/Karajan/issues/15"
+    },
+    {
+      "number": 16,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:requirement",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        159
+      ],
+      "blocked_by": [
+        14,
+        15
+      ],
+      "body_sha256": "2cea64cd8d3bcfab6cdc35e53f7622968a4c6fbf6dc5649537417ef085368a67",
+      "url": "https://github.com/zhouy1017/Karajan/issues/16"
+    },
+    {
+      "number": 17,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:requirement",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        161
+      ],
+      "blocked_by": [
+        14,
+        15
+      ],
+      "body_sha256": "1d6e0034e9d0fda360a9af57b8f3aa5e10674eeb3a9937334b4ed6650d9b1aa7",
+      "url": "https://github.com/zhouy1017/Karajan/issues/17"
+    },
+    {
+      "number": 18,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:requirement",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        203
+      ],
+      "blocked_by": [
+        13
+      ],
+      "body_sha256": "4a45fb159605fc2e00daae4e8c4eabd577eecff631332591fe5aa011709bafd2",
+      "url": "https://github.com/zhouy1017/Karajan/issues/18"
+    },
+    {
+      "number": 19,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:requirement",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        65,
+        204
+      ],
+      "blocked_by": [
+        13
+      ],
+      "body_sha256": "86bac63aead7210cb74dd853ac7a40c7696ae61ded80135b5173228a8cb6e1d6",
+      "url": "https://github.com/zhouy1017/Karajan/issues/19"
+    },
+    {
+      "number": 20,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:requirement",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        67,
+        205
+      ],
+      "blocked_by": [
+        13
+      ],
+      "body_sha256": "9bad84219eba329239f41e0d207c74eed43731ff219fbed6c2bd08102df4f578",
+      "url": "https://github.com/zhouy1017/Karajan/issues/20"
+    },
+    {
+      "number": 21,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:requirement",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        85,
+        84,
+        83,
+        82,
+        81,
+        80,
+        76,
+        87,
+        89,
+        90,
+        206
+      ],
+      "blocked_by": [
+        13
+      ],
+      "body_sha256": "4fbbae90151536be5d4516da4e49eb237199e885efe2e5f4aedc888b7b14180c",
+      "url": "https://github.com/zhouy1017/Karajan/issues/21"
+    },
+    {
+      "number": 22,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:requirement",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        207
+      ],
+      "blocked_by": [
+        13
+      ],
+      "body_sha256": "b2ece3e1a14288611a3e66e6325b634cff313d4b54df21a91364255daec7f253",
+      "url": "https://github.com/zhouy1017/Karajan/issues/22"
+    },
+    {
+      "number": 23,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:requirement",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        78,
+        75,
+        73,
+        72,
+        71,
+        196
+      ],
+      "blocked_by": [
+        15
+      ],
+      "body_sha256": "f4c87205218d9d70539810a9abd4e8b0334eedd62feb76256eaa72008cc7df26",
+      "url": "https://github.com/zhouy1017/Karajan/issues/23"
+    },
+    {
+      "number": 24,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:requirement",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        74,
+        70,
+        68,
+        197
+      ],
+      "blocked_by": [
+        13
+      ],
+      "body_sha256": "f70d8747b5ba142dfbddb46358ea9483c48deb6503fc8c282842a60ce51b5ad9",
+      "url": "https://github.com/zhouy1017/Karajan/issues/24"
+    },
+    {
+      "number": 25,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:requirement",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        198
+      ],
+      "blocked_by": [
+        13
+      ],
+      "body_sha256": "f64204279d6ade5bcf85240c7a9a1c3697d0ffef0cad9ca4400926be83486c02",
+      "url": "https://github.com/zhouy1017/Karajan/issues/25"
+    },
+    {
+      "number": 26,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:requirement",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        199
+      ],
+      "blocked_by": [
+        17,
+        25,
+        24,
+        23
+      ],
+      "body_sha256": "48035a4f17b027c907f2d296b2c67553d8f95391c1b24b8de2629470c2aa3a25",
+      "url": "https://github.com/zhouy1017/Karajan/issues/26"
+    },
+    {
+      "number": 27,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:requirement",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        200
+      ],
+      "blocked_by": [
+        23,
+        24
+      ],
+      "body_sha256": "4bac4b8dbb27e06cac28c6cac91bd2df944cbadb9d92e3b92c830b95947830e5",
+      "url": "https://github.com/zhouy1017/Karajan/issues/27"
+    },
+    {
+      "number": 28,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:requirement",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        201
+      ],
+      "blocked_by": [
+        16,
+        27,
+        26
+      ],
+      "body_sha256": "3d5655ca714a425dbe286f9908b29c5ff3c7e6735e875ed7bb0f40d385d0a396",
+      "url": "https://github.com/zhouy1017/Karajan/issues/28"
+    },
+    {
+      "number": 29,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:requirement",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        202
+      ],
+      "blocked_by": [
+        16,
+        26,
+        27
+      ],
+      "body_sha256": "842c686cc212380489af65d9be9adb02c3a755905b29df259054747f6048c228",
+      "url": "https://github.com/zhouy1017/Karajan/issues/29"
+    },
+    {
+      "number": 30,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:requirement",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        208
+      ],
+      "blocked_by": [
+        18,
+        19,
+        20,
+        21,
+        22,
+        28,
+        29
+      ],
+      "body_sha256": "7dd14e26e77e4abfea6fa670211d39ba9909d3cd59a3e81eaca5cb118eb60481",
+      "url": "https://github.com/zhouy1017/Karajan/issues/30"
+    },
+    {
+      "number": 87,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "ready-for-agent",
+        "kind:task",
+        "status:ready",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        85
+      ],
+      "body_sha256": "459a6fd76db55339f26cb5d0d63e5421ff63e916391ce5212bafaf47a30516d9",
+      "url": "https://github.com/zhouy1017/Karajan/issues/87"
+    },
+    {
+      "number": 93,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:requirement",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        109,
+        110,
+        111,
+        112,
+        113
+      ],
+      "blocked_by": [
+        112,
+        113
+      ],
+      "body_sha256": "9ed0d9fff70993724895f97ace66cb8cb58327a9bd3aeb8723f41444a2241f70",
+      "url": "https://github.com/zhouy1017/Karajan/issues/93"
+    },
+    {
+      "number": 95,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:requirement",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        96,
+        99,
+        100,
+        104,
+        106,
+        107,
+        114,
+        115,
+        116,
+        117
+      ],
+      "blocked_by": [
+        94,
+        93,
+        107,
+        116,
+        117
+      ],
+      "body_sha256": "8cb972ef24217581b89bf8a1e9279691bf58c2a219185399258f9bfce61b5d8e",
+      "url": "https://github.com/zhouy1017/Karajan/issues/95"
+    },
+    {
+      "number": 107,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:blocked",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        124,
+        149
+      ],
+      "blocked_by": [
+        106,
+        124,
+        149
+      ],
+      "body_sha256": "27a9ff9faa4d9ac8639a26b1b46261bb8820a5cbd0467dfbb82a321d0f09e5dd",
+      "url": "https://github.com/zhouy1017/Karajan/issues/107"
+    },
+    {
+      "number": 112,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        129,
+        142,
+        144,
+        146
+      ],
+      "blocked_by": [
+        110,
+        129,
+        142,
+        146
+      ],
+      "body_sha256": "da0229f64b87e9bc8a615b64d4de0b7ff1474b155542c3a12129717e7fc4aae7",
+      "url": "https://github.com/zhouy1017/Karajan/issues/112"
+    },
+    {
+      "number": 113,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        147
+      ],
+      "blocked_by": [
+        111,
+        112,
+        147
+      ],
+      "body_sha256": "02e7a8003809cf4e35ff44f290d652e5b5f487d32e50123aa82890b3e3556ce0",
+      "url": "https://github.com/zhouy1017/Karajan/issues/113"
+    },
+    {
+      "number": 116,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        143
+      ],
+      "blocked_by": [
+        114,
+        115,
+        144,
+        143
+      ],
+      "body_sha256": "787236e8e244bdf031ce435b0612025fed0cd721407db4eb9381eac74aea84e1",
+      "url": "https://github.com/zhouy1017/Karajan/issues/116"
+    },
+    {
+      "number": 117,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        107,
+        113,
+        116
+      ],
+      "body_sha256": "06ae3a3f506e2dfcb953c818c339d1773f65eb9f2863fbfd2c86bd703ea6bc23",
+      "url": "https://github.com/zhouy1017/Karajan/issues/117"
+    },
+    {
+      "number": 142,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "ready-for-agent",
+        "kind:task",
+        "status:ready",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        110,
+        111
+      ],
+      "body_sha256": "84540c55510948a4309227acdb653265d47489c9794d7a41443a61f5696603b4",
+      "url": "https://github.com/zhouy1017/Karajan/issues/142"
+    },
+    {
+      "number": 143,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "ready-for-agent",
+        "kind:task",
+        "status:ready",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        114,
+        115
+      ],
+      "body_sha256": "779b90d23ff3c2843c2c377ec0f9f4263bd7bc3bada72a0b0e9cb3206aef74d8",
+      "url": "https://github.com/zhouy1017/Karajan/issues/143"
+    },
+    {
+      "number": 146,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        142
+      ],
+      "body_sha256": "38f377a9181a15f67ce02803baf3fde26a376d2e15c35dc6a2cdc7c070f9466f",
+      "url": "https://github.com/zhouy1017/Karajan/issues/146"
+    },
+    {
+      "number": 147,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        168,
+        171
+      ],
+      "blocked_by": [
+        144,
+        171
+      ],
+      "body_sha256": "9a2e4393ffc318c77493704c486fc93840f45fb0bd45b79efb570a7b2c4629f6",
+      "url": "https://github.com/zhouy1017/Karajan/issues/147"
+    },
+    {
+      "number": 149,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "ready-for-agent",
+        "kind:task",
+        "status:ready",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [],
+      "body_sha256": "cd3811faa0c41a0cf8816a41136c7b4d21df33edd72dcf8e43da81ff14a7089f",
+      "url": "https://github.com/zhouy1017/Karajan/issues/149"
+    },
+    {
+      "number": 153,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        112,
+        147
+      ],
+      "body_sha256": "9c3a5cb1b09513c126195066afabc01e04fa7f958583869d3c5edeed41397496",
+      "url": "https://github.com/zhouy1017/Karajan/issues/153"
+    },
+    {
+      "number": 159,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        164,
+        165,
+        166
+      ],
+      "blocked_by": [
+        165,
+        166
+      ],
+      "body_sha256": "489c2a75184da9a2d7dccc77380346463fa29e1ac876640f470331ad091dbf52",
+      "url": "https://github.com/zhouy1017/Karajan/issues/159"
+    },
+    {
+      "number": 160,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        170
+      ],
+      "blocked_by": [
+        159,
+        170,
+        112,
+        147
+      ],
+      "body_sha256": "bba45d7b04a94ebfba3a57406fc72a77382e29f20878eb0c8eaed662630da98b",
+      "url": "https://github.com/zhouy1017/Karajan/issues/160"
+    },
+    {
+      "number": 161,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        160,
+        185,
+        188
+      ],
+      "body_sha256": "2f2623f0c84f5b6cd98598040ab68afa212522a6a13bb62c62f758321463ea9a",
+      "url": "https://github.com/zhouy1017/Karajan/issues/161"
+    },
+    {
+      "number": 162,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        161,
+        116
+      ],
+      "body_sha256": "61a3e8ce3ac5fd9e041d7b1ed615a782e49da1edc82c3877ccf17299e910a19b",
+      "url": "https://github.com/zhouy1017/Karajan/issues/162"
+    },
+    {
+      "number": 165,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "ready-for-agent",
+        "kind:task",
+        "status:ready",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        164
+      ],
+      "body_sha256": "1cf319c0e50bd287863ad2f48caf887f3e36e9165b213b0ab953b778c15e9ecf",
+      "url": "https://github.com/zhouy1017/Karajan/issues/165"
+    },
+    {
+      "number": 166,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "ready-for-agent",
+        "kind:task",
+        "status:ready",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [],
+      "body_sha256": "a9c362cc41f113fd728f1de0d02c2d5d9bc62f624b9891fd7cfa03e9041034ad",
+      "url": "https://github.com/zhouy1017/Karajan/issues/166"
+    },
+    {
+      "number": 170,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "ready-for-agent",
+        "kind:task",
+        "status:ready",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [],
+      "body_sha256": "29d5236372c9a07322332f139788305c453ee53c53ceb1267a7c7ceaccf8ef5e",
+      "url": "https://github.com/zhouy1017/Karajan/issues/170"
+    },
+    {
+      "number": 171,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "ready-for-agent",
+        "kind:task",
+        "status:ready",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [],
+      "body_sha256": "1f086f7eba5e4f21f25b950177af187bf4e5178a9563f5329639e7ed22c4cfc3",
+      "url": "https://github.com/zhouy1017/Karajan/issues/171"
+    },
+    {
+      "number": 183,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:requirement",
+        "status:queued",
+        "spec:ready",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        184,
+        185,
+        186,
+        187,
+        188,
+        189,
+        190,
+        191,
+        192,
+        193
+      ],
+      "blocked_by": [],
+      "body_sha256": "796abb788fddb0520414826ae3b5ba496e139cefcbc9ab2b4b3409c4f4ded71b",
+      "url": "https://github.com/zhouy1017/Karajan/issues/183"
+    },
+    {
+      "number": 184,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "ready-for-agent",
+        "kind:task",
+        "status:ready",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [],
+      "body_sha256": "9d1ca4e382856d13c05321d10ac17fed97adbe9ecf6990b0e29b5018ca976760",
+      "url": "https://github.com/zhouy1017/Karajan/issues/184"
+    },
+    {
+      "number": 185,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        184
+      ],
+      "body_sha256": "c8bf830880d6c02d040dd27e09f753e54143462083d465b9306297b6648a99ba",
+      "url": "https://github.com/zhouy1017/Karajan/issues/185"
+    },
+    {
+      "number": 186,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        184,
+        185,
+        165
+      ],
+      "body_sha256": "bb3b0db00e9ea1570493cd3976d72e156d4e250cf659ec6b62eabb5554c1d235",
+      "url": "https://github.com/zhouy1017/Karajan/issues/186"
+    },
+    {
+      "number": 187,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        184,
+        185,
+        165,
+        170
+      ],
+      "body_sha256": "fde4c02404771ac6af33521ad5cc81e05c5aaa7d50ba73473c0b3ba5bf1658f8",
+      "url": "https://github.com/zhouy1017/Karajan/issues/187"
+    },
+    {
+      "number": 188,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        185,
+        165,
+        170
+      ],
+      "body_sha256": "04442b072892af817e498a6c0900822e39283ebaee1d9d061dc87543a82a31a4",
+      "url": "https://github.com/zhouy1017/Karajan/issues/188"
+    },
+    {
+      "number": 189,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        188
+      ],
+      "body_sha256": "22e394715adc07e11e08c49c10c694bb7b1a128165105ab8b524e0b103823d30",
+      "url": "https://github.com/zhouy1017/Karajan/issues/189"
+    },
+    {
+      "number": 190,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        188
+      ],
+      "body_sha256": "1a0bec9858d9a4eda1afea5058decf23dcf2b957cc7bcc68e91e94f0819b0ecb",
+      "url": "https://github.com/zhouy1017/Karajan/issues/190"
+    },
+    {
+      "number": 191,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        184,
+        186,
+        188
+      ],
+      "body_sha256": "4a0e043c84db787c215091174f81744cd4eed03b8b94d2fc01c5abe591d44cf9",
+      "url": "https://github.com/zhouy1017/Karajan/issues/191"
+    },
+    {
+      "number": 192,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        184,
+        185,
+        198
+      ],
+      "body_sha256": "d8cc6e6022cf3cdff980a1bc6ca5a2b754f6b41ff2eceafd0f421532e9439d9b",
+      "url": "https://github.com/zhouy1017/Karajan/issues/192"
+    },
+    {
+      "number": 193,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        187,
+        186,
+        188,
+        189,
+        190,
+        191,
+        192
+      ],
+      "body_sha256": "9c66250617b58dd9821d522388ac3f5b67696341404fd20eb91fbd4489edb05f",
+      "url": "https://github.com/zhouy1017/Karajan/issues/193"
+    },
+    {
+      "number": 194,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        165
+      ],
+      "body_sha256": "a7267f785b908e9592c9be20fc991f0c004402e728e9720d2f7548c385eb85ab",
+      "url": "https://github.com/zhouy1017/Karajan/issues/194"
+    },
+    {
+      "number": 195,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        188,
+        189
+      ],
+      "body_sha256": "e7613288322d63fa46cede9b567a7535fe032b0abf46d1a661fcd92b9f6dfde0",
+      "url": "https://github.com/zhouy1017/Karajan/issues/195"
+    },
+    {
+      "number": 196,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        165,
+        170,
+        194
+      ],
+      "body_sha256": "019d4f41e9e260535a835a1b456491b1baef365e30ec2a5088ea443efaba033c",
+      "url": "https://github.com/zhouy1017/Karajan/issues/196"
+    },
+    {
+      "number": 197,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        184,
+        194
+      ],
+      "body_sha256": "aad671333bb71a2653ccd74991ac4fb337d3b96cb16e784a5534e9ff70fb4c6b",
+      "url": "https://github.com/zhouy1017/Karajan/issues/197"
+    },
+    {
+      "number": 198,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        184
+      ],
+      "body_sha256": "85627ea2075d5b558fe75d2812cff0641c907517acb6b274160c8eacb46be577",
+      "url": "https://github.com/zhouy1017/Karajan/issues/198"
+    },
+    {
+      "number": 199,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        189,
+        190,
+        196,
+        197,
+        198
+      ],
+      "body_sha256": "bcb337c08603982ce239f2c8485630d441c9900d0cfba0efc6485df776c41067",
+      "url": "https://github.com/zhouy1017/Karajan/issues/199"
+    },
+    {
+      "number": 200,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        188,
+        196,
+        197
+      ],
+      "body_sha256": "65bdd5657736b037b33aff70b2193ffef07a91bae939419a702587e91acfb963",
+      "url": "https://github.com/zhouy1017/Karajan/issues/200"
+    },
+    {
+      "number": 201,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        189,
+        190,
+        199,
+        200
+      ],
+      "body_sha256": "b3173051e062d717d7036fa63b34dcc8179dfe3af996c74c82c0c7ef1757d4b6",
+      "url": "https://github.com/zhouy1017/Karajan/issues/201"
+    },
+    {
+      "number": 202,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        188,
+        191,
+        199,
+        200
+      ],
+      "body_sha256": "fb2d2a0de08003285872904085e5d3332f1cf03e7eec74ac8e66ea428c0c1676",
+      "url": "https://github.com/zhouy1017/Karajan/issues/202"
+    },
+    {
+      "number": 203,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        7,
+        194
+      ],
+      "body_sha256": "72933ee0d5a427b0b630e088088110c46a1108bfeae8340269d8eea7ad905b0d",
+      "url": "https://github.com/zhouy1017/Karajan/issues/203"
+    },
+    {
+      "number": 204,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        7,
+        194
+      ],
+      "body_sha256": "1d53515d866dd205f7fd725d859dbe67039adcdb6b39c849242e8959187846e6",
+      "url": "https://github.com/zhouy1017/Karajan/issues/204"
+    },
+    {
+      "number": 205,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        198,
+        194
+      ],
+      "body_sha256": "c69ec1080c1debd83de111d97fcd414b3d11d5cfe412c345765ae04c7a548cc5",
+      "url": "https://github.com/zhouy1017/Karajan/issues/205"
+    },
+    {
+      "number": 206,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        87,
+        113,
+        117,
+        194
+      ],
+      "body_sha256": "1c6251aac406ccea8af5cc875a2945f5918ebf66e2c69653949ef16cc50f814b",
+      "url": "https://github.com/zhouy1017/Karajan/issues/206"
+    },
+    {
+      "number": 207,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        198,
+        194
+      ],
+      "body_sha256": "00f67dc642956f1714766ae8ebdceaf249259fe2da77efc45c07bc86c1ab4158",
+      "url": "https://github.com/zhouy1017/Karajan/issues/207"
+    },
+    {
+      "number": 208,
+      "state": "open",
+      "labels": [
+        "enhancement",
+        "kind:task",
+        "status:queued",
+        "spec:ready"
+      ],
+      "sub_issues": [],
+      "blocked_by": [
+        193,
+        203,
+        204,
+        205,
+        206,
+        207,
+        201,
+        202,
+        195,
+        196,
+        197,
+        198,
+        8,
+        153,
+        160,
+        161,
+        162
+      ],
+      "body_sha256": "52b98320b8ba325c5ea265b501f50dc6095fc58c9c4ae4c274bf421be3f0e47f",
+      "url": "https://github.com/zhouy1017/Karajan/issues/208"
+    },
+    {
+      "number": 174,
+      "state": "closed",
+      "labels": [
+        "status:completed",
+        "kind:requirement",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        175,
+        176,
+        177,
+        178
+      ],
+      "blocked_by": [],
+      "body_sha256": "67674d108fb956f1609d0ba2d90fbafd607a0f9afec0b1af17a4cdf74ef18678",
+      "url": "https://github.com/zhouy1017/Karajan/issues/174"
+    },
+    {
+      "number": 115,
+      "state": "closed",
+      "labels": [
+        "kind:task",
+        "status:completed",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        139
+      ],
+      "blocked_by": [
+        100,
+        101,
+        106,
+        136,
+        137,
+        139,
+        140
+      ],
+      "body_sha256": "f89ab21f2c5fa4f8ced1144c3e90db7b8448b061ed683c2289b1e61f3414c156",
+      "url": "https://github.com/zhouy1017/Karajan/issues/115"
+    },
+    {
+      "number": 111,
+      "state": "closed",
+      "labels": [
+        "kind:task",
+        "status:completed",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        134,
+        140
+      ],
+      "blocked_by": [
+        110,
+        134,
+        139,
+        140
+      ],
+      "body_sha256": "40464ec0ffdca43b382fc6f3fbee4246ead35a72757a5b82a64a1e6d7387a111",
+      "url": "https://github.com/zhouy1017/Karajan/issues/111"
+    },
+    {
+      "number": 94,
+      "state": "closed",
+      "labels": [
+        "kind:task",
+        "status:completed",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        101
+      ],
+      "blocked_by": [
+        90
+      ],
+      "body_sha256": "48c6f46d8b9be9ed54607bee2ba07306dca24a77c0e9c3ac32ff56e854ae2b98",
+      "url": "https://github.com/zhouy1017/Karajan/issues/94"
+    },
+    {
+      "number": 5,
+      "state": "closed",
+      "labels": [
+        "kind:task",
+        "status:completed",
+        "planning:decomposed"
+      ],
+      "sub_issues": [
+        61
+      ],
+      "blocked_by": [
+        2
+      ],
+      "body_sha256": "9f5713608c1c85cfda693bcf14f1672b5e15b04f038e0b9931eccfeb34738c3d",
+      "url": "https://github.com/zhouy1017/Karajan/issues/5"
+    }
+  ],
+  "policy_pending": false,
+  "new_tasks": 25,
+  "new_parents": 1,
+  "existing_open_updated": 47,
+  "completed_parents_marked": [
+    174,
+    115,
+    111,
+    94,
+    5
+  ],
+  "closed_queue_cleanup": [
+    {
+      "number": 144,
+      "state": "closed",
+      "labels": [
+        "kind:task",
+        "status:completed"
+      ],
+      "body_sha256": "5c6529f0401e420a51775034d5813b8fa8c137401c3576489afc8f76ac389085",
+      "url": "https://github.com/zhouy1017/Karajan/issues/144"
+    },
+    {
+      "number": 106,
+      "state": "closed",
+      "labels": [
+        "kind:task",
+        "status:completed"
+      ],
+      "body_sha256": "ffc431dfb25becafb2dd791b0e757aac01bd3603402c8f3e19791f340950dede",
+      "url": "https://github.com/zhouy1017/Karajan/issues/106"
+    },
+    {
+      "number": 104,
+      "state": "closed",
+      "labels": [
+        "kind:task",
+        "status:completed"
+      ],
+      "body_sha256": "76e14b122d8e4ed8e9846980cc1da6398d2fbaaba8125d2ae63a72b6845f355f",
+      "url": "https://github.com/zhouy1017/Karajan/issues/104"
+    },
+    {
+      "number": 101,
+      "state": "closed",
+      "labels": [
+        "kind:task",
+        "status:completed"
+      ],
+      "body_sha256": "2d1edca8ccd350ca119ac929b17108dcf7a034695076024ec0dcfef0bad886c3",
+      "url": "https://github.com/zhouy1017/Karajan/issues/101"
+    },
+    {
+      "number": 100,
+      "state": "closed",
+      "labels": [
+        "kind:task",
+        "status:completed"
+      ],
+      "body_sha256": "dd9d032c0273dd77496cc23c9f72c331d57be82db0941a8e5af2c1ffb78d2625",
+      "url": "https://github.com/zhouy1017/Karajan/issues/100"
+    },
+    {
+      "number": 99,
+      "state": "closed",
+      "labels": [
+        "kind:task",
+        "status:completed"
+      ],
+      "body_sha256": "f78b950917112cca3b0d78a55a360b6e019c6e00a8ccd8c417cabb5050e5f76b",
+      "url": "https://github.com/zhouy1017/Karajan/issues/99"
+    },
+    {
+      "number": 96,
+      "state": "closed",
+      "labels": [
+        "kind:task",
+        "status:completed"
+      ],
+      "body_sha256": "2525c1f1036f86c5c438a06e46a074cc4a2a9695f7ba6af3b84c4f95c71d4636",
+      "url": "https://github.com/zhouy1017/Karajan/issues/96"
+    },
+    {
+      "number": 94,
+      "state": "closed",
+      "labels": [
+        "kind:task",
+        "status:completed",
+        "planning:decomposed"
+      ],
+      "body_sha256": "48c6f46d8b9be9ed54607bee2ba07306dca24a77c0e9c3ac32ff56e854ae2b98",
+      "url": "https://github.com/zhouy1017/Karajan/issues/94"
+    },
+    {
+      "number": 90,
+      "state": "closed",
+      "labels": [
+        "kind:task",
+        "status:completed"
+      ],
+      "body_sha256": "d18acc63671764d9d9e92e12e9202e29a6de5093542545367ed82a46470f4170",
+      "url": "https://github.com/zhouy1017/Karajan/issues/90"
+    }
+  ],
+  "decision": {
+    "scope": "full_development_separate_source_qualification",
+    "metering": "allow_explicit_unknown_under_existing_gates",
+    "metering_text": "用户已确认：缺少精确 provider/token 可明确标未知或不完整，在原资格、授权、严格绑定与有限预算门全部满足时启用；完整统计独立验收。缺口使原硬门不可验证时仍阻塞，不新增消费许可。",
+    "confirmed_by": "用户：同意推荐",
+    "date": "2026-09-16"
+  },
+  "previous_publication": "publication.json"
+}

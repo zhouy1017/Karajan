@@ -1,6 +1,6 @@
 # Karajan 架构与完整流程
 
-修订：2026-09-14 r8，角色驱动调度版。本文是当前架构的解释与导航入口；详细行为和验收由 [工作台 PRD](../prd/commander-workbench.md)、[产品 PRD](../prd/karajan-v1.md) 及下方契约定义。**图中是目标设计，不能据此认定新模块已经实现。** 文档分类见 [文档导航](../README.md)。
+修订：2026-09-16 r9，继承角色驱动调度并增加会话用量与实际路由统计。本文是当前架构的解释与导航入口；详细行为和验收由 [工作台 PRD](../prd/commander-workbench.md)、[产品 PRD](../prd/karajan-v1.md) 及下方契约定义。**图中是目标设计，不能据此认定新模块已经实现。** 文档分类见 [文档导航](../README.md)。
 
 Karajan 是个人使用、以仓库项目为上下文的多来源 Agent 工作流平台。用户通过对话定义工作方式、角色及调度权限，审阅同源配置与图表后部署。Workflow 中的 Commander、调度器或其他获授权角色根据实际工作拆分任务、建立依赖、分配执行者并决定并行规模。Karajan 不内置 coding Agent 人数上限，不按固定前后端或三角色流程切分任务；报告、补丁和代码到 PR 使用各自完成条件。
 
@@ -116,16 +116,20 @@ Karajan 没有“最多两个/四个 coding Agent”的内置产品限制。角�
 
 | 模块 | 负责的复杂性 | 详细入口 |
 |---|---|---|
+| 跨模块开发与原范围承接 | 现有控制面复用、正式调用/执行/结果/UI 接线及独立出口 | [13](13-development-integration-contract.md)、[就绪清单](../planning/r9-development-readiness-20260916/README.md) |
 | Workbench / Hub | 项目会话、命令、同版预览、缩略卡与可恢复详情 | [工作台 PRD](../prd/commander-workbench.md)、[04](04-api-and-workbench.md)、[07](07-commander-workbench-backend-contract.md) |
 | Designer / Planning | 文字创作、受预算约束的修订、具体计划建议与交接 | [09](09-configurable-workflows.md)、[10](10-conversational-workflow-deployment.md) |
 | Workflow 调度角色 | 按任务作拆分、分工、依赖、优先级、派发及授权内调整决定 | [11](11-role-directed-scheduling.md) |
 | Configuration / Deployment | 不可变文件、编译、同源图表、精确确认、加载激活与恢复 | [10](10-conversational-workflow-deployment.md) |
 | Coordination / Policy | 校验角色调度决定、唯一业务状态提交、依赖/资源队列、恢复 | [01](01-control-and-state.md)、[02](02-routing-and-quota.md)、[11](11-role-directed-scheduling.md) |
 | Capacity / Inference | 多池预算、准入与对账；固定网关绑定和逐次调用许可 | [02](02-routing-and-quota.md)、[08](08-provider-gateway.md) |
+| Usage / 会话用量投影 | 同一账本按角色/Agent、任务、模型与实际 provider 统计，可信路由关联、覆盖去重及未知展示 | [12](12-conversation-usage-accounting.md) |
 | Execution / Artifacts | 受控执行、独立工作区、可信采集与产物/候选证据 | [03](03-execution-and-delivery.md) |
 | Delivery | 按产物类型验收；PR 凭据隔离、幂等与远端核对 | [03](03-execution-and-delivery.md)、[09](09-configurable-workflows.md) |
 
 外置网关不替 Karajan 决定业务重试或换源。公开模型别名不足以证明真实账户、计费路径和来源固定；不同来源的预算仍独立保留原生单位。网关隐藏的重试、请求变换、用量与取消语义须按部署版本验收。依据与限制见 [08 网关契约](08-provider-gateway.md) 和 [来源记录](sources.md)。
+
+会话用量覆盖全部所属 Run 及无 Run 的对话/创作调用。Hub 摘要、角色/任务详情和模型/provider 分组读取同一持久账本，实际路由与配置意图分开，已报告/估算/未知分开；刷新统计不调用模型。token 数量与预算预留、原生额度及金额分别表达，完整规则见 [12](12-conversation-usage-accounting.md)。
 
 ## 6. 两种流程，使用同一套引擎
 
@@ -144,4 +148,4 @@ Karajan 没有“最多两个/四个 coding Agent”的内置产品限制。角�
 
 P1–P4 是工程承接顺序，M0–M4/DG 是历史验收映射，均不规定用户 Workflow 的运行拓扑。保留 [A01–A26](05-build-and-validation.md)、原 FR/AC、来源资格和历史失败，按各自范围补齐；新设计不会自动完成旧 Issue。
 
-当前实现已有会话、草稿、规划/批准、资源账本及部分执行和验证基础，新增网关、配置 Designer、通用编译与部署、授权内动态任务调度仍待开发和验收。具体已有行为见 [实现导航](../implementation/README.md)，决定沿革见 [ADR](../adr/README.md) 与 [审阅记录](06-review-and-decisions.md)。个人单机、Web 工作台、Windows/WSL2 的环境边界继续适用；自动合并、多用户权限、多机队列、通用插件市场和任意脚本引擎不在当前范围。
+当前已有会话/草稿/规划批准、资源账本和部分执行验证基础；#175–#178 又完成网关目录、真实包与编译、deploy_only 加载和动态图/队列控制面。下一步补受控推理、Designer、全部业务适配器、部署到 Run、角色真实调度及会话用量，不能重复把控制面列为未实现。具体接线与独立出口见 [13](13-development-integration-contract.md)。具体已有行为见 [实现导航](../implementation/README.md)，决定沿革见 [ADR](../adr/README.md) 与 [审阅记录](06-review-and-decisions.md)。个人单机、Web 工作台、Windows/WSL2 的环境边界继续适用；自动合并、多用户权限、多机队列、通用插件市场和任意脚本引擎不在当前范围。

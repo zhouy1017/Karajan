@@ -1,0 +1,503 @@
+[
+  {
+    "key": "GW-CALL",
+    "parent": "R9",
+    "title": "网关受控调用、实际路由回执与会话调用记录",
+    "dependencies": [],
+    "requirements": "FR07/21/28/29；GW-AC02–05；UA-AC01/03/04/06",
+    "behavior": "在既有网关目录和绑定上，走正式调用授权入口完成固定模型的非流式/流式/工具结果续接；从一个会话动作查看该调用的状态、实际路由和原始usage覆盖。复用既有Capacity/send账本，不新建影子额度。",
+    "criteria": [
+      "受控本机HTTP上游实际收到固定模型、批准的消息/参数/tools；目录探测不发送推理，请求变换不越已批准策略。",
+      "每次请求绑定会话/ExecutionRef/ModelBinding及预算，未准入或来源撤销时上游接收数为零；凭据不进入浏览器/工具/日志。",
+      "流式、工具续接、429/截断/错误/响应丢失与取消均保存原call和发送事实；未知不自动重发，成功/失败/用量完整性分别记录。",
+      "可信路由观察和usage来源可关联；配置alias不冒充实际provider，重复累计/终态回执不双计，pre-Run调用同样可读回。"
+    ],
+    "out_of_scope": "不启用未经S验收的Profile，不安装/登录网关、不发送现金请求；完整聚合面板归USAGE，完整原币预算产品归CALL-BUDGET。",
+    "evidence": "C/U/P"
+  },
+  {
+    "key": "RUNTIME",
+    "parent": "R9",
+    "title": "受控 Agent 工具循环与真实执行身份接线",
+    "dependencies": [
+      "GW-CALL"
+    ],
+    "requirements": "FR07/13/16/21/23；GW-AC02/05；WF-AC08/09/11",
+    "behavior": "让正式agent_task适配器在独立工作区运行网关模型工具循环，RunnerHost管理真实进程/执行身份，Hub可查看工具进展、产物与停止核对。",
+    "criteria": [
+      "固定执行清单经过accepted/activation/start再启动；重传和spawn应答空窗只核对原身份，不产生第二writer。",
+      "通过本机受控模型响应驱动真实允许的文件/命令工具得到固定Artifact/Candidate，同时实际canary拒绝平台/其他任务/凭据/管理端/交付路径。",
+      "工具调用ID及完整参数/结果续接对应同一call链；实际发送经GW-CALL，隐藏子Agent/插件/fallback不能绕开准入和用量。",
+      "取消、子进程仍活、失联和迟到结果分别呈现；未经证实停止/隔离不释放互斥；report不强制代码workspace或PR。"
+    ],
+    "out_of_scope": "不重写RunnerHost/CandidateStore，不用fixture取得真实来源资格；兼容原生路径原AC继续独立验收。",
+    "evidence": "C/U/P"
+  },
+  {
+    "key": "DESIGNER",
+    "parent": "R9",
+    "title": "Hub 对话生成 Workflow 与同源图表编辑",
+    "dependencies": [
+      "GW-CALL",
+      "RUNTIME",
+      165
+    ],
+    "requirements": "FR22/24；UX-AC16/19/20；WD-AC01/02/08/10",
+    "behavior": "用户在无目标Run的会话描述两种不同流程，由实际Designer调用生成真实包；通过文字、表格、文件继续修订并查看同源图和diff。",
+    "criteria": [
+      "原消息、独立创作ExecutionRef、来源和累计预算可追溯；通过正式调用与配置服务生成报告和patch两种完整包，不用手写计划冒充模型产物。",
+      "全部图节点/角色表/文件/diff绑定同一编译摘要；表格文件修改不调用模型，旧输出不能覆盖新revision，非法字段有包内定位。",
+      "生成/修复/重试/新proposal/进程恢复不清零调用与时间预算；已发送未知先核对，到界限保留草稿。",
+      "实际浏览器刷新/切换会话/返回Hub保留输入和版本；不因保存、模型文字或预览成功自动部署。"
+    ],
+    "out_of_scope": "复用已完成#176，不重建编译器；不承诺自由脚本/插件市场/拖拽画布；真实模型S证据不能由本地provider模拟替代。",
+    "evidence": "C/U/P"
+  },
+  {
+    "key": "COMMANDER",
+    "parent": "R9",
+    "title": "网关 Commander 持续对话、可信规划与可编辑分工",
+    "dependencies": [
+      "GW-CALL",
+      "RUNTIME",
+      165,
+      170
+    ],
+    "requirements": "FR03/04/05/17；UX-AC02/03/06/09/11；PRD-AC02",
+    "behavior": "默认网关路径的主Commander持续读取获准需求/验收/可信仓库材料，产生可接受或编辑的初始分工；与Designer创作模式分开，向具体部署Run交接同版计划建议。",
+    "criteria": [
+      "真实会话消息和固定输入通过受控网关调用，完整最终输出经严格解析/可信编译才能形成建议；浏览器/模型自报Plan权威不可直接提交。",
+      "无Run时可讨论并保存规划建议，不伪造执行；采用已部署模板时由DEPLOY-RUN绑定具体输入/Run，再将建议编译成同版可编辑提案。",
+      "角色按固定RoleDefinition解释，模型/来源、依赖、写区、checks和授权范围可预览；任意自定义角色不被静默映射回旧三角色枚举。",
+      "主Commander/顾问预算、唯一有效提交任期与新上下文保持；旧结果/旧批准拒绝，无实施批准时仓库bytes/modes不变；恢复不重复模型请求。",
+      "工作台修改并一次确认同版分工，Hub保留草稿与上下文；缺资格/资源显示原因，固定Go资格失败不授予或否定新网关Profile资格。"
+    ],
+    "out_of_scope": "复用#170的不可变批准原语；不关闭#112/#113/#153原固定Go路径验收，不以本地provider代替真实Commander S。",
+    "evidence": "C/U/P"
+  },
+  {
+    "key": "DEPLOY-RUN",
+    "parent": "R9",
+    "title": "确认部署并运行与冻结输入到 Run 的完整入口",
+    "dependencies": [
+      "RUNTIME",
+      165,
+      170
+    ],
+    "requirements": "FR04/18/25；UX-AC21/22；WD-AC03–09",
+    "behavior": "在Hub对同版预览完成deploy_only或deploy_and_run；后者从已加载active定义和具体输入创建唯一真实Run，运行结果回到原会话。",
+    "criteria": [
+      "无业务输入可仅部署参数化模板；有输入的复合确认固定preview/bundle/compiled/input/run_plan/grant摘要与slot版本。",
+      "只消费loader真实读回的定义，生产Run与调度登记同一项目/会话/授权；pending、缺资格或缺适配器不能运行。",
+      "两个不同输入复用模板，各Run保留自己的输入/授权；active切换及回滚不重写旧Run。",
+      "在部署/active/Run创建/启动应答窗口故障并恢复，原命令最多关联一个Run；界面分别显示部署ready、执行及产物结果。"
+    ],
+    "out_of_scope": "复用#177，不能改用仅数据库标ready或测试手写tasklist；不部署外部网站，不扩大原一次授权。",
+    "evidence": "C/U/P"
+  },
+  {
+    "key": "ROLE-RUN",
+    "parent": "R9",
+    "title": "真实角色调度、自适应并行与资源排队回到 Hub",
+    "dependencies": [
+      "DEPLOY-RUN"
+    ],
+    "requirements": "FR26/27；UX-AC23/24；RS-AC01–10",
+    "behavior": "已授权调度角色从实际任务输入作出SchedulingDecision，经既有控制面提交图并将claim接到物理Agent执行，可信结果驱动下一次必要判断。",
+    "criteria": [
+      "对适合1/3/7项工作输入产生不同图，不预置前后端分工；由角色真正提交决定，授权内自动生效，越权/旧term/grant明确拒绝。",
+      "真实Attempt与claim/start/原图版本关联；降低容量完整排队，恢复只推进已有派发，不反复调用模型或截断任务。",
+      "并发决定CAS、委派子集、动态集合封口、替代义务及精确版本结果均由正式路径验证；旧Attempt/消费保留。",
+      "Hub展示原授权、运行图修订、角色决定、实际并行数/等待原因；重启/重复事件不重复派发，独立工作区不会互相覆盖。"
+    ],
+    "out_of_scope": "复用#178控制面，原#161两任务真实并行AC保留；不把脚本决定/异步函数当作角色S或物理并行证据。",
+    "evidence": "C/U/P"
+  },
+  {
+    "key": "WF-KINDS",
+    "parent": "R9",
+    "title": "Workflow 条件、人工节点、返工及产物种类执行",
+    "dependencies": [
+      "DEPLOY-RUN"
+    ],
+    "requirements": "FR14/19/20/22/23；UX-AC17/18；WF-AC01–11",
+    "behavior": "把已声明执行种类接入真实适配器，完成静态/动态流程的条件、汇合、人工决定、有界返工与report/patch/pr结果。",
+    "criteria": [
+      "agent_task、deterministic_check、human_decision、artifact_aggregate、candidate_integrate、publish_pr各有受信实现/资格检查；只有声明无实现保持不可运行。",
+      "真实类型化条件、人工旧决定/超时、未选分支与unknown分别处理；缺失/失败不能变not_applicable或跳过承诺义务。",
+      "同批多个失败只算一轮，返工产生新实例/输入并使相关证据失效；重启/改名/换Task不重置累计边界。",
+      "report可读下载，patch绑定基准/diff，pr复用独立Checks/Review/Delivery；失败/未知/作者改名均不能通过gate。",
+      "新网关Reviewer以独立ExecutionRef/新上下文消费同一Candidate和全部checks，输出经可信Evidence/当前验证收据绑定；无资格/作者上下文或不同家族要求未满足时拒绝。",
+      "两个独立workspace的候选按固定顺序整合并重验；交付凭据隔离，PR命令与expected head/当前证据关联，unknown先查原对象。"
+    ],
+    "out_of_scope": "不实现任意脚本执行引擎、用户插件或自动merge；新网关PR真实S/G由R9-EXIT验收，原#162/Go专属证据保留且不被替代。",
+    "evidence": "C/U/P"
+  },
+  {
+    "key": "USAGE",
+    "parent": "R9",
+    "title": "同一 Commander 会话多维 token 与实际 provider 用量面板",
+    "dependencies": [
+      "GW-CALL",
+      "DESIGNER",
+      "DEPLOY-RUN"
+    ],
+    "requirements": "FR28/29；UX-AC25–27；UA-AC01–07",
+    "behavior": "Hub展示全会话用量摘要，按角色/Agent实例/Task/模型/实际provider及交叉条件展开调用明细，覆盖所有Run与pre-Run调用。",
+    "criteria": [
+      "同时覆盖Commander/Designer/顾问/调度/Worker/Reviewer，同角色多实例、无任务、失败重试及父子任务；其他会话/账户外部消费不混入。",
+      "同模型跨provider分开，请求alias和实际路由分别显示；仅Attempt总量、缺usage、缓存/推理包含关系、冲突和估算均按架构12展示且不伪造精度。",
+      "重复流式累计/终态/网关上游重叠报告不双计；取消后迟到/可信更正计回原时间和身份，全部失败原账保留。",
+      "分组/总计/分页明细同一ledger revision；UTC半开时间过滤、未知/无任务组、缺口重取和跨会话异步隔离通过真实UI验证。",
+      "打开/筛选/排序/刷新零模型调用；用户主动的自然语言用量分析另记消费，卡片与面板同源，实际路由精度单列S证据。"
+    ],
+    "out_of_scope": "不从订阅百分比推算金额，不维护第二账本，不实现跨用户计费或未经要求的预算购买。",
+    "evidence": "C/U/P"
+  },
+  {
+    "key": "GW-QUALIFY",
+    "parent": "R9",
+    "title": "固定网关部署的真实来源、角色能力与路由计量资格",
+    "dependencies": [
+      "GW-CALL",
+      "RUNTIME",
+      "CALL-BUDGET"
+    ],
+    "requirements": "FR02/07/21/29；GW-AC01–05；UA-AC06",
+    "behavior": "在用户实际配置且已授权的固定网关/模型/账户范围验证真实调用、工具语义、隔离、路由和可观察用量，产生可供当前admission读取的资格事实。",
+    "criteria": [
+      "固定网关/Runtime/Profile及映射摘要，分别验证连接、目录、真实角色能力、数据去向与资源准入；目录或fixture不授资格。",
+      "至少两个已配置provider按各自能力验证非流式/流式/工具续接与实际转发语义、请求数、重试/取消限制及route/usage关联。",
+      "配置变更、来源撤销、未知结果和隐藏后备负例保留；未取得的字段/能力不得自报passed或使不合格来源启用。",
+      "缺账户/模型/预算/授权时明确blocked和解除条件；全部原始失败及请求计数按来源保留。"
+    ],
+    "out_of_scope": "不购买/重置额度、不自行挑选第三方；不以网关通过关闭原Codex/Claude/Go专属路径票。",
+    "evidence": "C/P/S"
+  },
+  {
+    "key": "R9-EXIT",
+    "parent": "R9",
+    "title": "r9 全行为跨流程验收与开发完成证据",
+    "dependencies": [
+      "COMMANDER",
+      "DESIGNER",
+      "DEPLOY-RUN",
+      "ROLE-RUN",
+      "WF-KINDS",
+      "USAGE",
+      "GW-QUALIFY"
+    ],
+    "requirements": "FR21–29；UX-AC15–27；GW/WF/WD/RS/UA 全部适用条件",
+    "behavior": "用同一固定候选在实际页面串起两种不同拓扑及代码交付模板，产物与用量回到同一Commander会话，证明完整新产品行为而非控制面样例。",
+    "criteria": [
+      "真实Designer生成并修改两个流程，经确认部署读取同版文件运行，分别得到合格report/patch；代码模板另经过当前checks/独立Review/PR。",
+      "真实角色按1/3/7工作需求决定不同图、容量背压后继续；各Agent实际身份与来源可追溯，无产品人数上限。",
+      "同一会话多Run/pre-Run用量、实际provider和来源能力限制可核对；在运行中换页/断线/重启/取消保持状态和尾账。",
+      "逐项绑定全部新增AC、SHA、命令/输入、期望与实际、C/U/P/S/G；任何缺项不报完整r9通过，原v1五来源/运维出口仍独立。"
+    ],
+    "out_of_scope": "不是#1/#30原完整v1的替代出口；不新增消费或合并权限。",
+    "evidence": "C/U/P/S/G"
+  },
+  {
+    "key": "PROJECT-SETTINGS",
+    "parent": 11,
+    "title": "项目来源设置与可执行资格状态的真实工作台",
+    "dependencies": [
+      165
+    ],
+    "requirements": "FR01/02/06/17/21；UX-AC01/06/14/15；原#11",
+    "behavior": "从项目设置维护受信仓库/基准、Profile/网关绑定和资源引用，在Hub选择来源并看到可见/合格/可准入的独立状态。",
+    "criteria": [
+      "合法对象保存读回；跨项目、越界仓库、坏共享池/币种/未知能力或缺预算不能启用执行。",
+      "真实UI只提交配置意图和secret_ref，假秘密不进入日志/导出，模型不能改endpoint/凭据；认证/SSE/产物/CSRF原门保留。",
+      "同键/CAS/并发和切项目恢复可复核；目录可见但无资格时明确原因，首屏仍以会话为中心。"
+    ],
+    "out_of_scope": "复用#63/#164/#175；不重复实现登录网关或直接授予真实资格。",
+    "evidence": "C/U/P"
+  },
+  {
+    "key": "REVISION",
+    "parent": 15,
+    "title": "计划变更、任务复用及原授权外修订工作台",
+    "dependencies": [
+      "DEPLOY-RUN",
+      "ROLE-RUN"
+    ],
+    "requirements": "FR04/05/15/26；UX-AC09/18；A22；原#15",
+    "behavior": "用户能审阅初始授权外变更，获准后产生新计划/任务版本；原范围内调度继续自动生效，复用有证明且输入未变的成果。",
+    "criteria": [
+      "A完成仅改B时新图显式复用A；旧B迟到不满足新版，依赖输入变化传递使证据失效。",
+      "扩来源/预算/工具/目标须同版批准；重复/旧term/批准竞态拒绝，旧Attempt不热改。",
+      "合法替代有明确义务覆盖；旧任务不阻塞新图的已转移义务，但其物理执行/消费仍核对，不能删图免除必需结果。"
+    ],
+    "out_of_scope": "不改变原#15验收责任，不将r8图编辑等同完整业务复用。",
+    "evidence": "C/U/P"
+  },
+  {
+    "key": "RULES",
+    "parent": 23,
+    "title": "Rulebook 编辑模拟发布的完整可恢复工作台",
+    "dependencies": [
+      165,
+      170,
+      "PROJECT-SETTINGS"
+    ],
+    "requirements": "FR06/16；A11/25；原#23",
+    "behavior": "用户按同快照编辑/导入/模拟并发布规则，看到来源候选、排除原因及对未来计划的影响。",
+    "criteria": [
+      "同快照模拟候选和顺序一致，实际零模型调用/预留；歧义、缺规则、风险下限与unknown原因可见。",
+      "已批准单一来源及替代集合原样保留；新成员/更宽规则不能进入旧Run，旧预览/hash/CAS拒绝。",
+      "跨币种无参考快照跳过该排序项，不改原币限额；刷新/导入/失败保留版本和审计。"
+    ],
+    "out_of_scope": "复用#71/#72/#73/#75/#78；不自动学习发布规则，不自动扩大授权。",
+    "evidence": "C/U/P"
+  },
+  {
+    "key": "CAPACITY",
+    "parent": 24,
+    "title": "共享池多窗口与保护量的运行和工作台接线",
+    "dependencies": [
+      "GW-CALL",
+      "PROJECT-SETTINGS"
+    ],
+    "requirements": "FR08/09/12；A03–06/25；原#24",
+    "behavior": "多个实际会话/执行争用同一资源池，工作台显示当前容量、预算和来源观察区别，政策更新影响后续准入。",
+    "criteria": [
+      "两key/模型同池资源向量全部成功或回滚，未知有限参数缺失拒绝；角色名不能获得保护量。",
+      "两个Run固定不同规则仍读取当前CapacityPolicy；保护值变更不释放在途消费，角色委派不复制额度。",
+      "外部/重复/延迟报告、短窗口重置与长窗口约束无双算；一任务阻塞不阻断独立任务，等待原因和恢复可见。"
+    ],
+    "out_of_scope": "复用#68/#70/#74；不将配额观察当会话token，不保证能阻止官方客户端外部消费。",
+    "evidence": "C/U/P"
+  },
+  {
+    "key": "CALL-BUDGET",
+    "parent": 25,
+    "title": "逐调用原币预算与未知消费核对闭环",
+    "dependencies": [
+      "GW-CALL"
+    ],
+    "requirements": "FR09/10；A18/19/26；原#25",
+    "behavior": "受控调用从父预留领取切片，原币预算、完整收费上界及send未知约束实际发送，页面可查原调用及未结清占用。",
+    "criteria": [
+      "并发子调用不重复扣完整父预留；任一资源向量不足全部拒绝，上游零请求。",
+      "send intent前/后及发送后未记账故障可重放核对，未知不退款不盲重发；无稳定logical ID的新接收重新准入。",
+      "USD/CNY等按原币分别硬约束，价格版本和全部收费上界固定；过期/缺收费项/无输出上界硬预算请求拒绝。",
+      "实报、估算、未知占用和实际token分别展示；受控provider证明本地C/P，真实API对账由对应来源票取得S。"
+    ],
+    "out_of_scope": "不发送未经授权的现金请求，不使用汇率放宽上限；USAGE负责完整会话分组面板。",
+    "evidence": "C/U/P"
+  },
+  {
+    "key": "REASSIGN",
+    "parent": 26,
+    "title": "获准换源、质量升级与累计修复的真实流程",
+    "dependencies": [
+      "ROLE-RUN",
+      "WF-KINDS",
+      "RULES",
+      "CAPACITY",
+      "CALL-BUDGET"
+    ],
+    "requirements": "FR11/14；A07/08/18/24；原#26",
+    "behavior": "资源耗尽或质量失败按原明确替代集合形成新Attempt，Hub可见原因、前后身份及累计消费/修复。",
+    "criteria": [
+      "429区分拥塞/耗尽/未知，已知耗尽不反复探测；旧执行停止或隔离且占账后才能切新Attempt/workspace。",
+      "来源替代不降风险/验收、不借现金；严格单一绑定保持阻塞，无合格者等待。",
+      "同批失败算一轮，新Task/计划/重启/换源不重置累计；用户选定主Commander不走自动替任。"
+    ],
+    "out_of_scope": "不改变原授权范围，不把网关静默fallback当产品换源。",
+    "evidence": "C/U/P"
+  },
+  {
+    "key": "HANDOFF",
+    "parent": 27,
+    "title": "用户决定的 Commander 交接与检查点工作台",
+    "dependencies": [
+      "DEPLOY-RUN",
+      "RULES",
+      "CAPACITY"
+    ],
+    "requirements": "FR03/12；PRD-AC02；原#12/#27",
+    "behavior": "对当前主Commander提出可核验交接方案，由用户决定新term；交接材料独立于供应商私有session，已有独立获批任务继续。",
+    "criteria": [
+      "方案包含当前目标/未决项/候选与资源已知估算未知；无答复/拒绝/过期材料零替任执行。",
+      "确认时重查term、资格、授权、预算、检查点，只激活指定新term；迟到结果和重复确认不夺权。",
+      "等待时已批独立任务继续，需新设计者等待；新上下文使用可信材料，不复制私有推理。"
+    ],
+    "out_of_scope": "不把自定义子图调度角色授权内委派误当主Commander交接；不自动换用户选定主控。",
+    "evidence": "C/U/P"
+  },
+  {
+    "key": "RECOVERY",
+    "parent": 28,
+    "title": "跨调用、进程、调度和交付的取消与正常恢复",
+    "dependencies": [
+      "ROLE-RUN",
+      "WF-KINDS",
+      "REASSIGN",
+      "HANDOFF"
+    ],
+    "requirements": "FR15/18；A09/10/20/23；原#28",
+    "behavior": "对运行中的全部正式路径做真实进程/持久故障注入，Hub明确保留未核对对象，重启后先恢复身份再推进。",
+    "criteria": [
+      "覆盖预留提交、accepted、spawn后ACK前、结果落盘、业务成功但子进程活、send_pending/unknown；不重复执行或释放未知writer。",
+      "实际子进程/权限迟到/取消竞态不能恢复已撤销效果；迟到结果无交付权但消费仍入账。",
+      "第二协调器拒绝接管；重启先只读恢复部署/图/grant/执行/调用/交付再准入，远端停止unknown不伪造。"
+    ],
+    "out_of_scope": "不以mock inspect代替P；历史备份restore epoch另归MAINTENANCE。",
+    "evidence": "C/U/P"
+  },
+  {
+    "key": "MAINTENANCE",
+    "parent": 29,
+    "title": "备份恢复、升级与保留策略的可操作产品",
+    "dependencies": [
+      "DEPLOY-RUN",
+      "USAGE",
+      "REASSIGN",
+      "HANDOFF"
+    ],
+    "requirements": "FR18；A21；原#29",
+    "behavior": "提供受管备份、恢复检查/用户继续、迁移与保留操作，覆盖新Workflow/调度/调用/统计对象。",
+    "criteria": [
+      "真实一致备份含所有控制库、不可变包/产物/账本及manifest，升级前备份；假秘密不进入导出。",
+      "备份后新增执行/消费/撤销/远端更新，再恢复旧快照：新restore epoch冻结旧activation/outbox，不恢复撤销权或旧余额。",
+      "用户对当前核对结果决定继续，缺历史保留unknown；缺证据/磁盘满不能交付。",
+      "只有无活进程、产物已保存且过保留期的受管解析路径可清理；active/旧Run/证据/恢复引用及用量审计保留。"
+    ],
+    "out_of_scope": "不备份供应商OAuth秘密，不把历史恢复当正常重启自动继续。",
+    "evidence": "C/U/P"
+  },
+  {
+    "key": "CODEX-S",
+    "parent": 18,
+    "title": "官方 Codex 订阅的产品角色与原生工具资格",
+    "dependencies": [
+      7,
+      "PROJECT-SETTINGS"
+    ],
+    "requirements": "FR02/07/09/10/16；原#18全部原AC",
+    "behavior": "将固定官方Codex/ChatGPT订阅、model/native settings、真实OS/隔离路径接到可选择Profile与实际角色任务，保留该路径的独立真实资格；已有离线原语优先复用，缺生产接线在本票补齐。",
+    "criteria": [
+      "读取父票全部原AC及已有证据，逐条核对登录、参数、模型/账户/计费与声明角色；原生通道不由新网关结果替代。",
+      "通过受控本地输入/假provider先核验请求固定、工具循环、超界拒绝和真实进程停止；fixture永远不产生官方enabled。",
+      "真实已授权调用关联业务计划/候选/Review输出、完整请求/取消/隔离及可观测usage；未知字段/未覆盖工具明确保留。",
+      "缺实际配置/资源或消费许可只阻塞本票S步骤，保存解除清单；不得自行选择第三方/付费/后备，失败历史和累计请求不重置。"
+    ],
+    "out_of_scope": "不继承其他模型或通道资格，不降低父票原验收；当前开发规格就绪不表示实测已授权。",
+    "evidence": "C/U/P/S"
+  },
+  {
+    "key": "CLAUDE-S",
+    "parent": 19,
+    "title": "官方 Claude 订阅的产品角色与全工具路径资格",
+    "dependencies": [
+      7,
+      "PROJECT-SETTINGS"
+    ],
+    "requirements": "FR02/07/09/10/16；原#19全部原AC",
+    "behavior": "将固定官方Claude CLI/model、Windows或WSL2、实际Bash/文件/MCP/hooks工具集合接到可选择Profile与实际角色任务，保留该路径的独立真实资格；已有离线原语优先复用，缺生产接线在本票补齐。",
+    "criteria": [
+      "读取父票全部原AC及已有证据，逐条核对登录、参数、模型/账户/计费与声明角色；原生通道不由新网关结果替代。",
+      "通过受控本地输入/假provider先核验请求固定、工具循环、超界拒绝和真实进程停止；fixture永远不产生官方enabled。",
+      "真实已授权调用关联业务计划/候选/Review输出、完整请求/取消/隔离及可观测usage；未知字段/未覆盖工具明确保留。",
+      "缺实际配置/资源或消费许可只阻塞本票S步骤，保存解除清单；不得自行选择第三方/付费/后备，失败历史和累计请求不重置。"
+    ],
+    "out_of_scope": "不继承其他模型或通道资格，不降低父票原验收；当前开发规格就绪不表示实测已授权。",
+    "evidence": "C/U/P/S"
+  },
+  {
+    "key": "DEEPSEEK-S",
+    "parent": 20,
+    "title": "DeepSeek 官方 API 产品能力与原币对账资格",
+    "dependencies": [
+      "CALL-BUDGET",
+      "PROJECT-SETTINGS"
+    ],
+    "requirements": "FR02/07/09/10/16；原#20全部原AC",
+    "behavior": "将用户配置的DeepSeek官方endpoint/model/secret_ref、价格与全部收费上界接到可选择Profile与实际角色任务，保留该路径的独立真实资格；已有离线原语优先复用，缺生产接线在本票补齐。",
+    "criteria": [
+      "读取父票全部原AC及已有证据，逐条核对登录、参数、模型/账户/计费与声明角色；原生通道不由新网关结果替代。",
+      "通过受控本地输入/假provider先核验请求固定、工具循环、超界拒绝和真实进程停止；fixture永远不产生官方enabled。",
+      "真实已授权调用关联业务计划/候选/Review输出、完整请求/取消/隔离及可观测usage；未知字段/未覆盖工具明确保留。",
+      "缺实际配置/资源或消费许可只阻塞本票S步骤，保存解除清单；不得自行选择第三方/付费/后备，失败历史和累计请求不重置。"
+    ],
+    "out_of_scope": "不继承其他模型或通道资格，不降低父票原验收；当前开发规格就绪不表示实测已授权。",
+    "evidence": "C/U/P/S"
+  },
+  {
+    "key": "GO-S",
+    "parent": 21,
+    "title": "Go 兼容通道产品接入与原范围整合验收",
+    "dependencies": [
+      87,
+      113,
+      117,
+      "PROJECT-SETTINGS"
+    ],
+    "requirements": "FR02/07/09/10/16；原#21全部原AC",
+    "behavior": "将固定Go通道及共享池、当前runtime/tokenizer与角色资格证据接到可选择Profile与实际角色任务，保留该路径的独立真实资格；已有离线原语优先复用，缺生产接线在本票补齐。",
+    "criteria": [
+      "读取父票全部原AC及已有证据，逐条核对登录、参数、模型/账户/计费与声明角色；原生通道不由新网关结果替代。",
+      "通过受控本地输入/假provider先核验请求固定、工具循环、超界拒绝和真实进程停止；fixture永远不产生官方enabled。",
+      "真实已授权调用关联业务计划/候选/Review输出、完整请求/取消/隔离及可观测usage；未知字段/未覆盖工具明确保留。",
+      "缺实际配置/资源或消费许可只阻塞本票S步骤，保存解除清单；不得自行选择第三方/付费/后备，失败历史和累计请求不重置。"
+    ],
+    "out_of_scope": "不继承其他模型或通道资格，不降低父票原验收；当前开发规格就绪不表示实测已授权。",
+    "evidence": "C/U/P/S"
+  },
+  {
+    "key": "THIRDPARTY-S",
+    "parent": 22,
+    "title": "指定第三方 API 的协议边界与产品来源资格",
+    "dependencies": [
+      "CALL-BUDGET",
+      "PROJECT-SETTINGS"
+    ],
+    "requirements": "FR02/07/09/10/16；原#22全部原AC",
+    "behavior": "将用户指定vendor/endpoint/model/数据去向/secret_ref、价格与收费上界接到可选择Profile与实际角色任务，保留该路径的独立真实资格；已有离线原语优先复用，缺生产接线在本票补齐。",
+    "criteria": [
+      "读取父票全部原AC及已有证据，逐条核对登录、参数、模型/账户/计费与声明角色；原生通道不由新网关结果替代。",
+      "通过受控本地输入/假provider先核验请求固定、工具循环、超界拒绝和真实进程停止；fixture永远不产生官方enabled。",
+      "真实已授权调用关联业务计划/候选/Review输出、完整请求/取消/隔离及可观测usage；未知字段/未覆盖工具明确保留。",
+      "缺实际配置/资源或消费许可只阻塞本票S步骤，保存解除清单；不得自行选择第三方/付费/后备，失败历史和累计请求不重置。"
+    ],
+    "out_of_scope": "不继承其他模型或通道资格，不降低父票原验收；当前开发规格就绪不表示实测已授权。",
+    "evidence": "C/U/P/S"
+  },
+  {
+    "key": "V1-EXIT",
+    "parent": 30,
+    "title": "原完整 v1 的全量证据、远端故障与性能出口",
+    "dependencies": [
+      "R9-EXIT",
+      "CODEX-S",
+      "CLAUDE-S",
+      "DEEPSEEK-S",
+      "GO-S",
+      "THIRDPARTY-S",
+      "RECOVERY",
+      "MAINTENANCE",
+      "REVISION",
+      "RULES",
+      "CAPACITY",
+      "CALL-BUDGET",
+      8,
+      153,
+      160,
+      161,
+      162
+    ],
+    "requirements": "FR01–29；PRD-AC01–06；A01–26；D01–09；全部适用UX/GW/WF/WD/RS/UA；原#30",
+    "behavior": "在所有独立开发/来源验收完成后，对最终集成候选证明原完整v1和新增r9出口；不把开发就绪或PR存在写成产品完成。",
+    "criteria": [
+      "逐项证据关联固定SHA、输入、命令、期望/实际、C/U/P/S/G与来源环境；五来源必需能力缺项保持未通过。",
+      "真实GitHub验证push/PR应答丢失、重复revision、外部head更新、push后取消、同commitCI，默认完成与预设CI gate分别核验。",
+      "固定负载下量测本地命令/快照p95<1秒、正常事件2秒内到UI，排除模型/网络/checks时间；原两writer负载及动态规模另测，不报告未经测量的成功率。",
+      "保留全部失败/not_run/unsupported与连续运行指标；当前必需CI、独立审查及最终合入树匹配后才允许关闭对应完整父范围。"
+    ],
+    "out_of_scope": "不自动merge，不用新r9出口取消原#1/#30的来源与维护义务。",
+    "evidence": "C/U/P/S/G"
+  }
+]

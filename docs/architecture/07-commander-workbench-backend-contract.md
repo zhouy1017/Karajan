@@ -1,10 +1,12 @@
 # Commander Workbench 后端契约
 
-原修订：2026-09-09；活动正文：2026-09-14 r8。本文是目标契约，不是整体验收记录。PR #167 的会话/草稿/Hub 后端子集不代表网关、Workflow、Designer 部署或角色动态调度已完成；新增行为独立实现验收，旧 PR155 缺口仅留历史。
+原修订：2026-09-09；活动正文：2026-09-16 r9。本文是目标契约，不是整体验收记录。PR #167 的会话/草稿/Hub 后端子集不代表网关、Workflow、Designer 部署、角色动态调度或会话用量统计已完成；新增行为独立实现验收，旧 PR155 缺口仅留历史。
 
 Hub 的 Designer 在独立有限创作授权下接收文字并实际写配置，可信服务从同一文件包生成可互动修改的图表；表格/文件直接修改走确定性校验编译，无需模型调用。确认后先准备 pending、调度器加载/readback，再 CAS active，取得真实部署回执。一次明确授权可同时批准部署和一个具体 Run，不要求重复确认。来源、定义与完整部署生命周期分别以 [08](08-provider-gateway.md)、[09](09-configurable-workflows.md)、[10](10-conversational-workflow-deployment.md) 为准。
 
 r8 增加 [11](11-role-directed-scheduling.md) 的 SchedulerGrant、SchedulingDecision、TaskGraphRevision 与 ExpansionSet。Workflow 中获权角色实际决定拆分/依赖/角色/优先级/派发，范围内命令经引擎校验后自动生效；Karajan 不固定前后端或 coding Agent 人数，资源不足排队且保留合法图。
+
+r9 增加 [12 会话用量](12-conversation-usage-accounting.md)：调用归属包含无 Run 的创作执行，Hub 用量摘要覆盖整个会话；角色/Agent、任务、模型、实际 provider 的聚合与明细读取同一持久账本，不以当前选中 Run 或配置别名代替真实范围和路由。
 
 ## 1. 领域关系与兼容迁移
 
@@ -74,6 +76,7 @@ r8 增加 [11](11-role-directed-scheduling.md) 的 SchedulerGrant、SchedulingDe
 | 接受建议 | `POST /v1/conversations/{id}/proposals/{revision}/accept` | 可选的轻量确认动作，用于保存用户对默认分工的调整；不要求用户为“接受建议”与“批准计划”重复确认 |
 | 计划批准/分发 | 现有 `POST /v1/runs/{id}/plan-approval` 的兼容批准语义 | 初始输入/Plan/执行与调度授权同版确认，复合部署可内部消费；范围外变更再批，范围内图修订标 accepted_under_grant，不伪造用户新批准 |
 | Hub 快照 | `GET /v1/conversations/{id}/hub` | 聚合设计/部署与 Run/Step/Task/Agent/Artifact/完成门；代码 PR 再显示 Candidate/checks/review/PR；只读 |
+| 会话用量 / 明细 | `GET /v1/conversations/{id}/usage` 与 `/usage/records` | 角色/Agent、任务、模型及实际 provider 分组/交叉筛选；全会话含 pre-Run，返回同一账本 revision、覆盖与未知状态，分页不截断汇总；详见 [12](12-conversation-usage-accounting.md) |
 | 事件流 | `GET /v1/conversations/{id}/events?after_seq=N` | SSE 返回 snapshot watermark；游标过期或检测到缺口返回 `event_gap`，客户端重新 GET snapshot 后从新 seq 继续 |
 | 单 Attempt 反馈 | `GET /v1/attempts/{id}/feedback?after_seq=N` | 显示 model progress、来源时间和 terminal truth；不以连接 heartbeat 代替执行事件 |
 
@@ -82,6 +85,8 @@ r8 增加 [11](11-role-directed-scheduling.md) 的 SchedulerGrant、SchedulingDe
 ## 4. Hub 聚合、SSE 恢复与调度边界
 
 Hub 分别标明配置预览、active、Run 冻结定义/初始授权和当前已接受运行图，展示每次角色决定/图 diff、授予范围、扩展封口及排队原因。不能把草稿/模型自报图或新 active 冒充旧 Run 配置，也不能因超出 UI 分页而丢掉任务。产物/详情读同一 watermark，不为报告流程添加 PR。
+
+Hub 的会话用量摘要携带独立 ledger revision、事件 watermark 与完整性；用量变化遵循相同快照/事件恢复机制，查询的汇总和分页明细固定同一用量快照。跨会话筛选拒绝，迟到回执只更新原归属；刷新不调用 Commander，不另建前端累计计数器。计量、路由与去重仅以 [12](12-conversation-usage-accounting.md) 为详细契约。
 
 SSE 客户端按以下顺序恢复：
 
