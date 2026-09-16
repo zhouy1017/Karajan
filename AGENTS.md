@@ -8,7 +8,7 @@
 
 涉及模型来源或 Workflow 时，遵循 [外置网关](docs/architecture/08-provider-gateway.md)、[自定义角色/Workflow](docs/architecture/09-configurable-workflows.md)、[对话设计与部署](docs/architecture/10-conversational-workflow-deployment.md) 和 2026-09-14 r8 [角色调度契约](docs/architecture/11-role-directed-scheduling.md)：Designer 生成同源配置与图表，确认后可信部署；运行中的获授权调度角色按实际任务拆分、分配和决定并行规模，原授权内自动生效。Karajan 不硬编码前后端拆分或 coding Agent 数量上限，实际资源/用户政策决定准入和排队。定义与已启动 Attempt 固定，授权内运行图修订留痕；越权才重新确认。P1–P4 是开发承接顺序，原两任务仅验收样例；新设计不表示实现或原 Issue 已完成。
 
-选择开发任务或恢复队列时，再读 [当前业务顺序](docs/planning/business-first.md)；按其中 P1 开仓库会话、P2 显式分工、P3 最小并行整合、P4 checks/独立 review/交付选择下一步。
+选择开发任务或恢复队列时，再读 [当前业务顺序](docs/planning/business-first.md)；按全量就绪清单的真实依赖领取，P1 开仓库会话、P2 显式分工、P3 最小并行整合、P4 checks/独立 review/交付仍为原工作台承接顺序。
 
 2026-09-16 r9 新增同一 Commander 会话内按角色/Agent、任务、模型及实际底层 provider 查看 token 用量，遵循 [会话用量与实际路由](docs/architecture/12-conversation-usage-accounting.md)。会话全部 Run 和无 Run 调用同源聚合，实际路由须有可信关联证据，已报告/估算/未知分开；FR28/29、UX-AC25–27 独立验收。当前按用户要求推进完整开发就绪与 Issue 标识，遵循 [开发接线](docs/architecture/13-development-integration-contract.md) 和 [就绪清单](docs/planning/r9-development-readiness-20260916/README.md)；全功能开发与各来源真实资格分开，缺来源配置只阻塞对应验收，完整 v1 原出口保留。规格完成不表示实现或新增消费授权。
 

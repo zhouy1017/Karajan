@@ -16,6 +16,8 @@ status: accepted
 
 ## 承接与后果
 
+启用策略仍有一项已集中提出的用户决定待答：精确 provider/token 是否也作为来源启用硬门。accepted 仅表示本功能需求已接受；未知的展示要求不自动授权启用不合格来源。当前待决项见架构 12 与开发就绪清单，相关 Issue 不标最终规格就绪。
+
 扩展 [ADR 0002](0002-profile-and-native-resource-ledger.md)、[0004](0004-commander-workbench.md) 和 [0005](0005-external-model-gateway.md)，沿用唯一账本、原生单位、严格绑定和消费授权。FR28/29、UX-AC25–27 及 [用量契约 UA-AC01–07](../architecture/12-conversation-usage-accounting.md) 独立验收，不将已有预算账本或 r8 控制面验收升级为本需求完成。
 
 实现需要调用归属、可信采集、版本化计量映射、覆盖去重与可恢复会话投影。无法观测内部重试或仅有 Attempt 总量的来源应显示其粒度和缺口，不虚构逐调用/逐 provider 精度。token 数不等于金额，账户全局配额也不等于本会话消费。2026-09-16 后续审核获用户要求推进完整开发就绪与 Issue 标识；实施责任见 [就绪清单](../planning/r9-development-readiness-20260916/README.md)。本轮准备不表示功能已实现，也不扩大消费授权。

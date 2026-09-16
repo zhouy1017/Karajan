@@ -1,26 +1,27 @@
 # 开发规划与历史范围导航
 
-分类核对：2026-09-14，活动设计为 r8。本页提供文档导航，不复制领取队列或推断 GitHub 当前状态。
+分类核对：2026-09-16，活动设计为 r9。本页提供文档导航，不复制领取队列或推断 GitHub 当前状态。
 
 ## 当前入口
 
 | 要做的事 | 入口 |
 |---|---|
 | 选择开发任务、恢复工作 | [当前业务顺序](business-first.md) |
-| 本批 Claude Code 实现、Issue 与最多 4 PR 范围 | [r8 第一阶段](r8-phase1-20260914/README.md) |
-| 判断 r8、r7、r6 与旧范围的承接 | [设计治理与承接矩阵](design-governance-20260909.md) |
+| 全量开发责任、验收覆盖、Issue 标识与待决项 | [r9 开发就绪审核](r9-development-readiness-20260916/README.md) |
+| 判断 r9、r8、r7、r6 与旧范围的承接 | [设计治理与承接矩阵](design-governance-20260909.md) |
 | 理解用户行为与界面 | [Commander Workbench PRD](../prd/commander-workbench.md) |
 | 实现对话设计、同源图表与真实部署 | [对话式 Workflow 部署契约](../architecture/10-conversational-workflow-deployment.md) |
 | 实现授权角色的动态拆分与调度 | [角色调度契约](../architecture/11-role-directed-scheduling.md) |
 | 验收原 Issue、候选或合并结果 | [Issue 跟踪流程](../agents/issue-tracker.md)、[实现证据导航](../implementation/README.md) |
 
-只有前两份文档在本目录维护当前安排。M0–M4、DG 和已发布 P1–P4 正文保留原范围，不能作为 r8 的完整任务清单；新增行为按活动治理另行承接。历史文件中的“当前”“下一步”“已派发”、模型分工及权限描述，只指其记录时点，不触发今天的执行或新增授权。
+当前安排由业务顺序与 r9 就绪清单承接。M0–M4、DG 和已发布 P1–P4 正文保留原范围，不能作为 r9 的完整任务清单；新增行为按活动治理承接。历史文件中的“当前”“下一步”“已派发”、模型分工及权限描述，只指其记录时点，不触发今天的执行或新增授权。
 
 ## 历史路线、交接与批次
 
 | 材料 | 分类与保留用途 |
 |---|---|
 | [M0–M4 路线](roadmap.md)、[v1 原任务清单](v1-backlog.md) | 2026-09-05 起的阶段范围、原出口与依赖；保留正文，当前排期已迁移 |
+| [r8 第一阶段](r8-phase1-20260914/README.md) | #174–#178 和四个 PR 已完成的控制面批次；原 worker、模型安排和合并授权不延伸到新批次 |
 | [M0 Issue 原文](m0/README.md) | 原探针任务与发布编号 |
 | [M1–M4 Issue 原文](v1/README.md) | 原 v1 子票及 Reviewer 后续切片；发布准备稿与已发布结果分开 |
 | [DG00–DG07](delivery-goals/README.md) | 历史交付目标映射，原文已标记为历史，不再串行启动 |

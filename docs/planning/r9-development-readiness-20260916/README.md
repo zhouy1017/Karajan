@@ -9,7 +9,7 @@
 用户意图已覆盖：同一 Hub 内完成自定义 Workflow 设计/部署/运行、授权角色按需求拆分派发、按真实资源并行/排队、独立质量与交付，并按每个角色/Agent、任务、模型和实际 provider 查看 token 用量。审核发现的主要问题是实现状态陈旧、运行接线缺少统一责任、r6–r9 尚缺完整任务承接、原票状态与当前候选不一致；这些已形成正文修订、[接线契约](../../architecture/13-development-integration-contract.md) 和下列可检验任务。
 
 - **已确认：全功能开发，来源独立验收。** 缺账号、endpoint、预算/消费许可仅阻塞对应真实验收；其余实现可用本地受控 provider、真实数据库/进程/UI 验证。#1/#30 原完整 v1 的五来源及所有出口保留。
-- **待用户决定：实际 provider/token 缺精确数据的启用策略。** 已一次性提问；此决定到达前，不将受影响规格标为最终就绪。
+- **待用户决定：实际 provider/token 缺精确数据的启用策略。** 已一次性提问；此决定到达前，不将受影响规格标为最终就绪。#1/#30、R9、GW-CALL、USAGE、GW-QUALIFY、R9-EXIT、V1-EXIT 使用 `spec:pending-decision`；其余无关规格继续准备。
 
 第三方厂商、来源实际账号/模型、网关安装配置、有限预算、项目基准/检查/交付目标等是运行前配置输入，已有明确填写位置和缺失拒绝语义；不是需要再设计一轮的产品分歧。开发 Agent 不得猜选付费厂商或消费额度。
 
@@ -37,6 +37,7 @@
 | 标记 | 精确含义 |
 |---|---|
 | `spec:ready` | 目标、输入输出/负例、修改边界、原AC/证据及依赖已可供Agent执行；配置型gate明确，不表示依赖已完成 |
+| `spec:pending-decision` | 已有具体任务和验收草案，但受尚未回答的产品决定影响；不能当作最终规格就绪 |
 | `planning:decomposed` | 已读回原生子Issue，正文列明子票和剩余责任；只表示已拆分，不表示完成或全部子票可同时开工 |
 | `status:ready` + `ready-for-agent` | 当前队列中无未满足实现依赖的叶子，可领取其明确范围；不授予现金、来源资格、产品批准或合并权限 |
 | `status:queued` | 有效规格，等待依赖或未安排；依赖及解除条件写在正文 |
@@ -46,37 +47,37 @@
 
 ## 新增完整开发切片
 
-每票都含明确输入、可观察输出、正/负/恢复验收、证据层级和排除项；完整机器可读正文见 [task-specifications.json](task-specifications.json)。R9产品增量父范围：`R9`。当前来源纯实测仍遵守已有授权，缺配置不能自动消费。
+每票都含明确输入、可观察输出、正/负/恢复验收、证据层级和排除项；完整机器可读正文见 [task-specifications.json](task-specifications.json)。R9产品增量父范围：[R9 / #183](https://github.com/zhouy1017/Karajan/issues/183)。当前来源纯实测仍遵守已有授权，缺配置不能自动消费。
 
 | Key / Issue | 交付行为 | 直接实现依赖 | 原生父范围 | 证据 |
 |---|---|---|---|---|
-| `GW-CALL` | 网关受控调用、实际路由回执与会话调用记录 | 无实现依赖 | `R9` | C/U/P |
-| `RUNTIME` | 受控 Agent 工具循环与真实执行身份接线 | `GW-CALL` | `R9` | C/U/P |
-| `DESIGNER` | Hub 对话生成 Workflow 与同源图表编辑 | `GW-CALL`、`RUNTIME`、[#165](https://github.com/zhouy1017/Karajan/issues/165) | `R9` | C/U/P |
-| `COMMANDER` | 网关 Commander 持续对话、可信规划与可编辑分工 | `GW-CALL`、`RUNTIME`、[#165](https://github.com/zhouy1017/Karajan/issues/165)、[#170](https://github.com/zhouy1017/Karajan/issues/170) | `R9` | C/U/P |
-| `DEPLOY-RUN` | 确认部署并运行与冻结输入到 Run 的完整入口 | `RUNTIME`、[#165](https://github.com/zhouy1017/Karajan/issues/165)、[#170](https://github.com/zhouy1017/Karajan/issues/170) | `R9` | C/U/P |
-| `ROLE-RUN` | 真实角色调度、自适应并行与资源排队回到 Hub | `DEPLOY-RUN` | `R9` | C/U/P |
-| `WF-KINDS` | Workflow 条件、人工节点、返工及产物种类执行 | `DEPLOY-RUN` | `R9` | C/U/P |
-| `USAGE` | 同一 Commander 会话多维 token 与实际 provider 用量面板 | `GW-CALL`、`DESIGNER`、`DEPLOY-RUN` | `R9` | C/U/P |
-| `GW-QUALIFY` | 固定网关部署的真实来源、角色能力与路由计量资格 | `GW-CALL`、`RUNTIME`、`CALL-BUDGET` | `R9` | C/P/S |
-| `R9-EXIT` | r9 全行为跨流程验收与开发完成证据 | `COMMANDER`、`DESIGNER`、`DEPLOY-RUN`、`ROLE-RUN`、`WF-KINDS`、`USAGE`、`GW-QUALIFY` | `R9` | C/U/P/S/G |
-| `PROJECT-SETTINGS` | 项目来源设置与可执行资格状态的真实工作台 | [#165](https://github.com/zhouy1017/Karajan/issues/165) | [#11](https://github.com/zhouy1017/Karajan/issues/11) | C/U/P |
-| `REVISION` | 计划变更、任务复用及原授权外修订工作台 | `DEPLOY-RUN`、`ROLE-RUN` | [#15](https://github.com/zhouy1017/Karajan/issues/15) | C/U/P |
-| `RULES` | Rulebook 编辑模拟发布的完整可恢复工作台 | [#165](https://github.com/zhouy1017/Karajan/issues/165)、[#170](https://github.com/zhouy1017/Karajan/issues/170)、`PROJECT-SETTINGS` | [#23](https://github.com/zhouy1017/Karajan/issues/23) | C/U/P |
-| `CAPACITY` | 共享池多窗口与保护量的运行和工作台接线 | `GW-CALL`、`PROJECT-SETTINGS` | [#24](https://github.com/zhouy1017/Karajan/issues/24) | C/U/P |
-| `CALL-BUDGET` | 逐调用原币预算与未知消费核对闭环 | `GW-CALL` | [#25](https://github.com/zhouy1017/Karajan/issues/25) | C/U/P |
-| `REASSIGN` | 获准换源、质量升级与累计修复的真实流程 | `ROLE-RUN`、`WF-KINDS`、`RULES`、`CAPACITY`、`CALL-BUDGET` | [#26](https://github.com/zhouy1017/Karajan/issues/26) | C/U/P |
-| `HANDOFF` | 用户决定的 Commander 交接与检查点工作台 | `DEPLOY-RUN`、`RULES`、`CAPACITY` | [#27](https://github.com/zhouy1017/Karajan/issues/27) | C/U/P |
-| `RECOVERY` | 跨调用、进程、调度和交付的取消与正常恢复 | `ROLE-RUN`、`WF-KINDS`、`REASSIGN`、`HANDOFF` | [#28](https://github.com/zhouy1017/Karajan/issues/28) | C/U/P |
-| `MAINTENANCE` | 备份恢复、升级与保留策略的可操作产品 | `DEPLOY-RUN`、`USAGE`、`REASSIGN`、`HANDOFF` | [#29](https://github.com/zhouy1017/Karajan/issues/29) | C/U/P |
-| `CODEX-S` | 官方 Codex 订阅的产品角色与原生工具资格 | [#7](https://github.com/zhouy1017/Karajan/issues/7)、`PROJECT-SETTINGS` | [#18](https://github.com/zhouy1017/Karajan/issues/18) | C/U/P/S |
-| `CLAUDE-S` | 官方 Claude 订阅的产品角色与全工具路径资格 | [#7](https://github.com/zhouy1017/Karajan/issues/7)、`PROJECT-SETTINGS` | [#19](https://github.com/zhouy1017/Karajan/issues/19) | C/U/P/S |
-| `DEEPSEEK-S` | DeepSeek 官方 API 产品能力与原币对账资格 | `CALL-BUDGET`、`PROJECT-SETTINGS` | [#20](https://github.com/zhouy1017/Karajan/issues/20) | C/U/P/S |
-| `GO-S` | Go 兼容通道产品接入与原范围整合验收 | [#87](https://github.com/zhouy1017/Karajan/issues/87)、[#113](https://github.com/zhouy1017/Karajan/issues/113)、[#117](https://github.com/zhouy1017/Karajan/issues/117)、`PROJECT-SETTINGS` | [#21](https://github.com/zhouy1017/Karajan/issues/21) | C/U/P/S |
-| `THIRDPARTY-S` | 指定第三方 API 的协议边界与产品来源资格 | `CALL-BUDGET`、`PROJECT-SETTINGS` | [#22](https://github.com/zhouy1017/Karajan/issues/22) | C/U/P/S |
-| `V1-EXIT` | 原完整 v1 的全量证据、远端故障与性能出口 | `R9-EXIT`、`CODEX-S`、`CLAUDE-S`、`DEEPSEEK-S`、`GO-S`、`THIRDPARTY-S`、`RECOVERY`、`MAINTENANCE`、`REVISION`、`RULES`、`CAPACITY`、`CALL-BUDGET`、[#8](https://github.com/zhouy1017/Karajan/issues/8)、[#153](https://github.com/zhouy1017/Karajan/issues/153)、[#160](https://github.com/zhouy1017/Karajan/issues/160)、[#161](https://github.com/zhouy1017/Karajan/issues/161)、[#162](https://github.com/zhouy1017/Karajan/issues/162) | [#30](https://github.com/zhouy1017/Karajan/issues/30) | C/U/P/S/G |
+| [GW-CALL / #184](https://github.com/zhouy1017/Karajan/issues/184) | 网关受控调用、实际路由回执与会话调用记录 | 无实现依赖 | [R9 / #183](https://github.com/zhouy1017/Karajan/issues/183) | C/U/P |
+| [RUNTIME / #185](https://github.com/zhouy1017/Karajan/issues/185) | 受控 Agent 工具循环与真实执行身份接线 | [GW-CALL / #184](https://github.com/zhouy1017/Karajan/issues/184) | [R9 / #183](https://github.com/zhouy1017/Karajan/issues/183) | C/U/P |
+| [DESIGNER / #186](https://github.com/zhouy1017/Karajan/issues/186) | Hub 对话生成 Workflow 与同源图表编辑 | [GW-CALL / #184](https://github.com/zhouy1017/Karajan/issues/184)、[RUNTIME / #185](https://github.com/zhouy1017/Karajan/issues/185)、[#165](https://github.com/zhouy1017/Karajan/issues/165) | [R9 / #183](https://github.com/zhouy1017/Karajan/issues/183) | C/U/P |
+| [COMMANDER / #187](https://github.com/zhouy1017/Karajan/issues/187) | 网关 Commander 持续对话、可信规划与可编辑分工 | [GW-CALL / #184](https://github.com/zhouy1017/Karajan/issues/184)、[RUNTIME / #185](https://github.com/zhouy1017/Karajan/issues/185)、[#165](https://github.com/zhouy1017/Karajan/issues/165)、[#170](https://github.com/zhouy1017/Karajan/issues/170) | [R9 / #183](https://github.com/zhouy1017/Karajan/issues/183) | C/U/P |
+| [DEPLOY-RUN / #188](https://github.com/zhouy1017/Karajan/issues/188) | 确认部署并运行与冻结输入到 Run 的完整入口 | [RUNTIME / #185](https://github.com/zhouy1017/Karajan/issues/185)、[#165](https://github.com/zhouy1017/Karajan/issues/165)、[#170](https://github.com/zhouy1017/Karajan/issues/170) | [R9 / #183](https://github.com/zhouy1017/Karajan/issues/183) | C/U/P |
+| [ROLE-RUN / #189](https://github.com/zhouy1017/Karajan/issues/189) | 真实角色调度、自适应并行与资源排队回到 Hub | [DEPLOY-RUN / #188](https://github.com/zhouy1017/Karajan/issues/188) | [R9 / #183](https://github.com/zhouy1017/Karajan/issues/183) | C/U/P |
+| [WF-KINDS / #190](https://github.com/zhouy1017/Karajan/issues/190) | Workflow 条件、人工节点、返工及产物种类执行 | [DEPLOY-RUN / #188](https://github.com/zhouy1017/Karajan/issues/188) | [R9 / #183](https://github.com/zhouy1017/Karajan/issues/183) | C/U/P |
+| [USAGE / #191](https://github.com/zhouy1017/Karajan/issues/191) | 同一 Commander 会话多维 token 与实际 provider 用量面板 | [GW-CALL / #184](https://github.com/zhouy1017/Karajan/issues/184)、[DESIGNER / #186](https://github.com/zhouy1017/Karajan/issues/186)、[DEPLOY-RUN / #188](https://github.com/zhouy1017/Karajan/issues/188) | [R9 / #183](https://github.com/zhouy1017/Karajan/issues/183) | C/U/P |
+| [GW-QUALIFY / #192](https://github.com/zhouy1017/Karajan/issues/192) | 固定网关部署的真实来源、角色能力与路由计量资格 | [GW-CALL / #184](https://github.com/zhouy1017/Karajan/issues/184)、[RUNTIME / #185](https://github.com/zhouy1017/Karajan/issues/185)、[CALL-BUDGET / #198](https://github.com/zhouy1017/Karajan/issues/198) | [R9 / #183](https://github.com/zhouy1017/Karajan/issues/183) | C/P/S |
+| [R9-EXIT / #193](https://github.com/zhouy1017/Karajan/issues/193) | r9 全行为跨流程验收与开发完成证据 | [COMMANDER / #187](https://github.com/zhouy1017/Karajan/issues/187)、[DESIGNER / #186](https://github.com/zhouy1017/Karajan/issues/186)、[DEPLOY-RUN / #188](https://github.com/zhouy1017/Karajan/issues/188)、[ROLE-RUN / #189](https://github.com/zhouy1017/Karajan/issues/189)、[WF-KINDS / #190](https://github.com/zhouy1017/Karajan/issues/190)、[USAGE / #191](https://github.com/zhouy1017/Karajan/issues/191)、[GW-QUALIFY / #192](https://github.com/zhouy1017/Karajan/issues/192) | [R9 / #183](https://github.com/zhouy1017/Karajan/issues/183) | C/U/P/S/G |
+| [PROJECT-SETTINGS / #194](https://github.com/zhouy1017/Karajan/issues/194) | 项目来源设置与可执行资格状态的真实工作台 | [#165](https://github.com/zhouy1017/Karajan/issues/165) | [#11](https://github.com/zhouy1017/Karajan/issues/11) | C/U/P |
+| [REVISION / #195](https://github.com/zhouy1017/Karajan/issues/195) | 计划变更、任务复用及原授权外修订工作台 | [DEPLOY-RUN / #188](https://github.com/zhouy1017/Karajan/issues/188)、[ROLE-RUN / #189](https://github.com/zhouy1017/Karajan/issues/189) | [#15](https://github.com/zhouy1017/Karajan/issues/15) | C/U/P |
+| [RULES / #196](https://github.com/zhouy1017/Karajan/issues/196) | Rulebook 编辑模拟发布的完整可恢复工作台 | [#165](https://github.com/zhouy1017/Karajan/issues/165)、[#170](https://github.com/zhouy1017/Karajan/issues/170)、[PROJECT-SETTINGS / #194](https://github.com/zhouy1017/Karajan/issues/194) | [#23](https://github.com/zhouy1017/Karajan/issues/23) | C/U/P |
+| [CAPACITY / #197](https://github.com/zhouy1017/Karajan/issues/197) | 共享池多窗口与保护量的运行和工作台接线 | [GW-CALL / #184](https://github.com/zhouy1017/Karajan/issues/184)、[PROJECT-SETTINGS / #194](https://github.com/zhouy1017/Karajan/issues/194) | [#24](https://github.com/zhouy1017/Karajan/issues/24) | C/U/P |
+| [CALL-BUDGET / #198](https://github.com/zhouy1017/Karajan/issues/198) | 逐调用原币预算与未知消费核对闭环 | [GW-CALL / #184](https://github.com/zhouy1017/Karajan/issues/184) | [#25](https://github.com/zhouy1017/Karajan/issues/25) | C/U/P |
+| [REASSIGN / #199](https://github.com/zhouy1017/Karajan/issues/199) | 获准换源、质量升级与累计修复的真实流程 | [ROLE-RUN / #189](https://github.com/zhouy1017/Karajan/issues/189)、[WF-KINDS / #190](https://github.com/zhouy1017/Karajan/issues/190)、[RULES / #196](https://github.com/zhouy1017/Karajan/issues/196)、[CAPACITY / #197](https://github.com/zhouy1017/Karajan/issues/197)、[CALL-BUDGET / #198](https://github.com/zhouy1017/Karajan/issues/198) | [#26](https://github.com/zhouy1017/Karajan/issues/26) | C/U/P |
+| [HANDOFF / #200](https://github.com/zhouy1017/Karajan/issues/200) | 用户决定的 Commander 交接与检查点工作台 | [DEPLOY-RUN / #188](https://github.com/zhouy1017/Karajan/issues/188)、[RULES / #196](https://github.com/zhouy1017/Karajan/issues/196)、[CAPACITY / #197](https://github.com/zhouy1017/Karajan/issues/197) | [#27](https://github.com/zhouy1017/Karajan/issues/27) | C/U/P |
+| [RECOVERY / #201](https://github.com/zhouy1017/Karajan/issues/201) | 跨调用、进程、调度和交付的取消与正常恢复 | [ROLE-RUN / #189](https://github.com/zhouy1017/Karajan/issues/189)、[WF-KINDS / #190](https://github.com/zhouy1017/Karajan/issues/190)、[REASSIGN / #199](https://github.com/zhouy1017/Karajan/issues/199)、[HANDOFF / #200](https://github.com/zhouy1017/Karajan/issues/200) | [#28](https://github.com/zhouy1017/Karajan/issues/28) | C/U/P |
+| [MAINTENANCE / #202](https://github.com/zhouy1017/Karajan/issues/202) | 备份恢复、升级与保留策略的可操作产品 | [DEPLOY-RUN / #188](https://github.com/zhouy1017/Karajan/issues/188)、[USAGE / #191](https://github.com/zhouy1017/Karajan/issues/191)、[REASSIGN / #199](https://github.com/zhouy1017/Karajan/issues/199)、[HANDOFF / #200](https://github.com/zhouy1017/Karajan/issues/200) | [#29](https://github.com/zhouy1017/Karajan/issues/29) | C/U/P |
+| [CODEX-S / #203](https://github.com/zhouy1017/Karajan/issues/203) | 官方 Codex 订阅的产品角色与原生工具资格 | [#7](https://github.com/zhouy1017/Karajan/issues/7)、[PROJECT-SETTINGS / #194](https://github.com/zhouy1017/Karajan/issues/194) | [#18](https://github.com/zhouy1017/Karajan/issues/18) | C/U/P/S |
+| [CLAUDE-S / #204](https://github.com/zhouy1017/Karajan/issues/204) | 官方 Claude 订阅的产品角色与全工具路径资格 | [#7](https://github.com/zhouy1017/Karajan/issues/7)、[PROJECT-SETTINGS / #194](https://github.com/zhouy1017/Karajan/issues/194) | [#19](https://github.com/zhouy1017/Karajan/issues/19) | C/U/P/S |
+| [DEEPSEEK-S / #205](https://github.com/zhouy1017/Karajan/issues/205) | DeepSeek 官方 API 产品能力与原币对账资格 | [CALL-BUDGET / #198](https://github.com/zhouy1017/Karajan/issues/198)、[PROJECT-SETTINGS / #194](https://github.com/zhouy1017/Karajan/issues/194) | [#20](https://github.com/zhouy1017/Karajan/issues/20) | C/U/P/S |
+| [GO-S / #206](https://github.com/zhouy1017/Karajan/issues/206) | Go 兼容通道产品接入与原范围整合验收 | [#87](https://github.com/zhouy1017/Karajan/issues/87)、[#113](https://github.com/zhouy1017/Karajan/issues/113)、[#117](https://github.com/zhouy1017/Karajan/issues/117)、[PROJECT-SETTINGS / #194](https://github.com/zhouy1017/Karajan/issues/194) | [#21](https://github.com/zhouy1017/Karajan/issues/21) | C/U/P/S |
+| [THIRDPARTY-S / #207](https://github.com/zhouy1017/Karajan/issues/207) | 指定第三方 API 的协议边界与产品来源资格 | [CALL-BUDGET / #198](https://github.com/zhouy1017/Karajan/issues/198)、[PROJECT-SETTINGS / #194](https://github.com/zhouy1017/Karajan/issues/194) | [#22](https://github.com/zhouy1017/Karajan/issues/22) | C/U/P/S |
+| [V1-EXIT / #208](https://github.com/zhouy1017/Karajan/issues/208) | 原完整 v1 的全量证据、远端故障与性能出口 | [R9-EXIT / #193](https://github.com/zhouy1017/Karajan/issues/193)、[CODEX-S / #203](https://github.com/zhouy1017/Karajan/issues/203)、[CLAUDE-S / #204](https://github.com/zhouy1017/Karajan/issues/204)、[DEEPSEEK-S / #205](https://github.com/zhouy1017/Karajan/issues/205)、[GO-S / #206](https://github.com/zhouy1017/Karajan/issues/206)、[THIRDPARTY-S / #207](https://github.com/zhouy1017/Karajan/issues/207)、[RECOVERY / #201](https://github.com/zhouy1017/Karajan/issues/201)、[MAINTENANCE / #202](https://github.com/zhouy1017/Karajan/issues/202)、[REVISION / #195](https://github.com/zhouy1017/Karajan/issues/195)、[RULES / #196](https://github.com/zhouy1017/Karajan/issues/196)、[CAPACITY / #197](https://github.com/zhouy1017/Karajan/issues/197)、[CALL-BUDGET / #198](https://github.com/zhouy1017/Karajan/issues/198)、[#8](https://github.com/zhouy1017/Karajan/issues/8)、[#153](https://github.com/zhouy1017/Karajan/issues/153)、[#160](https://github.com/zhouy1017/Karajan/issues/160)、[#161](https://github.com/zhouy1017/Karajan/issues/161)、[#162](https://github.com/zhouy1017/Karajan/issues/162) | [#30](https://github.com/zhouy1017/Karajan/issues/30) | C/U/P/S/G |
 
-GW-CALL从已有#175和资源原语直接开始；既有无阻塞叶子可同时核验/返修。没有“先关闭全部产品父票才能写代码”的依赖。每个后继在前置接口合入、证据适用且实际可执行后再升ready；原父票native blocked-by作为最终验收gate继续保留。COMMANDER/WF-KINDS负责新网关下的规划/独立Review/交付接线，R9-EXIT不依赖固定Go专属资格通过；原#112/#113/#153/#161/#162的剩余责任在V1-EXIT仍逐项核验，不被新通道通过替代。
+GW-CALL的代码前置已由#175和资源原语满足，用量启用策略确认后可领取；既有无阻塞叶子可同时核验/返修。没有“先关闭全部产品父票才能写代码”的依赖。每个后继在前置接口合入、证据适用且实际可执行后再升ready；原父票native blocked-by作为最终验收gate继续保留。COMMANDER/WF-KINDS负责新网关下的规划/独立Review/交付接线，R9-EXIT不依赖固定Go专属资格通过；原#112/#113/#153/#161/#162的剩余责任在V1-EXIT仍逐项核验，不被新通道通过替代。
 
 ## 现有47个Open Issue的当前承接
 
@@ -125,7 +126,7 @@ GW-CALL从已有#175和资源原语直接开始；既有无阻塞叶子可同时
 | [#153](https://github.com/zhouy1017/Karajan/issues/153) | 业务验收 | 当前持久Planning入口可复用，#112和#147完成后以真实完整Plan及用户精确批准验收原六AC。 | queued（依赖） | [#112](https://github.com/zhouy1017/Karajan/issues/112)、[#147](https://github.com/zhouy1017/Karajan/issues/147) |
 | [#159](https://github.com/zhouy1017/Karajan/issues/159) | P1聚合 | #164已合入；#165/#166与原PR172完成真实Hub页面U/C/P；不承担真实模型派发。 | queued（聚合验收） | [#165](https://github.com/zhouy1017/Karajan/issues/165)、[#166](https://github.com/zhouy1017/Karajan/issues/166) |
 | [#160](https://github.com/zhouy1017/Karajan/issues/160) | P2聚合 | #170原PR173补不可变提案，真实输入/Hub批准按本票原AC；与#112/#147资格边界分开。 | queued（聚合验收） | [#159](https://github.com/zhouy1017/Karajan/issues/159)、[#170](https://github.com/zhouy1017/Karajan/issues/170)、[#112](https://github.com/zhouy1017/Karajan/issues/112)、[#147](https://github.com/zhouy1017/Karajan/issues/147) |
-| [#161](https://github.com/zhouy1017/Karajan/issues/161) | P3真实验收 | 按原样本两独立writer实际窗口重叠、固定顺序组合并重跑checks；不是产品人数上限。 | queued（依赖） | [#160](https://github.com/zhouy1017/Karajan/issues/160)、`RUNTIME`、`DEPLOY-RUN` |
+| [#161](https://github.com/zhouy1017/Karajan/issues/161) | P3真实验收 | 按原样本两独立writer实际窗口重叠、固定顺序组合并重跑checks；不是产品人数上限。 | queued（依赖） | [#160](https://github.com/zhouy1017/Karajan/issues/160)、[RUNTIME / #185](https://github.com/zhouy1017/Karajan/issues/185)、[DEPLOY-RUN / #188](https://github.com/zhouy1017/Karajan/issues/188) |
 | [#162](https://github.com/zhouy1017/Karajan/issues/162) | P4真实交付 | 当前Candidate的checks/独立Review/diff/head/PR真实展示与交付核对。 | queued（依赖） | [#161](https://github.com/zhouy1017/Karajan/issues/161)、[#116](https://github.com/zhouy1017/Karajan/issues/116) |
 | [#165](https://github.com/zhouy1017/Karajan/issues/165) | 候选返修 | 沿PR172修复草稿替换身份、实际planning Attempt选中DTO、output_received命名SSE遗漏及当前真实浏览器验收。 | ready / ready-for-agent | 无实现依赖 |
 | [#166](https://github.com/zhouy1017/Karajan/issues/166) | 候选复核 | 组件已在PR172，核验原反馈状态/时间/终态/无颜色/reduced-motion全部AC并复用原PR。 | ready / ready-for-agent | 无实现依赖 |
