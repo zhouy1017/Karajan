@@ -1,0 +1,12 @@
+{
+  "new_tasks": 25,
+  "existing_open": 47,
+  "coverage_rows": 140,
+  "acyclic": true,
+  "documents": 23,
+  "local_links": 297,
+  "product_tests": "not_run: documentation and issue preparation only",
+  "source_id_sets_verified": true,
+  "baseline": "75ec6e9fab3a6801007420557f2b1443124ee7f6",
+  "scope": "Documentation consistency and task DAG only; not product behavior or source qualification"
+}
