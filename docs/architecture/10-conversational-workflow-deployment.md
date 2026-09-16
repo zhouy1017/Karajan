@@ -1,6 +1,6 @@
 # 对话式 Workflow 设计、配置与部署契约
 
-修订：2026-09-14，工作台 r8。状态：**未来产品契约，尚不代表已实现、验收或部署。** r7 的对话、真实配置、同源图表和 pending/readback/active 规则保留；r8 允许部署的 Workflow 授予角色按实际任务动态拆分与业务调度，详细见 [11](11-role-directed-scheduling.md)。
+修订：2026-09-16，r9 开发就绪审核。#176/PR180 已实现文件/同源编译，#177/PR181 已实现 deploy_only 与真实加载/读回/active；**Designer 模型创作、deploy_and_run 和完整流程实际执行仍待实现验收。** r7 的对话、真实配置、同源图表和 pending/readback/active 规则保留；r8 允许部署的 Workflow 授予角色按实际任务动态拆分与业务调度，详细见 [11](11-role-directed-scheduling.md)。
 
 本契约承接 [可定制角色与 Workflow](09-configurable-workflows.md)，对应活动 PRD 的 FR24/FR25、UX-AC19–22。它将主入口收敛为文字需求、真实配置文件、同源图表确认和真实部署；已有定义 API、表单、运行授权、角色边界与 report/patch/pr 质量门继续适用。
 
@@ -48,7 +48,7 @@ flowchart TD
 
 `WorkflowBundle` 是真实配置文件与固定依赖清单的整体。所有内嵌文件和外部定义引用都可追溯；外部引用必须固定 revision/digest，不能在部署时解析成不同的 latest。
 
-拟议配置包包含 `manifest.json`、`workflow.yaml`、`roles/*.yaml`，以及需要固定保存的非秘密说明模板。它们是供未来实现收敛的路径与格式，不表示当前存在解析器；文件路径必须来自受控包布局，禁止绝对路径、路径穿越、任意导入或自由脚本。配置引用 `profile_ref`、网关连接引用、检查配置和 secret_ref，不包含实际密钥、OAuth token 或网关管理凭据。
+已实现的受控配置包包含 `manifest.json`、`workflow.yaml`、`roles/` 下角色文件和 `templates/` 下非秘密模板；manifest 由可信服务生成。复用现有 `workflow.v1`、`karajan.workflow-bundle.v1` 与固定编译器身份，具体允许扩展名和解析规则见已有实现与 [开发接线](13-development-integration-contract.md)；文件路径必须来自受控包布局，禁止绝对路径、路径穿越、任意导入或自由脚本。配置引用 `profile_ref`、网关连接引用、检查配置和 secret_ref，不包含实际密钥、OAuth token 或网关管理凭据。
 
 | 内容 | 最小身份与用途 |
 |---|---|

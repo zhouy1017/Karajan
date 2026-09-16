@@ -1,6 +1,6 @@
 # 架构决定索引
 
-当前基准：2026-09-14 r8。`accepted` 表示设计决定已接受，实际实现与真实资格在对应证据中验收。后续 ADR 可以收窄旧示例或替代旧接入建议，不能据此改写历史事实。
+当前基准：2026-09-16 r9。`accepted` 表示设计决定已接受，实际实现与真实资格在对应证据中验收。后续 ADR 可以收窄旧示例或替代旧接入建议，不能据此改写历史事实。
 
 | ADR | 当前适用决定 | 后续承接 |
 |---|---|---|
@@ -12,5 +12,6 @@
 | [0006 可配置角色与 Workflow](0006-configurable-roles-and-workflows.md) | 职责和拓扑采用版本定义，Run/Attempt 冻结批准材料 | 0007 定义其对话创作、图表确认与真实部署体验 |
 | [0007 对话创作与部署](0007-conversational-workflow-deployment.md) | Agent 写配置，同源图表供审阅；可信程序准备、加载读回、条件激活并记录回执 | 当前活动交互与部署决定 |
 | [0008 角色调度与自适应并行](0008-role-directed-scheduling.md) | 用户授权的 Workflow 角色决定任务拆分和调度；无内置 coding Agent 数量上限，资源不足排队 | 初始授权内动态图修订自动生效；旧两 writer 初值废止，原验收样例保留 |
+| [0009 会话用量与实际 provider](0009-conversation-usage-accounting.md) | 同一 Commander 会话按角色/Agent、任务、模型与实际底层 provider 查看 token，可信归属与未知分开 | FR28/29、UX-AC25–27、UA-AC01–07 独立承接；复用账本，不将预算占用当实耗 |
 
 具体行为见 [工作台 PRD](../prd/commander-workbench.md)，模块与流程见 [架构总览](../architecture/README.md)。ADR 记录决定理由，不维护随时变化的实现进度。

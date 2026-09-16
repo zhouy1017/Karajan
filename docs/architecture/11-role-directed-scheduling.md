@@ -1,6 +1,6 @@
 # 角色主导的任务拆分与调度
 
-修订：2026-09-14 r8。状态：**按用户要求接受本设计方向，待实现与验收。** 对应 FR26/FR27、UX-AC23/24。Workflow 中获用户授权的调度器、Commander 或其他角色按实际任务决定拆分、分工、优先级和派发；Karajan 不内置前后端划分，也不内置 2、4 或其他产品级 Agent 人数上限。本文不声称无限吞吐或当前已经支持真实动态并行。
+修订：2026-09-16 r9 开发就绪审核。#178/PR182 已完成授权/命令/图修订、claim/队列/封口与义务控制面；**实际角色决定到物理 Agent 执行、Hub 和最终交付仍待集成验收。** 对应 FR26/FR27、UX-AC23/24。Workflow 中获用户授权的调度器、Commander 或其他角色按实际任务决定拆分、分工、优先级和派发；Karajan 不内置前后端划分，也不内置 2、4 或其他产品级 Agent 人数上限。本文不声称无限吞吐或当前已经支持真实动态并行。
 
 本契约承接 [可配置 Workflow](09-configurable-workflows.md)、[r7 对话与部署](10-conversational-workflow-deployment.md)、[控制状态](01-control-and-state.md) 和 [资源准入](02-routing-and-quota.md)。它修订“全部任务必须预先列出并逐版人工批准”和“默认两个 writer”的产品限制；原固定规模示例仍可作为测试场景，既有 [网关边界](08-provider-gateway.md)、隔离及 PR 证据门继续有效。决定见 [ADR 0008](../adr/0008-role-directed-scheduling.md)。
 

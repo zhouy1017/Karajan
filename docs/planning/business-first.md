@@ -1,8 +1,8 @@
 # 当前业务顺序
 
-修订：2026-09-14 r8。本文是开发执行入口；历史承接与 r6–r8 增量见 [设计治理](design-governance-20260909.md)。活动行为见 [工作台 PRD](../prd/commander-workbench.md)。当前要求外置网关、自定义角色/Workflow、对话生成配置、图表确认与真实部署，以及获授权角色按实际任务拆分和派发；新增实现和产品 AC 未完成，原验收与失败证据保留。
+修订：2026-09-16 r9 开发就绪审核。本文是开发执行入口；本轮可领取清单、完整责任和来源独立验收见 [就绪清单](r9-development-readiness-20260916/README.md)。历史承接与 r6–r9 增量见 [设计治理](design-governance-20260909.md)。活动行为见 [工作台 PRD](../prd/commander-workbench.md)。当前要求外置网关、自定义角色/Workflow、对话生成配置、图表确认与真实部署，以及获授权角色按实际任务拆分和派发；新增实现和产品 AC 未完成，原验收与失败证据保留。
 
-r8 先准备 [网关连接/模型绑定](../architecture/08-provider-gateway.md)、[角色/Workflow 编译](../architecture/09-configurable-workflows.md) 及 [获授权角色调度](../architecture/11-role-directed-scheduling.md) 的接口边界，完成 [Designer 对话→配置→图表迭代→确认→部署加载读回](../architecture/10-conversational-workflow-deployment.md) 到实际运行的最短闭环，再沿 P1–P4 集成。API/表单是支撑，不能把生成静态配置当产品完成。P1–P4 是开发承接顺序，不是固定运行流程；用不同角色的报告和代码模板验证实际扩图、派发及交付。当前 #172/#173 按原范围验收，新增 r6–r8 范围另行拆票同步远端。
+#175–#178 已完成网关目录、配置编译、deploy_only 加载和授权图/队列控制面，后续从这些接口继续推理/物理执行与 UI 接线；详见 [开发接线](../architecture/13-development-integration-contract.md)。原 r8 的准备顺序为 [网关连接/模型绑定](../architecture/08-provider-gateway.md)、[角色/Workflow 编译](../architecture/09-configurable-workflows.md) 及 [获授权角色调度](../architecture/11-role-directed-scheduling.md) 的接口边界，完成 [Designer 对话→配置→图表迭代→确认→部署加载读回](../architecture/10-conversational-workflow-deployment.md) 到实际运行的最短闭环，再沿 P1–P4 集成。API/表单是支撑，不能把生成静态配置当产品完成。P1–P4 是开发承接顺序，不是固定运行流程；用不同角色的报告和代码模板验证实际扩图、派发及交付。当前 #172/#173 按原范围验收，新增 r6–r8 范围另行拆票同步远端。
 
 运行时由 Workflow 中明确获授权的 Commander 或自定义调度角色按任务决定拆分、角色绑定、依赖与派发规模。范围内命令由可信服务校验后自动生效为新运行图 revision，无须逐子任务批准；定义、原授权与旧 Attempt 保持固定，超范围才请求新确认。产品不内置前后端分工或 Agent/角色/任务/并发人数上限；机器与上游实际容量、共享资源和用户明确预算/策略约束可执行时机，不足时完整排队，不截断业务任务图。
 
@@ -27,9 +27,13 @@ r4 将“项目 → Commander 会话”的侧栏层级纳入 P1/UX-AC14。切换
 
 ## 当前队列与复用
 
-2026-09-14 当前获授权批次为 [r8 第一阶段 #174](r8-phase1-20260914/README.md)：#175 网关目录 → #176 配置包/同源编译 → #177 部署加载 → #178 授权调度图/队列，按接口依赖派发、审查并合入 dev，总计最多 4 个 PR。2026-09-15 用户最新授权为**继续以当前默认 DeepSeek 完成全部剩余 #176–#178**，取代早先“仅 gemini-use 且单次重试”的派发说明；原发布快照保留原字节。Claude Code CLI worker 实现，Commander 负责独立审查和合并；本批覆盖明确的控制面 C/P 子范围，不将模型真实执行、候选整合或旧 #172/#173 视为已完成。下方 P1–P4 与原候选继续保留各自范围，后续按实际接口复用。
+2026-09-15 [r8 第一阶段 #174](r8-phase1-20260914/README.md) 已完成，#175–#178 和四个 PR 均按原控制面范围验收关闭/合入；真实模型、完整工作台和旧 #172/#173 未因此完成。旧 worker 已结束，原四 PR 数量与模型/合并授权不延伸到本轮。
 
-本轮以 r8 配置创作/部署、授权调度直接依赖和 P1→P2→P3→P4 集成为主线。优先复用 `#11`、`#12`、`#16`、`#17`、`#13`、`#14`、`#153`、`#93` 的原接口和候选；并核对 #112、#142、#146、#147、#90、#94、#95、#116 等接线。工作台切片仍按 [#159 入口](https://github.com/zhouy1017/Karajan/issues/159) → [#160 分工](https://github.com/zhouy1017/Karajan/issues/160) → [#161 并行](https://github.com/zhouy1017/Karajan/issues/161) → [#162 审查交付](https://github.com/zhouy1017/Karajan/issues/162) 承接；不改变原票范围。状态须实时查询 GitHub，不沿用旧 queued 文案。
+本轮将 r9 全功能准备到可供 Agent 分阶段领取：先并行推进无阻塞的网关受控调用、PR172/173 原候选返修/核验及原兼容路径独立叶子；再接通 Runtime、Designer、部署到 Run、动态角色执行、Workflow 全种类和用量；资源/规则/交接/恢复维护与原完整出口按实际接口依赖推进。`spec:ready` 与 `planning:decomposed` 表示规格与分解，`ready-for-agent` 只授予当前无执行依赖阻塞的已排队叶子。具体票号、依赖和当前发布读回见 [就绪清单](r9-development-readiness-20260916/README.md)。
+
+用户确认全功能开发与各来源验收分离：账号/endpoint/模型/预算/消费许可是配置 gate，缺失只阻塞相应真实验证，不阻止本地实现和无消费核验；#1/#30 的五来源和完整原 AC 不降标。新网关路径不替代原官方 Codex/Claude 或固定 Go 路径的验收。
+
+本轮保留配置创作/部署、授权调度直接依赖和 P1→P2→P3→P4 集成主线，并把 r9 用量及原完整产品剩余责任纳入就绪清单。优先复用 `#11`、`#12`、`#16`、`#17`、`#13`、`#14`、`#153`、`#93` 的原接口和候选；并核对 #112、#142、#146、#147、#90、#94、#95、#116 等接线。工作台切片仍按 [#159 入口](https://github.com/zhouy1017/Karajan/issues/159) → [#160 分工](https://github.com/zhouy1017/Karajan/issues/160) → [#161 并行](https://github.com/zhouy1017/Karajan/issues/161) → [#162 审查交付](https://github.com/zhouy1017/Karajan/issues/162) 承接；不改变原票范围。状态须实时查询 GitHub，不沿用旧 queued 文案。
 
 复用规则如下：
 

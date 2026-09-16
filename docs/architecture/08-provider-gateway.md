@@ -1,6 +1,6 @@
 # 外置模型网关
 
-修订：2026-09-14。状态：按用户要求采用外置 CLIProxyAPI 的设计方向；适配、部署和真实资格尚未实现或验收。决定见 [ADR 0005](../adr/0005-external-model-gateway.md)。
+修订：2026-09-16 r9 开发就绪审核。外置 CLIProxyAPI 方向不变；#175/PR179 已完成连接/绑定目录及无推理探测控制面，受控推理、实际路由/usage 与真实来源资格仍待独立实现验收。复用边界见 [开发接线](13-development-integration-contract.md)，决定见 [ADR 0005](../adr/0005-external-model-gateway.md)。
 
 ## 1. 职责与调用路径
 
@@ -32,11 +32,11 @@ Karajan 仍拥有 Workflow、Run/Task/Attempt、用户批准、工具权限、�
 | GatewayConnection revision | 稳定 ID、允许的 base URL、客户端协议、网关客户端 `secret_ref`、固定版本、路由/请求变换策略摘要、能力证据引用 | 地址与配置由所有者登记；模型和工具不能修改；连接测试与正式启用分开 |
 | ModelBinding revision | connection revision、公开 model ID/alias、允许的真实模型/provider、账户或明确账户集合、计费通道、共享池、必需参数 | alias 不是来源身份；未知项如实保存，不能用自报 model 补齐 |
 | Execution Profile revision | ModelBinding + Runtime revision + 参数与已验收能力 | Runtime 与模型通道独立组合；换网关/模型/映射后重新评估能力 |
-| ModelCall receipt | call/Attempt 身份、请求摘要、已批准绑定/变换策略、实际 route/用量/时间/错误来源、结果与核对状态 | 实际元数据仅在可关联且可信时采信；缺失不是零用量或成功 |
+| ModelCall receipt | call/ExecutionRef 身份（Attempt 或独立创作执行）、project/conversation 归属、请求摘要、已批准绑定/变换策略、实际 route/用量/时间/错误来源、结果与核对状态 | 实际元数据仅在可关联且可信时采信；缺失不是零用量或成功 |
 
 第一版客户端优先覆盖 OpenAI-compatible 的模型发现、非流式/流式生成与 function calling；具体采用 Chat Completions，Responses 作为单独协商的能力。不能仅因网关暴露多个兼容端点就宣称不同端点的工具、结构化输出、上下文和会话语义等价。`GET /v1/models` 只产生可选目录；连接可达、模型可见、角色所需能力通过、资源可准入分别展示。
 
-网关客户端密钥只存于 Karajan 受信调用层；runtime 使用有期限且绑定 Attempt 的凭证。供应商凭据留在外置网关。网关管理面与推理面分开，管理凭据不进入模型、工具、工作区或浏览器；第一版配置/登录在外置网关完成，Karajan 不依赖管理写接口。单机默认回环连接；远程网关须显式登记 TLS 地址与允许的数据去向。
+网关客户端密钥只存于 Karajan 受信调用层；runtime 使用有期限且绑定 ExecutionRef（Attempt 或独立创作执行）的凭证。供应商凭据留在外置网关。网关管理面与推理面分开，管理凭据不进入模型、工具、工作区或浏览器；第一版配置/登录在外置网关完成，Karajan 不依赖管理写接口。单机默认回环连接；远程网关须显式登记 TLS 地址与允许的数据去向。
 
 统一协议也不等于请求透明转发。网关可应用 payload override/filter、system prompt 改写与托管工具注入。绑定必须包含经批准的请求变换策略；第一版禁用未批准的职责/提示、参数、tools 变换和上游托管工具，能力测试核对实际发往受控上游的语义，而非仅检查客户端请求。改变这些策略需要重新评估受影响资格；无法观察实际转发语义时不能声明职责/工具约束已验证。[固定配置中的请求变换](https://github.com/router-for-me/CLIProxyAPI/blob/7fa443dc8bf8ca2f1ffd81c2472deb31b097b697/config.example.yaml)
 
@@ -57,6 +57,8 @@ Karajan 持久化每次调用意图；只有明确未发送的失败可在原规
 网关统一传输，不统一账户额度。两个连接或模型若消耗同一上游账户/订阅，必须引用同一资源池，不能重复预留。网关报告、服务配额观察、平台预算与本地估算分开保存；未提供实际账户身份时不能声称按该账户完成精确结算或保护。
 
 每个响应的 usage、可验证的请求级观察可作为账本输入；网关进程内计数和第三方统计面板不作为 Karajan 的唯一持久账本。缺少 usage、重试观测或取消确认时保留 unknown，并按既有有限保守授权处理。模型流事件只表示已观察到的输出，连接心跳不证明任务成功。
+
+2026-09-16 r9 增加 [会话用量与实际路由契约](12-conversation-usage-accounting.md)：调用账本须关联 Project/Conversation、角色/Agent、Task/Attempt 或无 Run 创作身份；实际 provider/model/账户/计费通道逐字段由可信回执证明，与请求 alias 和批准绑定分开。网关内部上游发送在可观察时分别记路由与用量，观察不到则声明覆盖缺口。流式累计、终态、网关与上游重复/重叠报告按覆盖去重，缓存/推理包含关系不重复求和；未知不归零。UA-AC 的统计与真实计量验收独立于原 GW-AC，不因网关目录可用即视为完成。
 
 取消先停止新调用和工具执行，终止/隔离原 runtime 并请求中断原 HTTP 流。连接已关闭不证明供应商已停止或不再计费；无法确认的远端状态仍为 unknown。网关配置/版本/路由映射变化须使受影响绑定重新评估，不将旧资格直接继承到新连接。
 

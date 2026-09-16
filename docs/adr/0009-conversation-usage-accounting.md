@@ -1,0 +1,21 @@
+---
+status: accepted
+---
+
+# 在同一 Commander 会话按角色、任务、模型和实际 provider 查看用量
+
+日期：2026-09-16，产品设计 r9。accepted 表示用户已要求新增此功能；具体字段和统计规则为本次设计承接，不表示已实现或真实计量已验收。
+
+## 背景与决定
+
+现有调用及原生资源账本承担预算和核对，但尚未定义同一 Commander 对话内完整的用量查看体验。只显示 Run 总量或配置的模型名称，无法回答哪个角色/Agent、哪个任务、哪种模型消耗了多少，以及实际由哪个底层 provider 承担。
+
+以 CommanderConversation 为默认统计边界，涵盖全部 Run 和 pre-Run 对话/创作调用。角色、Agent 执行实例、任务、模型、实际 provider 为同一持久账本上的独立与可交叉维度；角色定义与执行实例分开，任务累计包含各次 Attempt 的实际消费。会话 Hub 展示摘要和明细入口，筛选与刷新由可信程序读取，无需模型调用。
+
+请求别名、批准绑定与实际观测的 provider/model/account/计费通道分开保存。实际归属只能由可关联可信证据支持；未知字段及计量缺口直接展示。已报告 token、估算、未知和预算占用分开；缓存/推理包含关系、重复/迟到回执及父子任务小计不得导致重复计量。
+
+## 承接与后果
+
+扩展 [ADR 0002](0002-profile-and-native-resource-ledger.md)、[0004](0004-commander-workbench.md) 和 [0005](0005-external-model-gateway.md)，沿用唯一账本、原生单位、严格绑定和消费授权。FR28/29、UX-AC25–27 及 [用量契约 UA-AC01–07](../architecture/12-conversation-usage-accounting.md) 独立验收，不将已有预算账本或 r8 控制面验收升级为本需求完成。
+
+实现需要调用归属、可信采集、版本化计量映射、覆盖去重与可恢复会话投影。无法观测内部重试或仅有 Attempt 总量的来源应显示其粒度和缺口，不虚构逐调用/逐 provider 精度。token 数不等于金额，账户全局配额也不等于本会话消费。2026-09-16 后续审核获用户要求推进完整开发就绪与 Issue 标识；实施责任见 [就绪清单](../planning/r9-development-readiness-20260916/README.md)。本轮准备不表示功能已实现，也不扩大消费授权。
