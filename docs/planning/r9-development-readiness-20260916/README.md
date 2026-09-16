@@ -9,7 +9,7 @@
 用户意图已覆盖：同一 Hub 内完成自定义 Workflow 设计/部署/运行、授权角色按需求拆分派发、按真实资源并行/排队、独立质量与交付，并按每个角色/Agent、任务、模型和实际 provider 查看 token 用量。审核发现的主要问题是实现状态陈旧、运行接线缺少统一责任、r6–r9 尚缺完整任务承接、原票状态与当前候选不一致；这些已形成正文修订、[接线契约](../../architecture/13-development-integration-contract.md) 和下列可检验任务。
 
 - **已确认：全功能开发，来源独立验收。** 缺账号、endpoint、预算/消费许可仅阻塞对应真实验收；其余实现可用本地受控 provider、真实数据库/进程/UI 验证。#1/#30 原完整 v1 的五来源及所有出口保留。
-- **待用户决定：实际 provider/token 缺精确数据的启用策略。** 已一次性提问；此决定到达前，不将受影响规格标为最终就绪。#1/#30、R9、GW-CALL、USAGE、GW-QUALIFY、R9-EXIT、V1-EXIT 使用 `spec:pending-decision`；其余无关规格继续准备。
+- **已确认：用户已确认：缺少精确 provider/token 可明确标未知或不完整，在原资格、授权、严格绑定与有限预算门全部满足时启用；完整统计独立验收。缺口使原硬门不可验证时仍阻塞，不新增消费许可。** 两项产品决定均已解决，详见 [决定记录](decisions.json)。
 
 第三方厂商、来源实际账号/模型、网关安装配置、有限预算、项目基准/检查/交付目标等是运行前配置输入，已有明确填写位置和缺失拒绝语义；不是需要再设计一轮的产品分歧。开发 Agent 不得猜选付费厂商或消费额度。
 
@@ -77,7 +77,7 @@
 | [THIRDPARTY-S / #207](https://github.com/zhouy1017/Karajan/issues/207) | 指定第三方 API 的协议边界与产品来源资格 | [CALL-BUDGET / #198](https://github.com/zhouy1017/Karajan/issues/198)、[PROJECT-SETTINGS / #194](https://github.com/zhouy1017/Karajan/issues/194) | [#22](https://github.com/zhouy1017/Karajan/issues/22) | C/U/P/S |
 | [V1-EXIT / #208](https://github.com/zhouy1017/Karajan/issues/208) | 原完整 v1 的全量证据、远端故障与性能出口 | [R9-EXIT / #193](https://github.com/zhouy1017/Karajan/issues/193)、[CODEX-S / #203](https://github.com/zhouy1017/Karajan/issues/203)、[CLAUDE-S / #204](https://github.com/zhouy1017/Karajan/issues/204)、[DEEPSEEK-S / #205](https://github.com/zhouy1017/Karajan/issues/205)、[GO-S / #206](https://github.com/zhouy1017/Karajan/issues/206)、[THIRDPARTY-S / #207](https://github.com/zhouy1017/Karajan/issues/207)、[RECOVERY / #201](https://github.com/zhouy1017/Karajan/issues/201)、[MAINTENANCE / #202](https://github.com/zhouy1017/Karajan/issues/202)、[REVISION / #195](https://github.com/zhouy1017/Karajan/issues/195)、[RULES / #196](https://github.com/zhouy1017/Karajan/issues/196)、[CAPACITY / #197](https://github.com/zhouy1017/Karajan/issues/197)、[CALL-BUDGET / #198](https://github.com/zhouy1017/Karajan/issues/198)、[#8](https://github.com/zhouy1017/Karajan/issues/8)、[#153](https://github.com/zhouy1017/Karajan/issues/153)、[#160](https://github.com/zhouy1017/Karajan/issues/160)、[#161](https://github.com/zhouy1017/Karajan/issues/161)、[#162](https://github.com/zhouy1017/Karajan/issues/162) | [#30](https://github.com/zhouy1017/Karajan/issues/30) | C/U/P/S/G |
 
-GW-CALL的代码前置已由#175和资源原语满足，用量启用策略确认后可领取；既有无阻塞叶子可同时核验/返修。没有“先关闭全部产品父票才能写代码”的依赖。每个后继在前置接口合入、证据适用且实际可执行后再升ready；原父票native blocked-by作为最终验收gate继续保留。COMMANDER/WF-KINDS负责新网关下的规划/独立Review/交付接线，R9-EXIT不依赖固定Go专属资格通过；原#112/#113/#153/#161/#162的剩余责任在V1-EXIT仍逐项核验，不被新通道通过替代。
+GW-CALL的代码前置已由#175和资源原语满足，用量启用策略已确认，可领取；既有无阻塞叶子可同时核验/返修。没有“先关闭全部产品父票才能写代码”的依赖。每个后继在前置接口合入、证据适用且实际可执行后再升ready；原父票native blocked-by作为最终验收gate继续保留。COMMANDER/WF-KINDS负责新网关下的规划/独立Review/交付接线，R9-EXIT不依赖固定Go专属资格通过；原#112/#113/#153/#161/#162的剩余责任在V1-EXIT仍逐项核验，不被新通道通过替代。
 
 ## 现有47个Open Issue的当前承接
 
@@ -146,6 +146,8 @@ PR172 当前候选 `f70b3b93abcd47889c882f33ae92d53b941587f0`（#165/#166）与 
 
 远端Issue、标签、原生父子/依赖和当前正文已读回核验，详见 [publication.json](publication.json)。这表示任务准备完成，不表示产品已实现。
 
-本次读回 73 个 Open Issue：65 票规格完整，8 票待同一产品决定，9 个当前可领取范围；另有 37 票（含已完成父票）标识已拆分。已关闭票遗留的领取标签已按 publication 的 closed_queue_cleanup 单独清理，原完成状态和正文不变。
+首次发布快照读回 73 个 Open Issue：65 票规格完整，8 票当时待决定，9 个当时可领取范围；另有 37 票（含已完成父票）标识已拆分。已关闭票遗留的领取标签已按 publication 的 closed_queue_cleanup 单独清理，原完成状态和正文不变。
 
 [文档校验记录](document-validation.json)仅验证本地链接/表格、原始编号与责任映射、依赖无环和diff格式，不是产品行为验收。
+
+2026-09-16 用户已确认最后一项决定，规格不再有待决产品问题；对应标签和简报正在按本次确认同步，完成后以新增决定发布记录为准，首次 publication.json 保留原字节。
