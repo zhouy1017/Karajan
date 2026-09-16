@@ -105,6 +105,7 @@ class RunPlanner:
                         "at",
                         "result",
                     ],
+                    "conversation_proposal_revisions": ["conversation_id", "next_revision"],
                 },
             )
             return
@@ -158,6 +159,9 @@ class RunPlanner:
                   conversation_id TEXT NOT NULL REFERENCES commander_conversations(id),
                   event_type TEXT NOT NULL,
                   object_revision INTEGER NOT NULL, payload TEXT NOT NULL, at REAL NOT NULL);
+                CREATE TABLE IF NOT EXISTS conversation_proposal_revisions (
+                  conversation_id TEXT PRIMARY KEY REFERENCES commander_conversations(id),
+                  next_revision INTEGER NOT NULL);
                 """
             )
 
@@ -848,6 +852,12 @@ class RunPlanner:
             if version_two != (run["schema_version"] == "karajan.run-planning.v2"):
                 raise RunError("RUN_PROTOCOL_VERSION_MISMATCH")
             self._owner(run, principal)
+            if run.get("owner_proposals"):
+                # Proposal-bearing Runs must use ProposalStore's
+                # conversation/revision/If-Match authority path.  Keeping
+                # this at the Run seam prevents non-HTTP consumers from
+                # bypassing source freshness or immutable proposal binding.
+                raise RunError("CONVERSATION_PROPOSAL_BINDING_REQUIRED")
             self._term(run, request["term"])
             if request["plan_revision"] != run["latest_plan_revision"] or not run["plans"]:
                 raise RunError("PLAN_REVISION_STALE")

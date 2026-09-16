@@ -6,13 +6,14 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from karajan.conversations import ConversationError, ConversationStore
+from karajan.proposals import ProposalStore
 from karajan.runs import RunError, RunPlanner
 
 from .projects import command_key
 
 
 def register_run_routes(
-    app: FastAPI, planner: RunPlanner, conversations: ConversationStore
+    app: FastAPI, planner: RunPlanner, conversations: ConversationStore, proposals: ProposalStore
 ) -> None:
     @app.exception_handler(RunError)
     async def run_error(request: Request, error: RunError) -> JSONResponse:
@@ -74,6 +75,26 @@ def register_run_routes(
 
     @app.post("/v1/runs/{run_id}/plan-approval")
     def approve_plan(run_id: str, request: Request, data: dict[str, Any]) -> dict[str, Any]:
+        # Conversation-aware clients must bind the immutable proposal they saw.
+        # Legacy Run clients keep their released route and cannot accidentally
+        # address a cross-project proposal by omitting the new identity.
+        if {"run_id", "run_revision"} & set(data):
+            raise RunError("APPROVAL_ROUTE_AUTHORITY_OVERRIDE")
+        has_conversation_fields = {"conversation_id", "proposal_revision"} & set(data)
+        if has_conversation_fields:
+            if has_conversation_fields != {"conversation_id", "proposal_revision"}:
+                raise RunError("CONVERSATION_PROPOSAL_BINDING_REQUIRED")
+            from .projects import expected_revision
+
+            return proposals.approve(
+                run_id,
+                data,
+                run_revision=expected_revision(request),
+                key=command_key(request),
+                principal="owner",
+            )
+        if planner.get(run_id, principal="owner").get("owner_proposals"):
+            raise RunError("CONVERSATION_PROPOSAL_BINDING_REQUIRED")
         return planner.approve_plan(
             run_id, data, command_key=command_key(request), principal="owner"
         )

@@ -1552,6 +1552,95 @@ class ProfileQualificationStore:
                 "activation_allowed": False,
             }
 
+    @contextmanager
+    def proposal_authority_guard(
+        self,
+        project_id: str,
+        frozen_registrations: list[dict[str, Any]],
+        *,
+        principal: str,
+    ) -> Iterator[dict[str, Any]]:
+        """Hold current source and qualification facts for a non-executing proposal.
+
+        It reuses the sealed-record/current-binding reader used by routing, but
+        makes no Capacity claim and has no activation effect.  A local-fixture
+        authority is accepted only for a fixture-runtime registration and its
+        sealed fixture-root binding; all other registrations use runtime-tools.
+        """
+        with self._owned(project_id, principal) as db:
+            catalog = effective_catalog(db, project_id)
+            rows = []
+            seen = set()
+            for registration in frozen_registrations:
+                try:
+                    frozen = RegisteredProfile.model_validate(registration).model_dump()
+                    key = (frozen["id"], frozen["revision"])
+                    if key in seen:
+                        raise QualificationError("PROFILE_REFERENCE_DUPLICATE")
+                    seen.add(key)
+                    qualified = self._proposal_facts_locked(db, project_id, frozen)
+                except QualificationError as error:
+                    ref = (
+                        {"id": registration.get("id"), "revision": registration.get("revision")}
+                        if isinstance(registration, dict)
+                        else None
+                    )
+                    rows.append(
+                        {"profile": ref, "qualification": None, "reason_codes": [error.code]}
+                    )
+                else:
+                    rows.append(
+                        {
+                            "profile": {"id": frozen["id"], "revision": frozen["revision"]},
+                            "qualification": qualified,
+                            "reason_codes": [],
+                        }
+                    )
+            yield {
+                "project_db": db,
+                "catalog": catalog,
+                "profiles": rows,
+                "activation_allowed": False,
+            }
+
+    def _proposal_facts_locked(
+        self, db: sqlite3.Connection, project_id: str, frozen: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Select a trusted source reader from the registered Profile only."""
+        profile = frozen.get("profile")
+        binding = profile.get("binding") if isinstance(profile, dict) else None
+        if not isinstance(binding, dict):
+            raise QualificationError("PROFILE_IDENTITY_MISSING")
+        if binding.get("runtime_kind") != "fixture-runtime":
+            return self._facts(db, project_id, frozen, "runtime_tools", None)
+        ref = {"id": frozen["id"], "revision": frozen["revision"]}
+        starts = db.execute(
+            "SELECT * FROM profile_qualification_starts WHERE project_id=? ORDER BY rowid DESC",
+            (project_id,),
+        ).fetchall()
+        latest = next(
+            (
+                row
+                for row in starts
+                if (
+                    (start := self._checked_start(db, row)).get("qualification_scope")
+                    == "local_fixture"
+                    and start.get("profile_binding", {}).get("registration", {}).get("id")
+                    == ref["id"]
+                    and start.get("profile_binding", {}).get("registration", {}).get("revision")
+                    == ref["revision"]
+                )
+            ),
+            None,
+        )
+        if latest is None:
+            raise QualificationError("PROFILE_FACTS_MISSING")
+        runtime = self._checked_start(db, latest).get("runtime")
+        root = runtime.get("fixture_root") if isinstance(runtime, dict) else None
+        if not isinstance(root, str):
+            raise QualificationError("QUALIFICATION_RUNTIME_MISMATCH")
+        return self._facts(db, project_id, frozen, "local_fixture", Path(root))
+
     def _facts(
         self,
         db: sqlite3.Connection,

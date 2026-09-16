@@ -110,6 +110,8 @@ def _binding(
     task = next((t for t in plan["plan"]["tasks"] if t["id"] == task_id), None)
     if task is None or task["readiness"] != "ready":
         raise DemandError("TASK_SCOPE_NOT_APPROVED")
+    if task.get("profile_ref") is not None and task["profile_ref"] != ref:
+        raise DemandError("TASK_PROFILE_BINDING_REQUIRED")
     if task["duration_seconds"] > 1_000_000 or ref["revision"] > 1_000_000:
         raise DemandError("ADMISSION_BOUND_NOT_REPRESENTABLE")
     if ref not in plan["plan"]["authorization"]["profile_refs"]:
@@ -123,6 +125,8 @@ def _binding(
     registration = registrations[0]
     profile = registration["profile"]
     binding = profile["binding"]
+    if task.get("source_ref") is not None and task["source_ref"] != binding["channel_id"]:
+        raise DemandError("TASK_SOURCE_BINDING_REQUIRED")
     if {"id": profile["id"], "revision": profile["revision"]} != ref:
         raise DemandError("PROFILE_IDENTITY_MISMATCH")
     if catalog["project_id"] != run["project_id"] or ref not in catalog["approved_profile_refs"]:
@@ -162,7 +166,7 @@ def _binding(
             raise DemandError("PROFILE_POOL_VECTOR_INVALID")
         pools.append(rows[0])
     requirements = plan["routing_binding"]["task_requirements"][task_id]
-    if any(task[key] != value for key, value in requirements.items()):
+    if any(task.get(key) != value for key, value in requirements.items()):
         raise DemandError("APPROVED_REQUIREMENTS_MISMATCH")
     context = run["execution_policy_snapshot"]["context_policy"]
     return {
